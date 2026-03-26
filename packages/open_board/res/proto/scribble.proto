@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+message Point {
+  double x = 1 [json_name="x"];
+  /// The vertical coordinate.
+  double y = 2 [json_name="y"];
+  /// The pressure for this point.
+  double p = 3 [json_name="p"];
+  /// The altitude for this point.
+  double altitude = 4 [json_name="altitude"];
+  /// The azimuth for this point.
+  double azimuth = 5 [json_name="azimuth"];
+  /// The opacity for this point.
+  double opacity = 6 [json_name="opacity"];
+  /// The sizeV for this point.
+  repeated double size = 7 [json_name="size"];
+  /// The timestamp for this point.
+  double deprecated_timestamp = 8;
+  int64 timestamp = 9 [json_name="timestamp"];
+}
+
+message Segment {
+  Point start = 1 [json_name="start"];
+  Point end = 2 [json_name="end"];
+  int32 startIndex = 3 [json_name="startIndex"];
+  int32 endIndex = 4 [json_name="endIndex"];
+  repeated Point points = 5 [json_name="points"];
+}
+
+message StrokePoint {
+  Point point = 1 [json_name="point"];
+  Point vector = 2 [json_name="vector"];
+  double distance = 3 [json_name="distance"];
+  double runningLength = 4 [json_name="runningLength"];
+}
+
+message StrokeOptions {
+  /// The base size (diameter) of the stroke.
+  double size = 1 [json_name="size"];
+
+  /// The effect of pressure on the stroke's size.
+  double thinning = 2 [json_name="thinning"];
+
+  /// Controls the density of points along the stroke's edges.
+  double smoothing = 3 [json_name="smoothing"];
+
+  /// Controls the level of variation allowed in the input points.
+  double streamline = 4 [json_name="streamline"];
+
+  // The distance to taper the front of the stroke.
+  double taperStart = 5 [json_name="taperStart"];
+
+  // Whether to add a cap to the start of the stroke.
+  bool capStart = 6 [json_name="capStart"];
+
+  // The distance to taper the end of the stroke.
+  double taperEnd = 7 [json_name="taperEnd"];
+
+  // Whether to add a cap to the end of the stroke.
+  bool capEnd = 8 [json_name="capEnd"];
+
+  // Whether to simulate pressure or use the point's provided pressures.
+  bool simulatePressure = 9 [json_name="simulatePressure"];
+
+  // Whether the line is complete.
+  bool isComplete = 10 [json_name="isComplete"];
+}
+
+message Stroke {
+  repeated Point points = 1 [json_name="points"];
+  uint32 color = 2 [json_name="color"];
+  string ink = 3 [json_name="ink"];
+  string createdAt = 4 [json_name="createdAt"];
+  StrokeOptions options = 5 [json_name="options"];
+  string shapeType = 6 [json_name="shapeType"];
+  double width = 7 [json_name="width"];
+  repeated Segment segments = 8 [json_name="segments"];
+  double confidence = 9 [json_name="confidence"];
+}
+
+message TextDrawable {
+  string id = 1 [json_name="id"];
+  string text = 2 [json_name="text"];
+  double x = 3 [json_name="x"];
+  double y = 4 [json_name="y"];
+  string fontFamily = 5 [json_name="fontFamily"];
+  double fontSize = 6 [json_name="fontSize"];
+  uint32 color = 7 [json_name="color"];
+  bool isBold = 8 [json_name="isBold"];
+  bool isItalic = 9 [json_name="isItalic"];
+  bool isUnderlined = 10 [json_name="isUnderlined"];
+  string textAlign = 11 [json_name="textAlign"];
+  bool hidden = 12 [json_name="hidden"];
+  string createdAt = 13 [json_name="createdAt"];
+  string updatedAt = 14 [json_name="updatedAt"];
+  double rotation = 15 [json_name="rotation"];
+}
+
+message Scribble {
+  double width = 1 [json_name="width"];
+  double height = 2 [json_name="height"];
+  repeated Stroke strokes = 3 [json_name="lines"];
+  string updatedAt = 4 [json_name="updatedAt"];
+  string createdAt = 5 [json_name="createdAt"];
+  string version = 6 [json_name="version"];
+  double x = 7 [json_name="x"];
+  double y = 8 [json_name="y"];
+  repeated TextDrawable textDrawables = 9 [json_name="textDrawables"];
+}
+
