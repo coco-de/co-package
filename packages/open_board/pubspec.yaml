@@ -29,6 +29,7 @@ dev_dependencies:
     sdk: flutter
   json_annotation: ^4.9.0
   json_serializable: ^6.11.1
+  mocktail: ^1.0.4
 
 # The following section is specific to Flutter.
 flutter:
