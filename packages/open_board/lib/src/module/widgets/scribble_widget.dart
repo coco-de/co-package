@@ -6,7 +6,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/core/utils/measure_size.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
@@ -1104,8 +1103,8 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
                       valueListenable: isInteractiveNotifier,
                       builder: (context, isInteractive, child) {
                         // 🔄 ScribbleNotifier 상태 변경을 감지하여 UI 업데이트
-                        return StateNotifierBuilder<ScribbleState>(
-                          stateNotifier: widget.notifier,
+                        return ValueListenableBuilder<ScribbleState>(
+                          valueListenable: widget.notifier,
                           builder: (context, state, child) {
                             return Builder(
                               builder: (listenerContext) {

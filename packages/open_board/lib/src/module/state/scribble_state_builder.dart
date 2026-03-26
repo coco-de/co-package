@@ -1,8 +1,5 @@
 // 🐦 Flutter imports:
-
-// 📦 Package imports:
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 
 // 🌎 Project imports:
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
@@ -25,8 +22,8 @@ final class ScribbleStateBuilder extends StatefulWidget {
 final class _ScribbleStateBuilderState extends State<ScribbleStateBuilder> {
   @override
   Widget build(BuildContext context) {
-    return StateNotifierBuilder<ScribbleModeState>(
-      stateNotifier: widget.notifier,
+    return ValueListenableBuilder<ScribbleModeState>(
+      valueListenable: widget.notifier,
       builder: widget.builder,
     );
   }

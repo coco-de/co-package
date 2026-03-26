@@ -36,9 +36,9 @@ class ScribbleController extends ChangeNotifier {
   late final ScribbleNotifier _scribbleNotifier;
   late final ScribbleModeNotifier _modeNotifier;
 
-  /// ✨ Stream subscription들 (dispose 시 정리용)
-  StreamSubscription<dynamic>? _scribbleSubscription;
-  StreamSubscription<dynamic>? _modeSubscription;
+  /// ✨ Listener callbacks (dispose 시 정리용)
+  VoidCallback? _scribbleListener;
+  VoidCallback? _modeListener;
 
   /// ✨ 이미지 캡처를 위한 GlobalKey
   final GlobalKey repaintBoundaryKey = GlobalKey();
@@ -152,19 +152,21 @@ class ScribbleController extends ChangeNotifier {
 
   /// 리스너 설정
   void _setupListeners() {
-    // ScribbleNotifier 변경 감지 (StateNotifier stream 사용)
-    _scribbleSubscription = _scribbleNotifier.stream.listen((scribbleState) {
-      final currentScribble = scribbleState.scribble;
+    // ScribbleNotifier 변경 감지 (ValueNotifier listener 사용)
+    _scribbleListener = () {
+      final currentScribble = _scribbleNotifier.value.scribble;
       onScribbleChanged?.call(currentScribble);
       notifyListeners();
-    });
+    };
+    _scribbleNotifier.addListener(_scribbleListener!);
 
-    // ModeNotifier 변경 감지 (StateNotifier stream 사용)
-    _modeSubscription = _modeNotifier.stream.listen((modeState) {
-      final currentTool = modeState.inkGroupInfo.selectedInk;
+    // ModeNotifier 변경 감지 (ValueNotifier listener 사용)
+    _modeListener = () {
+      final currentTool = _modeNotifier.value.inkGroupInfo.selectedInk;
       onToolChanged?.call(currentTool);
       notifyListeners();
-    });
+    };
+    _modeNotifier.addListener(_modeListener!);
   }
 
   /// 내부 notifier들에 대한 읽기 전용 접근
@@ -466,11 +468,15 @@ class ScribbleController extends ChangeNotifier {
     // 🌍 DrawingState에서 자동 해제
     _unregisterFromDrawingState();
 
-    // ✨ Stream subscription들 정리
-    _scribbleSubscription?.cancel();
-    _modeSubscription?.cancel();
-    _scribbleSubscription = null;
-    _modeSubscription = null;
+    // ✨ Listener들 정리
+    if (_scribbleListener != null) {
+      _scribbleNotifier.removeListener(_scribbleListener!);
+    }
+    if (_modeListener != null) {
+      _modeNotifier.removeListener(_modeListener!);
+    }
+    _scribbleListener = null;
+    _modeListener = null;
 
     // Notifier들 정리
     _scribbleNotifier.dispose();

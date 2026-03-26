@@ -2,16 +2,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 
-// 📦 Package imports:
-import 'package:state_notifier/state_notifier.dart';
-
 // 🌎 Project imports:
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/scribble_mode.state.dart';
 
 abstract class ScribbleModeNotifierBase
-    extends StateNotifier<ScribbleModeState> {
-  ScribbleModeNotifierBase(super.state);
+    extends ValueNotifier<ScribbleModeState> {
+  ScribbleModeNotifierBase(super.value);
 }
 
 class ScribbleModeNotifier extends ScribbleModeNotifierBase {
@@ -34,8 +31,8 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
   /// the width to any arbitrary value from code.
   List<double> widths;
 
-  @override
-  ScribbleModeState get state => super.state;
+  ScribbleModeState get state => value;
+  set state(ScribbleModeState newState) => value = newState;
 
   void updateWidths(List<double> widths) {
     final index = this.widths.indexOf(state.inkGroupInfo.seletedStrokeWidth);

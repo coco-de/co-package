@@ -8,9 +8,8 @@ import 'package:flutter/widgets.dart';
 
 // 📦 Package imports:
 import 'package:fixnum/fixnum.dart';
-import 'package:history_state_notifier/history_state_notifier.dart';
 import 'package:open_board/src/core/utils/extensions/paint_extension/ex_color.dart';
-import 'package:state_notifier/state_notifier.dart';
+import 'package:value_notifier_tools/value_notifier_tools.dart';
 
 // 🌎 Project imports:
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
@@ -23,8 +22,12 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
 
-abstract class ScribbleNotifierBase extends StateNotifier<ScribbleState> {
-  ScribbleNotifierBase(super.state);
+abstract class ScribbleNotifierBase extends ValueNotifier<ScribbleState> {
+  ScribbleNotifierBase(super.value);
+
+  /// Compatibility getter/setter for state (maps to value)
+  ScribbleState get state => value;
+  set state(ScribbleState newState) => value = newState;
 
   void onPointerHover(PointerHoverEvent event, ScribbleModeState modeState);
 
@@ -41,7 +44,7 @@ abstract class ScribbleNotifierBase extends StateNotifier<ScribbleState> {
 
 /// This class controls the state and behavior for a [Strokes] widget.
 class ScribbleNotifier extends ScribbleNotifierBase
-    with HistoryStateNotifierMixin<ScribbleState> {
+    with HistoryValueNotifierMixin<ScribbleState> {
   ScribbleNotifier({
     /// If you pass a scribble here, the notifier will use that scribble as a
     /// starting point.
@@ -122,7 +125,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// Only apply the scribble from the undo history, otherwise keep current state
   @override
   @protected
-  ScribbleState transformHistoryState(
+  ScribbleState transformHistoryValue(
     ScribbleState historyState,
     ScribbleState currentState,
   ) {
@@ -155,7 +158,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
     if (addToUndoHistory) {
       state = newState;
     } else {
-      temporaryState = newState;
+      temporaryValue = newState;
     }
   }
 
@@ -178,7 +181,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// Sets the ink type of the next line
   void setStrokeInk() {
-    temporaryState = switch (state) {
+    temporaryValue = switch (state) {
       Drawing(:final scribble) => Drawing(scribble: scribble),
       Erasing(:final scribble) => Drawing(
         scribble: scribble,
@@ -195,7 +198,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// Switches to eraser mode
   void setEraser() {
-    temporaryState = Erasing(
+    temporaryValue = Erasing(
       scribble: state.scribble,
       activePointerIds: state.activePointerIds,
     );
@@ -224,7 +227,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// Sets the color of the pen to the given color.
   void setColor() {
-    temporaryState = switch (state) {
+    temporaryValue = switch (state) {
       Drawing(:final scribble) => Drawing(scribble: scribble),
       Erasing(:final scribble) => Drawing(
         scribble: scribble,
@@ -235,7 +238,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// Sets the current mode of allowed pointers to the given [ScribblePointerMode]
   // void setAllowedPointersMode(ScribblePointerMode allowedPointersMode) {
-  //   temporaryState = state.copyWith(
+  //   temporaryValue = state.copyWith(
   //     allowedPointersMode: allowedPointersMode,
   //   );
   // }
@@ -259,7 +262,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
       if (distance < 1.0) return; // 1픽셀 미만 이동은 무시
     }
 
-    temporaryState = switch (state) {
+    temporaryValue = switch (state) {
       final Drawing s => s.copyWith(pointerPosition: newPointerPosition),
       final Erasing s => s.copyWith(pointerPosition: newPointerPosition),
     };
@@ -335,7 +338,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
         ),
       );
     }
-    temporaryState = switch (s) {
+    temporaryValue = switch (s) {
       Drawing() => s.copyWith(
         activePointerIds: [...state.activePointerIds, event.pointer],
       ),
@@ -353,7 +356,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
   bool onPointerUpdate(PointerMoveEvent event, ScribbleModeState modeState) {
     if (!modeState.supportedPointerKinds.contains(event.kind)) return false;
     if (!state.active) {
-      temporaryState = switch (state) {
+      temporaryValue = switch (state) {
         final Drawing s => s.copyWith(pointerPosition: null),
         final Erasing s => s.copyWith(pointerPosition: null),
       };
@@ -386,9 +389,9 @@ class ScribbleNotifier extends ScribbleNotifierBase
           shapeType: "pending", // 도형 변환 예정 표시
         );
 
-        temporaryState = newState.copyWith(activeLine: updatedActiveLine);
+        temporaryValue = newState.copyWith(activeLine: updatedActiveLine);
       } else {
-        temporaryState = newState;
+        temporaryValue = newState;
       }
 
       final result =
@@ -409,7 +412,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
         state = newState;
       } else {
         // 스트로크 변경이 없어도 포인터 위치는 업데이트
-        temporaryState = newState;
+        temporaryValue = newState;
       }
 
       /// 만약 [preLocalPosition]과 [event.localPosition] 차이가 50px이 되면
@@ -619,7 +622,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
   void onPointerExit(PointerExitEvent event, ScribbleModeState modeState) {
     if (!modeState.supportedPointerKinds.contains(event.kind)) return;
     final finished = finishLineForState(state);
-    temporaryState = switch (finished) {
+    temporaryValue = switch (finished) {
       Drawing() => finished.copyWith(
         pointerPosition: null,
         activePointerIds: state.activePointerIds
@@ -827,7 +830,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
       }
     }
 
-    temporaryState = switch (state) {
+    temporaryValue = switch (state) {
       Drawing(:final activeLine) => Drawing(
         scribble: updatedScribble,
         activePointerIds: state.activePointerIds,
@@ -848,7 +851,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
     removeLassoStrokes();
 
     // 상태 초기화
-    temporaryState = switch (state) {
+    temporaryValue = switch (state) {
       final Drawing s => s.copyWith(pointerPosition: null),
       final Erasing s => s.copyWith(pointerPosition: null),
     };

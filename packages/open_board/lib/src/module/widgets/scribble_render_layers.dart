@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 
 import 'package:open_board/src/module/widgets/selection_overlay.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
@@ -118,8 +117,8 @@ class ScribbleRenderLayers {
 
   /// 활성 스트로크 레이어 빌드 (실시간 그리기)
   Widget buildActiveStrokeLayer() {
-    return StateNotifierBuilder<ScribbleState>(
-      stateNotifier: scribbleNotifier,
+    return ValueListenableBuilder<ScribbleState>(
+      valueListenable: scribbleNotifier,
       builder: (context, state, _) {
         final drawCurrentTool =
             drawPen && state is Drawing || drawEraser && state is Erasing;
@@ -161,10 +160,10 @@ class ScribbleRenderLayers {
       return [];
     }
 
-    // 실시간 업데이트를 위해 StateNotifierBuilder 사용
+    // 실시간 업데이트를 위해 ValueListenableBuilder 사용
     return [
-      StateNotifierBuilder<ScribbleState>(
-        stateNotifier: scribbleNotifier,
+      ValueListenableBuilder<ScribbleState>(
+        valueListenable: scribbleNotifier,
         builder: (context, state, _) {
           // 원본 바운딩 박스 사용 (회전/크기조절 시에도 원본 유지)
           final boundingBox =
