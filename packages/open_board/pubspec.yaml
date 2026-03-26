@@ -19,7 +19,7 @@ dependencies:
   import_sorter: ^4.6.0
   path_provider: ^2.1.5
   perfect_freehand: ^2.5.1
-  protobuf: ^5.1.0
+  protobuf: ^6.0.0
   shared_preferences: ^2.5.3
   state_notifier: ^0.7.2+1
   vector_math: ^2.2.0

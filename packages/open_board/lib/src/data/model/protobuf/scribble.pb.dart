@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: curly_braces_in_flow_control_structures
 // ignore_for_file: deprecated_member_use_from_same_package, library_prefixes
-// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: non_constant_identifier_names, prefer_relative_imports
 
 import 'dart:core' as $core;
 
@@ -55,20 +55,19 @@ class Point extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'Point',
       createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'x', $pb.PbFieldType.OD)
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'y', $pb.PbFieldType.OD)
-    ..a<$core.double>(3, _omitFieldNames ? '' : 'p', $pb.PbFieldType.OD)
-    ..a<$core.double>(4, _omitFieldNames ? '' : 'altitude', $pb.PbFieldType.OD)
-    ..a<$core.double>(5, _omitFieldNames ? '' : 'azimuth', $pb.PbFieldType.OD)
-    ..a<$core.double>(6, _omitFieldNames ? '' : 'opacity', $pb.PbFieldType.OD)
+    ..aD(1, _omitFieldNames ? '' : 'x')
+    ..aD(2, _omitFieldNames ? '' : 'y')
+    ..aD(3, _omitFieldNames ? '' : 'p')
+    ..aD(4, _omitFieldNames ? '' : 'altitude')
+    ..aD(5, _omitFieldNames ? '' : 'azimuth')
+    ..aD(6, _omitFieldNames ? '' : 'opacity')
     ..p<$core.double>(7, _omitFieldNames ? '' : 'size', $pb.PbFieldType.KD)
-    ..a<$core.double>(
-        8, _omitFieldNames ? '' : 'deprecatedTimestamp', $pb.PbFieldType.OD)
+    ..aD(8, _omitFieldNames ? '' : 'deprecatedTimestamp')
     ..aInt64(9, _omitFieldNames ? '' : 'timestamp')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Point clone() => Point()..mergeFromMessage(this);
+  Point clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   Point copyWith(void Function(Point) updates) =>
       super.copyWith((message) => updates(message as Point)) as Point;
@@ -80,7 +79,6 @@ class Point extends $pb.GeneratedMessage {
   static Point create() => Point._();
   @$core.override
   Point createEmptyInstance() => create();
-  static $pb.PbList<Point> createRepeated() => $pb.PbList<Point>();
   @$core.pragma('dart2js:noInline')
   static Point getDefault() =>
       _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Point>(create);
@@ -200,16 +198,13 @@ class Segment extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<Point>(1, _omitFieldNames ? '' : 'start', subBuilder: Point.create)
     ..aOM<Point>(2, _omitFieldNames ? '' : 'end', subBuilder: Point.create)
-    ..a<$core.int>(3, _omitFieldNames ? '' : 'startIndex', $pb.PbFieldType.O3,
-        protoName: 'startIndex')
-    ..a<$core.int>(4, _omitFieldNames ? '' : 'endIndex', $pb.PbFieldType.O3,
-        protoName: 'endIndex')
-    ..pc<Point>(5, _omitFieldNames ? '' : 'points', $pb.PbFieldType.PM,
-        subBuilder: Point.create)
+    ..aI(3, _omitFieldNames ? '' : 'startIndex', protoName: 'startIndex')
+    ..aI(4, _omitFieldNames ? '' : 'endIndex', protoName: 'endIndex')
+    ..pPM<Point>(5, _omitFieldNames ? '' : 'points', subBuilder: Point.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Segment clone() => Segment()..mergeFromMessage(this);
+  Segment clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   Segment copyWith(void Function(Segment) updates) =>
       super.copyWith((message) => updates(message as Segment)) as Segment;
@@ -221,7 +216,6 @@ class Segment extends $pb.GeneratedMessage {
   static Segment create() => Segment._();
   @$core.override
   Segment createEmptyInstance() => create();
-  static $pb.PbList<Segment> createRepeated() => $pb.PbList<Segment>();
   @$core.pragma('dart2js:noInline')
   static Segment getDefault() =>
       _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Segment>(create);
@@ -300,14 +294,12 @@ class StrokePoint extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<Point>(1, _omitFieldNames ? '' : 'point', subBuilder: Point.create)
     ..aOM<Point>(2, _omitFieldNames ? '' : 'vector', subBuilder: Point.create)
-    ..a<$core.double>(3, _omitFieldNames ? '' : 'distance', $pb.PbFieldType.OD)
-    ..a<$core.double>(
-        4, _omitFieldNames ? '' : 'runningLength', $pb.PbFieldType.OD,
-        protoName: 'runningLength')
+    ..aD(3, _omitFieldNames ? '' : 'distance')
+    ..aD(4, _omitFieldNames ? '' : 'runningLength', protoName: 'runningLength')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  StrokePoint clone() => StrokePoint()..mergeFromMessage(this);
+  StrokePoint clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   StrokePoint copyWith(void Function(StrokePoint) updates) =>
       super.copyWith((message) => updates(message as StrokePoint))
@@ -320,7 +312,6 @@ class StrokePoint extends $pb.GeneratedMessage {
   static StrokePoint create() => StrokePoint._();
   @$core.override
   StrokePoint createEmptyInstance() => create();
-  static $pb.PbList<StrokePoint> createRepeated() => $pb.PbList<StrokePoint>();
   @$core.pragma('dart2js:noInline')
   static StrokePoint getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<StrokePoint>(create);
@@ -406,17 +397,13 @@ class StrokeOptions extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'StrokeOptions',
       createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'size', $pb.PbFieldType.OD)
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'thinning', $pb.PbFieldType.OD)
-    ..a<$core.double>(3, _omitFieldNames ? '' : 'smoothing', $pb.PbFieldType.OD)
-    ..a<$core.double>(
-        4, _omitFieldNames ? '' : 'streamline', $pb.PbFieldType.OD)
-    ..a<$core.double>(
-        5, _omitFieldNames ? '' : 'taperStart', $pb.PbFieldType.OD,
-        protoName: 'taperStart')
+    ..aD(1, _omitFieldNames ? '' : 'size')
+    ..aD(2, _omitFieldNames ? '' : 'thinning')
+    ..aD(3, _omitFieldNames ? '' : 'smoothing')
+    ..aD(4, _omitFieldNames ? '' : 'streamline')
+    ..aD(5, _omitFieldNames ? '' : 'taperStart', protoName: 'taperStart')
     ..aOB(6, _omitFieldNames ? '' : 'capStart', protoName: 'capStart')
-    ..a<$core.double>(7, _omitFieldNames ? '' : 'taperEnd', $pb.PbFieldType.OD,
-        protoName: 'taperEnd')
+    ..aD(7, _omitFieldNames ? '' : 'taperEnd', protoName: 'taperEnd')
     ..aOB(8, _omitFieldNames ? '' : 'capEnd', protoName: 'capEnd')
     ..aOB(9, _omitFieldNames ? '' : 'simulatePressure',
         protoName: 'simulatePressure')
@@ -424,7 +411,7 @@ class StrokeOptions extends $pb.GeneratedMessage {
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  StrokeOptions clone() => StrokeOptions()..mergeFromMessage(this);
+  StrokeOptions clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   StrokeOptions copyWith(void Function(StrokeOptions) updates) =>
       super.copyWith((message) => updates(message as StrokeOptions))
@@ -437,8 +424,6 @@ class StrokeOptions extends $pb.GeneratedMessage {
   static StrokeOptions create() => StrokeOptions._();
   @$core.override
   StrokeOptions createEmptyInstance() => create();
-  static $pb.PbList<StrokeOptions> createRepeated() =>
-      $pb.PbList<StrokeOptions>();
   @$core.pragma('dart2js:noInline')
   static StrokeOptions getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<StrokeOptions>(create);
@@ -582,23 +567,21 @@ class Stroke extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'Stroke',
       createEmptyInstance: create)
-    ..pc<Point>(1, _omitFieldNames ? '' : 'points', $pb.PbFieldType.PM,
-        subBuilder: Point.create)
-    ..a<$core.int>(2, _omitFieldNames ? '' : 'color', $pb.PbFieldType.OU3)
+    ..pPM<Point>(1, _omitFieldNames ? '' : 'points', subBuilder: Point.create)
+    ..aI(2, _omitFieldNames ? '' : 'color', fieldType: $pb.PbFieldType.OU3)
     ..aOS(3, _omitFieldNames ? '' : 'ink')
     ..aOS(4, _omitFieldNames ? '' : 'createdAt', protoName: 'createdAt')
     ..aOM<StrokeOptions>(5, _omitFieldNames ? '' : 'options',
         subBuilder: StrokeOptions.create)
     ..aOS(6, _omitFieldNames ? '' : 'shapeType', protoName: 'shapeType')
-    ..a<$core.double>(7, _omitFieldNames ? '' : 'width', $pb.PbFieldType.OD)
-    ..pc<Segment>(8, _omitFieldNames ? '' : 'segments', $pb.PbFieldType.PM,
+    ..aD(7, _omitFieldNames ? '' : 'width')
+    ..pPM<Segment>(8, _omitFieldNames ? '' : 'segments',
         subBuilder: Segment.create)
-    ..a<$core.double>(
-        9, _omitFieldNames ? '' : 'confidence', $pb.PbFieldType.OD)
+    ..aD(9, _omitFieldNames ? '' : 'confidence')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Stroke clone() => Stroke()..mergeFromMessage(this);
+  Stroke clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   Stroke copyWith(void Function(Stroke) updates) =>
       super.copyWith((message) => updates(message as Stroke)) as Stroke;
@@ -610,7 +593,6 @@ class Stroke extends $pb.GeneratedMessage {
   static Stroke create() => Stroke._();
   @$core.override
   Stroke createEmptyInstance() => create();
-  static $pb.PbList<Stroke> createRepeated() => $pb.PbList<Stroke>();
   @$core.pragma('dart2js:noInline')
   static Stroke getDefault() =>
       _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Stroke>(create);
@@ -739,12 +721,11 @@ class TextDrawable extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'id')
     ..aOS(2, _omitFieldNames ? '' : 'text')
-    ..a<$core.double>(3, _omitFieldNames ? '' : 'x', $pb.PbFieldType.OD)
-    ..a<$core.double>(4, _omitFieldNames ? '' : 'y', $pb.PbFieldType.OD)
+    ..aD(3, _omitFieldNames ? '' : 'x')
+    ..aD(4, _omitFieldNames ? '' : 'y')
     ..aOS(5, _omitFieldNames ? '' : 'fontFamily', protoName: 'fontFamily')
-    ..a<$core.double>(6, _omitFieldNames ? '' : 'fontSize', $pb.PbFieldType.OD,
-        protoName: 'fontSize')
-    ..a<$core.int>(7, _omitFieldNames ? '' : 'color', $pb.PbFieldType.OU3)
+    ..aD(6, _omitFieldNames ? '' : 'fontSize', protoName: 'fontSize')
+    ..aI(7, _omitFieldNames ? '' : 'color', fieldType: $pb.PbFieldType.OU3)
     ..aOB(8, _omitFieldNames ? '' : 'isBold', protoName: 'isBold')
     ..aOB(9, _omitFieldNames ? '' : 'isItalic', protoName: 'isItalic')
     ..aOB(10, _omitFieldNames ? '' : 'isUnderlined', protoName: 'isUnderlined')
@@ -752,11 +733,11 @@ class TextDrawable extends $pb.GeneratedMessage {
     ..aOB(12, _omitFieldNames ? '' : 'hidden')
     ..aOS(13, _omitFieldNames ? '' : 'createdAt', protoName: 'createdAt')
     ..aOS(14, _omitFieldNames ? '' : 'updatedAt', protoName: 'updatedAt')
-    ..a<$core.double>(15, _omitFieldNames ? '' : 'rotation', $pb.PbFieldType.OD)
+    ..aD(15, _omitFieldNames ? '' : 'rotation')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  TextDrawable clone() => TextDrawable()..mergeFromMessage(this);
+  TextDrawable clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   TextDrawable copyWith(void Function(TextDrawable) updates) =>
       super.copyWith((message) => updates(message as TextDrawable))
@@ -769,8 +750,6 @@ class TextDrawable extends $pb.GeneratedMessage {
   static TextDrawable create() => TextDrawable._();
   @$core.override
   TextDrawable createEmptyInstance() => create();
-  static $pb.PbList<TextDrawable> createRepeated() =>
-      $pb.PbList<TextDrawable>();
   @$core.pragma('dart2js:noInline')
   static TextDrawable getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<TextDrawable>(create);
@@ -949,22 +928,21 @@ class Scribble extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'Scribble',
       createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'width', $pb.PbFieldType.OD)
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'height', $pb.PbFieldType.OD)
-    ..pc<Stroke>(3, _omitFieldNames ? '' : 'lines', $pb.PbFieldType.PM,
+    ..aD(1, _omitFieldNames ? '' : 'width')
+    ..aD(2, _omitFieldNames ? '' : 'height')
+    ..pPM<Stroke>(3, _omitFieldNames ? '' : 'lines',
         protoName: 'strokes', subBuilder: Stroke.create)
     ..aOS(4, _omitFieldNames ? '' : 'updatedAt', protoName: 'updatedAt')
     ..aOS(5, _omitFieldNames ? '' : 'createdAt', protoName: 'createdAt')
     ..aOS(6, _omitFieldNames ? '' : 'version')
-    ..a<$core.double>(7, _omitFieldNames ? '' : 'x', $pb.PbFieldType.OD)
-    ..a<$core.double>(8, _omitFieldNames ? '' : 'y', $pb.PbFieldType.OD)
-    ..pc<TextDrawable>(
-        9, _omitFieldNames ? '' : 'textDrawables', $pb.PbFieldType.PM,
+    ..aD(7, _omitFieldNames ? '' : 'x')
+    ..aD(8, _omitFieldNames ? '' : 'y')
+    ..pPM<TextDrawable>(9, _omitFieldNames ? '' : 'textDrawables',
         protoName: 'textDrawables', subBuilder: TextDrawable.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Scribble clone() => Scribble()..mergeFromMessage(this);
+  Scribble clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   Scribble copyWith(void Function(Scribble) updates) =>
       super.copyWith((message) => updates(message as Scribble)) as Scribble;
@@ -976,7 +954,6 @@ class Scribble extends $pb.GeneratedMessage {
   static Scribble create() => Scribble._();
   @$core.override
   Scribble createEmptyInstance() => create();
-  static $pb.PbList<Scribble> createRepeated() => $pb.PbList<Scribble>();
   @$core.pragma('dart2js:noInline')
   static Scribble getDefault() =>
       _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Scribble>(create);
