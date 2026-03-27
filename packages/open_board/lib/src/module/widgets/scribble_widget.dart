@@ -1085,15 +1085,22 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
                       }
                     }
                   : null,
-              // 🤚 멀티터치 상태에 따라 IgnorePointer 동적 제어
+              // 🤚 하이라이트 모드: IgnorePointer 제거 — 핀치 줌 지원
+              // 기존: IgnorePointer(ignoring: true)로 싱글터치 차단 → 첫 번째 터치가
+              // InteractiveViewer에 전달되지 않아 핀치 줌 제스처 인식 불가
+              // 수정: 항상 ignoring=false로 설정하고, 내부 Listener에서 싱글터치 이벤트를
+              // 선택적으로 무시 (line 1142-1158에서 이미 구현됨)
               child: ValueListenableBuilder<bool>(
                 valueListenable: _isMultiTouchNotifier,
                 builder: (context, isMultiTouch, child) {
-                  // 멀티터치 시 ignoring=false로 설정하여 InteractiveViewer로 이벤트 전달
+                  // 🔧 하이라이트 모드에서는 ignoring=false 유지 (핀치 줌 허용)
+                  // 텍스트 선택 차단은 내부 Listener의 onPointerDown에서 처리
                   final shouldIgnore =
-                      shouldIgnoreForTextSelection && !isMultiTouch;
+                      shouldIgnoreForTextSelection &&
+                      !isMultiTouch &&
+                      !isHighlighterMode;
                   return IgnorePointer(
-                    ignoring: shouldIgnore, // 멀티터치 시 FALSE → 줌/팬 가능
+                    ignoring: shouldIgnore,
                     child: child,
                   );
                 },
@@ -1575,11 +1582,15 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
 
   /// 🎯 InteractiveViewer 제스처 허용 여부 확인 (디버깅 포함)
   bool _shouldEnableInteractiveGestures() {
-    // 🎯 하이라이트 모드 체크 (텍스트 선택을 위해 제스처 완전 투과)
+    // 🎯 하이라이트 모드 체크
     final drawingState = DrawingState();
     final currentTool = drawingState.selectedTool.value;
     if (currentTool == DrawingTool.highlighter) {
-      return false; // ✅ 하이라이트 모드에서는 InteractiveViewer 완전 비활성화
+      // 🔧 멀티터치(핀치 줌) 시에는 InteractiveViewer 활성화
+      if (pointerHandler.isMultiTouch()) {
+        return true; // ✅ 핀치 줌 허용
+      }
+      return false; // 싱글터치 시에는 비활성화 (텍스트 선택 투과)
     }
 
     final isTransforming = widgetState.isTransforming;
