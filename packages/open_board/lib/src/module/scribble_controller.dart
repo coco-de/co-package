@@ -140,6 +140,8 @@ class ScribbleController extends ChangeNotifier {
     _scribbleNotifier = ScribbleNotifier(
       scribble: initialScribble ?? Scribble(strokes: [], width: 0, height: 0),
     );
+    // ScribbleNotifier 생성자가 state를 두 번 설정하여 spurious undo 히스토리가 생기므로 초기화
+    _scribbleNotifier.clearQueue();
 
     // ScribbleModeNotifier 초기화
     _modeNotifier = ScribbleModeNotifier();
@@ -195,17 +197,28 @@ class ScribbleController extends ChangeNotifier {
   }
 
   /// 현재 선택된 색상 가져오기
-  Color get currentColor => _modeNotifier.state.inkGroupInfo.selectedColor;
+  Color get currentColor {
+    _ensureInitialized();
+    return _modeNotifier.state.inkGroupInfo.selectedColor;
+  }
 
   /// 현재 브러시 크기 가져오기
-  double get currentStrokeWidth =>
-      _modeNotifier.state.inkGroupInfo.seletedStrokeWidth;
+  double get currentStrokeWidth {
+    _ensureInitialized();
+    return _modeNotifier.state.inkGroupInfo.seletedStrokeWidth;
+  }
 
   /// 되돌리기 가능 여부
-  bool get canUndo => _scribbleNotifier.canUndo;
+  bool get canUndo {
+    _ensureInitialized();
+    return _scribbleNotifier.canUndo;
+  }
 
   /// 다시 실행 가능 여부
-  bool get canRedo => _scribbleNotifier.canRedo;
+  bool get canRedo {
+    _ensureInitialized();
+    return _scribbleNotifier.canRedo;
+  }
 
   /// 필기 데이터가 비어있는지 확인
   bool get isEmpty =>
@@ -215,6 +228,7 @@ class ScribbleController extends ChangeNotifier {
 
   /// 도구 변경
   void setTool(String tool) {
+    _ensureInitialized();
     _modeNotifier.setSelectedInk(tool);
   }
 
@@ -238,11 +252,13 @@ class ScribbleController extends ChangeNotifier {
 
   /// 색상 변경
   void setColor(Color color) {
+    _ensureInitialized();
     _modeNotifier.setColor(color);
   }
 
   /// 브러시 크기 변경
   void setStrokeWidth(double width) {
+    _ensureInitialized();
     _modeNotifier.setStrokeWidth(width);
   }
 
@@ -250,6 +266,7 @@ class ScribbleController extends ChangeNotifier {
 
   /// 필기 데이터 로드
   void loadScribble(Scribble scribble) {
+    _ensureInitialized();
     _scribbleNotifier.setScribble(scribble: scribble);
   }
 
@@ -265,6 +282,7 @@ class ScribbleController extends ChangeNotifier {
 
   /// 전체 지우기
   void clear() {
+    _ensureInitialized();
     _scribbleNotifier.clear();
   }
 
@@ -465,22 +483,24 @@ class ScribbleController extends ChangeNotifier {
 
   @override
   void dispose() {
-    // 🌍 DrawingState에서 자동 해제
-    _unregisterFromDrawingState();
+    if (_isInitialized) {
+      // 🌍 DrawingState에서 자동 해제
+      _unregisterFromDrawingState();
 
-    // ✨ Listener들 정리
-    if (_scribbleListener != null) {
-      _scribbleNotifier.removeListener(_scribbleListener!);
-    }
-    if (_modeListener != null) {
-      _modeNotifier.removeListener(_modeListener!);
-    }
-    _scribbleListener = null;
-    _modeListener = null;
+      // ✨ Listener들 정리
+      if (_scribbleListener != null) {
+        _scribbleNotifier.removeListener(_scribbleListener!);
+      }
+      if (_modeListener != null) {
+        _modeNotifier.removeListener(_modeListener!);
+      }
+      _scribbleListener = null;
+      _modeListener = null;
 
-    // Notifier들 정리
-    _scribbleNotifier.dispose();
-    _modeNotifier.dispose();
+      // Notifier들 정리
+      _scribbleNotifier.dispose();
+      _modeNotifier.dispose();
+    }
 
     super.dispose();
   }
