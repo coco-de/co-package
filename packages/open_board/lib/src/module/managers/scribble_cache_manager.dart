@@ -13,6 +13,8 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:open_board/src/core/utils/extensions/merge_scribble.dart'; // 스트로크 분할/머지 import
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
+import 'package:open_board/src/module/managers/auto_save_scheduler.dart';
+import 'package:open_board/src/module/managers/scribble_file_storage.dart';
 import 'package:open_board/src/module/scribble_controller.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
@@ -33,7 +35,20 @@ class ScribbleCacheManager extends ChangeNotifier {
   static ScribbleCacheManager get instance =>
       _instance ??= ScribbleCacheManager._();
 
-  ScribbleCacheManager._();
+  ScribbleCacheManager._() {
+    _autoSaveScheduler = AutoSaveScheduler(
+      onSave: (key, scribble) async {
+        await saveScribble(key, scribble);
+      },
+      isDisposed: () => _isDisposed,
+    );
+  }
+
+  /// 파일 I/O 담당 모듈
+  final ScribbleFileStorage _fileStorage = ScribbleFileStorage();
+
+  /// 자동저장 스케줄러
+  late final AutoSaveScheduler _autoSaveScheduler;
 
   /// 메모리 캐시 (key -> Scribble)
   final Map<String, Scribble> _memoryCache = {};
@@ -1465,55 +1480,17 @@ class ScribbleCacheManager extends ChangeNotifier {
     }
   }
 
-  /// 페이지별 자동 저장 지연 시간 (밀리초)
-  static const int autoSaveDelayMs = 1000;
+  /// 페이지별 자동 저장 지연 시간 (밀리초) — AutoSaveScheduler 위임
+  static int get autoSaveDelayMs => AutoSaveScheduler.autoSaveDelayMs;
 
-  /// 자동 저장 타이머 맵 (key -> Timer)
-  final Map<String, Timer> _autoSaveTimers = {};
-
-  /// 🚨 무한루프 방지: 마지막 저장된 스트로크 해시 (key -> hash)
-  final Map<String, int> _lastSavedHashes = {};
-
-  /// 자동 저장 스케줄링
+  /// 자동 저장 스케줄링 — AutoSaveScheduler에 위임
   void scheduleAutoSave(String key, Scribble scribble) {
-    final normalizedKey = _normalizeKey(key);
-
-    // 🚨 무한루프 방지: 빈 스트로크는 저장하지 않음
-    if (scribble.strokes.isEmpty) {
-      debugPrint('🖊️ 빈 스트로크 자동저장 건너뜀: $normalizedKey');
-      return;
-    }
-
-    // 🚨 무한루프 방지: 동일한 스트로크 수는 저장하지 않음
-    final currentHash = scribble.strokes.length;
-    final lastHash = _lastSavedHashes[normalizedKey];
-    if (lastHash == currentHash) {
-      // debugPrint('🖊️ 동일한 스트로크 자동저장 건너뜀: $normalizedKey ($currentHash)');
-      return;
-    }
-
-    // 기존 타이머 취소
-    _autoSaveTimers[normalizedKey]?.cancel();
-
-    // 새 타이머 설정
-    _autoSaveTimers[normalizedKey] = Timer(
-      Duration(milliseconds: autoSaveDelayMs),
-      () async {
-        if (!_isDisposed) {
-          await saveScribble(normalizedKey, scribble);
-          _lastSavedHashes[normalizedKey] = currentHash; // 🚨 저장 후 해시 업데이트
-          _autoSaveTimers.remove(normalizedKey);
-        }
-      },
-    );
+    _autoSaveScheduler.schedule(key, scribble);
   }
 
-  /// 모든 자동 저장 타이머 정리
+  /// 모든 자동 저장 타이머 정리 — AutoSaveScheduler에 위임
   void cancelAllAutoSave() {
-    for (final timer in _autoSaveTimers.values) {
-      timer.cancel();
-    }
-    _autoSaveTimers.clear();
+    _autoSaveScheduler.cancelAll();
   }
 
   /// 인스턴스 정리
@@ -1531,14 +1508,11 @@ class ScribbleCacheManager extends ChangeNotifier {
     }
     _controllerCache.clear();
 
-    // 자동 저장 타이머 정리
-    cancelAllAutoSave();
+    // 자동 저장 스케줄러 정리
+    _autoSaveScheduler.dispose();
 
     // 메모리 캐시 정리
     clearMemoryCache();
-
-    // 🚨 무한루프 방지용 해시 캐시 정리
-    _lastSavedHashes.clear();
 
     // 분할 결과 캐시 정리
     clearSplitResultCache();
