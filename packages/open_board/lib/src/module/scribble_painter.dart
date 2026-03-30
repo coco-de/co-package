@@ -114,7 +114,10 @@ class ScribblePainter extends CustomPainter with SketchLinePainter {
     if (state is Drawing && (state as Drawing).activeLine != null) {
       final line = (state as Drawing).activeLine!;
 
-      final strokeDelegate = StrokePaintDelegate(strokes: []);
+      final strokeDelegate = StrokePaintDelegate(
+        strokes: [],
+        scaleFactor: modeState.scaleFactor,
+      );
       final shapeDelegate = ShapePaintDelegate(strokes: []);
 
       switch (line.ink) {
@@ -126,6 +129,9 @@ class ScribblePainter extends CustomPainter with SketchLinePainter {
           break;
         case "pen":
           strokeDelegate.drawPen(canvas, line);
+          break;
+        case "fixedPen":
+          strokeDelegate.drawFixedPen(canvas, line);
           break;
         case "lasso":
           final lassoDelegate = LassoPaintDelegate(
@@ -171,7 +177,10 @@ class ScribblePainter extends CustomPainter with SketchLinePainter {
     }
 
     // delegate 인스턴스 생성
-    final strokeDelegate = StrokePaintDelegate(strokes: []);
+    final strokeDelegate = StrokePaintDelegate(
+      strokes: [],
+      scaleFactor: modeState.scaleFactor,
+    );
     final shapeDelegate = ShapePaintDelegate(strokes: []);
 
     // 선택되지 않은 일반 스트로크 렌더링

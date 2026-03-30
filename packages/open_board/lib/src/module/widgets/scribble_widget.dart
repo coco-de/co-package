@@ -1402,6 +1402,7 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
           InkModes.pen,
           InkModes.pencil,
           InkModes.marker,
+          InkModes.fixedPen,
           InkModes.erase,
           InkModes.shape,
           InkModes.lasso,
@@ -1582,6 +1583,7 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
       InkModes.pen,
       InkModes.pencil,
       InkModes.marker,
+      InkModes.fixedPen,
       InkModes.erase, // 지우개도 포함
       InkModes.shape, // 도형 그리기도 포함
       InkModes.lasso, // 올가미도 포함
