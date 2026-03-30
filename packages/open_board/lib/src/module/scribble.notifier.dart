@@ -7,9 +7,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 // 📦 Package imports:
-import 'package:fixnum/fixnum.dart';
-import 'package:open_board/src/core/utils/extensions/paint_extension/ex_color.dart';
 import 'package:value_notifier_tools/value_notifier_tools.dart';
+import 'package:open_board/src/core/utils/extensions/paint_extension/ex_color.dart';
 
 // 🌎 Project imports:
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
@@ -21,6 +20,9 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
+import 'package:open_board/src/module/stroke/stroke_processor.dart';
+import 'package:open_board/src/module/stroke/eraser_processor.dart';
+import 'package:open_board/src/module/text/text_drawable_manager.dart';
 
 abstract class ScribbleNotifierBase extends ValueNotifier<ScribbleState> {
   ScribbleNotifierBase(super.value);
@@ -103,6 +105,9 @@ class ScribbleNotifier extends ScribbleNotifierBase
     );
     this.maxHistoryLength = maxHistoryLength;
 
+    // ♻️ StrokeProcessor 초기화
+    strokeProcessor = StrokeProcessor(pressureCurve: pressureCurve);
+
     // 초기화 시 모든 올가미 스트로크 제거
     removeLassoStrokes();
   }
@@ -112,6 +117,15 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// The curve that's used to map pen pressure to the pressure value when
   /// recording.
   final Curve pressureCurve;
+
+  /// ♻️ 스트로크 생성/계산 프로세서
+  late final StrokeProcessor strokeProcessor;
+
+  /// ♻️ 지우개 프로세서
+  final EraserProcessor eraserProcessor = const EraserProcessor();
+
+  /// ♻️ 텍스트 관리자
+  final TextDrawableManager textDrawableManager = const TextDrawableManager();
 
   /// The state of the scribble at this moment.
   ///
@@ -638,173 +652,37 @@ class ScribbleNotifier extends ScribbleNotifierBase
     };
   }
 
+  /// ♻️ StrokeProcessor로 위임
   ScribbleState addPoint(
     PointerEvent event,
     ScribbleState s,
     ScribbleModeState modeState,
-  ) {
-    if (s is Erasing || !s.active) return s;
-    if (s is! Drawing || s.activeLine == null) return s;
+  ) => strokeProcessor.addPointToStroke(event, s, modeState);
 
-    final drawing = s;
-    final currentLine = drawing.activeLine!;
-    final distanceToLast = currentLine.points.isEmpty
-        ? double.infinity
-        : (Offset(currentLine.points.last.x, currentLine.points.last.y) -
-                  event.localPosition)
-              .distance;
-    if (distanceToLast <=
-        kPrecisePointerPanSlop / modeState.scaleFactor * 0.01) {
-      return s;
-    }
-    return drawing.copyWith(
-      activeLine: Stroke(
-        points: [...currentLine.points, getPointFromEvent(event)],
-        color: currentLine.color,
-        ink: currentLine.ink,
-        width: currentLine.width,
-        createdAt: currentLine.createdAt,
-        options: currentLine.options,
-        shapeType: currentLine.shapeType,
-      ),
-    );
-  }
+  /// ♻️ EraserProcessor로 위임
+  ScribbleState erasePoint(PointerEvent event, ScribbleModeState modeState) =>
+      eraserProcessor.eraseAtPoint(event, modeState, state, preLocalPosition);
 
-  ScribbleState erasePoint(PointerEvent event, ScribbleModeState modeState) {
-    // 최소 값을 구하기 위해 임시로 설정한 변수
-    double minData = double.infinity;
-    final newScribble = Scribble(
-      x: state.scribble.x,
-      y: state.scribble.y,
-      width: state.scribble.width,
-      height: state.scribble.height,
-      strokes: state.scribble.strokes
-          .where(
-            (stroke) => stroke.points.every((pt) {
-              final intersect = getInterSectionPoint(event, pt);
-              // 그려져 있는 선들의 점 굵기를 계산한다.
-              final lineTarget =
-                  modeState.inkGroupInfo.seletedStrokeWidth /
-                      modeState.scaleFactor +
-                  getStrokeRadius(
-                    stroke.options.size,
-                    stroke.options.thinning,
-                    stroke.ink == "pen" ? stroke.points.first.p : pt.p,
-                  );
-              final minDistance =
-                  (intersect.dx >=
-                          math.min(
-                            preLocalPosition.dx,
-                            event.localPosition.dx,
-                          ) &&
-                      intersect.dx <=
-                          math.max(
-                            preLocalPosition.dx,
-                            event.localPosition.dx,
-                          ) &&
-                      intersect.dy >=
-                          math.min(
-                            preLocalPosition.dy,
-                            event.localPosition.dy,
-                          ) &&
-                      intersect.dy <=
-                          math.max(
-                            preLocalPosition.dy,
-                            event.localPosition.dy,
-                          )
-                  ? getDistance(pt, intersect)
-                  : math.min(
-                      getDistance(pt, preLocalPosition),
-                      getDistance(pt, event.localPosition),
-                    ));
+  /// ♻️ EraserProcessor로 위임
+  Offset getInterSectionPoint(PointerEvent event, Point p) =>
+      eraserProcessor.findIntersection(event, p, preLocalPosition);
 
-              minData = math.min(minData, minDistance);
-              // 구한 교점이 선분 위에 있으면 p 와 a 와의 거리가 최소 거리
-              return minDistance >= lineTarget;
-            }),
-          )
-          .toList(),
-      textDrawables: state.scribble.textDrawables, // 텍스트 필드 유지
-      version: state.scribble.version,
-    );
-    return switch (state) {
-      final Drawing s => s.copyWith(scribble: newScribble),
-      final Erasing s => s.copyWith(scribble: newScribble),
-    };
-  }
-
-  /// 점과 선 사이의 교점을 구하는 함수
-  Offset getInterSectionPoint(PointerEvent event, Point p) {
-    final Offset a;
-    final double m1;
-    final double k1;
-    final double m2;
-    final double k2;
-
-    if (preLocalPosition.dx == event.localPosition.dx) {
-      a = Offset(preLocalPosition.dx, p.y);
-    }
-    // 선분이 수평일 경우
-    else if (preLocalPosition.dy == event.localPosition.dy) {
-      a = Offset(p.x, preLocalPosition.dy);
-    }
-    // 그 외의 경우
-    else {
-      m1 =
-          (preLocalPosition.dy - event.localPosition.dy) /
-          (preLocalPosition.dx - event.localPosition.dx);
-
-      k1 = -m1 * preLocalPosition.dx + preLocalPosition.dy;
-
-      m2 = -1.0 / m1;
-      k2 = p.y - m2 * p.x;
-      a = Offset((k2 - k1) / (m1 - m2), (m1 * (k2 - k1) / (m1 - m2) + k1));
-    }
-    return a;
-  }
-
-  /// 점 a와 점 b 사이의 거리를 구하는 함수
+  /// ♻️ 점 a와 점 b 사이의 거리를 구하는 함수
   double getDistance(Point a, Offset b) =>
       math.sqrt(math.pow(b.dx - a.x, 2) + math.pow(b.dy - a.y, 2));
 
-  /// Converts a pointer event to the [Point] on the canvas.
-  Point getPointFromEvent(PointerEvent event) {
-    final overridePressureOnWeb = event is PointerHoverEvent && kIsWeb;
-    final p = overridePressureOnWeb || event.pressureMin == event.pressureMax
-        ? 0.5
-        : (event.pressure - event.pressureMin) /
-              (event.pressureMax - event.pressureMin);
-    return Point(
-      x: event.localPosition.dx,
-      y: event.localPosition.dy,
-      p: pressureCurve.transform(p),
-      timestamp: Int64(DateTime.now().microsecondsSinceEpoch),
-    );
-  }
+  /// ♻️ StrokeProcessor로 위임
+  Point getPointFromEvent(PointerEvent event) =>
+      strokeProcessor.createPointFromEvent(event);
 
-  ScribbleState finishLineForState(ScribbleState s) {
-    if (s is! Drawing || s.activeLine == null) {
-      return s;
-    }
-    return s.copyWith(
-      activeLine: null,
-      scribble: Scribble(
-        x: state.scribble.x,
-        y: state.scribble.y,
-        width: state.scribble.width,
-        height: state.scribble.height,
-        strokes: [...s.scribble.strokes, s.activeLine!],
-        textDrawables: state.scribble.textDrawables,
-        updatedAt: DateTime.now().toIso8601String(),
-        version: s.scribble.version,
-      ),
-    );
-  }
+  /// ♻️ StrokeProcessor로 위임
+  ScribbleState finishLineForState(ScribbleState s) =>
+      strokeProcessor.finishStroke(s);
 
-  /// Get the stroke's radius, given its size, thinning and p.
-  double getStrokeRadius(double size, double thinning, double p) {
-    return size * (0.5 - thinning * (0.5 - p));
-  }
+
+  /// ♻️ StrokeProcessor로 위임
+  double getStrokeRadius(double size, double thinning, double p) =>
+      strokeProcessor.calculateRadius(size, thinning, p);
 
   /// 모든 올가미 스트로크를 제거하는 메서드
   void removeLassoStrokes() {
@@ -1021,62 +899,10 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 현재 ScribbleState 전체 반환 (외부 접근용)
   ScribbleState get currentState => state;
 
-  // ==================== 텍스트 관리 기능 ====================
-
-  /// 텍스트 추가
-  void addTextDrawable(TextDrawable textDrawable) {
-    final currentTextDrawables = getCurrentTextDrawables();
-    final updatedTextDrawables = [...currentTextDrawables, textDrawable];
-
-    _updateScribbleWithTextDrawables(updatedTextDrawables);
-  }
-
-  /// 텍스트 수정
-  void updateTextDrawable(String id, TextDrawable updatedTextDrawable) {
-    final currentTextDrawables = getCurrentTextDrawables();
-    final updatedTextDrawables = currentTextDrawables.map((textDrawable) {
-      return textDrawable.id == id ? updatedTextDrawable : textDrawable;
-    }).toList();
-
-    _updateScribbleWithTextDrawables(updatedTextDrawables);
-  }
-
-  /// 텍스트 삭제
-  void removeTextDrawable(String id) {
-    final currentTextDrawables = getCurrentTextDrawables();
-    final updatedTextDrawables = currentTextDrawables
-        .where((textDrawable) => textDrawable.id != id)
-        .toList();
-
-    _updateScribbleWithTextDrawables(updatedTextDrawables);
-  }
-
-  /// 모든 텍스트 삭제
-  void clearAllTextDrawables() {
-    _updateScribbleWithTextDrawables([]);
-  }
-
-  /// 현재 텍스트 목록 가져오기
-  List<TextDrawable> getCurrentTextDrawables() {
-    // 프로토버퍼 스크리블에서 텍스트 목록 반환
-    return state.scribble.textDrawables;
-  }
+  // ==================== 텍스트 관리 기능 (♻️ TextDrawableManager로 위임) ====================
 
   /// 텍스트로 스크리블 업데이트 (내부 메서드)
-  void _updateScribbleWithTextDrawables(List<TextDrawable> textDrawables) {
-    // 현재 상태를 유지하면서 텍스트만 업데이트
-    final updatedScribble = Scribble(
-      x: state.scribble.x,
-      y: state.scribble.y,
-      width: state.scribble.width,
-      height: state.scribble.height,
-      strokes: state.scribble.strokes,
-      textDrawables: textDrawables, // 텍스트 필드 추가
-      createdAt: state.scribble.createdAt,
-      updatedAt: DateTime.now().toIso8601String(),
-      version: state.scribble.version,
-    );
-
+  void _updateScribbleWithTextDrawables(Scribble updatedScribble) {
     state = switch (state) {
       Drawing(
         :final activeLine,
@@ -1097,65 +923,71 @@ class ScribbleNotifier extends ScribbleNotifierBase
     };
   }
 
-  /// 텍스트 ID로 찾기
-  TextDrawable? findTextDrawableById(String id) {
-    final textDrawables = getCurrentTextDrawables();
-    try {
-      return textDrawables.firstWhere((textDrawable) => textDrawable.id == id);
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      return null;
-    }
+  /// 텍스트 추가
+  void addTextDrawable(TextDrawable textDrawable) {
+    _updateScribbleWithTextDrawables(
+      textDrawableManager.add(state.scribble, textDrawable),
+    );
   }
+
+  /// 텍스트 수정
+  void updateTextDrawable(String id, TextDrawable updatedTextDrawable) {
+    _updateScribbleWithTextDrawables(
+      textDrawableManager.update(state.scribble, id, updatedTextDrawable),
+    );
+  }
+
+  /// 텍스트 삭제
+  void removeTextDrawable(String id) {
+    _updateScribbleWithTextDrawables(
+      textDrawableManager.remove(state.scribble, id),
+    );
+  }
+
+  /// 모든 텍스트 삭제
+  void clearAllTextDrawables() {
+    _updateScribbleWithTextDrawables(
+      textDrawableManager.clearAll(state.scribble),
+    );
+  }
+
+  /// 현재 텍스트 목록 가져오기
+  List<TextDrawable> getCurrentTextDrawables() =>
+      textDrawableManager.getAll(state.scribble);
+
+  /// 텍스트 ID로 찾기
+  TextDrawable? findTextDrawableById(String id) =>
+      textDrawableManager.findById(state.scribble, id);
 
   /// 위치로 텍스트 찾기
   TextDrawable? findTextDrawableAtPosition(
     Offset position, {
     double tolerance = 10.0,
-  }) {
-    final textDrawables = getCurrentTextDrawables();
-
-    for (final textDrawable in textDrawables) {
-      final textPosition = textDrawable.position;
-      final distance = (textPosition - position).distance;
-
-      if (distance <= tolerance) {
-        return textDrawable;
-      }
-    }
-
-    return null;
-  }
+  }) => textDrawableManager.findAtPosition(
+    state.scribble,
+    position,
+    tolerance: tolerance,
+  );
 
   /// 텍스트 숨김/표시 토글
   void toggleTextDrawableVisibility(String id) {
-    final textDrawable = findTextDrawableById(id);
-    if (textDrawable != null) {
-      final updatedTextDrawable = textDrawable.copyWithHidden(
-        !textDrawable.hidden,
-      );
-      updateTextDrawable(id, updatedTextDrawable);
-    }
+    _updateScribbleWithTextDrawables(
+      textDrawableManager.toggleVisibility(state.scribble, id),
+    );
   }
 
   /// 텍스트 위치 이동
   void moveTextDrawable(String id, Offset newPosition) {
-    final textDrawable = findTextDrawableById(id);
-    if (textDrawable != null) {
-      final updatedTextDrawable = textDrawable.copyWithPosition(newPosition);
-      updateTextDrawable(id, updatedTextDrawable);
-    }
+    _updateScribbleWithTextDrawables(
+      textDrawableManager.move(state.scribble, id, newPosition),
+    );
   }
 
   /// 선택된 텍스트들 삭제 (올가미 선택과 연동)
   void deleteSelectedTextDrawables(List<String> selectedTextIds) {
-    final currentTextDrawables = getCurrentTextDrawables();
-    final updatedTextDrawables = currentTextDrawables
-        .where((textDrawable) => !selectedTextIds.contains(textDrawable.id))
-        .toList();
-
-    _updateScribbleWithTextDrawables(updatedTextDrawables);
+    _updateScribbleWithTextDrawables(
+      textDrawableManager.deleteSelected(state.scribble, selectedTextIds),
+    );
   }
 
   /// 텍스트 스타일 일괄 변경
@@ -1169,28 +1001,18 @@ class ScribbleNotifier extends ScribbleNotifierBase
     bool? isUnderlined,
     TextAlignment? textAlignment,
   }) {
-    final textDrawable = findTextDrawableById(id);
-    if (textDrawable != null) {
-      final currentStyle = textDrawable.style;
-      final updatedStyle = TextStyle(
-        fontFamily: fontFamily ?? currentStyle.fontFamily,
-        fontSize: fontSize ?? currentStyle.fontSize,
-        color: color ?? currentStyle.color,
-        fontWeight: isBold != null
-            ? (isBold ? FontWeight.bold : FontWeight.normal)
-            : currentStyle.fontWeight,
-        fontStyle: isItalic != null
-            ? (isItalic ? FontStyle.italic : FontStyle.normal)
-            : currentStyle.fontStyle,
-        decoration: isUnderlined != null
-            ? (isUnderlined ? TextDecoration.underline : null)
-            : currentStyle.decoration,
-      );
-
-      final updatedTextDrawable = textDrawable
-          .copyWithStyle(updatedStyle)
-          .copyWithAlignment(textAlignment ?? textDrawable.alignment);
-      updateTextDrawable(id, updatedTextDrawable);
-    }
+    _updateScribbleWithTextDrawables(
+      textDrawableManager.updateStyle(
+        state.scribble,
+        id,
+        fontFamily: fontFamily,
+        fontSize: fontSize,
+        color: color,
+        isBold: isBold,
+        isItalic: isItalic,
+        isUnderlined: isUnderlined,
+        textAlignment: textAlignment,
+      ),
+    );
   }
 }

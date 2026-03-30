@@ -1,0 +1,241 @@
+import 'package:flutter/gestures.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
+import 'package:open_board/src/module/state/scribble.state.dart';
+import 'package:open_board/src/module/state/scribble_mode.state.dart';
+import 'package:open_board/src/module/stroke/eraser_processor.dart';
+import 'package:open_board/src/core/utils/ink_group_info.dart';
+
+import '../helpers/test_helpers.dart';
+
+void main() {
+  group('EraserProcessor', () {
+    late EraserProcessor processor;
+
+    setUp(() {
+      processor = const EraserProcessor();
+    });
+
+    group('findIntersection', () {
+      test('수직 선분에 대한 교점을 계산한다', () {
+        // 수직 선분: x=100 (preLocalPosition=(100,0), event=(100,200))
+        // 포인트: (50, 80)
+        const event = PointerMoveEvent(
+          position: Offset(100, 200),
+        );
+        final point = createPoint(x: 50, y: 80);
+        const preLocalPosition = Offset(100, 0);
+
+        final result = processor.findIntersection(
+          event,
+          point,
+          preLocalPosition,
+        );
+
+        // 수직 선분이므로 교점의 x는 선분의 x(100), y는 포인트의 y(80)
+        expect(result.dx, closeTo(100.0, 0.01));
+        expect(result.dy, closeTo(80.0, 0.01));
+      });
+
+      test('수평 선분에 대한 교점을 계산한다', () {
+        // 수평 선분: y=100 (preLocalPosition=(0,100), event=(200,100))
+        // 포인트: (80, 50)
+        const event = PointerMoveEvent(
+          position: Offset(200, 100),
+        );
+        final point = createPoint(x: 80, y: 50);
+        const preLocalPosition = Offset(0, 100);
+
+        final result = processor.findIntersection(
+          event,
+          point,
+          preLocalPosition,
+        );
+
+        // 수평 선분이므로 교점의 x는 포인트의 x(80), y는 선분의 y(100)
+        expect(result.dx, closeTo(80.0, 0.01));
+        expect(result.dy, closeTo(100.0, 0.01));
+      });
+
+      test('대각선 선분에 대한 교점을 계산한다', () {
+        // 대각선 선분: (0,0) → (100,100), 기울기 1
+        // 포인트: (0, 100) → 수선의 발은 (50, 50)
+        const event = PointerMoveEvent(
+          position: Offset(100, 100),
+        );
+        final point = createPoint(x: 0, y: 100);
+        const preLocalPosition = Offset(0, 0);
+
+        final result = processor.findIntersection(
+          event,
+          point,
+          preLocalPosition,
+        );
+
+        expect(result.dx, closeTo(50.0, 0.01));
+        expect(result.dy, closeTo(50.0, 0.01));
+      });
+    });
+
+    group('eraseAtPoint', () {
+      late ScribbleModeState modeState;
+
+      setUp(() {
+        modeState = ScribbleModeState(
+          inkGroupInfo: InkGroupInfo(
+            selectedInk: InkModes.erase,
+          ),
+          scaleFactor: 1.0,
+        );
+      });
+
+      test('지우개 근처의 스트로크를 제거한다', () {
+        // 스트로크가 (50, 50) 근처에 있음
+        final stroke = createStroke(
+          points: [createPoint(x: 50, y: 50)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final scribble = createScribble(strokes: [stroke]);
+        final state = Erasing(
+          scribble: scribble,
+          activePointerIds: const [1],
+        );
+
+        // 지우개를 (50, 50) 위로 이동
+        const event = PointerMoveEvent(
+          position: Offset(50, 50),
+        );
+        const preLocalPosition = Offset(48, 48);
+
+        final result = processor.eraseAtPoint(
+          event,
+          modeState,
+          state,
+          preLocalPosition,
+        );
+
+        expect(result, isA<Erasing>());
+        expect(result.scribble.strokes, isEmpty);
+      });
+
+      test('멀리 있는 스트로크는 유지한다', () {
+        // 스트로크가 (500, 500) 근처에 있음
+        final stroke = createStroke(
+          points: [createPoint(x: 500, y: 500)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final scribble = createScribble(strokes: [stroke]);
+        final state = Erasing(
+          scribble: scribble,
+          activePointerIds: const [1],
+        );
+
+        // 지우개는 (50, 50) 근처
+        const event = PointerMoveEvent(
+          position: Offset(50, 50),
+        );
+        const preLocalPosition = Offset(48, 48);
+
+        final result = processor.eraseAtPoint(
+          event,
+          modeState,
+          state,
+          preLocalPosition,
+        );
+
+        expect(result, isA<Erasing>());
+        expect(result.scribble.strokes.length, 1);
+      });
+
+      test('Drawing 상태에서도 동작한다', () {
+        final stroke = createStroke(
+          points: [createPoint(x: 50, y: 50)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final scribble = createScribble(strokes: [stroke]);
+        final state = Drawing(
+          scribble: scribble,
+          activePointerIds: const [1],
+        );
+
+        const event = PointerMoveEvent(
+          position: Offset(50, 50),
+        );
+        const preLocalPosition = Offset(48, 48);
+
+        final result = processor.eraseAtPoint(
+          event,
+          modeState,
+          state,
+          preLocalPosition,
+        );
+
+        expect(result, isA<Drawing>());
+        expect(result.scribble.strokes, isEmpty);
+      });
+
+      test('textDrawables를 유지한다', () {
+        final stroke = createStroke(
+          points: [createPoint(x: 50, y: 50)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final textDrawable = createTextDrawable(id: 'text1');
+        final scribble = createScribble(
+          strokes: [stroke],
+          textDrawables: [textDrawable],
+        );
+        final state = Erasing(
+          scribble: scribble,
+          activePointerIds: const [1],
+        );
+
+        const event = PointerMoveEvent(
+          position: Offset(50, 50),
+        );
+        const preLocalPosition = Offset(48, 48);
+
+        final result = processor.eraseAtPoint(
+          event,
+          modeState,
+          state,
+          preLocalPosition,
+        );
+
+        expect(result.scribble.textDrawables.length, 1);
+        expect(result.scribble.textDrawables.first.id, 'text1');
+      });
+
+      test('여러 스트로크 중 근처에 있는 것만 제거한다', () {
+        final nearStroke = createStroke(
+          points: [createPoint(x: 50, y: 50)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final farStroke = createStroke(
+          points: [createPoint(x: 500, y: 500)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final scribble = createScribble(strokes: [nearStroke, farStroke]);
+        final state = Erasing(
+          scribble: scribble,
+          activePointerIds: const [1],
+        );
+
+        const event = PointerMoveEvent(
+          position: Offset(50, 50),
+        );
+        const preLocalPosition = Offset(48, 48);
+
+        final result = processor.eraseAtPoint(
+          event,
+          modeState,
+          state,
+          preLocalPosition,
+        );
+
+        expect(result.scribble.strokes.length, 1);
+        expect(result.scribble.strokes.first.points.first.x, 500.0);
+      });
+    });
+  });
+}

@@ -22,6 +22,11 @@ export 'src/module/coordinate_transformer.dart'; // ♻️ 스크린 ↔ 캔버�
 // 변형 핸들러
 export 'src/module/transform_handler.dart'; // ♻️ 이동/크기조절/회전 공통 변형 핸들러
 
+// ♻️ 분해된 프로세서들
+export 'src/module/stroke/stroke_processor.dart'; // ♻️ 스트로크 생성/계산 유틸리티
+export 'src/module/stroke/eraser_processor.dart'; // ♻️ 지우개 유틸리티
+export 'src/module/text/text_drawable_manager.dart'; // ♻️ 텍스트 CRUD 관리자
+
 // 유틸리티들
 export 'src/core/utils/measure_size.dart'; // ✨ 크기 측정 유틸리티
 
