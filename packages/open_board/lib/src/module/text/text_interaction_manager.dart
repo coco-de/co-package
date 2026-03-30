@@ -7,6 +7,7 @@ import 'package:open_board/src/module/text/inline_text_editor.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
+import 'package:open_board/src/module/transform_handler.dart';
 import 'dart:math' as math;
 
 /// 텍스트 상호작용을 관리하는 클래스
@@ -63,10 +64,10 @@ class TextInteractionManager {
 
   // 텍스트 변형 관련 변수들 (올가미 방식 적용)
   Offset? _originalTextCenter; // 텍스트 중심점
-  double? _originalDistance; // 원점에서 터치점까지의 거리
-  double? _originalAngle; // 원점에서 터치점까지의 각도
   double? _originalFontSize; // 원본 폰트 크기
-  double _currentRotation = 0.0; // 현재 회전 각도
+
+  // 공통 변형 핸들러
+  late TransformHandler _transformHandler;
 
   TextInteractionManager({
     required this.scribbleNotifier,
@@ -81,6 +82,7 @@ class TextInteractionManager {
     this.onTextDeselected,
     this.widgetState, // ScribbleWidgetState 참조 추가
   }) {
+    _transformHandler = TransformHandler(_transformer);
     _initializeFromScribble();
   }
 
@@ -447,39 +449,17 @@ class TextInteractionManager {
       return false;
     }
 
-    // 텍스트 변형 중인 경우 (올가미와 동일한 방식)
+    // 텍스트 변형 중인 경우 (TransformHandler 사용)
     if (_isTextResizing &&
         _selectedTextIndex != null &&
         _originalTextCenter != null &&
-        _originalDistance != null &&
-        _originalAngle != null &&
+        _transformHandler.isResizeRotating &&
         _originalFontSize != null) {
       final currentTouchPoint = event.localPosition;
-      final centerToCurrentTouch = currentTouchPoint - _originalTextCenter!;
 
-      // 현재 거리와 각도 계산
-      final currentDistance = centerToCurrentTouch.distance;
-
-      // 스케일 계산 (올가미와 동일: 원점에서 멀어지면 확대, 가까워지면 축소)
-      final scale = _originalDistance! > 0
-          ? currentDistance / _originalDistance!
-          : 1.0;
-      final clampedScale = scale.clamp(0.1, 3.0);
-
-      // 회전 각도 계산 (올가미와 동일한 방식)
-      final newAngle = math.atan2(
-        currentTouchPoint.dy - _originalTextCenter!.dy,
-        currentTouchPoint.dx - _originalTextCenter!.dx,
-      );
-
-      // 각도 차이 계산 (-π ~ π 범위로 정규화)
-      double angleDiff = newAngle - _originalAngle!;
-      if (angleDiff > math.pi) angleDiff -= 2 * math.pi;
-      if (angleDiff < -math.pi) angleDiff += 2 * math.pi;
-
-      // 현재 회전 각도 업데이트
-      _currentRotation += angleDiff;
-      _originalAngle = newAngle; // 다음 계산을 위해 업데이트
+      // TransformHandler로 스케일/회전 계산
+      final result = _transformHandler.computeResizeRotate(currentTouchPoint);
+      final clampedScale = result.scale;
 
       // 회전 정보를 맵에 저장 (TextDrawablePainter에서 사용)
       final textDrawable = textDrawables[_selectedTextIndex!];
@@ -490,7 +470,7 @@ class TextInteractionManager {
 
       // 회전 각도를 TextDrawable에 안전하게 설정
       try {
-        updatedText.rotation = _currentRotation;
+        updatedText.rotation = result.deltaAngle;
       } on Exception catch (error, stackTrace) {
         debugPrintStack(stackTrace: stackTrace);
         debugPrint(error.toString());
@@ -558,12 +538,12 @@ class TextInteractionManager {
     if (_isTextResizing) {
       _isTextResizing = false;
 
+      // TransformHandler 크기조절/회전 상태 종료
+      _transformHandler.endResizeRotate();
+
       // 변형 관련 변수들 초기화
       _originalTextCenter = null;
-      _originalDistance = null;
-      _originalAngle = null;
       _originalFontSize = null;
-      // _currentRotation은 유지 (다음 변형을 위해)
 
       _syncWithWidgetState();
       onStateChanged();
@@ -999,21 +979,22 @@ class TextInteractionManager {
     _originalFontSize = textDrawable.style.fontSize ?? 16.0;
 
     // 기존 회전 각도를 현재 회전으로 설정 (안전한 접근)
+    double currentRotation = 0.0;
     try {
-      _currentRotation = textDrawable.rotation;
+      currentRotation = textDrawable.rotation;
     } on Exception {
       // rotation 필드가 없거나 접근할 수 없는 경우 기본값 사용
-      _currentRotation = 0.0;
+      currentRotation = 0.0;
     }
 
-    // 터치 시작점에서 중심점까지의 거리와 각도 계산
-    final centerToTouch = position - _originalTextCenter!;
-    _originalDistance = centerToTouch.distance;
-    _originalAngle = math.atan2(centerToTouch.dy, centerToTouch.dx);
+    // TransformHandler로 크기조절/회전 시작
+    _transformHandler.startResizeRotate(
+      position,
+      _originalTextCenter!,
+      initialRotation: currentRotation,
+    );
 
     _isTextResizing = true;
-
-    // 🔥 InteractiveViewer 제스처 제어를 위한 상태 변경 로그
 
     // widgetState 동기화
     _syncWithWidgetState();
@@ -1116,11 +1097,12 @@ class TextInteractionManager {
     // 원본 폰트 크기 저장
     _originalFontSize = textDrawable.style.fontSize ?? 16.0;
 
-    // 터치 시작점에서 중심점까지의 거리와 각도 계산
+    // TransformHandler로 크기조절/회전 시작
     final touchPoint = details.localPosition;
-    final centerToTouch = touchPoint - _originalTextCenter!;
-    _originalDistance = centerToTouch.distance;
-    _originalAngle = math.atan2(centerToTouch.dy, centerToTouch.dx);
+    _transformHandler.startResizeRotate(
+      touchPoint,
+      _originalTextCenter!,
+    );
 
     _isTextResizing = true;
 
@@ -1131,44 +1113,22 @@ class TextInteractionManager {
     onStateChanged();
   }
 
-  /// 텍스트 변형 업데이트 (올가미와 동일한 방식)
+  /// 텍스트 변형 업데이트 (TransformHandler 사용)
   void onTextTransformUpdate(DragUpdateDetails details, BuildContext context) {
     if (_selectedTextIndex == null ||
         _originalTextCenter == null ||
-        _originalDistance == null ||
-        _originalAngle == null ||
         _originalFontSize == null ||
-        !_isTextResizing) {
+        !_isTextResizing ||
+        !_transformHandler.isResizeRotating) {
       return;
     }
 
     final textDrawable = textDrawables[_selectedTextIndex!];
     final currentTouchPoint = details.localPosition;
-    final centerToCurrentTouch = currentTouchPoint - _originalTextCenter!;
 
-    // 현재 거리와 각도 계산
-    final currentDistance = centerToCurrentTouch.distance;
-
-    // 스케일 계산 (올가미와 동일: 원점에서 멀어지면 확대, 가까워지면 축소)
-    final scale = _originalDistance! > 0
-        ? currentDistance / _originalDistance!
-        : 1.0;
-    final clampedScale = scale.clamp(0.1, 3.0);
-
-    // 회전 각도 계산
-    var deltaAngle =
-        math.atan2(centerToCurrentTouch.dy, centerToCurrentTouch.dx) -
-        _originalAngle!;
-
-    // 각도 차이를 -π ~ π 범위로 정규화 (연속성 보장)
-    while (deltaAngle > math.pi) {
-      deltaAngle -= 2 * math.pi;
-    }
-    while (deltaAngle < -math.pi) {
-      deltaAngle += 2 * math.pi;
-    }
-
-    _currentRotation = deltaAngle;
+    // TransformHandler로 스케일/회전 계산
+    final result = _transformHandler.computeResizeRotate(currentTouchPoint);
+    final clampedScale = result.scale;
 
     // 새 폰트 크기 계산
     final newFontSize = (_originalFontSize! * clampedScale).clamp(8.0, 72.0);
@@ -1178,7 +1138,7 @@ class TextInteractionManager {
     final updatedText = textDrawable.copyWithStyle(newStyle);
 
     // 회전 각도를 TextDrawable에 직접 설정
-    updatedText.rotation = _currentRotation;
+    updatedText.rotation = result.deltaAngle;
 
     // 텍스트 리스트 업데이트
     textDrawables[_selectedTextIndex!] = updatedText;
@@ -1193,7 +1153,7 @@ class TextInteractionManager {
     onStateChanged();
   }
 
-  /// 텍스트 변형 종료 (올가미와 동일한 방식)
+  /// 텍스트 변형 종료 (TransformHandler 사용)
   void onTextTransformEnd(DragEndDetails details) {
     // 최종 변환 완료 - 히스토리에 저장
     if (_selectedTextIndex != null &&
@@ -1205,15 +1165,13 @@ class TextInteractionManager {
       );
     }
 
-    // 🔥 InteractiveViewer 제스처 제어를 위한 상태 변경 로그
+    // TransformHandler 크기조절/회전 상태 종료
+    _transformHandler.endResizeRotate();
 
     // 상태 초기화
     _isTextResizing = false;
     _originalTextCenter = null;
-    _originalDistance = null;
-    _originalAngle = null;
     _originalFontSize = null;
-    _currentRotation = 0.0;
 
     // 오버레이 상태 유지 (변형 완료 후에도 선택 상태 유지)
     _showTextOverlay = true;

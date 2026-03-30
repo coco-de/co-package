@@ -19,6 +19,9 @@ export 'src/module/state/scribble_metadata.dart'; // ✨ 새로운 메타데이�
 // 좌표 변환
 export 'src/module/coordinate_transformer.dart'; // ♻️ 스크린 ↔ 캔버스 좌표 변환 유틸리티
 
+// 변형 핸들러
+export 'src/module/transform_handler.dart'; // ♻️ 이동/크기조절/회전 공통 변형 핸들러
+
 // 유틸리티들
 export 'src/core/utils/measure_size.dart'; // ✨ 크기 측정 유틸리티
 
