@@ -35,5 +35,9 @@ export 'src/module/state/scribble_mode.state.dart';
 
 // 🌍 전역 필기 도구 상태 관리
 export 'src/module/state/drawing_state.dart';
+export 'src/module/state/notifier_registry.dart';
+export 'src/module/state/state_synchronizer.dart';
+export 'src/module/state/undo_redo_tracker.dart';
+export 'src/module/state/drawing_settings_persistence.dart';
 
 export 'src/module/keys/keys.dart';
