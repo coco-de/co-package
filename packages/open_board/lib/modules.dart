@@ -46,3 +46,10 @@ export 'src/module/state/undo_redo_tracker.dart';
 export 'src/module/state/drawing_settings_persistence.dart';
 
 export 'src/module/keys/keys.dart';
+
+// ♻️ PaintDelegate 패턴 (ScribblePainter 분리)
+export 'src/module/painter/paint_delegate.dart';
+export 'src/module/painter/stroke_paint_delegate.dart';
+export 'src/module/painter/shape_paint_delegate.dart';
+export 'src/module/painter/lasso_paint_delegate.dart';
+export 'src/module/painter/cursor_paint_delegate.dart';
