@@ -1,0 +1,70 @@
+name: CI - Test & Analyze
+
+on:
+  pull_request:
+    branches: [development, main]
+  push:
+    branches: [development, main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.41.6"
+
+jobs:
+  test-and-analyze:
+    name: Test & Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: |
+          # workspace resolution 임시 제거 (standalone 빌드용)
+          sed -i 's/^resolution: workspace/# resolution: workspace/' pubspec.yaml
+          flutter pub get
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Restore pubspec
+        if: always()
+        run: |
+          sed -i 's/^# resolution: workspace/resolution: workspace/' pubspec.yaml
+
+      - name: Setup DCM
+        if: always()
+        uses: CQLabs/setup-dcm@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: DCM Analyze
+        if: always()
+        run: |
+          dcm run lib --all --no-fatal-found || true
+
+      - name: DCM Dashboard Upload
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main')
+        run: |
+          dcm run lib \
+            --analyze \
+            --metrics \
+            --unused-code \
+            --unused-files \
+            --dependencies \
+            --code-duplication \
+            --upload \
+            --project "${{ secrets.DCM_PROJECT_KEY }}" \
+            --ci-key "${{ secrets.DCM_CI_KEY }}" \
+            --email "${{ secrets.DCM_EMAIL }}"
