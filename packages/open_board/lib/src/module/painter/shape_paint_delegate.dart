@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:open_board/src/core/utils/geometry_utils.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/painter/paint_delegate.dart';
 
@@ -76,7 +77,7 @@ class ShapePaintDelegate implements PaintDelegate {
     }
 
     // 중심점 계산
-    final centroid = _calculateCentroid(stroke.points);
+    final centroid = GeometryUtils.calculateCentroid(stroke.points);
 
     // PCA를 사용한 타원 주축 분석
     double covXx = 0, covYy = 0, covXy = 0;
@@ -211,16 +212,4 @@ class ShapePaintDelegate implements PaintDelegate {
     canvas.drawPath(path, polyPaint);
   }
 
-  // -- Helper methods --
-
-  Point _calculateCentroid(List<Point> points) {
-    if (points.isEmpty) return Point(x: 0, y: 0);
-
-    double sumX = 0, sumY = 0;
-    for (final point in points) {
-      sumX += point.x;
-      sumY += point.y;
-    }
-    return Point(x: sumX / points.length, y: sumY / points.length);
-  }
 }

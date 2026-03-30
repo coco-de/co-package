@@ -15,11 +15,6 @@ sealed class ScribbleState {
 
   bool get active => activePointerIds.length <= 1;
 
-  List<Stroke> get lines => switch (this) {
-    Drawing(:final scribble, :final activeLine) =>
-      activeLine == null ? scribble.strokes : [...scribble.strokes, activeLine],
-    Erasing(:final scribble) => scribble.strokes,
-  };
 }
 
 final class Drawing extends ScribbleState {
@@ -41,13 +36,12 @@ final class Drawing extends ScribbleState {
     Scribble? scribble,
     Stroke? activeLine,
     List<int>? activePointerIds,
-    List<int>? selectedStrokeIds,
     Point? pointerPosition,
   }) => Drawing(
     scribble: scribble ?? this.scribble,
     activeLine: activeLine ?? this.activeLine,
     activePointerIds: activePointerIds ?? this.activePointerIds,
-    selectedStrokeIds: selectedStrokeIds ?? this.selectedStrokeIds,
+    selectedStrokeIds: selectedStrokeIds,
     pointerPosition: pointerPosition ?? this.pointerPosition,
   );
 }

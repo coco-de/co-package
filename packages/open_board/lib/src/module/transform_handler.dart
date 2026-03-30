@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:open_board/src/module/coordinate_transformer.dart';
 
 /// 선택된 요소의 이동/크기조절/회전을 처리하는 공통 핸들러
 ///
@@ -9,8 +8,6 @@ import 'package:open_board/src/module/coordinate_transformer.dart';
 ///
 /// CoordinateTransformer만 의존하며, 스크린 ↔ 캔버스 좌표 변환을 활용합니다.
 class TransformHandler {
-  final CoordinateTransformer _transformer;
-
   // 이동 관련
   Offset? _moveStartPosition;
 
@@ -20,29 +17,13 @@ class TransformHandler {
   double? _originalAngle; // 원점 기준 초기 각도
   double _currentRotation = 0.0; // 현재 회전 각도
 
-  // 원본 포인트 캐싱
-  List<List<Offset>>? _originalPoints;
-
   // 변형 상태 추적
-  bool _isMoving = false;
   bool _isResizeRotating = false;
 
-  TransformHandler(this._transformer);
-
-  /// 현재 변형(이동 또는 크기조절/회전) 중인지 여부
-  bool get isTransforming => _isMoving || _isResizeRotating;
-
-  /// 현재 이동 중인지 여부
-  bool get isMoving => _isMoving;
+  TransformHandler();
 
   /// 현재 크기조절/회전 중인지 여부
   bool get isResizeRotating => _isResizeRotating;
-
-  /// 캐싱된 원본 포인트
-  List<List<Offset>>? get originalPoints => _originalPoints;
-
-  /// 현재 회전 각도
-  double get currentRotation => _currentRotation;
 
   // ── 이동 관련 ──
 
@@ -51,25 +32,6 @@ class TransformHandler {
   /// [startPosition]은 화면(스크린) 좌표 기준 시작 위치입니다.
   void startMove(Offset startPosition) {
     _moveStartPosition = startPosition;
-    _isMoving = true;
-  }
-
-  /// 이동 적용 - 원본 포인트 목록에 delta를 적용하여 새 포인트 목록 반환
-  ///
-  /// [currentPosition]은 현재 화면(스크린) 좌표입니다.
-  /// 반환값은 delta가 적용된 새로운 포인트 목록입니다 (원본 구조 유지).
-  List<List<Offset>> applyMove(
-    List<List<Offset>> pointGroups,
-    Offset currentPosition,
-  ) {
-    if (_moveStartPosition == null) return pointGroups;
-
-    final delta = currentPosition - _moveStartPosition!;
-    return pointGroups.map((points) {
-      return points.map((point) {
-        return Offset(point.dx + delta.dx, point.dy + delta.dy);
-      }).toList();
-    }).toList();
   }
 
   /// 이동에 사용되는 delta 값을 반환
@@ -83,7 +45,6 @@ class TransformHandler {
   /// 이동 종료
   void endMove() {
     _moveStartPosition = null;
-    _isMoving = false;
   }
 
   // ── 크기조절/회전 관련 ──
@@ -114,8 +75,9 @@ class TransformHandler {
   /// - scale: 원본 대비 크기 비율
   /// - deltaAngle: 시작 각도 대비 회전 변화량
   /// - finalRotation: 초기 회전 + deltaAngle 합계
-  ({double scale, double deltaAngle, double finalRotation})
-      computeResizeRotate(Offset currentPosition) {
+  ({double scale, double deltaAngle, double finalRotation}) computeResizeRotate(
+    Offset currentPosition,
+  ) {
     if (_transformOrigin == null ||
         _originalDistance == null ||
         _originalAngle == null) {
@@ -124,8 +86,7 @@ class TransformHandler {
 
     final centerToCurrent = currentPosition - _transformOrigin!;
     final currentDistance = centerToCurrent.distance;
-    final currentAngle =
-        math.atan2(centerToCurrent.dy, centerToCurrent.dx);
+    final currentAngle = math.atan2(centerToCurrent.dy, centerToCurrent.dx);
 
     // 스케일 계산
     final scale = _originalDistance! > 0
@@ -145,11 +106,7 @@ class TransformHandler {
 
     _currentRotation = deltaAngle;
 
-    return (
-      scale: scale,
-      deltaAngle: deltaAngle,
-      finalRotation: deltaAngle,
-    );
+    return (scale: scale, deltaAngle: deltaAngle, finalRotation: deltaAngle);
   }
 
   /// 원본 포인트 그룹에 스케일/회전 변환을 적용하여 새 포인트 목록 반환
@@ -200,23 +157,8 @@ class TransformHandler {
   /// 원본 포인트 그룹 캐싱
   ///
   /// 변형 전 원본 상태를 저장하여, 누적 변형을 방지합니다.
+  // ignore: no-empty-block
   void cacheOriginalPoints(List<List<Offset>> pointGroups) {
-    _originalPoints = pointGroups
-        .map((points) => List<Offset>.from(points))
-        .toList();
-  }
-
-  // ── 리셋 ──
-
-  /// 모든 변형 상태를 초기화합니다.
-  void reset() {
-    _moveStartPosition = null;
-    _transformOrigin = null;
-    _originalDistance = null;
-    _originalAngle = null;
-    _currentRotation = 0.0;
-    _originalPoints = null;
-    _isMoving = false;
-    _isResizeRotating = false;
+    // Reserved for future use: caching original points before transform
   }
 }

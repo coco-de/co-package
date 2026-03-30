@@ -39,42 +39,18 @@ enum ShapeType {
   pending,
 }
 
-/// 도형 타입과 신뢰도를 함께 저장하는 클래스
-class ShapeTypeResult {
-  final ShapeType type;
-  final double confidence;
-
-  ShapeTypeResult(this.type, this.confidence);
-}
-
 /// 도형 특성을 나타내는 클래스 - 알고리즘 계산에 사용
 class ShapeCharacteristics {
-  final List<Point> points;
   final Rect boundingBox;
-  final double area;
-  final double perimeter;
   final Point centroid;
-  final double firstLastDistance;
   final double aspectRatio;
-  final List<Point> simplifiedPoints;
   final List<Point> convexHull;
-  final double convexHullArea;
-  final double rotation;
-  List<Segment>? segments;
 
   ShapeCharacteristics({
-    required this.points,
     required this.boundingBox,
-    required this.area,
-    required this.perimeter,
     required this.centroid,
-    required this.firstLastDistance,
     required this.aspectRatio,
-    required this.simplifiedPoints,
     required this.convexHull,
-    required this.convexHullArea,
-    this.rotation = 0.0,
-    this.segments,
   });
 }
 
@@ -82,13 +58,7 @@ class ShapeCharacteristics {
 class ShapeDetectionResult {
   final ShapeType shapeType;
   final Stroke transformedStroke;
-  final double confidence;
-
-  ShapeDetectionResult(
-    this.shapeType,
-    this.transformedStroke, {
-    this.confidence = 1.0,
-  });
+  ShapeDetectionResult(this.shapeType, this.transformedStroke);
 
   /// 문자열 형태의 shapeType 반환
   String get shapeTypeString {
@@ -236,11 +206,7 @@ class ShapeDetector {
       _createEllipse(transformedStroke, points);
 
       final ellipseType = _determineEllipseType(points);
-      return ShapeDetectionResult(
-        ellipseType,
-        transformedStroke,
-        confidence: 0.9,
-      );
+      return ShapeDetectionResult(ellipseType, transformedStroke);
     }
     return null;
   }
@@ -289,11 +255,7 @@ class ShapeDetector {
         _createPolygonFromCorners(transformedStroke, corners, true);
 
         final triangleType = _determineTriangleType(corners);
-        return ShapeDetectionResult(
-          triangleType,
-          transformedStroke,
-          confidence: triangleScore,
-        );
+        return ShapeDetectionResult(triangleType, transformedStroke);
       }
     }
 
@@ -302,7 +264,7 @@ class ShapeDetector {
       _createPolygonFromCorners(transformedStroke, corners, true);
 
       final quadType = _determineQuadrilateralType(corners);
-      return ShapeDetectionResult(quadType, transformedStroke, confidence: 0.9);
+      return ShapeDetectionResult(quadType, transformedStroke);
     }
 
     // 삼각형 확인 (코너가 3개인 경우)
@@ -310,11 +272,7 @@ class ShapeDetector {
       _createPolygonFromCorners(transformedStroke, corners, true);
 
       final triangleType = _determineTriangleType(corners);
-      return ShapeDetectionResult(
-        triangleType,
-        transformedStroke,
-        confidence: 0.9,
-      );
+      return ShapeDetectionResult(triangleType, transformedStroke);
     }
 
     // 다각형 확인
@@ -322,22 +280,14 @@ class ShapeDetector {
       _createPolygonFromCorners(transformedStroke, corners, true);
 
       final polygonType = _determinePolygonType(corners);
-      return ShapeDetectionResult(
-        polygonType,
-        transformedStroke,
-        confidence: 0.8,
-      );
+      return ShapeDetectionResult(polygonType, transformedStroke);
     }
 
     // 직선 확인
     if (corners.length == 2) {
       transformedStroke.points.add(corners[0]);
       transformedStroke.points.add(corners[1]);
-      return ShapeDetectionResult(
-        ShapeType.line,
-        transformedStroke,
-        confidence: 0.9,
-      );
+      return ShapeDetectionResult(ShapeType.line, transformedStroke);
     }
 
     // 기본값: 폴리라인
@@ -345,11 +295,7 @@ class ShapeDetector {
       transformedStroke,
       corners.isEmpty ? simplifiedPoints : corners,
     );
-    return ShapeDetectionResult(
-      ShapeType.polyline,
-      transformedStroke,
-      confidence: 0.8,
-    );
+    return ShapeDetectionResult(ShapeType.polyline, transformedStroke);
   }
 
   /// 원/타원 여부 판별
@@ -677,27 +623,16 @@ class ShapeDetector {
   ShapeCharacteristics _calculateShapeCharacteristics(List<Point> points) {
     if (points.isEmpty) {
       return ShapeCharacteristics(
-        points: [],
         boundingBox: Rect.zero,
-        area: 0,
-        perimeter: 0,
         centroid: Point(x: 0, y: 0),
-        firstLastDistance: 0,
         aspectRatio: 1.0,
-        simplifiedPoints: [],
         convexHull: [],
-        convexHullArea: 0,
-        rotation: 0.0,
       );
     }
 
     final boundingBox = GeometryUtils.calculateBoundingBox(points);
     final centroid = GeometryUtils.calculateCentroid(points);
     final perimeter = GeometryUtils.calculatePolygonPerimeter(points);
-    final firstLastDistance = GeometryUtils.calculateDistance(
-      points.first,
-      points.last,
-    );
     final aspectRatio = boundingBox.width > 0
         ? boundingBox.height / boundingBox.width
         : 1.0;
@@ -709,54 +644,12 @@ class ShapeDetector {
     final convexHull = ConvexHullCalculator.calculateConvexHull(
       simplifiedPoints,
     );
-    final convexHullArea = ConvexHullCalculator.calculateConvexHullArea(
-      convexHull,
-    );
-
-    double rotation = 0.0;
-    if (convexHull.length >= 2) {
-      rotation = _calculateMainAxisRotation(convexHull);
-    }
-
     return ShapeCharacteristics(
-      points: points,
       boundingBox: boundingBox,
-      area: boundingBox.width * boundingBox.height,
-      perimeter: perimeter,
       centroid: centroid,
-      firstLastDistance: firstLastDistance,
       aspectRatio: aspectRatio,
-      simplifiedPoints: simplifiedPoints,
       convexHull: convexHull,
-      convexHullArea: convexHullArea,
-      rotation: rotation,
     );
-  }
-
-  /// 주축 회전각 계산
-  double _calculateMainAxisRotation(List<Point> convexHull) {
-    double maxDist = 0.0;
-    Point p1 = convexHull[0];
-    Point p2 = convexHull[0];
-
-    for (int i = 0; i < convexHull.length; i++) {
-      for (int j = i + 1; j < convexHull.length; j++) {
-        final dist = GeometryUtils.calculateDistance(
-          convexHull[i],
-          convexHull[j],
-        );
-        if (dist > maxDist) {
-          maxDist = dist;
-          p1 = convexHull[i];
-          p2 = convexHull[j];
-        }
-      }
-    }
-
-    if (maxDist > 0) {
-      return math.atan2(p2.y - p1.y, p2.x - p1.x);
-    }
-    return 0.0;
   }
 
   /// 사각형 세부 유형 판별

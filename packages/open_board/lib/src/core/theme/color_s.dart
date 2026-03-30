@@ -47,13 +47,6 @@ class ColorS {
       Color(0xFF0100FF),
     ];
   }
-
-  static const Color black = Color(0xFF222222);
-  static const Color red = Color(0xFFEC3A3A);
-  static const Color yellow = Color(0xFFFFE927);
-  static const Color green = Color(0xFF0AD35A);
-  static const Color blue = Color(0xFF0D84F2);
-  static const Color etc = Color(0xFF111111);
 }
 
 /*

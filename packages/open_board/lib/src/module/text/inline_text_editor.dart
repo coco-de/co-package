@@ -9,7 +9,7 @@ import 'package:open_board/src/module/text/text_drawable_factory.dart';
 /// 터치한 위치에 나타나는 인라인 텍스트 에디터
 final class InlineTextEditor extends StatefulWidget {
   /// 편집할 텍스트 drawable
-  final TextDrawable? drawable;
+  final TextDrawable drawable;
 
   /// 에디터가 나타날 위치
   final Offset position;
@@ -27,17 +27,17 @@ final class InlineTextEditor extends StatefulWidget {
   final double scale;
 
   /// 선택된 텍스트 컬러
-  final Color? selectedColor;
+  final Color selectedColor;
 
   const InlineTextEditor({
     super.key,
-    this.drawable,
+    required this.drawable,
     required this.position,
     required this.textSettings,
     required this.onComplete,
-    this.isNew = false,
-    this.scale = 1.0,
-    this.selectedColor,
+    required this.isNew,
+    required this.scale,
+    required this.selectedColor,
   });
 
   @override
@@ -77,9 +77,9 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       }
     });
 
-    // 기존 텍스트가 있으면 설정
-    if (widget.drawable != null) {
-      textEditingController.text = widget.drawable!.text;
+    // 텍스트 설정
+    textEditingController.text = widget.drawable.text;
+    if (!widget.isNew) {
       _hasUserInteracted = true; // 기존 텍스트는 이미 상호작용이 있었다고 간주
     }
 
@@ -140,16 +140,13 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     final screenSize = mediaQuery.size;
 
     // TextDrawable과 동일한 스타일 적용
-    final textColor =
-        widget.selectedColor ??
-        widget.textSettings.textStyle.color ??
-        Colors.black;
+    final textColor = widget.selectedColor;
 
     // 기본 폰트 크기 계산 (기존 텍스트의 경우 현재 스케일 고려)
     double baseFontSize;
-    if (widget.drawable != null && widget.drawable!.style.fontSize != null) {
+    if (!widget.isNew && widget.drawable.style.fontSize != null) {
       // 기존 텍스트인 경우: 현재 폰트 크기를 현재 스케일로 나누어 원본 크기 계산
-      baseFontSize = widget.drawable!.style.fontSize! / widget.scale;
+      baseFontSize = widget.drawable.style.fontSize! / widget.scale;
     } else {
       // 새 텍스트인 경우: textSettings에서 기본 크기 사용
       baseFontSize = math.max(
@@ -159,12 +156,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     }
 
     // 현재 스케일 적용
-    double actualFontSize;
-    if (widget.drawable != null) {
-      actualFontSize = baseFontSize * widget.scale;
-    } else {
-      actualFontSize = baseFontSize * widget.scale;
-    }
+    final actualFontSize = baseFontSize * widget.scale;
 
     // TextDrawable과 동일한 스타일 생성
     final textStyle = widget.textSettings.textStyle.copyWith(
@@ -375,20 +367,17 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       }
 
       // 내용이 있는 경우 저장
-      final textColor =
-          widget.selectedColor ??
-          widget.textSettings.textStyle.color ??
-          Colors.black;
+      final textColor = widget.selectedColor;
 
       // 스케일을 고려한 실제 폰트 크기 계산
-      double actualFontSize;
-      if (widget.drawable != null) {
+      final double actualFontSize;
+      if (!widget.isNew) {
         // 기존 텍스트 편집인 경우
-        final baseFontSize = widget.drawable!.style.fontSize! / widget.scale;
+        final baseFontSize = widget.drawable.style.fontSize! / widget.scale;
         actualFontSize = baseFontSize;
       } else {
         // 새 텍스트 생성인 경우
-        final baseFontSize = 16.0; // 기본 크기
+        const baseFontSize = 16.0; // 기본 크기
         actualFontSize = baseFontSize;
       }
 
@@ -400,8 +389,8 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       );
 
       // 텍스트 drawable 생성 또는 업데이트
-      final drawable = (widget.drawable != null)
-          ? widget.drawable!
+      final drawable = !widget.isNew
+          ? widget.drawable
                 .copyWithText(text)
                 .copyWithStyle(style)
                 .copyWithAlignment(widget.textSettings.textAlignment)

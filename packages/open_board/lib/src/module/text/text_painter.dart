@@ -13,9 +13,9 @@ class TextDrawablePainter extends CustomPainter {
 
   const TextDrawablePainter({
     required this.textDrawables,
-    this.selectedTextDrawable,
-    this.isTransforming = false,
-    this.editingTextId,
+    required this.selectedTextDrawable,
+    required this.isTransforming,
+    required this.editingTextId,
   });
 
   @override
@@ -482,85 +482,6 @@ class TextDrawablePainter extends CustomPainter {
       textPainter.width,
       textPainter.height,
     );
-  }
-
-  /// Check if a point is within a text drawable's bounds
-  static bool isPointInText(TextDrawable textDrawable, Offset point) {
-    final bounds = getTextBounds(textDrawable);
-
-    // 터치 영역을 확대하기 위해 패딩 추가 (8px)
-    final expandedBounds = Rect.fromLTWH(
-      bounds.left - 8,
-      bounds.top - 8,
-      bounds.width + 16,
-      bounds.height + 16,
-    );
-
-    return expandedBounds.contains(point);
-  }
-
-  /// Check if a point is within a resize handle
-  static bool isPointInHandle(TextDrawable textDrawable, Offset point) {
-    final bounds = getTextBounds(textDrawable);
-    final rect = Rect.fromLTWH(
-      bounds.left - 4,
-      bounds.top - 4,
-      bounds.width + 8,
-      bounds.height + 8,
-    );
-
-    const handleSize = 8.0;
-    const handleRadius = handleSize / 2;
-
-    // Check each corner handle
-    final handles = [
-      rect.topLeft,
-      rect.topRight,
-      rect.bottomLeft,
-      rect.bottomRight,
-    ];
-
-    for (final handle in handles) {
-      final distance = (point - handle).distance;
-      if (distance <= handleRadius + 4) {
-        // 4px tolerance
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /// Get which handle is being touched
-  static String? getHandleType(TextDrawable textDrawable, Offset point) {
-    final bounds = getTextBounds(textDrawable);
-    final rect = Rect.fromLTWH(
-      bounds.left - 4,
-      bounds.top - 4,
-      bounds.width + 8,
-      bounds.height + 8,
-    );
-
-    const handleSize = 8.0;
-    const handleRadius = handleSize / 2;
-
-    // Check each corner handle
-    final handles = {
-      'topLeft': rect.topLeft,
-      'topRight': rect.topRight,
-      'bottomLeft': rect.bottomLeft,
-      'bottomRight': rect.bottomRight,
-    };
-
-    for (final entry in handles.entries) {
-      final distance = (point - entry.value).distance;
-      if (distance <= handleRadius + 4) {
-        // 4px tolerance
-        return entry.key;
-      }
-    }
-
-    return null;
   }
 
   /// 회전된 텍스트의 정확한 버튼 위치 계산 (정적 메서드용)

@@ -6,40 +6,7 @@ import 'package:flutter/foundation.dart' show debugPrint; // 🔧 디버그 출�
 
 extension MergeScribble on Scribble {
   // 다른 필기데이터와 병합 처리
-  Scribble mergeFrom({required Scribble scribble}) {
-    strokes.addAll(
-      scribble.strokes.map<Stroke>((e) {
-        for (final point in e.points) {
-          // 원점 좌표 변환 처리
-          point.x += scribble.x;
-          point.y += scribble.y;
-        }
-        return e;
-      }).toList(),
-    );
-    return this;
-  }
-
   // 가장 첫번째 좌표를 빼줘서 첫번째 좌표에 대한 상대 좌표들로 만들기
-  Scribble differentFrom() {
-    strokes.addAll(
-      strokes.map<Stroke>((e) {
-        // 가장 첫 번째 좌표
-        final firstPoint = e.points[0];
-        for (final point in e.points) {
-          // 첫 번째 좌표가 아닐 경우
-          if (point != firstPoint) {
-            // 가장 첫 번째 좌표를 빼줘서 첫번째 좌표에 대한 상대 좌표들로 만든다.
-            point.x -= firstPoint.x;
-            point.y -= firstPoint.y;
-          }
-        }
-        return e;
-      }).toList(),
-    );
-    return this;
-  }
-
   /// 🔄 **Phase 5: 스트로크 분할/머지 시스템**
   ///
   /// 양면 모드에서 그린 필기를 단면 모드로 변환할 때 사용
@@ -47,7 +14,7 @@ extension MergeScribble on Scribble {
   ScribbleSplitResult splitStrokesForDoubleToSingleMode({
     required double pageWidth,
     required double pageHeight,
-    bool isFirstPageSingle = true,
+    required bool isFirstPageSingle,
   }) {
     final leftPageStrokes = <Stroke>[];
     final rightPageStrokes = <Stroke>[];
@@ -83,7 +50,6 @@ extension MergeScribble on Scribble {
 
         crossPageStrokes.add(
           CrossPageStroke(
-            originalStrokeIndex: strokeIndex,
             leftStroke: splitResult.leftStroke,
             rightStroke: splitResult.rightStroke,
             boundaryX: pageBoundaryX,
@@ -541,17 +507,11 @@ class ScribbleSplitResult {
 
 /// 🔄 페이지 경계를 넘나드는 스트로크 정보
 class CrossPageStroke {
-  final int originalStrokeIndex;
   final Stroke? leftStroke;
   final Stroke? rightStroke;
   final double boundaryX;
 
-  CrossPageStroke({
-    required this.originalStrokeIndex,
-    this.leftStroke,
-    this.rightStroke,
-    required this.boundaryX,
-  });
+  CrossPageStroke({required this.leftStroke, required this.rightStroke, required this.boundaryX});
 }
 
 /// 🔄 개별 스트로크 분할 결과
@@ -559,5 +519,5 @@ class StrokeSplitResult {
   final Stroke? leftStroke;
   final Stroke? rightStroke;
 
-  StrokeSplitResult({this.leftStroke, this.rightStroke});
+  StrokeSplitResult({required this.leftStroke, required this.rightStroke});
 }

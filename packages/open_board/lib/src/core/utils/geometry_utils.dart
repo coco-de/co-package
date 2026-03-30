@@ -91,46 +91,6 @@ class GeometryUtils {
     return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
 
-  /// 주어진 점과 가장 가까운 점의 인덱스 찾기
-  static int findClosestPointIndex(List<Point> points, Point target) {
-    if (points.isEmpty) return -1;
-
-    int closestIndex = 0;
-    double minDistance = double.infinity;
-
-    for (int i = 0; i < points.length; i++) {
-      final distance = calculateDistance(points[i], target);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestIndex = i;
-      }
-    }
-
-    return closestIndex;
-  }
-
-  /// 점들을 시계 방향으로 정렬
-  static List<Point> orderPointsClockwise(List<Point> points) {
-    if (points.length <= 2) return points;
-
-    // 중심점 계산
-    final centroid = calculateCentroid(points);
-
-    // 각 점의 중심에 대한 각도 계산
-    final pointsWithAngles = points.map((p) {
-      final angle = math.atan2(p.y - centroid.y, p.x - centroid.x);
-      return {'point': p, 'angle': angle};
-    }).toList();
-
-    // 각도에 따라 정렬
-    pointsWithAngles.sort(
-      (a, b) => (a['angle'] as double).compareTo(b['angle'] as double),
-    );
-
-    // 정렬된 포인트만 반환
-    return pointsWithAngles.map((entry) => entry['point'] as Point).toList();
-  }
-
   /// 지정된 경로 구간의 방향 벡터 계산
   static Point calculatePathDirection(
     List<Point> points,
@@ -144,11 +104,6 @@ class GeometryUtils {
     final end = points[endIdx];
 
     return Point(x: end.x - start.x, y: end.y - start.y);
-  }
-
-  /// 외적 계산 (CCW 방향 체크)
-  static double crossProduct(Point p1, Point p2, Point p3) {
-    return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
   }
 
   /// 세 점의 방향성 계산 (0: 일직선, 1: 시계 방향, 2: 반시계 방향)

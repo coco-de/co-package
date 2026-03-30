@@ -16,7 +16,7 @@ class LassoPaintDelegate implements PaintDelegate {
     required this.allStrokes,
     required this.selectedStrokeIds,
     required this.showLassoOverlay,
-    this.lassoSelectionState,
+    required this.lassoSelectionState,
     this.isActiveLine = false,
   });
 

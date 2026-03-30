@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -42,9 +41,6 @@ class ScribbleController extends ChangeNotifier {
 
   /// ✨ 이미지 캡처를 위한 GlobalKey
   final GlobalKey repaintBoundaryKey = GlobalKey();
-
-  /// ✨ 원본 배경 이미지 크기 (MeasureSize에서 측정됨)
-  Size? _originalImageSize;
 
   /// 필기 데이터 변경 콜백
   void Function(Scribble scribble)? onScribbleChanged;
@@ -190,24 +186,6 @@ class ScribbleController extends ChangeNotifier {
     return _scribbleNotifier.currentScribble;
   }
 
-  /// 현재 선택된 도구 가져오기
-  String get currentTool {
-    _ensureInitialized();
-    return _modeNotifier.state.inkGroupInfo.selectedInk;
-  }
-
-  /// 현재 선택된 색상 가져오기
-  Color get currentColor {
-    _ensureInitialized();
-    return _modeNotifier.state.inkGroupInfo.selectedColor;
-  }
-
-  /// 현재 브러시 크기 가져오기
-  double get currentStrokeWidth {
-    _ensureInitialized();
-    return _modeNotifier.state.inkGroupInfo.seletedStrokeWidth;
-  }
-
   /// 되돌리기 가능 여부
   bool get canUndo {
     _ensureInitialized();
@@ -232,52 +210,12 @@ class ScribbleController extends ChangeNotifier {
     _modeNotifier.setSelectedInk(tool);
   }
 
-  /// 펜 도구로 변경
-  void setPen() => setTool(InkModes.pen);
-
-  /// 연필 도구로 변경
-  void setPencil() => setTool(InkModes.pencil);
-
-  /// 마커 도구로 변경
-  void setMarker() => setTool(InkModes.marker);
-
-  /// 지우개 도구로 변경
-  void setEraser() => setTool(InkModes.erase);
-
-  /// 올가미 도구로 변경
-  void setLasso() => setTool(InkModes.lasso);
-
-  /// 텍스트 도구로 변경
-  void setText() => setTool(InkModes.text);
-
-  /// 색상 변경
-  void setColor(Color color) {
-    _ensureInitialized();
-    _modeNotifier.setColor(color);
-  }
-
-  /// 브러시 크기 변경
-  void setStrokeWidth(double width) {
-    _ensureInitialized();
-    _modeNotifier.setStrokeWidth(width);
-  }
-
   /// === 필기 데이터 제어 메서드들 ===
 
   /// 필기 데이터 로드
   void loadScribble(Scribble scribble) {
     _ensureInitialized();
     _scribbleNotifier.setScribble(scribble: scribble);
-  }
-
-  /// 필기 데이터 로드 (크기 자동 조정)
-  void loadScribbleWithSize(Scribble scribble, Size targetSize) {
-    final adjustedScribble = scribble.rebuild(
-      (b) => b
-        ..width = targetSize.width
-        ..height = targetSize.height,
-    );
-    loadScribble(adjustedScribble);
   }
 
   /// 전체 지우기
@@ -325,60 +263,6 @@ class ScribbleController extends ChangeNotifier {
     loadScribble(scribble);
   }
 
-  /// JSON으로 내보내기
-  String exportAsJson() {
-    return currentScribble.writeToJson();
-  }
-
-  /// JSON에서 가져오기
-  void importFromJson(String json) {
-    final scribble = Scribble()..mergeFromJsonMap(json as Map<String, dynamic>);
-    loadScribble(scribble);
-  }
-
-  /// === 고급 기능 메서드들 ===
-
-  /// 특정 스트로크 삭제
-  void removeStroke(int strokeIndex) {
-    final currentScribbleData = currentScribble;
-    if (strokeIndex >= 0 && strokeIndex < currentScribbleData.strokes.length) {
-      final strokes = List<Stroke>.from(currentScribbleData.strokes);
-      strokes.removeAt(strokeIndex);
-
-      final updatedScribble = currentScribbleData.rebuild(
-        (b) => b
-          ..strokes.clear()
-          ..strokes.addAll(strokes),
-      );
-
-      loadScribble(updatedScribble);
-    }
-  }
-
-  /// 여러 스트로크 삭제
-  void removeStrokes(List<int> strokeIndices) {
-    final currentScribbleData = currentScribble;
-    final strokes = List<Stroke>.from(currentScribbleData.strokes);
-
-    // 역순으로 정렬해서 인덱스 꼬임 방지
-    final sortedIndices = List<int>.from(strokeIndices)
-      ..sort((a, b) => b.compareTo(a));
-
-    for (final index in sortedIndices) {
-      if (index >= 0 && index < strokes.length) {
-        strokes.removeAt(index);
-      }
-    }
-
-    final updatedScribble = currentScribbleData.rebuild(
-      (b) => b
-        ..strokes.clear()
-        ..strokes.addAll(strokes),
-    );
-
-    loadScribble(updatedScribble);
-  }
-
   /// 통계 정보
   ScribbleStats get stats => ScribbleStats.from(currentScribble);
 
@@ -420,64 +304,6 @@ class ScribbleController extends ChangeNotifier {
       debugPrintStack(stackTrace: stackTrace);
       debugPrint(error.toString());
       return null;
-    }
-  }
-
-  /// ✨ Uint8List로 PNG 이미지 캡처 (파일 저장용)
-  Future<Uint8List?> captureAsPngBytes({double pixelRatio = 3.0}) async {
-    try {
-      final byteData = await captureAsPng(pixelRatio: pixelRatio);
-      if (byteData == null) return null;
-
-      return byteData.buffer.asUint8List();
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      return null;
-    }
-  }
-
-  /// ✨ 원본 이미지 크기 설정 (ScribbleWidget의 MeasureSize에서 호출)
-  void setOriginalImageSize(Size size) {
-    _originalImageSize = size;
-  }
-
-  /// ✨ 원본 이미지 크기 기준 정확한 픽셀 비율 계산
-  double calculateOptimalPixelRatio() {
-    // 1순위: 원본 이미지 크기 기준 계산
-    if (_originalImageSize != null &&
-        repaintBoundaryKey.currentContext != null) {
-      final renderBox =
-          repaintBoundaryKey.currentContext!.findRenderObject() as RenderBox?;
-
-      if (renderBox != null) {
-        final currentSize = renderBox.size;
-        final originalSize = _originalImageSize!;
-
-        // 원본 해상도 대비 현재 위젯 크기 비율 계산
-        final widthRatio = originalSize.width / currentSize.width;
-        final heightRatio = originalSize.height / currentSize.height;
-
-        // 더 큰 비율을 사용하여 원본 해상도 보장
-        final calculatedRatio = math.max(widthRatio, heightRatio);
-
-        // 안전 범위 내에서 제한 (0.5 ~ 8.0)
-        return calculatedRatio.clamp(0.5, 8.0);
-      }
-    }
-
-    // 2순위: 필기 복잡도 기반 계산 (Fallback)
-    final scribbleStats = stats;
-    final complexity =
-        scribbleStats.strokeCount * 0.3 +
-        (scribbleStats.totalPointCount / 100) * 0.7;
-
-    if (complexity < 10) {
-      return 2.0; // 간단한 필기
-    } else if (complexity < 50) {
-      return 3.0; // 보통 복잡도
-    } else {
-      return 4.0; // 복잡한 필기
     }
   }
 

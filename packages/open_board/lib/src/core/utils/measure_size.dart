@@ -36,13 +36,40 @@ import 'package:flutter/widgets.dart';
 /// - 정확한 모바일 감지: 화면 크기, 픽셀 밀도, 방향 기준
 /// ```
 
+/// 크기 유효성 검사 (공통 헬퍼)
+bool _isValidMeasuredSize(Size size) {
+  return size.width.isFinite &&
+      size.height.isFinite &&
+      size.width > 0 &&
+      size.height > 0;
+}
+
+/// 크기 측정 위젯의 공통 build 로직
+Widget _buildMeasureSizeBody({
+  required GlobalKey widgetKey,
+  required Widget child,
+}) {
+  return OverflowBox(
+    alignment: Alignment.topLeft,
+    minWidth: 0,
+    minHeight: 0,
+    maxWidth: double.infinity,
+    maxHeight: double.infinity,
+    child: RepaintBoundary(key: widgetKey, child: child),
+  );
+}
+
 /// 자식 위젯의 크기를 측정하고 콜백으로 전달하는 위젯
 /// ⚠️ 모바일 환경에서는 SafeMeasureSize 사용을 권장합니다.
 final class MeasureSize extends StatefulWidget {
   final Widget child;
   final ValueChanged<Size> onChange;
 
-  const MeasureSize({super.key, required this.child, required this.onChange});
+  const MeasureSize({
+    super.key,
+    required this.child,
+    required this.onChange,
+  });
 
   @override
   State<MeasureSize> createState() => _MeasureSizeState();
@@ -107,7 +134,7 @@ final class _MeasureSizeState extends State<MeasureSize> {
       final newSize = renderBox.size;
 
       // 🔒 안전성 검사 5: 크기 유효성 확인
-      if (!_isValidSize(newSize)) {
+      if (!_isValidMeasuredSize(newSize)) {
         debugPrint('⚠️ MeasureSize: 유효하지 않은 크기: $newSize');
         _isMeasuring = false;
         return;
@@ -134,14 +161,6 @@ final class _MeasureSizeState extends State<MeasureSize> {
     }
   }
 
-  /// 🔒 크기 유효성 검사
-  bool _isValidSize(Size size) {
-    return size.width.isFinite &&
-        size.height.isFinite &&
-        size.width > 0 &&
-        size.height > 0;
-  }
-
   /// 🔒 재시도 스케줄링
   void _scheduleRetry() {
     if (_timer?.isActive == true) {
@@ -164,67 +183,7 @@ final class _MeasureSizeState extends State<MeasureSize> {
 
   @override
   Widget build(BuildContext context) {
-    return OverflowBox(
-      alignment: Alignment.topLeft,
-      minWidth: 0,
-      minHeight: 0,
-      maxWidth: double.infinity,
-      maxHeight: double.infinity,
-      child: RepaintBoundary(key: _key, child: widget.child),
-    );
-  }
-}
-
-/// 자식 위젯의 크기를 즉시 측정하는 위젯
-final class InstantMeasureSize extends StatefulWidget {
-  final Widget child;
-  final ValueChanged<Size> onChange;
-
-  const InstantMeasureSize({
-    super.key,
-    required this.child,
-    required this.onChange,
-  });
-
-  @override
-  State<InstantMeasureSize> createState() => _InstantMeasureSizeState();
-}
-
-final class _InstantMeasureSizeState extends State<InstantMeasureSize> {
-  Size? _lastReportedSize;
-  bool _hasReported = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final size = Size(constraints.maxWidth, constraints.maxHeight);
-
-        // 🔒 안전성 검사: 유효한 크기일 때만 콜백 호출
-        if (_isValidSize(size) &&
-            (!_hasReported || _lastReportedSize != size)) {
-          _lastReportedSize = size;
-          _hasReported = true;
-
-          // 다음 프레임에서 콜백 호출 (레이아웃 완료 후)
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              widget.onChange(size);
-            }
-          });
-        }
-
-        return SizedBox.fromSize(size: size, child: widget.child);
-      },
-    );
-  }
-
-  /// 🔒 크기 유효성 검사
-  bool _isValidSize(Size size) {
-    return size.width.isFinite &&
-        size.height.isFinite &&
-        size.width > 0 &&
-        size.height > 0;
+    return _buildMeasureSizeBody(widgetKey: _key, child: widget.child);
   }
 }
 
@@ -309,7 +268,7 @@ final class _RenderMeasureSizeState extends State<RenderMeasureSize> {
       final size = renderBox.size;
 
       // 🔒 안전성 검사 4: 크기 유효성 확인
-      if (!_isValidSize(size)) {
+      if (!_isValidMeasuredSize(size)) {
         debugPrint('⚠️ RenderMeasureSize: 유효하지 않은 크기: $size');
         _isMeasuring = false;
         return;
@@ -329,14 +288,6 @@ final class _RenderMeasureSizeState extends State<RenderMeasureSize> {
       _isMeasuring = false;
       _scheduleRetry();
     }
-  }
-
-  /// 🔒 크기 유효성 검사
-  bool _isValidSize(Size size) {
-    return size.width.isFinite &&
-        size.height.isFinite &&
-        size.width > 0 &&
-        size.height > 0;
   }
 
   /// 🔒 재시도 스케줄링
@@ -361,14 +312,7 @@ final class _RenderMeasureSizeState extends State<RenderMeasureSize> {
 
   @override
   Widget build(BuildContext context) {
-    return OverflowBox(
-      alignment: Alignment.topLeft,
-      minWidth: 0,
-      minHeight: 0,
-      maxWidth: double.infinity,
-      maxHeight: double.infinity,
-      child: RepaintBoundary(key: _key, child: widget.child),
-    );
+    return _buildMeasureSizeBody(widgetKey: _key, child: widget.child);
   }
 }
 
@@ -549,7 +493,7 @@ final class _SafeMeasureSizeState extends State<SafeMeasureSize> {
       final size = renderBox.size;
 
       // 🔒 안전성 검사 4: 크기 유효성 확인
-      if (!_isValidSize(size)) {
+      if (!_isValidMeasuredSize(size)) {
         _handleMeasurementFailure('유효하지 않은 크기: $size');
         return;
       }
@@ -574,14 +518,6 @@ final class _SafeMeasureSizeState extends State<SafeMeasureSize> {
     } on Exception catch (error, stackTrace) {
       _handleMeasurementFailure('크기 측정 중 오류: $error', stackTrace);
     }
-  }
-
-  /// 🔒 크기 유효성 검사
-  bool _isValidSize(Size size) {
-    return size.width.isFinite &&
-        size.height.isFinite &&
-        size.width > 0 &&
-        size.height > 0;
   }
 
   /// 🔒 측정 실패 처리
@@ -626,14 +562,7 @@ final class _SafeMeasureSizeState extends State<SafeMeasureSize> {
 
   @override
   Widget build(BuildContext context) {
-    return OverflowBox(
-      alignment: Alignment.topLeft,
-      minWidth: 0,
-      minHeight: 0,
-      maxWidth: double.infinity,
-      maxHeight: double.infinity,
-      child: RepaintBoundary(key: _key, child: widget.child),
-    );
+    return _buildMeasureSizeBody(widgetKey: _key, child: widget.child);
   }
 }
 
@@ -674,8 +603,8 @@ class MeasureWidgetUtil {
   /// ```
   static Size measureWidget(
     Widget widget, {
-    BoxConstraints constraints = const BoxConstraints(),
-    TextDirection textDirection = TextDirection.ltr,
+    required BoxConstraints constraints,
+    required TextDirection textDirection,
   }) {
     final measureData = _createMeasureData(textDirection, constraints);
 
@@ -764,7 +693,7 @@ class _MeasureData {
   });
 }
 
-void debugLog(Object? message) {
+void debugLog(Object message) {
   if (!kDebugMode) return;
   debugPrint(message.toString());
 }

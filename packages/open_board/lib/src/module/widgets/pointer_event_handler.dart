@@ -4,18 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
-import 'package:open_board/src/module/coordinate_transformer.dart';
-
 /// 포인터 이벤트 처리를 담당하는 핸들러 클래스
 class PointerEventHandler {
   final ScribbleNotifier scribbleNotifier;
   final ScribbleModeNotifier modeNotifier;
-  final TransformationController? transformationController;
-  final VoidCallback? onStateChanged;
-  final Function(ScribbleNotifier)? onScribble;
-  final Function(ScribbleNotifier)? onScribbleFinished;
-  final BuildContext? context;
-
+  final VoidCallback onStateChanged;
+  final Function(ScribbleNotifier) onScribble;
+  final Function(ScribbleNotifier) onScribbleFinished;
   // 터치 관련 상태
   int _activeTouchCount = 0;
   bool _isDragging = false;
@@ -26,17 +21,10 @@ class PointerEventHandler {
   PointerEventHandler({
     required this.scribbleNotifier,
     required this.modeNotifier,
-    this.transformationController,
-    this.onStateChanged,
-    this.onScribble,
-    this.onScribbleFinished,
-    this.context,
+    required this.onStateChanged,
+    required this.onScribble,
+    required this.onScribbleFinished,
   });
-
-  CoordinateTransformer get _transformer =>
-      CoordinateTransformer(transformationController);
-
-  double get currentScale => _transformer.scale;
 
   void incrementTouch() => _activeTouchCount++;
   void decrementTouch() =>
@@ -45,7 +33,7 @@ class PointerEventHandler {
   bool get isDragging => _isDragging;
   set isDragging(bool value) {
     _isDragging = value;
-    onStateChanged?.call();
+    onStateChanged();
   }
 
   ui.PointerDeviceKind? get currentPointerKind => _currentPointerKind;
@@ -84,7 +72,7 @@ class PointerEventHandler {
     // 🎯 Undo/Redo 상태 업데이트
     drawingState.updateUndoRedoState();
 
-    onScribble?.call(scribbleNotifier);
+    onScribble(scribbleNotifier);
 
     final adjustedEvent = adjustPointerEvent(event);
     scribbleNotifier.onPointerDown(adjustedEvent, modeNotifier.state);
@@ -103,19 +91,7 @@ class PointerEventHandler {
 
     final adjustedEvent = adjustPointerEvent(event);
     scribbleNotifier.onPointerUp(adjustedEvent, modeNotifier.state);
-    onScribbleFinished?.call(scribbleNotifier);
-  }
-
-  /// 터치 이벤트가 그리기 가능한지 확인
-  bool canStartDrawing(PointerEvent event) {
-    // 🔧 멀티터치 시 그리기 차단 (스크롤 우선)
-    if (event.kind == ui.PointerDeviceKind.touch && _activeTouchCount > 1) {
-      return false;
-    }
-
-    return event.kind == ui.PointerDeviceKind.touch && _activeTouchCount == 1 ||
-        event.kind == ui.PointerDeviceKind.stylus ||
-        event.kind == ui.PointerDeviceKind.unknown;
+    onScribbleFinished(scribbleNotifier);
   }
 
   /// 멀티터치 확인

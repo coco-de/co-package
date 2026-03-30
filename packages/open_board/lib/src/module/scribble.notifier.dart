@@ -1,8 +1,6 @@
 // 🎯 Dart imports:
-import 'dart:math' as math;
 
 // 🐦 Flutter imports:
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
@@ -17,8 +15,6 @@ import 'package:open_board/src/module/state/scribble_mode.state.dart';
 import 'package:open_board/src/core/utils/shape_detector.dart';
 import 'package:open_board/src/module/widgets/scribble_widget.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
-import 'package:open_board/src/module/text/text_drawable_extensions.dart';
-import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
 import 'package:open_board/src/module/stroke/stroke_processor.dart';
 import 'package:open_board/src/module/stroke/eraser_processor.dart';
@@ -51,42 +47,13 @@ class ScribbleNotifier extends ScribbleNotifierBase
     /// If you pass a scribble here, the notifier will use that scribble as a
     /// starting point.
     Scribble? scribble,
-
-    /// How many states you want stored in the undo history, 30 by default.
-    int maxHistoryLength = 30,
-
-    /// 필기 영역 가로 사이즈
-    /// 백그라운드 이미지 사이즈와 동일 합니다
-    double? width,
-
-    /// 필기 영역 세로 사이즈
-    /// 백그라운드 이미지 사이즈와 동일 합니다
-    double? height,
-
-    /// [origin]의 x 좌표 값
-    double? x,
-
-    /// [origin]의 y 좌표 값
-    double? y,
-
-    /// 현재 필기 데이터의 앱 버전
-    String? version,
-
-    /// The curve that's used to map pen pressure to the pressure value when
-    /// recording, by default it's linear.
-    this.pressureCurve = Curves.linear,
   }) : super(
          Drawing(
            scribble:
                scribble ??
                Scribble(
                  strokes: [],
-                 width: width,
-                 height: height,
-                 x: x,
-                 y: y,
                  createdAt: DateTime.now().toIso8601String(),
-                 version: version,
                ),
          ),
        ) {
@@ -95,15 +62,10 @@ class ScribbleNotifier extends ScribbleNotifierBase
           scribble ??
           Scribble(
             strokes: [],
-            width: width,
-            height: height,
-            x: x,
-            y: y,
             createdAt: DateTime.now().toIso8601String(),
-            version: version,
           ),
     );
-    this.maxHistoryLength = maxHistoryLength;
+    this.maxHistoryLength = 30;
 
     // ♻️ StrokeProcessor 초기화
     strokeProcessor = StrokeProcessor(pressureCurve: pressureCurve);
@@ -116,7 +78,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// The curve that's used to map pen pressure to the pressure value when
   /// recording.
-  final Curve pressureCurve;
+  final Curve pressureCurve = Curves.linear;
 
   /// ♻️ 스트로크 생성/계산 프로세서
   late final StrokeProcessor strokeProcessor;
@@ -232,12 +194,6 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// 도형 인식 기능 활성화 상태
   bool _shapeRecognitionEnabled = false;
-
-  /// 도형 인식 기능을 활성화 또는 비활성화합니다.
-  /// [enabled]가 true이면 도형 인식 기능이 활성화되고, false이면 비활성화됩니다.
-  void setShapeRecognition(bool enabled) {
-    _shapeRecognitionEnabled = enabled;
-  }
 
   /// Sets the color of the pen to the given color.
   void setColor() {
@@ -386,8 +342,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
       // Shape 도구인 경우 activeLine.shapeType은 'pending'으로 유지
       // 도형 변환은 onPointerUp에서만 수행됨
-      if (newState is Drawing &&
-          newState.activeLine != null &&
+      if (newState.activeLine != null &&
           modeState.inkGroupInfo.selectedInk == InkModes.shape &&
           newState.activeLine!.shapeType.isEmpty) {
         // 드래그 중에도 쉐이프 타입을 'pending'으로 설정 (변환 예정을 표시)
@@ -663,14 +618,6 @@ class ScribbleNotifier extends ScribbleNotifierBase
   ScribbleState erasePoint(PointerEvent event, ScribbleModeState modeState) =>
       eraserProcessor.eraseAtPoint(event, modeState, state, preLocalPosition);
 
-  /// ♻️ EraserProcessor로 위임
-  Offset getInterSectionPoint(PointerEvent event, Point p) =>
-      eraserProcessor.findIntersection(event, p, preLocalPosition);
-
-  /// ♻️ 점 a와 점 b 사이의 거리를 구하는 함수
-  double getDistance(Point a, Offset b) =>
-      math.sqrt(math.pow(b.dx - a.x, 2) + math.pow(b.dy - a.y, 2));
-
   /// ♻️ StrokeProcessor로 위임
   Point getPointFromEvent(PointerEvent event) =>
       strokeProcessor.createPointFromEvent(event);
@@ -678,11 +625,6 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// ♻️ StrokeProcessor로 위임
   ScribbleState finishLineForState(ScribbleState s) =>
       strokeProcessor.finishStroke(s);
-
-
-  /// ♻️ StrokeProcessor로 위임
-  double getStrokeRadius(double size, double thinning, double p) =>
-      strokeProcessor.calculateRadius(size, thinning, p);
 
   /// 모든 올가미 스트로크를 제거하는 메서드
   void removeLassoStrokes() {
@@ -720,18 +662,6 @@ class ScribbleNotifier extends ScribbleNotifierBase
         activePointerIds: state.activePointerIds,
         pointerPosition: pointerPosition,
       ),
-    };
-  }
-
-  /// 올가미 선택을 초기화하고 새로운 올가미를 그릴 수 있도록 하는 메서드
-  void resetLassoSelection() {
-    // 올가미 스트로크 제거
-    removeLassoStrokes();
-
-    // 상태 초기화
-    temporaryValue = switch (state) {
-      final Drawing s => s.copyWith(pointerPosition: null),
-      final Erasing s => s.copyWith(pointerPosition: null),
     };
   }
 
@@ -773,72 +703,6 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
     // 교차점이 선분 위에 있는지 확인
     return t >= 0 && t <= 1 && u >= 0 && u <= 1;
-  }
-
-  /// 올가미 스트로크와 교차하는 스트로크를 찾는 메서드
-  List<int> findStrokesInLasso(List<Offset> lassoPoints) {
-    final result = <int>[];
-
-    if (lassoPoints.length < 3) {
-      return result;
-    }
-
-    // 올가미를 닫힌 경로로 만들기
-    if (lassoPoints.first != lassoPoints.last) {
-      lassoPoints.add(lassoPoints.first);
-    }
-
-    final numStrokes = state.scribble.strokes.length;
-
-    for (int i = 0; i < numStrokes; i++) {
-      final stroke = state.scribble.strokes[i];
-
-      // 올가미 스트로크는 제외
-      if (stroke.ink == InkModes.lasso || stroke.points.isEmpty) {
-        continue;
-      }
-
-      // 스트로크의 모든 포인트가 올가미 내부에 있는지 확인
-      bool isStrokeInside = true;
-      bool hasInsidePoint = false;
-
-      // 스트로크의 포인트들을 검사
-      for (final point in stroke.points) {
-        final offsetPoint = Offset(point.x, point.y);
-        if (_isPointInPolygon(offsetPoint, lassoPoints)) {
-          hasInsidePoint = true;
-        } else {
-          isStrokeInside = false;
-        }
-      }
-
-      // 스트로크가 올가미와 교차하는지 확인
-      bool isStrokeIntersecting = false;
-      for (int j = 0; j < stroke.points.length - 1; j++) {
-        final start = Offset(stroke.points[j].x, stroke.points[j].y);
-        final end = Offset(stroke.points[j + 1].x, stroke.points[j + 1].y);
-
-        for (int k = 0; k < lassoPoints.length - 1; k++) {
-          if (_doLinesIntersect(
-            start,
-            end,
-            lassoPoints[k],
-            lassoPoints[k + 1],
-          )) {
-            isStrokeIntersecting = true;
-            break;
-          }
-        }
-        if (isStrokeIntersecting) break;
-      }
-
-      // 스트로크가 올가미 내부에 있거나 교차하는 경우 선택
-      if (isStrokeInside || hasInsidePoint || isStrokeIntersecting) {
-        result.add(i);
-      }
-    }
-
-    return result;
   }
 
   /// 올가미 스트로크와 교차하는 스트로크가 있는지 확인하는 메서드
@@ -944,75 +808,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
     );
   }
 
-  /// 모든 텍스트 삭제
-  void clearAllTextDrawables() {
-    _updateScribbleWithTextDrawables(
-      textDrawableManager.clearAll(state.scribble),
-    );
-  }
-
   /// 현재 텍스트 목록 가져오기
   List<TextDrawable> getCurrentTextDrawables() =>
       textDrawableManager.getAll(state.scribble);
-
-  /// 텍스트 ID로 찾기
-  TextDrawable? findTextDrawableById(String id) =>
-      textDrawableManager.findById(state.scribble, id);
-
-  /// 위치로 텍스트 찾기
-  TextDrawable? findTextDrawableAtPosition(
-    Offset position, {
-    double tolerance = 10.0,
-  }) => textDrawableManager.findAtPosition(
-    state.scribble,
-    position,
-    tolerance: tolerance,
-  );
-
-  /// 텍스트 숨김/표시 토글
-  void toggleTextDrawableVisibility(String id) {
-    _updateScribbleWithTextDrawables(
-      textDrawableManager.toggleVisibility(state.scribble, id),
-    );
-  }
-
-  /// 텍스트 위치 이동
-  void moveTextDrawable(String id, Offset newPosition) {
-    _updateScribbleWithTextDrawables(
-      textDrawableManager.move(state.scribble, id, newPosition),
-    );
-  }
-
-  /// 선택된 텍스트들 삭제 (올가미 선택과 연동)
-  void deleteSelectedTextDrawables(List<String> selectedTextIds) {
-    _updateScribbleWithTextDrawables(
-      textDrawableManager.deleteSelected(state.scribble, selectedTextIds),
-    );
-  }
-
-  /// 텍스트 스타일 일괄 변경
-  void updateTextDrawableStyle(
-    String id, {
-    String? fontFamily,
-    double? fontSize,
-    Color? color,
-    bool? isBold,
-    bool? isItalic,
-    bool? isUnderlined,
-    TextAlignment? textAlignment,
-  }) {
-    _updateScribbleWithTextDrawables(
-      textDrawableManager.updateStyle(
-        state.scribble,
-        id,
-        fontFamily: fontFamily,
-        fontSize: fontSize,
-        color: color,
-        isBold: isBold,
-        isItalic: isItalic,
-        isUnderlined: isUnderlined,
-        textAlignment: textAlignment,
-      ),
-    );
-  }
 }

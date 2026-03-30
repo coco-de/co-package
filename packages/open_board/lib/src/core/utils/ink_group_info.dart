@@ -18,29 +18,7 @@ class InkGroupInfo {
   /// 선택된 잉크
   String selectedInk;
 
-  /// 선택된 잉크 그룹
-  String selectedInkGroup;
-
-  /// 잉크 그룹 정보
-  Map<String, Map<String, dynamic>> inkGroups;
-
-  InkGroupInfo({
-    required this.selectedInk,
-    this.selectedInkGroup = InkModes.pen,
-    this.inkGroups = const {
-      InkModes.pen: {
-        InkModes.pen: {"color": Colors.black, "width": 3.0},
-        InkModes.marker: {"color": Colors.black, "width": 5.0},
-        InkModes.pencil: {"color": Colors.black, "width": 2.0},
-        InkModes.lasso: {"color": Colors.blue, "width": 2.0},
-        InkModes.shape: {"color": Colors.black, "width": 2.0},
-        InkModes.text: {"color": Colors.black, "width": 14.0},
-      },
-      InkModes.erase: {
-        InkModes.erase: {"color": Colors.transparent, "width": 20.0},
-      },
-    },
-  });
+  InkGroupInfo({required this.selectedInk});
 
   Color get selectedColor => _colorBox[selectedInk] ?? Colors.black;
 

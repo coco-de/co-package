@@ -1,0 +1,565 @@
+{
+  "date": "2026-03-30 04:40:13.967418Z",
+  "version": "1.36.0",
+  "sensitivity": "exact",
+  "commands": {
+    "unused-code": {
+      "lib/src/core/utils/measure_size.dart": {
+        "unused-code-issue": [
+          "f098a45cbebadaacdd1b8e2f37cd86b6",
+          "ac8eb2bfa9a71721d3a0e0baf8e610c9"
+        ]
+      },
+      "lib/src/module/managers/scribble_cache_manager.dart": {
+        "unused-code-issue": [
+          "6cd098af2ce4923837491e84fc7c42e4",
+          "5433c6bfc22d70a5faeceda92a1a23b4",
+          "973c893d01bff83d7fa3bb8746344051",
+          "87c43e1f25962128cdd2123c836156cc",
+          "636310fa3579cdb793868ace676dfd16",
+          "57044c33ba45431607d83f7e47f38c53",
+          "ce6688d9fb23f10a4ab3c5783d112221",
+          "9dfc59273d92300c45a512a09db9176d",
+          "e6fd983c545afe84e9eff891d2b2debb",
+          "bb63f91714309cc24c660bbea8719932",
+          "6fc2d06da709216e110eb9831c0d486f",
+          "14c05af60f4eaf0db0bf6c89dcac36a9",
+          "3a77e1e9580cffa1aa3be0f6151b0da8",
+          "228808c4422944504c20e8998802f7f0",
+          "76ef8e7d58abf8604789818317a4fc8e",
+          "1ec3c95e892342d65b6e448e4d3cc15d",
+          "e1c54b6ce5d2e6d47b8bd6c3cb080d90",
+          "aa32722478b40fdbc5720c7a9caa7c08",
+          "4c9a3a98d82fabc03977ebbe0fe163c7",
+          "3a6f03c260671db79063c8d10deb9328"
+        ],
+        "not-assigned-unused-code-issue": [
+          "345f55f9e7ecafd1336880f01ba17b1c",
+          "77e4bdee36eb4f6c952f9ebf3d51d431",
+          "06b046736aebd06b049be14d530737d8",
+          "56cd20d5be56998bda24573e12e98e57"
+        ]
+      },
+      "lib/src/module/models/lasso_selection_state.dart": {
+        "unused-code-issue": [
+          "a6b4c6748e4758308eb2cf234145155e"
+        ]
+      },
+      "lib/src/module/scribble.notifier.dart": {
+        "not-assigned-unused-code-issue": [
+          "9e96117871b4a4cd9e1dc0f6b25247d5"
+        ]
+      },
+      "lib/src/module/scribble_controller.dart": {
+        "unused-code-issue": [
+          "2e6dd58d095f61c469b616a6f7ab11fb",
+          "f9d6f95efe49a04cec24e5610c48488b",
+          "665c6cd9caa05ab3ea8082d876613eb2",
+          "47cae8e51976bbfa8c90581666c79fd5",
+          "e0572f63a3ac4ecb4f81be5a2892e695",
+          "508ea5def26b878a8b4a26e01e868070"
+        ]
+      },
+      "lib/src/module/state/drawing_settings_persistence.dart": {
+        "not-assigned-unused-code-issue": [
+          "17f7b8dec966517f0443c944c1ed502e",
+          "7174d6e9c9f04c1eaf8bc467f3dce19a"
+        ]
+      },
+      "lib/src/module/widgets/scribble_widget.dart": {
+        "unused-code-issue": [
+          "0081fa99d65323eb76e905b5846b4c92",
+          "59064532eb65bef1ea08eb12f915d9c0"
+        ],
+        "not-assigned-unused-code-issue": [
+          "f572c33c49b207161726993c7ecfc4d2"
+        ]
+      },
+      "lib/src/module/widgets/scribble_widget_state.dart": {
+        "not-assigned-unused-code-issue": [
+          "ace8c9f86e7718a4dabbadea71e51879"
+        ]
+      },
+      "lib/src/module/widgets/simple_scribble_widget.dart": {
+        "unused-code-issue": [
+          "a78ba506ec438cbcd62ab477c550e57b"
+        ]
+      }
+    },
+    "code-duplications": {
+      "lib/src/module/text/text_interaction_manager.dart": {
+        "duplication-issue": [
+          "e48646059e4c6cd8dc70213fe5d39b6e"
+        ]
+      },
+      "lib/src/module/widgets/scribble_widget.dart": {
+        "duplication-issue": [
+          "0081fa99d65323eb76e905b5846b4c92"
+        ]
+      }
+    },
+    "parameters": {
+      "lib/src/module/scribble.notifier.dart": {
+        "unnecessary-nullable-parameter-issue": [
+          "e3cff9b21198ef7f9641744a784ba6cb"
+        ],
+        "unnecessary-optional-parameter-issue": [
+          "e3cff9b21198ef7f9641744a784ba6cb"
+        ]
+      },
+      "lib/src/module/scribble_controller.dart": {
+        "unnecessary-optional-parameter-issue": [
+          "96cbe8bc1d476d715bc664ad88fa01ee",
+          "102f285c8e4c0a6967361330112ba822",
+          "82f352562e023b5c6e4bc4fce0ede92a",
+          "6506a907f75040f65643bcbaa63ba142",
+          "90947903bc4e5d0b6cb4fb160707205f",
+          "7ffd68966f8a28ae635af9fde31fd06a",
+          "4b9cfaf999b1eceb2c9cd4e83fb8922a"
+        ]
+      },
+      "lib/src/module/state/scribble_mode.state.dart": {
+        "unnecessary-optional-parameter-issue": [
+          "a760c636f110fe86601f126ae31c4d7c"
+        ]
+      },
+      "lib/src/module/state/text_settings.dart": {
+        "unnecessary-optional-parameter-issue": [
+          "9d31b018e5b26157a230ca7bdf6c3b12",
+          "70f34d714691f0267ccfbe04363d9c5c"
+        ]
+      },
+      "lib/src/module/widgets/scribble_widget.dart": {
+        "unnecessary-nullable-parameter-issue": [
+          "3bd523269856be2bcd8d0664fa351bd1"
+        ],
+        "never-passed-parameter-issue": [
+          "1f6d503c79c59d169c0aafd6c6a5498a",
+          "c109f1d37f138acec3af0df2c7924843",
+          "96f2a14d6c3109b00becf6efe6c7e842",
+          "72add9d830adc8c6fb44e641a0f1e5a3"
+        ],
+        "unnecessary-optional-parameter-issue": [
+          "c305a8a6ae218e396468268ff9fdac89",
+          "af588f9df6a034068f20029b52f82f6f",
+          "0d68c2ad10cf2a8a30629c2795c52933",
+          "17be90947fd8bbf39eaa7e8fca07d416",
+          "e1c28703bfa45ff441f118039894511a",
+          "6cfba9ca7c286e32b7d599fb9b382096",
+          "7ae92f0f8d2463f797b885cc7cf6ab48",
+          "76ea967e329e35c73a83237894700068",
+          "d3f8af6f1c273115f5efc7144a57808b",
+          "fe662162cf8ba2cc19397afb023b2da1",
+          "02b599e0f4b91f773eb8e9209903667e",
+          "07b6d0a425b9c857cf696dda2515663e",
+          "3bd523269856be2bcd8d0664fa351bd1",
+          "d21a86287f8d93b3b21aa4c6e72d4a08"
+        ]
+      }
+    },
+    "unnecessarily-public-code": {
+      "lib/src/core/algorithm/douglas_peucker.dart": {
+        "unnecessarily-public-issue": [
+          "445e0cc3c6a9027c6c61a7d81cb6f35d",
+          "fd8f15c96aef85ccba4d8ff3565838a3",
+          "a01b65772cf46e983e377d51d19649df",
+          "f022d166b6e2ae4b207b69abe49cc725",
+          "5d2f76d009734e0570cf53cc5a355af6"
+        ]
+      },
+      "lib/src/core/utils/corner_detector.dart": {
+        "unnecessarily-public-issue": [
+          "166f2cf478f182d8bfd5816a02a8ce03"
+        ]
+      },
+      "lib/src/core/utils/extensions/merge_scribble.dart": {
+        "unnecessarily-public-issue": [
+          "eae03bec2af3a7b1ca54bc4b3e269a49",
+          "e677f39667036c8b73aa06a967a2a114",
+          "029d5832625532a6f0b954d2ad6d5cab",
+          "2f3d32b863f93b9eafb204182befe055",
+          "c5a90a54360e35c5a2a55ef8ee0253f3",
+          "5536cabcf18789d35722b33cbb313bb4",
+          "b543ed37ee212aa2933953f7258f6bba",
+          "029d5832625532a6f0b954d2ad6d5cab",
+          "2f3d32b863f93b9eafb204182befe055",
+          "604ee86042c5e36fa10325ce0b394452",
+          "a3619420559e608f0995d0eab19162da"
+        ]
+      },
+      "lib/src/core/utils/ink_group_info.dart": {
+        "unnecessarily-public-issue": [
+          "c6b2594d2cc952324cf42a0c7523d543",
+          "82ccca36f599f1c1f9eac0b55dba0a50"
+        ]
+      },
+      "lib/src/core/utils/measure_size.dart": {
+        "unnecessarily-public-issue": [
+          "78ad23b895b0b432c29de65e9a940462",
+          "4a8cb0b5d733e61e29f4757a576e5c0b",
+          "f098a45cbebadaacdd1b8e2f37cd86b6",
+          "66e06d4a79f1fbf20f71ea5ed616c53c",
+          "78ad23b895b0b432c29de65e9a940462",
+          "4a8cb0b5d733e61e29f4757a576e5c0b",
+          "78ad23b895b0b432c29de65e9a940462",
+          "4a8cb0b5d733e61e29f4757a576e5c0b",
+          "237245f07ff0504f98316bafaa1c6f75",
+          "dc4fe147aa10497226f95a1f0c8f2704",
+          "75f53071f20ad4c8cc2f99016ef52d2d",
+          "ac8eb2bfa9a71721d3a0e0baf8e610c9",
+          "8b1330d5c7c4ffa340819ddc962c9b74",
+          "0bdbdbe6d60f91ae5d4f611ea65cd85e"
+        ]
+      },
+      "lib/src/core/utils/point_calculator.dart": {
+        "unnecessarily-public-issue": [
+          "ff1ab79d7e5cd212157bc0cdf42d1e08",
+          "dd46d242f520e05281c1d777ce6ed6d2",
+          "dfc71aef78e27dced19cdf3fb5253230"
+        ]
+      },
+      "lib/src/core/utils/shape_detector.dart": {
+        "unnecessarily-public-issue": [
+          "e5408cab2b126af0cda2f4d31b6be6be",
+          "9ad4611405526d063f9617acd2df8dd1",
+          "4e30f35bc8373bb320f2bfbce8988a81",
+          "3cbb050745e4cf1cbc45880ce7d57773",
+          "634484578110b7bd874e636a2fba9d33",
+          "77e3946d47851a412172ea9ea10807ac",
+          "8fea53ce567e7bb59852c8a1a427f930",
+          "4d92d2355e33d20465d19c17bb228ed7"
+        ]
+      },
+      "lib/src/core/utils/stroke_calculator.dart": {
+        "unnecessarily-public-issue": [
+          "c7a8b6896382988a8fa2b02d89631a0b",
+          "82bb9332e26f3866bac1fb1efe2e06be",
+          "fa20cf487fce05ba7880bec67838af56"
+        ]
+      },
+      "lib/src/module/coordinate_transformer.dart": {
+        "unnecessarily-public-issue": [
+          "3fc816b5dd6d5c5147e6ebb28ed9b923"
+        ]
+      },
+      "lib/src/module/lasso/lasso_selection_manager.dart": {
+        "unnecessarily-public-issue": [
+          "4b9a540c775548994ee999c977a1d088",
+          "b04ba7af90229312f6fbfafdde77c672",
+          "f572c33c49b207161726993c7ecfc4d2",
+          "1968e92b4cf7f6cdc84029f9885b1d55",
+          "3e9320865d6affd7d3fe2d268baa060b"
+        ]
+      },
+      "lib/src/module/managers/auto_save_scheduler.dart": {
+        "unnecessarily-public-issue": [
+          "68a496a5f9c4f400f96f8f8dfbffb07d",
+          "68312b9c3b2a177d04e953d3f1aef218",
+          "c0fb38cac98f3b4ed2afd168831545ef",
+          "0c6810e271728228363f681ce166fd04"
+        ]
+      },
+      "lib/src/module/managers/scribble_cache_manager.dart": {
+        "unnecessarily-public-issue": [
+          "345f55f9e7ecafd1336880f01ba17b1c",
+          "77e4bdee36eb4f6c952f9ebf3d51d431",
+          "06b046736aebd06b049be14d530737d8",
+          "56cd20d5be56998bda24573e12e98e57",
+          "6cd098af2ce4923837491e84fc7c42e4",
+          "5433c6bfc22d70a5faeceda92a1a23b4",
+          "973c893d01bff83d7fa3bb8746344051",
+          "11677c2e14c42d472fa94c9ed7387c1b",
+          "95ff81bf38d9a8fa3eadd509bf7bacdf",
+          "3e854051e312b1dd41a393bfd091690e",
+          "87c43e1f25962128cdd2123c836156cc",
+          "636310fa3579cdb793868ace676dfd16",
+          "57044c33ba45431607d83f7e47f38c53",
+          "ce6688d9fb23f10a4ab3c5783d112221",
+          "9dfc59273d92300c45a512a09db9176d",
+          "f87f5cc8b676ffc9b8f221baaba13e7f",
+          "e6fd983c545afe84e9eff891d2b2debb",
+          "11346ea49cc1ebf83fd2a0aa8de5ddba",
+          "bb63f91714309cc24c660bbea8719932",
+          "6fc2d06da709216e110eb9831c0d486f",
+          "14c05af60f4eaf0db0bf6c89dcac36a9",
+          "3a77e1e9580cffa1aa3be0f6151b0da8",
+          "2bbad59e1e542b80536000cab8254114",
+          "28c70b18051a30f3b18904bbbeb44bdd",
+          "228808c4422944504c20e8998802f7f0",
+          "76ef8e7d58abf8604789818317a4fc8e",
+          "1ec3c95e892342d65b6e448e4d3cc15d",
+          "e1c54b6ce5d2e6d47b8bd6c3cb080d90",
+          "980feec6ee52a3432632db6c40649a06",
+          "cf5ddb064adf8c7579e4c65ed75cfbbe",
+          "aa32722478b40fdbc5720c7a9caa7c08",
+          "4c9a3a98d82fabc03977ebbe0fe163c7",
+          "9b6c8cbaacdd1c0ae4af4a10e7fbeccf",
+          "3a6f03c260671db79063c8d10deb9328"
+        ]
+      },
+      "lib/src/module/models/lasso_selection_state.dart": {
+        "unnecessarily-public-issue": [
+          "886008bbe4280c568483b6e833f9ae6e"
+        ]
+      },
+      "lib/src/module/painter/cursor_paint_delegate.dart": {
+        "unnecessarily-public-issue": [
+          "3a9d9d07bd4d149ffe29d82f0a10f00e",
+          "b7c81f2a6d403e54f32d8454edbe31ea",
+          "b63b5b4da0465b1ca1247e1a470ff582"
+        ]
+      },
+      "lib/src/module/painter/lasso_paint_delegate.dart": {
+        "unnecessarily-public-issue": [
+          "e2e348c91d90d7c91ce2a1d6e81d9a52",
+          "7db4c07d3957759ed392cb722d0b4a6f",
+          "47e3d1a1b0602ce0fc7164b3cb13e20a",
+          "3b188db393994b2d9c273403c099d7b4",
+          "2861b2c3d5cd735a673e7ceecce447b3",
+          "b5bee58583c958e1bb0fe1f8c8a5d4b9",
+          "16e2b6c863c68825fd0e7357ced0f846",
+          "80a5fa6b9c3b1173bbd65be36e293aa5",
+          "221a7d81068eaea48818895fd67413a6",
+          "8c3f42120f6b93b1db145fabc7a446dc"
+        ]
+      },
+      "lib/src/module/painter/shape_paint_delegate.dart": {
+        "unnecessarily-public-issue": [
+          "ca244b9f6cf20997c28f16799f859399"
+        ]
+      },
+      "lib/src/module/painter/stroke_paint_delegate.dart": {
+        "unnecessarily-public-issue": [
+          "ee6ca7339345725eb3425d1ddefb7364"
+        ]
+      },
+      "lib/src/module/scribble.notifier.dart": {
+        "unnecessarily-public-issue": [
+          "fc0ff22d048a06a782f836ec534ccf45",
+          "4a74ad49d0d13471ad7494c00ac5eca8",
+          "e2f331fa4eb4772a1668240aa3ae6c10",
+          "9e96117871b4a4cd9e1dc0f6b25247d5",
+          "0fe2d6ebc1ec74fecc4e01736c12da4a",
+          "5585172fe63f3d845e10cd6d6694e06c",
+          "1f6e98701f60be8219253778547a0f04",
+          "95fc436f7ed6b2cf83da3c2a215a0eef",
+          "c825d7abdb12c1d8706fa29da2771154",
+          "2d8ea5e6218f2380adf073faa7544293",
+          "bbe4729d40fcd68da10777c0884ebb20",
+          "91b6991308806f5cacc05f85c4db82de",
+          "8e275a4e1e390637a7a31db4510adb1d",
+          "005d9ba7afaee3457bb52eedc234a1ca"
+        ]
+      },
+      "lib/src/module/scribble_controller.dart": {
+        "unnecessarily-public-issue": [
+          "557e0bc39d949e0dde6a1743f90e0ce4",
+          "508ea5def26b878a8b4a26e01e868070",
+          "c5db4ecf9b78aa847ac6cdc878e63c37",
+          "9576058adfaaf58ef600c4630d1399d8",
+          "f2ee41ec541a4ea1b93f5a7ba3cfb4d9",
+          "45c6137eae3bc0867d64a4ed4d9785a5",
+          "2e6dd58d095f61c469b616a6f7ab11fb",
+          "f9d6f95efe49a04cec24e5610c48488b",
+          "665c6cd9caa05ab3ea8082d876613eb2",
+          "47cae8e51976bbfa8c90581666c79fd5",
+          "e39882284489b907f77c566918e6777c",
+          "e0572f63a3ac4ecb4f81be5a2892e695",
+          "fef5680229ef442aaa91336f10a30756",
+          "f0f01079b7dca5a02f223d002fd4506b",
+          "d65a19f500501828164472645506e3ae",
+          "e4e8ce4212df6adfbda09fd5777c136c",
+          "b7a7ccd569aa6e2eddde5e44a89e5b13"
+        ]
+      },
+      "lib/src/module/scribble_mode.notifier.dart": {
+        "unnecessarily-public-issue": [
+          "793f6fff61ae2979bff5e69ed156d609",
+          "a1b308cb7702f39e7890de63eb9d5f1b"
+        ]
+      },
+      "lib/src/module/scribble_painter.dart": {
+        "unnecessarily-public-issue": [
+          "fd16e6ba0c3ce56b0981658466ff6d2e",
+          "b28025430eeed7b60f40fe0d31f461df",
+          "a12d617d92ac823d98cdc9950c28d8f2",
+          "21f2011af288055a627a99c0b44d5b8d",
+          "cff5aeca83d20118884a36cc834a338f",
+          "15c2fa1ae10a2661be679f7cb2948544",
+          "d8ed821454966cd7f0994c104d692436",
+          "960d75fadff8d2c95ab2001e7ac4d651",
+          "4ba4019b5ddcd1e9582b931ac07553dd",
+          "0099fff9635dbb70bd55252b28666def",
+          "553d741c456d761ef457411283cd66d4"
+        ]
+      },
+      "lib/src/module/state/drawing_settings_persistence.dart": {
+        "unnecessarily-public-issue": [
+          "17f7b8dec966517f0443c944c1ed502e",
+          "7174d6e9c9f04c1eaf8bc467f3dce19a",
+          "efdcbaf470207b9b80e4b069416181fb"
+        ]
+      },
+      "lib/src/module/state/notifier_registry.dart": {
+        "unnecessarily-public-issue": [
+          "bca1f2a624a0f6f0978aeb3a9466fbe1"
+        ]
+      },
+      "lib/src/module/state/state_synchronizer.dart": {
+        "unnecessarily-public-issue": [
+          "43e9ba69bac07d23cb000ae42cf90c01"
+        ]
+      },
+      "lib/src/module/state/undo_redo_tracker.dart": {
+        "unnecessarily-public-issue": [
+          "d63dbaa7f1b8971c87e56f280bbba035",
+          "1ffb1500089fabd61289a5fd4e30f765"
+        ]
+      },
+      "lib/src/module/stroke/eraser_processor.dart": {
+        "unnecessarily-public-issue": [
+          "3889501d80a26ac0585b371f057d0191"
+        ]
+      },
+      "lib/src/module/stroke/stroke_processor.dart": {
+        "unnecessarily-public-issue": [
+          "1a76cf4c5fa3b215b4a49827ee501f44"
+        ]
+      },
+      "lib/src/module/text/inline_text_editor.dart": {
+        "unnecessarily-public-issue": [
+          "6ab75b264179b2e1d89e948663689935",
+          "093537ff6ec841a7347fcc881f04d396",
+          "e49313a9886b16d04801d65d0cc6adb0",
+          "05a0fc4a6b05e18e00b40ed816e7e038",
+          "014f06cbfe60df93d168e7861b933684",
+          "28915597e16574a4ed2c1b9b95ea72ea",
+          "c898f1647faea33c85a71d0a151856cd"
+        ]
+      },
+      "lib/src/module/text/text_drawable_manager.dart": {
+        "unnecessarily-public-issue": [
+          "74420e6dcef4c964d5eb6e1fa96b6814"
+        ]
+      },
+      "lib/src/module/text/text_interaction_manager.dart": {
+        "unnecessarily-public-issue": [
+          "4b9a540c775548994ee999c977a1d088",
+          "d3cbfbd3e2c9ae565083a80b41e91079",
+          "b04ba7af90229312f6fbfafdde77c672",
+          "95cd51ccf33301934d30fdf8d151a351",
+          "bf1a5dc4e28d83c0cfcfc417478c3dd8",
+          "7b5785872a0bac6c922568814b621c06",
+          "03862734fb083c66013f0abf0211ccd6",
+          "aecc8327fe5f6f5ec7a8d9fb5051a565",
+          "bf85f7f6cdbb6af4b16bae44f7c41395",
+          "0e56df95b5a9db301e451b18656272b1",
+          "3e9320865d6affd7d3fe2d268baa060b"
+        ]
+      },
+      "lib/src/module/text/text_painter.dart": {
+        "unnecessarily-public-issue": [
+          "20770f6877eb88efb7044b5b3124c80f",
+          "25d3638de1daf1ab198cb0630e5369ff",
+          "36a213c581d552d3da4253f85ee36d30",
+          "494c4a9e0a3a2a23b0d64a2a5ffc9a40"
+        ]
+      },
+      "lib/src/module/widgets/pointer_event_handler.dart": {
+        "unnecessarily-public-issue": [
+          "4b9a540c775548994ee999c977a1d088",
+          "d3cbfbd3e2c9ae565083a80b41e91079",
+          "b04ba7af90229312f6fbfafdde77c672",
+          "6c3d6e99b9d3434041e6695b3987b772",
+          "25dc5ede87f19e84ce5c14aed9fb9f63",
+          "d5635dff5e73f87d35d2a1efa54c37b5",
+          "0995bc8489dc92ec9ad8959fc36dc9e1"
+        ]
+      },
+      "lib/src/module/widgets/scribble_render_layers.dart": {
+        "unnecessarily-public-issue": [
+          "4b9a540c775548994ee999c977a1d088",
+          "d3cbfbd3e2c9ae565083a80b41e91079",
+          "0e56df95b5a9db301e451b18656272b1",
+          "02e27782d9e6efe3f501de1ce45ee907",
+          "b28025430eeed7b60f40fe0d31f461df",
+          "33a435c929aa5101a806fd160b34334b",
+          "2d7d894c27835a9c3191a28153aa2c85",
+          "62525155587aada527cfc20dd580d5e3",
+          "15c2fa1ae10a2661be679f7cb2948544",
+          "6b3d37e6a7c644157b7a8f17dff0a092",
+          "87e76a72f2b991ecf69c0d079c034553",
+          "4034b36b821c4ba8faa4a0ab16657636",
+          "4d48943dce26c8aea1f6383aebe8bf8b",
+          "9facfb0ba9f66aa01949700624e447f4",
+          "7b23e5c1227ffb75d085e982ea97412b"
+        ]
+      },
+      "lib/src/module/widgets/scribble_widget.dart": {
+        "unnecessarily-public-issue": [
+          "5f8457ff265af94a3be8e4335a41d289",
+          "8493cdee42899be028572f5e5876d2ed",
+          "0081fa99d65323eb76e905b5846b4c92",
+          "59064532eb65bef1ea08eb12f915d9c0",
+          "3442f57c5d958b10f35db703d3c6a7e3",
+          "f73cd31d048b9c2a69b49dac34e52873",
+          "999d41b2b6e4b31497cab606d9a2f63d",
+          "a5f482df5423b1383b66fa1f87891009",
+          "d3cbfbd3e2c9ae565083a80b41e91079",
+          "81f01ab95f06bf3ebd8b187619573775",
+          "62525155587aada527cfc20dd580d5e3",
+          "15c2fa1ae10a2661be679f7cb2948544",
+          "8de0dffe867f2e752deca91bad32b055",
+          "fe75d4daf621897ca0eec450aeef04d4",
+          "b28025430eeed7b60f40fe0d31f461df",
+          "33a435c929aa5101a806fd160b34334b",
+          "6a6dd31f91a1aa823f600d904f60deb1",
+          "137202c548c9b29010f01a28bbf86cea",
+          "d7917fe64d5f50a51caeff32069c35bd",
+          "6711faeb8f732b0c96431385b4dc84f2",
+          "f720fb7621235a8129300b70e3e5a910",
+          "54ebf4eda35777f4451f80fcdac04cf1",
+          "3110472aa89124a3202a66f2148a4a43",
+          "846230144182517bcc0701a2c5b280f2",
+          "eb153c05e1034675b74c2ed56d539386",
+          "f572c33c49b207161726993c7ecfc4d2"
+        ]
+      },
+      "lib/src/module/widgets/scribble_widget_state.dart": {
+        "unnecessarily-public-issue": [
+          "dc0b5508782e7730d243553c9ab99a81",
+          "d874b1fce2642ed9a42cec7750d97a73",
+          "ace8c9f86e7718a4dabbadea71e51879",
+          "dcf8065008a914055d7975e809b262f9",
+          "b41a54df304591d2aafa086c7a102b28",
+          "cc313ca0072ae12cf60eef626262db07"
+        ]
+      },
+      "lib/src/module/widgets/simple_scribble_widget.dart": {
+        "unnecessarily-public-issue": [
+          "28910419dd901358437f64c94c5f8572",
+          "6bd7baadefac323798bf20147f63442e",
+          "f3d0664fd1ccb7077034ce5ff03a0a69",
+          "9fe4b3808dc456637df176d11c620e4f",
+          "73160a9f7ff4884b769bdfc1b11620ca",
+          "f46d7e8ae77cc2b554a5012e250cce5d",
+          "0a1b70d42bc5d43e5d9b83c6527f2187",
+          "54ebf4eda35777f4451f80fcdac04cf1",
+          "6243d8602b67867b62b195c3921d34bb",
+          "eb153c05e1034675b74c2ed56d539386",
+          "1f65f17b5b8b28ce487c658affb9b34a",
+          "cee671f42cbae24812f6cf175ff30213",
+          "3f8c9866807d15ee52b947328f6d8894",
+          "e329806bf408267d68af5bc1f35f3e61",
+          "3208a59b879acb68feeb3e46076a7e01",
+          "ef5e2643843b03f5787dd070781f4975",
+          "3459c2cbb0448b047943b48d31043379",
+          "c3f209c05a9e2289c1f960b23f83443b",
+          "b631081d1662e1cd5ac9c846ce60a3be",
+          "a78ba506ec438cbcd62ab477c550e57b",
+          "521fee90e2ddb68aa4b6fe1902e4455d"
+        ]
+      }
+    }
+  }
+}

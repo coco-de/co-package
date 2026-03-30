@@ -48,9 +48,6 @@ class TextSettings {
   /// The text alignment to be used for new text drawables
   final TextAlignment textAlignment;
 
-  /// Focus node for the text field
-  final FocusNode? focusNode;
-
   /// Creates a [TextSettings] object
   const TextSettings({
     this.textStyle = const TextStyle(
@@ -59,21 +56,7 @@ class TextSettings {
       fontWeight: FontWeight.normal,
     ),
     this.textAlignment = TextAlignment.center,
-    this.focusNode,
   });
-
-  /// Creates a copy of this [TextSettings] with the given fields replaced
-  TextSettings copyWith({
-    TextStyle? textStyle,
-    TextAlignment? textAlignment,
-    FocusNode? focusNode,
-  }) {
-    return TextSettings(
-      textStyle: textStyle ?? this.textStyle,
-      textAlignment: textAlignment ?? this.textAlignment,
-      focusNode: focusNode ?? this.focusNode,
-    );
-  }
 
   @override
   bool operator ==(Object other) =>
@@ -81,10 +64,9 @@ class TextSettings {
       other is TextSettings &&
           runtimeType == other.runtimeType &&
           textStyle == other.textStyle &&
-          textAlignment == other.textAlignment &&
-          focusNode == other.focusNode;
+          textAlignment == other.textAlignment;
 
   @override
   int get hashCode =>
-      textStyle.hashCode ^ textAlignment.hashCode ^ focusNode.hashCode;
+      textStyle.hashCode ^ textAlignment.hashCode;
 }

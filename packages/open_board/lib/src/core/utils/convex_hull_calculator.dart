@@ -28,20 +28,6 @@ class ConvexHullCalculator {
     return _performGrahamScan(pivot, filteredPoints);
   }
 
-  /// Convex Hull 면적 계산
-  static double calculateConvexHullArea(List<Point> hull) {
-    if (hull.length < 3) return 0.0;
-
-    double area = 0.0;
-    for (int i = 0; i < hull.length; i++) {
-      int j = (i + 1) % hull.length;
-      area += hull[i].x * hull[j].y;
-      area -= hull[j].x * hull[i].y;
-    }
-
-    return (area.abs() / 2.0);
-  }
-
   /// 가장 아래 있는 점 찾기 (피봇 포인트)
   static Point _findPivotPoint(List<Point> points) {
     Point pivot = points[0];
