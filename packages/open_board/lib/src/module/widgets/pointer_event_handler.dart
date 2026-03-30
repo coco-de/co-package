@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
+import 'package:open_board/src/module/coordinate_transformer.dart';
 
 /// 포인터 이벤트 처리를 담당하는 핸들러 클래스
 class PointerEventHandler {
@@ -32,8 +33,10 @@ class PointerEventHandler {
     this.context,
   });
 
-  double get currentScale =>
-      transformationController?.value.getMaxScaleOnAxis() ?? 1.0;
+  CoordinateTransformer get _transformer =>
+      CoordinateTransformer(transformationController);
+
+  double get currentScale => _transformer.scale;
 
   void incrementTouch() => _activeTouchCount++;
   void decrementTouch() =>

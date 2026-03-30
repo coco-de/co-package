@@ -1,11 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:vector_math/vector_math_64.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/core/utils/ink_group_info.dart';
+import 'package:open_board/src/module/coordinate_transformer.dart';
 
 /// 올가미 선택 기능을 관리하는 클래스
 /// ScribbleWidget의 올가미 관련 기능들을 분리하여 관리
@@ -68,8 +68,10 @@ class LassoSelectionManager {
   bool get showLassoOverlay => _showLassoOverlay;
   bool get isLassoTransforming => _isLassoTransforming;
 
-  double get currentScale =>
-      transformationController?.value.getMaxScaleOnAxis() ?? 1.0;
+  CoordinateTransformer get _transformer =>
+      CoordinateTransformer(transformationController);
+
+  double get currentScale => _transformer.scale;
 
   /// 올가미 모드에서 포인터 다운 처리
   bool handleLassoModePointerDown(
@@ -514,22 +516,14 @@ class LassoSelectionManager {
     final buttonPosition = corners[3]; // 좌하단 = 변형 버튼 위치 (캔버스 좌표)
 
     // 버튼 위치를 화면 좌표로 변환 (scene → viewport)
-    Offset screenButtonPosition = buttonPosition;
-    if (transformationController != null) {
-      final matrix = transformationController!.value;
-      screenButtonPosition = MatrixUtils.transformPoint(matrix, buttonPosition);
-    }
+    final screenButtonPosition = _transformer.canvasToScreen(buttonPosition);
 
     // ⭐ 터치 위치와 버튼 위치의 오프셋 저장 (점프 방지)
     _touchToButtonOffset = screenButtonPosition - localPosition;
 
     // 중심점을 화면 좌표로 변환 (scene → viewport)
     final center = _originalOrientedBoundingBox!.center;
-    Offset screenCenter = center;
-    if (transformationController != null) {
-      final matrix = transformationController!.value;
-      screenCenter = MatrixUtils.transformPoint(matrix, center);
-    }
+    final screenCenter = _transformer.canvasToScreen(center);
 
     // 버튼에서 중심까지의 화면 거리와 각도 (고정 기준)
     final centerToButton = screenButtonPosition - screenCenter;
@@ -603,25 +597,14 @@ class LassoSelectionManager {
       final buttonPosition = corners[3]; // 좌하단
 
       // 버튼 위치를 화면 좌표로 변환 (scene → viewport)
-      Offset screenButtonPosition = buttonPosition;
-      if (transformationController != null) {
-        final matrix = transformationController!.value;
-        screenButtonPosition = MatrixUtils.transformPoint(
-          matrix,
-          buttonPosition,
-        );
-      }
+      final screenButtonPosition = _transformer.canvasToScreen(buttonPosition);
 
       // ⭐ 터치 위치와 버튼 위치의 오프셋 저장 (점프 방지)
       _touchToButtonOffset = screenButtonPosition - localPosition;
 
       // 중심점을 화면 좌표로 변환 (scene → viewport)
       final center = _originalOrientedBoundingBox!.center;
-      Offset screenCenter = center;
-      if (transformationController != null) {
-        final matrix = transformationController!.value;
-        screenCenter = MatrixUtils.transformPoint(matrix, center);
-      }
+      final screenCenter = _transformer.canvasToScreen(center);
 
       // 버튼에서 중심까지의 화면 거리와 각도
       final centerToButton = screenButtonPosition - screenCenter;
@@ -644,11 +627,7 @@ class LassoSelectionManager {
         localPosition + (_touchToButtonOffset ?? Offset.zero);
 
     // 중심점을 화면 좌표로 변환 (scene → viewport)
-    Offset screenCenter = center;
-    if (transformationController != null) {
-      final matrix = transformationController!.value;
-      screenCenter = MatrixUtils.transformPoint(matrix, center);
-    }
+    final screenCenter = _transformer.canvasToScreen(center);
 
     // 버튼 위치에서 중심까지의 거리와 각도
     final centerToButton = currentButtonPosition - screenCenter;
@@ -845,16 +824,8 @@ class LassoSelectionManager {
     Offset localPosition = position;
 
     // transformationController가 있고 스케일이 1.0이 아닌 경우 추가 변환
-    if (transformationController != null &&
-        transformationController!.value.getMaxScaleOnAxis() != 1.0) {
-      final matrix = transformationController!.value;
-      final inverseMatrix = Matrix4.inverted(matrix);
-      final vector = Vector4(localPosition.dx, localPosition.dy, 0, 1);
-      final transformedVector = inverseMatrix * vector;
-      localPosition = Offset(
-        transformedVector.x as double,
-        transformedVector.y as double,
-      );
+    if (currentScale != 1.0) {
+      localPosition = _transformer.canvasToLocal(localPosition);
     }
 
     final scale = currentScale;

@@ -16,6 +16,9 @@ export 'src/module/managers/scribble_cache_manager.dart';
 // 🔄 메타데이터 및 동기화 시스템
 export 'src/module/state/scribble_metadata.dart'; // ✨ 새로운 메타데이터 시스템
 
+// 좌표 변환
+export 'src/module/coordinate_transformer.dart'; // ♻️ 스크린 ↔ 캔버스 좌표 변환 유틸리티
+
 // 유틸리티들
 export 'src/core/utils/measure_size.dart'; // ✨ 크기 측정 유틸리티
 

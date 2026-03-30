@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vector_math/vector_math_64.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
@@ -9,6 +8,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
+import 'package:open_board/src/module/coordinate_transformer.dart';
 
 /// 텍스트 상호작용을 처리하는 핸들러 클래스
 class TextInteractionHandler {
@@ -61,8 +61,10 @@ class TextInteractionHandler {
   bool get isTextTransforming => _isTextTransforming;
   bool get isTextResizing => _isTextResizing;
 
-  double get currentScale =>
-      transformationController?.value.getMaxScaleOnAxis() ?? 1.0;
+  CoordinateTransformer get _transformer =>
+      CoordinateTransformer(transformationController);
+
+  double get currentScale => _transformer.scale;
 
   /// 텍스트 설정 업데이트 (현재 선택된 색상과 크기 반영)
   void _updateTextSettings() {
@@ -86,10 +88,7 @@ class TextInteractionHandler {
   /// 텍스트 모드 처리
   void handleTextMode(Offset position) {
     // 스케일 조정된 위치 계산 (다른 모드와 일관성 유지)
-    Offset adjustedPosition = position;
-    if (currentScale != 1.0) {
-      adjustedPosition = transformationController!.toScene(position);
-    }
+    final adjustedPosition = _transformer.screenToCanvas(position);
 
     // 기존 텍스트 클릭 체크
     for (final textDrawable in _textDrawables) {
@@ -170,18 +169,7 @@ class TextInteractionHandler {
     }
 
     // scene 좌표를 local 좌표로 변환
-    Offset localPosition = scenePosition;
-    if (currentScale != 1.0 && transformationController != null) {
-      // transformation matrix의 역변환을 사용하여 scene → local 변환
-      final matrix = transformationController!.value;
-      final inverseMatrix = Matrix4.inverted(matrix);
-      final vector = Vector4(scenePosition.dx, scenePosition.dy, 0, 1);
-      final transformedVector = inverseMatrix * vector;
-      localPosition = Offset(
-        transformedVector.x as double,
-        transformedVector.y as double,
-      );
-    }
+    final localPosition = _transformer.canvasToLocal(scenePosition);
 
     // local 좌표를 화면 좌표로 변환
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
@@ -235,19 +223,7 @@ class TextInteractionHandler {
 
     // scene 좌표를 local 좌표로 변환 후 화면 좌표로 변환
     final scenePosition = textDrawable.position;
-    Offset localPosition = scenePosition;
-
-    if (currentScale != 1.0 && transformationController != null) {
-      // transformation matrix의 역변환을 사용하여 scene → local 변환
-      final matrix = transformationController!.value;
-      final inverseMatrix = Matrix4.inverted(matrix);
-      final vector = Vector4(scenePosition.dx, scenePosition.dy, 0, 1);
-      final transformedVector = inverseMatrix * vector;
-      localPosition = Offset(
-        transformedVector.x as double,
-        transformedVector.y as double,
-      );
-    }
+    final localPosition = _transformer.canvasToLocal(scenePosition);
 
     // local 좌표를 화면 좌표로 변환
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
@@ -345,10 +321,7 @@ class TextInteractionHandler {
   /// 다른 모드에서 텍스트 터치 처리
   bool _handleTextTouchInOtherModes(PointerDownEvent event) {
     // 스케일 조정된 위치 계산
-    Offset adjustedPosition = event.localPosition;
-    if (currentScale != 1.0) {
-      adjustedPosition = transformationController!.toScene(event.localPosition);
-    }
+    final adjustedPosition = _transformer.screenToCanvas(event.localPosition);
 
     // 선택된 텍스트가 있는 경우 변형 처리
     if (_selectedTextDrawable != null) {
@@ -425,12 +398,7 @@ class TextInteractionHandler {
         !_isTextResizing &&
         _selectedTextDrawable != null) {
       // 스케일 조정된 위치 계산
-      Offset adjustedPosition = event.localPosition;
-      if (currentScale != 1.0) {
-        adjustedPosition = transformationController!.toScene(
-          event.localPosition,
-        );
-      }
+      final adjustedPosition = _transformer.screenToCanvas(event.localPosition);
 
       // 드래그 거리 확인
       final dragDistance = (adjustedPosition - _textTapStartPosition!).distance;
@@ -471,10 +439,7 @@ class TextInteractionHandler {
   /// 텍스트 크기 조절 처리
   void _handleTextResize(PointerMoveEvent event) {
     // 스케일 조정된 위치 계산
-    Offset adjustedPosition = event.localPosition;
-    if (currentScale != 1.0) {
-      adjustedPosition = transformationController!.toScene(event.localPosition);
-    }
+    final adjustedPosition = _transformer.screenToCanvas(event.localPosition);
 
     // 드래그 거리를 기반으로 폰트 크기 계산
     final delta = adjustedPosition - _textDragStartPosition!;
@@ -511,10 +476,7 @@ class TextInteractionHandler {
   /// 텍스트 드래그 처리
   void _handleTextDrag(PointerMoveEvent event) {
     // 스케일 조정된 위치 계산
-    Offset adjustedPosition = event.localPosition;
-    if (currentScale != 1.0) {
-      adjustedPosition = transformationController!.toScene(event.localPosition);
-    }
+    final adjustedPosition = _transformer.screenToCanvas(event.localPosition);
 
     // 드래그 거리 계산
     final delta = adjustedPosition - _textDragStartPosition!;

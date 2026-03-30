@@ -6,6 +6,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
+import 'package:open_board/src/module/coordinate_transformer.dart';
 import 'dart:math' as math;
 
 /// 텍스트 상호작용을 관리하는 클래스
@@ -103,8 +104,10 @@ class TextInteractionManager {
       _isTransformingText ||
       isTextDragPreparing;
 
-  double get currentScale =>
-      transformationController?.value.getMaxScaleOnAxis() ?? 1.0;
+  CoordinateTransformer get _transformer =>
+      CoordinateTransformer(transformationController);
+
+  double get currentScale => _transformer.scale;
 
   /// 스크리블에서 텍스트 데이터 초기화
   void _initializeFromScribble() {
