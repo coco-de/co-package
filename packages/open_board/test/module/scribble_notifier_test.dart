@@ -415,12 +415,9 @@ void main() {
         expect(found!.text, 'Found');
       });
 
-      test('존재하지 않는 id로 검색하면 예외가 발생한다', () {
-        // firstWhere는 orElse 없이 호출되므로 StateError 발생
-        expect(
-          () => notifier.findTextDrawableById('nonexistent'),
-          throwsA(isA<StateError>()),
-        );
+      test('존재하지 않는 id로 검색하면 null을 반환한다', () {
+        final result = notifier.findTextDrawableById('nonexistent');
+        expect(result, isNull);
       });
     });
   });
