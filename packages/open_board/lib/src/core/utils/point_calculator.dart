@@ -4,27 +4,12 @@ import 'dart:math' hide Point;
 // 🌎 Project imports:
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 
-// 🌎 Project imports:
-
-/// Various (mostly vector) math helpers. Each function returns a new Point.
-Point neg(Point A) {
-  return Point(x: -A.x, y: -A.y, p: A.p);
-}
-
 Point add(Point A, Point B) {
   return Point(x: A.x + B.x, y: A.y + B.y, p: B.p);
 }
 
 Point sub(Point A, Point B) {
   return Point(x: A.x - B.x, y: A.y - B.y, p: A.p);
-}
-
-Point mulV(Point A, Point B) {
-  return Point(x: A.x * B.x, y: A.y * B.y, p: B.p);
-}
-
-Point divV(Point A, Point B) {
-  return Point(x: A.x / B.x, y: A.y / B.y, p: B.p);
 }
 
 Point mul(Point A, double s) {

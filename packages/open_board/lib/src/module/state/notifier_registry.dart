@@ -15,21 +15,12 @@ class NotifierRegistry {
   /// 활성 ScribbleNotifier 변경 알림용 ValueNotifier
   late ValueNotifier<ScribbleNotifier?> activeScribbleNotifierNotifier;
 
-  /// 등록된 modeNotifier 수
-  int get activeModeNotifierCount => _activeModeNotifiers.length;
-
-  /// 등록된 scribbleNotifier 수
-  int get activeScribbleNotifierCount => _activeScribbleNotifiers.length;
-
   /// 현재 활성 ScribbleNotifier (undo/redo 대상)
   ScribbleNotifier? get lastActiveScribbleNotifier =>
       _lastActiveScribbleNotifier;
 
   /// 모든 활성 modeNotifier들
   Set<ScribbleModeNotifier> get activeModeNotifiers => _activeModeNotifiers;
-
-  /// 모든 활성 scribbleNotifier들
-  Set<ScribbleNotifier> get activeScribbleNotifiers => _activeScribbleNotifiers;
 
   /// ValueNotifier 초기화 (DrawingState._initializeNotifiers에서 호출)
   void initialize(
@@ -63,7 +54,7 @@ class NotifierRegistry {
   void unregisterScribbleNotifier(
     ScribbleNotifier scribbleNotifier, {
     required bool isDisposed,
-    VoidCallback? onLastActiveCleared,
+    required VoidCallback onLastActiveCleared,
   }) {
     _activeScribbleNotifiers.remove(scribbleNotifier);
 
@@ -72,7 +63,7 @@ class NotifierRegistry {
 
       if (!isDisposed) {
         activeScribbleNotifierNotifier.value = null;
-        onLastActiveCleared?.call();
+        onLastActiveCleared();
       }
     }
   }
@@ -121,10 +112,4 @@ class NotifierRegistry {
     return null;
   }
 
-  /// 모든 리소스 정리
-  void clear() {
-    _activeModeNotifiers.clear();
-    _activeScribbleNotifiers.clear();
-    _lastActiveScribbleNotifier = null;
-  }
 }

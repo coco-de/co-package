@@ -1,9 +1,6 @@
 // import 'dart:developer' show log; // 🚀 성능 최적화: 디버그 로그 제거
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble_controller.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
@@ -95,17 +92,8 @@ final class SimpleScribbleWidget extends StatefulWidget {
   /// 허용된 포인터 모드 (기본: 펜만 허용하여 손필기 방지)
   final ScribblePointerMode allowedPointersMode;
 
-  /// 🔥 새로운 파라미터: 화면 전체 사용 여부
-  final bool useFullScreen;
-
-  /// 🆕 새로운 파라미터: 최소 캔버스 크기
-  final Size? minCanvasSize;
-
   /// 🆕 논리 컨텐츠 크기(PDF 논리 사이즈). 지정 시 내부 ScribbleWidget에 전달
   final Size? contentLogicalSize;
-
-  /// 🆕 외부에서 주입하는 초기 스케일(선택)
-  final double? initialScale;
 
   const SimpleScribbleWidget({
     super.key,
@@ -127,11 +115,8 @@ final class SimpleScribbleWidget extends StatefulWidget {
     this.maxScale = 6.0,
     this.panDirection =
         PanDirection.horizontal, // 🎯 기본값: 가로 pan 허용 (PageView 스와이프)
-    this.allowedPointersMode = ScribblePointerMode.penOnly, // 🚫 손필기 방지: 펜만 허용
-    this.useFullScreen = true, // 🔥 기본값: 화면 전체 사용
-    this.minCanvasSize, // 🆕 최소 캔버스 크기
+    this.allowedPointersMode = ScribblePointerMode.penOnly, // 🆕 최소 캔버스 크기
     this.contentLogicalSize,
-    this.initialScale,
   });
 
   @override
@@ -141,7 +126,6 @@ final class SimpleScribbleWidget extends StatefulWidget {
 final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
   late ScribbleController _controller;
   bool _isControllerOwned = false; // 내부에서 생성한 컨트롤러인지 여부
-  final GlobalKey _repaintBoundaryKey = GlobalKey();
 
   @override
   void initState() {
@@ -208,35 +192,6 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
     super.dispose();
   }
 
-  /// 현재 필기 위젯을 이미지로 캡처합니다.
-  ///
-  /// [pixelRatio]는 이미지 해상도를 결정합니다 (기본값: 3.0).
-  /// [format]은 이미지 형식을 지정합니다 (기본값: PNG).
-  ///
-  /// 반환값은 이미지 데이터가 포함된 ByteData입니다.
-  Future<ByteData?> captureImage({
-    double pixelRatio = 3.0,
-    ui.ImageByteFormat format = ui.ImageByteFormat.png,
-  }) async {
-    try {
-      // RenderRepaintBoundary 객체 가져오기
-      final RenderRepaintBoundary boundary =
-          _repaintBoundaryKey.currentContext!.findRenderObject()
-              as RenderRepaintBoundary;
-
-      // 이미지로 변환
-      final ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
-
-      // ByteData로 변환
-      final ByteData? byteData = await image.toByteData(format: format);
-
-      return byteData;
-    } on Exception catch (error) {
-      debugPrint('❌ 위젯 캡처 실패: $error');
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // 🔧 디버깅: 성능 최적화를 위해 빌드 로그 제거 (필요시에만 활성화)
@@ -248,7 +203,6 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
       repaintBoundaryKey:
           _controller.repaintBoundaryKey, // ✨ controller의 key 전달
       contentLogicalSize: widget.contentLogicalSize,
-      initialScale: widget.initialScale,
       onScribble: widget.onScribbleChanged != null
           ? (notifier) {
               // ✅ 빈 스트로크도 저장 필요 (지우개로 전부 삭제한 경우)
@@ -274,130 +228,7 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
       // 기타 기본값들
       drawPen: true,
       drawEraser: true,
-      pressureFactor: 0.5,
-      speedFactor: 0.1,
-      minWidthFactor: 0.3,
       child: widget.child, // 🔥 child 전달 - 마지막에 위치
     );
-  }
-}
-
-/// ✨ 컨트롤러 없이 바로 사용할 수 있는 간편 위젯
-///
-/// 가장 간단한 사용법을 위한 위젯입니다.
-///
-/// 사용 예시:
-/// ```dart
-/// QuickScribbleWidget(
-///   child: YourWidget(),
-///   onSave: (scribbleData) => saveToDatabase(scribbleData),
-/// )
-/// ```
-final class QuickScribbleWidget extends StatefulWidget {
-  /// 자식 위젯 (필수)
-  final Widget child;
-
-  /// 필기 저장 콜백
-  final Function(Scribble scribble)? onSave;
-
-  /// 로드할 필기 데이터
-  final Scribble? loadScribble;
-
-  const QuickScribbleWidget({
-    super.key,
-    required this.child,
-    this.onSave,
-    this.loadScribble,
-  });
-
-  @override
-  State<QuickScribbleWidget> createState() => _QuickScribbleWidgetState();
-}
-
-final class _QuickScribbleWidgetState extends State<QuickScribbleWidget> {
-  late ScribbleController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = ScribbleController(initialScribble: widget.loadScribble);
-
-    // 🚫 손필기 방지: 펜만 허용하도록 설정
-    _controller.modeNotifier.setAllowedPointersMode(
-      ScribblePointerMode.penOnly,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  /// 현재 필기 데이터 저장
-  void _saveScribble() {
-    if (_controller.isEmpty) return;
-    widget.onSave?.call(_controller.currentScribble);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // ✨ 간단한 툴바
-        if (widget.onSave != null)
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.undo),
-                onPressed: _controller.canUndo ? _controller.undo : null,
-              ),
-              IconButton(
-                icon: const Icon(Icons.redo),
-                onPressed: _controller.canRedo ? _controller.redo : null,
-              ),
-              IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: _controller.isEmpty ? null : _controller.clear,
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.save),
-                onPressed: _controller.isEmpty ? null : _saveScribble,
-              ),
-            ],
-          ),
-
-        // ✨ 필기 영역
-        Expanded(
-          child: SimpleScribbleWidget(
-            controller: _controller,
-            child: widget.child,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 컨트롤러에 대한 접근을 제공하는 헬퍼 위젯
-class ScribbleControllerProvider extends InheritedWidget {
-  final ScribbleController controller;
-
-  const ScribbleControllerProvider({
-    super.key,
-    required this.controller,
-    required super.child,
-  });
-
-  static ScribbleController? of(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<ScribbleControllerProvider>()
-        ?.controller;
-  }
-
-  @override
-  bool updateShouldNotify(ScribbleControllerProvider oldWidget) {
-    return oldWidget.controller != controller;
   }
 }

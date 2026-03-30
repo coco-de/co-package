@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:math' as math;
@@ -14,7 +13,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_board/src/core/utils/extensions/merge_scribble.dart'; // 스트로크 분할/머지 import
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/managers/auto_save_scheduler.dart';
-import 'package:open_board/src/module/managers/scribble_file_storage.dart';
 import 'package:open_board/src/module/scribble_controller.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
@@ -31,10 +29,6 @@ import 'package:open_board/src/module/state/scribble.state.dart';
 ///
 /// 키 형식: 'contentId/pageId' 또는 원하는 계층 구조
 class ScribbleCacheManager extends ChangeNotifier {
-  static ScribbleCacheManager? _instance;
-  static ScribbleCacheManager get instance =>
-      _instance ??= ScribbleCacheManager._();
-
   ScribbleCacheManager._() {
     _autoSaveScheduler = AutoSaveScheduler(
       onSave: (key, scribble) async {
@@ -43,9 +37,6 @@ class ScribbleCacheManager extends ChangeNotifier {
       isDisposed: () => _isDisposed,
     );
   }
-
-  /// 파일 I/O 담당 모듈
-  final ScribbleFileStorage _fileStorage = ScribbleFileStorage();
 
   /// 자동저장 스케줄러
   late final AutoSaveScheduler _autoSaveScheduler;
@@ -109,8 +100,6 @@ class ScribbleCacheManager extends ChangeNotifier {
   String get currentTool => _currentTool;
   Color get currentColor => _currentColor;
   double get currentStrokeWidth => _currentStrokeWidth;
-  String get currentPointerMode => _currentPointerMode;
-  bool get isAutoSaveEnabled => _autoSaveEnabled;
 
   /// 웹 플랫폼 여부 (파일 I/O 불가)
   bool get _isWeb => kIsWeb;
@@ -200,68 +189,10 @@ class ScribbleCacheManager extends ChangeNotifier {
     return _controllerCache[normalizedKey]!;
   }
 
-  /// 특정 키의 컨트롤러를 가져오거나 생성 (비동기식, 파일에서 자동 로드)
-  /// 키 형식: 'contentId/pageId' (예: 'book123/page1')
-  Future<ScribbleController> getControllerAsync(String key) async {
-    final normalizedKey = _normalizeKey(key);
-
-    if (!_controllerCache.containsKey(normalizedKey)) {
-      _controllerCache[normalizedKey] = ScribbleController(
-        initialTool: _currentTool,
-        initialColor: _currentColor,
-        initialStrokeWidth: _currentStrokeWidth,
-        onScribbleChanged: (scribble) {
-          if (_isDisposed) return; // ✨ dispose 후 호출 방지
-
-          if (_autoSaveEnabled) {
-            scheduleAutoSave(normalizedKey, scribble);
-          }
-
-          // 🚨 Widget tree lock 방지: UI 업데이트를 다음 프레임으로 연기
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!_isDisposed) {
-              notifyListeners();
-            }
-          });
-        },
-      );
-
-      // ✨ 포인터 모드 동기화
-      _applyPointerModeToController(_controllerCache[normalizedKey]!);
-
-      // 파일에서 필기 데이터 로드 시도
-      try {
-        final scribble = await loadScribble(normalizedKey);
-        if (scribble != null) {
-          final bytes = scribble.writeToBuffer();
-          _controllerCache[normalizedKey]!.importFromBytes(bytes);
-        }
-      } on Exception catch (error, stackTrace) {
-        debugPrintStack(stackTrace: stackTrace);
-        debugPrint(error.toString());
-      }
-    }
-
-    return _controllerCache[normalizedKey]!;
-  }
-
   /// 특정 키의 컨트롤러가 존재하는지 확인
   bool hasController(String key) {
     final normalizedKey = _normalizeKey(key);
     return _controllerCache.containsKey(normalizedKey);
-  }
-
-  /// 특정 키의 컨트롤러 제거
-  void removeController(String key) {
-    final normalizedKey = _normalizeKey(key);
-    final controller = _controllerCache.remove(normalizedKey);
-    if (controller != null) {
-      // 🌍 DrawingState에서 해제
-      final globalState = DrawingState();
-      globalState.unregisterNotifier(controller.modeNotifier);
-      globalState.unregisterScribbleNotifier(controller.scribbleNotifier);
-      controller.dispose();
-    }
   }
 
   // ===== 이미지 캡처 메서드들 =====
@@ -389,176 +320,6 @@ class ScribbleCacheManager extends ChangeNotifier {
     }
   }
 
-  /// 🖼️ 특정 키의 필기를 PNG 이미지로 캡처 (편의 메서드)
-  Future<Uint8List?> captureScribbleImagePng(
-    String key, {
-    double? pixelRatio,
-  }) async {
-    log('🖼️ PNG 이미지 캡처 요청 - key: $key, pixelRatio: $pixelRatio');
-
-    final result = await captureScribbleImage(
-      key,
-      pixelRatio: pixelRatio,
-      format: ui.ImageByteFormat.png,
-    );
-
-    if (result != null) {
-      log('✅ PNG 캡처 완료 - 크기: ${result.length} bytes');
-    } else {
-      log('⚠️ PNG 캡처 실패 - 결과가 null');
-    }
-
-    return result;
-  }
-
-  /// 🖼️ 특정 키의 필기를 JPEG 이미지로 캡처 (편의 메서드)
-  ///
-  /// PNG 대비 용량이 작지만 투명도는 지원하지 않음
-  Future<Uint8List?> captureScribbleImageJpeg(
-    String key, {
-    double? pixelRatio,
-    int quality = 85, // JPEG 품질 (1-100, 기본값: 85)
-  }) async {
-    final controller = getController(key);
-    if (controller.repaintBoundaryKey.currentContext == null) {
-      return null;
-    }
-
-    try {
-      final boundary =
-          controller.repaintBoundaryKey.currentContext!.findRenderObject()
-              as RenderRepaintBoundary?;
-
-      if (boundary == null) return null;
-
-      final calculatedPixelRatio =
-          pixelRatio ?? _calculateOptimalPixelRatio(key);
-
-      // PNG로 먼저 캡처 (투명도 정보 포함)
-      final image = await boundary.toImage(pixelRatio: calculatedPixelRatio);
-      final pngBytes = await image.toByteData(format: ui.ImageByteFormat.png);
-
-      if (pngBytes == null) return null;
-
-      // PNG를 JPEG로 변환 (투명 배경을 흰색으로 변경)
-      final codec = await ui.instantiateImageCodec(
-        pngBytes.buffer.asUint8List(),
-      );
-      final frame = await codec.getNextFrame();
-
-      // 흰색 배경과 합성
-      final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder);
-      final paint = Paint();
-
-      // 흰색 배경 그리기
-      canvas.drawRect(
-        Rect.fromLTWH(
-          0,
-          0,
-          frame.image.width.toDouble(),
-          frame.image.height.toDouble(),
-        ),
-        Paint()..color = Colors.white,
-      );
-
-      // 원본 이미지 그리기
-      canvas.drawImage(frame.image, Offset.zero, paint);
-
-      final picture = recorder.endRecording();
-      final finalImage = await picture.toImage(
-        frame.image.width,
-        frame.image.height,
-      );
-
-      // JPEG로 인코딩 (품질 설정은 Flutter에서 직접 지원하지 않으므로 PNG 사용)
-      final byteData = await finalImage.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
-
-      picture.dispose();
-      finalImage.dispose();
-      frame.image.dispose();
-      image.dispose();
-
-      return byteData?.buffer.asUint8List();
-    } on Exception {
-      return null;
-    }
-  }
-
-  /// 🖼️ 특정 키의 필기를 이미지로 캡처하고 파일로 저장
-  ///
-  /// [key] 캐시 키 (예: 'contentId/pageId')
-  /// [filePath] 저장할 파일 경로 (확장자 포함)
-  /// [pixelRatio] 이미지 해상도 배율 (기본값: 자동 계산)
-  ///
-  /// 반환: 저장 성공 여부
-  Future<bool> captureAndSaveScribbleImage(
-    String key,
-    String filePath, {
-    double? pixelRatio,
-  }) async {
-    try {
-      // 파일 확장자에 따라 포맷 결정
-      final format =
-          filePath.toLowerCase().endsWith('.jpg') ||
-              filePath.toLowerCase().endsWith('.jpeg')
-          ? ui.ImageByteFormat.rawRgba
-          : ui.ImageByteFormat.png;
-
-      final imageBytes = await captureScribbleImage(
-        key,
-        pixelRatio: pixelRatio,
-        format: format,
-      );
-
-      if (imageBytes == null) {
-        return false;
-      }
-
-      // 디렉토리 생성
-      final file = File(filePath);
-      final directory = file.parent;
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-
-      // 파일 저장
-      await file.writeAsBytes(imageBytes);
-      return true;
-    } on Exception {
-      return false;
-    }
-  }
-
-  /// 🖼️ 모든 페이지의 필기를 이미지로 캡처하여 맵으로 반환
-  ///
-  /// [pixelRatio] 이미지 해상도 배율 (기본값: 자동 계산)
-  /// [format] 이미지 포맷 (기본값: PNG)
-  ///
-  /// 반환: 키와 이미지 바이트 데이터의 맵
-  Future<Map<String, Uint8List>> captureAllScribbleImages({
-    double? pixelRatio,
-    ui.ImageByteFormat format = ui.ImageByteFormat.png,
-  }) async {
-    final result = <String, Uint8List>{};
-
-    for (final key in _controllerCache.keys) {
-      final imageBytes = await captureScribbleImage(
-        key,
-        pixelRatio: pixelRatio,
-        format: format,
-      );
-
-      if (imageBytes != null) {
-        result[key] = imageBytes;
-      }
-    }
-
-    return result;
-  }
-
   /// 🖼️ 필기 복잡도에 따른 최적 픽셀 비율 계산
   ///
   /// [key] 캐시 키
@@ -619,22 +380,6 @@ class ScribbleCacheManager extends ChangeNotifier {
     } else {
       return 4.0; // 복잡한 필기
     }
-  }
-
-  /// ✨ 특정 키의 원본 이미지 크기 설정
-  void setOriginalImageSize(String key, Size size) {
-    final normalizedKey = _normalizeKey(key);
-    _originalImageSizes[normalizedKey] = size;
-
-    // 해당 키의 컨트롤러에도 전달
-    final controller = _controllerCache[normalizedKey];
-    controller?.setOriginalImageSize(size);
-  }
-
-  /// ✨ 특정 키의 원본 이미지 크기 조회
-  Size? getOriginalImageSize(String key) {
-    final normalizedKey = _normalizeKey(key);
-    return _originalImageSizes[normalizedKey];
   }
 
   /// ✨ 목표 해상도 결정 (원본 이미지 크기를 모를 때)
@@ -706,46 +451,6 @@ class ScribbleCacheManager extends ChangeNotifier {
     return boundary != null;
   }
 
-  /// 🖼️ 캐시에 있는 모든 페이지 중 캡처 가능한 페이지 키 목록 반환
-  ///
-  /// 반환: 캡처 가능한 키 목록
-  List<String> getCapturableScribbleKeys() {
-    final capturableKeys = <String>[];
-
-    for (final key in _controllerCache.keys) {
-      if (canCaptureScribbleImage(key)) {
-        capturableKeys.add(key);
-      }
-    }
-
-    return capturableKeys;
-  }
-
-  /// 🖼️ 특정 키의 필기를 base64 문자열로 캡처
-  ///
-  /// [key] 캐시 키
-  /// [pixelRatio] 이미지 해상도 배율 (기본값: 자동 계산)
-  /// [format] 이미지 포맷 (기본값: PNG)
-  ///
-  /// 반환: base64 인코딩된 이미지 문자열 또는 null
-  Future<String?> captureScribbleImageAsBase64(
-    String key, {
-    double? pixelRatio,
-    ui.ImageByteFormat format = ui.ImageByteFormat.png,
-  }) async {
-    final imageBytes = await captureScribbleImage(
-      key,
-      pixelRatio: pixelRatio,
-      format: format,
-    );
-
-    if (imageBytes == null) {
-      return null;
-    }
-
-    return base64Encode(imageBytes);
-  }
-
   // ===== 컨트롤러 조작 메서드들 =====
 
   /// 특정 페이지 지우기
@@ -755,48 +460,11 @@ class ScribbleCacheManager extends ChangeNotifier {
     controller?.clear();
   }
 
-  /// 특정 페이지 되돌리기
-  void undoPage(String key) {
-    final normalizedKey = _normalizeKey(key);
-    final controller = _controllerCache[normalizedKey];
-    controller?.undo();
-  }
-
-  /// 특정 페이지 다시 실행
-  void redoPage(String key) {
-    final normalizedKey = _normalizeKey(key);
-    final controller = _controllerCache[normalizedKey];
-    controller?.redo();
-  }
-
   /// 특정 페이지가 비어있는지 확인
   bool isPageEmpty(String key) {
     final normalizedKey = _normalizeKey(key);
     final controller = _controllerCache[normalizedKey];
     return controller?.isEmpty ?? true;
-  }
-
-  /// 특정 페이지에서 되돌리기 가능한지 확인
-  bool canUndoPage(String key) {
-    final normalizedKey = _normalizeKey(key);
-    final controller = _controllerCache[normalizedKey];
-    return controller?.canUndo ?? false;
-  }
-
-  /// 특정 페이지에서 다시 실행 가능한지 확인
-  bool canRedoPage(String key) {
-    final normalizedKey = _normalizeKey(key);
-    final controller = _controllerCache[normalizedKey];
-    return controller?.canRedo ?? false;
-  }
-
-  /// 특정 페이지의 필기 데이터 내보내기
-  Uint8List? exportPageData(String key) {
-    final normalizedKey = _normalizeKey(key);
-    final controller = _controllerCache[normalizedKey];
-    if (controller == null || controller.isEmpty) return null;
-
-    return controller.exportAsBytes();
   }
 
   /// 특정 페이지에 필기 데이터 가져오기
@@ -844,32 +512,9 @@ class ScribbleCacheManager extends ChangeNotifier {
     }
   }
 
-  /// 🎯 비동기 컨트롤러 로드 후 활성 설정
-  Future<void> setActiveControllerAsync(String key) async {
-    setActiveController(key);
-  }
-
   /// 🔄 현재 활성 컨트롤러의 undo/redo 상태 강제 업데이트
   void updateActiveControllerUndoRedoState() {
     final globalState = DrawingState();
-    globalState.updateUndoRedoState();
-  }
-
-  /// 🎯 모든 컨트롤러의 도구 상태를 전역 상태와 동기화
-  void syncAllControllersWithGlobalState() {
-    final globalState = DrawingState();
-
-    for (final entry in _controllerCache.entries) {
-      final controller = entry.value;
-
-      // ModeNotifier 동기화
-      globalState.applyToModeNotifier(controller.modeNotifier);
-
-      // ScribbleNotifier 동기화
-      globalState.syncScribbleNotifierToGlobalTool(controller.scribbleNotifier);
-    }
-
-    // 최종 undo/redo 상태 업데이트
     globalState.updateUndoRedoState();
   }
 
@@ -926,96 +571,20 @@ class ScribbleCacheManager extends ChangeNotifier {
     }
   }
 
-  /// 손모드 설정 (모든 포인터 허용)
-  void setHandMode() {
-    setPointerMode('all');
-  }
-
-  /// 펜모드 설정 (펜만 허용)
-  void setPenMode() {
-    setPointerMode('penOnly');
-  }
-
-  /// 자동 저장 활성화/비활성화
-  void setAutoSaveEnabled(bool enabled) {
-    _autoSaveEnabled = enabled;
-  }
-
-  // ===== 편의 메서드들 =====
-
-  /// 펜 도구로 변경
-  void setPen() => setTool(ScribbleTool.pen);
-
-  /// 연필 도구로 변경
-  void setPencil() => setTool(ScribbleTool.pencil);
-
-  /// 마커 도구로 변경
-  void setMarker() => setTool(ScribbleTool.marker);
-
-  /// 지우개 도구로 변경
-  void setEraser() => setTool(ScribbleTool.eraser);
-
-  /// 텍스트 도구로 변경
-  void setText() => setTool(ScribbleTool.text);
-
-  /// 올가미 도구로 변경
-  void setLasso() => setTool(ScribbleTool.lasso);
-
-  // ===== 컨트롤러 데이터 관리 =====
-
-  /// 모든 페이지의 필기 데이터 내보내기
-  Map<String, Uint8List> exportAllPagesData() {
-    final result = <String, Uint8List>{};
-
-    for (final entry in _controllerCache.entries) {
-      if (!entry.value.isEmpty) {
-        result[entry.key] = entry.value.exportAsBytes();
-      }
-    }
-
-    return result;
-  }
-
-  /// 모든 페이지의 필기 데이터 가져오기
-  void importAllPagesData(Map<String, Uint8List> data) {
-    for (final entry in data.entries) {
-      // 기존 형식 (contentId_pageId)과 새 형식 (contentId/pageId) 모두 지원
-      String key;
-      if (entry.key.contains('/')) {
-        key = entry.key; // 새 형식
-      } else {
-        // 기존 형식에서 새 형식으로 변환
-        final parts = entry.key.split('_');
-        if (parts.length == 2) {
-          key = '${parts[0]}/${parts[1]}';
-        } else {
-          key = entry.key; // 변환 불가능하면 원본 사용
-        }
-      }
-      importPageData(key, entry.value);
-    }
-  }
-
-  /// 전체 통계 정보
-  Map<String, ScribbleStats> getAllPagesStats() {
-    final result = <String, ScribbleStats>{};
-
-    for (final entry in _controllerCache.entries) {
-      if (!entry.value.isEmpty) {
-        result[entry.key] = entry.value.stats;
-      }
-    }
-
-    return result;
-  }
-
   // ===== 내부 헬퍼 메서드들 =====
+
+  /// 모든 캐시된 컨트롤러에 동일한 작업을 적용하는 공통 헬퍼
+  void _applyToAllControllers(
+    void Function(ScribbleController controller) action,
+  ) {
+    for (final controller in _controllerCache.values) {
+      action(controller);
+    }
+  }
 
   /// 모든 컨트롤러에 현재 도구 설정 적용
   void _applyToolSettingsToAllControllers() {
-    for (final controller in _controllerCache.values) {
-      _syncToolSettingsToController(controller);
-    }
+    _applyToAllControllers(_syncToolSettingsToController);
   }
 
   /// 특정 컨트롤러에 도구 설정 동기화
@@ -1056,9 +625,7 @@ class ScribbleCacheManager extends ChangeNotifier {
 
   /// 모든 컨트롤러에 포인터 모드 동기화
   void _syncPointerModeToAllControllers() {
-    for (final controller in _controllerCache.values) {
-      _applyPointerModeToController(controller);
-    }
+    _applyToAllControllers(_applyPointerModeToController);
   }
 
   /// 개별 컨트롤러에 포인터 모드 적용
@@ -1133,62 +700,6 @@ class ScribbleCacheManager extends ChangeNotifier {
     }
   }
 
-  /// 🔥 특정 키를 즉시 저장 모드로 설정 (탭 전환, 앱 종료 등에 사용)
-  void markForImmediateSave(String key) {
-    final normalizedKey = _normalizeKey(key);
-    _immediateSaveKeys.add(normalizedKey);
-    debugPrint('ScribbleCacheManager: 즉시 저장 모드 설정 - $normalizedKey');
-  }
-
-  /// 🔥 즉시 저장 모드 해제
-  void unmarkForImmediateSave(String key) {
-    final normalizedKey = _normalizeKey(key);
-    _immediateSaveKeys.remove(normalizedKey);
-  }
-
-  /// 🔥 모든 대기 중인 저장 작업을 즉시 실행 (앱 종료 시 사용)
-  Future<void> flushAllPendingSaves() async {
-    debugPrint('ScribbleCacheManager: 모든 대기 중인 저장 작업 즉시 실행 시작');
-
-    final pendingKeys = List<String>.from(_saveTimers.keys);
-
-    for (final key in pendingKeys) {
-      final timer = _saveTimers[key];
-      timer?.cancel();
-
-      // 메모리에 있는 데이터로 즉시 저장
-      final scribble = _memoryCache[key];
-      if (scribble != null) {
-        await _saveToFileImmediately(key, scribble);
-      }
-    }
-
-    // 모든 타이머 정리
-    _saveTimers.clear();
-
-    debugPrint('ScribbleCacheManager: 모든 저장 작업 완료 (${pendingKeys.length}개)');
-  }
-
-  /// 🔥 특정 키의 대기 중인 저장 작업을 즉시 실행
-  Future<bool> flushSave(String key) async {
-    final normalizedKey = _normalizeKey(key);
-
-    // 대기 중인 타이머가 있으면 취소하고 즉시 저장
-    final timer = _saveTimers[normalizedKey];
-    if (timer != null) {
-      timer.cancel();
-      _saveTimers.remove(normalizedKey);
-
-      final scribble = _memoryCache[normalizedKey];
-      if (scribble != null) {
-        debugPrint('ScribbleCacheManager: 대기 중인 저장 작업 즉시 실행 - $normalizedKey');
-        return await _saveToFileImmediately(normalizedKey, scribble);
-      }
-    }
-
-    return true;
-  }
-
   /// 필기 데이터 로드
   Future<Scribble?> loadScribble(String key) async {
     try {
@@ -1216,20 +727,6 @@ class ScribbleCacheManager extends ChangeNotifier {
 
       // 메모리 캐시에 저장
       _memoryCache[normalizedKey] = scribble;
-
-      return scribble;
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      return null;
-    }
-  }
-
-  /// Assets에서 초기 필기 데이터 로드 (예시용)
-  Future<Scribble?> loadScribbleFromAssets(String assetPath) async {
-    try {
-      final ByteData data = await rootBundle.load(assetPath);
-      final scribble = Scribble.fromBuffer(data.buffer.asUint8List());
 
       return scribble;
     } on Exception catch (error, stackTrace) {
@@ -1348,149 +845,14 @@ class ScribbleCacheManager extends ChangeNotifier {
     }
   }
 
-  /// 모든 필기 키 목록 가져오기
-  Future<List<String>> getAllScribbleKeys() async {
-    if (_isWeb) return _memoryCache.keys.toList()..sort();
-    try {
-      final dir = await cacheDirectory;
-      final keys = <String>[];
-
-      await for (final entity in dir.list(recursive: true)) {
-        if (entity is File && entity.path.endsWith('.bin')) {
-          // 파일 경로에서 키 추출
-          final relativePath = entity.path
-              .replaceFirst('${dir.path}/', '')
-              .replaceAll('.bin', '');
-          keys.add(relativePath);
-        }
-      }
-
-      keys.sort();
-      return keys;
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      return [];
-    }
-  }
-
-  /// 캐시 크기 정보 가져오기
-  Future<Map<String, dynamic>> getCacheInfo() async {
-    if (_isWeb) {
-      return {
-        'totalFiles': 0,
-        'totalSize': 0,
-        'totalSizeFormatted': '0 B (web)',
-        'memoryCache': _memoryCache.length,
-      };
-    }
-    try {
-      final dir = await cacheDirectory;
-      int totalFiles = 0;
-      int totalSize = 0;
-
-      await for (final entity in dir.list(recursive: true)) {
-        if (entity is File) {
-          totalFiles++;
-          final stat = await entity.stat();
-          totalSize += stat.size;
-        }
-      }
-
-      return {
-        'totalFiles': totalFiles,
-        'totalSize': totalSize,
-        'totalSizeFormatted': _formatBytes(totalSize),
-        'memoryCache': _memoryCache.length,
-      };
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      return {
-        'totalFiles': 0,
-        'totalSize': 0,
-        'totalSizeFormatted': '0 B',
-        'memoryCache': _memoryCache.length,
-      };
-    }
-  }
-
-  /// 바이트 크기를 사람이 읽기 쉬운 형태로 변환
-  String _formatBytes(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) {
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-    }
-    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
-  }
-
   /// 메모리 캐시 정리
   void clearMemoryCache() {
     _memoryCache.clear();
   }
 
-  /// 전체 캐시 정리 (메모리 + 디스크)
-  Future<bool> clearAllCache() async {
-    try {
-      // 메모리 캐시 정리
-      clearMemoryCache();
-
-      // 웹에서는 디스크 캐시 없음
-      if (_isWeb) return true;
-
-      // 디스크 캐시 정리
-      final dir = await cacheDirectory;
-      if (await dir.exists()) {
-        await dir.delete(recursive: true);
-        await dir.create(recursive: true);
-      }
-
-      return true;
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      return false;
-    }
-  }
-
-  /// 필기 데이터를 다른 형식으로 내보내기 (JSON)
-  Future<String?> exportScribbleAsJson(String key) async {
-    try {
-      final scribble = await loadScribble(key);
-      if (scribble == null) return null;
-
-      return scribble.writeToJson();
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      return null;
-    }
-  }
-
-  /// JSON에서 필기 데이터 가져오기
-  Future<bool> importScribbleFromJson(String key, String json) async {
-    try {
-      final scribble = Scribble.fromJson(json);
-      return await saveScribble(key, scribble);
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      return false;
-    }
-  }
-
-  /// 페이지별 자동 저장 지연 시간 (밀리초) — AutoSaveScheduler 위임
-  static int get autoSaveDelayMs => AutoSaveScheduler.autoSaveDelayMs;
-
   /// 자동 저장 스케줄링 — AutoSaveScheduler에 위임
   void scheduleAutoSave(String key, Scribble scribble) {
     _autoSaveScheduler.schedule(key, scribble);
-  }
-
-  /// 모든 자동 저장 타이머 정리 — AutoSaveScheduler에 위임
-  void cancelAllAutoSave() {
-    _autoSaveScheduler.cancelAll();
   }
 
   /// 인스턴스 정리
@@ -1519,67 +881,6 @@ class ScribbleCacheManager extends ChangeNotifier {
 
     // ChangeNotifier dispose 호출
     super.dispose();
-  }
-
-  // MARK: - 하위 호환성을 위한 레거시 메서드들
-
-  /// [Deprecated] contentId와 pageId를 사용하는 레거시 메서드
-  /// 대신 saveScribble(key) 사용 권장
-  @Deprecated('Use saveScribble(key) instead')
-  Future<bool> saveScribbleWithIds(
-    String contentId,
-    String pageId,
-    Scribble scribble,
-  ) {
-    return saveScribble('$contentId/$pageId', scribble);
-  }
-
-  /// [Deprecated] contentId와 pageId를 사용하는 레거시 메서드
-  /// 대신 loadScribble(key) 사용 권장
-  @Deprecated('Use loadScribble(key) instead')
-  Future<Scribble?> loadScribbleWithIds(String contentId, String pageId) {
-    return loadScribble('$contentId/$pageId');
-  }
-
-  /// [Deprecated] contentId와 pageId를 사용하는 레거시 메서드
-  /// 대신 deleteScribble(key) 사용 권장
-  @Deprecated('Use deleteScribble(key) instead')
-  Future<bool> deleteScribbleWithIds(String contentId, String pageId) {
-    return deleteScribble('$contentId/$pageId');
-  }
-
-  /// [Deprecated] contentId를 사용하는 레거시 메서드
-  /// 대신 deleteScribblesByPrefix(keyPrefix) 사용 권장
-  @Deprecated('Use deleteScribblesByPrefix(keyPrefix) instead')
-  Future<bool> deleteContentScribbles(String contentId) {
-    return deleteScribblesByPrefix(contentId);
-  }
-
-  /// [Deprecated] contentId와 pageId를 사용하는 레거시 메서드
-  /// 대신 hasScribble(key) 사용 권장
-  @Deprecated('Use hasScribble(key) instead')
-  Future<bool> hasScribbleWithIds(String contentId, String pageId) {
-    return hasScribble('$contentId/$pageId');
-  }
-
-  /// [Deprecated] contentId를 사용하는 레거시 메서드
-  /// 대신 getScribbleKeys(keyPrefix) 사용 권장
-  @Deprecated('Use getScribbleKeys(keyPrefix) instead')
-  Future<List<String>> getScribblePages(String contentId) async {
-    final keys = await getScribbleKeys(contentId);
-    // 키에서 pageId 부분만 추출하여 반환
-    return keys.map((key) => key.split('/').last).toList();
-  }
-
-  /// [Deprecated] contentId와 pageId를 사용하는 레거시 메서드
-  /// 대신 scheduleAutoSave(key, scribble) 사용 권장
-  @Deprecated('Use scheduleAutoSave(key, scribble) instead')
-  void scheduleAutoSaveWithIds(
-    String contentId,
-    String pageId,
-    Scribble scribble,
-  ) {
-    scheduleAutoSave('$contentId/$pageId', scribble);
   }
 
   /// === 고급 기능 ===
@@ -1888,128 +1189,9 @@ class ScribbleCacheManager extends ChangeNotifier {
     }
   }
 
-  /// 🔄 모드 전환 자동 처리
-  ///
-  /// 양면↔단면 모드 전환 시 자동으로 스트로크 분할/병합을 처리합니다.
-  ///
-  /// [contentId]: 컨텐츠 ID (예: 'book123')
-  /// [pageNumber]: 기준 페이지 번호
-  /// [fromDoublePage]: true면 양면→단면, false면 단면→양면
-  /// [pageWidth]: 페이지 너비
-  /// [pageHeight]: 페이지 높이
-  Future<bool> handleModeTransition({
-    required String contentId,
-    required int pageNumber,
-    required bool fromDoublePage,
-    required double pageWidth,
-    required double pageHeight,
-  }) async {
-    try {
-      if (fromDoublePage) {
-        // 🔄 양면 → 단면 모드 전환
-        // 🎯 firstPageSingle 전략에 따른 올바른 페이지 매핑
-
-        int leftPage, rightPage, doublePageKeyNumber;
-
-        // 🎯 firstPageSingle 전략: 1페이지는 단면, [2,3], [4,5], [6,7], [8,9]...
-        if (pageNumber == 1) {
-          // 첫 페이지는 단면이므로 분할 불필요
-          debugPrint('🔄 첫 페이지는 단면 모드이므로 분할 불필요');
-          return true;
-        }
-
-        // 현재 페이지가 속한 양면 쌍 계산
-        final pairIndex = (pageNumber - 2) ~/ 2;
-        leftPage = 2 + (pairIndex * 2); // 2, 4, 6, 8...
-        rightPage = leftPage + 1; // 3, 5, 7, 9...
-        doublePageKeyNumber = leftPage; // 양면 모드에서는 왼쪽 페이지 번호로 저장됨
-
-        final doublePageKey = '$contentId/$doublePageKeyNumber';
-        final leftPageKey = '$contentId/$leftPage';
-        final rightPageKey = '$contentId/$rightPage';
-
-        debugPrint('🔄 양면→단면 전환 시도');
-        debugPrint('  - 요청 페이지: $pageNumber');
-        debugPrint('  - 계산된 양면 쌍: [$leftPage, $rightPage]');
-        debugPrint('  - 소스 키 (양면): $doublePageKey');
-        debugPrint('  - 타겟 키 (왼쪽): $leftPageKey');
-        debugPrint('  - 타겟 키 (오른쪽): $rightPageKey');
-
-        // 🔍 양면 모드 키에 실제 필기가 있는지 확인
-        final hasData = await hasScribble(doublePageKey);
-        if (!hasData) {
-          debugPrint('🔄 양면 키에 필기 없음: $doublePageKey');
-          return false;
-        }
-
-        return await splitDoublePageToSinglePages(
-          doublePageKey: doublePageKey,
-          leftPageKey: leftPageKey,
-          rightPageKey: rightPageKey,
-          pageWidth: pageWidth,
-          pageHeight: pageHeight,
-        );
-      } else {
-        // 🔄 단면 → 양면 모드 전환
-        // 🎯 firstPageSingle 전략에 따른 올바른 페이지 매핑
-
-        int leftPage, rightPage, doublePageKeyNumber;
-
-        if (pageNumber == 1) {
-          // 첫 페이지는 단면이므로 병합 불필요
-          debugPrint('🔄 첫 페이지는 단면 모드이므로 병합 불필요');
-          return true;
-        }
-
-        // 현재 페이지가 속한 양면 쌍 계산
-        final pairIndex = (pageNumber - 2) ~/ 2;
-        leftPage = 2 + (pairIndex * 2); // 2, 4, 6, 8...
-        rightPage = leftPage + 1; // 3, 5, 7, 9...
-        doublePageKeyNumber = leftPage; // 양면 모드에서는 왼쪽 페이지 번호로 저장됨
-
-        final leftPageKey = '$contentId/$leftPage';
-        final rightPageKey = '$contentId/$rightPage';
-        final doublePageKey = '$contentId/$doublePageKeyNumber';
-
-        debugPrint('🔄 단면→양면 전환 시도');
-        debugPrint('  - 요청 페이지: $pageNumber');
-        debugPrint('  - 계산된 양면 쌍: [$leftPage, $rightPage]');
-        debugPrint('  - 소스 키 (왼쪽): $leftPageKey');
-        debugPrint('  - 소스 키 (오른쪽): $rightPageKey');
-        debugPrint('  - 타겟 키 (양면): $doublePageKey');
-
-        // 🔍 좌우 페이지 중 하나라도 필기가 있는지 확인
-        final hasLeftData = await hasScribble(leftPageKey);
-        final hasRightData = await hasScribble(rightPageKey);
-
-        if (!hasLeftData && !hasRightData) {
-          debugPrint('🔄 좌우 페이지 모두 필기 없음');
-          return false;
-        }
-
-        return await mergeSinglePagesToDoublePage(
-          leftPageKey: leftPageKey,
-          rightPageKey: rightPageKey,
-          doublePageKey: doublePageKey,
-          pageWidth: pageWidth,
-          pageHeight: pageHeight,
-        );
-      }
-    } on Exception catch (error, stackTrace) {
-      debugPrint('❌ 모드 전환 처리 실패: $error');
-      debugPrintStack(stackTrace: stackTrace);
-      return false;
-    }
-  }
-
   /// 🔄 **분할 결과 캐시 정리**
-  void clearSplitResultCache([String? specificKey]) {
-    if (specificKey != null) {
-      _splitResultCache.remove(specificKey);
-      debugPrint('🗑️ 분할 결과 캐시 제거: $specificKey');
-    } else {
-      _splitResultCache.clear();
-      debugPrint('🗑️ 모든 분할 결과 캐시 제거');
-    }
+  void clearSplitResultCache() {
+    _splitResultCache.clear();
+    debugPrint('🗑️ 모든 분할 결과 캐시 제거');
   }
 }

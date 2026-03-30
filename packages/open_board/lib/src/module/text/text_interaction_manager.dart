@@ -21,13 +21,12 @@ class TextInteractionManager {
   final GlobalKey? repaintBoundaryKey; // 추가: Overlay 위치 계산용
 
   // 콜백 함수들
-  final void Function(TextDrawable textDrawable)? onTextSelected;
-  final void Function(TextDrawable textDrawable)? onTextEdit;
-  final void Function(TextDrawable textDrawable)? onTextUpdated;
-  final void Function()? onTextDeselected;
+  final void Function(TextDrawable textDrawable) onTextSelected;
+  final void Function(TextDrawable textDrawable) onTextUpdated;
+  final void Function() onTextDeselected;
 
   // ScribbleWidgetState 참조 추가
-  final ScribbleWidgetState? widgetState;
+  final ScribbleWidgetState widgetState;
 
   // 텍스트 관련 상태 - 로컬 리스트 제거하고 ScribbleNotifier 참조만 사용
   int? _selectedTextIndex;
@@ -74,32 +73,26 @@ class TextInteractionManager {
     required this.modeNotifier,
     required this.onStateChanged,
     required this.context,
-    this.transformationController,
-    this.repaintBoundaryKey, // 생성자에서 받음
-    this.onTextSelected,
-    this.onTextEdit,
-    this.onTextUpdated,
-    this.onTextDeselected,
-    this.widgetState, // ScribbleWidgetState 참조 추가
+    required this.transformationController,
+    required this.repaintBoundaryKey,
+    required this.onTextSelected,
+    required this.onTextUpdated,
+    required this.onTextDeselected,
+    required this.widgetState,
   }) {
-    _transformHandler = TransformHandler(_transformer);
+    _transformHandler = TransformHandler();
     _initializeFromScribble();
   }
 
   // Getters - ScribbleNotifier에서 직접 가져오기
   List<TextDrawable> get textDrawables =>
       scribbleNotifier.getCurrentTextDrawables();
-  TextSettings get textSettings => _textSettings;
-  int? get selectedTextIndex => _selectedTextIndex;
-  bool get isEditingText => _isEditingText;
   bool get isDraggingText => _isDraggingText;
   bool get isTextDragPreparing =>
       _draggingTextIndex != null && !_isDraggingText;
   bool get isTransformingText => _isTransformingText;
   bool get showTextOverlay => _showTextOverlay;
 
-  // 🔥 InteractiveViewer 제스처 제어용 getter 추가
-  bool get isTextResizing => _isTextResizing;
   bool get isAnyTextInteracting =>
       _isTextResizing ||
       _isDraggingText ||
@@ -136,27 +129,19 @@ class TextInteractionManager {
 
   /// widgetState와 동기화
   void _syncWithWidgetState() {
-    if (widgetState != null) {
-      widgetState!.isEditingText = _isEditingText;
-      widgetState!.editingTextId = _editingTextId;
-      widgetState!.isTextTransforming =
-          _isDraggingText || _isTransformingText; // 텍스트 변형 상태 동기화
+    widgetState.isEditingText = _isEditingText;
+    widgetState.editingTextId = _editingTextId;
+    widgetState.isTextTransforming =
+        _isDraggingText || _isTransformingText; // 텍스트 변형 상태 동기화
 
-      // 선택된 텍스트 정보 업데이트
-      if (_selectedTextIndex != null &&
-          _selectedTextIndex! >= 0 &&
-          _selectedTextIndex! < textDrawables.length) {
-        widgetState!.selectedTextDrawable = textDrawables[_selectedTextIndex!];
-      } else {
-        widgetState!.selectedTextDrawable = null;
-      }
+    // 선택된 텍스트 정보 업데이트
+    if (_selectedTextIndex != null &&
+        _selectedTextIndex! >= 0 &&
+        _selectedTextIndex! < textDrawables.length) {
+      widgetState.selectedTextDrawable = textDrawables[_selectedTextIndex!];
+    } else {
+      widgetState.selectedTextDrawable = null;
     }
-  }
-
-  /// 텍스트 설정 업데이트
-  void updateTextSettings(TextSettings settings) {
-    _textSettings = settings;
-    onStateChanged();
   }
 
   /// 포인터 다운 이벤트 처리
@@ -210,7 +195,7 @@ class TextInteractionManager {
     if (_selectedTextIndex != null) {
       _selectedTextIndex = null;
       _showTextOverlay = false;
-      onTextDeselected?.call();
+      onTextDeselected();
     }
 
     // 🔧 새 텍스트 추가 시 현재 펜 굵기로 텍스트 설정 업데이트
@@ -261,18 +246,15 @@ class TextInteractionManager {
   /// 특정 화면 위치에 인라인 텍스트 에디터 표시 (새 텍스트용)
   void _showTextEditorAtScreenPosition(
     TextDrawable textDrawable,
-    Offset localPosition, [ // 캔버스 좌표계 기준
-    GlobalKey? repaintBoundaryKey,
-  ]) {
+    Offset localPosition, // 캔버스 좌표계 기준
+  ) {
     if (_isEditingText || _textEditorOverlay != null) {
       return; // 이미 편집 중이면 무시
     }
 
-    final key = repaintBoundaryKey ?? this.repaintBoundaryKey;
-
     // 변환 없이 localToGlobal만 적용
     final RenderBox? renderBox =
-        key?.currentContext?.findRenderObject() as RenderBox?;
+        repaintBoundaryKey?.currentContext?.findRenderObject() as RenderBox?;
     final editorPosition =
         renderBox?.localToGlobal(localPosition) ?? Offset.zero;
 
@@ -303,7 +285,7 @@ class TextInteractionManager {
             _selectedTextIndex = newIndex;
             _showTextOverlay = true;
 
-            onTextUpdated?.call(finalDrawable);
+            onTextUpdated(finalDrawable);
           } else {
             // 취소된 경우 또는 빈 텍스트인 경우
           }
@@ -322,18 +304,15 @@ class TextInteractionManager {
 
   /// 인라인 텍스트 에디터 표시 (기존 텍스트용)
   void _showTextEditor(
-    TextDrawable textDrawable, [
-    GlobalKey? repaintBoundaryKey,
-  ]) {
+    TextDrawable textDrawable,
+  ) {
     if (_isEditingText || _textEditorOverlay != null) {
       return; // 이미 편집 중이면 무시
     }
 
-    final key = repaintBoundaryKey ?? this.repaintBoundaryKey;
-
     // 변환 없이 localToGlobal만 적용
     final RenderBox? renderBox =
-        key?.currentContext?.findRenderObject() as RenderBox?;
+        repaintBoundaryKey?.currentContext?.findRenderObject() as RenderBox?;
     final editorPosition =
         renderBox?.localToGlobal(textDrawable.position) ?? Offset.zero;
 
@@ -752,7 +731,7 @@ class TextInteractionManager {
     // widgetState 동기화
     _syncWithWidgetState();
 
-    onTextSelected?.call(selectedText);
+    onTextSelected(selectedText);
     onStateChanged();
   }
 
@@ -802,7 +781,7 @@ class TextInteractionManager {
     // widgetState 동기화
     _syncWithWidgetState();
 
-    onTextUpdated?.call(updatedText);
+    onTextUpdated(updatedText);
     onStateChanged(); // 실시간 렌더링을 위한 상태 변경 알림
   }
 
@@ -877,44 +856,6 @@ class TextInteractionManager {
     onStateChanged();
   }
 
-  /// 텍스트 내용 업데이트
-  void updateTextContent(int index, String newText) {
-    if (index < 0 || index >= textDrawables.length) return;
-
-    final updatedText = textDrawables[index].copyWithText(newText);
-    scribbleNotifier.updateTextDrawable(updatedText.id, updatedText);
-    onTextUpdated?.call(updatedText);
-  }
-
-  /// 텍스트 스타일 업데이트
-  void updateTextStyle(int index, TextStyle newStyle) {
-    if (index < 0 || index >= textDrawables.length) return;
-
-    final updatedText = textDrawables[index].copyWithStyle(newStyle);
-    scribbleNotifier.updateTextDrawable(updatedText.id, updatedText);
-    onTextUpdated?.call(updatedText);
-  }
-
-  /// 텍스트 삭제
-  void deleteText(int index) {
-    if (index < 0 || index >= textDrawables.length) return;
-
-    final textToDelete = textDrawables[index];
-    scribbleNotifier.removeTextDrawable(textToDelete.id);
-
-    // 선택된 텍스트가 삭제된 경우 선택 해제
-    if (_selectedTextIndex == index) {
-      _selectedTextIndex = null;
-      _isEditingText = false;
-      onTextDeselected?.call();
-    } else if (_selectedTextIndex != null && _selectedTextIndex! > index) {
-      // 인덱스 조정
-      _selectedTextIndex = _selectedTextIndex! - 1;
-    }
-
-    onStateChanged();
-  }
-
   /// 선택된 텍스트 삭제
   void deleteSelectedText() {
     if (_selectedTextIndex == null ||
@@ -935,30 +876,6 @@ class TextInteractionManager {
     // widgetState 동기화
     _syncWithWidgetState();
 
-    onStateChanged();
-  }
-
-  /// 텍스트 선택 해제
-  void deselectText() {
-    _selectedTextIndex = null;
-    _isEditingText = false;
-    _showTextOverlay = false;
-    onTextDeselected?.call();
-    onStateChanged();
-  }
-
-  /// 편집 모드 종료
-  void finishEditing() {
-    _isEditingText = false;
-    onStateChanged();
-  }
-
-  /// 텍스트 변형 시작 (크기조절, 회전 등)
-  void startTextTransform(int index) {
-    if (index < 0 || index >= textDrawables.length) return;
-
-    _isTransformingText = true;
-    _selectedTextIndex = index;
     onStateChanged();
   }
 
@@ -1002,29 +919,6 @@ class TextInteractionManager {
     onStateChanged();
   }
 
-  /// 텍스트 크기 조절
-  void resizeText(int index, double scaleFactor) {
-    if (index < 0 || index >= textDrawables.length) return;
-
-    final textDrawable = textDrawables[index];
-    final currentFontSize = textDrawable.style.fontSize ?? 16.0;
-    final newFontSize = (currentFontSize * scaleFactor).clamp(8.0, 72.0);
-
-    final newStyle = textDrawable.style.copyWith(fontSize: newFontSize);
-    updateTextStyle(index, newStyle);
-  }
-
-  /// 텍스트 회전 (현재 TextDrawable에서 지원하지 않음)
-  void rotateText(int index, double rotation) {
-    // TODOS: 회전 기능이 필요한 경우 TextDrawable 구조 확장 필요
-    // 현재는 기본 기능만 지원
-  }
-
-  /// 모든 텍스트 선택 해제
-  void clearSelection() {
-    deselectText();
-  }
-
   /// 텍스트 오버레이 숨기기
   void hideTextOverlay() {
     _showTextOverlay = false;
@@ -1036,41 +930,6 @@ class TextInteractionManager {
     _showTextOverlay = false;
     _selectedTextIndex = null;
     _syncWithWidgetState();
-    onStateChanged();
-  }
-
-  /// 텍스트 복사
-  TextDrawable? copyText(int index) {
-    if (index < 0 || index >= textDrawables.length) return null;
-
-    final originalText = textDrawables[index];
-    final newPosition = Offset(
-      originalText.position.dx + 20,
-      originalText.position.dy + 20,
-    );
-    return originalText.copyWithPosition(newPosition);
-  }
-
-  /// 텍스트 붙여넣기
-  void pasteText(TextDrawable textDrawable) {
-    scribbleNotifier.addTextDrawable(textDrawable);
-    onStateChanged();
-  }
-
-  /// 특정 위치에 텍스트가 있는지 확인
-  bool hasTextAt(Offset position) {
-    return _findTextAt(position) != null;
-  }
-
-  /// 텍스트 개수 반환
-  int get textCount => textDrawables.length;
-
-  /// 모든 텍스트 삭제
-  void clearAllTexts() {
-    scribbleNotifier.clearAllTextDrawables();
-    _selectedTextIndex = null;
-    _isEditingText = false;
-    onTextDeselected?.call();
     onStateChanged();
   }
 
@@ -1099,10 +958,7 @@ class TextInteractionManager {
 
     // TransformHandler로 크기조절/회전 시작
     final touchPoint = details.localPosition;
-    _transformHandler.startResizeRotate(
-      touchPoint,
-      _originalTextCenter!,
-    );
+    _transformHandler.startResizeRotate(touchPoint, _originalTextCenter!);
 
     _isTextResizing = true;
 
@@ -1207,17 +1063,6 @@ class TextInteractionManager {
       // 다음 계산을 위해 현재 위치 저장
       _lastTransformPosition = details.localPosition;
     }
-  }
-
-  /// 리소스 정리
-  void dispose() {
-    // 인라인 텍스트 에디터 정리
-    if (_textEditorOverlay != null) {
-      _textEditorOverlay!.remove();
-      _textEditorOverlay = null;
-    }
-    _isEditingText = false;
-    _editingTextId = null;
   }
 
   /// 컨트롤 영역 터치 처리 메서드 (회전된 텍스트 지원)

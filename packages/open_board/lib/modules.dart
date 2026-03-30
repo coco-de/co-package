@@ -4,9 +4,6 @@ library;
 export 'src/module/widgets/scribble_widget.dart';
 export 'src/module/widgets/simple_scribble_widget.dart'; // ✨ 간편한 위젯들
 
-// ✨ 통합된 필기 시스템 (ScribbleCacheManager로 통합됨)
-export 'src/module/widgets/scribble_drawing_toolbar.dart';
-
 // 컨트롤러
 export 'src/module/scribble_controller.dart'; // ✨ 새로운 컨트롤러
 
@@ -33,7 +30,6 @@ export 'src/core/utils/measure_size.dart'; // ✨ 크기 측정 유틸리티
 // 노티파이어들
 export 'src/module/scribble.notifier.dart';
 export 'src/module/state/scribble.state.dart';
-export 'src/module/state/scribble_state_builder.dart';
 
 export 'src/module/scribble_mode.notifier.dart';
 export 'src/module/state/scribble_mode.state.dart';
@@ -46,6 +42,11 @@ export 'src/module/state/undo_redo_tracker.dart';
 export 'src/module/state/drawing_settings_persistence.dart';
 
 export 'src/module/keys/keys.dart';
+
+// 모델 및 유틸리티
+export 'src/core/utils/ink_group_info.dart';
+export 'src/module/models/lasso_selection_state.dart';
+export 'src/module/models/oriented_bounding_box.dart';
 
 // ♻️ PaintDelegate 패턴 (ScribblePainter 분리)
 export 'src/module/painter/paint_delegate.dart';

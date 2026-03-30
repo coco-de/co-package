@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
@@ -14,17 +13,12 @@ import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
-import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/text_interaction_manager.dart';
 import 'package:open_board/src/module/text/text_painter.dart';
-import 'package:open_board/src/module/utils/image_capture_utils.dart';
 // 새로 생성한 클래스들 import
 import 'package:open_board/src/module/widgets/pointer_event_handler.dart';
 import 'package:open_board/src/module/widgets/scribble_render_layers.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
-
-/// 페이지 네비게이션 방향 enum
-enum PageNavigationDirection { previous, next }
 
 /// 🎯 Pan 제스처 방향 제어 enum
 enum PanDirection {
@@ -104,9 +98,6 @@ final class ScribbleWidget extends StatefulWidget {
   /// child의 실제 렌더 크기나 뷰포트 크기와 무관하게 고정 좌표계를 유지합니다.
   final Size? contentLogicalSize;
 
-  /// 🆕 외부에서 주입하는 초기 스케일(선택). 주어지면 첫 프레임에 우선 적용
-  final double? initialScale;
-
   ScribbleWidget({
     super.key,
     required this.notifier,
@@ -119,22 +110,17 @@ final class ScribbleWidget extends StatefulWidget {
     this.isScribbleEnable = true,
     this.drawPen = true,
     this.drawEraser = true,
-    this.pressureFactor = 0.5,
-    this.speedFactor = 0.1,
-    this.minWidthFactor = 0.3,
     this.maxScale = 3.0,
     this.panDirection = PanDirection.horizontal, // 🎯 기본값: 가로 pan 허용
     this.onInteractionUpdate,
     this.onHandModeDrawingChanged,
     this.onSelectionComplete,
-    this.onTransformComplete,
     this.onModeChanged,
     this.onChildSizeChanged, // ✨ 자식 크기 변경 콜백
     this.onScaleChanged,
     this.onTransformChanged,
     this.repaintBoundaryKey, // ✨ 외부에서 제공 가능한 GlobalKey
-    this.contentLogicalSize, // 🆕 논리 컨텐츠 크기
-    this.initialScale,
+    this.contentLogicalSize,
   });
 
   /// ✨ 크기 결정 방식:
@@ -146,9 +132,6 @@ final class ScribbleWidget extends StatefulWidget {
   final bool isScribbleEnable;
   final bool drawPen;
   final bool drawEraser;
-  final double pressureFactor;
-  final double speedFactor;
-  final double minWidthFactor;
   final double maxScale;
   final PanDirection panDirection; // 🎯 Pan 제스처 방향 제어
   final ui.Image? background;
@@ -186,8 +169,6 @@ final class ScribbleWidget extends StatefulWidget {
 
   final Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
   onSelectionComplete;
-  final Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
-  onTransformComplete;
   final Function(bool isSelecting, bool isTransforming)? onModeChanged;
 
   final void Function(
@@ -207,40 +188,6 @@ final class ScribbleWidget extends StatefulWidget {
 
   @override
   State<ScribbleWidget> createState() => _ScribbleWidgetState();
-
-  /// Fallback 이미지 캡처 메서드
-  Future<ByteData> captureFromWidget(
-    Widget widget, {
-    Duration delay = const Duration(seconds: 1),
-    double? pixelRatio,
-    BuildContext? context,
-    Size? targetSize,
-  }) {
-    return ImageCaptureUtils.captureFromWidget(
-      widget,
-      delay: delay,
-      pixelRatio: pixelRatio,
-      context: context,
-      targetSize: targetSize,
-    );
-  }
-
-  /// 위젯을 UI 이미지로 변환
-  static Future<ui.Image> widgetToUiImage(
-    Widget widget, {
-    Duration delay = const Duration(seconds: 1),
-    double? pixelRatio,
-    BuildContext? context,
-    Size? targetSize,
-  }) {
-    return ImageCaptureUtils.widgetToUiImage(
-      widget,
-      delay: delay,
-      pixelRatio: pixelRatio,
-      context: context,
-      targetSize: targetSize,
-    );
-  }
 }
 
 /// ScribbleWidget의 State 클래스 - 리팩토링된 버전
@@ -249,8 +196,6 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
   TransformationController? transformationController;
   late StrokeCountNotifier strokeCountNotifier;
   late ValueNotifier<bool> isInteractiveNotifier;
-  int strokeCount = 0;
-
   // scribble_tools 패턴용 상태 변수들
   bool isZoomedIn = false;
   bool isBlockVerticalDrag = false;
@@ -306,11 +251,8 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
     // 🌍 DrawingState 등록은 ScribbleController에서 자동으로 처리됨 ✅
     // (중복 등록 코드 제거됨)
 
-    // 🎯 Undo/Redo 후 화면 업데이트 콜백 등록
-    final drawingState = DrawingState();
-    drawingState.registerUndoRedoUpdateCallback(_forceRepaint);
-
     // 🔄 DrawingState의 도구 변경 감지 리스너 추가
+    final drawingState = DrawingState();
     drawingState.selectedTool.addListener(_onDrawingToolChanged);
 
     // 등록 후 즉시 강제 동기화 실행
@@ -335,20 +277,18 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
 
     // 상태 관리 객체 초기화
     widgetState = ScribbleWidgetState();
-    _initializeTextSettings();
 
     // 포인터 이벤트 핸들러 초기화
     pointerHandler = PointerEventHandler(
       scribbleNotifier: widget.notifier,
       modeNotifier: widget.modeNotifier,
-      transformationController: transformationController,
       onStateChanged: () {
         // 🔒 dispose 후 setState 호출 방지 (메모리 크래시 방지)
         if (mounted) {
           setState(() {});
         }
       },
-      onScribble: widget.onScribble,
+      onScribble: widget.onScribble ?? (_) {},
       onScribbleFinished: (notifier) {
         // 필기 완료 후 Undo/Redo 상태 업데이트
         final drawingState = DrawingState();
@@ -382,9 +322,6 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
       size: null, // child가 있으면 자동으로 크기 측정됨
       drawPen: widget.drawPen,
       drawEraser: widget.drawEraser,
-      pressureFactor: widget.pressureFactor,
-      speedFactor: widget.speedFactor,
-      minWidthFactor: widget.minWidthFactor,
     );
 
     // 매니저들 초기화
@@ -392,21 +329,6 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
 
     // 기존 텍스트 불러오기 (매니저 초기화 후)
     _loadTextDrawablesFromNotifier();
-  }
-
-  void _initializeTextSettings() {
-    final currentColor = widget.modeNotifier.state.inkGroupInfo.selectedColor;
-    final currentSize =
-        widget.modeNotifier.state.inkGroupInfo.seletedStrokeWidth;
-
-    widgetState.textSettings = TextSettings(
-      textStyle: TextStyle(
-        fontSize: currentSize,
-        color: currentColor,
-        fontWeight: FontWeight.normal,
-      ),
-      textAlignment: TextAlignment.center,
-    );
   }
 
   void _initializeManagers() {
@@ -426,7 +348,6 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
       onTextSelected: (textDrawable) {
         lassoManager.resetLassoState();
       },
-      onTextEdit: (textDrawable) {},
       onTextUpdated: (textDrawable) {},
       onTextDeselected: () {},
     );
@@ -434,15 +355,12 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
     // 올가미 매니저 초기화
     lassoManager = LassoSelectionManager(
       scribbleNotifier: widget.notifier,
-      modeNotifier: widget.modeNotifier,
       onStateChanged: () {
         if (mounted) {
           setState(() {});
         }
       },
       transformationController: transformationController,
-      onSelectionComplete: widget.onSelectionComplete,
-      onTransformComplete: widget.onTransformComplete,
       onModeChanged: widget.onModeChanged,
     );
   }
@@ -487,30 +405,6 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
       }
     }
     return true;
-  }
-
-  /// 🎯 Undo/Redo 후 강제 화면 업데이트
-  void _forceRepaint() {
-    if (mounted) {
-      // 1. strokeCountNotifier 활성화하여 CustomPainter 다시 그리기
-      strokeCountNotifier.active();
-
-      // 2. setState 호출하여 위젯 트리 다시 빌드
-      setState(() {});
-
-      // 3. 다음 프레임에서 비활성화 후 다시 활성화 (확실한 repaint 트리거)
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          strokeCountNotifier.deactive();
-          // 한 프레임 후 다시 활성화
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              strokeCountNotifier.active();
-            }
-          });
-        }
-      });
-    }
   }
 
   // 이전 모드 추적을 위한 변수
@@ -608,11 +502,8 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
     // 🌍 DrawingState 등록 해제는 ScribbleController에서 자동으로 처리됨 ✅
     // (중복 해제 코드 제거됨)
 
-    // 🎯 Undo/Redo 후 화면 업데이트 콜백 해제
-    final drawingState = DrawingState();
-    drawingState.unregisterUndoRedoUpdateCallback(_forceRepaint);
-
     // 🔄 DrawingState 도구 변경 리스너 해제
+    final drawingState = DrawingState();
     drawingState.selectedTool.removeListener(_onDrawingToolChanged);
 
     // 🆕 스케일 변화 리스너 제거
@@ -630,34 +521,6 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
   // 현재 스케일 계산 (내부 transformationController 사용)
   double get currentScale =>
       transformationController?.value.getMaxScaleOnAxis() ?? 1.0;
-
-  // 미디어 쿼리 데이터
-  MediaQueryData get mediaData => MediaQuery.of(context);
-
-  double get width {
-    // ✨ 1순위: child가 있고 크기가 측정된 경우
-    if (_childSize != null) {
-      return _childSize!.width;
-    }
-
-    // 2순위: 화면 크기 (기본값)
-    final screenWidth =
-        mediaData.size.width - mediaData.padding.left - mediaData.padding.right;
-
-    return screenWidth;
-  }
-
-  double get height {
-    // ✨ 1순위: child가 있고 크기가 측정된 경우
-    if (_childSize != null) {
-      return _childSize!.height;
-    }
-
-    // 2순위: 화면 크기 (기본값)
-    final screenHeight = mediaData.size.height;
-
-    return screenHeight;
-  }
 
   // ✨ child 크기 변경 콜백 처리
   void _onChildSizeChanged(Size newSize) {

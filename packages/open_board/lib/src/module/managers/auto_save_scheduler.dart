@@ -23,10 +23,7 @@ class AutoSaveScheduler {
   /// 마지막 저장된 스트로크 수 해시 (무한루프 방지)
   final Map<String, int> _lastSavedHashes = {};
 
-  AutoSaveScheduler({
-    required this.onSave,
-    required this.isDisposed,
-  });
+  AutoSaveScheduler({required this.onSave, required this.isDisposed});
 
   /// 자동 저장 스케줄링
   ///
@@ -75,13 +72,6 @@ class AutoSaveScheduler {
     cancelAll();
     _lastSavedHashes.clear();
   }
-
-  /// 대기 중인 키 목록
-  List<String> get pendingKeys => List.unmodifiable(_autoSaveTimers.keys);
-
-  /// 특정 키의 타이머가 대기 중인지 확인
-  bool hasPendingTimer(String key) =>
-      _autoSaveTimers.containsKey(_normalizeKey(key));
 
   /// 캐시 키 정규화 (특수 문자 처리)
   static String _normalizeKey(String key) {

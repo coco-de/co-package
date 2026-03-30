@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
-import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
@@ -13,7 +12,6 @@ import 'package:open_board/src/module/transform_handler.dart';
 class LassoSelectionManager {
   // 의존성
   final ScribbleNotifier scribbleNotifier;
-  final ScribbleModeNotifier modeNotifier;
   final VoidCallback onStateChanged;
 
   // 올가미 선택 관련 상태
@@ -46,23 +44,15 @@ class LassoSelectionManager {
   // 공통 변형 핸들러
   late TransformHandler _transformHandler;
 
-  // 콜백 함수들
-  final void Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
-  onSelectionComplete;
-  final void Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
-  onTransformComplete;
   final void Function(bool isSelecting, bool isTransforming)? onModeChanged;
 
   LassoSelectionManager({
     required this.scribbleNotifier,
-    required this.modeNotifier,
     required this.onStateChanged,
-    this.transformationController,
-    this.onSelectionComplete,
-    this.onTransformComplete,
-    this.onModeChanged,
+    required this.transformationController,
+    required this.onModeChanged,
   }) {
-    _transformHandler = TransformHandler(_transformer);
+    _transformHandler = TransformHandler();
   }
 
   // Getters
@@ -73,9 +63,6 @@ class LassoSelectionManager {
 
   CoordinateTransformer get _transformer =>
       CoordinateTransformer(transformationController);
-
-  /// 공통 변형 핸들러 (외부 참조용)
-  TransformHandler get transformHandler => _transformHandler;
 
   double get currentScale => _transformer.scale;
 
@@ -212,10 +199,7 @@ class LassoSelectionManager {
         final calculatedBoundingBox = _calculateBoundingBox(_selectedStrokeIds);
 
         _lassoSelectionState = painter.LassoSelectionState(
-          selectedStrokeIds: _selectedStrokeIds,
           boundingBox: calculatedBoundingBox,
-          isTransforming: false,
-          operation: painter.TransformOperation.none,
         );
         _showLassoOverlay = false; // 터치업인사이드에서 표시하도록 숨김
         _isLassoTransforming = false;
@@ -311,10 +295,7 @@ class LassoSelectionManager {
 
         _showLassoOverlay = true;
         _lassoSelectionState = painter.LassoSelectionState(
-          selectedStrokeIds: _selectedStrokeIds,
           boundingBox: overlayBoundingBox,
-          isTransforming: false,
-          operation: painter.TransformOperation.none,
         );
         onStateChanged();
 
@@ -399,10 +380,7 @@ class LassoSelectionManager {
 
         // ⑤ 선택 상태 및 바운딩 박스 등은 기존대로
         _lassoSelectionState = painter.LassoSelectionState(
-          selectedStrokeIds: _selectedStrokeIds,
           boundingBox: _calculateBoundingBox(_selectedStrokeIds),
-          isTransforming: false,
-          operation: painter.TransformOperation.none,
         );
         _showLassoOverlay = false;
         _isLassoTransforming = false;
@@ -668,7 +646,9 @@ class LassoSelectionManager {
 
       for (int i = 0; i < _selectedStrokeIds.length; i++) {
         final strokeId = _selectedStrokeIds[i];
-        if (strokeId >= 0 && strokeId < strokes.length && i < transformedGroups.length) {
+        if (strokeId >= 0 &&
+            strokeId < strokes.length &&
+            i < transformedGroups.length) {
           final stroke = strokes[strokeId];
           final transformedPoints = transformedGroups[i];
 

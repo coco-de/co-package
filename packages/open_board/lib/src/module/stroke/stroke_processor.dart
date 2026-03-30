@@ -16,7 +16,7 @@ import 'package:open_board/src/module/state/scribble_mode.state.dart';
 /// ScribbleNotifier에서 추출된 상태 없는(stateless) 유틸리티로,
 /// 포인트 추가, 이벤트에서 포인트 생성, 스트로크 완료, 반지름 계산을 담당합니다.
 class StrokeProcessor {
-  const StrokeProcessor({this.pressureCurve = Curves.linear});
+  const StrokeProcessor({required this.pressureCurve});
 
   /// 펜 압력 매핑에 사용되는 커브
   final Curve pressureCurve;
@@ -103,10 +103,4 @@ class StrokeProcessor {
     );
   }
 
-  /// 스트로크의 반지름을 계산합니다.
-  ///
-  /// [size], [thinning], [p] (압력)을 기반으로 스트로크의 반지름을 계산합니다.
-  double calculateRadius(double size, double thinning, double p) {
-    return size * (0.5 - thinning * (0.5 - p));
-  }
 }
