@@ -6,6 +6,7 @@ import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
+import 'package:open_board/src/module/transform_handler.dart';
 
 /// 올가미 선택 기능을 관리하는 클래스
 /// ScribbleWidget의 올가미 관련 기능들을 분리하여 관리
@@ -38,12 +39,12 @@ class LassoSelectionManager {
   painter.OrientedBoundingBox? _originalOrientedBoundingBox;
   Offset? _startTouchPoint; // 터치 시작점 저장
   Offset? _touchToButtonOffset; // 터치 위치와 버튼 위치의 오프셋
-  double? _originalDistance; // 시작점에서 중심점까지의 거리
-  double? _originalAngle; // 원점 기준 초기 거리와 각도 계산
-  double _currentRotation = 0.0; // 텍스트 방식: deltaAngle 저장 (상대 회전각도만)
 
   // TransformationController 참조
   TransformationController? transformationController;
+
+  // 공통 변형 핸들러
+  late TransformHandler _transformHandler;
 
   // 콜백 함수들
   final void Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
@@ -60,7 +61,9 @@ class LassoSelectionManager {
     this.onSelectionComplete,
     this.onTransformComplete,
     this.onModeChanged,
-  });
+  }) {
+    _transformHandler = TransformHandler(_transformer);
+  }
 
   // Getters
   painter.LassoSelectionState get lassoSelectionState => _lassoSelectionState;
@@ -70,6 +73,9 @@ class LassoSelectionManager {
 
   CoordinateTransformer get _transformer =>
       CoordinateTransformer(transformationController);
+
+  /// 공통 변형 핸들러 (외부 참조용)
+  TransformHandler get transformHandler => _transformHandler;
 
   double get currentScale => _transformer.scale;
 
@@ -490,6 +496,9 @@ class LassoSelectionManager {
         )
         .toList();
 
+    // TransformHandler에도 원본 포인트 캐싱
+    _transformHandler.cacheOriginalPoints(_originalStrokePoints!);
+
     // 원본 스트로크들로부터 직접 바운딩 박스 계산 (현재 변환된 상태)
     final box = _calculateBoundingBox(_selectedStrokeIds);
 
@@ -525,24 +534,20 @@ class LassoSelectionManager {
     final center = _originalOrientedBoundingBox!.center;
     final screenCenter = _transformer.canvasToScreen(center);
 
-    // 버튼에서 중심까지의 화면 거리와 각도 (고정 기준)
-    final centerToButton = screenButtonPosition - screenCenter;
-    _originalDistance = centerToButton.distance;
-    _originalAngle = math.atan2(centerToButton.dy, centerToButton.dx);
-
-    // 기존 회전 각도 저장
-    _currentRotation = _originalOrientedBoundingBox!.rotation;
+    // TransformHandler로 크기조절/회전 시작 (화면 좌표 기준)
+    _transformHandler.startResizeRotate(
+      screenButtonPosition,
+      screenCenter,
+      initialRotation: _originalOrientedBoundingBox!.rotation,
+    );
   }
 
   /// 크기조절/회전 업데이트
   void onResizeRotateUpdate(DragUpdateDetails details, BuildContext context) {
-    // 🔧 디버그: 메서드 호출 확인
-
     // 🔥 필수 변수들이 null인 경우 자동으로 초기화 (onPanStart 미호출 대응)
     if (_originalOrientedBoundingBox == null ||
         _startTouchPoint == null ||
-        _originalDistance == null ||
-        _originalAngle == null) {
+        !_transformHandler.isResizeRotating) {
       // onResizeRotateStart와 동일한 초기화 로직 실행
       if (_selectedStrokeIds.isEmpty) {
         return;
@@ -606,10 +611,12 @@ class LassoSelectionManager {
       final center = _originalOrientedBoundingBox!.center;
       final screenCenter = _transformer.canvasToScreen(center);
 
-      // 버튼에서 중심까지의 화면 거리와 각도
-      final centerToButton = screenButtonPosition - screenCenter;
-      _originalDistance = centerToButton.distance;
-      _originalAngle = math.atan2(centerToButton.dy, centerToButton.dx);
+      // TransformHandler로 크기조절/회전 시작
+      _transformHandler.startResizeRotate(
+        screenButtonPosition,
+        screenCenter,
+        initialRotation: _originalOrientedBoundingBox!.rotation,
+      );
     }
 
     final originalBox = _originalOrientedBoundingBox!;
@@ -626,37 +633,13 @@ class LassoSelectionManager {
     final currentButtonPosition =
         localPosition + (_touchToButtonOffset ?? Offset.zero);
 
-    // 중심점을 화면 좌표로 변환 (scene → viewport)
-    final screenCenter = _transformer.canvasToScreen(center);
-
-    // 버튼 위치에서 중심까지의 거리와 각도
-    final centerToButton = currentButtonPosition - screenCenter;
-    final currentDistance = centerToButton.distance;
-    final currentAngle = math.atan2(centerToButton.dy, centerToButton.dx);
-
-    // 🎯 화면 거리 비율 = 캔버스 적용 비율
-    // _originalDistance는 화면 거리 (toScene 적용됨)
-    // currentDistance도 화면 거리
-    // 비율은 동일하게 캔버스에 적용됨 (toScene 후 화면에서도 같은 비율)
-    final scale = (currentDistance / _originalDistance!).clamp(0.1, 3.0);
-
-    // 회전 각도 계산: 현재 각도 - 원래 버튼 각도
-    var deltaAngle = currentAngle - _originalAngle!;
-
-    // 각도 차이를 -π ~ π 범위로 정규화 (연속성 보장)
-    while (deltaAngle > math.pi) {
-      deltaAngle -= 2 * math.pi;
-    }
-    while (deltaAngle < -math.pi) {
-      deltaAngle += 2 * math.pi;
-    }
-
-    // 🔥 상대 회전각만 저장
-    _currentRotation = deltaAngle;
+    // TransformHandler로 스케일/회전 계산
+    final result = _transformHandler.computeResizeRotate(currentButtonPosition);
+    final scale = result.scale;
 
     // 🎯 텍스트 방식: 기존회전 + 상대회전
     final originalRotation = originalBox.rotation;
-    final finalRotation = originalRotation + _currentRotation;
+    final finalRotation = originalRotation + result.deltaAngle;
 
     final newOrientedBox = painter.OrientedBoundingBox(
       center: center, // 중심점 고정
@@ -670,35 +653,24 @@ class LassoSelectionManager {
       orientedBoundingBox: newOrientedBox,
     );
 
-    // 스트로크들 변환 적용
+    // 스트로크들 변환 적용 (TransformHandler의 applyResizeRotate 사용)
     if (_originalStrokePoints != null && _selectedStrokeIds.isNotEmpty) {
       final currentScribble = scribbleNotifier.currentState.scribble;
       final strokes = List<Stroke>.from(currentScribble.strokes);
 
+      // TransformHandler로 변환된 포인트 계산
+      final transformedGroups = _transformHandler.applyResizeRotate(
+        _originalStrokePoints!,
+        center: center,
+        scale: scale,
+        rotation: finalRotation,
+      );
+
       for (int i = 0; i < _selectedStrokeIds.length; i++) {
         final strokeId = _selectedStrokeIds[i];
-        if (strokeId >= 0 && strokeId < strokes.length) {
-          final originalPoints = _originalStrokePoints![i];
+        if (strokeId >= 0 && strokeId < strokes.length && i < transformedGroups.length) {
           final stroke = strokes[strokeId];
-
-          final transformedPoints = originalPoints.map((point) {
-            // 중심점 기준으로 이동
-            final relativePoint = point - center;
-
-            // 스케일 적용
-            final scaledPoint = relativePoint * scale;
-
-            // 🎯 텍스트 방식: 기존회전 + 상대회전 적용
-            final cos = math.cos(finalRotation);
-            final sin = math.sin(finalRotation);
-            final rotatedPoint = Offset(
-              scaledPoint.dx * cos - scaledPoint.dy * sin,
-              scaledPoint.dx * sin + scaledPoint.dy * cos,
-            );
-
-            // 중심점 기준으로 다시 이동
-            return rotatedPoint + center;
-          }).toList();
+          final transformedPoints = transformedGroups[i];
 
           // 변환된 포인트들로 스트로크 업데이트
           for (
@@ -759,12 +731,12 @@ class LassoSelectionManager {
       );
     }
 
+    // TransformHandler 크기조절/회전 상태 종료
+    _transformHandler.endResizeRotate();
+
     // 상태 초기화 (텍스트 방식: 변형 완료 후에는 현재 회전 유지)
     _originalOrientedBoundingBox = null;
     _startTouchPoint = null;
-    _originalDistance = null;
-    _originalAngle = null;
-    // 🎯 텍스트 방식: _currentRotation은 초기화하지 않음 (현재 회전 상태 유지)
 
     // 🔥 변형된 스트로크들의 현재 포인트를 다시 캐싱 (이동 시 정확한 기준점 확보)
     // 주의: _originalStrokePoints는 초기화하지 않고 새로운 값으로 업데이트
@@ -1092,6 +1064,9 @@ class LassoSelectionManager {
     _lastTransformPosition = localPosition;
     _isLassoTransforming = true;
 
+    // TransformHandler로 이동 시작
+    _transformHandler.startMove(localPosition);
+
     // 현재 선택된 스트로크들의 원본 좌표 저장
     _cacheOriginalStrokePoints();
     onStateChanged();
@@ -1113,8 +1088,9 @@ class LassoSelectionManager {
     // Listener와 동일한 로컬 좌표 획득
     final localPosition = renderBox.globalToLocal(details.globalPosition);
 
-    // 🔄 박스 없을 때와 완전히 동일한 로직
-    final delta = localPosition - _lastTransformPosition!;
+    // TransformHandler로 delta 계산
+    final delta = _transformHandler.getMoveDeleta(localPosition);
+    if (delta == null) return;
 
     // 원본 위치에서 델타만큼 이동
     _moveSelectedStrokesFromOriginal(delta);
@@ -1123,6 +1099,9 @@ class LassoSelectionManager {
   /// 이동 종료
   void onMoveEnd(DragEndDetails details) {
     _isLassoTransforming = false;
+
+    // TransformHandler 이동 상태 종료
+    _transformHandler.endMove();
 
     // 최종 변경사항을 히스토리에 저장
     if (_selectedStrokeIds.isNotEmpty) {
@@ -1154,6 +1133,9 @@ class LassoSelectionManager {
         _originalStrokePoints!.add(points);
       }
     }
+
+    // TransformHandler에도 원본 포인트 캐싱
+    _transformHandler.cacheOriginalPoints(_originalStrokePoints!);
   }
 
   /// 바운딩 박스 업데이트
