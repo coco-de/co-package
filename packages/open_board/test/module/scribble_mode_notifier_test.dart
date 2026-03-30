@@ -129,6 +129,26 @@ void main() {
       });
     });
 
+    group('setFixedPen()', () {
+      test('잉크 모드를 fixedPen으로 설정한다', () {
+        notifier.setFixedPen();
+        expect(notifier.state.inkGroupInfo.selectedInk, InkModes.fixedPen);
+      });
+
+      test('scaleFactor와 allowedPointersMode는 유지된다', () {
+        notifier.setScaleFactor(1.5);
+        notifier.setAllowedPointersMode(ScribblePointerMode.mouseOnly);
+
+        notifier.setFixedPen();
+
+        expect(notifier.state.scaleFactor, 1.5);
+        expect(
+          notifier.state.allowedPointersMode,
+          ScribblePointerMode.mouseOnly,
+        );
+      });
+    });
+
     group('setShape()', () {
       test('잉크 모드를 shape으로 설정한다', () {
         notifier.setShape();

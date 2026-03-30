@@ -8,6 +8,7 @@ class InkModes {
   static const String pen = 'pen';
   static const String pencil = 'pencil';
   static const String marker = 'marker';
+  static const String fixedPen = 'fixedPen';
   static const String erase = 'erase';
   static const String lasso = 'lasso';
   static const String shape = 'shape';
@@ -28,6 +29,7 @@ class InkGroupInfo {
     InkModes.pen: ColorS.getColors(inkType: InkModes.pen)[0],
     InkModes.pencil: ColorS.getColors(inkType: InkModes.pencil)[0],
     InkModes.marker: ColorS.getColors(inkType: InkModes.marker)[0],
+    InkModes.fixedPen: ColorS.getColors(inkType: InkModes.pen)[0],
     InkModes.erase: ColorS.getColors(inkType: InkModes.erase)[0],
     InkModes.lasso: Colors.blue,
     InkModes.shape: ColorS.getColors(inkType: InkModes.shape)[0],
@@ -38,6 +40,7 @@ class InkGroupInfo {
     InkModes.pen: 0.5,
     InkModes.pencil: 0.5,
     InkModes.marker: 2.5,
+    InkModes.fixedPen: 0.5,
     InkModes.erase: 2.5,
     InkModes.lasso: 1.8,
     InkModes.shape: 1.0,

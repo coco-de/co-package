@@ -144,6 +144,10 @@ void main() {
         returnsNormally,
       );
       expect(
+        () => delegate.drawStroke(canvas, createStroke(ink: 'fixedPen')),
+        returnsNormally,
+      );
+      expect(
         () => delegate.drawStroke(canvas, createStroke(ink: 'erase')),
         returnsNormally,
       );

@@ -295,7 +295,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
             size:
                 modeState.inkGroupInfo.seletedStrokeWidth /
                 modeState.scaleFactor,
-            thinning: modeState.inkGroupInfo.selectedInk == "pen" ? 0.7 : 0.0,
+            thinning:
+                (modeState.inkGroupInfo.selectedInk == "pen" ||
+                        modeState.inkGroupInfo.selectedInk == "fixedPen")
+                    ? 0.7
+                    : 0.0,
             smoothing: 0.5,
             streamline: 0.5,
             taperStart: 0.0,

@@ -62,6 +62,17 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
     );
   }
 
+  /// 고정 두께 펜 모드로 설정 (화면상 물리적 두께가 줌과 무관하게 고정)
+  void setFixedPen() {
+    state = ScribbleModeState(
+      scaleFactor: state.scaleFactor,
+      allowedPointersMode: state.allowedPointersMode,
+      inkGroupInfo: state.inkGroupInfo.copyWith(
+        selectedInk: InkModes.fixedPen,
+      ),
+    );
+  }
+
   /// 도형 모드로 설정
   void setShape() {
     state = ScribbleModeState(

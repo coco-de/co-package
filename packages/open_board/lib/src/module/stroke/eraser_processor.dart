@@ -46,7 +46,9 @@ class EraserProcessor {
                   _calculateStrokeRadius(
                     stroke.options.size,
                     stroke.options.thinning,
-                    stroke.ink == "pen" ? stroke.points.first.p : pt.p,
+                    (stroke.ink == "pen" || stroke.ink == "fixedPen")
+                        ? stroke.points.first.p
+                        : pt.p,
                   );
               final minDistance =
                   (intersect.dx >=

@@ -8,6 +8,7 @@ void main() {
       expect(InkModes.pen, 'pen');
       expect(InkModes.pencil, 'pencil');
       expect(InkModes.marker, 'marker');
+      expect(InkModes.fixedPen, 'fixedPen');
       expect(InkModes.erase, 'erase');
       expect(InkModes.lasso, 'lasso');
       expect(InkModes.shape, 'shape');
