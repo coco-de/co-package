@@ -84,3 +84,14 @@ build/
 
 # FVM Version Cache
 .fvm/
+
+# Claude Code
+.claude/
+.mcp.json
+
+# Project docs & pipeline (managed locally)
+docs/
+.pipeline/
+
+# Lock file
+pubspec.lock
