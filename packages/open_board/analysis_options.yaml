@@ -13,3 +13,6 @@ analyzer:
 linter:
   rules:
     constant_identifier_names: false
+
+dcm:
+  exclude-public-api: true
