@@ -49,6 +49,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: DCM Format Check
+        if: always()
+        run: dcm format lib --dry-run --fatal-found
+
       - name: DCM Analyze
         if: always()
         run: |

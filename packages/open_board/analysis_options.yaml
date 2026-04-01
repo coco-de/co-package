@@ -9,10 +9,76 @@ analyzer:
     - "**/*.pbenum.dart"
     - "**/*.pbjson.dart"
     - "**/*.pbserver.dart"
+    - "**/*.freezed.dart"
+    - "**/*.gen.dart"
+    - "**/generated/**"
 
 linter:
   rules:
     constant_identifier_names: false
+    # DCM member-ordering으로 대체
+    sort_constructors_first: false
+    sort_unnamed_constructors_first: false
 
-dcm:
+# ── DCM 설정 ──
+dart_code_metrics:
   exclude-public-api: true
+
+  # 포매터 설정 (dcm format 명령에 적용)
+  formatter:
+    line-length: 80
+    indent: 2
+    cascading-widget-extensions: true
+
+  # 메트릭 임계값
+  metrics:
+    cyclomatic-complexity: 20
+    number-of-parameters: 4
+    maximum-nesting-level: 5
+    number-of-methods: 10
+    widgets-nesting-level: 5
+    source-lines-of-code: 50
+    maintainability-index: 50
+    number-of-imports: 10
+  metrics-exclude:
+    - test/**
+
+  # 린트 규칙
+  rules:
+    # ── 일반 Dart 규칙 ──
+    - avoid-dynamic
+    - avoid-nested-conditional-expressions
+    - avoid-redundant-async
+    - avoid-unnecessary-type-assertions
+    - avoid-unnecessary-type-casts
+    - avoid-unused-parameters
+    - avoid-unrelated-type-assertions
+    - no-empty-block
+    - no-equal-then-else
+    - prefer-moving-to-variable
+    - prefer-match-file-name
+    - prefer-conditional-expressions
+    - avoid-passing-async-when-sync-expected
+    - avoid-recursive-tostring
+
+    # ── 멤버 순서 (Dart 린트의 sort_constructors_first 대체) ──
+    - member-ordering:
+        order:
+          - public-static-fields
+          - private-static-fields
+          - public-fields
+          - private-fields
+          - constructors
+          - named-constructors
+          - factory-constructors
+          - public-getters-setters
+          - private-getters-setters
+          - public-methods
+          - private-methods
+          - overridden-methods
+
+    # ── Flutter 전용 ──
+    - avoid-returning-widgets
+    - avoid-unnecessary-setstate
+    - prefer-extracting-callbacks
+    - prefer-const-border-radius
