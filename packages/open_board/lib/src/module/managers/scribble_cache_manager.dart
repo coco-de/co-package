@@ -13,6 +13,7 @@
   import 'package:open_board/src/core/utils/extensions/merge_scribble.dart'; // 스트로크 분할/머지 import
   import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_board/src/module/managers/auto_save_scheduler.dart';
+  import 'package:open_board/src/module/managers/scribble_book_controller.dart';
   import 'package:open_board/src/module/scribble_controller.dart';
   import 'package:open_board/src/module/state/drawing_state.dart';
   import 'package:open_board/src/module/state/scribble.state.dart';
@@ -28,7 +29,7 @@
   /// - 스트로크 분할/머지 시스템 (양면↔단면 전환)
   ///
   /// 키 형식: 'contentId/pageId' 또는 원하는 계층 구조
-  class ScribbleCacheManager extends ChangeNotifier {
+  class ScribbleCacheManager extends ChangeNotifier implements ScribblePageProvider {
     /// 저장 디바운스 시간 (기본 1.5초)
     static const Duration _saveDebounceTime = Duration(milliseconds: 1500);
 

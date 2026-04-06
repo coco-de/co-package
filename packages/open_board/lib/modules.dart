@@ -10,6 +10,18 @@ export 'src/module/scribble_controller.dart'; // ✨ 새로운 컨트롤러
 // 통합 캐시 매니저 (ScribbleController 관리 포함)
 export 'src/module/managers/scribble_cache_manager.dart';
 
+// 다중 페이지 관리 컨트롤러
+export 'src/module/managers/scribble_book_controller.dart';
+
+// 이벤트 시스템 (리플레이/동기화용)
+export 'src/module/events/scribble_book_event.dart';
+
+// 스트로크 해시 유틸리티 (중복 제거용)
+export 'src/core/utils/scribble_hash_util.dart';
+
+// 리플레이 엔진
+export 'src/module/replay/scribble_replay_controller.dart';
+
 // 🔄 메타데이터 및 동기화 시스템
 export 'src/module/state/scribble_metadata.dart'; // ✨ 새로운 메타데이터 시스템
 
