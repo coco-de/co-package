@@ -65,7 +65,7 @@
 
 | 컴포넌트 | 역할 | 기술 |
 |---------|------|------|
-| **Flutter Client** | 필기 입력/렌더링, 실시간 전송/수신, 리플레이 재생 | open-board, livekit_client v2.7.0 |
+| **Flutter Client** | 필기 입력/렌더링, 실시간 전송/수신, 리플레이 재생 | open-board (인터페이스), livekit_client v2.7.0 (소비자 앱에서 Transport 구현) |
 | **App Server** | 세션 CRUD, LiveKit 토큰 발급, 스냅샷 저장/조회, .obt 업로드 | Serverpod |
 | **LiveKit SFU** | Data Channel 중계, 음성 트랙 중계, Egress 녹화 | LiveKit Server (Self-Host 또는 Cloud) |
 | **Object Store** | .obt 타임라인 + .bin 필기 데이터 영구 저장, 녹화 MP4 저장 | S3-compatible (R2, MinIO) |
@@ -1281,10 +1281,11 @@ class LocalLoopbackTransport implements LiveSessionTransport {
 | **S1.1** LiveSessionTransport 인터페이스 정의 | T1. 인터페이스 설계 및 코드 작성 | 2d |
 | | T2. TransportConnectionState 상태 머신 | 1d |
 | | T3. LocalLoopbackTransport 구현 + 단위 테스트 | 2d |
-| **S1.2** LiveKitTransport 구현 | T1. Room 연결/해제 | 1d |
+| **S1.2** LiveKitTransport 레퍼런스 구현 (Example 앱) | T1. Room 연결/해제 | 1d |
 | | T2. Topic별 Lossy/Reliable 데이터 송수신 | 2d |
 | | T3. 재연결 로직 (exponential backoff) | 1d |
 | | T4. 연결 상태 모니터링 + 메트릭 수집 | 1d |
+| | *Note: open_board 패키지가 아닌 Example 앱에 구현. 소비자 앱 레퍼런스로 제공.* | |
 | **S1.3** Protobuf 메시지 정의 | T1. message.proto 작성 (StrokePointsBatch, StrokeCompleteMessage 등) | 1d |
 | | T2. protoc 코드 생성 설정 | 0.5d |
 | | T3. 직렬화/역직렬화 벤치마크 | 0.5d |

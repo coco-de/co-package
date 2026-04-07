@@ -41,14 +41,15 @@ lib/src/module/live/
 │   └── sync/
 │       └── late_join_synchronizer.dart    # 늦은 참가자 동기화 로직
 │
-├── data/                            # 외부 구현체 (LiveKit, Protobuf 직렬화)
+├── data/                            # 내부 구현체 (Protobuf 직렬화, 테스트용 Transport)
 │   ├── transport/
-│   │   ├── livekit_transport.dart         # LiveKitTransport 구현체
 │   │   └── local_loopback_transport.dart  # 테스트/데모용 로컬 루프백
 │   ├── serializer/
 │   │   └── message_serializer.dart        # Protobuf encode/decode (Topic별)
 │   └── renderer/
 │       └── remote_stroke_renderer.dart    # 원격 스트로크 점진적 렌더링
+│   # NOTE: LiveKitTransport는 open_board에 포함하지 않음
+│   # 소비자 앱에서 LiveSessionTransport 인터페이스를 구현하여 주입
 │
 ├── presentation/                    # Controller, Widget
 │   ├── live_session_controller.dart       # 세션 오케스트레이터
@@ -65,12 +66,12 @@ lib/src/module/live/
 presentation ──▶ domain ◀── data
      │                         │
      │                         │
-     └── Flutter SDK           └── livekit_client, protobuf
+     └── Flutter SDK           └── protobuf (livekit_client는 소비자 앱에서 구현)
 ```
 
 **핵심 규칙:**
 - `domain/`은 Flutter SDK, livekit_client, protobuf 등 어떤 외부 패키지에도 의존하지 않는다. 순수 Dart만 사용한다.
-- `data/`는 `domain/`의 인터페이스를 구현한다. livekit_client, protobuf 의존성은 여기에만 존재한다.
+- `data/`는 `domain/`의 인터페이스를 구현한다. protobuf 의존성은 여기에만 존재한다. `livekit_client`는 open_board에 포함하지 않으며, 소비자 앱에서 `LiveSessionTransport`를 구현하여 주입한다.
 - `presentation/`은 `domain/`의 모델과 인터페이스만 참조한다. `data/`의 구체 구현체를 직접 참조하지 않는다 (DI를 통해 주입).
 
 ### 1.4 레이어별 상세 책임
@@ -92,7 +93,7 @@ presentation ──▶ domain ◀── data
 
 | 파일 | 책임 |
 |------|------|
-| `livekit_transport.dart` | `LiveSessionTransport` 구현. LiveKit `Room` 생성, Data Channel 토픽별 송수신, Lossy/Reliable 채널 분리. `livekit_client` 패키지 직접 의존. |
+| ~~`livekit_transport.dart`~~ | **open_board에 포함하지 않음**. 소비자 앱에서 `LiveSessionTransport` 인터페이스를 구현. LiveKit, WebSocket, gRPC 등 자유롭게 선택 가능. |
 | `local_loopback_transport.dart` | `LiveSessionTransport` 구현. 네트워크 없이 `StreamController`로 송수신 루프백. 단위 테스트 및 Example 앱용. |
 | `message_serializer.dart` | 7개 Topic별 Protobuf encode/decode 유틸리티. `StrokePointsBatch`, `StrokeCompleteMessage`, `ScribbleEventMessage`, `ViewportMessage`, `SyncRequestMessage`, `SyncResponseMessage` 처리. |
 | `remote_stroke_renderer.dart` | Lossy 포인트 배치를 받아 임시 스트로크를 점진적으로 렌더링하고, Reliable 완료 메시지 수신 시 전체 Stroke로 교체하는 렌더러. |
@@ -176,7 +177,9 @@ class LiveSessionScope extends InheritedWidget {
 ```dart
 // 소비자 앱 (예: Riverpod 사용 시)
 final liveSessionProvider = Provider<LiveSessionController>((ref) {
-  final transport = LiveKitTransport(wsUrl: 'wss://...');
+  // LiveSessionTransport 구현은 소비자 앱에서 제공
+  // 예: LiveKitTransport, WebSocketTransport 등
+  final transport = ref.watch(transportProvider);
   final bookController = ref.watch(bookControllerProvider);
   return LiveSessionController(
     bookController: bookController,
@@ -272,7 +275,7 @@ replayController.play();
 | 클래스 | 용도 | 패키지 위치 |
 |--------|------|------------|
 | `LiveSessionTransport` | Transport 추상 인터페이스 | open_board (core) |
-| `LiveKitTransport` | LiveKit 구현체 | open_board (또는 향후 open_board_livekit) |
+| `LiveKitTransport` | LiveKit 구현체 | **소비자 앱에서 구현** (open_board는 인터페이스만 제공) |
 | `LocalLoopbackTransport` | 테스트/데모용 루프백 | open_board (core) |
 | `LiveSessionController` | 세션 오케스트레이터 | open_board (core) |
 | `LiveScribbleWidget` | 실시간 필기 위젯 | open_board (core) |
@@ -295,7 +298,7 @@ export 'src/module/live/domain/model/transport_state.dart';
 export 'src/module/live/presentation/live_session_controller.dart';
 export 'src/module/live/presentation/live_scribble_widget.dart';
 export 'src/module/live/di/live_session_scope.dart';
-export 'src/module/live/data/transport/livekit_transport.dart';
+// LiveKitTransport는 소비자 앱에서 구현 — open_board에서 export하지 않음
 export 'src/module/live/data/transport/local_loopback_transport.dart';
 ```
 
@@ -431,7 +434,7 @@ lib/src/module/live/
 │
 ├── data/
 │   ├── transport/
-│   │   ├── livekit_transport.dart             [신규] LiveKit Data Channel 구현체
+│   │   # livekit_transport.dart는 소비자 앱에서 구현
 │   │   └── local_loopback_transport.dart      [신규] 테스트/데모용 로컬 루프백
 │   ├── serializer/
 │   │   └── message_serializer.dart            [신규] Topic별 Protobuf encode/decode
@@ -461,7 +464,7 @@ lib/src/module/live/
 | 6 | `event_batcher.dart` | `EventBatcher` | 100ms Timer 기반 Point 배칭. `addPoint()` -> `onBatchReady` callback |
 | 7 | `viewport_throttler.dart` | `ViewportThrottler` | 100ms 쓰로틀. `onViewportChanged()` -> `onThrottled` callback |
 | 8 | `late_join_synchronizer.dart` | `LateJoinSynchronizer` | Queue 기반 이벤트 버퍼링. `isSyncing` 플래그 관리 |
-| 9 | `livekit_transport.dart` | `LiveKitTransport` | LiveKit `Room` 연결, `publishData()` Lossy/Reliable 분기, `onDataReceived` 라우팅 |
+| ~~9~~ | ~~`livekit_transport.dart`~~ | ~~`LiveKitTransport`~~ | **소비자 앱에서 구현** |
 | 10 | `local_loopback_transport.dart` | `LocalLoopbackTransport` | `StreamController` 쌍으로 teacher/student 루프백 |
 | 11 | `message_serializer.dart` | `MessageSerializer` | `StrokePointsBatch`, `StrokeCompleteMessage` 등 Protobuf encode/decode |
 | 12 | `remote_stroke_renderer.dart` | `RemoteStrokeRenderer` | Lossy 포인트 누적 -> 임시 Path 렌더링 -> Reliable 완료 시 Stroke 교체 |
@@ -487,7 +490,7 @@ Tech Spec에 명시된 대로 기존 open-board 코어 코드의 변경을 최�
 | 4 | `lib/src/module/replay/scribble_timeline_recorder.dart` | `_convertToTimelineEvent`에 `ViewportChangedEvent`, `SessionParticipantEvent` case 추가 | **확장** (기존 case 변경 없음) |
 | 5 | `lib/src/module/replay/scribble_replay_controller.dart` | `_convertFromTimelineEvent`에 `TlViewportChanged`, `TlSessionParticipant` case 추가 | **확장** (기존 case 변경 없음) |
 | 6 | `lib/src/data/model/timeline/timeline_serializer.dart` | 새 이벤트 타입의 직렬화/역직렬화 추가 | **확장** |
-| 7 | `pubspec.yaml` | `livekit_client: ^2.7.0` 의존성 추가 | **추가** |
+| ~~7~~ | ~~`pubspec.yaml`~~ | ~~`livekit_client: ^2.7.0`~~ | **불필요** — 소비자 앱에서 직접 의존 |
 
 ### 6.3 변경하지 않는 파일 (명시적 보호)
 
@@ -520,7 +523,7 @@ Tech Spec에 명시된 대로 기존 open-board 코어 코드의 변경을 최�
 | 항목 | 상태 | 근거 |
 |------|------|------|
 | domain 레이어가 외부 의존성에 의존하지 않는가? | PASS | domain/에 import되는 패키지: 없음 (순수 Dart, dart:async만 사용) |
-| data -> domain 의존 방향이 올바른가? | PASS | `LiveKitTransport implements LiveSessionTransport` |
+| data -> domain 의존 방향이 올바른가? | PASS | `LocalLoopbackTransport implements LiveSessionTransport` (LiveKit 구현은 소비자 앱) |
 | presentation -> domain 의존 방향이 올바른가? | PASS | `LiveSessionController`는 `LiveSessionTransport` 인터페이스만 참조 |
 | presentation이 data를 직접 참조하지 않는가? | PASS | DI (`LiveSessionScope`)를 통해 구체 구현체 주입 |
 | 기존 open-board 모듈의 flat 구조를 유지하는가? | PASS | 기존 `module/events/`, `module/replay/` 등 변경 없음 |
@@ -567,7 +570,7 @@ Tech Spec에 명시된 대로 기존 open-board 코어 코드의 변경을 최�
 
 | 항목 | 설명 | 결정 시점 |
 |------|------|----------|
-| `livekit_client` 패키지 분리 | core 패키지에 LiveKit 의존성을 포함할지, `open_board_livekit` 별도 패키지로 분리할지 | Phase 1 중반 (소비자 피드백 후) |
+| ~~`livekit_client` 패키지 분리~~ | **결정 완료**: open_board는 인터페이스만 제공. LiveKit 구현은 소비자 앱에서 담당. | 해결됨 |
 | sealed class 확장의 하위 호환성 | `ViewportChangedEvent` 추가 시 소비자의 기존 switch 문에서 컴파일 에러 발생 가능. `@Deprecated` 가이드 또는 minor version bump 필요 | Phase 1 착수 전 |
 | Egress 녹화 트리거 | 서버 측에서 자동 시작할지, 클라이언트에서 요청할지 | Tech Spec 리뷰 시 |
 | 오디오 동기화 정밀도 | .obt + MP4 동기화 드리프트 허용 범위 (현재 200ms) | 사용자 테스트 후 |
