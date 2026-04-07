@@ -15,12 +15,23 @@ export 'src/module/managers/scribble_book_controller.dart';
 
 // 이벤트 시스템 (리플레이/동기화용)
 export 'src/module/events/scribble_book_event.dart';
+export 'src/module/events/scribble_event_bridge.dart';
 
 // 스트로크 해시 유틸리티 (중복 제거용)
 export 'src/core/utils/scribble_hash_util.dart';
 
 // 리플레이 엔진
 export 'src/module/replay/scribble_replay_controller.dart';
+export 'src/module/replay/timeline_file.dart';
+export 'src/module/replay/content_fingerprint_util.dart';
+export 'src/module/replay/timeline_migrator.dart';
+export 'src/module/replay/scribble_timeline_recorder.dart';
+export 'src/module/replay/stroke_animator.dart';
+export 'src/module/replay/scribble_replay_handler.dart';
+
+// 타임라인 모델
+export 'src/data/model/timeline/timeline_models.dart';
+export 'src/data/model/timeline/timeline_serializer.dart';
 
 // 🔄 메타데이터 및 동기화 시스템
 export 'src/module/state/scribble_metadata.dart'; // ✨ 새로운 메타데이터 시스템

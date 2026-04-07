@@ -2,7 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:open_board/src/data/model/protobuf/scribble.pb.dart' show Stroke;
+import 'package:open_board/src/data/model/timeline/timeline_models.dart';
 import 'package:open_board/src/module/events/scribble_book_event.dart';
+import 'package:open_board/src/module/replay/timeline_file.dart';
+
+/// 타임라인에서 변환 시 사용하는 빈 Stroke 플레이스홀더
+///
+/// .obt 타임라인은 Stroke 데이터를 포함하지 않으므로
+/// StrokeAddedEvent 변환 시 빈 Stroke를 사용한다.
+/// 실제 Stroke 데이터는 [ScribbleReplayHandler]에서 .bin 파일로부터 로드한다.
+final Stroke _emptyStroke = Stroke();
 
 /// 필기 리플레이 상태
 enum ReplayState {
@@ -156,6 +166,64 @@ class ScribbleReplayController extends ChangeNotifier {
     _buildSnapshots();
 
     notifyListeners();
+  }
+
+  /// [ScribbleTimeline]에서 타임라인 로드 (.obt 데이터)
+  ///
+  /// [ScribbleTimeline]의 이벤트를 [ScribbleBookEvent]로 변환 후 로드한다.
+  void loadFromTimeline(ScribbleTimeline timeline) {
+    final events = timeline.events
+        .map(_convertFromTimelineEvent)
+        .toList();
+    loadTimeline(events);
+  }
+
+  /// .obt 파일에서 타임라인 로드
+  ///
+  /// [TimelineFile.read]로 파일을 읽고 [loadFromTimeline]으로 로드한다.
+  /// Throws [FormatException] if file is invalid.
+  Future<void> loadFromFile(String path) async {
+    final timeline = await TimelineFile.read(path);
+    loadFromTimeline(timeline);
+  }
+
+  /// [TimelineEvent] → [ScribbleBookEvent] 변환
+  ScribbleBookEvent _convertFromTimelineEvent(TimelineEvent tlEvent) {
+    final timestampMicros = tlEvent.timestamp.toInt();
+
+    return switch (tlEvent.event) {
+      TlPageChanged(:final fromIndex, :final toIndex, :final fromPageId, :final toPageId) =>
+        PageChangedEvent(
+          fromIndex: fromIndex,
+          toIndex: toIndex,
+          fromPageId: fromPageId,
+          toPageId: toPageId,
+          timestampMicros: timestampMicros,
+        ),
+      TlStrokeAdded(:final pageId, :final strokeIndex) =>
+        StrokeAddedEvent(
+          pageId: pageId,
+          stroke: _emptyStroke,
+          strokeIndex: strokeIndex,
+          timestampMicros: timestampMicros,
+        ),
+      TlStrokeRemoved(:final pageId, :final strokeIndex) =>
+        StrokeRemovedEvent(
+          pageId: pageId,
+          strokeIndex: strokeIndex,
+          timestampMicros: timestampMicros,
+        ),
+      TlUndo(:final pageId) =>
+        UndoPerformedEvent(pageId: pageId, timestampMicros: timestampMicros),
+      TlRedo(:final pageId) =>
+        RedoPerformedEvent(pageId: pageId, timestampMicros: timestampMicros),
+      TlPageAdded(:final pageId, :final atIndex) =>
+        PageAddedEvent(pageId: pageId, atIndex: atIndex, timestampMicros: timestampMicros),
+      TlPageRemoved(:final pageId, :final atIndex) =>
+        PageRemovedEvent(pageId: pageId, atIndex: atIndex, timestampMicros: timestampMicros),
+      TlPageCleared(:final pageId) =>
+        PageClearedEvent(pageId: pageId, timestampMicros: timestampMicros),
+    };
   }
 
   // ===== 재생 제어 =====
