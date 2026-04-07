@@ -12,6 +12,7 @@
     pen,
     pencil,
     marker,
+    fixedPen,
     erase,
     highlighter,
     text,

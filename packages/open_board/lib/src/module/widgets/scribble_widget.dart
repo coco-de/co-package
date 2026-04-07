@@ -596,6 +596,7 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
       DrawingTool.pen => InkModes.pen,
       DrawingTool.pencil => InkModes.pencil,
       DrawingTool.marker => InkModes.marker,
+      DrawingTool.fixedPen => InkModes.fixedPen,
       DrawingTool.highlighter => InkModes.marker, // 하이라이터는 마커로 처리
       DrawingTool.text => InkModes.text,
       DrawingTool.lasso => InkModes.lasso,
@@ -1990,6 +1991,9 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
         break;
       case DrawingTool.marker:
         currentInk = InkModes.marker;
+        break;
+      case DrawingTool.fixedPen:
+        currentInk = InkModes.fixedPen;
         break;
       case DrawingTool.highlighter:
         currentInk = InkModes.marker; // 하이라이터는 마커로 처리
