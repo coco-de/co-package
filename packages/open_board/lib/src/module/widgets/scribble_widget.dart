@@ -523,9 +523,6 @@
 
               // 🛑 폴백 크기 렌더링 방지: 실제 콘텐츠 논리 크기가 준비될 때까지 렌더 지연
               if (widget.contentLogicalSize == null) {
-                debugPrint(
-                  '⏳ [Child] waiting for actual contentLogicalSize. Skip rendering fallback.',
-                );
                 return SizedBox(
                   width: scribbleWidgetSize.width,
                   height: scribbleWidgetSize.height,
@@ -589,28 +586,6 @@
                 0.0,
               );
 
-              // 🔎 디버그 로그: child-present 계산 추적
-              final orientation = MediaQuery.of(context).orientation;
-              final ctrl = transformationController;
-              final currentMatrix = ctrl?.value ?? Matrix4.identity();
-              final currentScale = currentMatrix.getMaxScaleOnAxis();
-              final currentTranslation = currentMatrix.getTranslation();
-              debugPrint(
-                '📐 [Child] orientation=$orientation viewport=${scribbleWidgetSize.width.toStringAsFixed(1)}x${scribbleWidgetSize.height.toStringAsFixed(1)}',
-              );
-              debugPrint(
-                '📄 [Child] content=${fixedContentSize.width.toStringAsFixed(1)}x${fixedContentSize.height.toStringAsFixed(1)}',
-              );
-              debugPrint(
-                '🔢 [Child] scale(rawFit=${scaleToFit.toStringAsFixed(4)}, fit=${adjustedScaleToFit.toStringAsFixed(4)})',
-              );
-              debugPrint(
-                '🧩 [Child] display=${displaySize.width.toStringAsFixed(1)}x${displaySize.height.toStringAsFixed(1)} offset=(${fixedContentOffsetX.toStringAsFixed(1)},${fixedContentOffsetY.toStringAsFixed(1)})',
-              );
-              // transformationController 초기화 전에 찍는 현재값
-              debugPrint(
-                '🎛️ [Child] ctrlScale(pre)=${currentScale.toStringAsFixed(4)} ctrlTrans=(${currentTranslation.x.toStringAsFixed(1)},${currentTranslation.y.toStringAsFixed(1)})',
-              );
 
               // transformationController 초기화
               transformationController ??= TransformationController();
@@ -658,9 +633,6 @@
                   ? candidateMax
                   : safeMinScale + 0.001; // 최대 스케일도 최소보다 크게 보정
 
-              debugPrint(
-                '🎚️ [Child] min=${safeMinScale.toStringAsFixed(4)} max=${safeMaxScale.toStringAsFixed(4)}',
-              );
 
               // 🆕 보정: 사용자 상호작용 전에도 1.0 유지
               if (!_hasUserInteracted) {
@@ -836,9 +808,6 @@
                       (isMouseOnlyMode &&
                           currentPointerKind == ui.PointerDeviceKind.mouse));
 
-              debugPrint(
-                '🎨 [하이라이트] mode: $selectedTool, kind: $currentPointerKind, ignoreForTextSelection: $shouldIgnoreForTextSelection',
-              );
 
               // 🎯 포인터 종류 감지를 위한 최상위 Listener
               // ⚡ onPointerDown에서 펜/마우스/손 모두 감지

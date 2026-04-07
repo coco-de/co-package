@@ -107,6 +107,12 @@
       }
     }
 
+    /// Undo 가능 여부 실시간 추적 ValueNotifier
+    ValueNotifier<bool> get canUndoNotifier => _undoRedoTracker.canUndoNotifier;
+
+    /// Redo 가능 여부 실시간 추적 ValueNotifier
+    ValueNotifier<bool> get canRedoNotifier => _undoRedoTracker.canRedoNotifier;
+
     /// 🎯 Undo/Redo 가능 여부 상태 업데이트 (public)
     void updateUndoRedoState() {
       _undoRedoTracker.updateUndoRedoState();
