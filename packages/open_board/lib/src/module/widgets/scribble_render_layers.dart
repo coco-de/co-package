@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 
 import 'package:open_board/src/module/widgets/selection_overlay.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
@@ -24,23 +23,17 @@ class ScribbleRenderLayers {
   final Size? size;
   final bool drawPen;
   final bool drawEraser;
-  final double pressureFactor;
-  final double speedFactor;
-  final double minWidthFactor;
 
   ScribbleRenderLayers({
     required this.scribbleNotifier,
     required this.modeNotifier,
     required this.widgetState,
     required this.strokeCountNotifier,
-    this.background,
-    this.backgroundChild,
-    this.size,
+    required this.background,
+    required this.backgroundChild,
+    required this.size,
     required this.drawPen,
     required this.drawEraser,
-    required this.pressureFactor,
-    required this.speedFactor,
-    required this.minWidthFactor,
   });
 
   /// 배경 레이어 빌드
@@ -64,15 +57,7 @@ class ScribbleRenderLayers {
   }
 
   /// 완성된 스트로크 레이어 빌드
-  Widget buildCompletedStrokesLayer({
-    VoidCallback? onLassoDelete,
-    Function(DragStartDetails)? onLassoTransformStart,
-    Function(DragUpdateDetails)? onLassoTransformUpdate,
-    Function(DragEndDetails)? onLassoTransformEnd,
-    Function(DragStartDetails)? onLassoMoveStart,
-    Function(DragUpdateDetails)? onLassoMoveUpdate,
-    Function(DragEndDetails)? onLassoMoveEnd,
-  }) {
+  Widget buildCompletedStrokesLayer() {
     return Positioned.fill(
       child: CustomPaint(
         painter: painter.ScribblePainter(
@@ -80,21 +65,11 @@ class ScribbleRenderLayers {
           modeState: modeNotifier.state,
           drawPointer: drawPen,
           drawEraser: drawEraser,
-          pressureFactor: pressureFactor,
-          speedFactor: speedFactor,
-          minWidthFactor: minWidthFactor,
           background: background,
           selectedStrokeIds: widgetState.selectedStrokeIds,
           activeHandle: widgetState.activeHandle,
           showLassoOverlay: widgetState.showLassoOverlay,
           lassoSelectionState: widgetState.lassoSelectionState,
-          onLassoDelete: onLassoDelete,
-          onLassoTransformStart: onLassoTransformStart,
-          onLassoTransformUpdate: onLassoTransformUpdate,
-          onLassoTransformEnd: onLassoTransformEnd,
-          onLassoMoveStart: onLassoMoveStart,
-          onLassoMoveUpdate: onLassoMoveUpdate,
-          onLassoMoveEnd: onLassoMoveEnd,
           repaint: strokeCountNotifier,
         ),
       ),
@@ -102,7 +77,7 @@ class ScribbleRenderLayers {
   }
 
   /// 텍스트 레이어 빌드
-  Widget buildTextLayer({bool showTextOverlay = false}) {
+  Widget buildTextLayer({required bool showTextOverlay}) {
     return Positioned.fill(
       child: CustomPaint(
         painter: TextDrawablePainter(
@@ -118,8 +93,8 @@ class ScribbleRenderLayers {
 
   /// 활성 스트로크 레이어 빌드 (실시간 그리기)
   Widget buildActiveStrokeLayer() {
-    return StateNotifierBuilder<ScribbleState>(
-      stateNotifier: scribbleNotifier,
+    return ValueListenableBuilder<ScribbleState>(
+      valueListenable: scribbleNotifier,
       builder: (context, state, _) {
         final drawCurrentTool =
             drawPen && state is Drawing || drawEraser && state is Erasing;
@@ -135,9 +110,6 @@ class ScribbleRenderLayers {
             modeState: modeNotifier.state,
             drawPointer: drawPen,
             drawEraser: drawEraser,
-            pressureFactor: pressureFactor,
-            speedFactor: speedFactor,
-            minWidthFactor: minWidthFactor,
             isActiveLine: true,
             showLassoOverlay: widgetState.showLassoOverlay,
           ),
@@ -161,10 +133,10 @@ class ScribbleRenderLayers {
       return [];
     }
 
-    // 실시간 업데이트를 위해 StateNotifierBuilder 사용
+    // 실시간 업데이트를 위해 ValueListenableBuilder 사용
     return [
-      StateNotifierBuilder<ScribbleState>(
-        stateNotifier: scribbleNotifier,
+      ValueListenableBuilder<ScribbleState>(
+        valueListenable: scribbleNotifier,
         builder: (context, state, _) {
           // 원본 바운딩 박스 사용 (회전/크기조절 시에도 원본 유지)
           final boundingBox =
@@ -271,15 +243,7 @@ class ScribbleRenderLayers {
       ...buildBackgroundLayers(),
 
       // 2. 완성된 스트로크 레이어 (올가미 오버레이 포함)
-      buildCompletedStrokesLayer(
-        onLassoDelete: onDelete,
-        onLassoTransformStart: onResizeRotateStart,
-        onLassoTransformUpdate: onResizeRotateUpdate,
-        onLassoTransformEnd: onResizeRotateEnd,
-        onLassoMoveStart: onMoveStart,
-        onLassoMoveUpdate: onMoveUpdate,
-        onLassoMoveEnd: onMoveEnd,
-      ),
+      buildCompletedStrokesLayer(),
 
       // 3. 텍스트 레이어 (오버레이 버튼 포함)
       buildTextLayer(showTextOverlay: showTextOverlay),
@@ -329,7 +293,7 @@ class ScribbleRenderLayers {
   /// 올가미 드래그 핸들러 빌드 (시각적 요소 없이 드래그만)
   List<Widget> _buildLassoDragHandlers({
     required Rect boundingBox,
-    painter.OrientedBoundingBox? orientedBoundingBox,
+    required painter.OrientedBoundingBox? orientedBoundingBox,
     required VoidCallback onDelete,
     required Function(DragStartDetails) onTransformStart,
     required Function(DragUpdateDetails) onTransformUpdate,

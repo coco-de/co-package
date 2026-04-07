@@ -13,11 +13,9 @@ class DouglasPeucker {
   ///
   /// [points]
   /// [tolerance] 이중 허용오차 단순화 정도에 영향을 줍니다(포인트 좌표와 동일한 메트릭).
-  /// [highestQuality]  (기본값은 false) 거리 기반 전처리 단계를 제외하여 최고 품질의 단순화를 제공하지만 실행 속도가 10-20배 느립니다.
   static List<Point> simplify(
     List<Point> points, {
-    double tolerance = 1.0,
-    bool highestQuality = false,
+    required double tolerance,
   }) {
     if (points.length < 2) {
       return points;
@@ -25,9 +23,7 @@ class DouglasPeucker {
 
     final sqTolerance = pow(tolerance, 2).toDouble();
 
-    if (!highestQuality) {
-      points = simplifyRadialDistance(points, sqTolerance);
-    }
+    points = simplifyRadialDistance(points, sqTolerance);
 
     points = simplifyDouglasPeucker(points, sqTolerance);
 

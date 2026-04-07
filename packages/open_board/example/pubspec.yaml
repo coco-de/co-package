@@ -1,0 +1,22 @@
+name: open_board_example
+description: "Open Board 패키지 데모 앱"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  open_board:
+    path: ../
+  flutter_smooth_markdown: ^0.7.2
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

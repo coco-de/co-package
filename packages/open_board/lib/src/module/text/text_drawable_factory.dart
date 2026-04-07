@@ -11,7 +11,7 @@ class TextDrawableFactory {
     required Offset position,
     required TextStyle style,
     required TextAlignment alignment,
-    bool hidden = false,
+    required bool hidden,
   }) {
     return TextDrawable(
       id: id,

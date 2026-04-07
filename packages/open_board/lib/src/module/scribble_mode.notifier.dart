@@ -2,46 +2,26 @@
 import 'package:flutter/widgets.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 
-// 📦 Package imports:
-import 'package:state_notifier/state_notifier.dart';
-
 // 🌎 Project imports:
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/scribble_mode.state.dart';
 
 abstract class ScribbleModeNotifierBase
-    extends StateNotifier<ScribbleModeState> {
-  ScribbleModeNotifierBase(super.state);
+    extends ValueNotifier<ScribbleModeState> {
+  ScribbleModeNotifierBase(super.value);
 }
 
 class ScribbleModeNotifier extends ScribbleModeNotifierBase {
-  ScribbleModeNotifier({
-    /// The supported widths, mainly useful for rendering UI, you can still set
-    /// the width to any arbitrary value from code. The first entry in this list
-    /// will be the starting width.
-    this.widths = const [0.5, 1.5, 2.5, 4.0, 6.0],
-
-    /// Which pointers can be drawn with and are captured.
-    ScribblePointerMode allowedPointersMode = ScribblePointerMode.all,
-  }) : super(
+  ScribbleModeNotifier()
+      : super(
          ScribbleModeState(
-           allowedPointersMode: allowedPointersMode,
+           allowedPointersMode: ScribblePointerMode.all,
            inkGroupInfo: InkGroupInfo(selectedInk: InkModes.pencil),
          ),
        );
 
-  /// The supported widths, mainly useful for rendering UI, you can still set
-  /// the width to any arbitrary value from code.
-  List<double> widths;
-
-  @override
-  ScribbleModeState get state => super.state;
-
-  void updateWidths(List<double> widths) {
-    final index = this.widths.indexOf(state.inkGroupInfo.seletedStrokeWidth);
-    this.widths = widths;
-    setStrokeWidth(widths[index]);
-  }
+  ScribbleModeState get state => value;
+  set state(ScribbleModeState newState) => value = newState;
 
   /// Sets the width of the next line
   void setStrokeWidth(double strokeWidth) {
@@ -52,33 +32,6 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
     );
     // temporaryState = state.copyWith(
     //   selectedWidth: strokeWidth,
-    // );
-  }
-
-  void setStrokeWidthMap(String inkType, double strokeWidth) {
-    state = ScribbleModeState(
-      inkGroupInfo: state.inkGroupInfo.copyWith(
-        selectedInk: inkType,
-        strokeWidth: strokeWidth,
-      ),
-      scaleFactor: state.scaleFactor,
-      allowedPointersMode: state.allowedPointersMode,
-    );
-  }
-
-  /// Sets the zoom factor to allow for adjusting line width.
-  ///
-  /// If the factor is 2 for example, lines will be drawn half as thick as
-  /// actually selected to allow for drawing details.
-  void setScaleFactor(double factor) {
-    assert(factor >= 0);
-    state = ScribbleModeState(
-      scaleFactor: factor,
-      allowedPointersMode: state.allowedPointersMode,
-      inkGroupInfo: state.inkGroupInfo.copyWith(),
-    );
-    // temporaryState = state.copyWith(
-    //   scaleFactor: factor,
     // );
   }
 
@@ -109,6 +62,17 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
     );
   }
 
+  /// 고정 두께 펜 모드로 설정 (화면상 물리적 두께가 줌과 무관하게 고정)
+  void setFixedPen() {
+    state = ScribbleModeState(
+      scaleFactor: state.scaleFactor,
+      allowedPointersMode: state.allowedPointersMode,
+      inkGroupInfo: state.inkGroupInfo.copyWith(
+        selectedInk: InkModes.fixedPen,
+      ),
+    );
+  }
+
   /// 도형 모드로 설정
   void setShape() {
     state = ScribbleModeState(
@@ -124,18 +88,6 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
       scaleFactor: state.scaleFactor,
       allowedPointersMode: state.allowedPointersMode,
       inkGroupInfo: state.inkGroupInfo.copyWith(selectedInk: InkModes.erase),
-    );
-  }
-
-  /// 지우개 두께 설정
-  void setEraserWidth(double width) {
-    state = ScribbleModeState(
-      scaleFactor: state.scaleFactor,
-      allowedPointersMode: state.allowedPointersMode,
-      inkGroupInfo: state.inkGroupInfo.copyWith(
-        selectedInk: InkModes.erase,
-        strokeWidth: width,
-      ),
     );
   }
 
@@ -161,15 +113,6 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
   void setColor(Color color) {
     state = ScribbleModeState(
       inkGroupInfo: state.inkGroupInfo.copyWith(inkColor: color),
-      scaleFactor: state.scaleFactor,
-      allowedPointersMode: state.allowedPointersMode,
-    );
-  }
-
-  /// 올가미 선택 모드로 전환
-  void setLassoMode() {
-    state = ScribbleModeState(
-      inkGroupInfo: state.inkGroupInfo.copyWith(selectedInk: 'lasso'),
       scaleFactor: state.scaleFactor,
       allowedPointersMode: state.allowedPointersMode,
     );
