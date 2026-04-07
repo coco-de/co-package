@@ -89,7 +89,7 @@
     /// 양면↔단면 모드 전환 시 분할 결과 캐시
     final Map<String, ScribbleSplitResult> _splitResultCache = {};
 
-    ScribbleCacheManager._() {
+    ScribbleCacheManager() {
       _autoSaveScheduler = AutoSaveScheduler(
         onSave: (key, scribble) async {
           await saveScribble(key, scribble);
