@@ -444,6 +444,7 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
     ScribbleTool.pen: DrawingTool.pen,
     ScribbleTool.pencil: DrawingTool.pencil,
     ScribbleTool.marker: DrawingTool.marker,
+    ScribbleTool.fixedPen: DrawingTool.fixedPen,
     ScribbleTool.eraser: DrawingTool.erase,
   };
 
@@ -745,6 +746,7 @@ class _ToolBar extends StatelessWidget {
     (ScribbleTool.pen, Icons.edit, 'Pen'),
     (ScribbleTool.pencil, Icons.create, 'Pencil'),
     (ScribbleTool.marker, Icons.highlight, 'Marker'),
+    (ScribbleTool.fixedPen, Icons.precision_manufacturing, 'Fixed'),
     (ScribbleTool.eraser, Icons.auto_fix_normal, 'Eraser'),
   ];
 
