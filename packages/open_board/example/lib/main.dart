@@ -185,310 +185,169 @@ replay.setSpeed(1.5);
 ];
 
 // =============================================================================
-// Main Page — Multi-page Markdown + Drawing + Record/Replay
+// Recording Manager
 // =============================================================================
 
-class MultiPageDrawingPage extends StatefulWidget {
-  const MultiPageDrawingPage({super.key});
+class RecordingManager {
+  final ScribbleBookController bookController;
 
-  @override
-  State<MultiPageDrawingPage> createState() => _MultiPageDrawingPageState();
-}
-
-class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
-  // Page management
-  late final _FakePageProvider _pageProvider;
-  late final ScribbleBookController _bookController;
-  late final PageController _pageViewController;
-
-  // Drawing tools
-  String _currentTool = ScribbleTool.pen;
-  Color _currentColor = Colors.black;
-  double _currentStrokeWidth = 2.0;
-  bool _isDrawingEnabled = true;
-
-  // Recording
   ScribbleEventBridge? _bridge;
   ScribbleTimelineRecorder? _recorder;
   bool _isRecording = false;
+  String? lastObtPath;
 
-  // Replay
-  ScribbleReplayController? _replayController;
-  StreamSubscription<ScribbleBookEvent>? _replayEventSub;
-  StreamSubscription<int>? _replayPositionSub;
-  Timer? _replayAnimationTimer;
-  bool _isReplaying = false;
-  double _replayProgress = 0;
-  String? _lastObtPath;
-  Map<String, List<Stroke>> _savedStrokes = {};
-  /// 녹화 시작 시점의 절대 타임스탬프 (포인트 타임스탬프와 매핑용)
-  int _recordingOriginMicros = 0;
+  RecordingManager({required this.bookController});
 
-  static const _tools = [
-    (ScribbleTool.pen, Icons.edit, 'Pen'),
-    (ScribbleTool.pencil, Icons.create, 'Pencil'),
-    (ScribbleTool.marker, Icons.highlight, 'Marker'),
-    (ScribbleTool.eraser, Icons.auto_fix_normal, 'Eraser'),
-  ];
+  bool get isRecording => _isRecording;
 
-  static const _colors = [
-    Colors.black,
-    Colors.red,
-    Colors.orange,
-    Colors.green,
-    Colors.blue,
-    Colors.purple,
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-
-    // DrawingState 글로벌 상태 초기화
-    final ds = DrawingState();
-    ds.pointerMode.value = DrawingPointerMode.mouseOnly;
-    ds.selectedTool.value = DrawingTool.pen;
-    ds.selectedColor.value = _currentColor;
-    ds.selectedThickness.value = _currentStrokeWidth;
-
-    _pageProvider = _FakePageProvider();
-    _bookController = ScribbleBookController(
-      pageIds: _samplePages.map((p) => p.id).toList(),
-      contentId: 'example-book',
-      pageProvider: _pageProvider,
-    );
-    _pageViewController = PageController();
-    _bookController.addListener(_onBookChanged);
-  }
-
-  void _onBookChanged() {
-    if (mounted) setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _stopRecording();
-    _stopReplay();
-    _bookController.removeListener(_onBookChanged);
-    _bookController.dispose();
-    _pageViewController.dispose();
-    super.dispose();
-  }
-
-  // ===== Tool Control =====
-
-  static const _toolToDrawingTool = {
-    ScribbleTool.pen: DrawingTool.pen,
-    ScribbleTool.pencil: DrawingTool.pencil,
-    ScribbleTool.marker: DrawingTool.marker,
-    ScribbleTool.eraser: DrawingTool.erase,
-  };
-
-  void _selectTool(String tool) {
-    setState(() => _currentTool = tool);
-    final drawingTool = _toolToDrawingTool[tool];
-    if (drawingTool != null) {
-      DrawingState().selectedTool.value = drawingTool;
-    }
-  }
-
-  void _selectColor(Color color) {
-    setState(() => _currentColor = color);
-    DrawingState().selectedColor.value = color;
-  }
-
-  void _setStrokeWidth(double width) {
-    setState(() => _currentStrokeWidth = width);
-    DrawingState().selectedThickness.value = width;
-  }
-
-  ScribbleController? _controllerForPage(String pageId) {
-    final index = _bookController.pageIds.indexOf(pageId);
-    if (index < 0) return null;
-    return _bookController.controllerAt(index);
-  }
-
-  void _toggleDrawing() {
-    setState(() => _isDrawingEnabled = !_isDrawingEnabled);
-  }
-
-  // ===== Page Navigation =====
-
-  Future<void> _goToPage(int index) async {
-    await _bookController.goToPage(index);
-    _pageViewController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  // ===== Recording =====
-
-  Future<void> _startRecording() async {
-    _bridge = ScribbleEventBridge(_bookController);
+  Future<void> start() async {
+    _bridge = ScribbleEventBridge(bookController);
     _recorder = ScribbleTimelineRecorder(
-      contentId: 'example-book',
-      pageIds: _bookController.pageIds,
+      contentId: bookController.contentId,
+      pageIds: bookController.pageIds,
     );
 
-    _bookController.startRecording();
+    bookController.startRecording();
     _bridge!.attach();
-    _recorder!.start(_bookController.eventStream);
-
-    setState(() => _isRecording = true);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recording started'),
-        duration: Duration(seconds: 1),
-      ),
-    );
+    _recorder!.start(bookController.eventStream);
+    _isRecording = true;
   }
 
-  Future<void> _stopRecording() async {
-    if (!_isRecording) return;
+  Future<int> stop() async {
+    if (!_isRecording) return 0;
 
-    try {
-      final dir = await getTemporaryDirectory();
-      final path = '${dir.path}/session_${DateTime.now().millisecondsSinceEpoch}.obt';
+    final dir = await getTemporaryDirectory();
+    final path =
+        '${dir.path}/session_${DateTime.now().millisecondsSinceEpoch}.obt';
 
-      await _recorder!.stopAndSave(path);
-      _bridge!.detach();
-      _bookController.stopRecording();
+    await _recorder!.stopAndSave(path);
+    _bridge!.detach();
+    bookController.stopRecording();
 
-      _lastObtPath = path;
-      setState(() => _isRecording = false);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Recording saved (${_recorder!.eventCount} events)'),
-            action: SnackBarAction(
-              label: 'Replay',
-              onPressed: _startReplay,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isRecording = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Save failed: $e')),
-        );
-      }
-    }
-
+    final eventCount = _recorder!.eventCount;
+    lastObtPath = path;
+    _isRecording = false;
     _bridge = null;
     _recorder = null;
+    return eventCount;
+  }
+}
+
+// =============================================================================
+// Replay Manager — 포인트 타임스탬프 기반 실시간 애니메이션
+// =============================================================================
+
+class ReplayManager {
+  final ScribbleBookController bookController;
+  final PageController pageViewController;
+  final VoidCallback onStateChanged;
+
+  ScribbleReplayController? _controller;
+  StreamSubscription<ScribbleBookEvent>? _eventSub;
+  StreamSubscription<int>? _positionSub;
+  Timer? _animationTimer;
+
+  Map<String, List<Stroke>> _savedStrokes = {};
+  int _recordingOriginMicros = 0;
+
+  bool isReplaying = false;
+  double progress = 0;
+
+  ReplayManager({
+    required this.bookController,
+    required this.pageViewController,
+    required this.onStateChanged,
+  });
+
+  ScribbleController? _controllerForPage(String pageId) {
+    final index = bookController.pageIds.indexOf(pageId);
+    if (index < 0) return null;
+    return bookController.controllerAt(index);
   }
 
-  // ===== Replay =====
-
-  Future<void> _startReplay() async {
-    if (_lastObtPath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No recording available. Record first!')),
-      );
-      return;
-    }
-
-    // 리플레이 전에 각 페이지의 스트로크 백업
+  Future<void> start(String obtPath) async {
+    // 스트로크 백업
     _savedStrokes = {};
     _recordingOriginMicros = 0;
-    for (var i = 0; i < _bookController.pageCount; i++) {
-      final pageId = _bookController.pageIds[i];
-      final scribble = _bookController.controllerAt(i).currentScribble;
+    for (var i = 0; i < bookController.pageCount; i++) {
+      final pageId = bookController.pageIds[i];
+      final scribble = bookController.controllerAt(i).currentScribble;
       _savedStrokes[pageId] = List<Stroke>.from(scribble.strokes);
     }
 
-    // Clear all pages for clean replay
-    for (var i = 0; i < _bookController.pageCount; i++) {
-      _bookController.controllerAt(i).clear();
+    // 클리어 & 첫 페이지로 이동
+    for (var i = 0; i < bookController.pageCount; i++) {
+      bookController.controllerAt(i).clear();
     }
-    await _bookController.goToPage(0);
-    _pageViewController.jumpToPage(0);
+    await bookController.goToPage(0);
+    pageViewController.jumpToPage(0);
 
-    _replayController = ScribbleReplayController();
-    await _replayController!.loadFromFile(_lastObtPath!);
+    // 타임라인 로드
+    _controller = ScribbleReplayController();
+    await _controller!.loadFromFile(obtPath);
 
-    // 타임라인 첫 이벤트 시각 = 녹화 시작 시점
-    // positionMicros=0이 이 시각에 대응하므로, 이 값을 기준으로 매핑
-    _replayEventSub = _replayController!.onEvent.listen((event) {
-      // 첫 이벤트의 타임스탬프를 녹화 시작 기준으로 사용
+    // 이벤트 스트림: 타임라인 시작 시각 캡처 + 페이지 전환
+    _eventSub = _controller!.onEvent.listen((event) {
       if (_recordingOriginMicros == 0) {
         _recordingOriginMicros = event.timestampMicros;
       }
       if (event is PageChangedEvent) {
-        _bookController.goToPage(event.toIndex);
-        _pageViewController.jumpToPage(event.toIndex);
+        bookController.goToPage(event.toIndex);
+        pageViewController.jumpToPage(event.toIndex);
       }
     });
 
-    // 16ms 주기로 포인트 타임스탬프 기반 애니메이션 (~60fps)
-    _replayAnimationTimer = Timer.periodic(
+    // 60fps 애니메이션 타이머
+    _animationTimer = Timer.periodic(
       const Duration(milliseconds: 16),
-      (_) => _updateReplayAnimation(),
+      (_) => _updateAnimation(),
     );
 
-    // 진행률 표시
-    _replayPositionSub = _replayController!.onPositionChanged.listen((micros) {
-      if (!mounted) return;
-      final duration = _replayController!.durationMicros;
-      setState(() {
-        _replayProgress = duration > 0 ? micros / duration : 0;
-      });
+    // 진행률
+    _positionSub = _controller!.onPositionChanged.listen((micros) {
+      final duration = _controller!.durationMicros;
+      progress = duration > 0 ? micros / duration : 0;
+      onStateChanged();
     });
 
-    _replayController!.addListener(() {
-      if (!mounted) return;
-      if (_replayController!.state == ReplayState.completed) {
+    // 완료 감지
+    _controller!.addListener(() {
+      if (_controller!.state == ReplayState.completed) {
         _finalizeAllStrokes();
-        setState(() => _isReplaying = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Replay completed')),
-        );
+        isReplaying = false;
+        onStateChanged();
       }
     });
 
-    _replayController!.play();
-    setState(() {
-      _isReplaying = true;
-      _isDrawingEnabled = false;
-    });
+    _controller!.play();
+    isReplaying = true;
+    onStateChanged();
   }
 
-  /// 매 프레임: 현재 재생 시각에 해당하는 포인트까지만 부분 렌더링
-  void _updateReplayAnimation() {
-    if (_replayController == null) return;
+  void _updateAnimation() {
+    if (_controller == null || _recordingOriginMicros == 0) return;
 
-    // 상대 positionMicros → 절대 포인트 타임스탬프로 변환
     final absoluteTime =
-        _recordingOriginMicros + _replayController!.positionMicros;
+        _recordingOriginMicros + _controller!.positionMicros;
 
     for (final entry in _savedStrokes.entries) {
-      final pageId = entry.key;
       final allStrokes = entry.value;
       if (allStrokes.isEmpty) continue;
 
-      final controller = _controllerForPage(pageId);
+      final controller = _controllerForPage(entry.key);
       if (controller == null) continue;
 
       final displayStrokes = <Stroke>[];
       for (final stroke in allStrokes) {
         final partial =
             StrokeAnimator.createPartialStroke(stroke, absoluteTime);
-        if (partial != null) {
-          displayStrokes.add(partial);
-        }
+        if (partial != null) displayStrokes.add(partial);
       }
 
       controller.loadScribble(Scribble()..strokes.addAll(displayStrokes));
     }
   }
 
-  /// 리플레이 완료 시 원본 전체 렌더링
   void _finalizeAllStrokes() {
     for (final entry in _savedStrokes.entries) {
       final controller = _controllerForPage(entry.key);
@@ -497,351 +356,25 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
     }
   }
 
-  void _stopReplay() {
-    _replayAnimationTimer?.cancel();
-    _replayAnimationTimer = null;
-    _replayPositionSub?.cancel();
-    _replayPositionSub = null;
-    _replayEventSub?.cancel();
-    _replayEventSub = null;
-    _replayController?.dispose();
-    _replayController = null;
-    setState(() {
-      _isReplaying = false;
-      _replayProgress = 0;
-      _isDrawingEnabled = true;
-    });
-  }
-
-  // ===== Build =====
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final currentIndex = _bookController.currentPageIndex;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_samplePages[currentIndex].title),
-        centerTitle: true,
-        leading: _isRecording
-            ? Padding(
-                padding: const EdgeInsets.all(12),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  width: 12,
-                  height: 12,
-                ),
-              )
-            : null,
-        actions: [
-          // Drawing toggle
-          IconButton(
-            onPressed: _toggleDrawing,
-            icon: Icon(
-              _isDrawingEnabled ? Icons.draw : Icons.visibility,
-            ),
-            tooltip: _isDrawingEnabled ? 'View mode' : 'Draw mode',
-          ),
-          // Undo / Redo
-          IconButton(
-            onPressed: _bookController.activeController.canUndo
-                ? _bookController.activeController.undo
-                : null,
-            icon: const Icon(Icons.undo),
-          ),
-          IconButton(
-            onPressed: _bookController.activeController.canRedo
-                ? _bookController.activeController.redo
-                : null,
-            icon: const Icon(Icons.redo),
-          ),
-          // Clear
-          IconButton(
-            onPressed: () => _bookController.activeController.clear(),
-            icon: const Icon(Icons.delete_outline),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Tool bar (visible only in draw mode)
-          if (_isDrawingEnabled && !_isReplaying) _buildToolBar(colorScheme),
-
-          // Replay controls
-          if (_isReplaying) _buildReplayControls(colorScheme),
-
-          // Page content
-          Expanded(
-            child: PageView.builder(
-              controller: _pageViewController,
-              itemCount: _samplePages.length,
-              onPageChanged: (index) async {
-                if (index != _bookController.currentPageIndex) {
-                  await _bookController.goToPage(index);
-                }
-              },
-              physics: _isDrawingEnabled
-                  ? const NeverScrollableScrollPhysics()
-                  : null,
-              itemBuilder: (context, index) {
-                final page = _samplePages[index];
-                return _buildPage(page, index);
-              },
-            ),
-          ),
-
-          // Page indicator + Record/Replay buttons
-          _buildBottomBar(colorScheme, currentIndex),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPage(
-    ({String id, String title, String markdown}) page,
-    int index,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final contentSize = Size(constraints.maxWidth, constraints.maxHeight);
-        return Stack(
-          children: [
-            // Markdown content layer (별도 레이어로 분리 — SmoothMarkdown 내부의
-            // SingleChildScrollView가 오프스크린 측정 시 View.of() 에러 유발 방지)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: SmoothMarkdown(
-                    data: page.markdown,
-                    styleSheet: MarkdownStyleSheet.github(),
-                  ),
-                ),
-              ),
-            ),
-            // Drawing overlay
-            Positioned.fill(
-              child: SimpleScribbleWidget(
-                controller: _bookController.controllerAt(index),
-                allowedPointersMode: ScribblePointerMode.all,
-                isScribbleEnabled: _isDrawingEnabled && !_isReplaying,
-                maxScale: 4.0,
-                panDirection: PanDirection.none,
-                contentLogicalSize: contentSize,
-                child: const SizedBox.expand(),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildToolBar(ColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Tools
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final (tool, icon, label) in _tools)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: FilterChip(
-                      avatar: Icon(icon, size: 18),
-                      label: Text(label),
-                      selected: _currentTool == tool,
-                      onSelected: (_) => _selectTool(tool),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          // Colors & width
-          Row(
-            children: [
-              for (final color in _colors)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: GestureDetector(
-                    onTap: () => _selectColor(color),
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: _currentColor == color
-                              ? colorScheme.primary
-                              : colorScheme.outlineVariant,
-                          width: _currentColor == color ? 3 : 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Slider(
-                  value: _currentStrokeWidth,
-                  min: 0.5,
-                  max: 8.0,
-                  divisions: 15,
-                  onChanged: _setStrokeWidth,
-                ),
-              ),
-              Text(
-                _currentStrokeWidth.toStringAsFixed(1),
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReplayControls(ColorScheme colorScheme) {
-    final replay = _replayController;
-    if (replay == null) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.play_circle, color: colorScheme.onPrimaryContainer),
-          const SizedBox(width: 8),
-          Text(
-            'Replaying',
-            style: TextStyle(
-              color: colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: LinearProgressIndicator(
-              value: _replayProgress.clamp(0.0, 1.0),
-              backgroundColor: colorScheme.onPrimaryContainer.withValues(alpha: 0.2),
-              valueColor: AlwaysStoppedAnimation(colorScheme.onPrimaryContainer),
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            onPressed: _stopReplay,
-            icon: Icon(Icons.stop, color: colorScheme.onPrimaryContainer),
-            tooltip: 'Stop replay',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomBar(ColorScheme colorScheme, int currentIndex) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        border: Border(
-          top: BorderSide(color: colorScheme.outlineVariant),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            // Page indicator
-            Flexible(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (var i = 0; i < _samplePages.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 3),
-                        child: GestureDetector(
-                          onTap: () => _goToPage(i),
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: i == currentIndex
-                                  ? colorScheme.primary
-                                  : colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              '${i + 1}',
-                              style: TextStyle(
-                                color: i == currentIndex
-                                    ? colorScheme.onPrimary
-                                    : colorScheme.onSurface,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // Record / Replay buttons
-            if (!_isReplaying) ...[
-              FilledButton.tonalIcon(
-                onPressed: _isRecording ? _stopRecording : _startRecording,
-                icon: Icon(
-                  _isRecording ? Icons.stop : Icons.fiber_manual_record,
-                  color: _isRecording ? Colors.red : null,
-                  size: 16,
-                ),
-                label: Text(_isRecording ? 'Stop' : 'Record'),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.tonalIcon(
-                onPressed: _lastObtPath != null ? _startReplay : null,
-                icon: const Icon(Icons.replay, size: 16),
-                label: const Text('Replay'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+  void stop() {
+    _animationTimer?.cancel();
+    _animationTimer = null;
+    _positionSub?.cancel();
+    _positionSub = null;
+    _eventSub?.cancel();
+    _eventSub = null;
+    _controller?.dispose();
+    _controller = null;
+    isReplaying = false;
+    progress = 0;
   }
 }
 
 // =============================================================================
-// Simple in-memory page provider for the example
+// In-memory page provider
 // =============================================================================
 
-class _FakePageProvider implements ScribblePageProvider {
+class _InMemoryPageProvider implements ScribblePageProvider {
   final Map<String, ScribbleController> _controllers = {};
   final Map<String, Scribble> _scribbles = {};
 
@@ -880,5 +413,573 @@ class _FakePageProvider implements ScribblePageProvider {
   Future<bool> deleteScribble(String key) async {
     _scribbles.remove(key);
     return true;
+  }
+}
+
+// =============================================================================
+// Main Page
+// =============================================================================
+
+class MultiPageDrawingPage extends StatefulWidget {
+  const MultiPageDrawingPage({super.key});
+
+  @override
+  State<MultiPageDrawingPage> createState() => _MultiPageDrawingPageState();
+}
+
+class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
+  late final DrawingState _drawingState;
+  late final _InMemoryPageProvider _pageProvider;
+  late final ScribbleBookController _bookController;
+  late final PageController _pageViewController;
+  late final RecordingManager _recording;
+  late final ReplayManager _replay;
+
+  String _currentTool = ScribbleTool.pen;
+  Color _currentColor = Colors.black;
+  double _currentStrokeWidth = 2.0;
+  bool _isDrawingEnabled = true;
+
+  static const _toolToDrawingTool = {
+    ScribbleTool.pen: DrawingTool.pen,
+    ScribbleTool.pencil: DrawingTool.pencil,
+    ScribbleTool.marker: DrawingTool.marker,
+    ScribbleTool.eraser: DrawingTool.erase,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+
+    _drawingState = DrawingState()
+      ..pointerMode.value = DrawingPointerMode.mouseOnly
+      ..selectedTool.value = DrawingTool.pen
+      ..selectedColor.value = _currentColor
+      ..selectedThickness.value = _currentStrokeWidth;
+
+    _pageProvider = _InMemoryPageProvider();
+    _bookController = ScribbleBookController(
+      pageIds: _samplePages.map((p) => p.id).toList(),
+      contentId: 'example-book',
+      pageProvider: _pageProvider,
+    );
+    _pageViewController = PageController();
+    _bookController.addListener(_onChanged);
+
+    _recording = RecordingManager(bookController: _bookController);
+    _replay = ReplayManager(
+      bookController: _bookController,
+      pageViewController: _pageViewController,
+      onStateChanged: _onChanged,
+    );
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _stopRecording();
+    _replay.stop();
+    _bookController.removeListener(_onChanged);
+    _bookController.dispose();
+    _pageViewController.dispose();
+    super.dispose();
+  }
+
+  // ===== Tool Control =====
+
+  void _selectTool(String tool) {
+    setState(() => _currentTool = tool);
+    final drawingTool = _toolToDrawingTool[tool];
+    if (drawingTool != null) {
+      _drawingState.selectedTool.value = drawingTool;
+    }
+  }
+
+  void _selectColor(Color color) {
+    setState(() => _currentColor = color);
+    _drawingState.selectedColor.value = color;
+  }
+
+  void _setStrokeWidth(double width) {
+    setState(() => _currentStrokeWidth = width);
+    _drawingState.selectedThickness.value = width;
+  }
+
+  void _toggleDrawing() {
+    setState(() => _isDrawingEnabled = !_isDrawingEnabled);
+  }
+
+  // ===== Page Navigation =====
+
+  Future<void> _goToPage(int index) async {
+    await _bookController.goToPage(index);
+    _pageViewController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  // ===== Recording =====
+
+  Future<void> _startRecording() async {
+    await _recording.start();
+    setState(() {});
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recording started'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    if (!_recording.isRecording) return;
+    try {
+      final eventCount = await _recording.stop();
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Recording saved ($eventCount events)'),
+            action: SnackBarAction(
+              label: 'Replay',
+              onPressed: _startReplay,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed: $e')),
+        );
+      }
+    }
+  }
+
+  // ===== Replay =====
+
+  Future<void> _startReplay() async {
+    final path = _recording.lastObtPath;
+    if (path == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No recording available. Record first!')),
+      );
+      return;
+    }
+    setState(() => _isDrawingEnabled = false);
+    await _replay.start(path);
+  }
+
+  // ===== Build =====
+
+  @override
+  Widget build(BuildContext context) {
+    final currentIndex = _bookController.currentPageIndex;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_samplePages[currentIndex].title),
+        centerTitle: true,
+        leading: _recording.isRecording
+            ? Padding(
+                padding: const EdgeInsets.all(12),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  width: 12,
+                  height: 12,
+                ),
+              )
+            : null,
+        actions: [
+          IconButton(
+            onPressed: _toggleDrawing,
+            icon: Icon(_isDrawingEnabled ? Icons.draw : Icons.visibility),
+            tooltip: _isDrawingEnabled ? 'View mode' : 'Draw mode',
+          ),
+          IconButton(
+            onPressed: _bookController.activeController.canUndo
+                ? _bookController.activeController.undo
+                : null,
+            icon: const Icon(Icons.undo),
+          ),
+          IconButton(
+            onPressed: _bookController.activeController.canRedo
+                ? _bookController.activeController.redo
+                : null,
+            icon: const Icon(Icons.redo),
+          ),
+          IconButton(
+            onPressed: () => _bookController.activeController.clear(),
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          if (_isDrawingEnabled && !_replay.isReplaying)
+            _ToolBar(
+              currentTool: _currentTool,
+              currentColor: _currentColor,
+              currentStrokeWidth: _currentStrokeWidth,
+              onToolSelected: _selectTool,
+              onColorSelected: _selectColor,
+              onStrokeWidthChanged: _setStrokeWidth,
+            ),
+          if (_replay.isReplaying)
+            _ReplayControls(
+              progress: _replay.progress,
+              onStop: () {
+                _replay.stop();
+                setState(() => _isDrawingEnabled = true);
+              },
+            ),
+          Expanded(
+            child: PageView.builder(
+              controller: _pageViewController,
+              itemCount: _samplePages.length,
+              onPageChanged: (index) async {
+                if (index != _bookController.currentPageIndex) {
+                  await _bookController.goToPage(index);
+                }
+              },
+              physics: _isDrawingEnabled
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
+              itemBuilder: (context, index) {
+                final page = _samplePages[index];
+                return _DrawingPage(
+                  markdown: page.markdown,
+                  controller: _bookController.controllerAt(index),
+                  isEnabled: _isDrawingEnabled && !_replay.isReplaying,
+                );
+              },
+            ),
+          ),
+          _BottomBar(
+            pageCount: _samplePages.length,
+            currentIndex: currentIndex,
+            isRecording: _recording.isRecording,
+            isReplaying: _replay.isReplaying,
+            hasRecording: _recording.lastObtPath != null,
+            onPageTap: _goToPage,
+            onRecordTap: _recording.isRecording
+                ? _stopRecording
+                : _startRecording,
+            onReplayTap: _startReplay,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Extracted Widgets
+// =============================================================================
+
+class _DrawingPage extends StatelessWidget {
+  const _DrawingPage({
+    required this.markdown,
+    required this.controller,
+    required this.isEnabled,
+  });
+
+  final String markdown;
+  final ScribbleController controller;
+  final bool isEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentSize = Size(constraints.maxWidth, constraints.maxHeight);
+        return SimpleScribbleWidget(
+          controller: controller,
+          allowedPointersMode: ScribblePointerMode.all,
+          isScribbleEnabled: isEnabled,
+          maxScale: 4.0,
+          panDirection: PanDirection.none,
+          contentLogicalSize: contentSize,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: SmoothMarkdown(
+              data: markdown,
+              styleSheet: MarkdownStyleSheet.github(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ToolBar extends StatelessWidget {
+  const _ToolBar({
+    required this.currentTool,
+    required this.currentColor,
+    required this.currentStrokeWidth,
+    required this.onToolSelected,
+    required this.onColorSelected,
+    required this.onStrokeWidthChanged,
+  });
+
+  final String currentTool;
+  final Color currentColor;
+  final double currentStrokeWidth;
+  final ValueChanged<String> onToolSelected;
+  final ValueChanged<Color> onColorSelected;
+  final ValueChanged<double> onStrokeWidthChanged;
+
+  static const _tools = [
+    (ScribbleTool.pen, Icons.edit, 'Pen'),
+    (ScribbleTool.pencil, Icons.create, 'Pencil'),
+    (ScribbleTool.marker, Icons.highlight, 'Marker'),
+    (ScribbleTool.eraser, Icons.auto_fix_normal, 'Eraser'),
+  ];
+
+  static const _colors = [
+    Colors.black,
+    Colors.red,
+    Colors.orange,
+    Colors.green,
+    Colors.blue,
+    Colors.purple,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        border: Border(
+          bottom: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final (tool, icon, label) in _tools)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: FilterChip(
+                      avatar: Icon(icon, size: 18),
+                      label: Text(label),
+                      selected: currentTool == tool,
+                      onSelected: (_) => onToolSelected(tool),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              for (final color in _colors)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: GestureDetector(
+                    onTap: () => onColorSelected(color),
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: currentColor == color
+                              ? colorScheme.primary
+                              : colorScheme.outlineVariant,
+                          width: currentColor == color ? 3 : 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Slider(
+                  value: currentStrokeWidth,
+                  min: 0.5,
+                  max: 8.0,
+                  divisions: 15,
+                  onChanged: onStrokeWidthChanged,
+                ),
+              ),
+              Text(
+                currentStrokeWidth.toStringAsFixed(1),
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReplayControls extends StatelessWidget {
+  const _ReplayControls({
+    required this.progress,
+    required this.onStop,
+  });
+
+  final double progress;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        border: Border(
+          bottom: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.play_circle, color: colorScheme.onPrimaryContainer),
+          const SizedBox(width: 8),
+          Text(
+            'Replaying',
+            style: TextStyle(
+              color: colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: LinearProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              backgroundColor:
+                  colorScheme.onPrimaryContainer.withValues(alpha: 0.2),
+              valueColor:
+                  AlwaysStoppedAnimation(colorScheme.onPrimaryContainer),
+            ),
+          ),
+          const SizedBox(width: 12),
+          IconButton(
+            onPressed: onStop,
+            icon: Icon(Icons.stop, color: colorScheme.onPrimaryContainer),
+            tooltip: 'Stop replay',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({
+    required this.pageCount,
+    required this.currentIndex,
+    required this.isRecording,
+    required this.isReplaying,
+    required this.hasRecording,
+    required this.onPageTap,
+    required this.onRecordTap,
+    required this.onReplayTap,
+  });
+
+  final int pageCount;
+  final int currentIndex;
+  final bool isRecording;
+  final bool isReplaying;
+  final bool hasRecording;
+  final ValueChanged<int> onPageTap;
+  final VoidCallback onRecordTap;
+  final VoidCallback onReplayTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        border: Border(
+          top: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Flexible(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (var i = 0; i < pageCount; i++)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: GestureDetector(
+                          onTap: () => onPageTap(i),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: i == currentIndex
+                                  ? colorScheme.primary
+                                  : colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                color: i == currentIndex
+                                    ? colorScheme.onPrimary
+                                    : colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (!isReplaying) ...[
+              FilledButton.tonalIcon(
+                onPressed: onRecordTap,
+                icon: Icon(
+                  isRecording ? Icons.stop : Icons.fiber_manual_record,
+                  color: isRecording ? Colors.red : null,
+                  size: 16,
+                ),
+                label: Text(isRecording ? 'Stop' : 'Record'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonalIcon(
+                onPressed: hasRecording ? onReplayTap : null,
+                icon: const Icon(Icons.replay, size: 16),
+                label: const Text('Replay'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
