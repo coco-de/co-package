@@ -151,12 +151,12 @@
           onToolChanged: widget.onToolChanged,
         );
         _isControllerOwned = true;
-
-        // 🚫 손필기 방지: 펜만 허용하도록 설정
-        _controller.modeNotifier.setAllowedPointersMode(
-          widget.allowedPointersMode,
-        );
       }
+
+      // 허용 포인터 모드 설정 (외부/내부 컨트롤러 모두 적용)
+      _controller.modeNotifier.setAllowedPointersMode(
+        widget.allowedPointersMode,
+      );
 
       // 외부 콜백이 있다면 컨트롤러에 추가 설정
       if (widget.onScribbleChanged != null) {

@@ -214,9 +214,15 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
 
   // Replay
   ScribbleReplayController? _replayController;
+  StreamSubscription<ScribbleBookEvent>? _replayEventSub;
+  StreamSubscription<int>? _replayPositionSub;
+  Timer? _replayAnimationTimer;
   bool _isReplaying = false;
   double _replayProgress = 0;
   String? _lastObtPath;
+  Map<String, List<Stroke>> _savedStrokes = {};
+  /// 녹화 시작 시점의 절대 타임스탬프 (포인트 타임스탬프와 매핑용)
+  int _recordingOriginMicros = 0;
 
   static const _tools = [
     (ScribbleTool.pen, Icons.edit, 'Pen'),
@@ -237,6 +243,14 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
   @override
   void initState() {
     super.initState();
+
+    // DrawingState 글로벌 상태 초기화
+    final ds = DrawingState();
+    ds.pointerMode.value = DrawingPointerMode.mouseOnly;
+    ds.selectedTool.value = DrawingTool.pen;
+    ds.selectedColor.value = _currentColor;
+    ds.selectedThickness.value = _currentStrokeWidth;
+
     _pageProvider = _FakePageProvider();
     _bookController = ScribbleBookController(
       pageIds: _samplePages.map((p) => p.id).toList(),
@@ -263,19 +277,35 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
 
   // ===== Tool Control =====
 
+  static const _toolToDrawingTool = {
+    ScribbleTool.pen: DrawingTool.pen,
+    ScribbleTool.pencil: DrawingTool.pencil,
+    ScribbleTool.marker: DrawingTool.marker,
+    ScribbleTool.eraser: DrawingTool.erase,
+  };
+
   void _selectTool(String tool) {
     setState(() => _currentTool = tool);
-    _bookController.activeController.setTool(tool);
+    final drawingTool = _toolToDrawingTool[tool];
+    if (drawingTool != null) {
+      DrawingState().selectedTool.value = drawingTool;
+    }
   }
 
   void _selectColor(Color color) {
     setState(() => _currentColor = color);
-    _bookController.activeController.modeNotifier.setColor(color);
+    DrawingState().selectedColor.value = color;
   }
 
   void _setStrokeWidth(double width) {
     setState(() => _currentStrokeWidth = width);
-    _bookController.activeController.modeNotifier.setStrokeWidth(width);
+    DrawingState().selectedThickness.value = width;
+  }
+
+  ScribbleController? _controllerForPage(String pageId) {
+    final index = _bookController.pageIds.indexOf(pageId);
+    if (index < 0) return null;
+    return _bookController.controllerAt(index);
   }
 
   void _toggleDrawing() {
@@ -364,6 +394,15 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
       return;
     }
 
+    // 리플레이 전에 각 페이지의 스트로크 백업
+    _savedStrokes = {};
+    _recordingOriginMicros = 0;
+    for (var i = 0; i < _bookController.pageCount; i++) {
+      final pageId = _bookController.pageIds[i];
+      final scribble = _bookController.controllerAt(i).currentScribble;
+      _savedStrokes[pageId] = List<Stroke>.from(scribble.strokes);
+    }
+
     // Clear all pages for clean replay
     for (var i = 0; i < _bookController.pageCount; i++) {
       _bookController.controllerAt(i).clear();
@@ -374,8 +413,27 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
     _replayController = ScribbleReplayController();
     await _replayController!.loadFromFile(_lastObtPath!);
 
-    // Listen to position changes
-    _replayController!.onPositionChanged.listen((micros) {
+    // 타임라인 첫 이벤트 시각 = 녹화 시작 시점
+    // positionMicros=0이 이 시각에 대응하므로, 이 값을 기준으로 매핑
+    _replayEventSub = _replayController!.onEvent.listen((event) {
+      // 첫 이벤트의 타임스탬프를 녹화 시작 기준으로 사용
+      if (_recordingOriginMicros == 0) {
+        _recordingOriginMicros = event.timestampMicros;
+      }
+      if (event is PageChangedEvent) {
+        _bookController.goToPage(event.toIndex);
+        _pageViewController.jumpToPage(event.toIndex);
+      }
+    });
+
+    // 16ms 주기로 포인트 타임스탬프 기반 애니메이션 (~60fps)
+    _replayAnimationTimer = Timer.periodic(
+      const Duration(milliseconds: 16),
+      (_) => _updateReplayAnimation(),
+    );
+
+    // 진행률 표시
+    _replayPositionSub = _replayController!.onPositionChanged.listen((micros) {
       if (!mounted) return;
       final duration = _replayController!.durationMicros;
       setState(() {
@@ -386,6 +444,7 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
     _replayController!.addListener(() {
       if (!mounted) return;
       if (_replayController!.state == ReplayState.completed) {
+        _finalizeAllStrokes();
         setState(() => _isReplaying = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Replay completed')),
@@ -400,7 +459,51 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
     });
   }
 
+  /// 매 프레임: 현재 재생 시각에 해당하는 포인트까지만 부분 렌더링
+  void _updateReplayAnimation() {
+    if (_replayController == null) return;
+
+    // 상대 positionMicros → 절대 포인트 타임스탬프로 변환
+    final absoluteTime =
+        _recordingOriginMicros + _replayController!.positionMicros;
+
+    for (final entry in _savedStrokes.entries) {
+      final pageId = entry.key;
+      final allStrokes = entry.value;
+      if (allStrokes.isEmpty) continue;
+
+      final controller = _controllerForPage(pageId);
+      if (controller == null) continue;
+
+      final displayStrokes = <Stroke>[];
+      for (final stroke in allStrokes) {
+        final partial =
+            StrokeAnimator.createPartialStroke(stroke, absoluteTime);
+        if (partial != null) {
+          displayStrokes.add(partial);
+        }
+      }
+
+      controller.loadScribble(Scribble()..strokes.addAll(displayStrokes));
+    }
+  }
+
+  /// 리플레이 완료 시 원본 전체 렌더링
+  void _finalizeAllStrokes() {
+    for (final entry in _savedStrokes.entries) {
+      final controller = _controllerForPage(entry.key);
+      if (controller == null) continue;
+      controller.loadScribble(Scribble()..strokes.addAll(entry.value));
+    }
+  }
+
   void _stopReplay() {
+    _replayAnimationTimer?.cancel();
+    _replayAnimationTimer = null;
+    _replayPositionSub?.cancel();
+    _replayPositionSub = null;
+    _replayEventSub?.cancel();
+    _replayEventSub = null;
     _replayController?.dispose();
     _replayController = null;
     setState(() {
@@ -502,31 +605,39 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
     ({String id, String title, String markdown}) page,
     int index,
   ) {
-    return Stack(
-      children: [
-        // Markdown content layer
-        Positioned.fill(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: SmoothMarkdown(
-              data: page.markdown,
-              styleSheet: MarkdownStyleSheet.github(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentSize = Size(constraints.maxWidth, constraints.maxHeight);
+        return Stack(
+          children: [
+            // Markdown content layer (별도 레이어로 분리 — SmoothMarkdown 내부의
+            // SingleChildScrollView가 오프스크린 측정 시 View.of() 에러 유발 방지)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: SmoothMarkdown(
+                    data: page.markdown,
+                    styleSheet: MarkdownStyleSheet.github(),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-
-        // Drawing overlay
-        Positioned.fill(
-          child: SimpleScribbleWidget(
-            controller: _bookController.controllerAt(index),
-            allowedPointersMode: ScribblePointerMode.all,
-            isScribbleEnabled: _isDrawingEnabled && !_isReplaying,
-            maxScale: 4.0,
-            panDirection: PanDirection.none,
-            child: const SizedBox.expand(),
-          ),
-        ),
-      ],
+            // Drawing overlay
+            Positioned.fill(
+              child: SimpleScribbleWidget(
+                controller: _bookController.controllerAt(index),
+                allowedPointersMode: ScribblePointerMode.all,
+                isScribbleEnabled: _isDrawingEnabled && !_isReplaying,
+                maxScale: 4.0,
+                panDirection: PanDirection.none,
+                contentLogicalSize: contentSize,
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -661,36 +772,45 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
         child: Row(
           children: [
             // Page indicator
-            for (var i = 0; i < _samplePages.length; i++)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: GestureDetector(
-                  onTap: () => _goToPage(i),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: i == currentIndex
-                          ? colorScheme.primary
-                          : colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${i + 1}',
-                      style: TextStyle(
-                        color: i == currentIndex
-                            ? colorScheme.onPrimary
-                            : colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
+            Flexible(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (var i = 0; i < _samplePages.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: GestureDetector(
+                          onTap: () => _goToPage(i),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: i == currentIndex
+                                  ? colorScheme.primary
+                                  : colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                color: i == currentIndex
+                                    ? colorScheme.onPrimary
+                                    : colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                  ],
                 ),
               ),
+            ),
 
-            const Spacer(),
+            const SizedBox(width: 8),
 
             // Record / Replay buttons
             if (!_isReplaying) ...[
@@ -723,6 +843,7 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
 
 class _FakePageProvider implements ScribblePageProvider {
   final Map<String, ScribbleController> _controllers = {};
+  final Map<String, Scribble> _scribbles = {};
 
   @override
   ScribbleController getController(String key) {
@@ -747,11 +868,17 @@ class _FakePageProvider implements ScribblePageProvider {
     String key,
     Scribble scribble, {
     bool immediate = false,
-  }) async => true;
+  }) async {
+    _scribbles[key] = scribble;
+    return true;
+  }
 
   @override
-  Future<Scribble?> loadScribble(String key) async => null;
+  Future<Scribble?> loadScribble(String key) async => _scribbles[key];
 
   @override
-  Future<bool> deleteScribble(String key) async => true;
+  Future<bool> deleteScribble(String key) async {
+    _scribbles.remove(key);
+    return true;
+  }
 }
