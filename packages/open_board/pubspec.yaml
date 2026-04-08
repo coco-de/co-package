@@ -22,6 +22,11 @@ dev_dependencies:
     sdk: flutter
 
 # The following section is specific to Flutter.
+  fake_async: any
+  mocktail: any
+  shared_preferences: any
+  path_provider_platform_interface: any
+  plugin_platform_interface: any
 flutter:
 
 import_sorter:

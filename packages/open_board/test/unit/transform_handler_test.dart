@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
 import 'package:open_board/src/module/transform_handler.dart';

@@ -70,6 +70,12 @@ class StateSynchronizer {
           modeNotifier.setStrokeWidth(currentThickness);
           modeNotifier.setMarker();
 
+        case DrawingTool.fixedPen:
+          if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
+          modeNotifier.setColor(currentColor);
+          modeNotifier.setStrokeWidth(currentThickness);
+          modeNotifier.setFixedPen();
+
         case DrawingTool.highlighter:
           break;
 
@@ -201,6 +207,7 @@ class StateSynchronizer {
         case DrawingTool.pen:
         case DrawingTool.pencil:
         case DrawingTool.marker:
+        case DrawingTool.fixedPen:
         case DrawingTool.highlighter:
         case DrawingTool.shape:
         case DrawingTool.text:

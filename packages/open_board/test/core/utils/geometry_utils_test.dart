@@ -1,8 +1,6 @@
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/core/utils/geometry_utils.dart';
 
 import '../../helpers/test_helpers.dart';
