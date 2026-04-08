@@ -223,6 +223,26 @@ class ScribbleReplayController extends ChangeNotifier {
         PageRemovedEvent(pageId: pageId, atIndex: atIndex, timestampMicros: timestampMicros),
       TlPageCleared(:final pageId) =>
         PageClearedEvent(pageId: pageId, timestampMicros: timestampMicros),
+      TlViewportChanged(:final pageId, :final scale, :final centerX,
+          :final centerY, :final viewportWidth, :final viewportHeight) =>
+        ViewportChangedEvent(
+          pageId: pageId,
+          scale: scale,
+          centerX: centerX,
+          centerY: centerY,
+          viewportWidth: viewportWidth,
+          viewportHeight: viewportHeight,
+          timestampMicros: timestampMicros,
+        ),
+      TlSessionParticipant(:final participantId, :final displayName,
+          :final role, :final action) =>
+        SessionParticipantEvent(
+          participantId: participantId,
+          displayName: displayName,
+          role: ParticipantRole.values.byName(role),
+          action: ParticipantAction.values.byName(action),
+          timestampMicros: timestampMicros,
+        ),
     };
   }
 

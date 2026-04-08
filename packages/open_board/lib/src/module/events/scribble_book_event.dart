@@ -155,3 +155,55 @@ class PageClearedEvent extends ScribbleBookEvent {
   String toString() =>
       'PageClearedEvent(page=$pageId, t=$timestampMicros)';
 }
+
+/// 뷰포트(줌/팬) 변경 이벤트
+class ViewportChangedEvent extends ScribbleBookEvent {
+  final String pageId;
+  final double scale;
+  final double centerX;
+  final double centerY;
+  final double viewportWidth;
+  final double viewportHeight;
+
+  const ViewportChangedEvent({
+    required this.pageId,
+    required this.scale,
+    required this.centerX,
+    required this.centerY,
+    required this.viewportWidth,
+    required this.viewportHeight,
+    required super.timestampMicros,
+  });
+
+  @override
+  String toString() =>
+      'ViewportChangedEvent(page=$pageId, scale=$scale, '
+      'center=($centerX,$centerY), t=$timestampMicros)';
+}
+
+/// 세션 참가자 이벤트 (타임라인 기록용)
+class SessionParticipantEvent extends ScribbleBookEvent {
+  final String participantId;
+  final String displayName;
+  final ParticipantRole role;
+  final ParticipantAction action;
+
+  const SessionParticipantEvent({
+    required this.participantId,
+    required this.displayName,
+    required this.role,
+    required this.action,
+    required super.timestampMicros,
+  });
+
+  @override
+  String toString() =>
+      'SessionParticipantEvent(${participantId}, ${action.name}, '
+      't=$timestampMicros)';
+}
+
+/// 참가자 역할
+enum ParticipantRole { teacher, student }
+
+/// 참가자 액션
+enum ParticipantAction { joined, left }
