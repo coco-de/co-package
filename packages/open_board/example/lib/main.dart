@@ -214,12 +214,20 @@ class _DrawingPageState extends State<DrawingPage> {
 
           // Canvas
           Expanded(
-            child: SimpleScribbleWidget(
-              controller: _controller,
-              allowedPointersMode: ScribblePointerMode.all,
-              maxScale: 6.0,
-              panDirection: PanDirection.both,
-              child: Container(color: Colors.white),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SimpleScribbleWidget(
+                  controller: _controller,
+                  allowedPointersMode: ScribblePointerMode.all,
+                  maxScale: 6.0,
+                  panDirection: PanDirection.both,
+                  contentLogicalSize: Size(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                  ),
+                  child: Container(color: Colors.white),
+                );
+              },
             ),
           ),
         ],
