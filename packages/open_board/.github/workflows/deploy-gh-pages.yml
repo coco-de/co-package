@@ -30,7 +30,7 @@ jobs:
 
       - name: Build web
         working-directory: example
-        run: flutter build web --release --base-href /open-board/
+        run: flutter build web --release --wasm --base-href /open-board/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
