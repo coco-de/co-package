@@ -89,6 +89,9 @@
     /// 양면↔단면 모드 전환 시 분할 결과 캐시
     final Map<String, ScribbleSplitResult> _splitResultCache = {};
 
+    /// 싱글톤 인스턴스
+    static final ScribbleCacheManager instance = ScribbleCacheManager();
+
     ScribbleCacheManager() {
       _autoSaveScheduler = AutoSaveScheduler(
         onSave: (key, scribble) async {
@@ -471,6 +474,20 @@
         debugPrint('ScribbleCacheManager: 필기 저장 실패 - $error');
         return false;
       }
+    }
+
+    /// 대기 중인 디바운스 저장을 즉시 실행
+    Future<bool> flushSave(String key) async {
+      final normalizedKey = _normalizeKey(key);
+      final timer = _saveTimers.remove(normalizedKey);
+      if (timer != null) {
+        timer.cancel();
+        final scribble = _memoryCache[normalizedKey];
+        if (scribble != null) {
+          return _saveToFileImmediately(normalizedKey, scribble);
+        }
+      }
+      return false;
     }
 
     /// 필기 데이터 로드
