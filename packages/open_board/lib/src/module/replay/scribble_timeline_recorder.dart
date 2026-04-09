@@ -141,6 +141,24 @@ class ScribbleTimelineRecorder {
           fromPageId: pageIds.elementAtOrNull(_activePageIndex) ?? '',
           toPageId: pageIds.elementAtOrNull(_activePageIndex) ?? '',
         ),
+      ViewportChangedEvent(:final pageId, :final scale, :final centerX,
+          :final centerY, :final viewportWidth, :final viewportHeight) =>
+        TlViewportChanged(
+          pageId: pageId,
+          scale: scale,
+          centerX: centerX,
+          centerY: centerY,
+          viewportWidth: viewportWidth,
+          viewportHeight: viewportHeight,
+        ),
+      SessionParticipantEvent(:final participantId, :final displayName,
+          :final role, :final action) =>
+        TlSessionParticipant(
+          participantId: participantId,
+          displayName: displayName,
+          role: role.name,
+          action: action.name,
+        ),
     };
 
     return TimelineEvent(timestamp: timestamp, event: data);
@@ -165,6 +183,8 @@ class ScribbleTimelineRecorder {
       case UndoPerformedEvent():
       case RedoPerformedEvent():
       case DoublePageToggledEvent():
+      case ViewportChangedEvent():
+      case SessionParticipantEvent():
         break;
     }
   }

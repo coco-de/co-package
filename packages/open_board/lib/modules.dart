@@ -48,6 +48,9 @@ export 'src/module/live/presentation/viewport_animator.dart';
 export 'src/module/live/domain/model/live_session.dart';
 export 'src/module/live/domain/sync/late_join_synchronizer.dart';
 export 'src/module/live/di/live_session_scope.dart';
+export 'src/module/live/presentation/synced_replay_controller.dart';
+export 'src/module/live/domain/storage/session_storage.dart';
+export 'src/module/live/domain/recording/egress_controller.dart';
 
 // 🔄 메타데이터 및 동기화 시스템
 export 'src/module/state/scribble_metadata.dart'; // ✨ 새로운 메타데이터 시스템

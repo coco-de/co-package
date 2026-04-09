@@ -97,6 +97,20 @@ class TimelineSerializer {
         TlPageAdded e => {'pageId': e.pageId, 'atIndex': e.atIndex},
         TlPageRemoved e => {'pageId': e.pageId, 'atIndex': e.atIndex},
         TlPageCleared e => {'pageId': e.pageId},
+        TlViewportChanged e => {
+            'pageId': e.pageId,
+            'scale': e.scale,
+            'centerX': e.centerX,
+            'centerY': e.centerY,
+            'viewportWidth': e.viewportWidth,
+            'viewportHeight': e.viewportHeight,
+          },
+        TlSessionParticipant e => {
+            'participantId': e.participantId,
+            'displayName': e.displayName,
+            'role': e.role,
+            'action': e.action,
+          },
       };
 
   static TimelineEventData _mapToEventData(
@@ -129,6 +143,20 @@ class TimelineSerializer {
             atIndex: d['atIndex'] as int,
           ),
         'pageCleared' => TlPageCleared(pageId: d['pageId'] as String),
+        'viewportChanged' => TlViewportChanged(
+            pageId: d['pageId'] as String,
+            scale: (d['scale'] as num).toDouble(),
+            centerX: (d['centerX'] as num).toDouble(),
+            centerY: (d['centerY'] as num).toDouble(),
+            viewportWidth: (d['viewportWidth'] as num).toDouble(),
+            viewportHeight: (d['viewportHeight'] as num).toDouble(),
+          ),
+        'sessionParticipant' => TlSessionParticipant(
+            participantId: d['participantId'] as String,
+            displayName: d['displayName'] as String,
+            role: d['role'] as String,
+            action: d['action'] as String,
+          ),
         _ => throw FormatException('Unknown event type: $type'),
       };
 
@@ -175,5 +203,7 @@ extension on TimelineEventData {
         TlPageAdded() => 'pageAdded',
         TlPageRemoved() => 'pageRemoved',
         TlPageCleared() => 'pageCleared',
+        TlViewportChanged() => 'viewportChanged',
+        TlSessionParticipant() => 'sessionParticipant',
       };
 }
