@@ -517,21 +517,13 @@
               final scribbleWidgetSize = Size(boundedWidth, boundedHeight);
 
               // 사전 측정이 완료된 상태만 들어오도록 보장됨 (_isChildReady == true)
-              if (!_isChildReady) {
-                // 안전장치: 예외 상황에서는 최소 위젯 반환
+              if (!_isChildReady && widget.contentLogicalSize == null) {
+                // 안전장치: contentLogicalSize 미제공 + 사전 측정 미완료 시 최소 위젯 반환
                 return const SizedBox.shrink();
               }
 
-              // 🛑 폴백 크기 렌더링 방지: 실제 콘텐츠 논리 크기가 준비될 때까지 렌더 지연
-              if (widget.contentLogicalSize == null) {
-                return SizedBox(
-                  width: scribbleWidgetSize.width,
-                  height: scribbleWidgetSize.height,
-                );
-              }
-
-              // 스케일 기준 크기: 논리 컨텐츠 크기 우선, 없으면 측정된 child 크기 사용
-              Size baseContentSize = widget.contentLogicalSize ?? _childSize!;
+              // 스케일 기준 크기: 논리 컨텐츠 크기 우선, 없으면 측정된 child 크기, 최종 폴백은 뷰포트 크기
+              Size baseContentSize = widget.contentLogicalSize ?? _childSize ?? scribbleWidgetSize;
               if (baseContentSize.width <= 0 || baseContentSize.height <= 0) {
                 // 0 또는 음수 크기 보호
                 baseContentSize = const Size(1, 1);
@@ -656,24 +648,22 @@
                 panEnabled: _shouldEnablePan(), // 🚫 필기 모드에서 수평 pan 비활성화
                 scaleEnabled: _shouldEnableScale(), // ✅ 확대/축소는 허용
                 // 🚨 MouseTracker 버그 방지: 중복 콜백 제거 및 안전한 콜백 처리
-                onInteractionStart: widget.onInteractionUpdate != null
-                    ? (ScaleStartDetails detail) {
+                onInteractionStart: (ScaleStartDetails detail) {
                         try {
-                          // 🆕 사용자가 제스처를 시작했음을 기록하여 자동 스냅 중단
+                          // 사용자가 제스처를 시작했음을 기록하여 자동 스냅 중단
                           _hasUserInteracted = true;
                           widget.onInteractionUpdate?.call(
                             true,
                             isReachedTopBoundary,
                             isReachedBottomBoundary,
-                            isReachedLeftBoundary, // 🆕 좌측 경계 상태
-                            isReachedRightBoundary, // 🆕 우측 경계 상태
-                            null, // 시작 시에는 제스처 속도 없음
+                            isReachedLeftBoundary,
+                            isReachedRightBoundary,
+                            null,
                           );
                         } on Exception {
                           // MouseTracker 버그 방지: 콜백 오류 무시
                         }
-                      }
-                    : null,
+                      },
                 onInteractionUpdate: (ScaleUpdateDetails details) {
                   try {
                     // 🎯 핵심: _handleScaleInteraction 호출 추가!
