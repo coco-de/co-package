@@ -24,6 +24,9 @@ jobs:
         with:
           channel: stable
 
+      - name: Remove workspace resolution for standalone build
+        run: sed -i '/^resolution: workspace/d' pubspec.yaml
+
       - name: Install dependencies
         working-directory: example
         run: flutter pub get
