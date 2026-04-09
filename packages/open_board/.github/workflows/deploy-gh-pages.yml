@@ -24,16 +24,22 @@ jobs:
         with:
           channel: stable
 
-      - name: Remove workspace resolution
-        run: sed -i '/^resolution:/d' pubspec.yaml
+      - name: Remove workspace resolution and clean dev_dependencies
+        run: |
+          sed -i '/^resolution:/d' pubspec.yaml
+          sed -i '/^  fake_async:/d' pubspec.yaml
+          sed -i '/^  mocktail:/d' pubspec.yaml
+          sed -i '/^  shared_preferences:/d' pubspec.yaml
+          sed -i '/^  path_provider_platform_interface:/d' pubspec.yaml
+          sed -i '/^  plugin_platform_interface:/d' pubspec.yaml
 
       - name: Install dependencies
         working-directory: example
         run: flutter pub get
 
-      - name: Build web (Wasm)
+      - name: Build web
         working-directory: example
-        run: flutter build web --release --wasm --base-href /open-board/
+        run: flutter build web --release --base-href /open-board/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
