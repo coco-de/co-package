@@ -216,16 +216,21 @@ class _DrawingPageState extends State<DrawingPage> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
+                final size = Size(
+                  constraints.maxWidth,
+                  constraints.maxHeight,
+                );
                 return SimpleScribbleWidget(
                   controller: _controller,
                   allowedPointersMode: ScribblePointerMode.all,
                   maxScale: 6.0,
                   panDirection: PanDirection.both,
-                  contentLogicalSize: Size(
-                    constraints.maxWidth,
-                    constraints.maxHeight,
+                  contentLogicalSize: size,
+                  child: SizedBox(
+                    width: size.width,
+                    height: size.height,
+                    child: const ColoredBox(color: Colors.white),
                   ),
-                  child: Container(color: Colors.white),
                 );
               },
             ),

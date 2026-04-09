@@ -2602,6 +2602,13 @@
       }
       _previousMode = currentMode;
 
+      // ✅ contentLogicalSize가 외부에서 제공된 경우 사전 측정을 건너뛰고 바로 오버레이 빌드
+      if (!_isChildReady && widget.contentLogicalSize != null) {
+        _childSize = widget.contentLogicalSize;
+        _isChildSizeMeasured = true;
+        return _buildChildOverlay();
+      }
+
       // ✅ 사전 측정: child가 있지만 아직 크기가 준비되지 않았다면 먼저 정확한 크기를 측정
       if (!_isChildReady) {
         // 1) 오프-트리 동기 측정 시도 (항상 유한한 제약 사용)
