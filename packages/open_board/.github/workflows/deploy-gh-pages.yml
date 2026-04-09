@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -24,14 +24,14 @@ jobs:
         with:
           channel: stable
 
-      - name: Remove workspace resolution for standalone build
-        run: sed -i '/^resolution: workspace/d' pubspec.yaml
+      - name: Remove workspace resolution
+        run: sed -i '/^resolution:/d' pubspec.yaml
 
       - name: Install dependencies
         working-directory: example
         run: flutter pub get
 
-      - name: Build web
+      - name: Build web (Wasm)
         working-directory: example
         run: flutter build web --release --wasm --base-href /open-board/
 
@@ -41,12 +41,10 @@ jobs:
           path: example/build/web
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
