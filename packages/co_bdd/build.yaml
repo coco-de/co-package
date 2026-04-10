@@ -1,0 +1,11 @@
+builders:
+  dual_test_gen:
+    import: "package:co_test_gen/builder.dart"
+    builder_factories: ["dualTestBuilder"]
+    build_extensions:
+      ".feature":
+        - ".widget_test.dart"
+        - ".patrol_test.dart"
+    auto_apply: dependents
+    build_to: source
+    required_inputs: [".feature"]
