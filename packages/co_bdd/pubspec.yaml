@@ -4,9 +4,9 @@ description: >-
   BDD Dual Test Generator — generates Widget Test + Patrol E2E Test
   from Gherkin .feature files with a shared TestDriver abstraction.
   Write BDD steps once, run them as both widget tests and Patrol integration tests.
-homepage: https://github.com/coco-de/co_test_gen
-repository: https://github.com/coco-de/co_test_gen
-issue_tracker: https://github.com/coco-de/co_test_gen/issues
+homepage: https://github.com/coco-de/co-test-gen
+repository: https://github.com/coco-de/co-test-gen
+issue_tracker: https://github.com/coco-de/co-test-gen/issues
 topics:
   - bdd
   - testing
