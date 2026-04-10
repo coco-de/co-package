@@ -51,9 +51,20 @@
 /// 5. Run `dart run build_runner build` to generate test files.
 library;
 
+// Driver
 export 'src/driver/patrol_test_driver.dart';
 export 'src/driver/test_driver.dart';
 export 'src/driver/widget_test_driver.dart';
+
+// Generator
 export 'src/generator/dual_test_builder.dart';
 export 'src/generator/feature_parser.dart';
 export 'src/generator/test_generator.dart';
+
+// Keys
+export 'src/key/common_keys.dart';
+
+// Steps
+export 'src/step/auth_steps.dart';
+export 'src/step/navigation_steps.dart';
+export 'src/step/search_steps.dart';
