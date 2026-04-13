@@ -6,7 +6,12 @@ library;
 import 'dart:async';
 
 import 'package:co_test_gen/src/generator/feature_parser.dart';
-import 'package:co_test_gen/src/generator/test_generator.dart';
+import 'package:co_test_gen/src/generator/test_generator.dart'
+    show
+        defaultSharedStepsImport,
+        generatePatrolTest,
+        generateWidgetTest,
+        sharedStepFileNames;
 import 'package:build/build.dart';
 
 /// .feature 파일에서 Widget Test + Patrol Test를 동시 생성하는 Builder.
@@ -63,6 +68,27 @@ class DualTestBuilder implements Builder {
     // stepFolder 옵션 (기본값: 'step')
     final stepFolder = options.config['stepFolder'] as String? ?? 'step';
 
+    // sharedSteps 옵션 (기본값: false)
+    // true이면 sharedStepFileNames에 매칭되는 step은
+    // 로��� step 대신 sharedStepsImport 패키지에서 import됩니다.
+    final useSharedSteps =
+        options.config['sharedSteps'] as bool? ?? false;
+
+    // sharedStepsImport 옵션 — 공유 step 패키지 import 경로
+    final sharedStepsImport =
+        options.config['sharedStepsImport'] as String? ??
+            defaultSharedStepsImport;
+
+    // sharedStepNames 옵션 — 프로젝트별 공유 step 목록 등���
+    final customSharedNames =
+        (options.config['sharedStepNames'] as List<dynamic>?)
+            ?.cast<String>();
+    if (customSharedNames != null) {
+      sharedStepFileNames
+        ..clear()
+        ..addAll(customSharedNames);
+    }
+
     // Widget Test 생성
     final widgetScenarios = feature.scenarios.where(
       (scenario) => scenario.target != TestTarget.patrolOnly,
@@ -72,6 +98,8 @@ class DualTestBuilder implements Builder {
       final widgetTestCode = generateWidgetTest(
         feature,
         stepFolder: stepFolder,
+        useSharedSteps: useSharedSteps,
+        sharedStepsImport: sharedStepsImport,
       );
       await buildStep.writeAsString(widgetTestId, widgetTestCode);
     }
@@ -85,6 +113,8 @@ class DualTestBuilder implements Builder {
       final patrolTestCode = generatePatrolTest(
         feature,
         stepFolder: stepFolder,
+        useSharedSteps: useSharedSteps,
+        sharedStepsImport: sharedStepsImport,
       );
       await buildStep.writeAsString(patrolTestId, patrolTestCode);
     }

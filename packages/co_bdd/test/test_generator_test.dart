@@ -7,11 +7,7 @@ void main() {
     name: 'Email Login',
     tags: ['smoke', 'auth'],
     background: [
-      const Step(
-        keyword: 'Given',
-        text: 'I am on the login page',
-        params: [],
-      ),
+      const Step(keyword: 'Given', text: 'I am on the login page', params: []),
     ],
     scenarios: [
       const Scenario(
@@ -34,16 +30,12 @@ void main() {
       const Scenario(
         name: 'Patrol only scenario',
         tags: ['patrol-only'],
-        steps: [
-          Step(keyword: 'Given', text: 'app is running', params: []),
-        ],
+        steps: [Step(keyword: 'Given', text: 'app is running', params: [])],
       ),
       const Scenario(
         name: 'Widget only scenario',
         tags: ['widget-only'],
-        steps: [
-          Step(keyword: 'Given', text: 'widget is mounted', params: []),
-        ],
+        steps: [Step(keyword: 'Given', text: 'widget is mounted', params: [])],
       ),
     ],
   );
@@ -103,6 +95,102 @@ void main() {
       expect(
         patrolCode,
         contains("iEnterInTheEmailField(driver, 'test@example.com')"),
+      );
+    });
+  });
+
+  group('sharedSteps (generic key-based)', () {
+    setUp(() {
+      sharedStepFileNames
+        ..clear()
+        ..addAll([
+          'i_tap_the_widget',
+          'the_widget_should_be_displayed',
+        ]);
+    });
+
+    tearDown(() => sharedStepFileNames.clear());
+
+    final sharedFeature = FeatureFile(
+      name: 'Generic Step Test',
+      tags: [],
+      background: [],
+      scenarios: [
+        const Scenario(
+          name: 'Widget tap and display',
+          tags: [],
+          steps: [
+            Step(
+              keyword: 'When',
+              text: "I tap the {'search_button'} widget",
+              params: ['search_button'],
+            ),
+            Step(
+              keyword: 'Then',
+              text: "the {'book_list'} widget should be displayed",
+              params: ['book_list'],
+            ),
+            Step(
+              keyword: 'When',
+              text: 'I tap the login button',
+              params: [],
+            ),
+          ],
+        ),
+      ],
+    );
+
+    test('without sharedSteps all steps use local imports', () {
+      final code = generateWidgetTest(sharedFeature, stepFolder: 'step');
+
+      expect(code, contains("import 'step/i_tap_the_widget.dart'"));
+      expect(
+        code,
+        contains("import 'step/the_widget_should_be_displayed.dart'"),
+      );
+      expect(code, contains("import 'step/i_tap_the_login_button.dart'"));
+    });
+
+    test('with sharedSteps generic steps use package import', () {
+      final code = generateWidgetTest(
+        sharedFeature,
+        stepFolder: 'step',
+        useSharedSteps: true,
+        sharedStepsImport: 'package:my_app/shared_steps.dart',
+      );
+
+      // Generic steps are NOT imported locally
+      expect(
+        code,
+        isNot(contains("import 'step/i_tap_the_widget.dart'")),
+      );
+      // Instead they come from the shared package
+      expect(
+        code,
+        contains("import 'package:my_app/shared_steps.dart'"),
+      );
+      // Domain-specific steps still use local import
+      expect(
+        code,
+        contains("import 'step/i_tap_the_login_button.dart'"),
+      );
+    });
+
+    test('patrol test also uses shared imports', () {
+      final code = generatePatrolTest(
+        sharedFeature,
+        stepFolder: 'step',
+        useSharedSteps: true,
+        sharedStepsImport: 'package:my_app/shared_steps.dart',
+      );
+
+      expect(
+        code,
+        contains("import 'package:my_app/shared_steps.dart'"),
+      );
+      expect(
+        code,
+        contains("import 'step/i_tap_the_login_button.dart'"),
       );
     });
   });

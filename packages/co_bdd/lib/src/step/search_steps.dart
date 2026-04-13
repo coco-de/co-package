@@ -42,8 +42,7 @@ class SearchSteps {
       driver.enterText(searchFieldKey, query);
 
   /// Verifies that search results are visible.
-  Future<void> expectResultsVisible() =>
-      driver.expectVisible(searchResultsKey);
+  Future<void> expectResultsVisible() => driver.expectVisible(searchResultsKey);
 
   /// Full search flow: tap icon, enter query, wait for results.
   Future<void> searchFor(String query) async {

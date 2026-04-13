@@ -3,15 +3,53 @@
 /// Receives a [FeatureFile] and generates `.widget_test.dart` and
 /// `.patrol_test.dart`. Step functions use the `TestDriver` abstraction
 /// so they can be reused across both test types.
+///
+/// ## Shared Steps
+///
+/// When `sharedSteps` is enabled, steps whose `fileName` matches an entry
+/// in `sharedStepFileNames` are imported from a shared package instead of
+/// generating a local step file. This eliminates duplication across features.
+///
+/// Configure via build.yaml:
+/// ```yaml
+/// options:
+///   sharedSteps: true
+///   sharedStepsImport: "package:test_driver/shared_steps.dart"
+/// ```
 library;
 
 import 'package:co_test_gen/src/generator/feature_parser.dart';
+
+/// Default import path for shared steps package.
+const defaultSharedStepsImport = 'package:co_test_gen/shared_steps.dart';
+
+/// Registry of shared step file names (without `.dart` extension).
+///
+/// When `sharedSteps: true`, steps matching these names are imported from
+/// the shared steps package instead of the local step folder.
+///
+/// Projects should override this by providing their own set via
+/// [registerSharedSteps] or by populating `sharedStepFileNames` in
+/// their build configuration.
+///
+/// To add a new shared step:
+/// 1. Create the step file in `lib/src/shared_step/{given|when|then}/`
+/// 2. Export it from `lib/shared_steps.dart`
+/// 3. Add the file name (without .dart) to this set
+final sharedStepFileNames = <String>{
+  // Override this set per-project or register via builder options
+};
 
 /// Generates Widget Test code.
 ///
 /// Creates a `WidgetTestDriver(tester)` and passes it to step functions
 /// as `TestDriver driver`.
-String generateWidgetTest(FeatureFile feature, {required String stepFolder}) {
+String generateWidgetTest(
+  FeatureFile feature, {
+  required String stepFolder,
+  bool useSharedSteps = false,
+  String sharedStepsImport = defaultSharedStepsImport,
+}) {
   final buffer = StringBuffer()
     ..writeln('// GENERATED CODE - DO NOT MODIFY BY HAND')
     ..writeln('// ignore_for_file: type=lint')
@@ -28,14 +66,23 @@ String generateWidgetTest(FeatureFile feature, {required String stepFolder}) {
     ..writeln("import 'package:flutter_test/flutter_test.dart';")
     ..writeln("import 'package:co_test_gen/co_test_gen.dart';");
 
-  // Step imports (widget-only + both scenarios)
+  // Step imports — shared steps are imported from a single package import,
+  // local steps are imported individually from the step folder.
   final widgetSteps = _collectStepsForTarget(feature, TestTarget.widgetOnly);
   final importedFiles = <String>{};
+  var needsSharedImport = false;
   for (final step in widgetSteps) {
     final fileName = step.fileName;
     if (importedFiles.add(fileName)) {
-      buffer.writeln("import '$stepFolder/$fileName.dart';");
+      if (useSharedSteps && sharedStepFileNames.contains(fileName)) {
+        needsSharedImport = true;
+      } else {
+        buffer.writeln("import '$stepFolder/$fileName.dart';");
+      }
     }
+  }
+  if (needsSharedImport) {
+    buffer.writeln("import '$sharedStepsImport';");
   }
 
   buffer
@@ -68,9 +115,7 @@ String generateWidgetTest(FeatureFile feature, {required String stepFolder}) {
         ? ", tags: [${tags.map((t) => "'$t'").join(', ')}]"
         : '';
 
-    buffer.writeln(
-      "  testWidgets('''${scenario.name}''', (tester) async {",
-    );
+    buffer.writeln("  testWidgets('''${scenario.name}''', (tester) async {");
 
     if (feature.background.isNotEmpty) {
       buffer.writeln('    await bddSetUp(tester);');
@@ -94,7 +139,12 @@ String generateWidgetTest(FeatureFile feature, {required String stepFolder}) {
 ///
 /// Creates a `PatrolTestDriver($)` and passes it to step functions
 /// as `TestDriver driver`.
-String generatePatrolTest(FeatureFile feature, {required String stepFolder}) {
+String generatePatrolTest(
+  FeatureFile feature, {
+  required String stepFolder,
+  bool useSharedSteps = false,
+  String sharedStepsImport = defaultSharedStepsImport,
+}) {
   final buffer = StringBuffer()
     ..writeln('// GENERATED CODE - DO NOT MODIFY BY HAND')
     ..writeln('// ignore_for_file: type=lint')
@@ -109,14 +159,22 @@ String generatePatrolTest(FeatureFile feature, {required String stepFolder}) {
     ..writeln("import 'package:patrol/patrol.dart';")
     ..writeln("import 'package:co_test_gen/co_test_gen.dart';");
 
-  // Step imports (patrol-only + both scenarios)
+  // Step imports — shared steps from package, local steps from folder
   final patrolSteps = _collectStepsForTarget(feature, TestTarget.patrolOnly);
   final importedFiles = <String>{};
+  var needsSharedImport = false;
   for (final step in patrolSteps) {
     final fileName = step.fileName;
     if (importedFiles.add(fileName)) {
-      buffer.writeln("import '$stepFolder/$fileName.dart';");
+      if (useSharedSteps && sharedStepFileNames.contains(fileName)) {
+        needsSharedImport = true;
+      } else {
+        buffer.writeln("import '$stepFolder/$fileName.dart';");
+      }
     }
+  }
+  if (needsSharedImport) {
+    buffer.writeln("import '$sharedStepsImport';");
   }
 
   buffer
@@ -135,9 +193,7 @@ String generatePatrolTest(FeatureFile feature, {required String stepFolder}) {
   // Background → bddSetUp
   if (feature.background.isNotEmpty) {
     buffer
-      ..writeln(
-        r'  Future<void> bddSetUp(PatrolIntegrationTester $) async {',
-      )
+      ..writeln(r'  Future<void> bddSetUp(PatrolIntegrationTester $) async {')
       ..writeln(r'    final driver = PatrolTestDriver($);');
     for (final step in feature.background) {
       buffer.writeln('    await ${_driverStepCall(step)};');

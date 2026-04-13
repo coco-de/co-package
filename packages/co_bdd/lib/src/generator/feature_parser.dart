@@ -36,11 +36,7 @@ class FeatureFile {
 /// 시나리오.
 class Scenario {
   /// [Scenario]를 생성합니다.
-  const Scenario({
-    required this.name,
-    required this.tags,
-    required this.steps,
-  });
+  const Scenario({required this.name, required this.tags, required this.steps});
 
   /// 시나리오 이름.
   final String name;
@@ -62,11 +58,7 @@ class Scenario {
 /// GWT 단계.
 class Step {
   /// [Step]을 생성합니다.
-  const Step({
-    required this.keyword,
-    required this.text,
-    required this.params,
-  });
+  const Step({required this.keyword, required this.text, required this.params});
 
   /// Given / When / Then / And / But.
   final String keyword;
