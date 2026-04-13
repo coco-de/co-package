@@ -24,7 +24,10 @@ dependencies:
     sdk: flutter
   flutter_test:
     sdk: flutter
+  patrol: ^4.5.0
 
 dev_dependencies:
   lints: ^5.1.0
   test: ^1.25.0
+
+resolution: workspace
