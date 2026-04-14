@@ -1,4 +1,3 @@
-// ignore_for_file: prefer-match-file-name
 
 /// .feature 파일 파서.
 ///

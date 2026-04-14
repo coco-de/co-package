@@ -18,7 +18,6 @@ import 'package:flutter_test/flutter_test.dart';
 ///   await iTapTheLoginButton(driver);
 /// });
 /// ```
-// ignore_for_file: avoid-dynamic
 class PatrolTestDriver extends TestDriver {
   /// Creates a driver wrapping the Patrol tester [$].
   PatrolTestDriver(this.$);

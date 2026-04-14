@@ -1,5 +1,3 @@
-// ignore_for_file: prefer-declaring-const-constructor
-
 /// build_runner Builder — .feature → dual test 생성.
 library;
 
