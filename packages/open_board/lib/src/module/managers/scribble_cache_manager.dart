@@ -29,7 +29,11 @@
   /// - 스트로크 분할/머지 시스템 (양면↔단면 전환)
   ///
   /// 키 형식: 'contentId/pageId' 또는 원하는 계층 구조
-  class ScribbleCacheManager extends ChangeNotifier implements ScribblePageProvider {
+  class ScribbleCacheManager extends ChangeNotifier
+      implements ScribblePageProvider {
+    /// 싱글톤 인스턴스
+    static final ScribbleCacheManager instance = ScribbleCacheManager();
+
     /// 저장 디바운스 시간 (기본 1.5초)
     static const Duration _saveDebounceTime = Duration(milliseconds: 1500);
 
@@ -88,9 +92,6 @@
     /// 스트로크 분할/머지 시스템
     /// 양면↔단면 모드 전환 시 분할 결과 캐시
     final Map<String, ScribbleSplitResult> _splitResultCache = {};
-
-    /// 싱글톤 인스턴스
-    static final ScribbleCacheManager instance = ScribbleCacheManager();
 
     ScribbleCacheManager() {
       _autoSaveScheduler = AutoSaveScheduler(
@@ -1068,9 +1069,8 @@
         return 2.0; // 간단한 필기
       } else if (complexity < 30) {
         return 3.0; // 보통 복잡도
-      } else {
-        return 4.0; // 복잡한 필기
       }
+      return 4.0; // 복잡한 필기
     }
 
     /// ✨ 목표 해상도 결정 (원본 이미지 크기를 모를 때)
@@ -1155,23 +1155,23 @@
     /// DrawingTool을 ScribbleTool로 변환
     String _convertToScribbleTool(DrawingTool tool) {
       switch (tool) {
-        case DrawingTool.pen:
+        case .pen:
           return ScribbleTool.pen;
-        case DrawingTool.pencil:
+        case .pencil:
           return ScribbleTool.pencil;
-        case DrawingTool.marker:
+        case .marker:
           return ScribbleTool.marker;
-        case DrawingTool.fixedPen:
+        case .fixedPen:
           return ScribbleTool.pen;
-        case DrawingTool.erase:
+        case .erase:
           return ScribbleTool.eraser;
-        case DrawingTool.highlighter:
+        case .highlighter:
           return ScribbleTool.marker; // 하이라이터는 마커로 처리
-        case DrawingTool.text:
+        case .text:
           return ScribbleTool.text;
-        case DrawingTool.shape:
+        case .shape:
           return ScribbleTool.shape;
-        case DrawingTool.lasso:
+        case .lasso:
           return ScribbleTool.lasso;
       }
     }

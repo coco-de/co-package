@@ -16,7 +16,7 @@
     /// 지우개 표시 여부
     final bool drawEraser;
 
-    CursorPaintDelegate({
+    const CursorPaintDelegate({
       required this.state,
       required this.modeState,
       required this.drawEraser,
@@ -33,11 +33,11 @@
 
     /// 포인터(커서/지우개) 렌더링
     void _drawPointer(ui.Canvas canvas) {
-      Paint paint = Paint()..style = PaintingStyle.fill;
+      Paint paint = Paint()..style = .fill;
 
       paint.style = switch (state) {
-        Drawing() => PaintingStyle.fill,
-        Erasing() => PaintingStyle.fill,
+        Drawing() => .fill,
+        Erasing() => .fill,
       };
       paint.color = switch (state) {
         Drawing() => modeState.inkGroupInfo.selectedColor,

@@ -58,7 +58,7 @@
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: textDrawable.alignment.textAlign,
-        textDirection: TextDirection.ltr,
+        textDirection: .ltr,
       );
 
       textPainter.layout();
@@ -66,19 +66,19 @@
       // Calculate position based on alignment
       Offset position = textDrawable.position;
       switch (textDrawable.alignment) {
-        case TextAlignment.center:
+        case .center:
           position = Offset(
             textDrawable.position.dx - textPainter.width / 2,
             textDrawable.position.dy - textPainter.height / 2,
           );
           break;
-        case TextAlignment.right:
+        case .right:
           position = Offset(
             textDrawable.position.dx - textPainter.width,
             textDrawable.position.dy - textPainter.height / 2,
           );
           break;
-        case TextAlignment.left:
+        case .left:
           position = Offset(
             textDrawable.position.dx,
             textDrawable.position.dy - textPainter.height / 2,
@@ -152,7 +152,7 @@
         final textPainter = TextPainter(
           text: textSpan,
           textAlign: textDrawable.alignment.textAlign,
-          textDirection: TextDirection.ltr,
+          textDirection: .ltr,
         );
         textPainter.layout();
 
@@ -213,7 +213,7 @@
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: textDrawable.alignment.textAlign,
-        textDirection: TextDirection.ltr,
+        textDirection: .ltr,
       );
 
       textPainter.layout();
@@ -221,19 +221,19 @@
       // Calculate position based on alignment
       Offset position = textDrawable.position;
       switch (textDrawable.alignment) {
-        case TextAlignment.center:
+        case .center:
           position = Offset(
             textDrawable.position.dx - textPainter.width / 2,
             textDrawable.position.dy - textPainter.height / 2,
           );
           break;
-        case TextAlignment.right:
+        case .right:
           position = Offset(
             textDrawable.position.dx - textPainter.width,
             textDrawable.position.dy - textPainter.height / 2,
           );
           break;
-        case TextAlignment.left:
+        case .left:
           position = Offset(
             textDrawable.position.dx,
             textDrawable.position.dy - textPainter.height / 2,
@@ -295,7 +295,7 @@
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: textDrawable.alignment.textAlign,
-        textDirection: TextDirection.ltr,
+        textDirection: .ltr,
       );
 
       textPainter.layout();
@@ -330,7 +330,7 @@
 
         final paint = Paint()
           ..color = isTransforming ? Colors.green : Colors.blue
-          ..style = PaintingStyle.stroke
+          ..style = .stroke
           ..strokeWidth = isTransforming ? 3.0 : 2.0;
 
         try {
@@ -343,7 +343,7 @@
         if (isTransforming) {
           final backgroundPaint = Paint()
             ..color = Colors.blue.withValues(alpha: 0.1)
-            ..style = PaintingStyle.fill;
+            ..style = .fill;
           try {
             canvas.drawRect(rect, backgroundPaint);
           } on Exception catch (error) {
@@ -375,7 +375,7 @@
 
         final paint = Paint()
           ..color = isTransforming ? Colors.green : Colors.blue
-          ..style = PaintingStyle.stroke
+          ..style = .stroke
           ..strokeWidth = isTransforming ? 3.0 : 2.0;
 
         try {
@@ -388,7 +388,7 @@
         if (isTransforming) {
           final backgroundPaint = Paint()
             ..color = Colors.blue.withValues(alpha: 0.1)
-            ..style = PaintingStyle.fill;
+            ..style = .fill;
           try {
             canvas.drawRect(rect, backgroundPaint);
           } on Exception catch (error) {
@@ -478,7 +478,7 @@
       final deleteButtonCenter = positions['delete']!;
       final deleteButtonPaint = Paint()
         ..color = Colors.red
-        ..style = PaintingStyle.fill;
+        ..style = .fill;
 
       // 삭제 버튼 배경 원
       try {
@@ -490,7 +490,7 @@
       // 삭제 버튼 테두리
       final deleteButtonBorderPaint = Paint()
         ..color = Colors.white
-        ..style = PaintingStyle.stroke
+        ..style = .stroke
         ..strokeWidth = 2.0;
       try {
         canvas.drawCircle(
@@ -505,9 +505,9 @@
       // 삭제 아이콘 (X)
       final deleteIconPaint = Paint()
         ..color = Colors.white
-        ..style = PaintingStyle.stroke
+        ..style = .stroke
         ..strokeWidth = 3.0
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = .round;
 
       const iconSize = 12.0;
       try {
@@ -529,7 +529,7 @@
       final transformButtonCenter = positions['transform']!;
       final transformButtonPaint = Paint()
         ..color = Colors.blue
-        ..style = PaintingStyle.fill;
+        ..style = .fill;
 
       // 변형 버튼 배경 원
       try {
@@ -545,7 +545,7 @@
       // 변형 버튼 테두리
       final transformButtonBorderPaint = Paint()
         ..color = Colors.white
-        ..style = PaintingStyle.stroke
+        ..style = .stroke
         ..strokeWidth = 2.0;
       try {
         canvas.drawCircle(
@@ -560,9 +560,9 @@
       // 변형 아이콘 (크기조절 화살표)
       final transformIconPaint = Paint()
         ..color = Colors.white
-        ..style = PaintingStyle.stroke
+        ..style = .stroke
         ..strokeWidth = 2.5
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = .round;
 
       const arrowSize = 10.0;
       // 대각선 화살표 (↗)
@@ -607,7 +607,7 @@
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: textDrawable.alignment.textAlign,
-        textDirection: TextDirection.ltr,
+        textDirection: .ltr,
       );
       textPainter.layout();
 

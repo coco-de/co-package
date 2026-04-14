@@ -11,7 +11,7 @@
     /// 렌더링할 도형 스트로크 목록
     final List<Stroke> strokes;
 
-    ShapePaintDelegate({required this.strokes});
+    const ShapePaintDelegate({required this.strokes});
 
     @override
     void paint(ui.Canvas canvas, ui.Size size) {
@@ -19,9 +19,9 @@
         final paint = Paint()
           ..color = Color(stroke.color)
           ..strokeWidth = stroke.options.size
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round
-          ..style = PaintingStyle.stroke;
+          ..strokeCap = .round
+          ..strokeJoin = .round
+          ..style = .stroke;
         drawShape(canvas, paint, stroke);
       }
     }
@@ -143,7 +143,7 @@
       canvas.rotate(angle);
 
       final rect = Rect.fromCenter(
-        center: Offset.zero,
+        center: .zero,
         width: radiusX * 2,
         height: radiusY * 2,
       );
@@ -187,9 +187,9 @@
       final polyPaint = Paint()
         ..color = Color(stroke.color)
         ..strokeWidth = stroke.options.size
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
+        ..style = .stroke
+        ..strokeCap = .round
+        ..strokeJoin = .round;
 
       final path = Path();
 

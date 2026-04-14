@@ -14,7 +14,7 @@
     /// 현재 줌 레벨 (fixedPen 렌더링 보정에 사용)
     final double scaleFactor;
 
-    StrokePaintDelegate({required this.strokes, this.scaleFactor = 1.0});
+    const StrokePaintDelegate({required this.strokes, this.scaleFactor = 1.0});
 
     @override
     void paint(ui.Canvas canvas, ui.Size size) {
@@ -53,7 +53,7 @@
     void drawPen(ui.Canvas canvas, Stroke stroke) {
       Paint paint = Paint()
         ..color = Color(stroke.color)
-        ..style = PaintingStyle.fill;
+        ..style = .fill;
       final path = getPathForStrokeOld(stroke);
       if (path == null) {
         return;
@@ -66,9 +66,9 @@
       Paint paint = Paint()
         ..color = Color(stroke.color)
         ..strokeWidth = stroke.options.size
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..style = PaintingStyle.stroke;
+        ..strokeCap = .round
+        ..strokeJoin = .round
+        ..style = .stroke;
       final path = getSimplePathForStroke(stroke);
       if (path == null) {
         return;
@@ -105,7 +105,7 @@
       );
       Paint paint = Paint()
         ..color = Color(stroke.color)
-        ..style = PaintingStyle.fill;
+        ..style = .fill;
       final path = getPathForStrokeOld(adjustedStroke);
       if (path == null) {
         return;
@@ -120,9 +120,9 @@
       Paint paint = Paint()
         ..color = Color(stroke.color)
         ..strokeWidth = stroke.options.size * 2
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..style = PaintingStyle.stroke;
+        ..strokeCap = .round
+        ..strokeJoin = .round
+        ..style = .stroke;
       final path = getSimplePathForStroke(
         Stroke(
           points: stroke.points,

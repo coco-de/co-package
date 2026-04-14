@@ -6,6 +6,7 @@
   import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_board/src/module/state/scribble.state.dart';
 
+  @immutable
   class ScribbleModeState {
     InkGroupInfo inkGroupInfo;
 
@@ -13,6 +14,7 @@
     double scaleFactor;
 
     ScribblePointerMode allowedPointersMode;
+
     ScribbleModeState({
       /// How much the widget is scaled at the moment.
       ///
@@ -27,22 +29,22 @@
     });
 
     StrokeOptions get options =>
-        StrokeOptions(size: inkGroupInfo.seletedStrokeWidth / scaleFactor);
+        .new(size: inkGroupInfo.seletedStrokeWidth / scaleFactor);
 
     /// Returns a set of [PointerDeviceKind] that represents the currently
     /// supported devices, depending on [state.allowedPointersMode].
     Set<PointerDeviceKind> get supportedPointerKinds {
       switch (allowedPointersMode) {
-        case ScribblePointerMode.all:
+        case .all:
           return Set.from(PointerDeviceKind.values);
-        case ScribblePointerMode.mouseOnly:
+        case .mouseOnly:
           return const {PointerDeviceKind.mouse};
-        case ScribblePointerMode.penOnly:
+        case .penOnly:
           return const {
             PointerDeviceKind.stylus,
             PointerDeviceKind.invertedStylus,
           };
-        case ScribblePointerMode.mouseAndPen:
+        case .mouseAndPen:
           return const {
             PointerDeviceKind.mouse,
             PointerDeviceKind.stylus,

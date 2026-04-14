@@ -27,6 +27,7 @@
   ///
   /// 내부적으로 NotifierRegistry, StateSynchronizer, UndoRedoTracker,
   /// DrawingSettingsPersistence에 위임합니다 (Facade 패턴).
+  @immutable
   class DrawingState {
     static DrawingState? _instance;
 
@@ -45,6 +46,7 @@
     final DrawingSettingsPersistence _persistence =
         DrawingSettingsPersistence(); // ✨ dispose 상태 추적 (위젯 생명주기 오류 방지)
     bool _isDisposed = false;
+
     factory DrawingState() {
       if (_instance == null || _instance!._isDisposed) {
         // 🔄 인스턴스가 없거나 dispose된 경우 새로 생성
@@ -61,6 +63,12 @@
     /// 현재 활성 ScribbleNotifier (undo/redo 대상)
     ScribbleNotifier? get lastActiveScribbleNotifier =>
         _registry.lastActiveScribbleNotifier;
+
+    /// Undo 가능 여부 실시간 추적 ValueNotifier
+    ValueNotifier<bool> get canUndoNotifier => _undoRedoTracker.canUndoNotifier;
+
+    /// Redo 가능 여부 실시간 추적 ValueNotifier
+    ValueNotifier<bool> get canRedoNotifier => _undoRedoTracker.canRedoNotifier;
 
     /// 📝 ScribbleModeNotifier 등록 (ScribbleWidget에서 자동 호출)
     void registerNotifier(ScribbleModeNotifier modeNotifier) {
@@ -108,12 +116,6 @@
       }
     }
 
-    /// Undo 가능 여부 실시간 추적 ValueNotifier
-    ValueNotifier<bool> get canUndoNotifier => _undoRedoTracker.canUndoNotifier;
-
-    /// Redo 가능 여부 실시간 추적 ValueNotifier
-    ValueNotifier<bool> get canRedoNotifier => _undoRedoTracker.canRedoNotifier;
-
     /// 🎯 Undo/Redo 가능 여부 상태 업데이트 (public)
     void updateUndoRedoState() {
       _undoRedoTracker.updateUndoRedoState();
@@ -160,8 +162,8 @@
       final activeScribbleNotifierNotifier = ValueNotifier<ScribbleNotifier?>(
         null,
       );
-      final canUndoNotifier = ValueNotifier<bool>(false);
-      final canRedoNotifier = ValueNotifier<bool>(false);
+      final canUndoNotifier = ValueNotifier(false);
+      final canRedoNotifier = ValueNotifier(false);
 
       // 하위 객체들 초기화
       _registry.initialize(activeScribbleNotifierNotifier);

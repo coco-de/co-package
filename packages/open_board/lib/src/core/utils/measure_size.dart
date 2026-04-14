@@ -53,8 +53,8 @@
       alignment: Alignment.topLeft,
       minWidth: 0,
       minHeight: 0,
-      maxWidth: double.infinity,
-      maxHeight: double.infinity,
+      maxWidth: .infinity,
+      maxHeight: .infinity,
       child: RepaintBoundary(key: widgetKey, child: child),
     );
   }
@@ -652,7 +652,7 @@
         return data.rootView.size;
       } on Exception catch (error) {
         debugLog('[ERROR MEASURE WIDGET]: $error');
-        return Size.zero;
+        return .zero;
       } finally {
         // Clean up.
         element.update(

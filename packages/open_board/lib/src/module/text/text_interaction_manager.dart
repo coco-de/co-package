@@ -99,8 +99,7 @@
 
     double get currentScale => _transformer.scale;
 
-    CoordinateTransformer get _transformer =>
-        CoordinateTransformer(transformationController);
+    CoordinateTransformer get _transformer => .new(transformationController);
 
     /// 포인터 다운 이벤트 처리
     bool handlePointerDown(PointerDownEvent event) {
@@ -518,9 +517,9 @@
         textStyle: TextStyle(
           fontSize: textSize,
           color: modeNotifier.state.inkGroupInfo.selectedColor,
-          fontWeight: FontWeight.normal,
+          fontWeight: .normal,
         ),
-        textAlignment: TextAlignment.center,
+        textAlignment: .center,
       );
       _syncWithWidgetState();
     }
@@ -561,7 +560,7 @@
         textStyle: TextStyle(
           fontSize: textSize,
           color: modeNotifier.state.inkGroupInfo.selectedColor,
-          fontWeight: FontWeight.normal,
+          fontWeight: .normal,
         ),
         textAlignment: _textSettings.textAlignment,
       );
@@ -580,10 +579,9 @@
         fontSize: _textSettings.textStyle.fontSize ?? 20.0,
         color: (_textSettings.textStyle.color ?? Colors.black).toARGB32(),
         fontFamily: _textSettings.textStyle.fontFamily ?? '',
-        isBold: _textSettings.textStyle.fontWeight == FontWeight.bold,
-        isItalic: _textSettings.textStyle.fontStyle == FontStyle.italic,
-        isUnderlined:
-            _textSettings.textStyle.decoration == TextDecoration.underline,
+        isBold: _textSettings.textStyle.fontWeight == .bold,
+        isItalic: _textSettings.textStyle.fontStyle == .italic,
+        isUnderlined: _textSettings.textStyle.decoration == .underline,
         textAlign: _textSettings.textAlignment.name,
         hidden: true, // 편집 중에는 숨김
       );
@@ -606,8 +604,7 @@
       // 변환 없이 localToGlobal만 적용
       final RenderBox? renderBox =
           repaintBoundaryKey?.currentContext?.findRenderObject() as RenderBox?;
-      final editorPosition =
-          renderBox?.localToGlobal(localPosition) ?? Offset.zero;
+      final editorPosition = renderBox?.localToGlobal(localPosition) ?? .zero;
 
       _isEditingText = true;
       _editingTextId = textDrawable.id;
@@ -663,7 +660,7 @@
       final RenderBox? renderBox =
           repaintBoundaryKey?.currentContext?.findRenderObject() as RenderBox?;
       final editorPosition =
-          renderBox?.localToGlobal(textDrawable.position) ?? Offset.zero;
+          renderBox?.localToGlobal(textDrawable.position) ?? .zero;
 
       _isEditingText = true;
       _editingTextId = textDrawable.id;
@@ -808,7 +805,7 @@
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: textDrawable.alignment.textAlign,
-        textDirection: TextDirection.ltr,
+        textDirection: .ltr,
       );
       textPainter.layout();
 
@@ -817,19 +814,19 @@
         // TextDrawablePainter와 동일한 방식으로 렌더링 위치 계산
         Offset renderPosition = textDrawable.position;
         switch (textDrawable.alignment) {
-          case TextAlignment.center:
+          case .center:
             renderPosition = Offset(
               textDrawable.position.dx - textPainter.width / 2,
               textDrawable.position.dy - textPainter.height / 2,
             );
             break;
-          case TextAlignment.right:
+          case .right:
             renderPosition = Offset(
               textDrawable.position.dx - textPainter.width,
               textDrawable.position.dy - textPainter.height / 2,
             );
             break;
-          case TextAlignment.left:
+          case .left:
             renderPosition = Offset(
               textDrawable.position.dx,
               textDrawable.position.dy - textPainter.height / 2,
@@ -848,35 +845,33 @@
         final contains = textRect.contains(point);
 
         return contains;
-      } else {
-        // 회전된 텍스트의 경우 역변환을 통해 점이 영역 내부에 있는지 확인
-        final center = textDrawable.position;
-        final halfWidth = textPainter.width / 2;
-        final halfHeight = textPainter.height / 2;
+      } // 회전된 텍스트의 경우 역변환을 통해 점이 영역 내부에 있는지 확인
+      final center = textDrawable.position;
+      final halfWidth = textPainter.width / 2;
+      final halfHeight = textPainter.height / 2;
 
-        // 점을 텍스트 중심 기준으로 이동
-        final relativePoint = point - center;
+      // 점을 텍스트 중심 기준으로 이동
+      final relativePoint = point - center;
 
-        // 역회전 적용 (-rotation)
-        final cos = math.cos(-rotation);
-        final sin = math.sin(-rotation);
-        final rotatedPoint = Offset(
-          relativePoint.dx * cos - relativePoint.dy * sin,
-          relativePoint.dx * sin + relativePoint.dy * cos,
-        );
+      // 역회전 적용 (-rotation)
+      final cos = math.cos(-rotation);
+      final sin = math.sin(-rotation);
+      final rotatedPoint = Offset(
+        relativePoint.dx * cos - relativePoint.dy * sin,
+        relativePoint.dx * sin + relativePoint.dy * cos,
+      );
 
-        // 회전되지 않은 상태에서 영역 내부에 있는지 확인 (8px 패딩 포함)
-        final rect = Rect.fromLTWH(
-          -halfWidth - 8,
-          -halfHeight - 8,
-          textPainter.width + 16,
-          textPainter.height + 16,
-        );
+      // 회전되지 않은 상태에서 영역 내부에 있는지 확인 (8px 패딩 포함)
+      final rect = Rect.fromLTWH(
+        -halfWidth - 8,
+        -halfHeight - 8,
+        textPainter.width + 16,
+        textPainter.height + 16,
+      );
 
-        final contains = rect.contains(rotatedPoint);
+      final contains = rect.contains(rotatedPoint);
 
-        return contains;
-      }
+      return contains;
     }
 
     /// 기존 텍스트 탭 처리
@@ -1010,7 +1005,7 @@
       if (_draggingTextIndex == null) return;
 
       final currentScribble = scribbleNotifier.currentState.scribble;
-      final textDrawables = List<TextDrawable>.from(
+      final textDrawables = List<TextDrawable>.of(
         currentScribble.textDrawables,
       );
 
@@ -1119,7 +1114,7 @@
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: textDrawable.alignment.textAlign,
-        textDirection: TextDirection.ltr,
+        textDirection: .ltr,
       );
       textPainter.layout();
 
@@ -1184,26 +1179,26 @@
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: textDrawable.alignment.textAlign,
-        textDirection: TextDirection.ltr,
+        textDirection: .ltr,
       );
       textPainter.layout();
 
       // 텍스트 정렬에 따른 렌더링 위치 계산
       Offset renderPosition = textDrawable.position;
       switch (textDrawable.alignment) {
-        case TextAlignment.center:
+        case .center:
           renderPosition = Offset(
             textDrawable.position.dx - textPainter.width / 2,
             textDrawable.position.dy - textPainter.height / 2,
           );
           break;
-        case TextAlignment.right:
+        case .right:
           renderPosition = Offset(
             textDrawable.position.dx - textPainter.width,
             textDrawable.position.dy - textPainter.height / 2,
           );
           break;
-        case TextAlignment.left:
+        case .left:
           renderPosition = Offset(
             textDrawable.position.dx,
             textDrawable.position.dy - textPainter.height / 2,

@@ -93,11 +93,11 @@
         canvas.drawImageRect(
           background!,
           Rect.fromPoints(
-            Offset.zero,
+            .zero,
             Offset(background!.width.toDouble(), background!.height.toDouble()),
           ),
           Rect.fromPoints(
-            Offset.zero,
+            .zero,
             Offset(
               background!.width.toDouble() * maxScale,
               background!.height.toDouble() * maxScale,
@@ -149,9 +149,9 @@
               final paint = Paint()
                 ..color = Color(line.color)
                 ..strokeWidth = line.options.size
-                ..strokeCap = StrokeCap.round
-                ..strokeJoin = StrokeJoin.round
-                ..style = PaintingStyle.stroke;
+                ..strokeCap = .round
+                ..strokeJoin = .round
+                ..style = .stroke;
               shapeDelegate.drawShape(canvas, paint, line);
             }
             break;
@@ -195,9 +195,9 @@
           final paint = Paint()
             ..color = Color(line.color)
             ..strokeWidth = line.options.size
-            ..strokeCap = StrokeCap.round
-            ..strokeJoin = StrokeJoin.round
-            ..style = PaintingStyle.stroke;
+            ..strokeCap = .round
+            ..strokeJoin = .round
+            ..style = .stroke;
           shapeDelegate.drawShape(canvas, paint, line);
         } else {
           strokeDelegate.drawStroke(canvas, line);

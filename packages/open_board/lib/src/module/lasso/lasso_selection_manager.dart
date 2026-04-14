@@ -62,8 +62,7 @@
 
     double get currentScale => _transformer.scale;
 
-    CoordinateTransformer get _transformer =>
-        CoordinateTransformer(transformationController);
+    CoordinateTransformer get _transformer => .new(transformationController);
 
     /// 올가미 모드에서 포인터 다운 처리
     bool handleLassoModePointerDown(
@@ -161,10 +160,9 @@
           _isLassoTransforming = false; // 아직 변형 모드 아님
 
           return true;
-        } else {
-          resetLassoState();
-          return false; // 일반 드로잉 모드로 넘김
         }
+        resetLassoState();
+        return false; // 일반 드로잉 모드로 넘김
       } else {
         final (strokesInLasso, textsInLasso) = _findElementsInLasso(
           lassoPoints,
@@ -176,7 +174,7 @@
 
           // 올가미 스트로크 제거 및 오버레이 즉시 표시
           if (lassoStrokeIndex >= 0) {
-            final strokes = List<Stroke>.from(currentScribble.strokes)
+            final strokes = List<Stroke>.of(currentScribble.strokes)
               ..removeWhere((stroke) => stroke.ink == InkModes.lasso);
 
             final updatedScribble = Scribble(
@@ -219,33 +217,31 @@
           onStateChanged(); // 상태 변경 알림
           onModeChanged?.call(false, false); // 선택 완료 상태
           return true; // 이벤트 처리 완료
-        } else {
-          // 올가미 스트로크만 제거하고 일반 그리기 모드로 복귀
-          if (lassoStrokeIndex >= 0) {
-            final strokes = List<Stroke>.from(currentScribble.strokes)
-              ..removeWhere((stroke) => stroke.ink == InkModes.lasso);
+        } // 올가미 스트로크만 제거하고 일반 그리기 모드로 복귀
+        if (lassoStrokeIndex >= 0) {
+          final strokes = List<Stroke>.of(currentScribble.strokes)
+            ..removeWhere((stroke) => stroke.ink == InkModes.lasso);
 
-            final updatedScribble = Scribble(
-              strokes: strokes,
-              width: currentScribble.width,
-              height: currentScribble.height,
-              x: currentScribble.x,
-              y: currentScribble.y,
-              textDrawables: currentScribble.textDrawables,
-              createdAt: currentScribble.createdAt,
-              updatedAt: currentScribble.updatedAt,
-              version: currentScribble.version,
-            );
-            scribbleNotifier.setScribble(
-              scribble: updatedScribble,
-              addToUndoHistory: false,
-            );
-          }
-
-          _resetLassoState();
-          onStateChanged();
-          return false; // 일반 드로잉 모드로 넘김
+          final updatedScribble = Scribble(
+            strokes: strokes,
+            width: currentScribble.width,
+            height: currentScribble.height,
+            x: currentScribble.x,
+            y: currentScribble.y,
+            textDrawables: currentScribble.textDrawables,
+            createdAt: currentScribble.createdAt,
+            updatedAt: currentScribble.updatedAt,
+            version: currentScribble.version,
+          );
+          scribbleNotifier.setScribble(
+            scribble: updatedScribble,
+            addToUndoHistory: false,
+          );
         }
+
+        _resetLassoState();
+        onStateChanged();
+        return false; // 일반 드로잉 모드로 넘김
       }
 
       // 이벤트 처리 완료 (올가미 그리기 모드에서는 항상 true 반환)
@@ -303,7 +299,7 @@
           onStateChanged();
 
           final currentScribble = scribbleNotifier.currentState.scribble;
-          final strokes = List<Stroke>.from(currentScribble.strokes);
+          final strokes = List<Stroke>.of(currentScribble.strokes);
           strokes.removeWhere((stroke) => stroke.ink == InkModes.lasso);
 
           final updatedScribble = Scribble(
@@ -337,12 +333,10 @@
           onStateChanged();
           _cleanupTouchState();
           return true;
-        } else {
-          // ❌ 조건 불만족 - 선택 해제
+        } // ❌ 조건 불만족 - 선택 해제
 
-          resetLassoState();
-          return true;
-        }
+        resetLassoState();
+        return true;
       }
 
       return false;
@@ -373,7 +367,7 @@
           );
 
           // ② 기존 선택된 스트로크 id 목록 복사
-          final allSelected = List<int>.from(strokesInLasso);
+          final allSelected = List<int>.of(strokesInLasso);
 
           // ③ 올가미 스트로크가 있으면 id 추가
           if (lassoStrokeIndex != -1) {
@@ -415,12 +409,11 @@
       if (strokeIds.isEmpty) return;
 
       // 선택된 스트로크 ID를 내림차순으로 정렬
-      final sortedIds = List<int>.from(strokeIds)
-        ..sort((a, b) => b.compareTo(a));
+      final sortedIds = List<int>.of(strokeIds)..sort((a, b) => b.compareTo(a));
 
       // 현재 scribble 상태와 모든 스트로크를 복사
       final currentScribble = scribbleNotifier.currentState.scribble;
-      final List<Stroke> strokes = List<Stroke>.from(currentScribble.strokes);
+      final List<Stroke> strokes = List<Stroke>.of(currentScribble.strokes);
 
       // 스트로크 ID를 기준으로 해당 스트로크를 삭제
       for (final id in sortedIds) {
@@ -610,7 +603,7 @@
 
       // ⭐ 터치 위치에 오프셋을 더해서 실제 버튼이 있어야 할 위치 계산
       final currentButtonPosition =
-          localPosition + (_touchToButtonOffset ?? Offset.zero);
+          localPosition + (_touchToButtonOffset ?? .zero);
 
       // TransformHandler로 스케일/회전 계산
       final result = _transformHandler.computeResizeRotate(
@@ -637,7 +630,7 @@
       // 스트로크들 변환 적용 (TransformHandler의 applyResizeRotate 사용)
       if (_originalStrokePoints != null && _selectedStrokeIds.isNotEmpty) {
         final currentScribble = scribbleNotifier.currentState.scribble;
-        final strokes = List<Stroke>.from(currentScribble.strokes);
+        final strokes = List<Stroke>.of(currentScribble.strokes);
 
         // TransformHandler로 변환된 포인트 계산
         final transformedGroups = _transformHandler.applyResizeRotate(
@@ -803,11 +796,11 @@
 
     /// 바운딩 박스 계산 메서드
     Rect _calculateBoundingBox(List<int> strokeIds) {
-      if (strokeIds.isEmpty) return Rect.zero;
+      if (strokeIds.isEmpty) return .zero;
 
       final strokes = scribbleNotifier.currentState.scribble.strokes;
-      double minX = double.infinity;
-      double minY = double.infinity;
+      double minX = .infinity;
+      double minY = .infinity;
       double maxX = -double.infinity;
       double maxY = -double.infinity;
 
@@ -831,7 +824,7 @@
       }
 
       // 최소값이 여전히 무한대라면 유효한 스트로크가 없는 것
-      if (minX == double.infinity) return Rect.zero;
+      if (minX == .infinity) return .zero;
 
       return Rect.fromLTRB(minX, minY, maxX, maxY);
     }
@@ -929,7 +922,7 @@
     }
 
     /// 올가미 영역 내의 스트로크 ID와 텍스트 ID 찾기 (좌표계 통일)
-    (List<int> strokeIds, List<int> textIds) _findElementsInLasso(
+    (List<int>, List<int>) _findElementsInLasso(
       List<Offset> lassoPoints,
     ) {
       if (lassoPoints.length < 3) {
@@ -937,7 +930,7 @@
       }
 
       // 🔥 scribble-tools 방식: 올가미 포인트도 원본 좌표 직접 사용 (드로잉과 동일)
-      final polygon = List<Offset>.from(lassoPoints);
+      final polygon = List<Offset>.of(lassoPoints);
 
       // 폴리곤 닫기
       if (polygon.isNotEmpty && polygon.first != polygon.last) {
@@ -1005,7 +998,7 @@
     }
 
     /// 올가미 스트로크 찾기
-    (Stroke? stroke, int index) _findLatestLassoStrokeWithIndex(
+    (Stroke?, int) _findLatestLassoStrokeWithIndex(
       Scribble scribble,
     ) {
       for (int i = scribble.strokes.length - 1; i >= 0; i--) {
@@ -1024,7 +1017,7 @@
       }
 
       final currentScribble = scribbleNotifier.currentState.scribble;
-      final strokes = List<Stroke>.from(currentScribble.strokes);
+      final strokes = List<Stroke>.of(currentScribble.strokes);
 
       // 원본 위치에서 델타만큼 이동 (텍스트와 동일한 방식)
       for (int i = 0; i < _selectedStrokeIds.length; i++) {
@@ -1142,7 +1135,7 @@
     /// 🔧 새 터치 시작 시 기존 올가미 스트로크 정리 (매번 자동 정리)
     void _cleanupExistingLassoStrokes() {
       final currentScribble = scribbleNotifier.currentState.scribble;
-      final strokes = List<Stroke>.from(currentScribble.strokes);
+      final strokes = List<Stroke>.of(currentScribble.strokes);
       strokes.removeWhere((stroke) => stroke.ink == InkModes.lasso);
 
       final updatedScribble = Scribble(

@@ -4,6 +4,7 @@
   import 'package:open_board/src/module/scribble_painter.dart' as painter;
 
   /// ScribbleWidget의 상태를 관리하는 클래스
+  @immutable
   class ScribbleWidgetState {
     // 올가미 선택 관련 상태
     painter.LassoSelectionState lassoSelectionState =

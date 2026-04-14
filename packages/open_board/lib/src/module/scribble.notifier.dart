@@ -247,8 +247,7 @@
       if (!modeState.supportedPointerKinds.contains(event.kind)) return;
 
       // 손가락 입력일 때 멀티터치 방지
-      if (event.kind == PointerDeviceKind.touch &&
-          state.activePointerIds.isNotEmpty) {
+      if (event.kind == .touch && state.activePointerIds.isNotEmpty) {
         return;
       }
       // 터치하는 순간 이전 좌표와 현재 좌표를 같게 만든다.
@@ -309,8 +308,7 @@
               taperEnd: 0.0,
               capStart: true,
               capEnd: true,
-              simulatePressure:
-                  modeState.allowedPointersMode != ScribblePointerMode.penOnly,
+              simulatePressure: modeState.allowedPointersMode != .penOnly,
             ),
           ),
         );
@@ -407,9 +405,7 @@
     @override
     void onPointerUp(PointerUpEvent event, ScribbleModeState modeState) {
       if (!modeState.supportedPointerKinds.contains(event.kind)) return;
-      final pos = event.kind == PointerDeviceKind.mouse
-          ? state.pointerPosition
-          : null;
+      final pos = event.kind == .mouse ? state.pointerPosition : null;
 
       // 올가미 선택 도구를 사용하는 경우
       if (modeState.inkGroupInfo.selectedInk == InkModes.lasso) {
@@ -520,7 +516,7 @@
       if (modeState.inkGroupInfo.selectedInk == InkModes.shape ||
           _shapeRecognitionEnabled) {
         switch (state) {
-          case Drawing(scribble: final scribble):
+          case Drawing(:final scribble):
             // 마지막으로 그린 스트로크 가져오기
             if (scribble.strokes.isNotEmpty) {
               final lastStrokeIndex = scribble.strokes.length - 1;
@@ -534,7 +530,7 @@
                   stroke,
                 );
 
-                if (result.shapeType != ShapeType.none) {
+                if (result.shapeType != .none) {
                   // 변환된 스트로크를 적용
                   final newStroke = result.transformedStroke;
                   newStroke.shapeType = result.shapeTypeString;

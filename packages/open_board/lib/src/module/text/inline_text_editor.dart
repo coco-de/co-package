@@ -252,7 +252,7 @@
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: widget.textSettings.textAlignment.textAlign,
-        textDirection: TextDirection.ltr,
+        textDirection: .ltr,
       );
 
       // 화면 너비에서 여백을 뺀 크기로 레이아웃
@@ -295,7 +295,7 @@
       }
 
       return Material(
-        type: MaterialType.transparency,
+        type: .transparency,
         child: Stack(
           children: [
             // 배경 터치 시 완료 처리 (새 텍스트이고 아직 입력하지 않았다면 완료하지 않음)
@@ -322,8 +322,8 @@
                   width: editorWidth,
                   height: editorHeight,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue, width: 2.0),
-                    borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    border: .all(color: Colors.blue, width: 2.0),
+                    borderRadius: const .all(.circular(4)),
                   ),
                   child: Row(
                     children: [
@@ -336,15 +336,15 @@
                           textAlign:
                               widget.textSettings.textAlignment.textAlign,
                           decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
+                            contentPadding: const .symmetric(
                               horizontal: 4,
                             ),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            disabledBorder: InputBorder.none,
-                            errorBorder: InputBorder.none,
-                            focusedErrorBorder: InputBorder.none,
+                            border: .none,
+                            enabledBorder: .none,
+                            focusedBorder: .none,
+                            disabledBorder: .none,
+                            errorBorder: .none,
+                            focusedErrorBorder: .none,
                             isDense: true,
                             hintStyle: textStyle.copyWith(
                               color: textColor.withValues(alpha: 0.5),
@@ -352,10 +352,9 @@
                           ),
                           maxLines: null,
                           minLines: 1,
-                          keyboardType: TextInputType.multiline,
-                          textInputAction:
-                              TextInputAction.newline, // 🔥 엔터키를 줄바꿈으로 변경
-                          textCapitalization: TextCapitalization.none,
+                          keyboardType: .multiline,
+                          textInputAction: .newline, // 🔥 엔터키를 줄바꿈으로 변경
+                          textCapitalization: .none,
                           expands: false,
                           // 🔥 onSubmitted 제거 - 엔터키로 편집 완료하지 않음
                         ),
@@ -375,8 +374,8 @@
                           child: InkWell(
                             onTap: _insertTodayDate,
                             borderRadius: const .only(
-                              topRight: Radius.circular(2),
-                              bottomRight: Radius.circular(2),
+                              topRight: .circular(2),
+                              bottomRight: .circular(2),
                             ),
                             child: Container(
                               child: Icon(

@@ -46,7 +46,7 @@
     final double aspectRatio;
     final List<Point> convexHull;
 
-    ShapeCharacteristics({
+    const ShapeCharacteristics({
       required this.boundingBox,
       required this.centroid,
       required this.aspectRatio,
@@ -58,58 +58,59 @@
   class ShapeDetectionResult {
     final ShapeType shapeType;
     final Stroke transformedStroke;
-    ShapeDetectionResult(this.shapeType, this.transformedStroke);
+
+    const ShapeDetectionResult(this.shapeType, this.transformedStroke);
 
     /// 문자열 형태의 shapeType 반환
     String get shapeTypeString {
       switch (shapeType) {
-        case ShapeType.line:
+        case .line:
           return 'line';
-        case ShapeType.rectangle:
+        case .rectangle:
           return 'rectangle';
-        case ShapeType.square:
+        case .square:
           return 'square';
-        case ShapeType.diamond:
+        case .diamond:
           return 'diamond';
-        case ShapeType.parallelogram:
+        case .parallelogram:
           return 'parallelogram';
-        case ShapeType.trapezoid:
+        case .trapezoid:
           return 'trapezoid';
-        case ShapeType.irregularQuadrilateral:
+        case .irregularQuadrilateral:
           return 'irregular_quadrilateral';
-        case ShapeType.triangle:
+        case .triangle:
           return 'triangle';
-        case ShapeType.rightTriangle:
+        case .rightTriangle:
           return 'right_triangle';
-        case ShapeType.equilateralTriangle:
+        case .equilateralTriangle:
           return 'equilateral_triangle';
-        case ShapeType.isoscelesTriangle:
+        case .isoscelesTriangle:
           return 'isosceles_triangle';
-        case ShapeType.irregularTriangle:
+        case .irregularTriangle:
           return 'irregular_triangle';
-        case ShapeType.polygon:
+        case .polygon:
           return 'polygon';
-        case ShapeType.pentagon:
+        case .pentagon:
           return 'pentagon';
-        case ShapeType.hexagon:
+        case .hexagon:
           return 'hexagon';
-        case ShapeType.circle:
+        case .circle:
           return 'circle';
-        case ShapeType.ellipse:
+        case .ellipse:
           return 'ellipse';
-        case ShapeType.arrow:
+        case .arrow:
           return 'arrow';
-        case ShapeType.doubleArrow:
+        case .doubleArrow:
           return 'double_arrow';
-        case ShapeType.blockArrow:
+        case .blockArrow:
           return 'block_arrow';
-        case ShapeType.connector:
+        case .connector:
           return 'connector';
-        case ShapeType.polyline:
+        case .polyline:
           return 'polyline';
-        case ShapeType.pending:
+        case .pending:
           return 'pending';
-        case ShapeType.none:
+        case .none:
           return '';
       }
     }
@@ -124,13 +125,13 @@
     static const double _closedThreshold = 0.15;
 
     /// 인스턴스 생성을 제한하는 private 생성자
-    ShapeDetector._();
+    const ShapeDetector._();
 
     /// 도형 인식 및 변환 - 메인 진입점
     ShapeDetectionResult detectAndTransform(Stroke stroke) {
       // 원본 점이 너무 적으면 그대로 사용
       if (stroke.points.length < 5) {
-        return ShapeDetectionResult(ShapeType.polyline, stroke);
+        return ShapeDetectionResult(.polyline, stroke);
       }
 
       // 1. 기본 정보 계산
@@ -287,7 +288,7 @@
       if (corners.length == 2) {
         transformedStroke.points.add(corners[0]);
         transformedStroke.points.add(corners[1]);
-        return ShapeDetectionResult(ShapeType.line, transformedStroke);
+        return ShapeDetectionResult(.line, transformedStroke);
       }
 
       // 기본값: 폴리라인
@@ -295,7 +296,7 @@
         transformedStroke,
         corners.isEmpty ? simplifiedPoints : corners,
       );
-      return ShapeDetectionResult(ShapeType.polyline, transformedStroke);
+      return ShapeDetectionResult(.polyline, transformedStroke);
     }
 
     /// 원/타원 여부 판별
@@ -633,7 +634,7 @@
     ShapeCharacteristics _calculateShapeCharacteristics(List<Point> points) {
       if (points.isEmpty) {
         return ShapeCharacteristics(
-          boundingBox: Rect.zero,
+          boundingBox: .zero,
           centroid: Point(x: 0, y: 0),
           aspectRatio: 1.0,
           convexHull: [],
@@ -664,7 +665,7 @@
 
     /// 사각형 세부 유형 판별
     ShapeType _determineQuadrilateralType(List<Point> corners) {
-      if (corners.length != 4) return ShapeType.irregularQuadrilateral;
+      if (corners.length != 4) return .irregularQuadrilateral;
 
       final sides = _calculateSideLengths(corners);
       final angles = _calculateCornerAngles(corners);
@@ -677,7 +678,7 @@
 
       // 정사각형 검사
       if (sideRatio > 0.9 && isRightAngled) {
-        return ShapeType.square;
+        return .square;
       }
 
       // 다이아몬드 검사
@@ -686,16 +687,16 @@
         final aspectRatio = boundingBox.width / boundingBox.height;
 
         if (aspectRatio > 0.8 && aspectRatio < 1.2) {
-          return ShapeType.diamond;
+          return .diamond;
         }
       }
 
       // 직사각형 검사
       if (isRightAngled && _hasParallelSides(sides)) {
-        return ShapeType.rectangle;
+        return .rectangle;
       }
 
-      return ShapeType.irregularQuadrilateral;
+      return .irregularQuadrilateral;
     }
 
     /// 변의 길이 계산
@@ -733,14 +734,14 @@
 
     /// 삼각형 세부 유형 판별
     ShapeType _determineTriangleType(List<Point> corners) {
-      if (corners.length != 3) return ShapeType.irregularTriangle;
+      if (corners.length != 3) return .irregularTriangle;
 
       final sides = _calculateSideLengths(corners);
       final angles = _calculateCornerAngles(corners);
 
       // 직각 삼각형 검사
       if (angles.any((angle) => angle >= 85 && angle <= 95)) {
-        return ShapeType.rightTriangle;
+        return .rightTriangle;
       }
 
       // 정삼각형 검사
@@ -749,28 +750,28 @@
       final sideRatio = minSide / maxSide;
 
       if (sideRatio > 0.9) {
-        return ShapeType.equilateralTriangle;
+        return .equilateralTriangle;
       }
 
       // 이등변 삼각형 검사
-      final sortedSides = List<double>.from(sides)..sort();
+      final sortedSides = List<double>.of(sides)..sort();
       if ((sortedSides[0] / sortedSides[1]) > 0.9 ||
           (sortedSides[1] / sortedSides[2]) > 0.9) {
-        return ShapeType.isoscelesTriangle;
+        return .isoscelesTriangle;
       }
 
-      return ShapeType.irregularTriangle;
+      return .irregularTriangle;
     }
 
     /// 다각형 세부 유형 판별
     ShapeType _determinePolygonType(List<Point> corners) {
       switch (corners.length) {
         case 5:
-          return ShapeType.pentagon;
+          return .pentagon;
         case 6:
-          return ShapeType.hexagon;
+          return .hexagon;
         default:
-          return ShapeType.polygon;
+          return .polygon;
       }
     }
 
@@ -779,8 +780,6 @@
       final characteristics = _calculateShapeCharacteristics(points);
       final aspectRatio = characteristics.aspectRatio;
 
-      return aspectRatio >= 0.9 && aspectRatio <= 1.1
-          ? ShapeType.circle
-          : ShapeType.ellipse;
+      return aspectRatio >= 0.9 && aspectRatio <= 1.1 ? .circle : .ellipse;
     }
   }

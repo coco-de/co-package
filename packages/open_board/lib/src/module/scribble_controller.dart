@@ -118,7 +118,7 @@
         currentScribble.textDrawables.isEmpty;
 
     /// 통계 정보
-    ScribbleStats get stats => ScribbleStats.from(currentScribble);
+    ScribbleStats get stats => .from(currentScribble);
 
     /// === 도구 제어 메서드들 ===
 

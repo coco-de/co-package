@@ -33,6 +33,7 @@
     );
 
     final ShapePaintDelegate _shapeDelegate = ShapePaintDelegate(strokes: []);
+
     LassoPaintDelegate({
       required this.allStrokes,
       required this.selectedStrokeIds,
@@ -111,7 +112,7 @@
           path,
           Paint()
             ..color = Colors.blue.withValues(alpha: 0.15)
-            ..style = PaintingStyle.fill,
+            ..style = .fill,
         );
       }
 
@@ -119,9 +120,9 @@
       final borderPaint = Paint()
         ..color = Colors.blue
         ..strokeWidth = 4.0
-        ..style = PaintingStyle.stroke
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round
+        ..style = .stroke
+        ..strokeJoin = .round
+        ..strokeCap = .round
         ..isAntiAlias = true;
       drawDashedPath(canvas, path, borderPaint, const [10.0, 6.0]);
     }
@@ -147,9 +148,9 @@
           final paint = Paint()
             ..color = Color(stroke.color)
             ..strokeWidth = stroke.options.size
-            ..strokeCap = StrokeCap.round
-            ..strokeJoin = StrokeJoin.round
-            ..style = PaintingStyle.stroke;
+            ..strokeCap = .round
+            ..strokeJoin = .round
+            ..style = .stroke;
           _shapeDelegate.drawShape(canvas, paint, stroke);
         } else {
           _strokeDelegate.drawStroke(canvas, stroke);
@@ -213,11 +214,11 @@
       final paint = Paint()
         ..color = borderColor
         ..strokeWidth = 2.0
-        ..style = PaintingStyle.stroke;
+        ..style = .stroke;
 
       final fillPaint = Paint()
         ..color = borderColor.withValues(alpha: 0.1)
-        ..style = PaintingStyle.fill;
+        ..style = .fill;
 
       if (lassoState?.orientedBoundingBox?.corners != null &&
           lassoState!.orientedBoundingBox!.corners.length >= 4) {
@@ -252,7 +253,7 @@
         radius,
         Paint()
           ..color = color
-          ..style = PaintingStyle.fill,
+          ..style = .fill,
       );
       canvas.drawCircle(
         center,
@@ -260,7 +261,7 @@
         Paint()
           ..color = Colors.white
           ..strokeWidth = 2.0
-          ..style = PaintingStyle.stroke,
+          ..style = .stroke,
       );
 
       if (icon == Icons.delete) {
@@ -301,9 +302,9 @@
     void _drawDeleteIcon(ui.Canvas canvas, Offset center) {
       final p = Paint()
         ..color = Colors.white
-        ..style = PaintingStyle.stroke
+        ..style = .stroke
         ..strokeWidth = 3.0
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = .round;
       const s = 12.0;
       canvas.drawLine(
         center + const Offset(-s / 2, -s / 2),
@@ -320,9 +321,9 @@
     void _drawTransformIcon(ui.Canvas canvas, Offset center) {
       final p = Paint()
         ..color = Colors.white
-        ..style = PaintingStyle.stroke
+        ..style = .stroke
         ..strokeWidth = 2.5
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = .round;
       const s = 10.0;
       canvas.drawLine(
         center + const Offset(-s / 2, s / 2),

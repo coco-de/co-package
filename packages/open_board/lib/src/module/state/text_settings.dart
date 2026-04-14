@@ -6,36 +6,36 @@
   extension TextAlignmentExtension on TextAlignment {
     String get value {
       switch (this) {
-        case TextAlignment.left:
+        case .left:
           return 'left';
-        case TextAlignment.center:
+        case .center:
           return 'center';
-        case TextAlignment.right:
+        case .right:
           return 'right';
       }
     }
 
     TextAlign get textAlign {
       switch (this) {
-        case TextAlignment.left:
-          return TextAlign.left;
-        case TextAlignment.center:
-          return TextAlign.center;
-        case TextAlignment.right:
-          return TextAlign.right;
+        case .left:
+          return .left;
+        case .center:
+          return .center;
+        case .right:
+          return .right;
       }
     }
 
     static TextAlignment fromString(String value) {
       switch (value) {
         case 'left':
-          return TextAlignment.left;
+          return .left;
         case 'center':
-          return TextAlignment.center;
+          return .center;
         case 'right':
-          return TextAlignment.right;
+          return .right;
         default:
-          return TextAlignment.center;
+          return .center;
       }
     }
   }
@@ -53,7 +53,7 @@
       this.textStyle = const TextStyle(
         fontSize: 16,
         color: Colors.black,
-        fontWeight: FontWeight.normal,
+        fontWeight: .normal,
       ),
       this.textAlignment = TextAlignment.center,
     });

@@ -2,11 +2,13 @@
 
   enum ScribblePointerMode { all, mouseOnly, penOnly, mouseAndPen }
 
+  @immutable
   sealed class ScribbleState {
     final Scribble scribble;
 
     final List<int> activePointerIds;
     final Point? pointerPosition;
+
     const ScribbleState({
       required this.scribble,
       required this.activePointerIds,
@@ -16,6 +18,7 @@
     bool get active => activePointerIds.length <= 1;
   }
 
+  @immutable
   final class Drawing extends ScribbleState {
     /// The line that is currently being drawn
     final Stroke? activeLine;
@@ -36,7 +39,7 @@
       Stroke? activeLine,
       List<int>? activePointerIds,
       Point? pointerPosition,
-    }) => Drawing(
+    }) => .new(
       scribble: scribble ?? this.scribble,
       activeLine: activeLine ?? this.activeLine,
       activePointerIds: activePointerIds ?? this.activePointerIds,
@@ -45,6 +48,7 @@
     );
   }
 
+  @immutable
   final class Erasing extends ScribbleState {
     const Erasing({
       required super.scribble,
@@ -56,7 +60,7 @@
       Scribble? scribble,
       List<int>? activePointerIds,
       Point? pointerPosition,
-    }) => Erasing(
+    }) => .new(
       scribble: scribble ?? this.scribble,
       activePointerIds: activePointerIds ?? this.activePointerIds,
       pointerPosition: pointerPosition ?? this.pointerPosition,
