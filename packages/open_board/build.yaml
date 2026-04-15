@@ -9,7 +9,6 @@ targets:
         enabled: false
       # 불필요한 빌더 비활성화 (이 패키지에서 사용하지 않음)
       json_serializable|json_serializable:
-        generate_for:
-          - lib/src/module/state/**
+        enabled: false
       go_router_builder|go_router_builder:
         enabled: false
