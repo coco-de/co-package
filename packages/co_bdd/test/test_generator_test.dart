@@ -103,10 +103,7 @@ void main() {
     setUp(() {
       sharedStepFileNames
         ..clear()
-        ..addAll([
-          'i_tap_the_widget',
-          'the_widget_should_be_displayed',
-        ]);
+        ..addAll(['i_tap_the_widget', 'the_widget_should_be_displayed']);
     });
 
     tearDown(() => sharedStepFileNames.clear());
@@ -130,11 +127,7 @@ void main() {
               text: "the {'book_list'} widget should be displayed",
               params: ['book_list'],
             ),
-            Step(
-              keyword: 'When',
-              text: 'I tap the login button',
-              params: [],
-            ),
+            Step(keyword: 'When', text: 'I tap the login button', params: []),
           ],
         ),
       ],
@@ -160,20 +153,11 @@ void main() {
       );
 
       // Generic steps are NOT imported locally
-      expect(
-        code,
-        isNot(contains("import 'step/i_tap_the_widget.dart'")),
-      );
+      expect(code, isNot(contains("import 'step/i_tap_the_widget.dart'")));
       // Instead they come from the shared package
-      expect(
-        code,
-        contains("import 'package:my_app/shared_steps.dart'"),
-      );
+      expect(code, contains("import 'package:my_app/shared_steps.dart'"));
       // Domain-specific steps still use local import
-      expect(
-        code,
-        contains("import 'step/i_tap_the_login_button.dart'"),
-      );
+      expect(code, contains("import 'step/i_tap_the_login_button.dart'"));
     });
 
     test('patrol test also uses shared imports', () {
@@ -184,14 +168,8 @@ void main() {
         sharedStepsImport: 'package:my_app/shared_steps.dart',
       );
 
-      expect(
-        code,
-        contains("import 'package:my_app/shared_steps.dart'"),
-      );
-      expect(
-        code,
-        contains("import 'step/i_tap_the_login_button.dart'"),
-      );
+      expect(code, contains("import 'package:my_app/shared_steps.dart'"));
+      expect(code, contains("import 'step/i_tap_the_login_button.dart'"));
     });
   });
 }

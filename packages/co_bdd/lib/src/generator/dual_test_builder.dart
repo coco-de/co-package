@@ -69,18 +69,16 @@ class DualTestBuilder implements Builder {
     // sharedSteps 옵션 (기본값: false)
     // true이면 sharedStepFileNames에 매칭되는 step은
     // 로��� step 대신 sharedStepsImport 패키지에서 import됩니다.
-    final useSharedSteps =
-        options.config['sharedSteps'] as bool? ?? false;
+    final useSharedSteps = options.config['sharedSteps'] as bool? ?? false;
 
     // sharedStepsImport 옵션 — 공유 step 패키지 import 경로
     final sharedStepsImport =
         options.config['sharedStepsImport'] as String? ??
-            defaultSharedStepsImport;
+        defaultSharedStepsImport;
 
     // sharedStepNames 옵션 — 프로젝트별 공유 step 목록 등���
     final customSharedNames =
-        (options.config['sharedStepNames'] as List<dynamic>?)
-            ?.cast<String>();
+        (options.config['sharedStepNames'] as List<dynamic>?)?.cast<String>();
     if (customSharedNames != null) {
       sharedStepFileNames
         ..clear()
