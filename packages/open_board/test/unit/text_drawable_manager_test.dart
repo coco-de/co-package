@@ -238,7 +238,10 @@ void main() {
         final text = createTextDrawable(id: 'text1');
         final scribbleWithText = createScribble(textDrawables: [text]);
 
-        final result = manager.toggleVisibility(scribbleWithText, 'nonexistent');
+        final result = manager.toggleVisibility(
+          scribbleWithText,
+          'nonexistent',
+        );
 
         expect(result.textDrawables.length, 1);
       });

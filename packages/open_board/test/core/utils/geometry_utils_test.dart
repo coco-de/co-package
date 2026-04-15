@@ -33,14 +33,20 @@ void main() {
         final prev = createPoint(x: 0, y: 0);
         final mid = createPoint(x: 0, y: 5);
         final next = createPoint(x: 5, y: 5);
-        expect(GeometryUtils.calculateCornerAngle(prev, mid, next), closeTo(90, 0.1));
+        expect(
+          GeometryUtils.calculateCornerAngle(prev, mid, next),
+          closeTo(90, 0.1),
+        );
       });
 
       test('일직선(180도)', () {
         final prev = createPoint(x: 0, y: 0);
         final mid = createPoint(x: 5, y: 0);
         final next = createPoint(x: 10, y: 0);
-        expect(GeometryUtils.calculateCornerAngle(prev, mid, next), closeTo(180, 0.1));
+        expect(
+          GeometryUtils.calculateCornerAngle(prev, mid, next),
+          closeTo(180, 0.1),
+        );
       });
 
       test('영벡터 시 180도 반환', () {
@@ -65,7 +71,10 @@ void main() {
 
       test('정사각형의 중심', () {
         final points = createPoints([
-          [0, 0], [10, 0], [10, 10], [0, 10],
+          [0, 0],
+          [10, 0],
+          [10, 10],
+          [0, 10],
         ]);
         final centroid = GeometryUtils.calculateCentroid(points);
         expect(centroid.x, 5);
@@ -81,9 +90,15 @@ void main() {
 
       test('정사각형 둘레 계산', () {
         final points = createPoints([
-          [0, 0], [10, 0], [10, 10], [0, 10],
+          [0, 0],
+          [10, 0],
+          [10, 10],
+          [0, 10],
         ]);
-        expect(GeometryUtils.calculatePolygonPerimeter(points), closeTo(40, 0.1));
+        expect(
+          GeometryUtils.calculatePolygonPerimeter(points),
+          closeTo(40, 0.1),
+        );
       });
     });
 
@@ -94,7 +109,9 @@ void main() {
 
       test('여러 포인트의 바운딩 박스', () {
         final points = createPoints([
-          [5, 10], [15, 3], [2, 20],
+          [5, 10],
+          [15, 3],
+          [2, 20],
         ]);
         final rect = GeometryUtils.calculateBoundingBox(points);
         expect(rect.left, 2);
@@ -111,7 +128,9 @@ void main() {
 
       test('가장 가까운 점 찾기', () {
         final points = createPoints([
-          [0, 0], [10, 10], [5, 5],
+          [0, 0],
+          [10, 10],
+          [5, 5],
         ]);
         final target = createPoint(x: 4, y: 4);
         expect(GeometryUtils.findClosestPointIndex(points, target), 2);
@@ -126,7 +145,10 @@ void main() {
 
       test('정렬 후 원본 길이 유지', () {
         final points = createPoints([
-          [0, 0], [10, 0], [10, 10], [0, 10],
+          [0, 0],
+          [10, 0],
+          [10, 10],
+          [0, 10],
         ]);
         final ordered = GeometryUtils.orderPointsClockwise(points);
         expect(ordered.length, 4);
@@ -135,14 +157,20 @@ void main() {
 
     group('calculatePathDirection', () {
       test('잘못된 인덱스는 (0,0) 반환', () {
-        final points = createPoints([[0, 0], [10, 10]]);
+        final points = createPoints([
+          [0, 0],
+          [10, 10],
+        ]);
         final dir = GeometryUtils.calculatePathDirection(points, 1, 0);
         expect(dir.x, 0);
         expect(dir.y, 0);
       });
 
       test('방향 벡터 계산', () {
-        final points = createPoints([[0, 0], [10, 5]]);
+        final points = createPoints([
+          [0, 0],
+          [10, 5],
+        ]);
         final dir = GeometryUtils.calculatePathDirection(points, 0, 1);
         expect(dir.x, 10);
         expect(dir.y, 5);

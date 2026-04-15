@@ -27,7 +27,10 @@ void main() {
       final scribble = createScribble();
       expect(Drawing(scribble: scribble).active, true);
       expect(Drawing(scribble: scribble, activePointerIds: [1]).active, true);
-      expect(Drawing(scribble: scribble, activePointerIds: [1, 2]).active, false);
+      expect(
+        Drawing(scribble: scribble, activePointerIds: [1, 2]).active,
+        false,
+      );
     });
 
     test('lines — activeLine 없으면 strokes만', () {

@@ -156,7 +156,8 @@ void main() {
 
       test('loadScribbleWithSize() 크기 적용', () {
         // rebuild()는 frozen protobuf에서만 동작하므로 freeze() 필요
-        final frozenScribble = createScribbleWithStrokes(strokeCount: 1)..freeze();
+        final frozenScribble = createScribbleWithStrokes(strokeCount: 1)
+          ..freeze();
         controller.loadScribbleWithSize(frozenScribble, const Size(800, 600));
         expect(controller.currentScribble.width, 800.0);
         expect(controller.currentScribble.height, 600.0);

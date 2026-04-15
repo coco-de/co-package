@@ -23,7 +23,10 @@ void main() {
     });
 
     test('fromString 잘못된 값은 center', () {
-      expect(TextAlignmentExtension.fromString('unknown'), TextAlignment.center);
+      expect(
+        TextAlignmentExtension.fromString('unknown'),
+        TextAlignment.center,
+      );
     });
   });
 

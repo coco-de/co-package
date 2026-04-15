@@ -61,8 +61,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // SimpleScribbleWidget 내부의 ScribbleWidget이 child를 받았는지 확인
-      final widget =
-          tester.widget<ScribbleWidget>(find.byType(ScribbleWidget));
+      final widget = tester.widget<ScribbleWidget>(find.byType(ScribbleWidget));
       expect(widget.child, isNotNull);
     });
   });
