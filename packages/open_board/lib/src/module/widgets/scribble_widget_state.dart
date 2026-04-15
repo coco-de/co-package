@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
+import 'package:open_board/src/module/state/text_settings.dart';
 
 /// ScribbleWidget의 상태를 관리하는 클래스
-@immutable
 class ScribbleWidgetState {
   // 올가미 선택 관련 상태
   painter.LassoSelectionState lassoSelectionState =
@@ -19,6 +19,9 @@ class ScribbleWidgetState {
   bool isEditingText = false;
   String? editingTextId;
   OverlayEntry? textEditorOverlay;
+
+  // 텍스트 설정
+  TextSettings? textSettings;
 
   // 텍스트 변형 관련 상태
   bool isTextTransforming = false;

@@ -12,6 +12,7 @@ class PointerEventHandler {
   final ScribbleModeNotifier modeNotifier;
   final VoidCallback onStateChanged;
   final Function(ScribbleNotifier) onScribble;
+  final TransformationController? transformationController;
 
   final Function(ScribbleNotifier) onScribbleFinished; // 터치 관련 상태
   int _activeTouchCount = 0;
@@ -25,6 +26,7 @@ class PointerEventHandler {
     required this.onStateChanged,
     required this.onScribble,
     required this.onScribbleFinished,
+    this.transformationController,
   });
 
   bool get isDragging => _isDragging;

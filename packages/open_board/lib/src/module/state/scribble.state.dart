@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 
 enum ScribblePointerMode { all, mouseOnly, penOnly, mouseAndPen }

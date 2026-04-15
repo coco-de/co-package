@@ -27,7 +27,6 @@ enum DrawingTool {
 ///
 /// 내부적으로 NotifierRegistry, StateSynchronizer, UndoRedoTracker,
 /// DrawingSettingsPersistence에 위임합니다 (Facade 패턴).
-@immutable
 class DrawingState {
   static DrawingState? _instance;
 
@@ -119,6 +118,18 @@ class DrawingState {
   /// 🎯 Undo/Redo 가능 여부 상태 업데이트 (public)
   void updateUndoRedoState() {
     _undoRedoTracker.updateUndoRedoState();
+  }
+
+  /// 🔔 Undo/Redo 상태 변경 콜백 등록
+  void registerUndoRedoUpdateCallback(VoidCallback callback) {
+    canUndoNotifier.addListener(callback);
+    canRedoNotifier.addListener(callback);
+  }
+
+  /// 🔔 Undo/Redo 상태 변경 콜백 해제
+  void unregisterUndoRedoUpdateCallback(VoidCallback callback) {
+    canUndoNotifier.removeListener(callback);
+    canRedoNotifier.removeListener(callback);
   }
 
   /// 🎯 현재 상태를 특정 modeNotifier에 적용

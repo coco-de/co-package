@@ -23,6 +23,9 @@ class ScribbleRenderLayers {
   final Size? size;
   final bool drawPen;
   final bool drawEraser;
+  final double pressureFactor;
+  final double speedFactor;
+  final double minWidthFactor;
 
   const ScribbleRenderLayers({
     required this.scribbleNotifier,
@@ -34,6 +37,9 @@ class ScribbleRenderLayers {
     required this.size,
     required this.drawPen,
     required this.drawEraser,
+    this.pressureFactor = 1.0,
+    this.speedFactor = 1.0,
+    this.minWidthFactor = 0.3,
   });
 
   /// 배경 레이어 빌드

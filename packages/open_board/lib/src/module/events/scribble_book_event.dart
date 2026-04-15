@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 
 /// ScribbleBookController에서 발생하는 모든 이벤트

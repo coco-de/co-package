@@ -1,5 +1,6 @@
 // 🐦 Flutter imports:
 import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 
 // 🌎 Project imports:

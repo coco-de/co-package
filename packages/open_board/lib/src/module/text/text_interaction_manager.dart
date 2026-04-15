@@ -27,6 +27,7 @@ class TextInteractionManager {
 
   // 콜백 함수들
   final void Function(TextDrawable textDrawable) onTextSelected;
+  final void Function(TextDrawable textDrawable) onTextEdit;
 
   final void Function(TextDrawable textDrawable) onTextUpdated;
 
@@ -74,6 +75,7 @@ class TextInteractionManager {
     required this.transformationController,
     required this.repaintBoundaryKey,
     required this.onTextSelected,
+    required this.onTextEdit,
     required this.onTextUpdated,
     required this.onTextDeselected,
     required this.widgetState,

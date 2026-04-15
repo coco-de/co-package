@@ -1,4 +1,5 @@
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/foundation.dart';
 
 /// .obt 파일의 Protobuf payload에 대응하는 Dart 모델
 ///

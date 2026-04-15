@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
+import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
@@ -12,6 +13,7 @@ import 'package:open_board/src/module/transform_handler.dart';
 class LassoSelectionManager {
   // 의존성
   final ScribbleNotifier scribbleNotifier;
+  final ScribbleModeNotifier? modeNotifier;
   final VoidCallback onStateChanged;
 
   // 터치 위치와 버튼 위치의 오프셋
@@ -20,6 +22,10 @@ class LassoSelectionManager {
   TransformationController? transformationController;
 
   final void Function(bool isSelecting, bool isTransforming)? onModeChanged;
+  final void Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
+      onSelectionComplete;
+  final void Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
+      onTransformComplete;
 
   // 올가미 선택 관련 상태
   painter.LassoSelectionState _lassoSelectionState =
@@ -47,9 +53,12 @@ class LassoSelectionManager {
 
   LassoSelectionManager({
     required this.scribbleNotifier,
+    this.modeNotifier,
     required this.onStateChanged,
     required this.transformationController,
     required this.onModeChanged,
+    this.onSelectionComplete,
+    this.onTransformComplete,
   }) {
     _transformHandler = TransformHandler();
   }
