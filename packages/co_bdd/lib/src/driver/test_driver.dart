@@ -44,6 +44,27 @@ abstract class TestDriver {
   /// Pumps a widget into the test environment.
   Future<void> pumpWidget(Widget widget) async {}
 
+  // --- Extended assertions / actions ---
+
+  /// Asserts that no widget identified by [key] exists in the tree.
+  Future<void> expectNotVisible(Key key);
+
+  /// Asserts exactly [count] widgets matching [key] exist.
+  Future<void> expectCount(Key key, int count);
+
+  /// Taps the widget at [index] among widgets matching [key].
+  Future<void> tapAtIndex(Key key, int index);
+
+  /// Scrolls the enclosing [Scrollable] until the widget identified by
+  /// [key] becomes visible.
+  Future<void> scrollUntilVisible(Key key);
+
+  /// Asserts that the subtree rooted at [key] contains [text].
+  Future<void> expectContainsText(Key key, String text);
+
+  /// Long-presses the widget identified by [key].
+  Future<void> longPress(Key key);
+
   // --- Patrol-only (no-op in widget tests) ---
 
   /// Presses the home button (Patrol only).

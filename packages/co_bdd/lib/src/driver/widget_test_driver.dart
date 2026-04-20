@@ -88,4 +88,39 @@ class WidgetTestDriver extends TestDriver {
 
   @override
   Future<void> wait(Duration duration) => tester.pump(duration);
+
+  @override
+  Future<void> expectNotVisible(Key key) async {
+    expect(find.byKey(key), findsNothing);
+  }
+
+  @override
+  Future<void> expectCount(Key key, int count) async {
+    expect(find.byKey(key), findsNWidgets(count));
+  }
+
+  @override
+  Future<void> tapAtIndex(Key key, int index) async {
+    await patrolTester(find.byKey(key).at(index)).tap();
+  }
+
+  @override
+  Future<void> scrollUntilVisible(Key key) async {
+    await patrolTester(find.byKey(key)).scrollTo();
+  }
+
+  @override
+  Future<void> expectContainsText(Key key, String text) async {
+    final finder = find.descendant(
+      of: find.byKey(key),
+      matching: find.text(text, findRichText: true),
+    );
+    expect(finder, findsWidgets);
+  }
+
+  @override
+  Future<void> longPress(Key key) async {
+    await tester.longPress(find.byKey(key));
+    await tester.pump();
+  }
 }
