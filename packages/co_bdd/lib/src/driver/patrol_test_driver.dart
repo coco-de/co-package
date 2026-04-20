@@ -1,15 +1,17 @@
+// patrol 4.x에서 $.native 는 deprecated(→ platformAutomator) 이지만
+// 해당 대체 API의 메서드 시그니처(pressHome/openQuickSettings/pressBack)가
+// 아직 동일하게 제공되지 않아 당분간 native 를 유지한다.
+// ignore_for_file: deprecated_member_use
+
 import 'package:co_test_gen/src/driver/test_driver.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:patrol/patrol.dart';
 
 /// Patrol-based [TestDriver] implementation.
 ///
-/// Used in BDD Patrol E2E tests to share step functions with widget tests.
-///
-/// Requires `package:patrol` as a dependency in your project.
-/// The `PatrolIntegrationTester` type is not imported here to avoid
-/// a hard dependency on patrol; instead, it accepts `dynamic` and
-/// uses duck typing for the patrol-specific API.
+/// Wraps [PatrolIntegrationTester] for BDD Patrol E2E tests, sharing
+/// step functions with widget tests through the [TestDriver] abstraction.
 ///
 /// ```dart
 /// patrolTest('login success', ($) async {
@@ -22,18 +24,17 @@ class PatrolTestDriver extends TestDriver {
   /// Creates a driver wrapping the Patrol tester [$].
   PatrolTestDriver(this.$);
 
-  /// The underlying `PatrolIntegrationTester` instance.
-  final dynamic $;
+  /// The underlying [PatrolIntegrationTester] instance.
+  final PatrolIntegrationTester $;
 
   @override
   Future<void> tap(Key key) async {
-    // ignore: avoid-dynamic
-    await ($ as dynamic).call(find.byKey(key)).tap() as Future<void>;
+    await $(find.byKey(key)).tap();
   }
 
   @override
   Future<void> tapText(String text) async {
-    await ($ as dynamic).call(text).tap() as Future<void>;
+    await $(text).tap();
   }
 
   @override
@@ -43,52 +44,49 @@ class PatrolTestDriver extends TestDriver {
       matching: find.byType(EditableText),
     );
     if (descendant.evaluate().isNotEmpty) {
-      await ($ as dynamic).call(descendant.first).enterText(text)
-          as Future<void>;
+      await $(descendant.first).enterText(text);
     } else {
-      await ($ as dynamic).call(find.byKey(key)).enterText(text)
-          as Future<void>;
+      await $(find.byKey(key)).enterText(text);
     }
   }
 
   @override
   Future<void> expectVisible(Key key) async {
-    expect(($ as dynamic).call(find.byKey(key)), findsOneWidget);
+    expect($(find.byKey(key)), findsOneWidget);
   }
 
   @override
   Future<void> expectTextVisible(String text) async {
-    expect(($ as dynamic).call(text), findsWidgets);
+    expect($(text), findsWidgets);
   }
 
   @override
   Future<void> pumpWidget(Widget widget) async {
-    await ($ as dynamic).pumpWidgetAndSettle(widget) as Future<void>;
+    await $.pumpWidgetAndSettle(widget);
   }
 
   @override
   Future<void> settle({Duration? timeout}) async {
-    await ($ as dynamic).pump(timeout ?? const Duration(seconds: 5))
-        as Future<void>;
+    await $.pump(timeout ?? const Duration(seconds: 5));
   }
 
   @override
   Future<void> wait(Duration duration) async {
-    await ($ as dynamic).pump(duration) as Future<void>;
+    await $.pump(duration);
   }
 
   @override
   Future<void> pressHome() async {
-    await ($ as dynamic).native.pressHome() as Future<void>;
+    await $.native.pressHome();
   }
 
   @override
   Future<void> openNotifications() async {
-    await ($ as dynamic).native.openQuickSettings() as Future<void>;
+    await $.native.openQuickSettings();
   }
 
   @override
   Future<void> pressBack() async {
-    await ($ as dynamic).native.pressBack() as Future<void>;
+    await $.native.pressBack();
   }
 }

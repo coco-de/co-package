@@ -1,10 +1,13 @@
 import 'package:co_test_gen/src/driver/test_driver.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:patrol_finders/patrol_finders.dart';
 
 /// [WidgetTester]-based [TestDriver] implementation.
 ///
-/// Used in BDD widget tests to share step functions with Patrol E2E tests.
+/// Internally uses [PatrolTester] from `patrol_finders` for a concise,
+/// chainable finder API (`$(finder).tap()`). Step functions remain
+/// unchanged because [TestDriver]'s external interface is preserved.
 ///
 /// ```dart
 /// testWidgets('login success', (tester) async {
@@ -13,23 +16,39 @@ import 'package:flutter_test/flutter_test.dart';
 ///   await iTapTheLoginButton(driver);
 /// });
 /// ```
+///
+/// To customize timeouts, pass a [PatrolTesterConfig]:
+/// ```dart
+/// final driver = WidgetTestDriver(
+///   tester,
+///   config: const PatrolTesterConfig(
+///     settleTimeout: Duration(seconds: 30),
+///   ),
+/// );
+/// ```
 class WidgetTestDriver extends TestDriver {
-  /// Creates a driver wrapping [tester].
-  WidgetTestDriver(this.tester);
+  /// Creates a driver wrapping [tester]. Optionally accepts a custom
+  /// [PatrolTesterConfig]; defaults to `PatrolTesterConfig()`.
+  WidgetTestDriver(
+    this.tester, {
+    PatrolTesterConfig config = const PatrolTesterConfig(),
+  }) : patrolTester = PatrolTester(tester: tester, config: config);
 
   /// The underlying [WidgetTester] instance.
   final WidgetTester tester;
 
+  /// The [PatrolTester] wrapping [tester]. Exposed so that step
+  /// implementations can access advanced finder APIs when needed.
+  final PatrolTester patrolTester;
+
   @override
   Future<void> tap(Key key) async {
-    await tester.tap(find.byKey(key));
-    await tester.pump();
+    await patrolTester(find.byKey(key)).tap();
   }
 
   @override
   Future<void> tapText(String text) async {
-    await tester.tap(find.text(text));
-    await tester.pump();
+    await patrolTester(text).tap();
   }
 
   @override
@@ -39,21 +58,20 @@ class WidgetTestDriver extends TestDriver {
       matching: find.byType(EditableText),
     );
     if (descendant.evaluate().isNotEmpty) {
-      await tester.enterText(descendant.first, text);
+      await patrolTester(descendant.first).enterText(text);
     } else {
-      await tester.enterText(find.byKey(key), text);
+      await patrolTester(find.byKey(key)).enterText(text);
     }
-    await tester.pump();
   }
 
   @override
   Future<void> expectVisible(Key key) async {
-    expect(find.byKey(key), findsOneWidget);
+    expect(patrolTester(find.byKey(key)), findsOneWidget);
   }
 
   @override
   Future<void> expectTextVisible(String text) async {
-    expect(find.text(text), findsWidgets);
+    expect(patrolTester(text), findsWidgets);
   }
 
   @override

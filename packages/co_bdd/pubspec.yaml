@@ -25,6 +25,7 @@ dependencies:
   flutter_test:
     sdk: flutter
   patrol: ^4.5.0
+  patrol_finders: ^3.2.0
 
 dev_dependencies:
   test: any
