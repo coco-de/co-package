@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
@@ -302,6 +303,12 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
   // 🤚 멀티터치 상태 추적 (2손가락 이상 터치 시 IgnorePointer 비활성화)
   late ValueNotifier<bool> _isMultiTouchNotifier;
 
+  // 🖊️ 스타일러스 활성 상태 추적 — 펜 hover/down 시 true.
+  //   scribble layer의 hit-test를 동적으로 토글하여, 펜 입력은 캡처하고
+  //   그 외(마우스/터치)는 child PdfViewer로 통과시켜 onLinkTap 동작 보장.
+  late ValueNotifier<bool> _isStylusActiveNotifier;
+  Timer? _stylusInactiveTimer;
+
   @override
   void initState() {
     super.initState();
@@ -328,6 +335,14 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
       null,
     );
     _isMultiTouchNotifier = ValueNotifier(false);
+    _isStylusActiveNotifier = ValueNotifier(false);
+
+    // 🖊️ 글로벌 PointerRouter로 스타일러스 hover/down 감지.
+    //   hit-test와 무관하게 모든 PointerEvent를 받아, scribble layer가
+    //   IgnorePointer(true) 상태여도 펜 활성 여부를 추적할 수 있다.
+    GestureBinding.instance.pointerRouter.addGlobalRoute(
+      _handleGlobalStylusPointer,
+    );
 
     // transformationController 먼저 초기화 (매니저들이 의존하므로)
     transformationController =
@@ -886,20 +901,50 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
                     ),
 
                     // 2. 필기 레이어: 고정된 PDF 영역에서만 필기 가능하도록 클리핑
+                    // 🖊️ 동적 IgnorePointer: pointerMode + stylus 활성 상태에 따라
+                    //   hit-test 토글:
+                    //   - .penOnly + stylus hover/down → IgnorePointer(false) (펜 그리기)
+                    //   - .penOnly + 그 외(마우스/터치) → IgnorePointer(true) (PDF 인터랙션)
+                    //   - .mouseOnly (손가락 모드) → IgnorePointer(false) (모든 입력 캡처)
+                    //   - .all / .mouseAndPen → IgnorePointer(false) (모든 입력 캡처)
                     Positioned(
                       left: fixedContentOffsetX,
                       top: fixedContentOffsetY,
-                      child: SizedBox.fromSize(
-                        size: displaySize,
-                        child: FittedBox(
-                          fit: .contain,
-                          child: SizedBox.fromSize(
-                            size: fixedContentSize, // 🔥 고정된 컨텐츠 크기 사용
-                            child: ClipRect(
-                              // 🔥 필기 영역을 고정된 크기로 제한
-                              child: RepaintBoundary(
-                                // 🚀 성능 최적화: 필기 레이어 독립적 리페인트
-                                child: _buildScribbleLayer(fixedContentSize),
+                      child: ValueListenableBuilder<DrawingPointerMode>(
+                        valueListenable: DrawingState().pointerMode,
+                        builder: (context, pointerMode, child) {
+                          // .penOnly가 아니면 모든 입력을 캡처해야 하므로
+                          // IgnorePointer(false) 영구 적용
+                          if (pointerMode != DrawingPointerMode.penOnly) {
+                            return IgnorePointer(
+                              ignoring: false,
+                              child: child,
+                            );
+                          }
+                          // .penOnly: stylus hover 시에만 활성화
+                          return ValueListenableBuilder<bool>(
+                            valueListenable: _isStylusActiveNotifier,
+                            builder: (context, isStylusActive, child) {
+                              return IgnorePointer(
+                                ignoring: !isStylusActive,
+                                child: child,
+                              );
+                            },
+                            child: child,
+                          );
+                        },
+                        child: SizedBox.fromSize(
+                          size: displaySize,
+                          child: FittedBox(
+                            fit: .contain,
+                            child: SizedBox.fromSize(
+                              size: fixedContentSize, // 🔥 고정된 컨텐츠 크기 사용
+                              child: ClipRect(
+                                // 🔥 필기 영역을 고정된 크기로 제한
+                                child: RepaintBoundary(
+                                  // 🚀 성능 최적화: 필기 레이어 독립적 리페인트
+                                  child: _buildScribbleLayer(fixedContentSize),
+                                ),
                               ),
                             ),
                           ),
@@ -949,11 +994,15 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
             // ⚡ onPointerDown에서 펜/마우스/손 모두 감지
             // ⚠️ 중요: IgnorePointer의 ignoring 값이 빌드 시점에 결정되므로 첫 이벤트는 이전 상태로 처리될 수 있음
             // 해결: Builder로 감싸서 최신 ValueNotifier 값을 직접 참조
-            // 🖱️ 드로잉 모드(하이라이트 제외)에서는 opaque로 PDF 드래그 차단
             return Listener(
-              behavior: widget.isScribbleEnable && !isHighlighterMode
-                  ? .opaque // 드로잉 모드: PDF 드래그 차단
-                  : .translucent, // 하이라이트 또는 비활성: 투과
+              // ⚡ 항상 .translucent로 설정하여 child(PDF)의 hit-test 통과 허용.
+              // 이전 동작: 드로잉 모드(`isScribbleEnable && !isHighlighter`)에서
+              //   .opaque로 모든 포인터를 가로채 PDF의 onLinkTap 미호출.
+              // 현재 동작: 하이라이터 모드의 포인터 종류 감지 핸들러는 그대로
+              //   동작하고, 그 외 입력은 child로 통과되어 PdfViewer의 링크 탭/
+              //   텍스트 선택이 정상 동작한다. 펜 그리기 캡처는 내부 Listener
+              //   (라인 ~963)의 onPointerDown에서 처리.
+              behavior: .translucent,
               onPointerDown: isHighlighterMode
                   ? (event) {
                       // 펜/마우스/손 모두 감지
@@ -1173,10 +1222,15 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
                                           }
                                         }
                                       : null,
-                                  child: Container(
+                                  // 🔍 SizedBox 사용: Container(color: transparent)는
+                                  // 내부적으로 DecoratedBox로 변환되어 hit-test에 포함됨.
+                                  // 이 경우 PDF 영역 전체를 덮어 child PdfViewer의
+                                  // 링크 hit-test를 가로채므로 onLinkTap이 호출되지 않음.
+                                  // SizedBox는 RenderConstrainedBox로 hit-test를 child에
+                                  // 위임하므로, 빈 영역에서는 자연스럽게 PDF로 통과됨.
+                                  child: SizedBox(
                                     width: targetSize.width,
                                     height: targetSize.height,
-                                    color: Colors.transparent, // ✨ 투명 배경
                                     child: Stack(
                                       children: renderLayers.buildAllLayers(
                                         onDelete: () => _removeSelectedStrokes(
@@ -2691,13 +2745,65 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
     // 🆕 스케일 변화 리스너 제거
     transformationController?.removeListener(_onTransformationChanged);
 
+    // 🖊️ 글로벌 PointerRouter 리스너 해제
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(
+      _handleGlobalStylusPointer,
+    );
+    _stylusInactiveTimer?.cancel();
+
     widgetState.dispose();
     pointerHandler.dispose();
     strokeCountNotifier.dispose();
     isInteractiveNotifier.dispose();
     _currentPointerKindForHighlighter.dispose();
     _isMultiTouchNotifier.dispose();
+    _isStylusActiveNotifier.dispose();
     super.dispose();
+  }
+
+  /// 🖊️ 글로벌 PointerRouter에서 호출 — stylus 이벤트를 영역 필터링 후
+  /// scribble layer의 hit-test 활성화 여부를 결정한다.
+  ///
+  /// 동작:
+  /// - stylus hover/down: 위젯 영역 안이면 _isStylusActive=true (scribble 활성)
+  /// - stylus up/cancel: 짧은 딜레이 후 false (다음 down 사이 깜빡임 방지)
+  /// - stylus가 아닌 입력: 무시 → 마우스/터치는 PDF로 통과
+  void _handleGlobalStylusPointer(PointerEvent event) {
+    if (event.kind != ui.PointerDeviceKind.stylus) return;
+    if (!mounted) return;
+
+    final renderObject = context.findRenderObject();
+    if (renderObject is! RenderBox) return;
+    if (!renderObject.attached) return;
+
+    try {
+      final localPosition = renderObject.globalToLocal(event.position);
+      final isInside = (Offset.zero & renderObject.size).contains(
+        localPosition,
+      );
+
+      if (event is PointerHoverEvent || event is PointerDownEvent) {
+        if (isInside && !_isStylusActiveNotifier.value) {
+          _stylusInactiveTimer?.cancel();
+          _isStylusActiveNotifier.value = true;
+        }
+      } else if (event is PointerUpEvent || event is PointerCancelEvent) {
+        if (_isStylusActiveNotifier.value) {
+          // 펜이 화면을 떠난 직후 PDF 인터랙션이 가능해지도록 짧은 딜레이 후 false
+          _stylusInactiveTimer?.cancel();
+          _stylusInactiveTimer = Timer(
+            const Duration(milliseconds: 300),
+            () {
+              if (mounted) {
+                _isStylusActiveNotifier.value = false;
+              }
+            },
+          );
+        }
+      }
+    } on Exception {
+      // globalToLocal 실패 시 무시 (위젯이 정상 mount 상태가 아닐 수 있음)
+    }
   }
 
   // 현재 스케일 계산 (내부 transformationController 사용)
