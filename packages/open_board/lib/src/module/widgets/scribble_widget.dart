@@ -1035,24 +1035,16 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
                                 _listenerContext = listenerContext;
 
                                 return Listener(
-                                  behavior: widget.isScribbleEnable
-                                      ? (isHighlighterMode &&
-                                                (currentPointerKind ==
-                                                        ui
-                                                            .PointerDeviceKind
-                                                            .touch ||
-                                                    currentPointerKind ==
-                                                        ui
-                                                            .PointerDeviceKind
-                                                            .stylus ||
-                                                    (isMouseOnlyMode &&
-                                                        currentPointerKind ==
-                                                            ui
-                                                                .PointerDeviceKind
-                                                                .mouse)))
-                                            ? .translucent // 손/펜/마우스(핸드모드)일 때: 투과 (텍스트 선택 가능)
-                                            : .opaque // 필기 모드: 모든 터치 차단
-                                      : .translucent,
+                                  // ⚡ 항상 .translucent로 설정하여 child(PDF/이미지 등) 위젯이
+                                  // 자체 hit-test를 통해 onTap/onLinkTap 콜백을 처리할 수 있게 한다.
+                                  //
+                                  // 이전 동작: 필기 모드(isScribbleEnable=true)에서 .opaque로 모든
+                                  //   포인터를 가로채 PDF의 onLinkTap이 호출되지 않음.
+                                  // 현재 동작: allowedPointersMode가 캡처 대상으로 인정하는 포인터
+                                  //   (예: penOnly → stylus)는 onPointerDown 핸들러가 처리하고,
+                                  //   인정하지 않는 포인터(손가락/마우스 등)는 child로 자연스럽게
+                                  //   통과되어 PdfViewer의 링크 탭/텍스트 선택이 동작한다.
+                                  behavior: .translucent,
                                   // 🎨 하이라이트 모드에서 각 이벤트에서 포인터 종류를 직접 확인하여 즉시 처리
                                   // ⚡ 최상위 Listener에서 이미 포인터 종류를 감지했으므로, 여기서는 차단만 처리
                                   onPointerDown: widget.isScribbleEnable
