@@ -1024,20 +1024,28 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
                   }
                 }
               },
-              // 🤚 하이라이트 모드: IgnorePointer 제거 — 핀치 줌 지원
-              // 기존: IgnorePointer(ignoring: true)로 싱글터치 차단 → 첫 번째 터치가
-              // InteractiveViewer에 전달되지 않아 핀치 줌 제스처 인식 불가
-              // 수정: 항상 ignoring=false로 설정하고, 내부 Listener에서 싱글터치 이벤트를
-              // 선택적으로 무시 (line 1142-1158에서 이미 구현됨)
+              // 🤚 하이라이트 모드 IgnorePointer 정책:
+              //   외부 Listener(.translucent)는 IgnorePointer 바깥에 있어
+              //   멀티터치 hit가 외부 InteractiveViewer까지 그대로 도달한다.
+              //   따라서 IgnorePointer(true)로 자식(Stack RenderLayers + 내부
+              //   Listener)을 차단해도 외부 InteractiveViewer의 핀치 줌은
+              //   정상 동작한다.
+              //
+              //   - 하이라이트 + 싱글터치(touch/stylus/handMode 마우스):
+              //       IgnorePointer(true) → RenderLayers 흡수 차단 →
+              //       PDF의 long-press 텍스트 선택 GestureRecognizer가
+              //       GestureArena에서 win 가능
+              //   - 하이라이트 + 멀티터치:
+              //       IgnorePointer(false) → 외부 InteractiveViewer가 핀치 처리
+              //   - 비하이라이트 모드:
+              //       IgnorePointer(false) (기존 동작 유지) — 펜 그리기는 내부
+              //       Listener의 stylus 캡처가 처리
               child: ValueListenableBuilder<bool>(
                 valueListenable: _isMultiTouchNotifier,
                 builder: (context, isMultiTouch, child) {
-                  // 🔧 하이라이트 모드에서는 ignoring=false 유지 (핀치 줌 허용)
-                  // 텍스트 선택 차단은 내부 Listener의 onPointerDown에서 처리
-                  final shouldIgnore =
-                      shouldIgnoreForTextSelection &&
-                      !isMultiTouch &&
-                      !isHighlighterMode;
+                  // 하이라이트 모드 + 싱글터치 → 자식 hit-test 차단
+                  // (currentPointerKind가 아직 null인 첫 down 시점도 보수적으로 차단)
+                  final shouldIgnore = isHighlighterMode && !isMultiTouch;
                   return IgnorePointer(
                     ignoring: shouldIgnore,
                     child: child,
