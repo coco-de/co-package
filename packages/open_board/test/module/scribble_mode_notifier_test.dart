@@ -330,5 +330,6 @@ void main() {
         expect(notifier.state.inkGroupInfo.selectedColor, red);
       });
     });
+
   });
 }

@@ -901,50 +901,31 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
                     ),
 
                     // 2. 필기 레이어: 고정된 PDF 영역에서만 필기 가능하도록 클리핑
-                    // 🖊️ 동적 IgnorePointer: pointerMode + stylus 활성 상태에 따라
-                    //   hit-test 토글:
-                    //   - .penOnly + stylus hover/down → IgnorePointer(false) (펜 그리기)
-                    //   - .penOnly + 그 외(마우스/터치) → IgnorePointer(true) (PDF 인터랙션)
-                    //   - .mouseOnly (손가락 모드) → IgnorePointer(false) (모든 입력 캡처)
-                    //   - .all / .mouseAndPen → IgnorePointer(false) (모든 입력 캡처)
+                    // 🤚 IgnorePointer 정책 (C안 정공법):
+                    //   ScribbleWidget이 항상 모든 입력을 받아야 InteractiveViewer가
+                    //   두 손가락 핀치 줌을 처리할 수 있다.
+                    //   - 펜 그리기: 내부 Listener의 onPointerDown(stylus)이 캡처
+                    //   - 두 손가락 핀치: InteractiveViewer가 처리 (scaleEnabled=true)
+                    //   - 단일 손가락 탭: 외부에서 좌표 변환 + PDF 링크 forward
+                    //   - 손가락 좌우 스와이프: pdf_viewer_widget의 외부 Listener에서 처리
+                    //
+                    //   이전 동작(제거됨): .penOnly + stylus 비활성 시 IgnorePointer(true)로
+                    //   손가락을 PDF로 통과시킴. 그러나 첫 손가락이 PDF에 흡수되어
+                    //   InteractiveViewer가 두 손가락 핀치를 인식 못 하는 핵심 버그였음.
                     Positioned(
                       left: fixedContentOffsetX,
                       top: fixedContentOffsetY,
-                      child: ValueListenableBuilder<DrawingPointerMode>(
-                        valueListenable: DrawingState().pointerMode,
-                        builder: (context, pointerMode, child) {
-                          // .penOnly가 아니면 모든 입력을 캡처해야 하므로
-                          // IgnorePointer(false) 영구 적용
-                          if (pointerMode != DrawingPointerMode.penOnly) {
-                            return IgnorePointer(
-                              ignoring: false,
-                              child: child,
-                            );
-                          }
-                          // .penOnly: stylus hover 시에만 활성화
-                          return ValueListenableBuilder<bool>(
-                            valueListenable: _isStylusActiveNotifier,
-                            builder: (context, isStylusActive, child) {
-                              return IgnorePointer(
-                                ignoring: !isStylusActive,
-                                child: child,
-                              );
-                            },
-                            child: child,
-                          );
-                        },
-                        child: SizedBox.fromSize(
-                          size: displaySize,
-                          child: FittedBox(
-                            fit: .contain,
-                            child: SizedBox.fromSize(
-                              size: fixedContentSize, // 🔥 고정된 컨텐츠 크기 사용
-                              child: ClipRect(
-                                // 🔥 필기 영역을 고정된 크기로 제한
-                                child: RepaintBoundary(
-                                  // 🚀 성능 최적화: 필기 레이어 독립적 리페인트
-                                  child: _buildScribbleLayer(fixedContentSize),
-                                ),
+                      child: SizedBox.fromSize(
+                        size: displaySize,
+                        child: FittedBox(
+                          fit: .contain,
+                          child: SizedBox.fromSize(
+                            size: fixedContentSize, // 🔥 고정된 컨텐츠 크기 사용
+                            child: ClipRect(
+                              // 🔥 필기 영역을 고정된 크기로 제한
+                              child: RepaintBoundary(
+                                // 🚀 성능 최적화: 필기 레이어 독립적 리페인트
+                                child: _buildScribbleLayer(fixedContentSize),
                               ),
                             ),
                           ),
@@ -1003,52 +984,46 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
               //   텍스트 선택이 정상 동작한다. 펜 그리기 캡처는 내부 Listener
               //   (라인 ~963)의 onPointerDown에서 처리.
               behavior: .translucent,
-              onPointerDown: isHighlighterMode
-                  ? (event) {
-                      // 펜/마우스/손 모두 감지
-                      if (event.kind == ui.PointerDeviceKind.stylus ||
-                          event.kind == ui.PointerDeviceKind.mouse ||
-                          event.kind == ui.PointerDeviceKind.touch) {
-                        // ⚡ 즉시 포인터 종류 설정
-                        _currentPointerKindForHighlighter.value = event.kind;
-                      }
-                      // 🔧 터치 카운트를 외부 Listener에서 관리
-                      // IgnorePointer가 내부 Listener를 차단하므로
-                      // 여기서 관리해야 멀티터치 핀치 줌이 작동함
-                      if (event.kind == ui.PointerDeviceKind.touch) {
-                        pointerHandler.incrementTouch();
-                        _isMultiTouchNotifier.value = pointerHandler
-                            .isMultiTouch();
-                        if (pointerHandler.isMultiTouch()) {
-                          setState(() {});
-                        }
-                      }
-                    }
-                  : null,
-              onPointerUp: isHighlighterMode
-                  ? (event) {
-                      if (event.kind == ui.PointerDeviceKind.touch) {
-                        pointerHandler.decrementTouch();
-                        _isMultiTouchNotifier.value = pointerHandler
-                            .isMultiTouch();
-                        if (!pointerHandler.isMultiTouch()) {
-                          setState(() {});
-                        }
-                      }
-                    }
-                  : null,
-              onPointerCancel: isHighlighterMode
-                  ? (event) {
-                      if (event.kind == ui.PointerDeviceKind.touch) {
-                        pointerHandler.decrementTouch();
-                        _isMultiTouchNotifier.value = pointerHandler
-                            .isMultiTouch();
-                        if (!pointerHandler.isMultiTouch()) {
-                          setState(() {});
-                        }
-                      }
-                    }
-                  : null,
+              // 🔧 멀티터치 카운트 갱신은 모드 무관하게 항상 동작.
+              // (이전: isHighlighterMode일 때만 동작 → pencil 모드에서
+              //  isMultiTouch가 갱신되지 않아 InteractiveViewer 핀치 줌이
+              //  영영 활성화되지 않는 핵심 버그였음)
+              onPointerDown: (event) {
+                // 멀티터치 카운트 (모든 필기/하이라이트 모드 공통 — 핀치 줌)
+                if (event.kind == ui.PointerDeviceKind.touch) {
+                  pointerHandler.incrementTouch();
+                  _isMultiTouchNotifier.value = pointerHandler.isMultiTouch();
+                  if (pointerHandler.isMultiTouch()) {
+                    setState(() {});
+                  }
+                }
+                // 하이라이트 모드 전용: 포인터 종류 감지 (텍스트 선택 분기용)
+                if (isHighlighterMode) {
+                  if (event.kind == ui.PointerDeviceKind.stylus ||
+                      event.kind == ui.PointerDeviceKind.mouse ||
+                      event.kind == ui.PointerDeviceKind.touch) {
+                    _currentPointerKindForHighlighter.value = event.kind;
+                  }
+                }
+              },
+              onPointerUp: (event) {
+                if (event.kind == ui.PointerDeviceKind.touch) {
+                  pointerHandler.decrementTouch();
+                  _isMultiTouchNotifier.value = pointerHandler.isMultiTouch();
+                  if (!pointerHandler.isMultiTouch()) {
+                    setState(() {});
+                  }
+                }
+              },
+              onPointerCancel: (event) {
+                if (event.kind == ui.PointerDeviceKind.touch) {
+                  pointerHandler.decrementTouch();
+                  _isMultiTouchNotifier.value = pointerHandler.isMultiTouch();
+                  if (!pointerHandler.isMultiTouch()) {
+                    setState(() {});
+                  }
+                }
+              },
               // 🤚 하이라이트 모드: IgnorePointer 제거 — 핀치 줌 지원
               // 기존: IgnorePointer(ignoring: true)로 싱글터치 차단 → 첫 번째 터치가
               // InteractiveViewer에 전달되지 않아 핀치 줌 제스처 인식 불가
@@ -1532,21 +1507,16 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
   }
 
   /// 🎯 InteractiveViewer scale 제스처 허용 여부 (확대/축소 허용)
+  ///
+  /// 🚨 멀티터치 판단을 기다리면 안 된다.
+  /// 첫 PointerDown 시점에 scaleEnabled=true여야 InteractiveViewer가
+  /// ScaleGestureRecognizer를 GestureArena에 등록하고, 그 후에 두 번째
+  /// 손가락이 들어와야 핀치가 시작된다. isMultiTouch()를 트리거로 두면
+  /// race로 첫 down 이벤트를 놓쳐 핀치가 영영 시작되지 않음.
+  ///
+  /// 정책: 펜으로 실제로 그리는 중일 때만 비활성화. 그 외에는 항상 활성화.
   bool _shouldEnableScale() {
-    // 🖊️ 멀티터치(두 손가락) 시에는 항상 scale 허용 (핀치 줌용)
-    if (pointerHandler.isMultiTouch()) {
-      return true; // ✅ 두 손가락 터치 시 핀치 줌 허용
-    }
-
-    // 🎯 하이라이트 모드 체크 (텍스트 선택을 위해 제스처 투과)
-    final drawingState = DrawingState();
-    final currentTool = drawingState.selectedTool.value;
-    if (currentTool == .highlighter) {
-      return true; // ✅ 하이라이트 모드에서는 InteractiveViewer도 scale 허용 (PdfViewer의 텍스트 선택을 위해)
-    }
-
-    // ✅ 확대/축소는 필기 모드에서도 허용 (펜 그리기 중에만 비활성화)
-    return _shouldEnableInteractiveGestures();
+    return !_isPenDrawing();
   }
 
   /// 🖊️ 손모드에서 그리기 시작 시 스크롤 차단

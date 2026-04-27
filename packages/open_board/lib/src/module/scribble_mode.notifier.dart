@@ -20,8 +20,24 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
         ),
       );
 
+  bool _isDisposed = false;
+
   ScribbleModeState get state => value;
-  set state(ScribbleModeState newState) => value = newState;
+
+  /// dispose 이후의 setter 호출은 조용히 무시한다.
+  /// (PageView 전환·hot reload 시 stale notifier가 build에서 접근하면
+  ///  ValueNotifier의 `Once you have called dispose() ...` 예외가 발생해
+  ///  필기 stroke가 비결정적으로 누락되는 원인이 됨)
+  set state(ScribbleModeState newState) {
+    if (_isDisposed) return;
+    value = newState;
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
 
   /// Sets the width of the next line
   void setStrokeWidth(double strokeWidth) {
