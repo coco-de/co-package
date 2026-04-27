@@ -976,14 +976,20 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
             // ⚠️ 중요: IgnorePointer의 ignoring 값이 빌드 시점에 결정되므로 첫 이벤트는 이전 상태로 처리될 수 있음
             // 해결: Builder로 감싸서 최신 ValueNotifier 값을 직접 참조
             return Listener(
-              // ⚡ 항상 .translucent로 설정하여 child(PDF)의 hit-test 통과 허용.
-              // 이전 동작: 드로잉 모드(`isScribbleEnable && !isHighlighter`)에서
-              //   .opaque로 모든 포인터를 가로채 PDF의 onLinkTap 미호출.
-              // 현재 동작: 하이라이터 모드의 포인터 종류 감지 핸들러는 그대로
-              //   동작하고, 그 외 입력은 child로 통과되어 PdfViewer의 링크 탭/
-              //   텍스트 선택이 정상 동작한다. 펜 그리기 캡처는 내부 Listener
-              //   (라인 ~963)의 onPointerDown에서 처리.
-              behavior: .translucent,
+              // 🎨 hit-test behavior 정책:
+              //   - 하이라이트 모드: .deferToChild
+              //       자식이 IgnorePointer(true)이면 자기도 hit-test에서 빠져
+              //       Stack의 hit-test가 PDF Positioned(아래)로 내려간다.
+              //       PDF의 자체 InteractiveViewer(pdfrx)가 핀치 줌·패닝·
+              //       텍스트 선택을 모두 처리하도록 위임.
+              //   - 그 외 모드: .translucent
+              //       child(PDF) hit-test 통과 + 자기 onPointer로 멀티터치 카운트.
+              //       펜 그리기 캡처는 내부 Listener의 stylus 핸들러가 처리.
+              //
+              // 이전 시도(.translucent 고정)는 ScribbleLayer 영역 전체가 항상
+              // hit으로 등록되어 PDF Positioned로 hit가 도달하지 못하던 회귀의
+              // 원인이었다.
+              behavior: isHighlighterMode ? .deferToChild : .translucent,
               // 🔧 멀티터치 카운트 갱신은 모드 무관하게 항상 동작.
               // (이전: isHighlighterMode일 때만 동작 → pencil 모드에서
               //  isMultiTouch가 갱신되지 않아 InteractiveViewer 핀치 줌이
@@ -1025,32 +1031,21 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
                 }
               },
               // 🤚 하이라이트 모드 IgnorePointer 정책:
-              //   외부 Listener(.translucent)는 IgnorePointer 바깥에 있어
-              //   멀티터치 hit가 외부 InteractiveViewer까지 그대로 도달한다.
-              //   따라서 IgnorePointer(true)로 자식(Stack RenderLayers + 내부
-              //   Listener)을 차단해도 외부 InteractiveViewer의 핀치 줌은
-              //   정상 동작한다.
+              //   하이라이트 모드에서는 ScribbleLayer 자식(Stack RenderLayers +
+              //   내부 Listener)을 항상 차단한다. 외부 Listener의 behavior가
+              //   .deferToChild이므로 자식이 hit 아니면 외부 Listener도
+              //   hit이 아니게 되어 Stack이 PDF Positioned(아래)로 hit-test를
+              //   진행한다.
               //
-              //   - 하이라이트 + 싱글터치(touch/stylus/handMode 마우스):
-              //       IgnorePointer(true) → RenderLayers 흡수 차단 →
-              //       PDF의 long-press 텍스트 선택 GestureRecognizer가
-              //       GestureArena에서 win 가능
-              //   - 하이라이트 + 멀티터치:
-              //       IgnorePointer(false) → 외부 InteractiveViewer가 핀치 처리
+              //   - 하이라이트 모드:
+              //       IgnorePointer(true) + Listener(.deferToChild)
+              //       → ScribbleLayer 영역 전체가 hit-test에서 빠짐
+              //       → PDF가 핀치 줌·패닝·텍스트 선택을 자체 처리(pdfrx)
               //   - 비하이라이트 모드:
-              //       IgnorePointer(false) (기존 동작 유지) — 펜 그리기는 내부
-              //       Listener의 stylus 캡처가 처리
-              child: ValueListenableBuilder<bool>(
-                valueListenable: _isMultiTouchNotifier,
-                builder: (context, isMultiTouch, child) {
-                  // 하이라이트 모드 + 싱글터치 → 자식 hit-test 차단
-                  // (currentPointerKind가 아직 null인 첫 down 시점도 보수적으로 차단)
-                  final shouldIgnore = isHighlighterMode && !isMultiTouch;
-                  return IgnorePointer(
-                    ignoring: shouldIgnore,
-                    child: child,
-                  );
-                },
+              //       IgnorePointer(false) — 펜 그리기는 내부 Listener의
+              //       stylus 캡처가 처리
+              child: IgnorePointer(
+                ignoring: isHighlighterMode,
                 child: ValueListenableBuilder<bool>(
                   valueListenable: strokeCountNotifier,
                   builder: (context, value, child) {
