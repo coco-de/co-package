@@ -124,6 +124,7 @@ final class ScribbleWidget extends StatefulWidget {
     this.onScaleChanged,
     this.onTransformChanged,
     this.repaintBoundaryKey, // ✨ 외부에서 제공 가능한 GlobalKey
+    this.transformationController, // 🆕 외부 주입 가능한 변환 컨트롤러
     this.contentLogicalSize, // 🆕 논리 컨텐츠 크기
     this.initialScale,
   });

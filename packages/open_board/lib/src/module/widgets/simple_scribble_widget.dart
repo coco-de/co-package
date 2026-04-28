@@ -34,6 +34,7 @@ final class SimpleScribbleWidget extends StatefulWidget {
     super.key,
     required this.child,
     this.controller,
+    this.transformationController,
     this.onScribbleChanged,
     this.onScribbleFinished,
     this.onToolChanged,
@@ -56,6 +57,12 @@ final class SimpleScribbleWidget extends StatefulWidget {
 
   /// 필기 컨트롤러 (선택적 - 없으면 자동 생성)
   final ScribbleController? controller;
+
+  /// 🆕 InteractiveViewer 변환 컨트롤러 (선택적 - 없으면 자동 생성).
+  /// 외부에서 주입하면 [ScribbleWidget] 내부 [InteractiveViewer]가 이 컨트롤러로
+  /// transform을 공유하므로, 외곽 [InteractiveViewer]와의 줌·패닝 동기화가
+  /// 가능하다.
+  final TransformationController? transformationController;
 
   /// 자식 위젯 (선택적) - 이 위젝 위에 필기 레이어가 오버레이됩니다
   final Widget child;
@@ -202,6 +209,7 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
       modeNotifier: _controller.modeNotifier,
       repaintBoundaryKey:
           _controller.repaintBoundaryKey, // ✨ controller의 key 전달
+      transformationController: widget.transformationController,
       contentLogicalSize: widget.contentLogicalSize,
       onScribble: widget.onScribbleChanged != null
           ? (notifier) {
