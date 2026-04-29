@@ -5,7 +5,21 @@
   import 'package:open_board/src/module/scribble_painter.dart' as painter;
   import 'package:open_board/src/core/utils/ink_group_info.dart';
   import 'package:open_board/src/module/coordinate_transformer.dart';
+  import 'package:open_board/src/module/state/text_settings.dart';
+  import 'package:open_board/src/module/text/text_drawable_extensions.dart';
   import 'package:open_board/src/module/transform_handler.dart';
+
+  /// 올가미 변형 시 원본 상태를 보관하기 위한 텍스트 상태 스냅샷
+  class _OriginalTextState {
+    final Offset position;
+    final double fontSize;
+    final double rotation;
+    const _OriginalTextState({
+      required this.position,
+      required this.fontSize,
+      required this.rotation,
+    });
+  }
 
   /// 올가미 선택 기능을 관리하는 클래스
   /// ScribbleWidget의 올가미 관련 기능들을 분리하여 관리
@@ -27,6 +41,12 @@
 
     // 선택된 스트로크 ID 목록
     List<int> _selectedStrokeIds = [];
+
+    // 선택된 텍스트 인덱스 목록 (현재 scribble.textDrawables 기준)
+    List<int> _selectedTextIds = [];
+
+    // 변형 시작 시점의 텍스트 원본 상태 (위치/크기/회전)
+    List<_OriginalTextState>? _originalTextStates;
 
     // 클래스 멤버에 추가
     bool _showLassoOverlay = false; // 클래스 멤버 추가 (터치업인사이드 체크 복원)
@@ -57,6 +77,7 @@
     // Getters
     painter.LassoSelectionState get lassoSelectionState => _lassoSelectionState;
     List<int> get selectedStrokeIds => _selectedStrokeIds;
+    List<int> get selectedTextIds => _selectedTextIds;
     bool get showLassoOverlay => _showLassoOverlay;
     bool get isLassoTransforming => _isLassoTransforming;
 
@@ -106,6 +127,8 @@
         // 바운딩 박스 밖을 터치하면 선택 해제
 
         _selectedStrokeIds = [];
+        _selectedTextIds = [];
+        _originalTextStates = null;
         _lassoSelectionState = painter.LassoSelectionState();
         _showLassoOverlay = false;
         onStateChanged();
@@ -120,6 +143,8 @@
       if (latestLassoStroke == null || latestLassoStroke.points.length <= 2) {
         // 올가미 영역 밖에서 새로 그리기 시작하면 선택 해제
         _selectedStrokeIds = [];
+        _selectedTextIds = [];
+        _originalTextStates = null;
         _lassoSelectionState = painter.LassoSelectionState();
         _showLassoOverlay = false;
         onStateChanged();
@@ -171,8 +196,9 @@
         );
 
         if (strokesInLasso.isNotEmpty || textsInLasso.isNotEmpty) {
-          // 선택된 스트로크 저장
+          // 선택된 스트로크 + 텍스트 저장
           _selectedStrokeIds = strokesInLasso;
+          _selectedTextIds = textsInLasso;
 
           // 올가미 스트로크 제거 및 오버레이 즉시 표시
           if (lassoStrokeIndex >= 0) {
@@ -210,11 +236,6 @@
           // 터치업인사이드 체크를 위한 변수 설정
           _lastLassoTapDownTime = DateTime.now();
           _lassoTapMoved = false;
-
-          // 텍스트가 선택된 경우 텍스트 매니저에 알림 (추후 구현)
-          if (textsInLasso.isNotEmpty) {
-            // TODOS: 텍스트와 스트로크 통합 선택 기능 구현
-          }
 
           onStateChanged(); // 상태 변경 알림
           onModeChanged?.call(false, false); // 선택 완료 상태
@@ -382,6 +403,7 @@
 
           // ④ 선택 id 목록에 올가미 곡선도 포함
           _selectedStrokeIds = allSelected;
+          _selectedTextIds = textsInLasso;
 
           // ⑤ 선택 상태 및 바운딩 박스 등은 기존대로
           _lassoSelectionState = painter.LassoSelectionState(
@@ -410,39 +432,46 @@
       onStateChanged();
     }
 
-    /// 선택된 스트로크들을 삭제하는 메서드
+    /// 선택된 스트로크 + 텍스트를 삭제하는 메서드
     void removeSelectedStrokes(List<int> strokeIds) {
-      if (strokeIds.isEmpty) return;
+      if (strokeIds.isEmpty && _selectedTextIds.isEmpty) return;
 
-      // 선택된 스트로크 ID를 내림차순으로 정렬
-      final sortedIds = List<int>.from(strokeIds)
-        ..sort((a, b) => b.compareTo(a));
-
-      // 현재 scribble 상태와 모든 스트로크를 복사
       final currentScribble = scribbleNotifier.currentState.scribble;
       final List<Stroke> strokes = List<Stroke>.from(currentScribble.strokes);
+      final List<TextDrawable> textDrawables = List<TextDrawable>.from(
+        currentScribble.textDrawables,
+      );
 
-      // 스트로크 ID를 기준으로 해당 스트로크를 삭제
-      for (final id in sortedIds) {
+      // 스트로크 삭제 (인덱스 변동을 피하기 위해 내림차순)
+      final sortedStrokeIds = List<int>.from(strokeIds)
+        ..sort((a, b) => b.compareTo(a));
+      for (final id in sortedStrokeIds) {
         if (id >= 0 && id < strokes.length) {
           strokes.removeAt(id);
         }
       }
 
-      // 스트로크가 삭제된 새 Scribble 객체 생성
+      // 텍스트 삭제 (인덱스 변동을 피하기 위해 내림차순)
+      final sortedTextIds = List<int>.from(_selectedTextIds)
+        ..sort((a, b) => b.compareTo(a));
+      for (final id in sortedTextIds) {
+        if (id >= 0 && id < textDrawables.length) {
+          textDrawables.removeAt(id);
+        }
+      }
+
       final updatedScribble = Scribble(
         strokes: strokes,
         width: currentScribble.width,
         height: currentScribble.height,
         x: currentScribble.x,
         y: currentScribble.y,
-        textDrawables: currentScribble.textDrawables, // 텍스트 필드 유지
+        textDrawables: textDrawables,
         createdAt: currentScribble.createdAt,
         updatedAt: currentScribble.updatedAt,
         version: currentScribble.version,
       );
 
-      // notifier를 통해 scribble 상태 업데이트
       scribbleNotifier.setScribble(
         scribble: updatedScribble,
         addToUndoHistory: true,
@@ -450,15 +479,17 @@
 
       // 선택 상태 초기화
       _selectedStrokeIds = [];
+      _selectedTextIds = [];
+      _originalTextStates = null;
       _lassoSelectionState = painter.LassoSelectionState();
       _showLassoOverlay = false;
-      _isLassoTransforming = false; // 올가미 변형 상태도 초기화
+      _isLassoTransforming = false;
       onStateChanged();
     }
 
     /// 크기조절/회전 시작
     void onResizeRotateStart(DragStartDetails details, BuildContext context) {
-      if (_selectedStrokeIds.isEmpty) {
+      if (_selectedStrokeIds.isEmpty && _selectedTextIds.isEmpty) {
         return;
       }
 
@@ -526,7 +557,7 @@
           _startTouchPoint == null ||
           !_transformHandler.isResizeRotating) {
         // onResizeRotateStart와 동일한 초기화 로직 실행
-        if (_selectedStrokeIds.isEmpty) {
+        if (_selectedStrokeIds.isEmpty && _selectedTextIds.isEmpty) {
           return;
         }
 
@@ -634,37 +665,87 @@
         orientedBoundingBox: newOrientedBox,
       );
 
-      // 스트로크들 변환 적용 (TransformHandler의 applyResizeRotate 사용)
-      if (_originalStrokePoints != null && _selectedStrokeIds.isNotEmpty) {
+      // 스트로크 + 텍스트 변환 적용
+      final hasStrokes =
+          _originalStrokePoints != null && _selectedStrokeIds.isNotEmpty;
+      final hasTexts =
+          _originalTextStates != null && _selectedTextIds.isNotEmpty;
+      if (hasStrokes || hasTexts) {
         final currentScribble = scribbleNotifier.currentState.scribble;
         final strokes = List<Stroke>.from(currentScribble.strokes);
-
-        // TransformHandler로 변환된 포인트 계산
-        final transformedGroups = _transformHandler.applyResizeRotate(
-          _originalStrokePoints!,
-          center: center,
-          scale: scale,
-          rotation: finalRotation,
+        final textDrawables = List<TextDrawable>.from(
+          currentScribble.textDrawables,
         );
 
-        for (int i = 0; i < _selectedStrokeIds.length; i++) {
-          final strokeId = _selectedStrokeIds[i];
-          if (strokeId >= 0 &&
-              strokeId < strokes.length &&
-              i < transformedGroups.length) {
-            final stroke = strokes[strokeId];
-            final transformedPoints = transformedGroups[i];
+        // 스트로크 변환
+        if (hasStrokes) {
+          final transformedGroups = _transformHandler.applyResizeRotate(
+            _originalStrokePoints!,
+            center: center,
+            scale: scale,
+            rotation: finalRotation,
+          );
 
-            // 변환된 포인트들로 스트로크 업데이트
-            for (
-              int j = 0;
-              j < stroke.points.length && j < transformedPoints.length;
-              j++
-            ) {
-              final transformedPoint = transformedPoints[j];
-              stroke.points[j].x = transformedPoint.dx;
-              stroke.points[j].y = transformedPoint.dy;
+          for (int i = 0; i < _selectedStrokeIds.length; i++) {
+            final strokeId = _selectedStrokeIds[i];
+            if (strokeId >= 0 &&
+                strokeId < strokes.length &&
+                i < transformedGroups.length) {
+              final stroke = strokes[strokeId];
+              final transformedPoints = transformedGroups[i];
+
+              for (
+                int j = 0;
+                j < stroke.points.length && j < transformedPoints.length;
+                j++
+              ) {
+                final transformedPoint = transformedPoints[j];
+                stroke.points[j].x = transformedPoint.dx;
+                stroke.points[j].y = transformedPoint.dy;
+              }
             }
+          }
+        }
+
+        // 텍스트 변환:
+        //  - 위치: 원본 - center → scale → rotate(deltaAngle) → + center
+        //  - fontSize: 원본 * scale (8~72 클램프, 단일 텍스트 변형과 동일)
+        //  - rotation: 원본 + deltaAngle
+        if (hasTexts) {
+          final dCos = math.cos(result.deltaAngle);
+          final dSin = math.sin(result.deltaAngle);
+
+          for (int i = 0; i < _selectedTextIds.length; i++) {
+            final textId = _selectedTextIds[i];
+            if (textId < 0 ||
+                textId >= textDrawables.length ||
+                i >= _originalTextStates!.length) {
+              continue;
+            }
+            final orig = _originalTextStates![i];
+
+            final relX = orig.position.dx - center.dx;
+            final relY = orig.position.dy - center.dy;
+            final scaledX = relX * scale;
+            final scaledY = relY * scale;
+            final rotX = scaledX * dCos - scaledY * dSin;
+            final rotY = scaledX * dSin + scaledY * dCos;
+            final newPosition = Offset(center.dx + rotX, center.dy + rotY);
+            final newFontSize = (orig.fontSize * scale).clamp(8.0, 72.0);
+            final newRotation = orig.rotation + result.deltaAngle;
+
+            // 적용
+            final t = textDrawables[textId];
+            final newStyle = t.style.copyWith(fontSize: newFontSize);
+            var updated = t
+                .copyWithStyle(newStyle)
+                .copyWithPosition(newPosition);
+            try {
+              updated.rotation = newRotation;
+            } on Exception {
+              // rotation 필드 미지원 시 무시
+            }
+            textDrawables[textId] = updated;
           }
         }
 
@@ -675,7 +756,7 @@
           width: currentScribble.width,
           height: currentScribble.height,
           strokes: strokes,
-          textDrawables: currentScribble.textDrawables, // 텍스트 필드 유지
+          textDrawables: textDrawables,
           updatedAt: DateTime.now().toIso8601String(),
           version: currentScribble.version,
         );
@@ -752,9 +833,13 @@
     /// 이동 업데이트 (박스 드래그 중)
     void onMoveUpdate(DragUpdateDetails details, BuildContext context) {
       // 🔄 박스 없을 때와 동일한 체크 (통합)
+      // 스트로크 또는 텍스트 중 하나라도 선택돼 있으면 진행
+      final hasStrokesCached =
+          _selectedStrokeIds.isNotEmpty && _originalStrokePoints != null;
+      final hasTextsCached =
+          _selectedTextIds.isNotEmpty && _originalTextStates != null;
       if (_lastTransformPosition == null ||
-          _selectedStrokeIds.isEmpty ||
-          _originalStrokePoints == null) {
+          (!hasStrokesCached && !hasTextsCached)) {
         return;
       }
 
@@ -801,11 +886,10 @@
       _lastTransformPosition = null;
     }
 
-    /// 바운딩 박스 계산 메서드
+    /// 바운딩 박스 계산 메서드 (선택된 스트로크 + 텍스트 영역 모두 포함)
     Rect _calculateBoundingBox(List<int> strokeIds) {
-      if (strokeIds.isEmpty) return Rect.zero;
-
-      final strokes = scribbleNotifier.currentState.scribble.strokes;
+      final scribble = scribbleNotifier.currentState.scribble;
+      final strokes = scribble.strokes;
       double minX = double.infinity;
       double minY = double.infinity;
       double maxX = -double.infinity;
@@ -830,9 +914,76 @@
         }
       }
 
-      // 최소값이 여전히 무한대라면 유효한 스트로크가 없는 것
+      // 선택된 텍스트의 bounds도 포함
+      final textDrawables = scribble.textDrawables;
+      for (final id in _selectedTextIds) {
+        if (id < 0 || id >= textDrawables.length) continue;
+        final bounds = _calculateTextBounds(textDrawables[id]);
+        if (bounds == Rect.zero) continue;
+        minX = math.min(minX, bounds.left);
+        minY = math.min(minY, bounds.top);
+        maxX = math.max(maxX, bounds.right);
+        maxY = math.max(maxY, bounds.bottom);
+      }
+
+      // 유효한 요소가 하나도 없으면 빈 영역
       if (minX == double.infinity) return Rect.zero;
 
+      return Rect.fromLTRB(minX, minY, maxX, maxY);
+    }
+
+    /// 텍스트의 axis-aligned bounds 계산 (회전 고려해 외접 사각형)
+    Rect _calculateTextBounds(TextDrawable textDrawable) {
+      final textSpan = TextSpan(
+        text: textDrawable.text,
+        style: textDrawable.style,
+      );
+      final tp = TextPainter(
+        text: textSpan,
+        textAlign: textDrawable.alignment.textAlign,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final center = textDrawable.position;
+      final halfW = tp.width / 2;
+      final halfH = tp.height / 2;
+      double rotation = 0.0;
+      try {
+        rotation = textDrawable.rotation;
+      } on Exception {
+        rotation = 0.0;
+      }
+
+      if (rotation == 0.0) {
+        return Rect.fromLTWH(
+          center.dx - halfW,
+          center.dy - halfH,
+          tp.width,
+          tp.height,
+        );
+      }
+
+      // 회전된 텍스트의 4개 모서리를 회전시켜 외접 axis-aligned bounds 계산
+      final corners = [
+        Offset(-halfW, -halfH),
+        Offset(halfW, -halfH),
+        Offset(halfW, halfH),
+        Offset(-halfW, halfH),
+      ];
+      final cos = math.cos(rotation);
+      final sin = math.sin(rotation);
+      double minX = double.infinity;
+      double minY = double.infinity;
+      double maxX = -double.infinity;
+      double maxY = -double.infinity;
+      for (final c in corners) {
+        final x = center.dx + c.dx * cos - c.dy * sin;
+        final y = center.dy + c.dx * sin + c.dy * cos;
+        minX = math.min(minX, x);
+        minY = math.min(minY, y);
+        maxX = math.max(maxX, x);
+        maxY = math.max(maxY, y);
+      }
       return Rect.fromLTRB(minX, minY, maxX, maxY);
     }
 
@@ -1019,32 +1170,58 @@
 
     /// 원본 위치에서 델타만큼 이동 (누적 이동 방지 - 텍스트 방식과 동일)
     void _moveSelectedStrokesFromOriginal(Offset delta) {
-      if (_originalStrokePoints == null || _selectedStrokeIds.isEmpty) {
-        return;
-      }
+      final hasStrokes =
+          _originalStrokePoints != null && _selectedStrokeIds.isNotEmpty;
+      final hasTexts =
+          _originalTextStates != null && _selectedTextIds.isNotEmpty;
+      if (!hasStrokes && !hasTexts) return;
 
       final currentScribble = scribbleNotifier.currentState.scribble;
       final strokes = List<Stroke>.from(currentScribble.strokes);
 
-      // 원본 위치에서 델타만큼 이동 (텍스트와 동일한 방식)
-      for (int i = 0; i < _selectedStrokeIds.length; i++) {
-        final strokeId = _selectedStrokeIds[i];
-        if (strokeId >= 0 &&
-            strokeId < strokes.length &&
-            i < _originalStrokePoints!.length) {
-          final stroke = strokes[strokeId];
-          final originalPoints = _originalStrokePoints![i];
+      // 원본 스트로크 위치에서 델타만큼 이동
+      if (hasStrokes) {
+        for (int i = 0; i < _selectedStrokeIds.length; i++) {
+          final strokeId = _selectedStrokeIds[i];
+          if (strokeId >= 0 &&
+              strokeId < strokes.length &&
+              i < _originalStrokePoints!.length) {
+            final stroke = strokes[strokeId];
+            final originalPoints = _originalStrokePoints![i];
 
-          // 원본 포인트에서 델타만큼 이동한 새 위치 계산
-          for (
-            int j = 0;
-            j < stroke.points.length && j < originalPoints.length;
-            j++
-          ) {
-            final originalPoint = originalPoints[j];
-            stroke.points[j].x = originalPoint.dx + delta.dx;
-            stroke.points[j].y = originalPoint.dy + delta.dy;
+            for (
+              int j = 0;
+              j < stroke.points.length && j < originalPoints.length;
+              j++
+            ) {
+              final originalPoint = originalPoints[j];
+              stroke.points[j].x = originalPoint.dx + delta.dx;
+              stroke.points[j].y = originalPoint.dy + delta.dy;
+            }
           }
+        }
+      }
+
+      // 텍스트도 원본 위치에서 델타만큼 이동
+      final textDrawables = List<TextDrawable>.from(
+        currentScribble.textDrawables,
+      );
+      if (hasTexts) {
+        for (int i = 0; i < _selectedTextIds.length; i++) {
+          final textId = _selectedTextIds[i];
+          if (textId < 0 ||
+              textId >= textDrawables.length ||
+              i >= _originalTextStates!.length) {
+            continue;
+          }
+          final orig = _originalTextStates![i];
+          final newPos = Offset(
+            orig.position.dx + delta.dx,
+            orig.position.dy + delta.dy,
+          );
+          textDrawables[textId] = textDrawables[textId].copyWithPosition(
+            newPos,
+          );
         }
       }
 
@@ -1055,7 +1232,7 @@
         height: currentScribble.height,
         x: currentScribble.x,
         y: currentScribble.y,
-        textDrawables: currentScribble.textDrawables,
+        textDrawables: textDrawables,
         createdAt: currentScribble.createdAt,
         updatedAt: currentScribble.updatedAt,
         version: currentScribble.version,
@@ -1104,25 +1281,46 @@
 
     void _resetLassoState() {
       _selectedStrokeIds = [];
+      _selectedTextIds = [];
+      _originalTextStates = null;
       _lassoSelectionState = painter.LassoSelectionState();
       _isLassoTransforming = false; // 올가미 변형 상태도 초기화
     }
 
-    /// 원본 스트로크 포인트 캐싱 (텍스트 방식과 동일)
+    /// 원본 스트로크 포인트 + 텍스트 상태 캐싱 (변형 시 누적 방지)
     void _cacheOriginalStrokePoints() {
-      if (_selectedStrokeIds.isEmpty) {
-        return;
-      }
+      final scribble = scribbleNotifier.currentState.scribble;
 
-      final strokes = scribbleNotifier.currentState.scribble.strokes;
+      // 스트로크 캐싱
+      final strokes = scribble.strokes;
       _originalStrokePoints = [];
-
       for (final id in _selectedStrokeIds) {
         if (id >= 0 && id < strokes.length) {
           final stroke = strokes[id];
           final points = stroke.points.map((pt) => Offset(pt.x, pt.y)).toList();
           _originalStrokePoints!.add(points);
         }
+      }
+
+      // 텍스트 캐싱
+      final textDrawables = scribble.textDrawables;
+      _originalTextStates = [];
+      for (final id in _selectedTextIds) {
+        if (id < 0 || id >= textDrawables.length) continue;
+        final t = textDrawables[id];
+        double rot = 0.0;
+        try {
+          rot = t.rotation;
+        } on Exception {
+          rot = 0.0;
+        }
+        _originalTextStates!.add(
+          _OriginalTextState(
+            position: t.position,
+            fontSize: t.style.fontSize ?? 16.0,
+            rotation: rot,
+          ),
+        );
       }
 
       // TransformHandler에도 원본 포인트 캐싱
@@ -1163,6 +1361,8 @@
       );
 
       _selectedStrokeIds = [];
+      _selectedTextIds = [];
+      _originalTextStates = null;
       _lassoSelectionState = painter.LassoSelectionState();
       _showLassoOverlay = false;
       _isLassoTransforming = false;
