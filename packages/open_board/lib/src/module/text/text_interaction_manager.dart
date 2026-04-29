@@ -61,8 +61,11 @@ class TextInteractionManager {
   Offset? _lastTapPosition;
 
   // 텍스트 변형 관련 변수들 (올가미 방식 적용)
-  Offset? _originalTextCenter; // 텍스트 중심점
+  Offset? _originalTextCenter; // 텍스트 중심점 (resize/transform용)
   double? _originalFontSize; // 원본 폰트 크기
+
+  // 드래그 시작 시점의 원본 텍스트 위치 (delta 기반 누적 방지 이동용)
+  Offset? _originalTextPosition;
 
   // 공통 변형 핸들러
   late TransformHandler _transformHandler;
@@ -132,6 +135,16 @@ class TextInteractionManager {
         // 🔥 더블탭 감지를 드래그 준비보다 먼저 처리
         return _handleExistingTextTap(_selectedTextIndex!, adjustedPosition);
       }
+
+      // 🔥 외부 터치 deselect (올가미 매니저 패턴 미러링)
+      // 오버레이가 표시된 상태에서 선택된 텍스트 영역 밖을 터치하면
+      // 새 텍스트를 만들지 않고 deselect만 수행하여 텍스트 도구를 비활성화한다.
+      _selectedTextIndex = null;
+      _showTextOverlay = false;
+      onTextDeselected();
+      _syncWithWidgetState();
+      onStateChanged();
+      return true; // 이벤트 소비 - fall-through으로 새 텍스트 생성 차단
     }
 
     // 🔥 scribble-tools 방식: 원본 좌표 직접 사용
@@ -198,37 +211,9 @@ class TextInteractionManager {
       return true; // 이벤트 처리 완료
     }
 
-    // 텍스트 드래그 준비 상태에서 임계값 확인
-    if (!_isDraggingText &&
-        _draggingTextIndex != null &&
-        _dragStartPosition != null &&
-        _textDragOffset != null) {
-      final dragDistance = (event.localPosition - _dragStartPosition!).distance;
-
-      if (dragDistance > 15.0) {
-        _isDraggingText = true;
-
-        // 🔥 InteractiveViewer 제스처 제어를 위한 상태 변경 로그
-
-        _syncWithWidgetState();
-      }
-    }
-
-    // 텍스트 드래그 중인 경우
-    if (_isDraggingText &&
-        _draggingTextIndex != null &&
-        _textDragOffset != null) {
-      // 🔥 scribble-tools 방식: 원본 좌표 직접 사용
-      final adjustedPosition = event.localPosition; // toScene() 제거
-      final newPosition = Offset(
-        adjustedPosition.dx - _textDragOffset!.dx,
-        adjustedPosition.dy - _textDragOffset!.dy,
-      );
-
-      _updateTextPosition(_draggingTextIndex!, newPosition);
-
-      return true; // 이벤트 처리 완료
-    }
+    // 🔥 텍스트 드래그 처리는 SelectionOverlay GestureDetector(onTextMoveStart/Update/End)로
+    //   완전 위임. Listener-기반 드래그(Mech A)와의 이중 경로 충돌로 인한 위치 점프
+    //   문제(#100)를 방지한다.
 
     return false;
   }
@@ -460,46 +445,57 @@ class TextInteractionManager {
     onStateChanged();
   }
 
-  /// 텍스트 이동 업데이트 (ScribbleWidget에서 호출)
-  void onTextMoveUpdate(DragUpdateDetails details) {
-    if (_draggingTextIndex == null || _lastTransformPosition == null) return;
-
-    // 드래그 시작 감지 (임계값을 높여서 더블탭과 구분)
-    if (!_isDraggingText && _dragStartPosition != null) {
-      final dragDistance =
-          (details.localPosition - _dragStartPosition!).distance;
-
-      if (dragDistance > 15.0) {
-        _isDraggingText = true;
-        // widgetState 동기화 (드래그 시작 시)
-        _syncWithWidgetState();
-      }
-    }
-
-    if (_isDraggingText) {
-      // 올가미와 동일한 방식: 델타 계산 후 직접 이동
-      final delta = details.localPosition - _lastTransformPosition!;
-      final adjustedDelta = delta / currentScale;
-
-      // 텍스트 직접 이동
-      _moveTextDirectly(adjustedDelta);
-
-      // 다음 계산을 위해 현재 위치 저장
-      _lastTransformPosition = details.localPosition;
-    }
-  }
-
-  /// 텍스트 이동 시작 (ScribbleWidget에서 호출)
+  /// 텍스트 이동 시작 (SelectionOverlay GestureDetector → ScribbleWidget에서 호출)
+  ///
+  /// GestureDetector가 pan 임계값을 통과한 후 호출되므로 즉시 드래그 상태로 전환한다.
+  /// 올가미의 `onMoveStart`와 동일한 패턴으로 시작 시점의 위치를 캐싱한다.
   void onTextMoveStart(DragStartDetails details) {
-    if (_selectedTextIndex == null) return;
+    if (_selectedTextIndex == null ||
+        _selectedTextIndex! >= textDrawables.length) {
+      return;
+    }
 
-    // 드래그 준비
-    _prepareDrag(_selectedTextIndex!, details.localPosition);
+    final textDrawable = textDrawables[_selectedTextIndex!];
+
+    // 드래그 즉시 시작 (GestureDetector가 이미 pan을 인식한 시점)
+    _draggingTextIndex = _selectedTextIndex;
+    _isDraggingText = true;
+    _dragStartPosition = details.localPosition;
+    _lastTransformPosition = details.localPosition;
+
+    // 원본 텍스트 위치 캐싱 (delta 기반 누적 방지 이동을 위해 필수)
+    _originalTextPosition = textDrawable.position;
+    _textDragOffset = .zero; // 사용하지 않지만 cleanup 일관성을 위해 0으로 설정
+
+    _syncWithWidgetState();
+    onStateChanged();
   }
 
-  /// 텍스트 이동 종료 (ScribbleWidget에서 호출)
+  /// 텍스트 이동 업데이트 (SelectionOverlay GestureDetector → ScribbleWidget에서 호출)
+  ///
+  /// 올가미의 `_moveSelectedStrokesFromOriginal` 패턴 적용:
+  /// - 시작 시점 대비 delta 계산 (`_lastTransformPosition`은 시작 시점에만 설정, 갱신 X)
+  /// - 원본 위치 + delta로 새 위치 산출 (누적 방지)
+  void onTextMoveUpdate(DragUpdateDetails details) {
+    if (_draggingTextIndex == null ||
+        _lastTransformPosition == null ||
+        _originalTextPosition == null ||
+        !_isDraggingText) {
+      return;
+    }
+
+    // 시작 시점 대비 delta (canvas 좌표계 - 추가 스케일 보정 불필요)
+    final delta = details.localPosition - _lastTransformPosition!;
+
+    // 원본 위치 + delta (누적 방지 - 매 프레임 동일한 시작점으로부터 계산)
+    final newPosition = _originalTextPosition! + delta;
+    _updateTextPosition(_draggingTextIndex!, newPosition);
+  }
+
+  /// 텍스트 이동 종료 (SelectionOverlay GestureDetector → ScribbleWidget에서 호출)
   void onTextMoveEnd(DragEndDetails details) {
     _finishTextDrag();
+    _originalTextPosition = null;
   }
 
   /// 스크리블에서 텍스트 데이터 초기화
@@ -895,13 +891,15 @@ class TextInteractionManager {
       _lastTapTime = null;
       _lastTapPosition = null;
     } else {
-      // 단일탭 처리 - 텍스트 선택 및 바로 변형 모드 활성화
+      // 단일탭 처리 - 텍스트 선택만 수행 (#100).
+      // 드래그는 SelectionOverlay GestureDetector(Mech B)가 담당.
+      // PointerDown 즉시 _prepareDrag 호출 시:
+      //   1) isTextDragPreparing이 true로 바뀌어 InteractiveViewer 핀치 줌이 차단됨.
+      //   2) GestureDetector.onPanStart 시점에 _prepareDrag가 재실행되어
+      //      offset이 이동된 위치 기준으로 재계산되며 드래그 점프 발생.
 
       // 새로운 텍스트 선택 또는 이미 선택된 텍스트 재선택
       _selectText(textIndex);
-
-      // 드래그 준비
-      _prepareDrag(textIndex, position);
 
       // 단일탭 시에만 탭 히스토리 업데이트
       _updateTapHistory(now, position);
@@ -962,27 +960,6 @@ class TextInteractionManager {
     _showTextEditor(textDrawable);
   }
 
-  /// 드래그 준비
-  void _prepareDrag(int textIndex, Offset position) {
-    _draggingTextIndex = textIndex;
-    _dragStartPosition = position;
-    _isDraggingText = false; // 실제 드래그는 임계값 초과 시 시작
-
-    // 🔥 scribble-tools 방식: 원본 좌표 직접 사용
-    // toScene() 변환 제거
-    final textDrawable = textDrawables[textIndex];
-    _textDragOffset = Offset(
-      position.dx - textDrawable.position.dx,
-      position.dy - textDrawable.position.dy,
-    );
-
-    // �� InteractiveViewer 제스처 제어를 위한 상태 변경 로그
-
-    // widgetState 동기화
-    _syncWithWidgetState();
-    onStateChanged();
-  }
-
   /// 텍스트 위치 업데이트
   void _updateTextPosition(int index, Offset newPosition) {
     if (index < 0 || index >= textDrawables.length) {
@@ -999,52 +976,6 @@ class TextInteractionManager {
 
     onTextUpdated(updatedText);
     onStateChanged(); // 실시간 렌더링을 위한 상태 변경 알림
-  }
-
-  /// 올가미 방식의 텍스트 직접 이동 (델타 기반)
-  void _moveTextDirectly(Offset delta) {
-    if (_draggingTextIndex == null) return;
-
-    final currentScribble = scribbleNotifier.currentState.scribble;
-    final textDrawables = List<TextDrawable>.of(
-      currentScribble.textDrawables,
-    );
-
-    if (_draggingTextIndex! >= 0 &&
-        _draggingTextIndex! < textDrawables.length) {
-      final textDrawable = textDrawables[_draggingTextIndex!];
-      final oldPosition = textDrawable.position;
-      final newPosition = Offset(
-        oldPosition.dx + delta.dx,
-        oldPosition.dy + delta.dy,
-      );
-
-      // 새 위치로 텍스트 업데이트
-      final updatedText = textDrawable.copyWithPosition(newPosition);
-      textDrawables[_draggingTextIndex!] = updatedText;
-
-      // 스크리블 즉시 업데이트 (히스토리 추가 없이)
-      final updatedScribble = Scribble(
-        strokes: currentScribble.strokes,
-        width: currentScribble.width,
-        height: currentScribble.height,
-        x: currentScribble.x,
-        y: currentScribble.y,
-        textDrawables: textDrawables,
-        createdAt: currentScribble.createdAt,
-        updatedAt: DateTime.now().toIso8601String(),
-        version: currentScribble.version,
-      );
-
-      scribbleNotifier.setScribble(
-        scribble: updatedScribble,
-        addToUndoHistory: false, // 드래그 중에는 히스토리 추가 안함
-      );
-
-      // widgetState 동기화
-      _syncWithWidgetState();
-      onStateChanged(); // 실시간 렌더링
-    }
   }
 
   /// 텍스트 드래그 완료 처리
