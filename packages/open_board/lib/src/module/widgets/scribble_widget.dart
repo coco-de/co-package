@@ -1472,6 +1472,16 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
       return true; // ✅ 두 손가락 터치 시 pan 허용
     }
 
+    // 🖊️ 손모드 + 드로잉 도구일 때는 단일 터치 pan을 즉시 차단.
+    //   _processPointerDown 이전(30ms 지연 + Future.delayed 동안)에는
+    //   _isHandModeDrawingActive가 아직 false인 race window가 존재하여
+    //   InteractiveViewer ScaleGestureRecognizer가 단일 터치 드래그를
+    //   pan으로 win → onInteractionUpdate가 페이지 미리보기/이동을
+    //   트리거하던 회귀를 사전에 차단한다.
+    if (_isInHandModeWithDrawingTool()) {
+      return false;
+    }
+
     // 🖊️ 손모드에서 그리기 중일 때는 스크롤 차단 (단, 싱글 터치일 때만)
     if (_isHandModeDrawingActive) {
       return false; // 손모드 그리기 중에는 pan 제스처 완전 차단
@@ -1558,6 +1568,17 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
       return false; // ✅ 하이라이트 모드에서는 페이지 넘김 허용
     }
 
+    // 🆕 손모드 + 드로잉 도구 + 단일 터치 시점부터 페이지 넘김 차단.
+    //   _processPointerDown(30ms 지연)이 실행되기 전 race window에
+    //   InteractiveViewer ScaleGestureRecognizer가 단일 터치 드래그를
+    //   scale=1.0 제스처로 인식 → onInteractionUpdate가 발화하여
+    //   `_handleScribbleInteractionUpdate` 가 페이지 미리보기/이동을
+    //   트리거하던 회귀를 첫 update 호출 시점부터 차단한다.
+    //   멀티터치(pinch zoom)는 isMultiTouch()로 분기하여 그대로 허용.
+    if (_isInHandModeWithDrawingTool() && !pointerHandler.isMultiTouch()) {
+      return true;
+    }
+
     // 2. InteractiveViewer 제스처가 비활성화되어야 하는 상태 (펜 drawing 등)
     if (!_shouldEnableInteractiveGestures()) {
       return true;
@@ -1637,7 +1658,11 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
     if (!widget.isScribbleEnable) return;
 
     if (event.kind == ui.PointerDeviceKind.touch) {
-      pointerHandler.incrementTouch();
+      // ⚠️ incrementTouch()는 외부 Listener(`_buildScribbleLayer`의 onPointerDown,
+      //   line ~1001)가 모드 무관하게 항상 호출하므로 여기서는 호출하지 않는다.
+      //   이전엔 이중 카운팅으로 단일 손가락에서도 _activeTouchCount=2 가 되어
+      //   isMultiTouch()=true 가 되었고, 그 결과 _processPointerDown 이 schedule
+      //   되지 않아 손모드 손가락 필기가 시작되지 않던 핵심 회귀였다.
 
       // 🖊️ 멀티터치 감지 시 InteractiveViewer 상태 갱신 (핀치 줌/드래그 허용)
       if (pointerHandler.isMultiTouch()) {
@@ -1980,9 +2005,9 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
   void _handlePointerUp(PointerUpEvent event) {
     final wasMultiTouch = pointerHandler.isMultiTouch();
 
-    if (event.kind == ui.PointerDeviceKind.touch) {
-      pointerHandler.decrementTouch();
-    }
+    // ⚠️ decrementTouch()는 외부 Listener(`_buildScribbleLayer`의 onPointerUp,
+    //   line ~1018)가 모드 무관하게 항상 호출하므로 여기서는 호출하지 않는다.
+    //   incrementTouch()와 짝을 맞춰 단일 진실 소스(SSOT)로 외부 Listener만 사용.
 
     // 🖐️ 멀티터치에서 싱글터치로 전환 시 InteractiveViewer 상태 갱신
     if (wasMultiTouch && !pointerHandler.isMultiTouch()) {
@@ -2063,9 +2088,8 @@ final class _ScribbleWidgetState extends State<ScribbleWidget> {
   void _handlePointerCancel(PointerCancelEvent event) {
     final wasMultiTouch = pointerHandler.isMultiTouch();
 
-    if (event.kind == ui.PointerDeviceKind.touch) {
-      pointerHandler.decrementTouch();
-    }
+    // ⚠️ decrementTouch()는 외부 Listener(`_buildScribbleLayer`의 onPointerCancel,
+    //   line ~1027)가 모드 무관하게 항상 호출하므로 여기서는 호출하지 않는다.
 
     // 🖐️ 멀티터치에서 싱글터치로 전환 시 InteractiveViewer 상태 갱신
     if (wasMultiTouch && !pointerHandler.isMultiTouch()) {

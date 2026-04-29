@@ -14,11 +14,12 @@ abstract final class ImageCaptureUtils {
     BuildContext? context,
     Size? targetSize,
   }) async {
-    final ratio = pixelRatio ??
+    final ratio =
+        pixelRatio ??
         (context != null
             ? MediaQuery.devicePixelRatioOf(context)
             : ui.PlatformDispatcher.instance.implicitView?.devicePixelRatio ??
-                1.0);
+                  1.0);
     final size = targetSize ?? const Size(256, 256);
 
     final repaintBoundary = RenderRepaintBoundary();

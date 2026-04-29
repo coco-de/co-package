@@ -27,7 +27,6 @@ dart_code_metrics:
   # 포매터 설정 (dcm format 명령에 적용)
   formatter:
     line-length: 80
-    indent: 2
     cascading-widget-extensions: true
 
   # 메트릭 임계값

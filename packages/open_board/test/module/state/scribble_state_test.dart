@@ -8,7 +8,10 @@ void main() {
     test('모든 모드 존재', () {
       expect(ScribblePointerMode.values.length, 4);
       expect(ScribblePointerMode.values, contains(ScribblePointerMode.all));
-      expect(ScribblePointerMode.values, contains(ScribblePointerMode.penOnly));
+      expect(
+        ScribblePointerMode.values,
+        contains(ScribblePointerMode.penOnly),
+      );
     });
   });
 

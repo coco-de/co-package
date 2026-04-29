@@ -35,13 +35,19 @@ void main() {
         final points = createPoints([
           [50, 50],
         ]);
-        final result = getStrokePoints(points, options: createStrokeOptions());
+        final result = getStrokePoints(
+          points,
+          options: createStrokeOptions(),
+        );
         expect(result.length, greaterThanOrEqualTo(1));
       });
 
       test('여러 포인트 → StrokePoint 리스트', () {
         final points = createLinePoints(count: 10);
-        final result = getStrokePoints(points, options: createStrokeOptions());
+        final result = getStrokePoints(
+          points,
+          options: createStrokeOptions(),
+        );
         expect(result.length, greaterThan(0));
         expect(result.first.distance, 0);
       });
@@ -54,7 +60,10 @@ void main() {
           toY: 0,
           count: 10,
         );
-        final result = getStrokePoints(points, options: createStrokeOptions());
+        final result = getStrokePoints(
+          points,
+          options: createStrokeOptions(),
+        );
         if (result.length >= 2) {
           expect(result.last.runningLength, greaterThan(0));
         }

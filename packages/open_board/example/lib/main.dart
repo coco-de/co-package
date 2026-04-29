@@ -559,9 +559,7 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
     final path = _recording.lastObtPath;
     if (path == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No recording available. Record first!'),
-        ),
+        const SnackBar(content: Text('No recording available. Record first!')),
       );
       return;
     }

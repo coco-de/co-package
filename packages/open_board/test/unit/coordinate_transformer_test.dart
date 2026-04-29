@@ -116,7 +116,10 @@ void main() {
 
       test('screenToCanvasDistance: 거리 변환 (스케일 역산)', () {
         // 2x 스케일일 때 스크린 거리 100은 캔버스 거리 50에 해당
-        expect(transformer.screenToCanvasDistance(100.0), closeTo(50.0, 0.01));
+        expect(
+          transformer.screenToCanvasDistance(100.0),
+          closeTo(50.0, 0.01),
+        );
       });
     });
 

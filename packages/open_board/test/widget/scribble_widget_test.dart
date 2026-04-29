@@ -54,7 +54,9 @@ void main() {
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
-      final widget = tester.widget<ScribbleWidget>(find.byType(ScribbleWidget));
+      final widget = tester.widget<ScribbleWidget>(
+        find.byType(ScribbleWidget),
+      );
       expect(widget.notifier, same(scribbleNotifier));
       expect(widget.modeNotifier, same(modeNotifier));
     });
@@ -72,7 +74,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // ScribbleWidget의 child 프로퍼티가 정상적으로 전달되었는지 확인
-      final widget = tester.widget<ScribbleWidget>(find.byType(ScribbleWidget));
+      final widget = tester.widget<ScribbleWidget>(
+        find.byType(ScribbleWidget),
+      );
       expect(widget.child, isNotNull);
     });
   });

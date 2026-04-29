@@ -23,9 +23,9 @@ class LassoSelectionManager {
 
   final void Function(bool isSelecting, bool isTransforming)? onModeChanged;
   final void Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
-      onSelectionComplete;
+  onSelectionComplete;
   final void Function(List<int> selectedStrokeIds, Matrix4 transformMatrix)?
-      onTransformComplete;
+  onTransformComplete;
 
   // 올가미 선택 관련 상태
   painter.LassoSelectionState _lassoSelectionState =

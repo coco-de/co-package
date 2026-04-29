@@ -18,7 +18,10 @@ void main() {
 
     test('fromString 변환', () {
       expect(TextAlignmentExtension.fromString('left'), TextAlignment.left);
-      expect(TextAlignmentExtension.fromString('center'), TextAlignment.center);
+      expect(
+        TextAlignmentExtension.fromString('center'),
+        TextAlignment.center,
+      );
       expect(TextAlignmentExtension.fromString('right'), TextAlignment.right);
     });
 
