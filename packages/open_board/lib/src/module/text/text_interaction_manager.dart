@@ -60,8 +60,10 @@
     Offset? _lastTapPosition;
 
     // 텍스트 변형 관련 변수들 (올가미 방식 적용)
-    Offset? _originalTextCenter; // 텍스트 중심점
+    Offset? _originalTextCenter; // 텍스트 중심점 (캔버스 좌표)
     double? _originalFontSize; // 원본 폰트 크기
+    double _originalTextRotation = 0.0; // 변형 시작 시점의 회전 각도
+    Offset? _touchToButtonOffset; // 터치-버튼 오프셋 (점프 방지, 화면 좌표)
 
     // 공통 변형 핸들러
     late TransformHandler _transformHandler;
@@ -154,47 +156,12 @@
         return false;
       }
 
-      // 텍스트 변형 중인 경우 (TransformHandler 사용)
-      if (_isTextResizing &&
-          _selectedTextIndex != null &&
-          _originalTextCenter != null &&
-          _transformHandler.isResizeRotating &&
-          _originalFontSize != null) {
-        final currentTouchPoint = event.localPosition;
-
-        // TransformHandler로 스케일/회전 계산
-        final result = _transformHandler.computeResizeRotate(currentTouchPoint);
-        final clampedScale = result.scale;
-
-        // 회전 정보를 맵에 저장 (TextDrawablePainter에서 사용)
-        final textDrawable = textDrawables[_selectedTextIndex!];
-        final newStyle = textDrawable.style.copyWith(
-          fontSize: _originalFontSize! * clampedScale,
-        );
-        final updatedText = textDrawable.copyWithStyle(newStyle);
-
-        // 회전 각도를 TextDrawable에 안전하게 설정
-        try {
-          updatedText.rotation = result.deltaAngle;
-        } on Exception catch (error, stackTrace) {
-          debugPrintStack(stackTrace: stackTrace);
-          debugPrint(error.toString());
-          // rotation 설정이 실패해도 다른 변형은 계속 진행
-        }
-
-        // 텍스트 리스트 업데이트
-        textDrawables[_selectedTextIndex!] = updatedText;
-
-        // ScribbleNotifier에 즉시 업데이트 (히스토리 추가 없이)
-        scribbleNotifier.updateTextDrawable(updatedText.id, updatedText);
-
-        // 오버레이 상태 유지
-        _showTextOverlay = true;
-
-        _syncWithWidgetState();
-        onStateChanged();
-
-        return true; // 이벤트 처리 완료
+      // 텍스트 변형(스케일/회전)은 selection_overlay의 GestureDetector에서
+      // onTextTransformStart/Update가 화면 좌표 기준으로 처리한다.
+      // 여기 raw pointer 경로에서 중복 처리하면 좌표 공간이 어긋나
+      // 재선택 시 텍스트 위치가 틀어지는 부작용이 있어 제거함.
+      if (_isTextResizing) {
+        return true; // 변형 중에는 다른 처리 차단
       }
 
       // 텍스트 드래그 준비 상태에서 임계값 확인
@@ -370,16 +337,38 @@
 
       final textDrawable = textDrawables[_selectedTextIndex!];
 
-      // 텍스트 중심점 계산
-      final bounds = _getTextBounds(textDrawable);
-      _originalTextCenter = bounds.center;
+      // 텍스트 회전 피벗(캔버스 좌표) — painter가 회전 중심으로 쓰는 textDrawable.position과 동일
+      _originalTextCenter = textDrawable.position;
 
-      // 원본 폰트 크기 저장
+      // 원본 폰트 크기 / 회전 저장
       _originalFontSize = textDrawable.style.fontSize ?? 16.0;
+      _originalTextRotation = _safeRotation(textDrawable);
 
-      // TransformHandler로 크기조절/회전 시작
-      final touchPoint = details.localPosition;
-      _transformHandler.startResizeRotate(touchPoint, _originalTextCenter!);
+      // 화면 좌표 기준으로 변환 (올가미와 동일한 좌표 공간 사용)
+      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox == null) return;
+
+      final localPosition = renderBox.globalToLocal(details.globalPosition);
+
+      // 변형 핸들의 캔버스 좌표 (회전된 좌하단 모서리)
+      final canvasButtonPosition = _getTransformHandleCanvasPosition(
+        textDrawable,
+      );
+      final screenButtonPosition = _transformer.canvasToScreen(
+        canvasButtonPosition,
+      );
+      final screenCenter = _transformer.canvasToScreen(_originalTextCenter!);
+
+      // 터치-버튼 오프셋: 핸들의 임의 지점을 잡아도 버튼 정중앙을
+      // 잡은 것처럼 추적되도록 보정 (점프 방지)
+      _touchToButtonOffset = screenButtonPosition - localPosition;
+
+      // TransformHandler로 크기조절/회전 시작 (화면 좌표 기준)
+      _transformHandler.startResizeRotate(
+        screenButtonPosition,
+        screenCenter,
+        initialRotation: _originalTextRotation,
+      );
 
       _isTextResizing = true;
 
@@ -403,11 +392,20 @@
         return;
       }
 
-      final textDrawable = textDrawables[_selectedTextIndex!];
-      final currentTouchPoint = details.localPosition;
+      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox == null) return;
 
-      // TransformHandler로 스케일/회전 계산
-      final result = _transformHandler.computeResizeRotate(currentTouchPoint);
+      final textDrawable = textDrawables[_selectedTextIndex!];
+
+      // 화면 좌표에서 핸들이 있어야 할 위치
+      final localPosition = renderBox.globalToLocal(details.globalPosition);
+      final currentButtonPosition =
+          localPosition + (_touchToButtonOffset ?? Offset.zero);
+
+      // TransformHandler로 스케일/회전 계산 (화면 좌표 기준)
+      final result = _transformHandler.computeResizeRotate(
+        currentButtonPosition,
+      );
       final clampedScale = result.scale;
 
       // 새 폰트 크기 계산
@@ -417,8 +415,8 @@
       final newStyle = textDrawable.style.copyWith(fontSize: newFontSize);
       final updatedText = textDrawable.copyWithStyle(newStyle);
 
-      // 회전 각도를 TextDrawable에 직접 설정
-      updatedText.rotation = result.deltaAngle;
+      // 기존 회전 + 이번 드래그의 변화량 = 최종 회전
+      updatedText.rotation = _originalTextRotation + result.deltaAngle;
 
       // 텍스트 리스트 업데이트
       textDrawables[_selectedTextIndex!] = updatedText;
@@ -431,6 +429,47 @@
 
       _syncWithWidgetState();
       onStateChanged();
+    }
+
+    /// 텍스트의 변형 핸들(좌하단) 캔버스 좌표 계산
+    /// (TextDrawablePainter._getRotatedButtonPositions와 일치)
+    Offset _getTransformHandleCanvasPosition(TextDrawable textDrawable) {
+      final textSpan = TextSpan(
+        text: textDrawable.text,
+        style: textDrawable.style,
+      );
+      final tp = TextPainter(
+        text: textSpan,
+        textAlign: textDrawable.alignment.textAlign,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final center = textDrawable.position;
+      final halfWidth = tp.width / 2;
+      final halfHeight = tp.height / 2;
+      final rotation = _safeRotation(textDrawable);
+
+      // 좌하단 모서리 (패딩 4px 포함)
+      final corner = Offset(-halfWidth - 4, halfHeight + 4);
+
+      if (rotation == 0.0) {
+        return Offset(center.dx + corner.dx, center.dy + corner.dy);
+      }
+
+      final cos = math.cos(rotation);
+      final sin = math.sin(rotation);
+      return Offset(
+        center.dx + corner.dx * cos - corner.dy * sin,
+        center.dy + corner.dx * sin + corner.dy * cos,
+      );
+    }
+
+    double _safeRotation(TextDrawable textDrawable) {
+      try {
+        return textDrawable.rotation;
+      } on Exception {
+        return 0.0;
+      }
     }
 
     /// 텍스트 변형 종료 (TransformHandler 사용)
@@ -452,6 +491,8 @@
       _isTextResizing = false;
       _originalTextCenter = null;
       _originalFontSize = null;
+      _originalTextRotation = 0.0;
+      _touchToButtonOffset = null;
 
       // 오버레이 상태 유지 (변형 완료 후에도 선택 상태 유지)
       _showTextOverlay = true;
@@ -490,11 +531,13 @@
     }
 
     /// 텍스트 이동 시작 (ScribbleWidget에서 호출)
+    /// 주: 실제 드래그 준비(_textDragOffset 등)는 handlePointerDown 경로에서
+    /// 캔버스 좌표 기준으로 이미 처리되므로 여기서 재초기화하지 않는다.
+    /// (selection_overlay GestureDetector의 details.localPosition은
+    ///  핸들/이동 영역의 작은 박스 로컬 좌표라 그대로 쓰면 오프셋이
+    ///  잘못 계산되어 텍스트가 점프하는 버그가 발생함)
     void onTextMoveStart(DragStartDetails details) {
-      if (_selectedTextIndex == null) return;
-
-      // 드래그 준비
-      _prepareDrag(_selectedTextIndex!, details.localPosition);
+      // no-op: pointer 경로에서 이미 _prepareDrag 처리됨
     }
 
     /// 텍스트 이동 종료 (ScribbleWidget에서 호출)
@@ -1078,7 +1121,7 @@
 
     /// 컨트롤 영역 터치 처리 메서드 (회전된 텍스트 지원)
     bool? _handleControlAreaTouch(Offset position, TextDrawable textDrawable) {
-      const buttonSize = 50.0; // 더 크게 설정 // TextDrawablePainter와 동일한 크기
+      const buttonSize = 35.0; // TextDrawablePainter 시각 버튼과 동일 (70% 축소)
       const buttonRadius = buttonSize / 2;
 
       final scale = currentScale;

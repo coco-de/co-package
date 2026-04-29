@@ -1536,14 +1536,15 @@
 
         // 드로잉 모드에서 텍스트 선택 조건:
         // 1. 기존 텍스트 영역 클릭
-        // 2. 손터치(touch)인 경우만 허용 (스타일러스는 그리기만)
-        final isTouch = event.kind == ui.PointerDeviceKind.touch;
+        // 2. 손터치(touch) 또는 마우스(웹/데스크톱) 허용
+        //    스타일러스는 그리기 의도로 간주해 텍스트 상호작용 차단
+        final isTouchOrMouse =
+            event.kind == ui.PointerDeviceKind.touch ||
+            event.kind == ui.PointerDeviceKind.mouse;
         final isClickingText = _isClickingExistingText(event);
 
-        if (isClickingText && isTouch) {
+        if (isClickingText && isTouchOrMouse) {
           textHandled = textManager.handlePointerDown(event);
-        } else if (isClickingText && !isTouch) {
-          textHandled = false;
         }
 
         if (!textHandled) {

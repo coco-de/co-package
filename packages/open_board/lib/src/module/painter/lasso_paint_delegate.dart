@@ -164,7 +164,7 @@
       if (lassoSelectionState?.boundingBox == null) return;
 
       final boundingBox = lassoSelectionState!.boundingBox!;
-      const handleSize = 50.0;
+      const handleSize = 35.0; // 시각 버튼 크기 (기존 50의 70%)
       const borderColor = Colors.blue;
 
       // 1. 바운딩 박스 테두리
@@ -304,7 +304,7 @@
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3.0
         ..strokeCap = StrokeCap.round;
-      const s = 12.0;
+      const s = 8.0; // 70% 축소
       canvas.drawLine(
         center + const Offset(-s / 2, -s / 2),
         center + const Offset(s / 2, s / 2),
@@ -323,7 +323,7 @@
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5
         ..strokeCap = StrokeCap.round;
-      const s = 10.0;
+      const s = 7.0; // 70% 축소
       canvas.drawLine(
         center + const Offset(-s / 2, s / 2),
         center + const Offset(s / 2, -s / 2),

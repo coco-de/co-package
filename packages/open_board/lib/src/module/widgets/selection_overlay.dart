@@ -7,6 +7,10 @@ enum SelectionOverlayType { text }
 /// 시각적 요소는 각각의 페인터에서 처리됨:
 /// - 올가미: ScribblePainter에서 처리
 /// - 텍스트: TextDrawablePainter에서 처리
+///
+/// [deleteButtonPosition]/[transformButtonPosition]을 명시적으로 전달하면
+/// 축 정렬 boundingBox 모서리 대신 그 위치에 핸들 GestureDetector를 배치합니다.
+/// (회전된 텍스트처럼 시각적 핸들과 축 정렬 모서리가 어긋나는 경우 사용)
 List<Widget> buildSelectionOverlay({
   required SelectionOverlayType type,
   required Rect boundingBox,
@@ -17,8 +21,10 @@ List<Widget> buildSelectionOverlay({
   required Function(DragStartDetails) onMoveStart,
   required Function(DragUpdateDetails) onMoveUpdate,
   required Function(DragEndDetails) onMoveEnd,
+  Offset? deleteButtonPosition,
+  Offset? transformButtonPosition,
 }) {
-  const handleSize = 40.0; // 버튼 시각적 크기
+  const handleSize = 28.0; // 버튼 터치 영역 크기 (시각 버튼 35px + 여유)
 
   final finalBoundingBox = boundingBox;
 
@@ -26,12 +32,13 @@ List<Widget> buildSelectionOverlay({
     return [];
   }
 
-  // 버튼 위치 계산
-  final deleteButtonPosition = Offset(finalBoundingBox.right, finalBoundingBox.top);
-  final transformButtonPosition = Offset(
-    finalBoundingBox.left,
-    finalBoundingBox.bottom,
-  );
+  // 버튼 위치 계산 (override 우선)
+  final resolvedDeleteButtonPosition =
+      deleteButtonPosition ??
+      Offset(finalBoundingBox.right, finalBoundingBox.top);
+  final resolvedTransformButtonPosition =
+      transformButtonPosition ??
+      Offset(finalBoundingBox.left, finalBoundingBox.bottom);
 
   return [
     // 전체 영역 드래그 (이동)
@@ -54,8 +61,8 @@ List<Widget> buildSelectionOverlay({
 
     // 삭제 버튼 터치 영역 (우상단)
     Positioned(
-      left: deleteButtonPosition.dx - handleSize / 2,
-      top: deleteButtonPosition.dy - handleSize / 2,
+      left: resolvedDeleteButtonPosition.dx - handleSize / 2,
+      top: resolvedDeleteButtonPosition.dy - handleSize / 2,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onDelete,
@@ -70,8 +77,8 @@ List<Widget> buildSelectionOverlay({
 
     // 크기조절/회전 버튼 터치 영역 (좌하단)
     Positioned(
-      left: transformButtonPosition.dx - handleSize / 2,
-      top: transformButtonPosition.dy - handleSize / 2,
+      left: resolvedTransformButtonPosition.dx - handleSize / 2,
+      top: resolvedTransformButtonPosition.dy - handleSize / 2,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanStart: (details) {

@@ -96,7 +96,7 @@
 
     /// 텍스트 오버레이 버튼 클릭 감지 (회전 지원)
     static String? getButtonType(TextDrawable textDrawable, Offset point) {
-      const buttonSize = 40.0; // 페인터와 동일한 크기
+      const buttonSize = 28.0; // 시각 버튼(35) 대비 약간 작은 hit-detect
       const buttonRadius = buttonSize / 2;
 
       // 회전된 텍스트의 정확한 버튼 위치 계산
@@ -183,7 +183,7 @@
       }
 
       // 버튼 영역 제외
-      const buttonSize = 40.0; // 페인터와 동일한 크기
+      const buttonSize = 28.0; // 시각 버튼(35) 대비 약간 작은 hit-detect
       const buttonRadius = buttonSize / 2;
 
       // 회전된 텍스트의 정확한 버튼 위치 계산
@@ -471,7 +471,7 @@
       Canvas canvas,
       Map<String, Offset> positions,
     ) {
-      const buttonSize = 50.0; // 더 크게 설정
+      const buttonSize = 35.0; // 시각 버튼 크기 (기존 50의 70%)
       const buttonRadius = buttonSize / 2;
 
       // 삭제 버튼 (우상단)
@@ -509,7 +509,7 @@
         ..strokeWidth = 3.0
         ..strokeCap = StrokeCap.round;
 
-      const iconSize = 12.0;
+      const iconSize = 8.0; // 70% 축소
       try {
         canvas.drawLine(
           deleteButtonCenter + const Offset(-iconSize / 2, -iconSize / 2),
@@ -564,7 +564,7 @@
         ..strokeWidth = 2.5
         ..strokeCap = StrokeCap.round;
 
-      const arrowSize = 10.0;
+      const arrowSize = 7.0; // 70% 축소
       // 대각선 화살표 (↗)
       try {
         canvas.drawLine(

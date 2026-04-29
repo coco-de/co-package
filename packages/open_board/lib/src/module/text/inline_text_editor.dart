@@ -4,7 +4,6 @@
   import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_board/src/module/state/text_settings.dart';
   import 'package:open_board/src/module/text/text_drawable_extensions.dart';
-  import 'package:open_board/src/module/text/text_drawable_factory.dart';
 
   /// 터치한 위치에 나타나는 인라인 텍스트 에디터
   final class InlineTextEditor extends StatefulWidget {
@@ -50,7 +49,6 @@
     late FocusNode textFieldNode;
     double bottomViewInsets = 0;
     bool disposed = false;
-    bool _hasUserInteracted = false; // 사용자가 실제로 입력했는지 추적
     bool _isCompleting = false; // 편집 완료 중인지 추적 (중복 호출 방지)
 
     @override
@@ -67,10 +65,6 @@
       // 텍스트 변경 시 UI 업데이트를 위한 리스너 추가
       textEditingController.addListener(() {
         if (mounted && !disposed) {
-          // 사용자가 텍스트를 입력했음을 표시
-          if (textEditingController.text.isNotEmpty) {
-            _hasUserInteracted = true;
-          }
           setState(() {
             // 텍스트 변경 시 크기 재계산을 위해 rebuild
           });
@@ -79,9 +73,6 @@
 
       // 텍스트 설정
       textEditingController.text = widget.drawable.text;
-      if (!widget.isNew) {
-        _hasUserInteracted = true; // 기존 텍스트는 이미 상호작용이 있었다고 간주
-      }
 
       // 첫 프레임 렌더링 후 포커스 요청
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -117,9 +108,6 @@
         offset: newCursorPosition,
       );
 
-      // 사용자가 상호작용했음을 표시
-      _hasUserInteracted = true;
-
       // 포커스를 다시 텍스트 필드로 이동
       textFieldNode.requestFocus();
     }
@@ -132,12 +120,7 @@
       try {
         final text = textEditingController.text.trim();
 
-        // 새 텍스트인데 아직 사용자가 입력하지 않았다면 편집 상태 유지
-        if (widget.isNew && !_hasUserInteracted) {
-          return;
-        }
-
-        // 텍스트가 비어있다면 삭제 처리
+        // 텍스트가 비어있다면 에디터 닫기 (취소 처리)
         if (text.isEmpty) {
           widget.onComplete(null);
           _isCompleting = false; // 완료 상태 초기화
@@ -166,21 +149,15 @@
           letterSpacing: 0,
         );
 
-        // 텍스트 drawable 생성 또는 업데이트
-        final drawable = !widget.isNew
-            ? widget.drawable
-                  .copyWithText(text)
-                  .copyWithStyle(style)
-                  .copyWithAlignment(widget.textSettings.textAlignment)
-                  .copyWithHidden(false)
-            : TextDrawableFactory.create(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                text: text,
-                position: widget.position,
-                style: style,
-                alignment: widget.textSettings.textAlignment,
-                hidden: false,
-              );
+        // 텍스트 drawable 업데이트
+        // - 새 텍스트도 widget.drawable에 이미 올바른 캔버스 좌표(x, y)와
+        //   새 ID가 세팅되어 있으므로 그대로 재활용한다.
+        //   (widget.position은 화면 좌표라서 drawable position으로 쓰면 안 됨)
+        final drawable = widget.drawable
+            .copyWithText(text)
+            .copyWithStyle(style)
+            .copyWithAlignment(widget.textSettings.textAlignment)
+            .copyWithHidden(false);
 
         widget.onComplete(drawable);
       } on Exception catch (error, stackTrace) {
@@ -298,15 +275,12 @@
         type: MaterialType.transparency,
         child: Stack(
           children: [
-            // 배경 터치 시 완료 처리 (새 텍스트이고 아직 입력하지 않았다면 완료하지 않음)
+            // 배경 터치 시 완료 처리
+            // - 입력된 텍스트가 있으면 텍스트 추가 후 닫기
+            // - 입력이 없으면 에디터 닫기 (취소)
             Positioned.fill(
               child: GestureDetector(
-                onTap: () {
-                  if (widget.isNew && !_hasUserInteracted) {
-                    return;
-                  }
-                  _completeEditing();
-                },
+                onTap: _completeEditing,
                 child: Container(color: Colors.transparent),
               ),
             ),

@@ -842,7 +842,7 @@
       Rect boundingBox,
       BuildContext context,
     ) {
-      const buttonSize = 40.0;
+      const buttonSize = 28.0; // 70% 축소 (기존 40)
       const extraPadding = 4.0;
 
       // 🎯 다른 메서드들과 동일한 좌표 변환 방식 사용
