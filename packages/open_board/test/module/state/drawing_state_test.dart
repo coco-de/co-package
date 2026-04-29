@@ -90,7 +90,7 @@ void main() {
 
     group('reset', () {
       test('모든 상태를 기본값으로 초기화', () {
-        drawingState.selectedTool.value = DrawingTool.marker;
+        drawingState.selectedTool.value = .marker;
         drawingState.selectedColor.value = Colors.red;
         drawingState.selectedThickness.value = 10.0;
 
@@ -160,10 +160,10 @@ void main() {
         int changeCount = 0;
         drawingState.selectedTool.addListener(() => changeCount++);
 
-        drawingState.selectedTool.value = DrawingTool.pen;
+        drawingState.selectedTool.value = .pen;
         expect(changeCount, 1);
 
-        drawingState.selectedTool.value = DrawingTool.erase;
+        drawingState.selectedTool.value = .erase;
         expect(changeCount, 2);
       });
 
@@ -215,8 +215,14 @@ void main() {
 
     group('DrawingPointerMode enum', () {
       test('모든 모드 존재', () {
-        expect(DrawingPointerMode.values, contains(DrawingPointerMode.mouseOnly));
-        expect(DrawingPointerMode.values, contains(DrawingPointerMode.penOnly));
+        expect(
+          DrawingPointerMode.values,
+          contains(DrawingPointerMode.mouseOnly),
+        );
+        expect(
+          DrawingPointerMode.values,
+          contains(DrawingPointerMode.penOnly),
+        );
       });
     });
 

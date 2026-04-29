@@ -1,0 +1,58 @@
+# Lefthook Configuration
+# https://github.com/evilmartians/lefthook
+#
+# NOTE: dcm format 통일 (dart format과 동시 사용 시 충돌 방지)
+# - dcm format: 포맷팅 (dart format 제거)
+# - dart analyze + dcm analyze: 정적 분석 (서로 다른 규칙 검사)
+
+pre-commit:
+  parallel: true
+  commands:
+    # dcm 포맷 체크 (dart format 제거 — 충돌 방지)
+    format:
+      glob: "*.dart"
+      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm}.dart"
+      run: dcm format {staged_files}
+      stage_fixed: true
+
+    # dart + dcm 통합 분석
+    # NOTE: --fatal-infos로 info 레벨도 차단, dcm은 --no-fatal-style 사용
+    analyze:
+      glob: "*.dart"
+      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm}.dart"
+      run: dart analyze --fatal-infos {staged_files} && dcm analyze --no-fatal-style {staged_files}
+
+pre-push:
+  parallel: true
+  commands:
+    # dcm 포맷 체크 (dart format 제거 — 충돌 방지)
+    format-check:
+      glob: "*.dart"
+      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm}.dart"
+      run: dcm format --dry-run {push_files}
+
+    # dart + dcm 통합 분석
+    # NOTE: pre-push는 게이트 역할 → --fatal-infos + --fatal-style로 모든 이슈 차단
+    analyze:
+      glob: "*.dart"
+      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm}.dart"
+      run: dart analyze --fatal-infos {push_files} && dcm analyze --fatal-style {push_files}
+
+commit-msg:
+  commands:
+    conventional-commits:
+      run: |
+        # Conventional Commits validation
+        # Format: <type>(<scope>): <description>
+
+        commit_msg=$(cat {1})
+
+        if ! echo "$commit_msg" | head -1 | grep -qE "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_-]+\))?: .+"; then
+          echo "Error: Commit message does not follow Conventional Commits format."
+          echo "Format: <type>(<scope>): <description>"
+          echo ""
+          echo "Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+          echo ""
+          echo "Example: fix(scribble): 🐛 하이라이트 모드 핀치 줌 수정"
+          exit 1
+        fi

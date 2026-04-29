@@ -15,8 +15,7 @@ import 'package:open_board/src/module/state/scribble_mode.state.dart';
 
 import '../../helpers/test_helpers.dart';
 
-InkGroupInfo _defaultInkGroupInfo() =>
-    InkGroupInfo(selectedInk: InkModes.pencil);
+InkGroupInfo _defaultInkGroupInfo() => .new(selectedInk: InkModes.pencil);
 
 void main() {
   group('PaintDelegate 인터페이스', () {
@@ -194,9 +193,21 @@ void main() {
     test('원(circle) 도형을 렌더링한다', () {
       // 간단한 원형 점 생성
       final circlePoints = createPoints([
-        [50, 100], [60, 115], [70, 125], [85, 130], [100, 130],
-        [115, 125], [125, 115], [130, 100], [125, 85], [115, 75],
-        [100, 70], [85, 75], [75, 85], [65, 90], [55, 95],
+        [50, 100],
+        [60, 115],
+        [70, 125],
+        [85, 130],
+        [100, 130],
+        [115, 125],
+        [125, 115],
+        [130, 100],
+        [125, 85],
+        [115, 75],
+        [100, 70],
+        [85, 75],
+        [75, 85],
+        [65, 90],
+        [55, 95],
       ]);
 
       final stroke = createStroke(
@@ -242,7 +253,7 @@ void main() {
       final canvas = Canvas(recorder);
       final paint = Paint()
         ..color = Colors.black
-        ..style = PaintingStyle.stroke;
+        ..style = .stroke;
 
       expect(
         () => delegate.drawShape(canvas, paint, stroke),
@@ -275,7 +286,10 @@ void main() {
       final lassoStroke = createStroke(
         ink: 'lasso',
         points: createPoints([
-          [10, 10], [100, 10], [100, 100], [10, 100],
+          [10, 10],
+          [100, 10],
+          [100, 100],
+          [10, 100],
         ]),
       );
       final delegate = LassoPaintDelegate(
@@ -347,7 +361,7 @@ void main() {
         ..lineTo(100, 100);
       final paint = Paint()
         ..color = Colors.blue
-        ..style = PaintingStyle.stroke;
+        ..style = .stroke;
 
       expect(
         () => delegate.drawDashedPath(canvas, path, paint, [10.0, 6.0]),

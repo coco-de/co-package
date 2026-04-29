@@ -7,63 +7,63 @@ import 'package:open_board/src/data/model/timeline/timeline_serializer.dart';
 import 'package:open_board/src/module/replay/content_fingerprint_util.dart';
 import 'package:open_board/src/module/replay/timeline_file.dart';
 
-ScribbleTimeline _createSampleTimeline() => ScribbleTimeline(
-      contentId: 'book123',
-      startTimestamp: Int64(1000000),
-      endTimestamp: Int64(61000000),
-      version: '1.0.0',
-      pageIds: ['page1', 'page2', 'page3'],
-      events: [
-        TimelineEvent(
-          timestamp: Int64(1000000),
-          event: const TlPageChanged(
-            fromIndex: -1,
-            toIndex: 0,
-            fromPageId: '',
-            toPageId: 'page1',
-          ),
-        ),
-        TimelineEvent(
-          timestamp: Int64(1100000),
-          event: const TlStrokeAdded(pageId: 'page1', strokeIndex: 0),
-        ),
-        TimelineEvent(
-          timestamp: Int64(30000000),
-          event: const TlPageChanged(
-            fromIndex: 0,
-            toIndex: 1,
-            fromPageId: 'page1',
-            toPageId: 'page2',
-          ),
-        ),
-        TimelineEvent(
-          timestamp: Int64(31000000),
-          event: const TlStrokeAdded(pageId: 'page2', strokeIndex: 0),
-        ),
-        TimelineEvent(
-          timestamp: Int64(60000000),
-          event: const TlUndo(pageId: 'page2'),
-        ),
-      ],
-      snapshots: [
-        TimelineSnapshot(
-          offsetMicros: Int64(0),
-          activePageIndex: 0,
-          pageStrokeCounts: {'page1': 0, 'page2': 0},
-        ),
-        TimelineSnapshot(
-          offsetMicros: Int64(30000000),
-          activePageIndex: 0,
-          pageStrokeCounts: {'page1': 1, 'page2': 0},
-        ),
-      ],
-      pageUpdatedAt: {'page1': '2026-04-07T00:00:00Z'},
-      contentFingerprint: const ContentFingerprint(
-        hash: 'abc123',
-        algorithm: 'sha256',
-        metadata: {'bookId': 'abc', 'title': '수학1'},
+ScribbleTimeline _createSampleTimeline() => .new(
+  contentId: 'book123',
+  startTimestamp: Int64(1000000),
+  endTimestamp: Int64(61000000),
+  version: '1.0.0',
+  pageIds: ['page1', 'page2', 'page3'],
+  events: [
+    TimelineEvent(
+      timestamp: Int64(1000000),
+      event: const TlPageChanged(
+        fromIndex: -1,
+        toIndex: 0,
+        fromPageId: '',
+        toPageId: 'page1',
       ),
-    );
+    ),
+    TimelineEvent(
+      timestamp: Int64(1100000),
+      event: const TlStrokeAdded(pageId: 'page1', strokeIndex: 0),
+    ),
+    TimelineEvent(
+      timestamp: Int64(30000000),
+      event: const TlPageChanged(
+        fromIndex: 0,
+        toIndex: 1,
+        fromPageId: 'page1',
+        toPageId: 'page2',
+      ),
+    ),
+    TimelineEvent(
+      timestamp: Int64(31000000),
+      event: const TlStrokeAdded(pageId: 'page2', strokeIndex: 0),
+    ),
+    TimelineEvent(
+      timestamp: Int64(60000000),
+      event: const TlUndo(pageId: 'page2'),
+    ),
+  ],
+  snapshots: [
+    TimelineSnapshot(
+      offsetMicros: Int64(0),
+      activePageIndex: 0,
+      pageStrokeCounts: {'page1': 0, 'page2': 0},
+    ),
+    TimelineSnapshot(
+      offsetMicros: Int64(30000000),
+      activePageIndex: 0,
+      pageStrokeCounts: {'page1': 1, 'page2': 0},
+    ),
+  ],
+  pageUpdatedAt: {'page1': '2026-04-07T00:00:00Z'},
+  contentFingerprint: const ContentFingerprint(
+    hash: 'abc123',
+    algorithm: 'sha256',
+    metadata: {'bookId': 'abc', 'title': '수학1'},
+  ),
+);
 
 void main() {
   group('TimelineSerializer', () {
@@ -120,8 +120,10 @@ void main() {
           TimelineEvent(
             timestamp: Int64(1),
             event: const TlPageChanged(
-              fromIndex: 0, toIndex: 1,
-              fromPageId: 'a', toPageId: 'b',
+              fromIndex: 0,
+              toIndex: 1,
+              fromPageId: 'a',
+              toPageId: 'b',
             ),
           ),
           TimelineEvent(
@@ -197,7 +199,9 @@ void main() {
 
     test('Magic bytes 검증', () async {
       final path = '${tempDir.path}/invalid.obt';
-      await File(path).writeAsBytes([0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
+      await File(
+        path,
+      ).writeAsBytes([0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
 
       expect(
         () => TimelineFile.read(path),
@@ -228,7 +232,9 @@ void main() {
     });
 
     test('readFormatVersion — 존재하지 않는 파일', () async {
-      final version = await TimelineFile.readFormatVersion('${tempDir.path}/none.obt');
+      final version = await TimelineFile.readFormatVersion(
+        '${tempDir.path}/none.obt',
+      );
       expect(version, -1);
     });
 

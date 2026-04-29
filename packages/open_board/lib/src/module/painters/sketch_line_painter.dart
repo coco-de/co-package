@@ -13,21 +13,20 @@ mixin SketchLinePainter {
           radius: 1,
         ),
       );
-    } else {
-      final path = Path();
-      path.moveTo(stroke.points[0].x, stroke.points[0].y);
-      for (int i = 1; i < stroke.points.length - 1; ++i) {
-        final p0 = stroke.points[i];
-        final p1 = stroke.points[i + 1];
-        path.quadraticBezierTo(
-          p0.x,
-          p0.y,
-          (p0.x + p1.x) / 2,
-          (p0.y + p1.y) / 2,
-        );
-      }
-      return path;
     }
+    final path = Path();
+    path.moveTo(stroke.points[0].x, stroke.points[0].y);
+    for (int i = 1; i < stroke.points.length - 1; ++i) {
+      final p0 = stroke.points[i];
+      final p1 = stroke.points[i + 1];
+      path.quadraticBezierTo(
+        p0.x,
+        p0.y,
+        (p0.x + p1.x) / 2,
+        (p0.y + p1.y) / 2,
+      );
+    }
+    return path;
   }
 
   Path? getPathForStrokeOld(Stroke stroke) {
@@ -41,20 +40,19 @@ mixin SketchLinePainter {
           radius: 1,
         ),
       );
-    } else {
-      final path = Path();
-      path.moveTo(outlinePoints[0].x, outlinePoints[0].y);
-      for (int i = 1; i < outlinePoints.length - 1; ++i) {
-        final p0 = outlinePoints[i];
-        final p1 = outlinePoints[i + 1];
-        path.quadraticBezierTo(
-          p0.x,
-          p0.y,
-          (p0.x + p1.x) / 2,
-          (p0.y + p1.y) / 2,
-        );
-      }
-      return path;
     }
+    final path = Path();
+    path.moveTo(outlinePoints[0].x, outlinePoints[0].y);
+    for (int i = 1; i < outlinePoints.length - 1; ++i) {
+      final p0 = outlinePoints[i];
+      final p1 = outlinePoints[i + 1];
+      path.quadraticBezierTo(
+        p0.x,
+        p0.y,
+        (p0.x + p1.x) / 2,
+        (p0.y + p1.y) / 2,
+      );
+    }
+    return path;
   }
 }

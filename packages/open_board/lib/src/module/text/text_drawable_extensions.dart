@@ -5,16 +5,16 @@ import 'package:open_board/src/module/state/text_settings.dart';
 /// Extensions for protobuf TextDrawable
 extension TextDrawableExtensions on TextDrawable {
   /// Get the position as Offset
-  Offset get position => Offset(x, y);
+  Offset get position => .new(x, y);
 
   /// Get the text style
-  TextStyle get style => TextStyle(
+  TextStyle get style => .new(
     fontFamily: fontFamily.isEmpty ? null : fontFamily,
     fontSize: fontSize == 0 ? 16.0 : fontSize,
     color: Color(color),
-    fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-    fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
-    decoration: isUnderlined ? TextDecoration.underline : null,
+    fontWeight: isBold ? .bold : .normal,
+    fontStyle: isItalic ? .italic : .normal,
+    decoration: isUnderlined ? .underline : null,
   );
 
   /// Get the text alignment
@@ -44,9 +44,9 @@ extension TextDrawableExtensions on TextDrawable {
       ..fontFamily = newStyle.fontFamily ?? ''
       ..fontSize = newStyle.fontSize ?? 16.0
       ..color = (newStyle.color ?? Colors.black).toARGB32()
-      ..isBold = newStyle.fontWeight == FontWeight.bold
-      ..isItalic = newStyle.fontStyle == FontStyle.italic
-      ..isUnderlined = newStyle.decoration == TextDecoration.underline
+      ..isBold = newStyle.fontWeight == .bold
+      ..isItalic = newStyle.fontStyle == .italic
+      ..isUnderlined = newStyle.decoration == .underline
       ..updatedAt = DateTime.now().toIso8601String();
   }
 

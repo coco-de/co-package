@@ -29,7 +29,7 @@ void main() {
       test('onSave 콜백을 설정할 수 있다', () async {
         var saveCalled = false;
         persistence.setupCallbacks(
-          onSave: () async => saveCalled = true,
+          onSave: () => saveCalled = true,
         );
 
         await persistence.saveSettings();
@@ -40,7 +40,7 @@ void main() {
       test('onLoad 콜백을 설정할 수 있다', () async {
         var loadCalled = false;
         persistence.setupCallbacks(
-          onLoad: () async => loadCalled = true,
+          onLoad: () => loadCalled = true,
         );
 
         await persistence.loadSettings();
@@ -57,7 +57,7 @@ void main() {
 
       test('onSave가 설정되어 있으면 호출된다', () async {
         var callCount = 0;
-        persistence.setupCallbacks(onSave: () async => callCount++);
+        persistence.setupCallbacks(onSave: () => callCount++);
 
         await persistence.saveSettings();
         await persistence.saveSettings();
@@ -74,7 +74,7 @@ void main() {
 
       test('onLoad가 설정되어 있으면 호출된다', () async {
         var callCount = 0;
-        persistence.setupCallbacks(onLoad: () async => callCount++);
+        persistence.setupCallbacks(onLoad: () => callCount++);
 
         await persistence.loadSettings();
 
@@ -91,8 +91,8 @@ void main() {
 
       test('disablePersistence 후 onSave/onLoad가 null이 된다', () {
         persistence.setupCallbacks(
-          onSave: () async {},
-          onLoad: () async {},
+          onSave: () {},
+          onLoad: () {},
         );
 
         persistence.disablePersistence();
@@ -135,7 +135,7 @@ void main() {
     group('setupAutoSave', () {
       test('ValueNotifier 변경 시 saveSettings이 호출된다', () async {
         var saveCount = 0;
-        persistence.setupCallbacks(onSave: () async => saveCount++);
+        persistence.setupCallbacks(onSave: () => saveCount++);
 
         final pointerMode = ValueNotifier(DrawingPointerMode.penOnly);
         final selectedTool = ValueNotifier(DrawingTool.pencil);
@@ -154,7 +154,7 @@ void main() {
         selectedColor.value = Colors.red;
 
         // 비동기 처리 대기
-        await Future.delayed(Duration.zero);
+        await Future.delayed(.zero);
 
         expect(saveCount, greaterThanOrEqualTo(1));
 
@@ -168,8 +168,8 @@ void main() {
     group('clear', () {
       test('clear 후 콜백이 null이 된다', () {
         persistence.setupCallbacks(
-          onSave: () async {},
-          onLoad: () async {},
+          onSave: () {},
+          onLoad: () {},
         );
 
         persistence.clear();

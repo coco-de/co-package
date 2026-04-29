@@ -9,7 +9,7 @@ import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 
 /// 기하학적 계산을 담당하는 유틸리티 클래스
 class GeometryUtils {
-  GeometryUtils._();
+  const GeometryUtils._();
 
   /// 두 점 사이의 거리 계산
   static double calculateDistance(Point p1, Point p2) {
@@ -74,7 +74,7 @@ class GeometryUtils {
 
   /// 바운딩 박스 계산
   static Rect calculateBoundingBox(List<Point> points) {
-    if (points.isEmpty) return Rect.zero;
+    if (points.isEmpty) return .zero;
 
     double minX = points[0].x;
     double minY = points[0].y;

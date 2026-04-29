@@ -4,11 +4,11 @@ import 'geometry_utils.dart';
 
 /// 컨벡스 헐(Convex Hull) 계산을 담당하는 클래스
 class ConvexHullCalculator {
-  ConvexHullCalculator._();
+  const ConvexHullCalculator._();
 
   /// 컨벡스 헐(Convex Hull) 계산 - Graham Scan 알고리즘
   static List<Point> calculateConvexHull(List<Point> points) {
-    if (points.length < 3) return List<Point>.from(points);
+    if (points.length < 3) return List<Point>.of(points);
 
     // 1. y값이 가장 작은 점 찾기 (y값이 같다면 x값이 작은 것)
     Point pivot = _findPivotPoint(points);
@@ -95,8 +95,11 @@ class ConvexHullCalculator {
   }
 
   /// Graham Scan 수행
-  static List<Point> _performGrahamScan(Point pivot, List<Point> sortedPoints) {
-    final hull = <Point>[pivot, sortedPoints[0], sortedPoints[1]];
+  static List<Point> _performGrahamScan(
+    Point pivot,
+    List<Point> sortedPoints,
+  ) {
+    final hull = [pivot, sortedPoints[0], sortedPoints[1]];
 
     for (int i = 2; i < sortedPoints.length; i++) {
       while (hull.length > 1 &&

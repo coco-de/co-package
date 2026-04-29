@@ -7,20 +7,29 @@ void main() {
   group('PointSimplifier', () {
     group('simplifyPoints', () {
       test('2개 이하 포인트는 그대로', () {
-        final points = createPoints([[0, 0]]);
+        final points = createPoints([
+          [0, 0],
+        ]);
         final result = PointSimplifier.simplifyPoints(points, 1.0);
         expect(result.length, 1);
       });
 
       test('2개 포인트는 그대로', () {
-        final points = createPoints([[0, 0], [10, 10]]);
+        final points = createPoints([
+          [0, 0],
+          [10, 10],
+        ]);
         final result = PointSimplifier.simplifyPoints(points, 1.0);
         expect(result.length, 2);
       });
 
       test('직선 포인트 단순화', () {
         final points = createLinePoints(
-          fromX: 0, fromY: 0, toX: 100, toY: 0, count: 50,
+          fromX: 0,
+          fromY: 0,
+          toX: 100,
+          toY: 0,
+          count: 50,
         );
         final result = PointSimplifier.simplifyPoints(points, 1.0);
         expect(result.length, lessThan(points.length));
@@ -37,7 +46,11 @@ void main() {
 
     group('adaptiveSimplify', () {
       test('5개 이하 포인트는 그대로', () {
-        final points = createPoints([[0, 0], [5, 5], [10, 0]]);
+        final points = createPoints([
+          [0, 0],
+          [5, 5],
+          [10, 0],
+        ]);
         final result = PointSimplifier.adaptiveSimplify(points, 30, false);
         expect(result.length, 3);
       });
@@ -52,7 +65,11 @@ void main() {
       test('폐곡선 단순화', () {
         final points = createRectanglePoints(pointsPerSide: 10);
         final perimeter = 400.0;
-        final result = PointSimplifier.adaptiveSimplify(points, perimeter, true);
+        final result = PointSimplifier.adaptiveSimplify(
+          points,
+          perimeter,
+          true,
+        );
         expect(result.length, lessThanOrEqualTo(points.length));
         expect(result.length, greaterThanOrEqualTo(2));
       });

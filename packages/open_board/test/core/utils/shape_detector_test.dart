@@ -8,13 +8,17 @@ void main() {
     late ShapeDetector detector;
 
     setUp(() {
-      detector = ShapeDetector.instance;
+      detector = .instance;
     });
 
     group('detectAndTransform', () {
       test('포인트 5개 미만이면 polyline 반환', () {
         final stroke = createStroke(
-          points: createPoints([[0, 0], [10, 10], [20, 0]]),
+          points: createPoints([
+            [0, 0],
+            [10, 10],
+            [20, 0],
+          ]),
         );
         final result = detector.detectAndTransform(stroke);
         expect(result.shapeType, ShapeType.polyline);
@@ -22,18 +26,31 @@ void main() {
 
       test('직선 감지', () {
         final stroke = createStroke(
-          points: createLinePoints(fromX: 0, fromY: 0, toX: 200, toY: 0, count: 20),
+          points: createLinePoints(
+            fromX: 0,
+            fromY: 0,
+            toX: 200,
+            toY: 0,
+            count: 20,
+          ),
           ink: 'shape',
         );
         final result = detector.detectAndTransform(stroke);
         // 직선이거나 polyline
-        expect(result.shapeType, isIn([ShapeType.line, ShapeType.polyline, ShapeType.connector]));
+        expect(
+          result.shapeType,
+          isIn([ShapeType.line, ShapeType.polyline, ShapeType.connector]),
+        );
       });
 
       test('사각형 감지 시도', () {
         final stroke = createStroke(
           points: createRectanglePoints(
-            left: 0, top: 0, right: 100, bottom: 100, pointsPerSide: 10,
+            left: 0,
+            top: 0,
+            right: 100,
+            bottom: 100,
+            pointsPerSide: 10,
           ),
           ink: 'shape',
         );
@@ -55,19 +72,19 @@ void main() {
     group('ShapeDetectionResult', () {
       test('shapeTypeString 변환', () {
         final stroke = createStroke();
-        final result = ShapeDetectionResult(ShapeType.line, stroke);
+        final result = ShapeDetectionResult(.line, stroke);
         expect(result.shapeTypeString, 'line');
       });
 
       test('none은 빈 문자열', () {
         final stroke = createStroke();
-        final result = ShapeDetectionResult(ShapeType.none, stroke);
+        final result = ShapeDetectionResult(.none, stroke);
         expect(result.shapeTypeString, '');
       });
 
       test('confidence 기본값', () {
         final stroke = createStroke();
-        final result = ShapeDetectionResult(ShapeType.circle, stroke);
+        final result = ShapeDetectionResult(.circle, stroke);
         expect(result.confidence, 1.0);
       });
     });

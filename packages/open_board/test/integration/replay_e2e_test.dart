@@ -16,9 +16,9 @@ import 'package:open_board/src/module/replay/timeline_migrator.dart';
 import 'package:open_board/src/module/scribble_controller.dart';
 
 class FakePageProvider implements ScribblePageProvider {
+  String? lastActiveKey;
   final Map<String, ScribbleController> _controllers = {};
   final Map<String, Scribble> _scribbles = {};
-  String? lastActiveKey;
 
   @override
   ScribbleController getController(String key) {
@@ -92,33 +92,39 @@ void main() {
       recorder.start(book.eventStream);
 
       // 이벤트 발행: 스트로크 추가
-      book.emitEvent(StrokeAddedEvent(
-        pageId: 'page1',
-        stroke: Stroke(points: [Point(x: 10, y: 20)]),
-        strokeIndex: 0,
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
+      book.emitEvent(
+        StrokeAddedEvent(
+          pageId: 'page1',
+          stroke: Stroke(points: [Point(x: 10, y: 20)]),
+          strokeIndex: 0,
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
 
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
       // 페이지 전환
-      book.emitEvent(PageChangedEvent(
-        fromIndex: 0,
-        toIndex: 1,
-        fromPageId: 'page1',
-        toPageId: 'page2',
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
+      book.emitEvent(
+        PageChangedEvent(
+          fromIndex: 0,
+          toIndex: 1,
+          fromPageId: 'page1',
+          toPageId: 'page2',
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
 
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
       // 스트로크 추가
-      book.emitEvent(StrokeAddedEvent(
-        pageId: 'page2',
-        stroke: Stroke(points: [Point(x: 30, y: 40)]),
-        strokeIndex: 0,
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
+      book.emitEvent(
+        StrokeAddedEvent(
+          pageId: 'page2',
+          stroke: Stroke(points: [Point(x: 30, y: 40)]),
+          strokeIndex: 0,
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
 
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
@@ -147,7 +153,7 @@ void main() {
 
       // seek으로 모든 이벤트 발행
       replay.seek(replay.duration);
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
       // 원본과 재생된 이벤트 구조 일치 검증
       expect(replayedEvents.length, 3);
@@ -175,8 +181,10 @@ void main() {
           TimelineEvent(
             timestamp: Int64(1000),
             event: const TlPageChanged(
-              fromIndex: -1, toIndex: 0,
-              fromPageId: '', toPageId: 'p1',
+              fromIndex: -1,
+              toIndex: 0,
+              fromPageId: '',
+              toPageId: 'p1',
             ),
           ),
           TimelineEvent(
@@ -259,7 +267,10 @@ void main() {
     });
 
     test('TimelineMigrator — 현재 버전 호환성', () {
-      expect(TimelineMigrator.canMigrate(TimelineFile.currentFormatVersion), isTrue);
+      expect(
+        TimelineMigrator.canMigrate(TimelineFile.currentFormatVersion),
+        isTrue,
+      );
 
       final timeline = ScribbleTimeline(contentId: 'test');
       final result = TimelineMigrator.migrate(
@@ -286,11 +297,13 @@ void main() {
 
       // 스트로크 추가로 이벤트 발행
       final scribble = Scribble(
-        strokes: [Stroke(points: [Point(x: 5, y: 5)])],
+        strokes: [
+          Stroke(points: [Point(x: 5, y: 5)]),
+        ],
       );
       book.activeController.loadScribble(scribble);
 
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
       expect(events.whereType<StrokeAddedEvent>().length, 1);
 

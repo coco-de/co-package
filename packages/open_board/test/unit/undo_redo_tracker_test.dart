@@ -12,8 +12,8 @@ void main() {
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
         tracker.initialize(
-          ValueNotifier<bool>(false),
-          ValueNotifier<bool>(false),
+          ValueNotifier(false),
+          ValueNotifier(false),
         );
 
         expect(tracker.canUndo, isFalse);
@@ -24,8 +24,8 @@ void main() {
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
         tracker.initialize(
-          ValueNotifier<bool>(false),
-          ValueNotifier<bool>(false),
+          ValueNotifier(false),
+          ValueNotifier(false),
         );
 
         expect(tracker.canRedo, isFalse);
@@ -33,15 +33,16 @@ void main() {
     });
 
     group('updateUndoRedoState', () {
-      testWidgets('활성 notifier가 없으면 canUndo/canRedo가 false로 설정된다',
-          (tester) async {
+      testWidgets('활성 notifier가 없으면 canUndo/canRedo가 false로 설정된다', (
+        tester,
+      ) async {
         await tester.pumpWidget(const SizedBox());
 
         final registry = NotifierRegistry();
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
-        final canUndoNotifier = ValueNotifier<bool>(true);
-        final canRedoNotifier = ValueNotifier<bool>(true);
+        final canUndoNotifier = ValueNotifier(true);
+        final canRedoNotifier = ValueNotifier(true);
         tracker.initialize(canUndoNotifier, canRedoNotifier);
 
         tracker.updateUndoRedoState();
@@ -60,8 +61,8 @@ void main() {
         final registry = NotifierRegistry();
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
-        final canUndoNotifier = ValueNotifier<bool>(true);
-        final canRedoNotifier = ValueNotifier<bool>(false);
+        final canUndoNotifier = ValueNotifier(true);
+        final canRedoNotifier = ValueNotifier(false);
         tracker.initialize(canUndoNotifier, canRedoNotifier);
 
         tracker.isDisposed = true;
@@ -80,8 +81,8 @@ void main() {
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
         tracker.initialize(
-          ValueNotifier<bool>(false),
-          ValueNotifier<bool>(false),
+          ValueNotifier(false),
+          ValueNotifier(false),
         );
 
         var callCount = 0;
@@ -95,8 +96,8 @@ void main() {
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
         tracker.initialize(
-          ValueNotifier<bool>(false),
-          ValueNotifier<bool>(false),
+          ValueNotifier(false),
+          ValueNotifier(false),
         );
 
         var callCount = 0;
@@ -115,8 +116,8 @@ void main() {
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
         tracker.initialize(
-          ValueNotifier<bool>(false),
-          ValueNotifier<bool>(false),
+          ValueNotifier(false),
+          ValueNotifier(false),
         );
 
         // 예외 없이 실행되면 성공
@@ -130,8 +131,8 @@ void main() {
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
         tracker.initialize(
-          ValueNotifier<bool>(false),
-          ValueNotifier<bool>(false),
+          ValueNotifier(false),
+          ValueNotifier(false),
         );
 
         // 예외 없이 실행되면 성공
@@ -145,8 +146,8 @@ void main() {
         registry.initialize(ValueNotifier<ScribbleNotifier?>(null));
         final tracker = UndoRedoTracker(registry);
         tracker.initialize(
-          ValueNotifier<bool>(false),
-          ValueNotifier<bool>(false),
+          ValueNotifier(false),
+          ValueNotifier(false),
         );
 
         var callCount = 0;

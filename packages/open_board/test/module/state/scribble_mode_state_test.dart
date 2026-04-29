@@ -18,15 +18,18 @@ void main() {
       test('all 모드 — 모든 포인터', () {
         final state = ScribbleModeState(
           inkGroupInfo: InkGroupInfo(selectedInk: InkModes.pen),
-          allowedPointersMode: ScribblePointerMode.all,
+          allowedPointersMode: .all,
         );
-        expect(state.supportedPointerKinds, containsAll(PointerDeviceKind.values));
+        expect(
+          state.supportedPointerKinds,
+          containsAll(PointerDeviceKind.values),
+        );
       });
 
       test('mouseOnly 모드', () {
         final state = ScribbleModeState(
           inkGroupInfo: InkGroupInfo(selectedInk: InkModes.pen),
-          allowedPointersMode: ScribblePointerMode.mouseOnly,
+          allowedPointersMode: .mouseOnly,
         );
         expect(state.supportedPointerKinds, {PointerDeviceKind.mouse});
       });
@@ -34,19 +37,31 @@ void main() {
       test('penOnly 모드', () {
         final state = ScribbleModeState(
           inkGroupInfo: InkGroupInfo(selectedInk: InkModes.pen),
-          allowedPointersMode: ScribblePointerMode.penOnly,
+          allowedPointersMode: .penOnly,
         );
-        expect(state.supportedPointerKinds, contains(PointerDeviceKind.stylus));
-        expect(state.supportedPointerKinds, contains(PointerDeviceKind.invertedStylus));
+        expect(
+          state.supportedPointerKinds,
+          contains(PointerDeviceKind.stylus),
+        );
+        expect(
+          state.supportedPointerKinds,
+          contains(PointerDeviceKind.invertedStylus),
+        );
       });
 
       test('mouseAndPen 모드', () {
         final state = ScribbleModeState(
           inkGroupInfo: InkGroupInfo(selectedInk: InkModes.pen),
-          allowedPointersMode: ScribblePointerMode.mouseAndPen,
+          allowedPointersMode: .mouseAndPen,
         );
-        expect(state.supportedPointerKinds, contains(PointerDeviceKind.mouse));
-        expect(state.supportedPointerKinds, contains(PointerDeviceKind.stylus));
+        expect(
+          state.supportedPointerKinds,
+          contains(PointerDeviceKind.mouse),
+        );
+        expect(
+          state.supportedPointerKinds,
+          contains(PointerDeviceKind.stylus),
+        );
       });
     });
 

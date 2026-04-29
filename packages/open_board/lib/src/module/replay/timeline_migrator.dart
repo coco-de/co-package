@@ -6,6 +6,15 @@ import 'package:open_board/src/module/replay/timeline_file.dart';
 /// [TimelineFile.read]에서 구 버전 파일 로드 시 자동 호출된다.
 /// 순차적 체인 방식: v1 → v2 → v3 → ... → currentFormatVersion
 class TimelineMigrator {
+  /// 등록된 마이그레이션 함수 맵 (fromVersion → transform)
+  static final Map<int, ScribbleTimeline Function(ScribbleTimeline)>
+  _migrations = {
+    // 현재 formatVersion=1 이므로 등록된 마이그레이션 없음.
+    // 향후 예시:
+    // 1: _migrateV1ToV2,
+    // 2: _migrateV2ToV3,
+  };
+
   const TimelineMigrator._();
 
   /// [from] 버전에서 [TimelineFile.currentFormatVersion]까지 순차 마이그레이션
@@ -50,13 +59,4 @@ class TimelineMigrator {
     }
     return true;
   }
-
-  /// 등록된 마이그레이션 함수 맵 (fromVersion → transform)
-  static final Map<int, ScribbleTimeline Function(ScribbleTimeline)>
-      _migrations = {
-    // 현재 formatVersion=1 이므로 등록된 마이그레이션 없음.
-    // 향후 예시:
-    // 1: _migrateV1ToV2,
-    // 2: _migrateV2ToV3,
-  };
 }

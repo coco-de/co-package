@@ -22,14 +22,17 @@ import 'package:open_board/src/module/replay/timeline_file.dart';
 /// await TimelineFile.write('session.obt', timeline);
 /// ```
 class ScribbleTimelineRecorder {
+  /// 스냅샷 생성 간격 (30초)
+  static const int snapshotIntervalMicros = 30 * 1000000;
   final String contentId;
+
   final List<String> pageIds;
-
   final List<TimelineEvent> _events = [];
-  final List<TimelineSnapshot> _snapshots = [];
 
+  final List<TimelineSnapshot> _snapshots = [];
   int _startTimestamp = 0;
   int _lastSnapshotOffset = 0;
+
   StreamSubscription<ScribbleBookEvent>? _subscription;
 
   /// 현재 페이지별 스트로크 수 추적 (스냅샷용)
@@ -37,9 +40,6 @@ class ScribbleTimelineRecorder {
 
   /// 현재 활성 페이지 인덱스
   int _activePageIndex = 0;
-
-  /// 스냅샷 생성 간격 (30초)
-  static const int snapshotIntervalMicros = 30 * 1000000;
 
   /// 녹화 상태
   bool _isRecording = false;
@@ -79,9 +79,9 @@ class ScribbleTimelineRecorder {
       startTimestamp: Int64(_startTimestamp),
       endTimestamp: Int64(ScribbleBookEvent.now()),
       version: '1.0.0',
-      pageIds: List.from(pageIds),
-      events: List.from(_events),
-      snapshots: List.from(_snapshots),
+      pageIds: List.of(pageIds),
+      events: List.of(_events),
+      snapshots: List.of(_snapshots),
     );
   }
 
@@ -111,27 +111,37 @@ class ScribbleTimelineRecorder {
     final timestamp = Int64(event.timestampMicros);
 
     final data = switch (event) {
-      PageChangedEvent(:final fromIndex, :final toIndex, :final fromPageId, :final toPageId) =>
+      PageChangedEvent(
+        :final fromIndex,
+        :final toIndex,
+        :final fromPageId,
+        :final toPageId,
+      ) =>
         TlPageChanged(
           fromIndex: fromIndex,
           toIndex: toIndex,
           fromPageId: fromPageId,
           toPageId: toPageId,
         ),
-      StrokeAddedEvent(:final pageId, :final strokeIndex) =>
-        TlStrokeAdded(pageId: pageId, strokeIndex: strokeIndex),
-      StrokeRemovedEvent(:final pageId, :final strokeIndex) =>
-        TlStrokeRemoved(pageId: pageId, strokeIndex: strokeIndex),
-      UndoPerformedEvent(:final pageId) =>
-        TlUndo(pageId: pageId),
-      RedoPerformedEvent(:final pageId) =>
-        TlRedo(pageId: pageId),
-      PageAddedEvent(:final pageId, :final atIndex) =>
-        TlPageAdded(pageId: pageId, atIndex: atIndex),
-      PageRemovedEvent(:final pageId, :final atIndex) =>
-        TlPageRemoved(pageId: pageId, atIndex: atIndex),
-      PageClearedEvent(:final pageId) =>
-        TlPageCleared(pageId: pageId),
+      StrokeAddedEvent(:final pageId, :final strokeIndex) => TlStrokeAdded(
+        pageId: pageId,
+        strokeIndex: strokeIndex,
+      ),
+      StrokeRemovedEvent(:final pageId, :final strokeIndex) => TlStrokeRemoved(
+        pageId: pageId,
+        strokeIndex: strokeIndex,
+      ),
+      UndoPerformedEvent(:final pageId) => TlUndo(pageId: pageId),
+      RedoPerformedEvent(:final pageId) => TlRedo(pageId: pageId),
+      PageAddedEvent(:final pageId, :final atIndex) => TlPageAdded(
+        pageId: pageId,
+        atIndex: atIndex,
+      ),
+      PageRemovedEvent(:final pageId, :final atIndex) => TlPageRemoved(
+        pageId: pageId,
+        atIndex: atIndex,
+      ),
+      PageClearedEvent(:final pageId) => TlPageCleared(pageId: pageId),
       DoublePageToggledEvent() =>
         // DoublePageToggled는 타임라인에 기록하지 않음 (UI 전용)
         // 빈 PageChanged로 대체
@@ -191,10 +201,12 @@ class ScribbleTimelineRecorder {
 
   /// 현재 상태 스냅샷 캡처
   void _captureSnapshot(int offsetMicros) {
-    _snapshots.add(TimelineSnapshot(
-      offsetMicros: Int64(offsetMicros),
-      activePageIndex: _activePageIndex,
-      pageStrokeCounts: Map.from(_pageStrokeCounts),
-    ));
+    _snapshots.add(
+      TimelineSnapshot(
+        offsetMicros: Int64(offsetMicros),
+        activePageIndex: _activePageIndex,
+        pageStrokeCounts: Map.of(_pageStrokeCounts),
+      ),
+    );
   }
 }

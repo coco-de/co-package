@@ -6,11 +6,11 @@ import 'package:open_board/src/module/scribble_controller.dart';
 
 /// 테스트용 ScribblePageProvider
 class FakePageProvider implements ScribblePageProvider {
-  final Map<String, ScribbleController> _controllers = {};
-  final Map<String, Scribble> _scribbles = {};
   String? lastActiveKey;
   int saveCount = 0;
   int deleteCount = 0;
+  final Map<String, ScribbleController> _controllers = {};
+  final Map<String, Scribble> _scribbles = {};
 
   @override
   ScribbleController getController(String key) {
@@ -664,10 +664,12 @@ void main() {
         book.eventStream.listen(events.add);
         book.startRecording();
 
-        book.emitEvent(PageClearedEvent(
-          pageId: 'page1',
-          timestampMicros: ScribbleBookEvent.now(),
-        ));
+        book.emitEvent(
+          PageClearedEvent(
+            pageId: 'page1',
+            timestampMicros: ScribbleBookEvent.now(),
+          ),
+        );
 
         expect(events.length, 1);
         expect(events[0], isA<PageClearedEvent>());
@@ -691,10 +693,14 @@ void main() {
         await book.goToPage(2);
 
         expect(events.length, 3);
-        expect(events[0].timestampMicros,
-            lessThanOrEqualTo(events[1].timestampMicros));
-        expect(events[1].timestampMicros,
-            lessThanOrEqualTo(events[2].timestampMicros));
+        expect(
+          events[0].timestampMicros,
+          lessThanOrEqualTo(events[1].timestampMicros),
+        );
+        expect(
+          events[1].timestampMicros,
+          lessThanOrEqualTo(events[2].timestampMicros),
+        );
       });
     });
 

@@ -21,9 +21,9 @@ class TextDrawableFactory {
       fontFamily: style.fontFamily ?? '',
       fontSize: style.fontSize ?? 16.0,
       color: (style.color ?? Colors.black).toARGB32(),
-      isBold: style.fontWeight == FontWeight.bold,
-      isItalic: style.fontStyle == FontStyle.italic,
-      isUnderlined: style.decoration == TextDecoration.underline,
+      isBold: style.fontWeight == .bold,
+      isItalic: style.fontStyle == .italic,
+      isUnderlined: style.decoration == .underline,
       textAlign: _convertTextAlignment(alignment),
       hidden: hidden,
       rotation: 0.0, // 기본 회전 각도 설정
@@ -35,11 +35,11 @@ class TextDrawableFactory {
   /// Convert TextAlignment to string
   static String _convertTextAlignment(TextAlignment alignment) {
     switch (alignment) {
-      case TextAlignment.left:
+      case .left:
         return 'left';
-      case TextAlignment.center:
+      case .center:
         return 'center';
-      case TextAlignment.right:
+      case .right:
         return 'right';
     }
   }

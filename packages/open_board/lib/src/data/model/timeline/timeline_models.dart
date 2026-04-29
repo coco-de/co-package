@@ -1,4 +1,5 @@
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/foundation.dart';
 
 /// .obt 파일의 Protobuf payload에 대응하는 Dart 모델
 ///
@@ -26,18 +27,18 @@ class ScribbleTimeline {
     List<TimelineSnapshot>? snapshots,
     Map<String, String>? pageUpdatedAt,
     this.contentFingerprint,
-  })  : startTimestamp = startTimestamp ?? Int64.ZERO,
-        endTimestamp = endTimestamp ?? Int64.ZERO,
-        pageIds = pageIds ?? [],
-        events = events ?? [],
-        snapshots = snapshots ?? [],
-        pageUpdatedAt = pageUpdatedAt ?? {};
+  }) : startTimestamp = startTimestamp ?? .ZERO,
+       endTimestamp = endTimestamp ?? .ZERO,
+       pageIds = pageIds ?? [],
+       events = events ?? [],
+       snapshots = snapshots ?? [],
+       pageUpdatedAt = pageUpdatedAt ?? {};
 
   /// 전체 재생 시간 (마이크로초)
-  int get durationMicros =>
-      (endTimestamp - startTimestamp).toInt();
+  int get durationMicros => (endTimestamp - startTimestamp).toInt();
 }
 
+@immutable
 class TimelineEvent {
   final Int64 timestamp;
   final TimelineEventData event;
@@ -83,28 +84,33 @@ class TlStrokeRemoved extends TimelineEventData {
 
 class TlUndo extends TimelineEventData {
   final String pageId;
+
   const TlUndo({required this.pageId});
 }
 
 class TlRedo extends TimelineEventData {
   final String pageId;
+
   const TlRedo({required this.pageId});
 }
 
 class TlPageAdded extends TimelineEventData {
   final String pageId;
   final int atIndex;
+
   const TlPageAdded({required this.pageId, required this.atIndex});
 }
 
 class TlPageRemoved extends TimelineEventData {
   final String pageId;
   final int atIndex;
+
   const TlPageRemoved({required this.pageId, required this.atIndex});
 }
 
 class TlPageCleared extends TimelineEventData {
   final String pageId;
+
   const TlPageCleared({required this.pageId});
 }
 

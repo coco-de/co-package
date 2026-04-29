@@ -38,7 +38,7 @@ void main() {
     group('applyToModeNotifier', () {
       test('펜 도구 적용 시 색상/두께/도구가 올바르게 설정된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        selectedTool.value = DrawingTool.pen;
+        selectedTool.value = .pen;
         selectedColor.value = Colors.red;
         selectedThickness.value = 3.0;
 
@@ -57,7 +57,7 @@ void main() {
 
       test('연필 도구 적용 시 올바르게 설정된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        selectedTool.value = DrawingTool.pencil;
+        selectedTool.value = .pencil;
         selectedColor.value = Colors.blue;
         selectedThickness.value = 1.5;
 
@@ -76,7 +76,7 @@ void main() {
 
       test('마커 도구 적용 시 투명도 0.5가 적용된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        selectedTool.value = DrawingTool.marker;
+        selectedTool.value = .marker;
         selectedColor.value = Colors.green;
         selectedThickness.value = 4.0;
 
@@ -95,7 +95,7 @@ void main() {
 
       test('지우개 도구 적용 시 erase 모드가 설정된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        selectedTool.value = DrawingTool.erase;
+        selectedTool.value = .erase;
         selectedThickness.value = 5.0;
 
         synchronizer.applyToModeNotifier(
@@ -113,7 +113,7 @@ void main() {
 
       test('올가미 도구 적용 시 lasso 모드가 설정된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        selectedTool.value = DrawingTool.lasso;
+        selectedTool.value = .lasso;
 
         synchronizer.applyToModeNotifier(
           modeNotifier,
@@ -128,7 +128,7 @@ void main() {
 
       test('텍스트 도구 적용 시 text 모드가 설정된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        selectedTool.value = DrawingTool.text;
+        selectedTool.value = .text;
 
         synchronizer.applyToModeNotifier(
           modeNotifier,
@@ -143,7 +143,7 @@ void main() {
 
       test('도형 도구 적용 시 shape 모드가 설정된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        selectedTool.value = DrawingTool.shape;
+        selectedTool.value = .shape;
         selectedColor.value = Colors.orange;
         selectedThickness.value = 2.5;
 
@@ -161,8 +161,8 @@ void main() {
 
       test('mouseOnly 포인터 모드 시 all 포인터 모드가 설정된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        pointerMode.value = DrawingPointerMode.mouseOnly;
-        selectedTool.value = DrawingTool.pencil;
+        pointerMode.value = .mouseOnly;
+        selectedTool.value = .pencil;
 
         synchronizer.applyToModeNotifier(
           modeNotifier,
@@ -180,8 +180,8 @@ void main() {
 
       test('penOnly 포인터 모드 시 penOnly가 설정된다', () {
         final modeNotifier = ScribbleModeNotifier();
-        pointerMode.value = DrawingPointerMode.penOnly;
-        selectedTool.value = DrawingTool.pencil;
+        pointerMode.value = .penOnly;
+        selectedTool.value = .pencil;
 
         synchronizer.applyToModeNotifier(
           modeNotifier,
@@ -205,7 +205,7 @@ void main() {
         registry.registerModeNotifier(notifier1);
         registry.registerModeNotifier(notifier2);
 
-        selectedTool.value = DrawingTool.pen;
+        selectedTool.value = .pen;
         selectedColor.value = Colors.red;
         selectedThickness.value = 3.0;
 
@@ -239,7 +239,7 @@ void main() {
         registry.registerModeNotifier(modeNotifier);
 
         // 먼저 도구 적용
-        selectedTool.value = DrawingTool.pen;
+        selectedTool.value = .pen;
         selectedColor.value = Colors.red;
         selectedThickness.value = 3.0;
 
@@ -266,7 +266,7 @@ void main() {
     group('syncScribbleNotifierToGlobalTool', () {
       test('그리기 도구일 때 setStrokeInk이 호출된다', () {
         final scribbleNotifier = ScribbleNotifier();
-        selectedTool.value = DrawingTool.pen;
+        selectedTool.value = .pen;
 
         // 예외 없이 실행되면 성공
         synchronizer.syncScribbleNotifierToGlobalTool(
@@ -277,7 +277,7 @@ void main() {
 
       test('지우개 도구일 때 setEraser가 호출된다', () {
         final scribbleNotifier = ScribbleNotifier();
-        selectedTool.value = DrawingTool.erase;
+        selectedTool.value = .erase;
 
         // 예외 없이 실행되면 성공
         synchronizer.syncScribbleNotifierToGlobalTool(

@@ -25,8 +25,11 @@ class ScribbleRenderLayers {
   final Size? size;
   final bool drawPen;
   final bool drawEraser;
+  final double pressureFactor;
+  final double speedFactor;
+  final double minWidthFactor;
 
-  ScribbleRenderLayers({
+  const ScribbleRenderLayers({
     required this.scribbleNotifier,
     required this.modeNotifier,
     required this.widgetState,
@@ -36,6 +39,9 @@ class ScribbleRenderLayers {
     required this.size,
     required this.drawPen,
     required this.drawEraser,
+    this.pressureFactor = 1.0,
+    this.speedFactor = 1.0,
+    this.minWidthFactor = 0.3,
   });
 
   /// 배경 레이어 빌드
@@ -47,7 +53,7 @@ class ScribbleRenderLayers {
         Positioned.fill(
           child: RawImage(
             image: background,
-            fit: BoxFit.contain, // 🎯 비율 유지하면서 화면에 맞춤 (fill → contain)
+            fit: .contain, // 🎯 비율 유지하면서 화면에 맞춤 (fill → contain)
           ),
         ),
       );
@@ -106,7 +112,7 @@ class ScribbleRenderLayers {
         }
 
         return CustomPaint(
-          size: size ?? Size.infinite,
+          size: size ?? .infinite,
           painter: painter.ScribblePainter(
             state: state,
             modeState: modeNotifier.state,
@@ -192,7 +198,7 @@ class ScribbleRenderLayers {
 
     // 드래그 핸들러만 제공 (시각적 요소는 TextDrawablePainter에서 처리)
     final overlayWidgets = buildSelectionOverlay(
-      type: SelectionOverlayType.text,
+      type: .text,
       boundingBox: bounds,
       onDelete: onTextDelete,
       onTransformStart: onTextTransformStart,
@@ -325,11 +331,11 @@ class ScribbleRenderLayers {
 
   /// 바운딩 박스 계산 (내부 헬퍼 메서드)
   Rect _calculateBoundingBox(List<int> strokeIds) {
-    if (strokeIds.isEmpty) return Rect.zero;
+    if (strokeIds.isEmpty) return .zero;
 
     final strokes = scribbleNotifier.currentState.scribble.strokes;
-    double minX = double.infinity;
-    double minY = double.infinity;
+    double minX = .infinity;
+    double minY = .infinity;
     double maxX = -double.infinity;
     double maxY = -double.infinity;
 
@@ -345,7 +351,7 @@ class ScribbleRenderLayers {
       }
     }
 
-    if (minX == double.infinity) return Rect.zero;
+    if (minX == .infinity) return .zero;
     return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
 
@@ -392,7 +398,7 @@ class ScribbleRenderLayers {
         width: boundingBox.width,
         height: boundingBox.height,
         child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
+          behavior: .translucent,
           onPanStart: onMoveStart,
           onPanUpdate: onMoveUpdate,
           onPanEnd: onMoveEnd,
@@ -408,7 +414,7 @@ class ScribbleRenderLayers {
         left: deleteButtonPosition.dx - handleSize / 2,
         top: deleteButtonPosition.dy - handleSize / 2,
         child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
+          behavior: .opaque,
           onTap: onDelete,
           child: Container(
             width: handleSize,
@@ -424,7 +430,7 @@ class ScribbleRenderLayers {
         left: transformButtonPosition.dx - handleSize / 2,
         top: transformButtonPosition.dy - handleSize / 2,
         child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
+          behavior: .opaque,
           onPanStart: onTransformStart,
           onPanUpdate: onTransformUpdate,
           onPanEnd: onTransformEnd,

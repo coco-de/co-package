@@ -70,7 +70,7 @@ void main() {
 
       test('다른 설정(scaleFactor, allowedPointersMode)은 유지된다', () {
         notifier.setScaleFactor(2.0);
-        notifier.setAllowedPointersMode(ScribblePointerMode.penOnly);
+        notifier.setAllowedPointersMode(.penOnly);
 
         notifier.setStrokeWidth(5.0);
 
@@ -99,7 +99,7 @@ void main() {
 
       test('scaleFactor와 allowedPointersMode는 유지된다', () {
         notifier.setScaleFactor(1.5);
-        notifier.setAllowedPointersMode(ScribblePointerMode.mouseOnly);
+        notifier.setAllowedPointersMode(.mouseOnly);
 
         notifier.setPen();
 
@@ -137,7 +137,7 @@ void main() {
 
       test('scaleFactor와 allowedPointersMode는 유지된다', () {
         notifier.setScaleFactor(1.5);
-        notifier.setAllowedPointersMode(ScribblePointerMode.mouseOnly);
+        notifier.setAllowedPointersMode(.mouseOnly);
 
         notifier.setFixedPen();
 
@@ -219,7 +219,7 @@ void main() {
 
     group('setAllowedPointersMode()', () {
       test('포인터 모드를 mouseOnly로 변경한다', () {
-        notifier.setAllowedPointersMode(ScribblePointerMode.mouseOnly);
+        notifier.setAllowedPointersMode(.mouseOnly);
         expect(
           notifier.state.allowedPointersMode,
           ScribblePointerMode.mouseOnly,
@@ -227,7 +227,7 @@ void main() {
       });
 
       test('포인터 모드를 penOnly로 변경한다', () {
-        notifier.setAllowedPointersMode(ScribblePointerMode.penOnly);
+        notifier.setAllowedPointersMode(.penOnly);
         expect(
           notifier.state.allowedPointersMode,
           ScribblePointerMode.penOnly,
@@ -235,7 +235,7 @@ void main() {
       });
 
       test('포인터 모드를 mouseAndPen으로 변경한다', () {
-        notifier.setAllowedPointersMode(ScribblePointerMode.mouseAndPen);
+        notifier.setAllowedPointersMode(.mouseAndPen);
         expect(
           notifier.state.allowedPointersMode,
           ScribblePointerMode.mouseAndPen,
@@ -253,7 +253,7 @@ void main() {
     group('setSelectedInk()', () {
       test('잉크 타입만 변경한다', () {
         notifier.setScaleFactor(1.5);
-        notifier.setAllowedPointersMode(ScribblePointerMode.mouseOnly);
+        notifier.setAllowedPointersMode(.mouseOnly);
 
         notifier.setSelectedInk(InkModes.marker);
 

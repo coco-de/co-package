@@ -43,7 +43,9 @@ void main() {
     });
 
     test('중간 시점 → 부분 스트로크', () {
-      final stroke = _createTimedStroke(timestamps: [100, 200, 300, 400, 500]);
+      final stroke = _createTimedStroke(
+        timestamps: [100, 200, 300, 400, 500],
+      );
       final result = StrokeAnimator.createPartialStroke(stroke, 250);
 
       expect(result, isNotNull);

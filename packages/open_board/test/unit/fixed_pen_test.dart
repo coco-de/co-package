@@ -64,7 +64,7 @@ void main() {
     });
 
     test('setFixedPen() 후 allowedPointersMode가 유지된다', () {
-      notifier.setAllowedPointersMode(ScribblePointerMode.penOnly);
+      notifier.setAllowedPointersMode(.penOnly);
       notifier.setFixedPen();
       expect(
         notifier.state.allowedPointersMode,
@@ -196,7 +196,10 @@ void main() {
         createStroke(ink: 'pencil'),
         createStroke(ink: 'marker'),
       ];
-      final delegate = StrokePaintDelegate(strokes: strokes, scaleFactor: 1.5);
+      final delegate = StrokePaintDelegate(
+        strokes: strokes,
+        scaleFactor: 1.5,
+      );
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
 

@@ -99,21 +99,25 @@ class ScribbleEventBridge {
     if (currentCount > previousCount) {
       // 스트로크 추가됨
       for (var i = previousCount; i < currentCount; i++) {
-        _bookController.emitEvent(StrokeAddedEvent(
-          pageId: pageId,
-          stroke: controller.currentScribble.strokes[i],
-          strokeIndex: i,
-          timestampMicros: ScribbleBookEvent.now(),
-        ));
+        _bookController.emitEvent(
+          StrokeAddedEvent(
+            pageId: pageId,
+            stroke: controller.currentScribble.strokes[i],
+            strokeIndex: i,
+            timestampMicros: ScribbleBookEvent.now(),
+          ),
+        );
       }
     } else if (currentCount < previousCount) {
       // 스트로크 제거됨 (지우개, undo 등)
       for (var i = previousCount - 1; i >= currentCount; i--) {
-        _bookController.emitEvent(StrokeRemovedEvent(
-          pageId: pageId,
-          strokeIndex: i,
-          timestampMicros: ScribbleBookEvent.now(),
-        ));
+        _bookController.emitEvent(
+          StrokeRemovedEvent(
+            pageId: pageId,
+            strokeIndex: i,
+            timestampMicros: ScribbleBookEvent.now(),
+          ),
+        );
       }
     }
 
