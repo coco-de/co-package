@@ -69,15 +69,25 @@ void main() {
 
       test('tolerance가 0이면 모든 포인트 유지', () {
         final points = [Point(0, 0), Point(5, 10), Point(10, 0)];
-        final result =
-            DouglasPeucker.simplify(points, tolerance: 0, highestQuality: true);
+        final result = DouglasPeucker.simplify(
+          points,
+          tolerance: 0,
+          highestQuality: true,
+        );
         expect(result.length, 3);
       });
 
       test('highestQuality 옵션으로 전처리 단계 스킵', () {
-        final points = List.generate(20, (i) => Point(i.toDouble(), (i % 3).toDouble()));
+        final points = List.generate(
+          20,
+          (i) => Point(i.toDouble(), (i % 3).toDouble()),
+        );
         final normal = DouglasPeucker.simplify(points, tolerance: 1.0);
-        final hq = DouglasPeucker.simplify(points, tolerance: 1.0, highestQuality: true);
+        final hq = DouglasPeucker.simplify(
+          points,
+          tolerance: 1.0,
+          highestQuality: true,
+        );
         // highestQuality는 전처리를 스킵하므로 결과가 다를 수 있음
         expect(hq.length, greaterThanOrEqualTo(2));
         expect(normal.length, greaterThanOrEqualTo(2));
@@ -86,7 +96,10 @@ void main() {
 
     group('simplifyRadialDistance', () {
       test('1개 이하 포인트는 그대로', () {
-        expect(DouglasPeucker.simplifyRadialDistance([Point(0, 0)], 1), hasLength(1));
+        expect(
+          DouglasPeucker.simplifyRadialDistance([Point(0, 0)], 1),
+          hasLength(1),
+        );
       });
 
       test('가까운 포인트 제거', () {

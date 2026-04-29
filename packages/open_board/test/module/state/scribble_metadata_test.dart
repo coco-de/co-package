@@ -15,7 +15,10 @@ void main() {
   group('ConflictResolution', () {
     test('모든 해결 방식 존재', () {
       expect(ConflictResolution.values, contains(ConflictResolution.none));
-      expect(ConflictResolution.values, contains(ConflictResolution.localWins));
+      expect(
+        ConflictResolution.values,
+        contains(ConflictResolution.localWins),
+      );
       expect(ConflictResolution.values, contains(ConflictResolution.manual));
     });
   });

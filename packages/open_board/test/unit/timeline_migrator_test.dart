@@ -7,26 +7,26 @@ import 'package:open_board/src/data/model/timeline/timeline_models.dart';
 import 'package:open_board/src/module/replay/timeline_file.dart';
 import 'package:open_board/src/module/replay/timeline_migrator.dart';
 
-ScribbleTimeline _createSampleTimeline() => ScribbleTimeline(
-      contentId: 'book123',
-      startTimestamp: Int64(1000000),
-      endTimestamp: Int64(61000000),
-      version: '1.0.0',
-      pageIds: ['page1', 'page2'],
-      events: [
-        TimelineEvent(
-          timestamp: Int64(1000000),
-          event: const TlStrokeAdded(pageId: 'page1', strokeIndex: 0),
-        ),
-      ],
-      snapshots: [
-        TimelineSnapshot(
-          offsetMicros: Int64(0),
-          activePageIndex: 0,
-          pageStrokeCounts: {'page1': 0},
-        ),
-      ],
-    );
+ScribbleTimeline _createSampleTimeline() => .new(
+  contentId: 'book123',
+  startTimestamp: Int64(1000000),
+  endTimestamp: Int64(61000000),
+  version: '1.0.0',
+  pageIds: ['page1', 'page2'],
+  events: [
+    TimelineEvent(
+      timestamp: Int64(1000000),
+      event: const TlStrokeAdded(pageId: 'page1', strokeIndex: 0),
+    ),
+  ],
+  snapshots: [
+    TimelineSnapshot(
+      offsetMicros: Int64(0),
+      activePageIndex: 0,
+      pageStrokeCounts: {'page1': 0},
+    ),
+  ],
+);
 
 void main() {
   group('TimelineMigrator', () {
@@ -113,6 +113,6 @@ void main() {
 }
 
 List<int> _uint32ToBytes(int value) {
-  final data = ByteData(4)..setUint32(0, value, Endian.little);
+  final data = ByteData(4)..setUint32(0, value, .little);
   return data.buffer.asUint8List();
 }

@@ -130,8 +130,7 @@ void main() {
         );
 
         // 현재 위치: (300, 100) → 거리 200 → 스케일 2.0
-        final result =
-            handler.computeResizeRotate(const Offset(300, 100));
+        final result = handler.computeResizeRotate(const Offset(300, 100));
 
         expect(result.scale, closeTo(2.0, 0.01));
         expect(result.deltaAngle, closeTo(0.0, 0.01));
@@ -144,8 +143,7 @@ void main() {
         );
 
         // 현재 위치: (150, 100) → 거리 50 → 스케일 0.5
-        final result =
-            handler.computeResizeRotate(const Offset(150, 100));
+        final result = handler.computeResizeRotate(const Offset(150, 100));
 
         expect(result.scale, closeTo(0.5, 0.01));
       });
@@ -157,8 +155,7 @@ void main() {
         );
 
         // 매우 가까운 위치 → 거리 5 → 스케일 0.05 → 클램프 0.1
-        final result =
-            handler.computeResizeRotate(const Offset(105, 100));
+        final result = handler.computeResizeRotate(const Offset(105, 100));
 
         expect(result.scale, closeTo(0.1, 0.01));
       });
@@ -170,8 +167,7 @@ void main() {
         );
 
         // 매우 먼 위치 → 거리 500 → 스케일 5.0 → 클램프 3.0
-        final result =
-            handler.computeResizeRotate(const Offset(600, 100));
+        final result = handler.computeResizeRotate(const Offset(600, 100));
 
         expect(result.scale, closeTo(3.0, 0.01));
       });
@@ -184,8 +180,7 @@ void main() {
         );
 
         // 현재 위치: (100, 200) → 각도 pi/2
-        final result =
-            handler.computeResizeRotate(const Offset(100, 200));
+        final result = handler.computeResizeRotate(const Offset(100, 200));
 
         expect(result.deltaAngle, closeTo(math.pi / 2, 0.01));
       });
@@ -197,15 +192,13 @@ void main() {
         );
 
         // 현재 위치: (100, 0) → 각도 -pi/2
-        final result =
-            handler.computeResizeRotate(const Offset(100, 0));
+        final result = handler.computeResizeRotate(const Offset(100, 0));
 
         expect(result.deltaAngle, closeTo(-math.pi / 2, 0.01));
       });
 
       test('computeResizeRotate: 초기화 전에는 기본값 반환', () {
-        final result =
-            handler.computeResizeRotate(const Offset(200, 200));
+        final result = handler.computeResizeRotate(const Offset(200, 200));
 
         expect(result.scale, 1.0);
         expect(result.deltaAngle, 0.0);
@@ -219,8 +212,7 @@ void main() {
         );
 
         // 동일 위치 → 스케일 1.0, deltaAngle 0
-        final result =
-            handler.computeResizeRotate(const Offset(200, 100));
+        final result = handler.computeResizeRotate(const Offset(200, 100));
 
         expect(result.scale, closeTo(1.0, 0.01));
         expect(result.deltaAngle, closeTo(0.0, 0.01));
@@ -394,8 +386,7 @@ void main() {
         );
         handler.reset();
 
-        final result =
-            handler.computeResizeRotate(const Offset(300, 100));
+        final result = handler.computeResizeRotate(const Offset(300, 100));
 
         expect(result.scale, 1.0);
         expect(result.deltaAngle, 0.0);
@@ -422,8 +413,9 @@ void main() {
           const Offset(200, 100),
           const Offset(100, 100),
         );
-        final resizeResult =
-            nullHandler.computeResizeRotate(const Offset(300, 100));
+        final resizeResult = nullHandler.computeResizeRotate(
+          const Offset(300, 100),
+        );
         expect(resizeResult.scale, closeTo(2.0, 0.01));
 
         nullHandler.endResizeRotate();

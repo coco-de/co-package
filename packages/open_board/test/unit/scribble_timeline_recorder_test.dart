@@ -47,14 +47,16 @@ void main() {
     test('이벤트 수집 — StrokeAdded', () async {
       recorder.start(eventController.stream);
 
-      eventController.add(StrokeAddedEvent(
-        pageId: 'page1',
-        stroke: _fakeStroke(),
-        strokeIndex: 0,
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
+      eventController.add(
+        StrokeAddedEvent(
+          pageId: 'page1',
+          stroke: _fakeStroke(),
+          strokeIndex: 0,
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
 
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
       expect(recorder.eventCount, 1);
 
       final timeline = recorder.stop();
@@ -69,15 +71,17 @@ void main() {
     test('이벤트 수집 — PageChanged', () async {
       recorder.start(eventController.stream);
 
-      eventController.add(PageChangedEvent(
-        fromIndex: 0,
-        toIndex: 1,
-        fromPageId: 'page1',
-        toPageId: 'page2',
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
+      eventController.add(
+        PageChangedEvent(
+          fromIndex: 0,
+          toIndex: 1,
+          fromPageId: 'page1',
+          toPageId: 'page2',
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
 
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
       final timeline = recorder.stop();
       expect(timeline.events[0].event, isA<TlPageChanged>());
@@ -93,22 +97,31 @@ void main() {
       final now = ScribbleBookEvent.now();
       final events = <ScribbleBookEvent>[
         PageChangedEvent(
-          fromIndex: 0, toIndex: 1,
-          fromPageId: 'page1', toPageId: 'page2',
+          fromIndex: 0,
+          toIndex: 1,
+          fromPageId: 'page1',
+          toPageId: 'page2',
           timestampMicros: now,
         ),
         StrokeAddedEvent(
-          pageId: 'page1', stroke: _fakeStroke(), strokeIndex: 0,
+          pageId: 'page1',
+          stroke: _fakeStroke(),
+          strokeIndex: 0,
           timestampMicros: now + 1,
         ),
         StrokeRemovedEvent(
-          pageId: 'page1', strokeIndex: 0,
+          pageId: 'page1',
+          strokeIndex: 0,
           timestampMicros: now + 2,
         ),
         UndoPerformedEvent(pageId: 'page1', timestampMicros: now + 3),
         RedoPerformedEvent(pageId: 'page1', timestampMicros: now + 4),
         PageAddedEvent(pageId: 'page3', atIndex: 2, timestampMicros: now + 5),
-        PageRemovedEvent(pageId: 'page3', atIndex: 2, timestampMicros: now + 6),
+        PageRemovedEvent(
+          pageId: 'page3',
+          atIndex: 2,
+          timestampMicros: now + 6,
+        ),
         PageClearedEvent(pageId: 'page1', timestampMicros: now + 7),
       ];
 
@@ -116,7 +129,7 @@ void main() {
         eventController.add(event);
       }
 
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
       final timeline = recorder.stop();
       expect(timeline.events.length, 8);
@@ -144,20 +157,24 @@ void main() {
     test('스냅샷 — 스트로크 카운트 추적', () async {
       recorder.start(eventController.stream);
 
-      eventController.add(StrokeAddedEvent(
-        pageId: 'page1',
-        stroke: _fakeStroke(),
-        strokeIndex: 0,
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
-      eventController.add(StrokeAddedEvent(
-        pageId: 'page1',
-        stroke: _fakeStroke(),
-        strokeIndex: 1,
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
+      eventController.add(
+        StrokeAddedEvent(
+          pageId: 'page1',
+          stroke: _fakeStroke(),
+          strokeIndex: 0,
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
+      eventController.add(
+        StrokeAddedEvent(
+          pageId: 'page1',
+          stroke: _fakeStroke(),
+          strokeIndex: 1,
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
 
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
       final timeline = recorder.stop();
       // 초기 스냅샷만 존재 (30초 미경과)
@@ -190,4 +207,4 @@ void main() {
   });
 }
 
-Stroke _fakeStroke() => Stroke(points: [Point(x: 10, y: 20)]);
+Stroke _fakeStroke() => .new(points: [Point(x: 10, y: 20)]);

@@ -28,6 +28,10 @@
     // 콜백 함수들
     final void Function(TextDrawable textDrawable) onTextSelected;
 
+    /// PR #100 도입: 외부에서 텍스트 편집 시작을 통지받기 위한 콜백
+    /// (현재 본 패키지 내부에서는 호출하지 않으나 main의 API 호환을 위해 유지)
+    final void Function(TextDrawable textDrawable)? onTextEdit;
+
     final void Function(TextDrawable textDrawable) onTextUpdated;
 
     final void Function() onTextDeselected; // ScribbleWidgetState 참조 추가
@@ -79,6 +83,7 @@
       required this.onTextUpdated,
       required this.onTextDeselected,
       required this.widgetState,
+      this.onTextEdit,
     }) {
       _transformHandler = TransformHandler();
       _initializeFromScribble();

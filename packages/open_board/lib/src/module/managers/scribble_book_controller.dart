@@ -59,6 +59,17 @@ class ScribbleBookController extends ChangeNotifier {
   /// 콘텐츠 식별자 (캐시 키 접두사)
   final String contentId;
 
+  /// 외부 저장소 위임
+  ScribblePersistenceDelegate? persistenceDelegate;
+
+  /// 첫 페이지 단면 전략 (양면 모드에서 첫 페이지만 단면으로 표시)
+  final bool firstPageSingle;
+
+  // ===== 인접 페이지 중복 스트로크 제거 =====
+
+  /// 중복 스트로크 자동 제거 활성화 여부
+  bool enableDuplicateRemoval = false;
+
   /// 내부 페이지 프로바이더
   final ScribblePageProvider _pageProvider;
 
@@ -68,14 +79,8 @@ class ScribbleBookController extends ChangeNotifier {
   /// 현재 페이지 인덱스
   int _currentPageIndex;
 
-  /// 외부 저장소 위임
-  ScribblePersistenceDelegate? persistenceDelegate;
-
   /// 양면 모드 여부
   bool _isDoublePageMode = false;
-
-  /// 첫 페이지 단면 전략 (양면 모드에서 첫 페이지만 단면으로 표시)
-  final bool firstPageSingle;
 
   /// 현재 저장/로드 진행 중 여부
   bool _isBusy = false;
@@ -101,14 +106,14 @@ class ScribbleBookController extends ChangeNotifier {
     int initialPageIndex = 0,
     this.persistenceDelegate,
     this.firstPageSingle = true,
-  })  : assert(pageIds.isNotEmpty, 'pageIds must not be empty'),
-        assert(
-          initialPageIndex >= 0 && initialPageIndex < pageIds.length,
-          'initialPageIndex out of range',
-        ),
-        _pageProvider = pageProvider,
-        _pageIds = List<String>.from(pageIds),
-        _currentPageIndex = initialPageIndex;
+  }) : assert(pageIds.isNotEmpty, 'pageIds must not be empty'),
+       assert(
+         initialPageIndex >= 0 && initialPageIndex < pageIds.length,
+         'initialPageIndex out of range',
+       ),
+       _pageProvider = pageProvider,
+       _pageIds = List<String>.of(pageIds),
+       _currentPageIndex = initialPageIndex;
 
   // ===== 페이지 상태 접근자 =====
 
@@ -145,23 +150,6 @@ class ScribbleBookController extends ChangeNotifier {
 
   /// 이벤트 기록 여부
   bool get isRecording => _isRecording;
-
-  /// 이벤트 기록 시작
-  void startRecording() {
-    _isRecording = true;
-  }
-
-  /// 이벤트 기록 중지
-  void stopRecording() {
-    _isRecording = false;
-  }
-
-  /// 이벤트 수동 발행 (외부에서 커스텀 이벤트 추가 시)
-  void emitEvent(ScribbleBookEvent event) {
-    if (_isRecording && !_eventController.isClosed) {
-      _eventController.add(event);
-    }
-  }
 
   // ===== 양면 모드 =====
 
@@ -201,6 +189,31 @@ class ScribbleBookController extends ChangeNotifier {
     return _pageProvider.getController(key);
   }
 
+  // ===== ScribbleController 접근 =====
+
+  /// 현재 페이지의 ScribbleController
+  ScribbleController get activeController {
+    final key = _buildKey(currentPageId);
+    return _pageProvider.getController(key);
+  }
+
+  /// 이벤트 기록 시작
+  void startRecording() {
+    _isRecording = true;
+  }
+
+  /// 이벤트 기록 중지
+  void stopRecording() {
+    _isRecording = false;
+  }
+
+  /// 이벤트 수동 발행 (외부에서 커스텀 이벤트 추가 시)
+  void emitEvent(ScribbleBookEvent event) {
+    if (_isRecording && !_eventController.isClosed) {
+      _eventController.add(event);
+    }
+  }
+
   /// 양면 모드 토글
   ///
   /// 토글 시 현재 페이지를 저장하고, 필요한 경우 스트로크를 분할/병합합니다.
@@ -214,10 +227,12 @@ class ScribbleBookController extends ChangeNotifier {
 
       _isDoublePageMode = !_isDoublePageMode;
 
-      emitEvent(DoublePageToggledEvent(
-        enabled: _isDoublePageMode,
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
+      emitEvent(
+        DoublePageToggledEvent(
+          enabled: _isDoublePageMode,
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
 
       notifyListeners();
     } finally {
@@ -244,14 +259,6 @@ class ScribbleBookController extends ChangeNotifier {
     if (pageIndex != null) {
       await goToPage(pageIndex);
     }
-  }
-
-  // ===== ScribbleController 접근 =====
-
-  /// 현재 페이지의 ScribbleController
-  ScribbleController get activeController {
-    final key = _buildKey(currentPageId);
-    return _pageProvider.getController(key);
   }
 
   /// 특정 페이지의 ScribbleController
@@ -301,13 +308,15 @@ class ScribbleBookController extends ChangeNotifier {
         ),
       );
 
-      emitEvent(PageChangedEvent(
-        fromIndex: previousIndex,
-        toIndex: index,
-        fromPageId: previousPageId,
-        toPageId: nextPageId,
-        timestampMicros: ScribbleBookEvent.now(),
-      ));
+      emitEvent(
+        PageChangedEvent(
+          fromIndex: previousIndex,
+          toIndex: index,
+          fromPageId: previousPageId,
+          toPageId: nextPageId,
+          timestampMicros: ScribbleBookEvent.now(),
+        ),
+      );
 
       notifyListeners();
     } finally {
@@ -348,11 +357,13 @@ class ScribbleBookController extends ChangeNotifier {
       _currentPageIndex++;
     }
 
-    emitEvent(PageAddedEvent(
-      pageId: id,
-      atIndex: insertIndex,
-      timestampMicros: ScribbleBookEvent.now(),
-    ));
+    emitEvent(
+      PageAddedEvent(
+        pageId: id,
+        atIndex: insertIndex,
+        timestampMicros: ScribbleBookEvent.now(),
+      ),
+    );
 
     notifyListeners();
   }
@@ -368,11 +379,13 @@ class ScribbleBookController extends ChangeNotifier {
     final removedPageId = _pageIds[index];
     final removedKey = _buildKey(removedPageId);
 
-    emitEvent(PageRemovedEvent(
-      pageId: removedPageId,
-      atIndex: index,
-      timestampMicros: ScribbleBookEvent.now(),
-    ));
+    emitEvent(
+      PageRemovedEvent(
+        pageId: removedPageId,
+        atIndex: index,
+        timestampMicros: ScribbleBookEvent.now(),
+      ),
+    );
 
     // 캐시 정리
     _pageProvider.deleteScribble(removedKey);
@@ -415,8 +428,7 @@ class ScribbleBookController extends ChangeNotifier {
     final pageId = _pageIds.removeAt(oldIndex);
 
     // removeAt 후 인덱스 보정
-    final adjustedNewIndex =
-        newIndex > oldIndex ? newIndex - 1 : newIndex;
+    final adjustedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
     _pageIds.insert(adjustedNewIndex, pageId);
 
     // 현재 페이지 인덱스 업데이트
@@ -450,11 +462,6 @@ class ScribbleBookController extends ChangeNotifier {
     }
   }
 
-  // ===== 인접 페이지 중복 스트로크 제거 =====
-
-  /// 중복 스트로크 자동 제거 활성화 여부
-  bool enableDuplicateRemoval = false;
-
   /// 인접 페이지에서 중복 스트로크 제거
   ///
   /// 현재 페이지에서 삭제된 스트로크가 인접 페이지에도 존재하면 자동 제거합니다.
@@ -477,10 +484,12 @@ class ScribbleBookController extends ChangeNotifier {
     final currentScribble = currentController.currentScribble;
 
     // 삭제된 스트로크 해시 계산
-    final previousHashes =
-        ScribbleHashUtil.generateStrokeHashSet(previousScribble.strokes);
-    final currentHashes =
-        ScribbleHashUtil.generateStrokeHashSet(currentScribble.strokes);
+    final previousHashes = ScribbleHashUtil.generateStrokeHashSet(
+      previousScribble.strokes,
+    );
+    final currentHashes = ScribbleHashUtil.generateStrokeHashSet(
+      currentScribble.strokes,
+    );
     final deletedHashes = previousHashes.difference(currentHashes);
 
     if (deletedHashes.isEmpty) return 0;
@@ -535,6 +544,28 @@ class ScribbleBookController extends ChangeNotifier {
     return totalRemoved;
   }
 
+  // ===== 유틸리티 =====
+
+  /// 특정 페이지가 비어있는지 확인
+  bool isPageEmpty(int index) {
+    _assertValidIndex(index);
+    final key = _buildKey(_pageIds[index]);
+    return _pageProvider.isPageEmpty(key);
+  }
+
+  /// 특정 페이지 ID의 인덱스 조회
+  int indexOfPage(String pageId) => _pageIds.indexOf(pageId);
+
+  @override
+  void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    _isRecording = false;
+    _pageChangeController.close();
+    _eventController.close();
+    super.dispose();
+  }
+
   /// 스트로크의 X 좌표를 오프셋만큼 이동
   Stroke _transformStroke(Stroke stroke, double xOffset) {
     final transformed = Stroke()
@@ -558,18 +589,6 @@ class ScribbleBookController extends ChangeNotifier {
     return transformed;
   }
 
-  // ===== 유틸리티 =====
-
-  /// 특정 페이지가 비어있는지 확인
-  bool isPageEmpty(int index) {
-    _assertValidIndex(index);
-    final key = _buildKey(_pageIds[index]);
-    return _pageProvider.isPageEmpty(key);
-  }
-
-  /// 특정 페이지 ID의 인덱스 조회
-  int indexOfPage(String pageId) => _pageIds.indexOf(pageId);
-
   // ===== 내부 메서드 =====
 
   /// 양면 모드에서 현재 페이지의 오른쪽 페이지 인덱스
@@ -590,9 +609,7 @@ class ScribbleBookController extends ChangeNotifier {
       if (!isLeftPage) return null; // 오른쪽 페이지에서는 secondary 없음
     } else {
       final isLeftPage = _currentPageIndex.isEven;
-      rightIndex = isLeftPage
-          ? _currentPageIndex + 1
-          : _currentPageIndex;
+      rightIndex = isLeftPage ? _currentPageIndex + 1 : _currentPageIndex;
       if (!isLeftPage) return null;
     }
 
@@ -610,10 +627,9 @@ class ScribbleBookController extends ChangeNotifier {
       if (spreadIndex == 0) return 0;
       final pageIndex = 1 + (spreadIndex - 1) * 2;
       return pageIndex < _pageIds.length ? pageIndex : null;
-    } else {
-      final pageIndex = spreadIndex * 2;
-      return pageIndex < _pageIds.length ? pageIndex : null;
     }
+    final pageIndex = spreadIndex * 2;
+    return pageIndex < _pageIds.length ? pageIndex : null;
   }
 
   String _buildKey(String pageId) => '$contentId/$pageId';
@@ -682,19 +698,10 @@ class ScribbleBookController extends ChangeNotifier {
       }
     }
   }
-
-  @override
-  void dispose() {
-    if (_isDisposed) return;
-    _isDisposed = true;
-    _isRecording = false;
-    _pageChangeController.close();
-    _eventController.close();
-    super.dispose();
-  }
 }
 
 /// 페이지 전환 이벤트
+@immutable
 class PageChangeEvent {
   final int fromIndex;
   final int toIndex;

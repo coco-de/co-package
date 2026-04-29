@@ -3,11 +3,11 @@ import 'package:open_board/src/core/algorithm/douglas_peucker.dart' as dp;
 
 /// 포인트 단순화를 담당하는 클래스
 class PointSimplifier {
-  PointSimplifier._();
+  const PointSimplifier._();
 
   /// Douglas-Peucker 알고리즘을 사용한 포인트 단순화
   static List<Point> simplifyPoints(List<Point> points, double epsilon) {
-    if (points.length <= 2) return List.from(points);
+    if (points.length <= 2) return List.of(points);
 
     // 입력 포인트 수에 따라 단순화 강도 조정
     double dynamicEpsilon = _calculateDynamicEpsilon(points.length, epsilon);
@@ -40,5 +40,4 @@ class PointSimplifier {
     }
     return baseEpsilon;
   }
-
 }

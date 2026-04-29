@@ -45,5 +45,4 @@ class DrawingSettingsPersistence {
       Future.delayed(const Duration(milliseconds: 50), syncToAllNotifiers);
     });
   }
-
 }

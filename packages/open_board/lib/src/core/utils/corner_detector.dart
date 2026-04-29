@@ -9,16 +9,16 @@ class _PointWithDistance {
   final Point point;
   final double distance;
 
-  _PointWithDistance(this.point, this.distance);
+  const _PointWithDistance(this.point, this.distance);
 }
 
 /// 코너 감지를 담당하는 클래스
 class CornerDetector {
-  CornerDetector._();
+  const CornerDetector._();
 
   /// 중요한 코너점 감지 - 각도 기반 단순 접근법
   static List<Point> detectSignificantCorners(List<Point> points) {
-    if (points.length < 3) return List.from(points);
+    if (points.length < 3) return List.of(points);
 
     // 각도 임계값 - 꺾임 각도가 이 값보다 작으면 코너로 인식
     const cornerAngleThreshold = 120.0;
@@ -27,7 +27,7 @@ class CornerDetector {
     const minDistanceThreshold = 10.0;
 
     // 코너 후보 목록 (시작점은 항상 포함)
-    final corners = <Point>[points.first];
+    final corners = [points.first];
 
     // 중간 점들에서 코너 탐색
     for (int i = 1; i < points.length - 1; i++) {
@@ -102,18 +102,15 @@ class CornerDetector {
     if (isTriangle) {
       // 삼각형으로 판단되면 삼각형에 최적화된 3개 코너 찾기
       return findBestTriangleCorners(simplifiedPoints);
+    } // 삼각형이 아니면 균등 간격으로 코너 생성
+    if (simplifiedPoints.length >= 5) {
+      corners.add(simplifiedPoints[0]);
+      corners.add(simplifiedPoints[simplifiedPoints.length ~/ 2]);
+      corners.add(simplifiedPoints[simplifiedPoints.length * 2 ~/ 3]);
     } else {
-      // 삼각형이 아니면 균등 간격으로 코너 생성
-      if (simplifiedPoints.length >= 5) {
-        corners.add(simplifiedPoints[0]);
-        corners.add(simplifiedPoints[simplifiedPoints.length ~/ 2]);
-        corners.add(simplifiedPoints[simplifiedPoints.length * 2 ~/ 3]);
-      } else {
-        // 포인트가 적으면 모든 포인트를 코너로 사용
-        corners.addAll(simplifiedPoints);
-      }
+      // 포인트가 적으면 모든 포인트를 코너로 사용
+      corners.addAll(simplifiedPoints);
     }
-
     return corners;
   }
 
@@ -135,7 +132,7 @@ class CornerDetector {
 
   /// 최적의 삼각형 코너 3개 찾기
   static List<Point> findBestTriangleCorners(List<Point> points) {
-    if (points.length <= 3) return List.from(points);
+    if (points.length <= 3) return List.of(points);
 
     // 컨벡스 헐에서 가장 멀리 떨어진 3개 점 찾기
     final hull = ConvexHullCalculator.calculateConvexHull(points);
@@ -165,8 +162,14 @@ class CornerDetector {
     // 시계 방향으로 정렬
     final resultCentroid = GeometryUtils.calculateCentroid(result);
     result.sort((a, b) {
-      final angleA = math.atan2(a.y - resultCentroid.y, a.x - resultCentroid.x);
-      final angleB = math.atan2(b.y - resultCentroid.y, b.x - resultCentroid.x);
+      final angleA = math.atan2(
+        a.y - resultCentroid.y,
+        a.x - resultCentroid.x,
+      );
+      final angleB = math.atan2(
+        b.y - resultCentroid.y,
+        b.x - resultCentroid.x,
+      );
       return angleA.compareTo(angleB);
     });
 

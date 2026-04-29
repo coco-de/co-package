@@ -15,8 +15,6 @@ import 'package:open_board/src/module/replay/timeline_migrator.dart';
 /// 0x08    ~       Payload (TimelineSerializer)
 /// ```
 class TimelineFile {
-  const TimelineFile._();
-
   /// Magic bytes: "OBT\0"
   static const List<int> magicBytes = [0x4F, 0x42, 0x54, 0x00];
 
@@ -25,6 +23,8 @@ class TimelineFile {
 
   /// 헤더 크기 (magic 4B + version 4B)
   static const int headerSize = 8;
+
+  const TimelineFile._();
 
   /// .obt 파일 저장
   static Future<void> write(String path, ScribbleTimeline timeline) async {
@@ -107,12 +107,13 @@ class TimelineFile {
   }
 
   static Uint8List _uint32ToBytes(int value) {
-    final data = ByteData(4)..setUint32(0, value, Endian.little);
+    final data = ByteData(4)..setUint32(0, value, .little);
     return data.buffer.asUint8List();
   }
 
   static int _readUint32(List<int> bytes, int offset) {
-    return ByteData.sublistView(Uint8List.fromList(bytes))
-        .getUint32(offset, Endian.little);
+    return ByteData.sublistView(
+      Uint8List.fromList(bytes),
+    ).getUint32(offset, .little);
   }
 }

@@ -7,44 +7,48 @@ import 'package:open_board/src/module/events/scribble_book_event.dart';
 import 'package:open_board/src/module/replay/scribble_replay_controller.dart';
 import 'package:open_board/src/module/replay/timeline_file.dart';
 
-ScribbleTimeline _createTestTimeline() => ScribbleTimeline(
-      contentId: 'book123',
-      startTimestamp: Int64(1000000),
-      endTimestamp: Int64(5000000),
-      version: '1.0.0',
-      pageIds: ['page1', 'page2'],
-      events: [
-        TimelineEvent(
-          timestamp: Int64(1000000),
-          event: const TlPageChanged(
-            fromIndex: -1, toIndex: 0,
-            fromPageId: '', toPageId: 'page1',
-          ),
-        ),
-        TimelineEvent(
-          timestamp: Int64(2000000),
-          event: const TlStrokeAdded(pageId: 'page1', strokeIndex: 0),
-        ),
-        TimelineEvent(
-          timestamp: Int64(3000000),
-          event: const TlPageChanged(
-            fromIndex: 0, toIndex: 1,
-            fromPageId: 'page1', toPageId: 'page2',
-          ),
-        ),
-        TimelineEvent(
-          timestamp: Int64(4000000),
-          event: const TlStrokeAdded(pageId: 'page2', strokeIndex: 0),
-        ),
-      ],
-      snapshots: [
-        TimelineSnapshot(
-          offsetMicros: Int64(0),
-          activePageIndex: 0,
-          pageStrokeCounts: {'page1': 0, 'page2': 0},
-        ),
-      ],
-    );
+ScribbleTimeline _createTestTimeline() => .new(
+  contentId: 'book123',
+  startTimestamp: Int64(1000000),
+  endTimestamp: Int64(5000000),
+  version: '1.0.0',
+  pageIds: ['page1', 'page2'],
+  events: [
+    TimelineEvent(
+      timestamp: Int64(1000000),
+      event: const TlPageChanged(
+        fromIndex: -1,
+        toIndex: 0,
+        fromPageId: '',
+        toPageId: 'page1',
+      ),
+    ),
+    TimelineEvent(
+      timestamp: Int64(2000000),
+      event: const TlStrokeAdded(pageId: 'page1', strokeIndex: 0),
+    ),
+    TimelineEvent(
+      timestamp: Int64(3000000),
+      event: const TlPageChanged(
+        fromIndex: 0,
+        toIndex: 1,
+        fromPageId: 'page1',
+        toPageId: 'page2',
+      ),
+    ),
+    TimelineEvent(
+      timestamp: Int64(4000000),
+      event: const TlStrokeAdded(pageId: 'page2', strokeIndex: 0),
+    ),
+  ],
+  snapshots: [
+    TimelineSnapshot(
+      offsetMicros: Int64(0),
+      activePageIndex: 0,
+      pageStrokeCounts: {'page1': 0, 'page2': 0},
+    ),
+  ],
+);
 
 void main() {
   group('ScribbleReplayController — .obt 로드 확장', () {
@@ -75,7 +79,7 @@ void main() {
 
       // seek을 끝까지 이동하여 모든 이벤트 즉시 발행
       replay.seek(replay.duration);
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
       // 4개 이벤트가 모두 발행되어야 함
       expect(events.length, 4);
@@ -137,8 +141,10 @@ void main() {
           TimelineEvent(
             timestamp: Int64(1),
             event: const TlPageChanged(
-              fromIndex: 0, toIndex: 1,
-              fromPageId: 'a', toPageId: 'b',
+              fromIndex: 0,
+              toIndex: 1,
+              fromPageId: 'a',
+              toPageId: 'b',
             ),
           ),
           TimelineEvent(

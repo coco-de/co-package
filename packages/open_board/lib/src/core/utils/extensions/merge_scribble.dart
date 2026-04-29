@@ -61,7 +61,10 @@ extension MergeScribble on Scribble {
       } else {
         // 🔄 오른쪽 페이지에만 속하는 스트로크
         // 오른쪽 페이지 좌표를 왼쪽 기준으로 변환
-        final adjustedStroke = _adjustStrokeForRightPage(stroke, pageBoundaryX);
+        final adjustedStroke = _adjustStrokeForRightPage(
+          stroke,
+          pageBoundaryX,
+        );
         rightPageStrokes.add(adjustedStroke);
       }
     }
@@ -134,7 +137,7 @@ extension MergeScribble on Scribble {
   /// 🔄 스트로크의 경계 박스 계산
   Rect _calculateStrokeBounds(Stroke stroke) {
     if (stroke.points.isEmpty) {
-      return Rect.zero;
+      return .zero;
     }
 
     double minX = stroke.points.first.x;
@@ -223,7 +226,10 @@ extension MergeScribble on Scribble {
         ..color = originalStroke.color;
     }
 
-    return StrokeSplitResult(leftStroke: leftStroke, rightStroke: rightStroke);
+    return StrokeSplitResult(
+      leftStroke: leftStroke,
+      rightStroke: rightStroke,
+    );
   }
 
   /// 🔄 두 점 사이에서 경계와의 교차점 계산 (안전한 버전)
@@ -497,7 +503,7 @@ class ScribbleSplitResult {
   final List<CrossPageStroke> crossPageStrokes;
   final double originalPageBoundary;
 
-  ScribbleSplitResult({
+  const ScribbleSplitResult({
     required this.leftPageScribble,
     required this.rightPageScribble,
     required this.crossPageStrokes,
@@ -511,7 +517,11 @@ class CrossPageStroke {
   final Stroke? rightStroke;
   final double boundaryX;
 
-  CrossPageStroke({required this.leftStroke, required this.rightStroke, required this.boundaryX});
+  const CrossPageStroke({
+    required this.leftStroke,
+    required this.rightStroke,
+    required this.boundaryX,
+  });
 }
 
 /// 🔄 개별 스트로크 분할 결과
@@ -519,5 +529,8 @@ class StrokeSplitResult {
   final Stroke? leftStroke;
   final Stroke? rightStroke;
 
-  StrokeSplitResult({required this.leftStroke, required this.rightStroke});
+  const StrokeSplitResult({
+    required this.leftStroke,
+    required this.rightStroke,
+  });
 }

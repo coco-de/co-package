@@ -18,12 +18,18 @@ void main() {
 
     test('fromString 변환', () {
       expect(TextAlignmentExtension.fromString('left'), TextAlignment.left);
-      expect(TextAlignmentExtension.fromString('center'), TextAlignment.center);
+      expect(
+        TextAlignmentExtension.fromString('center'),
+        TextAlignment.center,
+      );
       expect(TextAlignmentExtension.fromString('right'), TextAlignment.right);
     });
 
     test('fromString 잘못된 값은 center', () {
-      expect(TextAlignmentExtension.fromString('unknown'), TextAlignment.center);
+      expect(
+        TextAlignmentExtension.fromString('unknown'),
+        TextAlignment.center,
+      );
     });
   });
 

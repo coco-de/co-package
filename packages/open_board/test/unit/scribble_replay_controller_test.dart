@@ -10,13 +10,15 @@ List<ScribbleBookEvent> _createTimeline({
 }) {
   final events = <ScribbleBookEvent>[];
   for (var i = 0; i < count; i++) {
-    events.add(PageChangedEvent(
-      fromIndex: i,
-      toIndex: i + 1,
-      fromPageId: 'page$i',
-      toPageId: 'page${i + 1}',
-      timestampMicros: startMicros + (i * intervalMicros),
-    ));
+    events.add(
+      PageChangedEvent(
+        fromIndex: i,
+        toIndex: i + 1,
+        fromPageId: 'page$i',
+        toPageId: 'page${i + 1}',
+        timestampMicros: startMicros + (i * intervalMicros),
+      ),
+    );
   }
   return events;
 }
@@ -57,11 +59,13 @@ void main() {
       });
 
       test('duration이 올바르게 계산된다', () {
-        replay.loadTimeline(_createTimeline(
-          startMicros: 0,
-          count: 5,
-          intervalMicros: 2000000, // 2초 간격
-        ));
+        replay.loadTimeline(
+          _createTimeline(
+            startMicros: 0,
+            count: 5,
+            intervalMicros: 2000000, // 2초 간격
+          ),
+        );
 
         // 0, 2, 4, 6, 8 → duration = 8초 = 8000000μs
         expect(replay.durationMicros, 8000000);
@@ -71,13 +75,17 @@ void main() {
       test('타임라인이 시간순으로 정렬된다', () {
         final unordered = [
           PageChangedEvent(
-            fromIndex: 0, toIndex: 1,
-            fromPageId: 'a', toPageId: 'b',
+            fromIndex: 0,
+            toIndex: 1,
+            fromPageId: 'a',
+            toPageId: 'b',
             timestampMicros: 3000000,
           ),
           PageChangedEvent(
-            fromIndex: 1, toIndex: 2,
-            fromPageId: 'b', toPageId: 'c',
+            fromIndex: 1,
+            toIndex: 2,
+            fromPageId: 'b',
+            toPageId: 'c',
             timestampMicros: 1000000,
           ),
         ];
@@ -143,11 +151,13 @@ void main() {
 
     group('seek', () {
       setUp(() {
-        replay.loadTimeline(_createTimeline(
-          startMicros: 0,
-          count: 10,
-          intervalMicros: 1000000,
-        ));
+        replay.loadTimeline(
+          _createTimeline(
+            startMicros: 0,
+            count: 10,
+            intervalMicros: 1000000,
+          ),
+        );
       });
 
       test('seek 후 위치가 변경된다', () {
@@ -167,11 +177,13 @@ void main() {
 
     group('이벤트 발행', () {
       test('play 시 이벤트가 스트림으로 발행된다', () async {
-        replay.loadTimeline(_createTimeline(
-          startMicros: 0,
-          count: 3,
-          intervalMicros: 10000, // 10ms 간격 (빠른 테스트용)
-        ));
+        replay.loadTimeline(
+          _createTimeline(
+            startMicros: 0,
+            count: 3,
+            intervalMicros: 10000, // 10ms 간격 (빠른 테스트용)
+          ),
+        );
 
         final events = <ScribbleBookEvent>[];
         replay.onEvent.listen(events.add);
@@ -185,12 +197,14 @@ void main() {
         expect(events.first, isA<PageChangedEvent>());
       });
 
-      test('seek 시 이전 이벤트가 빠르게 발행된다', () async {
-        replay.loadTimeline(_createTimeline(
-          startMicros: 0,
-          count: 5,
-          intervalMicros: 1000000,
-        ));
+      test('seek 시 이전 이벤트가 빠르게 발행된다', () {
+        replay.loadTimeline(
+          _createTimeline(
+            startMicros: 0,
+            count: 5,
+            intervalMicros: 1000000,
+          ),
+        );
 
         final events = <ScribbleBookEvent>[];
         replay.onEvent.listen(events.add);
@@ -204,11 +218,13 @@ void main() {
 
     group('위치 스트림', () {
       test('onPositionChanged로 위치를 구독할 수 있다', () async {
-        replay.loadTimeline(_createTimeline(
-          startMicros: 0,
-          count: 3,
-          intervalMicros: 10000,
-        ));
+        replay.loadTimeline(
+          _createTimeline(
+            startMicros: 0,
+            count: 3,
+            intervalMicros: 10000,
+          ),
+        );
 
         final positions = <int>[];
         replay.onPositionChanged.listen(positions.add);
@@ -222,11 +238,13 @@ void main() {
 
     group('syncTo', () {
       test('syncTo는 seek의 alias', () {
-        replay.loadTimeline(_createTimeline(
-          startMicros: 0,
-          count: 10,
-          intervalMicros: 1000000,
-        ));
+        replay.loadTimeline(
+          _createTimeline(
+            startMicros: 0,
+            count: 10,
+            intervalMicros: 1000000,
+          ),
+        );
 
         replay.syncTo(const Duration(seconds: 5));
         expect(replay.positionMicros, 5000000);
@@ -235,11 +253,13 @@ void main() {
 
     group('completed 상태에서 재시작', () {
       test('completed 후 play하면 처음부터 재생', () async {
-        replay.loadTimeline(_createTimeline(
-          startMicros: 0,
-          count: 2,
-          intervalMicros: 10000,
-        ));
+        replay.loadTimeline(
+          _createTimeline(
+            startMicros: 0,
+            count: 2,
+            intervalMicros: 10000,
+          ),
+        );
 
         replay.play();
         await Future<void>.delayed(const Duration(milliseconds: 200));

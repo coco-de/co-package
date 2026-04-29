@@ -12,7 +12,8 @@ class FakePathProvider
     with MockPlatformInterfaceMixin
     implements PathProviderPlatform {
   final Directory tempDir;
-  FakePathProvider(this.tempDir);
+
+  const FakePathProvider(this.tempDir);
 
   @override
   Future<String?> getApplicationDocumentsPath() async => tempDir.path;
@@ -33,7 +34,9 @@ class FakePathProvider
   Future<List<String>?> getExternalCachePaths() async => null;
 
   @override
-  Future<List<String>?> getExternalStoragePaths({StorageDirectory? type}) async => null;
+  Future<List<String>?> getExternalStoragePaths({
+    StorageDirectory? type,
+  }) async => null;
 
   @override
   Future<String?> getDownloadsPath() async => null;
@@ -67,7 +70,10 @@ void main() {
     });
 
     test('정상 키는 그대로', () {
-      expect(ScribbleFileStorage.normalizeKey('content1/page1'), 'content1/page1');
+      expect(
+        ScribbleFileStorage.normalizeKey('content1/page1'),
+        'content1/page1',
+      );
       expect(ScribbleFileStorage.normalizeKey('abc_123'), 'abc_123');
     });
   });

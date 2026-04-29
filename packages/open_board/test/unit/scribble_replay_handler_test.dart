@@ -7,9 +7,9 @@ import 'package:open_board/src/module/replay/scribble_replay_handler.dart';
 import 'package:open_board/src/module/scribble_controller.dart';
 
 class FakePageProvider implements ScribblePageProvider {
+  String? lastActiveKey;
   final Map<String, ScribbleController> _controllers = {};
   final Map<String, Scribble> _scribbles = {};
-  String? lastActiveKey;
 
   @override
   ScribbleController getController(String key) {

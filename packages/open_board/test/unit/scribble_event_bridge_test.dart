@@ -6,9 +6,9 @@ import 'package:open_board/src/module/managers/scribble_book_controller.dart';
 import 'package:open_board/src/module/scribble_controller.dart';
 
 class FakePageProvider implements ScribblePageProvider {
+  String? lastActiveKey;
   final Map<String, ScribbleController> _controllers = {};
   final Map<String, Scribble> _scribbles = {};
-  String? lastActiveKey;
 
   @override
   ScribbleController getController(String key) {
@@ -100,15 +100,16 @@ void main() {
 
       // 스트로크 추가
       final scribble = Scribble(
-        strokes: [Stroke(points: [Point(x: 10, y: 20)])],
+        strokes: [
+          Stroke(points: [Point(x: 10, y: 20)]),
+        ],
       );
       book.activeController.loadScribble(scribble);
 
       // 이벤트 전파 대기
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
-      final strokeEvents =
-          events.whereType<StrokeAddedEvent>().toList();
+      final strokeEvents = events.whereType<StrokeAddedEvent>().toList();
       expect(strokeEvents, hasLength(1));
       expect(strokeEvents.first.pageId, 'page1');
       expect(strokeEvents.first.strokeIndex, 0);
@@ -133,14 +134,15 @@ void main() {
 
       // 스트로크 하나 제거 (1개로 줄임)
       final reducedScribble = Scribble(
-        strokes: [Stroke(points: [Point(x: 10, y: 20)])],
+        strokes: [
+          Stroke(points: [Point(x: 10, y: 20)]),
+        ],
       );
       book.activeController.loadScribble(reducedScribble);
 
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
-      final removeEvents =
-          events.whereType<StrokeRemovedEvent>().toList();
+      final removeEvents = events.whereType<StrokeRemovedEvent>().toList();
       expect(removeEvents, hasLength(1));
       expect(removeEvents.first.pageId, 'page1');
       expect(removeEvents.first.strokeIndex, 1);
@@ -157,14 +159,15 @@ void main() {
 
       // 스트로크 추가 — 이벤트 없어야 함
       final scribble = Scribble(
-        strokes: [Stroke(points: [Point(x: 10, y: 20)])],
+        strokes: [
+          Stroke(points: [Point(x: 10, y: 20)]),
+        ],
       );
       book.activeController.loadScribble(scribble);
 
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(.zero);
 
-      final strokeEvents =
-          events.whereType<StrokeAddedEvent>().toList();
+      final strokeEvents = events.whereType<StrokeAddedEvent>().toList();
       expect(strokeEvents, isEmpty);
     });
   });

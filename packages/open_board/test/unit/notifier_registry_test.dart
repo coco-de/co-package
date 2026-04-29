@@ -183,8 +183,9 @@ void main() {
           isDisposed: false,
         );
 
-        final result =
-            registry.findScribbleNotifierForModeNotifier(modeNotifier);
+        final result = registry.findScribbleNotifierForModeNotifier(
+          modeNotifier,
+        );
 
         expect(result, scribbleNotifier);
       });
@@ -194,8 +195,9 @@ void main() {
         final modeNotifier = ScribbleModeNotifier();
         registry.registerScribbleNotifier(scribbleNotifier);
 
-        final result =
-            registry.findScribbleNotifierForModeNotifier(modeNotifier);
+        final result = registry.findScribbleNotifierForModeNotifier(
+          modeNotifier,
+        );
 
         expect(result, scribbleNotifier);
       });
@@ -203,8 +205,9 @@ void main() {
       test('등록된 notifier가 없으면 null을 반환한다', () {
         final modeNotifier = ScribbleModeNotifier();
 
-        final result =
-            registry.findScribbleNotifierForModeNotifier(modeNotifier);
+        final result = registry.findScribbleNotifierForModeNotifier(
+          modeNotifier,
+        );
 
         expect(result, isNull);
       });

@@ -43,8 +43,8 @@ class ScribbleReplayHandler {
   ScribbleReplayHandler({
     required ScribbleBookController bookController,
     required ScribblePageProvider pageProvider,
-  })  : _bookController = bookController,
-        _pageProvider = pageProvider;
+  }) : _bookController = bookController,
+       _pageProvider = pageProvider;
 
   /// attach 상태 여부
   bool get isAttached => _isAttached;
@@ -120,8 +120,10 @@ class ScribbleReplayHandler {
     final displayStrokes = <Stroke>[];
     for (var i = 0; i <= _animatingStrokeIndex!; i++) {
       if (i >= strokes.length) break;
-      final partial =
-          StrokeAnimator.createPartialStroke(strokes[i], currentTimeMicros);
+      final partial = StrokeAnimator.createPartialStroke(
+        strokes[i],
+        currentTimeMicros,
+      );
       if (partial != null) displayStrokes.add(partial);
     }
 
@@ -154,7 +156,7 @@ class ScribbleReplayHandler {
     final key = '${_bookController.contentId}/$pageId';
     final scribble = await _pageProvider.loadScribble(key);
     if (scribble != null) {
-      _originalStrokes[pageId] = List<Stroke>.from(scribble.strokes);
+      _originalStrokes[pageId] = List<Stroke>.of(scribble.strokes);
     }
   }
 }

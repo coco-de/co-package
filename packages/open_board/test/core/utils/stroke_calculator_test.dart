@@ -32,23 +32,38 @@ void main() {
       });
 
       test('단일 포인트 → 2개 StrokePoint (자동 보간)', () {
-        final points = createPoints([[50, 50]]);
-        final result = getStrokePoints(points, options: createStrokeOptions());
+        final points = createPoints([
+          [50, 50],
+        ]);
+        final result = getStrokePoints(
+          points,
+          options: createStrokeOptions(),
+        );
         expect(result.length, greaterThanOrEqualTo(1));
       });
 
       test('여러 포인트 → StrokePoint 리스트', () {
         final points = createLinePoints(count: 10);
-        final result = getStrokePoints(points, options: createStrokeOptions());
+        final result = getStrokePoints(
+          points,
+          options: createStrokeOptions(),
+        );
         expect(result.length, greaterThan(0));
         expect(result.first.distance, 0);
       });
 
       test('runningLength 증가', () {
         final points = createLinePoints(
-          fromX: 0, fromY: 0, toX: 100, toY: 0, count: 10,
+          fromX: 0,
+          fromY: 0,
+          toX: 100,
+          toY: 0,
+          count: 10,
         );
-        final result = getStrokePoints(points, options: createStrokeOptions());
+        final result = getStrokePoints(
+          points,
+          options: createStrokeOptions(),
+        );
         if (result.length >= 2) {
           expect(result.last.runningLength, greaterThan(0));
         }
@@ -73,14 +88,23 @@ void main() {
 
     group('getStrokeOutlinePoints', () {
       test('빈 입력 → 빈 결과', () {
-        final result = getStrokeOutlinePoints([], options: createStrokeOptions());
+        final result = getStrokeOutlinePoints(
+          [],
+          options: createStrokeOptions(),
+        );
         expect(result, isEmpty);
       });
 
       test('StrokePoint에서 외곽선 생성', () {
         final points = createLinePoints(count: 10);
-        final strokePoints = getStrokePoints(points, options: createStrokeOptions());
-        final outline = getStrokeOutlinePoints(strokePoints, options: createStrokeOptions());
+        final strokePoints = getStrokePoints(
+          points,
+          options: createStrokeOptions(),
+        );
+        final outline = getStrokeOutlinePoints(
+          strokePoints,
+          options: createStrokeOptions(),
+        );
         expect(outline.isNotEmpty, true);
       });
     });

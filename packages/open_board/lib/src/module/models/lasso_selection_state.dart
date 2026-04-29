@@ -8,6 +8,7 @@ enum HandlePosition { none }
 enum TransformOperation { none, move }
 
 /// 올가미 선택 상태를 관리하는 클래스
+@immutable
 class LassoSelectionState {
   /// 변환 매트릭스 (확대, 축소, 회전)
   final Matrix4 transformMatrix;

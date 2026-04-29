@@ -114,6 +114,7 @@
       this.onTransformChanged,
       this.repaintBoundaryKey, // ✨ 외부에서 제공 가능한 GlobalKey
       this.contentLogicalSize,
+      this.transformationController, // 🆕 외부 주입 가능한 변환 컨트롤러 (PR #99)
     });
 
     /// ✨ 이미지 캡처를 위한 GlobalKey - 외부에서 접근 가능
@@ -184,7 +185,8 @@
     /// 🖊️ 손모드 그리기 상태 변경 콜백
     final void Function(bool isHandModeDrawingActive)? onHandModeDrawingChanged;
 
-    TransformationController? transformationController;
+    /// 🆕 외부에서 주입 가능한 변환 컨트롤러 (PR #99)
+    final TransformationController? transformationController;
 
     @override
     State<ScribbleWidget> createState() => _ScribbleWidgetState();

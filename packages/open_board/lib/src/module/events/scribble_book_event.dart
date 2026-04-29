@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 
 /// ScribbleBookController에서 발생하는 모든 이벤트
 ///
 /// 리플레이 타임라인 기록 및 외부 동기화에 사용됩니다.
 /// 모든 이벤트에 마이크로초 타임스탬프가 포함됩니다.
+@immutable
 sealed class ScribbleBookEvent {
   /// 이벤트 발생 시각 (마이크로초)
   final int timestampMicros;
@@ -15,6 +17,7 @@ sealed class ScribbleBookEvent {
 }
 
 /// 페이지 전환 이벤트
+@immutable
 class PageChangedEvent extends ScribbleBookEvent {
   final int fromIndex;
   final int toIndex;
@@ -35,6 +38,7 @@ class PageChangedEvent extends ScribbleBookEvent {
 }
 
 /// 스트로크 추가 이벤트
+@immutable
 class StrokeAddedEvent extends ScribbleBookEvent {
   final String pageId;
   final Stroke stroke;
@@ -53,6 +57,7 @@ class StrokeAddedEvent extends ScribbleBookEvent {
 }
 
 /// 스트로크 삭제 이벤트
+@immutable
 class StrokeRemovedEvent extends ScribbleBookEvent {
   final String pageId;
   final int strokeIndex;
@@ -69,6 +74,7 @@ class StrokeRemovedEvent extends ScribbleBookEvent {
 }
 
 /// Undo 이벤트
+@immutable
 class UndoPerformedEvent extends ScribbleBookEvent {
   final String pageId;
 
@@ -78,11 +84,11 @@ class UndoPerformedEvent extends ScribbleBookEvent {
   });
 
   @override
-  String toString() =>
-      'UndoPerformedEvent(page=$pageId, t=$timestampMicros)';
+  String toString() => 'UndoPerformedEvent(page=$pageId, t=$timestampMicros)';
 }
 
 /// Redo 이벤트
+@immutable
 class RedoPerformedEvent extends ScribbleBookEvent {
   final String pageId;
 
@@ -92,11 +98,11 @@ class RedoPerformedEvent extends ScribbleBookEvent {
   });
 
   @override
-  String toString() =>
-      'RedoPerformedEvent(page=$pageId, t=$timestampMicros)';
+  String toString() => 'RedoPerformedEvent(page=$pageId, t=$timestampMicros)';
 }
 
 /// 페이지 추가 이벤트
+@immutable
 class PageAddedEvent extends ScribbleBookEvent {
   final String pageId;
   final int atIndex;
@@ -113,6 +119,7 @@ class PageAddedEvent extends ScribbleBookEvent {
 }
 
 /// 페이지 삭제 이벤트
+@immutable
 class PageRemovedEvent extends ScribbleBookEvent {
   final String pageId;
   final int atIndex;
@@ -129,6 +136,7 @@ class PageRemovedEvent extends ScribbleBookEvent {
 }
 
 /// 양면 모드 토글 이벤트
+@immutable
 class DoublePageToggledEvent extends ScribbleBookEvent {
   final bool enabled;
 
@@ -143,6 +151,7 @@ class DoublePageToggledEvent extends ScribbleBookEvent {
 }
 
 /// 필기 전체 지우기 이벤트
+@immutable
 class PageClearedEvent extends ScribbleBookEvent {
   final String pageId;
 
@@ -152,8 +161,7 @@ class PageClearedEvent extends ScribbleBookEvent {
   });
 
   @override
-  String toString() =>
-      'PageClearedEvent(page=$pageId, t=$timestampMicros)';
+  String toString() => 'PageClearedEvent(page=$pageId, t=$timestampMicros)';
 }
 
 /// 뷰포트(줌/팬) 변경 이벤트
