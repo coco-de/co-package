@@ -8,6 +8,8 @@ import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/module/state/scribble.state.dart';
+import 'package:open_board/src/module/state/text_settings.dart';
+import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_painter.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
@@ -186,8 +188,13 @@ class ScribbleRenderLayers {
 
     final selectedText = widgetState.selectedTextDrawable!;
 
-    // 텍스트 바운딩 박스 계산
+    // 텍스트 바운딩 박스 계산 (축 정렬)
     final bounds = _calculateTextBounds(selectedText);
+
+    // 회전된 텍스트의 경우 시각적 핸들 위치(회전된 모서리)와
+    // 핸들 GestureDetector 위치를 일치시켜야 커서/탭 포인트가
+    // 보이는 핸들 위에 정확히 떨어진다.
+    final handlePositions = _calculateRotatedHandlePositions(selectedText);
 
     // 드래그 핸들러만 제공 (시각적 요소는 TextDrawablePainter에서 처리)
     final overlayWidgets = buildSelectionOverlay(
@@ -200,9 +207,66 @@ class ScribbleRenderLayers {
       onMoveStart: onTextMoveStart,
       onMoveUpdate: onTextMoveUpdate,
       onMoveEnd: onTextMoveEnd,
+      deleteButtonPosition: handlePositions?['delete'],
+      transformButtonPosition: handlePositions?['transform'],
     );
 
     return overlayWidgets;
+  }
+
+  /// 회전된 텍스트의 회전된 핸들 위치 계산
+  /// (TextDrawablePainter가 그리는 시각적 핸들 위치와 동일)
+  /// 회전이 0이면 null을 반환해 기본(축 정렬) 위치를 사용하게 한다.
+  Map<String, Offset>? _calculateRotatedHandlePositions(
+    TextDrawable textDrawable,
+  ) {
+    double rotation = 0.0;
+    try {
+      rotation = textDrawable.rotation;
+    } on Exception {
+      rotation = 0.0;
+    }
+    if (rotation == 0.0) return null;
+
+    final textSpan = TextSpan(
+      text: textDrawable.text,
+      style: textDrawable.style,
+    );
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: textDrawable.alignment.textAlign,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+
+    final center = textDrawable.position;
+    final halfWidth = textPainter.width / 2;
+    final halfHeight = textPainter.height / 2;
+
+    // 패딩(4px)을 포함한 모서리 — TextDrawablePainter._getRotatedButtonPositions와 일치
+    final corners = <Offset>[
+      Offset(-halfWidth - 4, -halfHeight - 4), // 좌상단
+      Offset(halfWidth + 4, -halfHeight - 4), // 우상단
+      Offset(halfWidth + 4, halfHeight + 4), // 우하단
+      Offset(-halfWidth - 4, halfHeight + 4), // 좌하단
+    ];
+
+    final cos = math.cos(rotation);
+    final sin = math.sin(rotation);
+
+    final rotatedCorners = corners
+        .map(
+          (c) => Offset(
+            center.dx + c.dx * cos - c.dy * sin,
+            center.dy + c.dx * sin + c.dy * cos,
+          ),
+        )
+        .toList();
+
+    return {
+      'delete': rotatedCorners[1], // 우상단
+      'transform': rotatedCorners[3], // 좌하단
+    };
   }
 
   /// 모든 레이어를 순서대로 빌드
@@ -308,7 +372,7 @@ class ScribbleRenderLayers {
     required Function(DragUpdateDetails) onMoveUpdate,
     required Function(DragEndDetails) onMoveEnd,
   }) {
-    const handleSize = 70.0; // 더 크게 설정 - 터치 영역 크기 (삭제/변형 버튼)
+    const handleSize = 49.0; // 터치 영역 크기 (삭제/변형 버튼) - 시각 버튼 35px 대비 여유
 
     // 버튼 위치 계산
     Offset deleteButtonPosition;
