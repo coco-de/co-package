@@ -28,9 +28,9 @@ jobs:
         working-directory: example
         run: flutter pub get
 
-      - name: Build web
+      - name: Build web (WebAssembly)
         working-directory: example
-        run: flutter build web --release --base-href /open-board/
+        run: flutter build web --wasm --release --base-href /open-board/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
