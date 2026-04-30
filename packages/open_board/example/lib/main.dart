@@ -630,7 +630,7 @@ class _DrawingPageState extends State<DrawingPage> {
                   constraints.maxWidth,
                   constraints.maxHeight,
                 );
-                final widget = ScribbleWidget(
+                return ScribbleWidget(
                   key: ValueKey('page-$_currentPageIndex'),
                   notifier: _notifier,
                   modeNotifier: _modeNotifier,
@@ -642,14 +642,12 @@ class _DrawingPageState extends State<DrawingPage> {
                   maxScale: 3.0,
                   panDirection: PanDirection.both,
                   onTransformChanged: _onTransformChanged,
+                  transformationController: _transformController,
                   child: SizedBox.fromSize(
                     size: size,
                     child: _SampleContent(pageIndex: _currentPageIndex),
                   ),
                 );
-                // transformationController 주입
-                widget.transformationController = _transformController;
-                return widget;
               },
             ),
           ),
