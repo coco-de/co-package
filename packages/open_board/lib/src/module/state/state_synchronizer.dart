@@ -12,7 +12,7 @@ import 'package:open_board/src/module/state/scribble.state.dart';
 class StateSynchronizer {
   final NotifierRegistry _registry;
 
-  const StateSynchronizer(this._registry);
+  StateSynchronizer(this._registry);
 
   /// 현재 상태를 특정 modeNotifier에 적용
   void applyToModeNotifier(
@@ -32,86 +32,89 @@ class StateSynchronizer {
       // 지우개에서 다른 도구로 전환하는 경우 ScribbleNotifier도 함께 변경
       final isEraserToOtherTool =
           beforeState.inkGroupInfo.selectedInk == 'erase' &&
-          currentTool != .erase;
+          currentTool != DrawingTool.erase;
       ScribbleNotifier? correspondingScribbleNotifier;
 
       if (isEraserToOtherTool) {
-        correspondingScribbleNotifier = _registry
-            .findScribbleNotifierForModeNotifier(modeNotifier);
+        correspondingScribbleNotifier =
+            _registry.findScribbleNotifierForModeNotifier(modeNotifier);
         if (correspondingScribbleNotifier != null) {
           correspondingScribbleNotifier.setStrokeInk();
         }
       }
 
       // 포인터 모드 설정
-      if (pointerMode.value == .mouseOnly) {
-        modeNotifier.setAllowedPointersMode(.all);
+      if (pointerMode.value == DrawingPointerMode.mouseOnly) {
+        modeNotifier.setAllowedPointersMode(ScribblePointerMode.all);
       } else {
-        modeNotifier.setAllowedPointersMode(.penOnly);
+        modeNotifier.setAllowedPointersMode(ScribblePointerMode.penOnly);
       }
 
+      // ⚠️ 순서 중요: setStrokeWidth/setColor는 selectedInk를 기준으로 box를
+      //    갱신하므로, 도구 변경(setPen 등)을 FIRST 호출해 selectedInk를
+      //    먼저 새 도구로 바꿔야 색/두께가 올바른 box에 들어간다.
       switch (currentTool) {
-        case .pen:
+        case DrawingTool.pen:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
-          modeNotifier.setColor(currentColor);
-          modeNotifier.setStrokeWidth(currentThickness);
           modeNotifier.setPen();
-
-        case .pencil:
-          if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
           modeNotifier.setColor(currentColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setPencil();
 
-        case .marker:
+        case DrawingTool.pencil:
+          if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
+          modeNotifier.setPencil();
+          modeNotifier.setColor(currentColor);
+          modeNotifier.setStrokeWidth(currentThickness);
+
+        case DrawingTool.marker:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
           final markerColor = currentColor.withValues(alpha: 0.5);
+          modeNotifier.setMarker();
           modeNotifier.setColor(markerColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setMarker();
 
-        case .fixedPen:
+        case DrawingTool.fixedPen:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
+          modeNotifier.setFixedPen();
           modeNotifier.setColor(currentColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setFixedPen();
 
-        case .highlighter:
+        case DrawingTool.highlighter:
           break;
 
-        case .erase:
-          modeNotifier.setStrokeWidth(currentThickness);
+        case DrawingTool.erase:
           modeNotifier.setEraser();
+          modeNotifier.setStrokeWidth(currentThickness);
 
           if (beforeState.inkGroupInfo.selectedInk != 'erase') {
-            correspondingScribbleNotifier = _registry
-                .findScribbleNotifierForModeNotifier(modeNotifier);
+            correspondingScribbleNotifier =
+                _registry.findScribbleNotifierForModeNotifier(modeNotifier);
             if (correspondingScribbleNotifier != null) {
               correspondingScribbleNotifier.setEraser();
             }
           }
 
-        case .text:
+        case DrawingTool.text:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
           modeNotifier.setText();
 
-        case .shape:
+        case DrawingTool.shape:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
+          modeNotifier.setShape();
           modeNotifier.setColor(currentColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setShape();
 
-        case .lasso:
+        case DrawingTool.lasso:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
           modeNotifier.setLassoSelection();
       }
 
       // 상태 불일치 감지 (지우개/올가미/텍스트 제외)
       final afterState = modeNotifier.state;
-      if (currentTool != .erase &&
-          currentTool != .lasso &&
-          currentTool != .text) {
-        final expectedColor = currentTool == .marker
+      if (currentTool != DrawingTool.erase &&
+          currentTool != DrawingTool.lasso &&
+          currentTool != DrawingTool.text) {
+        final expectedColor = currentTool == DrawingTool.marker
             ? currentColor.withValues(alpha: 0.5)
             : currentColor;
         final actualColor = afterState.inkGroupInfo.selectedColor;
@@ -178,8 +181,9 @@ class StateSynchronizer {
       final actualColor = state.inkGroupInfo.selectedColor;
       final actualThickness = state.inkGroupInfo.seletedStrokeWidth;
 
-      if (expectedTool != .erase && expectedTool != .lasso) {
-        final expectedFinalColor = expectedTool == .marker
+      if (expectedTool != DrawingTool.erase &&
+          expectedTool != DrawingTool.lasso) {
+        final expectedFinalColor = expectedTool == DrawingTool.marker
             ? expectedColor.withValues(alpha: 0.5)
             : expectedColor;
 
@@ -203,17 +207,17 @@ class StateSynchronizer {
       final currentTool = selectedTool.value;
 
       switch (currentTool) {
-        case .pen:
-        case .pencil:
-        case .marker:
-        case .fixedPen:
-        case .highlighter:
-        case .shape:
-        case .text:
-        case .lasso:
+        case DrawingTool.pen:
+        case DrawingTool.pencil:
+        case DrawingTool.marker:
+        case DrawingTool.fixedPen:
+        case DrawingTool.highlighter:
+        case DrawingTool.shape:
+        case DrawingTool.text:
+        case DrawingTool.lasso:
           scribbleNotifier.setStrokeInk();
           break;
-        case .erase:
+        case DrawingTool.erase:
           scribbleNotifier.setEraser();
           break;
       }
