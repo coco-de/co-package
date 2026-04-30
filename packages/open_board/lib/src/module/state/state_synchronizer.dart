@@ -50,38 +50,41 @@ class StateSynchronizer {
         modeNotifier.setAllowedPointersMode(ScribblePointerMode.penOnly);
       }
 
+      // ⚠️ 순서 중요: setStrokeWidth/setColor는 selectedInk를 기준으로 box를
+      //    갱신하므로, 도구 변경(setPen 등)을 FIRST 호출해 selectedInk를
+      //    먼저 새 도구로 바꿔야 색/두께가 올바른 box에 들어간다.
       switch (currentTool) {
         case DrawingTool.pen:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
+          modeNotifier.setPen();
           modeNotifier.setColor(currentColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setPen();
 
         case DrawingTool.pencil:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
+          modeNotifier.setPencil();
           modeNotifier.setColor(currentColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setPencil();
 
         case DrawingTool.marker:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
           final markerColor = currentColor.withValues(alpha: 0.5);
+          modeNotifier.setMarker();
           modeNotifier.setColor(markerColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setMarker();
 
         case DrawingTool.fixedPen:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
+          modeNotifier.setFixedPen();
           modeNotifier.setColor(currentColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setFixedPen();
 
         case DrawingTool.highlighter:
           break;
 
         case DrawingTool.erase:
-          modeNotifier.setStrokeWidth(currentThickness);
           modeNotifier.setEraser();
+          modeNotifier.setStrokeWidth(currentThickness);
 
           if (beforeState.inkGroupInfo.selectedInk != 'erase') {
             correspondingScribbleNotifier =
@@ -97,9 +100,9 @@ class StateSynchronizer {
 
         case DrawingTool.shape:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
+          modeNotifier.setShape();
           modeNotifier.setColor(currentColor);
           modeNotifier.setStrokeWidth(currentThickness);
-          modeNotifier.setShape();
 
         case DrawingTool.lasso:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
