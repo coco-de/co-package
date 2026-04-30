@@ -386,6 +386,10 @@
 
       final currentScale = currentTransform.getMaxScaleOnAxis();
 
+      // 🎯 fixedPen 등 화면상 물리 두께 보정을 위한 scaleFactor 동기화
+      //   InteractiveViewer의 줌이 변할 때마다 modeNotifier.scaleFactor를 갱신
+      widget.modeNotifier.setScaleFactor(currentScale);
+
       // 스케일 변화 감지 (5% 이상 변화 시에만 콜백 호출)
       const scaleThreshold = 0.05;
       if ((currentScale - _lastReportedScale).abs() > scaleThreshold) {
