@@ -16,13 +16,22 @@ concurrency:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Remove workspace resolution and clean dev_dependencies
+        run: |
+          sed -i '/^resolution:/d' pubspec.yaml
+          sed -i '/^  fake_async:/d' pubspec.yaml
+          sed -i '/^  mocktail:/d' pubspec.yaml
+          sed -i '/^  shared_preferences:/d' pubspec.yaml
+          sed -i '/^  path_provider_platform_interface:/d' pubspec.yaml
+          sed -i '/^  plugin_platform_interface:/d' pubspec.yaml
 
       - name: Install dependencies
         working-directory: example
@@ -41,7 +50,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Deploy to GitHub Pages
