@@ -4,7 +4,7 @@
   import 'dart:math' as math;
   import 'dart:ui' as ui;
 
-  import 'package:flutter/foundation.dart' show kIsWeb;
+  import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
   import 'package:flutter/material.dart';
   import 'package:flutter/rendering.dart';
   import 'package:flutter/services.dart';
@@ -32,6 +32,34 @@
   class ScribbleCacheManager extends ChangeNotifier implements ScribblePageProvider {
     /// 저장 디바운스 시간 (기본 1.5초)
     static const Duration _saveDebounceTime = Duration(milliseconds: 1500);
+
+    /// 전역 싱글턴 인스턴스 (lazy 초기화)
+    ///
+    /// 동일 컨트롤러/메모리 캐시를 모든 소비자가 공유해야 하므로
+    /// 일반적으로는 [instance] 를 사용해 접근합니다.
+    /// dispose 후 재접근 시 자동으로 새 인스턴스가 생성됩니다.
+    static ScribbleCacheManager? _singleton;
+
+    /// 전역 싱글턴 접근자
+    ///
+    /// `DrawingState` 와 동일한 패턴으로, dispose 된 인스턴스가 감지되면
+    /// 새 인스턴스를 자동 생성하여 안전하게 재사용할 수 있습니다.
+    static ScribbleCacheManager get instance {
+      if (_singleton == null || _singleton!._isDisposed) {
+        _singleton = ScribbleCacheManager();
+      }
+      return _singleton!;
+    }
+
+    /// 싱글턴 인스턴스 초기화 (테스트 전용)
+    ///
+    /// 테스트 격리가 필요한 경우에만 호출합니다.
+    /// 운영 코드에서는 호출하지 마세요.
+    @visibleForTesting
+    static void resetInstance() {
+      _singleton?.dispose();
+      _singleton = null;
+    }
 
     // ===== 콜백 함수들 =====
 
