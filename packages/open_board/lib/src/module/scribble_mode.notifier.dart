@@ -51,6 +51,18 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
     // );
   }
 
+  /// 현재 캔버스 줌 배율을 갱신한다.
+  /// fixedPen 등 화면상 물리 두께를 일정하게 유지해야 하는 도구가
+  /// 이 값을 사용해 stroke size를 보정한다.
+  void setScaleFactor(double scaleFactor) {
+    if (state.scaleFactor == scaleFactor) return;
+    state = ScribbleModeState(
+      inkGroupInfo: state.inkGroupInfo,
+      scaleFactor: scaleFactor,
+      allowedPointersMode: state.allowedPointersMode,
+    );
+  }
+
   /// 펜 모드로 설정
   void setPen() {
     state = ScribbleModeState(
