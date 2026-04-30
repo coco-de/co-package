@@ -76,9 +76,9 @@ class StrokePaintDelegate with SketchLinePainter implements PaintDelegate {
     canvas.drawPath(path, paint);
   }
 
-  /// 고정 두께 펜 렌더링: 화면상 물리적 두께가 줌 레벨과 무관하게 항상 동일
-  /// stroke.width에 원래 선택한 두께가 저장되어 있으므로,
-  /// 렌더링 시 현재 scaleFactor로 나눠서 보정한다.
+  /// 고정 두께 펜 렌더링:
+  ///   1) 화면상 물리적 두께가 줌 레벨과 무관하게 항상 동일 (size / scaleFactor)
+  ///   2) 스트로크 전 구간에 걸쳐 균일한 두께 (thinning 0 + simulatePressure false)
   void drawFixedPen(ui.Canvas canvas, Stroke stroke) {
     final adjustedSize = stroke.width / scaleFactor;
     final adjustedStroke = Stroke(
@@ -92,14 +92,15 @@ class StrokePaintDelegate with SketchLinePainter implements PaintDelegate {
       confidence: stroke.confidence,
       options: StrokeOptions(
         size: adjustedSize,
-        thinning: stroke.options.thinning,
+        // 기존에 저장된 strokes도 균일 두께로 렌더링되도록 강제 0 처리
+        thinning: 0.0,
         smoothing: stroke.options.smoothing,
         streamline: stroke.options.streamline,
         taperStart: stroke.options.taperStart,
         capStart: stroke.options.capStart,
         taperEnd: stroke.options.taperEnd,
         capEnd: stroke.options.capEnd,
-        simulatePressure: stroke.options.simulatePressure,
+        simulatePressure: false,
         isComplete: stroke.options.isComplete,
       ),
     );

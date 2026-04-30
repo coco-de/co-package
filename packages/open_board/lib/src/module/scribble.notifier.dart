@@ -297,18 +297,20 @@ class ScribbleNotifier extends ScribbleNotifierBase
             size:
                 modeState.inkGroupInfo.seletedStrokeWidth /
                 modeState.scaleFactor,
+            // fixedPen은 압력/두께 변화 없이 균일한 고정 두께를 유지한다.
+            //   - thinning 0: 속도/압력에 따른 두께 변화 비활성화
+            //   - simulatePressure false: 시뮬레이션 압력 무시
             thinning:
-                (modeState.inkGroupInfo.selectedInk == "pen" ||
-                    modeState.inkGroupInfo.selectedInk == "fixedPen")
-                ? 0.7
-                : 0.0,
+                modeState.inkGroupInfo.selectedInk == "pen" ? 0.7 : 0.0,
             smoothing: 0.5,
             streamline: 0.5,
             taperStart: 0.0,
             taperEnd: 0.0,
             capStart: true,
             capEnd: true,
-            simulatePressure: modeState.allowedPointersMode != .penOnly,
+            simulatePressure:
+                modeState.inkGroupInfo.selectedInk != "fixedPen" &&
+                modeState.allowedPointersMode != .penOnly,
           ),
         ),
       );
