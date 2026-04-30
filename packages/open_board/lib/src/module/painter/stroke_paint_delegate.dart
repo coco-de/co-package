@@ -77,10 +77,14 @@ class StrokePaintDelegate with SketchLinePainter implements PaintDelegate {
   }
 
   /// 고정 두께 펜 렌더링:
-  ///   1) 화면상 물리적 두께가 줌 레벨과 무관하게 항상 동일 (size / scaleFactor)
-  ///   2) 스트로크 전 구간에 걸쳐 균일한 두께 (thinning 0 + simulatePressure false)
+  ///   1) 그릴 당시 줌에 맞춰 캔버스 두께가 자동으로 결정됨 (생성 시 한 번):
+  ///      더 확대해서 그리면 캔버스 좌표상 더 가는 선, 같은 슬라이더라도
+  ///      모든 줌에서 그릴 때의 화면 픽셀 두께는 일정하게 보임.
+  ///   2) 한 번 그려진 스트로크의 캔버스 두께는 frozen — 줌 변화 시 동적으로
+  ///      재계산하지 않고 stroke.options.size를 그대로 사용. 따라서 기존
+  ///      스트로크는 일반 펜처럼 줌과 함께 화면상 비례 스케일됨.
+  ///   3) 스트로크 전 구간 균일 두께 (thinning 0 + simulatePressure false).
   void drawFixedPen(ui.Canvas canvas, Stroke stroke) {
-    final adjustedSize = stroke.width / scaleFactor;
     final adjustedStroke = Stroke(
       points: stroke.points,
       color: stroke.color,
@@ -91,8 +95,9 @@ class StrokePaintDelegate with SketchLinePainter implements PaintDelegate {
       segments: stroke.segments,
       confidence: stroke.confidence,
       options: StrokeOptions(
-        size: adjustedSize,
-        // 기존에 저장된 strokes도 균일 두께로 렌더링되도록 강제 0 처리
+        // frozen된 스트로크 자체의 size 사용 (재계산 X)
+        size: stroke.options.size,
+        // 기존 저장 strokes도 균일 두께 보장 (압력/속도 변화 무시)
         thinning: 0.0,
         smoothing: stroke.options.smoothing,
         streamline: stroke.options.streamline,
