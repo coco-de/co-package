@@ -282,21 +282,29 @@ class ScribbleNotifier extends ScribbleNotifierBase
         Erasing() => s,
       };
     } else if (state is Drawing) {
+      // fixedPen은 "그리는 시점의 화면 픽셀 두께"를 stroke.width에 고정으로
+      // 캡처해 두어, 같은 슬라이더 값이라도 다른 줌 레벨에서 그리면
+      // 결과 두께가 달라지도록 한다 (확대해서 그릴수록 가는 펜).
+      // 다른 도구는 기존처럼 슬라이더 값 = 캔버스 좌표 두께로 저장.
+      final inkMode = modeState.inkGroupInfo.selectedInk;
+      final selectedWidth = modeState.inkGroupInfo.seletedStrokeWidth;
+      final capturedWidth = inkMode == InkModes.fixedPen
+          ? selectedWidth * modeState.scaleFactor
+          : selectedWidth;
+
       s = (state as Drawing).copyWith(
         pointerPosition: getPointFromEvent(event),
         activeLine: Stroke(
           points: [getPointFromEvent(event)],
           color: colorToInt(modeState.inkGroupInfo.selectedColor),
           ink: modeState.inkGroupInfo.selectedInk,
-          width: modeState.inkGroupInfo.seletedStrokeWidth,
+          width: capturedWidth,
           createdAt: DateTime.now().toIso8601String(),
           shapeType: modeState.inkGroupInfo.selectedInk == InkModes.shape
               ? "pending"
               : "",
           options: StrokeOptions(
-            size:
-                modeState.inkGroupInfo.seletedStrokeWidth /
-                modeState.scaleFactor,
+            size: selectedWidth / modeState.scaleFactor,
             // fixedPen은 압력/두께 변화 없이 균일한 고정 두께를 유지한다.
             //   - thinning 0: 속도/압력에 따른 두께 변화 비활성화
             //   - simulatePressure false: 시뮬레이션 압력 무시
