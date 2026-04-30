@@ -282,32 +282,21 @@ class ScribbleNotifier extends ScribbleNotifierBase
         Erasing() => s,
       };
     } else if (state is Drawing) {
-      // fixedPen은 각 스트로크의 화면 픽셀 두께를 draw-time에 영구 캡처:
-      //   stroke.width = slider / draw-time-scale
-      // 이렇게 하면 painter의 stroke.width / current-scale × current-scale
-      // = stroke.width 가 줌과 무관하게 일정해 단일 스트로크의 화면 픽셀
-      // 크기가 영속(zoom-invariant). 또한 같은 슬라이더라도 더 확대해서 그리면
-      // stroke.width가 작아져 "정밀 펜"처럼 더 가는 선이 그려짐.
-      // 다른 도구는 기존 의미(slider = 캔버스 좌표 두께)를 유지.
-      final inkMode = modeState.inkGroupInfo.selectedInk;
-      final selectedWidth = modeState.inkGroupInfo.seletedStrokeWidth;
-      final capturedWidth = inkMode == InkModes.fixedPen
-          ? selectedWidth / modeState.scaleFactor
-          : selectedWidth;
-
       s = (state as Drawing).copyWith(
         pointerPosition: getPointFromEvent(event),
         activeLine: Stroke(
           points: [getPointFromEvent(event)],
           color: colorToInt(modeState.inkGroupInfo.selectedColor),
           ink: modeState.inkGroupInfo.selectedInk,
-          width: capturedWidth,
+          width: modeState.inkGroupInfo.seletedStrokeWidth,
           createdAt: DateTime.now().toIso8601String(),
           shapeType: modeState.inkGroupInfo.selectedInk == InkModes.shape
               ? "pending"
               : "",
           options: StrokeOptions(
-            size: selectedWidth / modeState.scaleFactor,
+            size:
+                modeState.inkGroupInfo.seletedStrokeWidth /
+                modeState.scaleFactor,
             // fixedPen은 압력/두께 변화 없이 균일한 고정 두께를 유지한다.
             //   - thinning 0: 속도/압력에 따른 두께 변화 비활성화
             //   - simulatePressure false: 시뮬레이션 압력 무시

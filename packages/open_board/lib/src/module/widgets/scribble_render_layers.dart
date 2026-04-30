@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:open_board/src/module/widgets/selection_overlay.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
+import 'package:open_board/src/module/state/scribble_mode.state.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
@@ -65,21 +66,30 @@ class ScribbleRenderLayers {
   }
 
   /// 완성된 스트로크 레이어 빌드
+  /// 🎯 ValueListenableBuilder로 modeNotifier를 구독해 줌 변화(scaleFactor 갱신)
+  ///    시점에도 painter가 즉시 새 modeState로 재구성되도록 한다.
+  ///    (기존엔 modeNotifier.state를 직접 읽어 fixedPen 보정이 새 줌으로 적용
+  ///     되지 않음 → 기존 스트로크가 줌에 비례해 커지는 버그)
   Widget buildCompletedStrokesLayer() {
     return Positioned.fill(
-      child: CustomPaint(
-        painter: painter.ScribblePainter(
-          state: scribbleNotifier.currentState,
-          modeState: modeNotifier.state,
-          drawPointer: drawPen,
-          drawEraser: drawEraser,
-          background: background,
-          selectedStrokeIds: widgetState.selectedStrokeIds,
-          activeHandle: widgetState.activeHandle,
-          showLassoOverlay: widgetState.showLassoOverlay,
-          lassoSelectionState: widgetState.lassoSelectionState,
-          repaint: strokeCountNotifier,
-        ),
+      child: ValueListenableBuilder<ScribbleModeState>(
+        valueListenable: modeNotifier,
+        builder: (context, modeState, _) {
+          return CustomPaint(
+            painter: painter.ScribblePainter(
+              state: scribbleNotifier.currentState,
+              modeState: modeState,
+              drawPointer: drawPen,
+              drawEraser: drawEraser,
+              background: background,
+              selectedStrokeIds: widgetState.selectedStrokeIds,
+              activeHandle: widgetState.activeHandle,
+              showLassoOverlay: widgetState.showLassoOverlay,
+              lassoSelectionState: widgetState.lassoSelectionState,
+              repaint: strokeCountNotifier,
+            ),
+          );
+        },
       ),
     );
   }
