@@ -435,6 +435,9 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
     ScribbleTool.marker: DrawingTool.marker,
     ScribbleTool.fixedPen: DrawingTool.fixedPen,
     ScribbleTool.eraser: DrawingTool.erase,
+    ScribbleTool.shape: DrawingTool.shape,
+    ScribbleTool.lasso: DrawingTool.lasso,
+    ScribbleTool.text: DrawingTool.text,
   };
   late final DrawingState _drawingState;
   late final _InMemoryPageProvider _pageProvider;
@@ -740,6 +743,9 @@ class _ToolBar extends StatelessWidget {
     (ScribbleTool.marker, Icons.highlight, 'Marker'),
     (ScribbleTool.fixedPen, Icons.precision_manufacturing, 'Fixed'),
     (ScribbleTool.eraser, Icons.auto_fix_normal, 'Eraser'),
+    (ScribbleTool.shape, Icons.crop_square, 'Shape'),
+    (ScribbleTool.lasso, Icons.gesture, 'Lasso'),
+    (ScribbleTool.text, Icons.text_fields, 'Text'),
   ];
   static const _colors = [
     Colors.black,
