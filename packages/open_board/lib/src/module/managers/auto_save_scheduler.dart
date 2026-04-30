@@ -59,6 +59,20 @@ class AutoSaveScheduler {
     );
   }
 
+  /// 특정 키의 대기 중인 자동 저장 타이머 취소
+  ///
+  /// 회전/모드 전환 등 즉시 영속화가 필요한 시점에 사용합니다.
+  /// `onSave` 콜백은 호출하지 않으며, 호출 측이 별도로 즉시 저장을 수행해야 합니다.
+  ///
+  /// Returns: 대기 중이던 타이머를 취소했다면 `true`, 없었다면 `false`
+  bool flush(String key) {
+    final normalizedKey = _normalizeKey(key);
+    final timer = _autoSaveTimers.remove(normalizedKey);
+    if (timer == null) return false;
+    timer.cancel();
+    return true;
+  }
+
   /// 모든 자동 저장 타이머 취소
   void cancelAll() {
     for (final timer in _autoSaveTimers.values) {

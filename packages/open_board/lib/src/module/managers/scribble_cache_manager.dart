@@ -501,6 +501,36 @@
       }
     }
 
+    /// 대기 중인 디바운스 저장을 즉시 실행 (flush)
+    ///
+    /// 다음 두 디바운스 레이어 중 하나라도 대기 중이면 타이머를 취소하고
+    /// 메모리 캐시의 최신 [Scribble] 데이터를 즉시 파일로 저장합니다.
+    ///   - [AutoSaveScheduler] (컨트롤러 변경 콜백 → 1.0초 디바운스)
+    ///   - [saveScribble] 내부 디바운스 (1.5초)
+    ///
+    /// 회전/모드 전환 등 즉시 영속화가 필요한 시점에 호출합니다.
+    ///
+    /// Returns:
+    /// - `true`: 대기 중인 디바운스가 있었고 즉시 저장에 성공한 경우
+    /// - `false`: 대기 중인 디바운스가 없거나 메모리 캐시에 데이터가 없는 경우
+    Future<bool> flushSave(String key) async {
+      final normalizedKey = _normalizeKey(key);
+
+      // 두 디바운스 레이어를 모두 검사·취소
+      final autoSaveWasPending = _autoSaveScheduler.flush(normalizedKey);
+      final pendingTimer = _saveTimers.remove(normalizedKey);
+      pendingTimer?.cancel();
+
+      // 어느 레이어에서도 대기 중이 아니면 flush 대상 없음
+      if (!autoSaveWasPending && pendingTimer == null) return false;
+
+      // 메모리 캐시의 최신 데이터를 즉시 파일로 저장
+      final scribble = _memoryCache[normalizedKey];
+      if (scribble == null) return false;
+
+      return _saveToFileImmediately(normalizedKey, scribble);
+    }
+
     /// 필기 데이터 로드
     Future<Scribble?> loadScribble(String key) async {
       try {
