@@ -518,7 +518,8 @@ class _MultiPageDrawingPageState extends State<MultiPageDrawingPage> {
   // ===== Recording =====
 
   Future<void> _startRecording() async {
-    await _recording.start();
+    // RecordingManager.start()는 void 반환 — wasm 엄격 타입 검사를 위해 await 제거
+    _recording.start();
     setState(() {});
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
