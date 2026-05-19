@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/painter/paint_delegate.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/scribble_mode.state.dart';
@@ -24,7 +25,14 @@ class CursorPaintDelegate implements PaintDelegate {
 
   @override
   void paint(ui.Canvas canvas, ui.Size size) {
-    if (state.pointerPosition != null && state is Erasing && drawEraser) {
+    // 모드가 지우개로 유지될 때만 커서를 그린다. state(Erasing)가 stale하게 남아도
+    // mode가 펜으로 바뀌면 커서를 그리지 않아 잔상을 방지한다.
+    final isEraserMode =
+        modeState.inkGroupInfo.selectedInk == InkModes.erase;
+    if (state.pointerPosition != null &&
+        state is Erasing &&
+        isEraserMode &&
+        drawEraser) {
       canvas.save();
       _drawPointer(canvas);
       canvas.restore();
