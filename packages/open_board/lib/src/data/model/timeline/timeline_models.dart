@@ -114,6 +114,38 @@ class TlPageCleared extends TimelineEventData {
   const TlPageCleared({required this.pageId});
 }
 
+class TlViewportChanged extends TimelineEventData {
+  final String pageId;
+  final double scale;
+  final double centerX;
+  final double centerY;
+  final double viewportWidth;
+  final double viewportHeight;
+
+  const TlViewportChanged({
+    required this.pageId,
+    required this.scale,
+    required this.centerX,
+    required this.centerY,
+    required this.viewportWidth,
+    required this.viewportHeight,
+  });
+}
+
+class TlSessionParticipant extends TimelineEventData {
+  final String participantId;
+  final String displayName;
+  final String role;
+  final String action;
+
+  const TlSessionParticipant({
+    required this.participantId,
+    required this.displayName,
+    required this.role,
+    required this.action,
+  });
+}
+
 class TimelineSnapshot {
   final Int64 offsetMicros;
   final int activePageIndex;

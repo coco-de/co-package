@@ -100,7 +100,9 @@ class ScribbleReplayHandler {
       case PageRemovedEvent(:final atIndex):
         _bookController.removePage(atIndex);
       case DoublePageToggledEvent():
-        break; // UI 전용, 무시
+      case ViewportChangedEvent():
+      case SessionParticipantEvent():
+        break; // 리플레이 핸들러에서는 무시 (별도 처리)
     }
   }
 

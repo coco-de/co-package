@@ -45,6 +45,10 @@ message TimelineEvent {
     TlPageAdded pageAdded = 7;
     TlPageRemoved pageRemoved = 8;
     TlPageCleared pageCleared = 9;
+
+    // Phase 1 추가
+    TlViewportChanged viewportChanged = 10;
+    TlSessionParticipant sessionParticipant = 11;
   }
 }
 
@@ -86,6 +90,22 @@ message TlPageRemoved {
 
 message TlPageCleared {
   string pageId = 1;
+}
+
+message TlViewportChanged {
+  string pageId       = 1;
+  double scale        = 2;
+  double centerX      = 3;
+  double centerY      = 4;
+  double viewportWidth  = 5;
+  double viewportHeight = 6;
+}
+
+message TlSessionParticipant {
+  string participantId = 1;
+  string displayName   = 2;
+  string role          = 3;  // "teacher" | "student"
+  string action        = 4;  // "joined" | "left"
 }
 
 /// seek 스냅샷 (경량 — Stroke 데이터 없음)

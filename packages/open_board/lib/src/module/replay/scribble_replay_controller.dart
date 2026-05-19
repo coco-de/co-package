@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:open_board/src/data/model/protobuf/scribble.pb.dart'
-    show Stroke;
+import 'package:open_board/src/data/model/protobuf/scribble.pb.dart' show Stroke;
 import 'package:open_board/src/data/model/timeline/timeline_models.dart';
 import 'package:open_board/src/module/events/scribble_book_event.dart';
 import 'package:open_board/src/module/replay/timeline_file.dart';
@@ -54,9 +53,6 @@ enum ReplayState {
 /// });
 /// ```
 class ScribbleReplayController extends ChangeNotifier {
-  /// 스냅샷 간격 (마이크로초, 기본 30초)
-  static const int _snapshotIntervalMicros = 30 * 1000000;
-
   /// 이벤트 타임라인 (시간순 정렬)
   List<ScribbleBookEvent> _timeline = [];
 
@@ -64,7 +60,7 @@ class ScribbleReplayController extends ChangeNotifier {
   int _currentIndex = 0;
 
   /// 재생 상태
-  ReplayState _state = .idle;
+  ReplayState _state = ReplayState.idle;
 
   /// 재생 속도 배율
   double _speed = 1.0;
@@ -84,6 +80,9 @@ class ScribbleReplayController extends ChangeNotifier {
   /// 스냅샷 체크포인트 (seek 최적화)
   final Map<int, ReplaySnapshot> _snapshots = {};
 
+  /// 스냅샷 간격 (마이크로초, 기본 30초)
+  static const int _snapshotIntervalMicros = 30 * 1000000;
+
   /// 이벤트 발행 스트림 (리플레이 시 발생하는 이벤트)
   final StreamController<ScribbleBookEvent> _eventController =
       StreamController<ScribbleBookEvent>.broadcast();
@@ -101,7 +100,7 @@ class ScribbleReplayController extends ChangeNotifier {
   ReplayState get state => _state;
 
   /// 재생 중 여부
-  bool get isPlaying => _state == .playing;
+  bool get isPlaying => _state == ReplayState.playing;
 
   /// 재생 속도
   double get speed => _speed;
@@ -113,13 +112,13 @@ class ScribbleReplayController extends ChangeNotifier {
   }
 
   /// 전체 재생 시간 (Duration)
-  Duration get duration => .new(microseconds: durationMicros);
+  Duration get duration => Duration(microseconds: durationMicros);
 
   /// 현재 재생 위치 (마이크로초)
   int get positionMicros {
-    if (_state == .idle) return 0;
-    if (_state == .completed) return durationMicros;
-    if (_state == .paused) return _playStartOffsetMicros;
+    if (_state == ReplayState.idle) return 0;
+    if (_state == ReplayState.completed) return durationMicros;
+    if (_state == ReplayState.paused) return _playStartOffsetMicros;
 
     // playing 상태: wall clock 기반 계산
     final elapsed =
@@ -130,7 +129,7 @@ class ScribbleReplayController extends ChangeNotifier {
   }
 
   /// 현재 재생 위치 (Duration)
-  Duration get position => .new(microseconds: positionMicros);
+  Duration get position => Duration(microseconds: positionMicros);
 
   /// 타임라인 이벤트 수
   int get eventCount => _timeline.length;
@@ -152,16 +151,15 @@ class ScribbleReplayController extends ChangeNotifier {
   void loadTimeline(List<ScribbleBookEvent> events) {
     _stop();
 
-    _timeline = List<ScribbleBookEvent>.of(events)
+    _timeline = List<ScribbleBookEvent>.from(events)
       ..sort(
         (a, b) => a.timestampMicros.compareTo(b.timestampMicros),
       );
 
     _currentIndex = 0;
-    _state = _timeline.isEmpty ? .idle : .paused;
-    _timelineStartMicros = _timeline.isEmpty
-        ? 0
-        : _timeline.first.timestampMicros;
+    _state = _timeline.isEmpty ? ReplayState.idle : ReplayState.paused;
+    _timelineStartMicros =
+        _timeline.isEmpty ? 0 : _timeline.first.timestampMicros;
     _playStartOffsetMicros = 0;
 
     // 스냅샷 생성
@@ -174,7 +172,9 @@ class ScribbleReplayController extends ChangeNotifier {
   ///
   /// [ScribbleTimeline]의 이벤트를 [ScribbleBookEvent]로 변환 후 로드한다.
   void loadFromTimeline(ScribbleTimeline timeline) {
-    final events = timeline.events.map(_convertFromTimelineEvent).toList();
+    final events = timeline.events
+        .map(_convertFromTimelineEvent)
+        .toList();
     loadTimeline(events);
   }
 
@@ -187,18 +187,77 @@ class ScribbleReplayController extends ChangeNotifier {
     loadFromTimeline(timeline);
   }
 
+  /// [TimelineEvent] → [ScribbleBookEvent] 변환
+  ScribbleBookEvent _convertFromTimelineEvent(TimelineEvent tlEvent) {
+    final timestampMicros = tlEvent.timestamp.toInt();
+
+    return switch (tlEvent.event) {
+      TlPageChanged(:final fromIndex, :final toIndex, :final fromPageId, :final toPageId) =>
+        PageChangedEvent(
+          fromIndex: fromIndex,
+          toIndex: toIndex,
+          fromPageId: fromPageId,
+          toPageId: toPageId,
+          timestampMicros: timestampMicros,
+        ),
+      TlStrokeAdded(:final pageId, :final strokeIndex) =>
+        StrokeAddedEvent(
+          pageId: pageId,
+          stroke: _emptyStroke,
+          strokeIndex: strokeIndex,
+          timestampMicros: timestampMicros,
+        ),
+      TlStrokeRemoved(:final pageId, :final strokeIndex) =>
+        StrokeRemovedEvent(
+          pageId: pageId,
+          strokeIndex: strokeIndex,
+          timestampMicros: timestampMicros,
+        ),
+      TlUndo(:final pageId) =>
+        UndoPerformedEvent(pageId: pageId, timestampMicros: timestampMicros),
+      TlRedo(:final pageId) =>
+        RedoPerformedEvent(pageId: pageId, timestampMicros: timestampMicros),
+      TlPageAdded(:final pageId, :final atIndex) =>
+        PageAddedEvent(pageId: pageId, atIndex: atIndex, timestampMicros: timestampMicros),
+      TlPageRemoved(:final pageId, :final atIndex) =>
+        PageRemovedEvent(pageId: pageId, atIndex: atIndex, timestampMicros: timestampMicros),
+      TlPageCleared(:final pageId) =>
+        PageClearedEvent(pageId: pageId, timestampMicros: timestampMicros),
+      TlViewportChanged(:final pageId, :final scale, :final centerX,
+          :final centerY, :final viewportWidth, :final viewportHeight) =>
+        ViewportChangedEvent(
+          pageId: pageId,
+          scale: scale,
+          centerX: centerX,
+          centerY: centerY,
+          viewportWidth: viewportWidth,
+          viewportHeight: viewportHeight,
+          timestampMicros: timestampMicros,
+        ),
+      TlSessionParticipant(:final participantId, :final displayName,
+          :final role, :final action) =>
+        SessionParticipantEvent(
+          participantId: participantId,
+          displayName: displayName,
+          role: ParticipantRole.values.byName(role),
+          action: ParticipantAction.values.byName(action),
+          timestampMicros: timestampMicros,
+        ),
+    };
+  }
+
   // ===== 재생 제어 =====
 
   /// 재생 시작/재개
   void play() {
     if (_timeline.isEmpty) return;
-    if (_state == .completed) {
+    if (_state == ReplayState.completed) {
       // 완료 상태에서 play → 처음부터 재생
       _currentIndex = 0;
       _playStartOffsetMicros = 0;
     }
 
-    _state = .playing;
+    _state = ReplayState.playing;
     _playStartWallMicros = DateTime.now().microsecondsSinceEpoch;
 
     _startPlayTimer();
@@ -207,10 +266,10 @@ class ScribbleReplayController extends ChangeNotifier {
 
   /// 일시 정지
   void pause() {
-    if (_state != .playing) return;
+    if (_state != ReplayState.playing) return;
 
     _playStartOffsetMicros = positionMicros;
-    _state = .paused;
+    _state = ReplayState.paused;
     _playTimer?.cancel();
 
     notifyListeners();
@@ -223,14 +282,18 @@ class ScribbleReplayController extends ChangeNotifier {
     // 가장 가까운 스냅샷 찾기
     final snapshotEntry = _findNearestSnapshot(targetMicros);
 
-    _currentIndex = snapshotEntry != null
-        ? snapshotEntry.value.eventIndex
-        : 0; // 스냅샷 이후 ~ 목표 위치까지 이벤트 빠르게 발행
+    if (snapshotEntry != null) {
+      _currentIndex = snapshotEntry.value.eventIndex;
+    } else {
+      _currentIndex = 0;
+    }
+
+    // 스냅샷 이후 ~ 목표 위치까지 이벤트 빠르게 발행
     _fastForwardTo(targetMicros);
 
     _playStartOffsetMicros = targetMicros;
 
-    if (_state == .playing) {
+    if (_state == ReplayState.playing) {
       _playStartWallMicros = DateTime.now().microsecondsSinceEpoch;
       _startPlayTimer();
     }
@@ -243,14 +306,14 @@ class ScribbleReplayController extends ChangeNotifier {
   void setSpeed(double speed) {
     assert(speed > 0, 'Speed must be positive');
 
-    if (_state == .playing) {
+    if (_state == ReplayState.playing) {
       _playStartOffsetMicros = positionMicros;
       _playStartWallMicros = DateTime.now().microsecondsSinceEpoch;
     }
 
     _speed = speed;
 
-    if (_state == .playing) {
+    if (_state == ReplayState.playing) {
       _startPlayTimer();
     }
 
@@ -262,75 +325,11 @@ class ScribbleReplayController extends ChangeNotifier {
     seek(position);
   }
 
-  @override
-  void dispose() {
-    if (_isDisposed) return;
-    _isDisposed = true;
-    _playTimer?.cancel();
-    _eventController.close();
-    _positionController.close();
-    super.dispose();
-  }
-
-  /// [TimelineEvent] → [ScribbleBookEvent] 변환
-  ScribbleBookEvent _convertFromTimelineEvent(TimelineEvent tlEvent) {
-    final timestampMicros = tlEvent.timestamp.toInt();
-
-    return switch (tlEvent.event) {
-      TlPageChanged(
-        :final fromIndex,
-        :final toIndex,
-        :final fromPageId,
-        :final toPageId,
-      ) =>
-        PageChangedEvent(
-          fromIndex: fromIndex,
-          toIndex: toIndex,
-          fromPageId: fromPageId,
-          toPageId: toPageId,
-          timestampMicros: timestampMicros,
-        ),
-      TlStrokeAdded(:final pageId, :final strokeIndex) => StrokeAddedEvent(
-        pageId: pageId,
-        stroke: _emptyStroke,
-        strokeIndex: strokeIndex,
-        timestampMicros: timestampMicros,
-      ),
-      TlStrokeRemoved(:final pageId, :final strokeIndex) => StrokeRemovedEvent(
-        pageId: pageId,
-        strokeIndex: strokeIndex,
-        timestampMicros: timestampMicros,
-      ),
-      TlUndo(:final pageId) => UndoPerformedEvent(
-        pageId: pageId,
-        timestampMicros: timestampMicros,
-      ),
-      TlRedo(:final pageId) => RedoPerformedEvent(
-        pageId: pageId,
-        timestampMicros: timestampMicros,
-      ),
-      TlPageAdded(:final pageId, :final atIndex) => PageAddedEvent(
-        pageId: pageId,
-        atIndex: atIndex,
-        timestampMicros: timestampMicros,
-      ),
-      TlPageRemoved(:final pageId, :final atIndex) => PageRemovedEvent(
-        pageId: pageId,
-        atIndex: atIndex,
-        timestampMicros: timestampMicros,
-      ),
-      TlPageCleared(:final pageId) => PageClearedEvent(
-        pageId: pageId,
-        timestampMicros: timestampMicros,
-      ),
-    };
-  }
-
   // ===== 내부 메서드 =====
 
   void _stop() {
     _playTimer?.cancel();
-    _state = .idle;
+    _state = ReplayState.idle;
     _currentIndex = 0;
     _playStartOffsetMicros = 0;
     _snapshots.clear();
@@ -374,7 +373,7 @@ class ScribbleReplayController extends ChangeNotifier {
     // 재생 완료 체크
     if (_currentIndex >= _timeline.length) {
       _playTimer?.cancel();
-      _state = .completed;
+      _state = ReplayState.completed;
       notifyListeners();
     }
   }
@@ -427,6 +426,16 @@ class ScribbleReplayController extends ChangeNotifier {
     }
 
     return nearest;
+  }
+
+  @override
+  void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    _playTimer?.cancel();
+    _eventController.close();
+    _positionController.close();
+    super.dispose();
   }
 }
 

@@ -1305,6 +1305,18 @@
 
     /// 🎯 InteractiveViewer pan 제스처 허용 여부 (panDirection에 따라 제어)
     bool _shouldEnablePan() {
+      // 🎯 하이라이트 모드: 외곽 InteractiveViewer 에 pan 양보 (GestureArena
+      //    경합 방지). 외곽 IV 가 panEnabled=isZoomedIn 으로 zoom 상태에서만
+      //    pan 을 처리하므로 일관된 동작 보장 + 단일 손가락 drag 는 PDF
+      //    텍스트 선택으로 통과.
+      //    ⚠️ multi-touch 체크보다 먼저 — highlight 모드에서는 멀티터치라도
+      //       내부 IV 가 캡처하지 않아야 외곽 IV 가 일관되게 win.
+      final drawingState = DrawingState();
+      final currentTool = drawingState.selectedTool.value;
+      if (currentTool == DrawingTool.highlighter) {
+        return false;
+      }
+
       // 🖊️ 멀티터치(두 손가락) 시에는 항상 pan 허용 (핀치 줌/드래그용)
       if (pointerHandler.isMultiTouch()) {
         return true; // ✅ 두 손가락 터치 시 pan 허용
@@ -1313,17 +1325,6 @@
       // 🖊️ 손모드에서 그리기 중일 때는 스크롤 차단 (단, 싱글 터치일 때만)
       if (_isHandModeDrawingActive) {
         return false; // 손모드 그리기 중에는 pan 제스처 완전 차단
-      }
-
-      // 🎯 하이라이트 모드 체크 (텍스트 선택을 위해 제스처 투과)
-      final drawingState = DrawingState();
-      final currentTool = drawingState.selectedTool.value;
-      if (currentTool == DrawingTool.highlighter) {
-        // 🚨 하이라이트 모드에서는 확대/축소 중일 때만 pan 허용
-        // 그 외에는 pan을 차단하여 PageView 스와이프가 작동하도록 함
-        final currentScale =
-            transformationController?.value.getMaxScaleOnAxis() ?? 1.0;
-        return currentScale > 1.01;
       }
 
       // 🎯 panDirection에 따른 pan 제스처 제어
@@ -1350,16 +1351,21 @@
 
     /// 🎯 InteractiveViewer scale 제스처 허용 여부 (확대/축소 허용)
     bool _shouldEnableScale() {
-      // 🖊️ 멀티터치(두 손가락) 시에는 항상 scale 허용 (핀치 줌용)
-      if (pointerHandler.isMultiTouch()) {
-        return true; // ✅ 두 손가락 터치 시 핀치 줌 허용
-      }
-
-      // 🎯 하이라이트 모드 체크 (텍스트 선택을 위해 제스처 투과)
+      // 🎯 하이라이트 모드: 외곽 InteractiveViewer 에 scale 양보 (GestureArena
+      //    경합 방지). 외곽 IV 가 멀티터치 핀치를 일관되게 캡처하도록 한다.
+      //    내부 IV 와 외곽 IV 가 동시에 ScaleGestureRecognizer 를 등록하면
+      //    첫 핀치에서 어느 쪽이 win 할지 불안정해 모드 전환 직후 확대/축소
+      //    동작이 일관되지 않는다 (kobic Issue: #5877 후속 보강).
+      //    ⚠️ multi-touch 체크보다 먼저.
       final drawingState = DrawingState();
       final currentTool = drawingState.selectedTool.value;
       if (currentTool == DrawingTool.highlighter) {
-        return true; // ✅ 하이라이트 모드에서는 InteractiveViewer도 scale 허용 (PdfViewer의 텍스트 선택을 위해)
+        return false;
+      }
+
+      // 🖊️ 멀티터치(두 손가락) 시에는 항상 scale 허용 (핀치 줌용)
+      if (pointerHandler.isMultiTouch()) {
+        return true; // ✅ 두 손가락 터치 시 핀치 줌 허용
       }
 
       // ✅ 확대/축소는 필기 모드에서도 허용 (펜 그리기 중에만 비활성화)

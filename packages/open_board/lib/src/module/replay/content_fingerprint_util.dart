@@ -60,15 +60,15 @@ class ContentFingerprintUtil {
     return null;
   }
 
-  /// FNV-1a 32-bit 해시 (웹 호환 — 64비트 정수는 JS에서 지원 불가)
+  /// FNV-1a 32-bit 해시 (Web/JavaScript 호환)
   ///
   /// 간단한 내장 해시. 앱 레벨에서 SHA-256으로 대체 가능.
   static String _simpleHash(String input) {
     final bytes = utf8.encode(input);
-    var hash = 0x811c9dc5; // FNV-1a 32-bit offset basis
+    var hash = 0x811c9dc5; // FNV offset basis (32-bit)
     for (final byte in bytes) {
       hash ^= byte;
-      hash = (hash * 0x01000193) & 0xFFFFFFFF; // FNV-1a 32-bit prime
+      hash = (hash * 0x01000193) & 0xFFFFFFFF; // FNV prime (32-bit)
     }
     return hash.toRadixString(16).padLeft(8, '0');
   }

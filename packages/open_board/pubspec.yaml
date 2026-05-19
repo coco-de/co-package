@@ -35,6 +35,11 @@ dev_dependencies:
   json_serializable: ^6.11.1
 
 # The following section is specific to Flutter.
+  fake_async: any
+  mocktail: any
+  shared_preferences: any
+  path_provider_platform_interface: any
+  plugin_platform_interface: any
 flutter:
   assets:
     - res/svgs/

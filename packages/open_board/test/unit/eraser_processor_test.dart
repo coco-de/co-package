@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/scribble_mode.state.dart';
 import 'package:open_board/src/module/stroke/eraser_processor.dart';

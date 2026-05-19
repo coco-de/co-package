@@ -33,6 +33,25 @@ export 'src/module/replay/scribble_replay_handler.dart';
 export 'src/data/model/timeline/timeline_models.dart';
 export 'src/data/model/timeline/timeline_serializer.dart';
 
+// 실시간 세션 (Transport 추상화)
+export 'src/module/live/domain/transport/live_session_transport.dart';
+export 'src/module/live/domain/model/transport_state.dart';
+export 'src/module/live/domain/model/transport_message.dart';
+export 'src/module/live/domain/model/session_participant.dart';
+export 'src/module/live/domain/batcher/event_batcher.dart';
+export 'src/module/live/domain/batcher/viewport_throttler.dart';
+export 'src/module/live/data/transport/local_loopback_transport.dart';
+export 'src/module/live/data/renderer/remote_stroke_renderer.dart';
+export 'src/module/live/presentation/live_session_controller.dart';
+export 'src/module/live/presentation/adaptive_viewport_calculator.dart';
+export 'src/module/live/presentation/viewport_animator.dart';
+export 'src/module/live/domain/model/live_session.dart';
+export 'src/module/live/domain/sync/late_join_synchronizer.dart';
+export 'src/module/live/di/live_session_scope.dart';
+export 'src/module/live/presentation/synced_replay_controller.dart';
+export 'src/module/live/domain/storage/session_storage.dart';
+export 'src/module/live/domain/recording/egress_controller.dart';
+
 // 🔄 메타데이터 및 동기화 시스템
 export 'src/module/state/scribble_metadata.dart'; // ✨ 새로운 메타데이터 시스템
 

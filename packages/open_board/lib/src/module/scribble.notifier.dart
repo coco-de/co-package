@@ -1,4 +1,5 @@
 // 🎯 Dart imports:
+import 'dart:async';
 
 // 🐦 Flutter imports:
 import 'package:flutter/gestures.dart';
@@ -63,6 +64,21 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// 도형 인식 기능 활성화 상태
   bool _shapeRecognitionEnabled = false;
+
+  /// 마커 펜 정지 시 직선 변환까지의 대기 시간
+  static const Duration kMarkerStraightenDelay = Duration(milliseconds: 1500);
+
+  /// 마커 펜 정지 판정 이동 임계값(픽셀, 제곱값으로 비교)
+  static const double kMarkerStraightenMoveThresholdSquared = 9.0;
+
+  /// 마커 펜 정지 감지 타이머
+  Timer? _markerStraightenTimer;
+
+  /// 마커 펜 정지 기준 위치(가장 마지막으로 의미 있는 이동이 발생한 좌표)
+  Offset _markerHoldAnchor = Offset.zero;
+
+  /// 마커 펜이 직선으로 변환되었는지 여부 (변환 후에는 끝점만 추종)
+  bool _markerStraightened = false;
 
   ScribbleNotifier({
     /// If you pass a scribble here, the notifier will use that scribble as a
@@ -323,6 +339,14 @@ class ScribbleNotifier extends ScribbleNotifierBase
         activePointerIds: [...state.activePointerIds, event.pointer],
       ),
     };
+
+    // 마커 펜 정지 감지: 그리기 시작 시점부터 타이머 가동
+    if (modeState.inkGroupInfo.selectedInk == InkModes.marker &&
+        state.activePointerIds.length == 1) {
+      _startMarkerStraightenTimer(event.localPosition);
+    } else {
+      _cancelMarkerStraighten();
+    }
   }
 
   /// preLoacation과 location 사이에 직선을 긋는다.
@@ -341,6 +365,42 @@ class ScribbleNotifier extends ScribbleNotifierBase
     }
 
     if (state is Drawing) {
+      // 마커 펜 직선화 이후: 새 포인트를 추가하지 않고 끝점만 갱신
+      if (_markerStraightened &&
+          modeState.inkGroupInfo.selectedInk == InkModes.marker) {
+        final drawing = state as Drawing;
+        final activeLine = drawing.activeLine;
+        if (activeLine != null &&
+            activeLine.ink == InkModes.marker &&
+            activeLine.points.length >= 2) {
+          final newEndPoint = getPointFromEvent(event);
+          final updatedStroke = Stroke(
+            points: [activeLine.points.first, newEndPoint],
+            color: activeLine.color,
+            ink: activeLine.ink,
+            width: activeLine.width,
+            createdAt: activeLine.createdAt,
+            options: activeLine.options,
+            shapeType: activeLine.shapeType,
+          );
+          temporaryValue = drawing.copyWith(
+            activeLine: updatedStroke,
+            pointerPosition: newEndPoint,
+          );
+          return true;
+        }
+      }
+
+      // 마커 펜 정지 감지: 임계값 이상 이동 시 타이머 재시작
+      if (modeState.inkGroupInfo.selectedInk == InkModes.marker &&
+          _markerStraightenTimer != null) {
+        final dx = event.localPosition.dx - _markerHoldAnchor.dx;
+        final dy = event.localPosition.dy - _markerHoldAnchor.dy;
+        if (dx * dx + dy * dy > kMarkerStraightenMoveThresholdSquared) {
+          _startMarkerStraightenTimer(event.localPosition);
+        }
+      }
+
       // 도구 타입에 관계없이 포인트 추가 - 도형 도구도 드래그 중에 라인이 보이도록 함
       final addedState = addPoint(event, state, modeState) as Drawing;
       final newState = addedState.copyWith(
@@ -407,6 +467,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
   @override
   void onPointerUp(PointerUpEvent event, ScribbleModeState modeState) {
     if (!modeState.supportedPointerKinds.contains(event.kind)) return;
+    _cancelMarkerStraighten();
     final pos = event.kind == .mouse ? state.pointerPosition : null;
 
     // 올가미 선택 도구를 사용하는 경우
@@ -577,6 +638,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
     ScribbleModeState modeState,
   ) {
     if (!modeState.supportedPointerKinds.contains(event.kind)) return;
+    _cancelMarkerStraighten();
     if (state is Drawing) {
       final finished =
           finishLineForState(addPoint(event, state, modeState)) as Drawing;
@@ -600,6 +662,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
   @override
   void onPointerExit(PointerExitEvent event, ScribbleModeState modeState) {
     if (!modeState.supportedPointerKinds.contains(event.kind)) return;
+    _cancelMarkerStraighten();
     final finished = finishLineForState(state);
     temporaryValue = switch (finished) {
       Drawing() => finished.copyWith(
@@ -635,6 +698,47 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// ♻️ StrokeProcessor로 위임
   ScribbleState finishLineForState(ScribbleState s) =>
       strokeProcessor.finishStroke(s);
+
+  /// 마커 정지 감지 타이머 시작
+  void _startMarkerStraightenTimer(Offset anchor) {
+    _markerStraightenTimer?.cancel();
+    _markerHoldAnchor = anchor;
+    _markerStraightened = false;
+    _markerStraightenTimer = Timer(kMarkerStraightenDelay, _straightenMarkerStroke);
+  }
+
+  /// 마커 정지 상태 초기화
+  void _cancelMarkerStraighten() {
+    _markerStraightenTimer?.cancel();
+    _markerStraightenTimer = null;
+    _markerStraightened = false;
+  }
+
+  /// 마커 펜 stroke을 첫 점 → 마지막 점 직선으로 변환
+  void _straightenMarkerStroke() {
+    final s = state;
+    if (s is! Drawing) return;
+    final activeLine = s.activeLine;
+    if (activeLine == null) return;
+    if (activeLine.ink != InkModes.marker) return;
+    if (activeLine.points.length < 2) return;
+
+    final firstPoint = activeLine.points.first;
+    final lastPoint = activeLine.points.last;
+
+    final straightStroke = Stroke(
+      points: [firstPoint, lastPoint],
+      color: activeLine.color,
+      ink: activeLine.ink,
+      width: activeLine.width,
+      createdAt: activeLine.createdAt,
+      options: activeLine.options,
+      shapeType: activeLine.shapeType,
+    );
+
+    _markerStraightened = true;
+    temporaryValue = s.copyWith(activeLine: straightStroke);
+  }
 
   /// 모든 올가미 스트로크를 제거하는 메서드
   void removeLassoStrokes() {
@@ -817,5 +921,12 @@ class ScribbleNotifier extends ScribbleNotifierBase
         pointerPosition: pointerPosition,
       ),
     };
+  }
+
+  @override
+  void dispose() {
+    _markerStraightenTimer?.cancel();
+    _markerStraightenTimer = null;
+    super.dispose();
   }
 }
