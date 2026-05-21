@@ -302,8 +302,11 @@ class ScribbleController extends ChangeNotifier {
     _scribbleNotifier = ScribbleNotifier(
       scribble: initialScribble ?? Scribble(strokes: [], width: 0, height: 0),
     );
-    // ScribbleNotifier 생성자가 state를 두 번 설정하여 spurious undo 히스토리가 생기므로 초기화
-    _scribbleNotifier.clearQueue();
+    // ScribbleNotifier 생성자가 state 를 두 번 설정하여 spurious undo 히스토리가 생긴다.
+    // `clearQueue()` 만 호출하면 history 가 완전히 비어서 첫 stroke 시 length=1 →
+    // `canUndo` 가 false 가 되는 버그가 발생하므로, 현재 상태를 baseline 으로 push 하여
+    // 첫 변경이 즉시 undo 가능하도록 보정한다.
+    _scribbleNotifier.resetHistoryToBaseline();
 
     // ScribbleModeNotifier 초기화
     _modeNotifier = ScribbleModeNotifier();

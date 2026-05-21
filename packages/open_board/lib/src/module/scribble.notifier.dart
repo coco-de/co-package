@@ -160,6 +160,24 @@ class ScribbleNotifier extends ScribbleNotifierBase
     }
   }
 
+  /// Undo 히스토리를 현재 상태 1개로 초기화하여 baseline 을 설정한다.
+  ///
+  /// `clearQueue()` 는 history 를 완전히 비우므로 첫 변경 후 `length == 1`
+  /// 이 되어 `canUndo` 가 `false` 가 된다 (첫 stroke 는 undo 불가능 상태).
+  ///
+  /// 이 메서드는 clearQueue 직후 현재 상태를 baseline 으로 history 에 명시 추가하여
+  /// 첫 변경이 즉시 undo 가능하도록 보정한다.
+  ///
+  /// `Drawing` / `Erasing` 은 identity 비교이므로 `copyWith()` 로 새 인스턴스를
+  /// 만들면 `shouldInsertValueIntoQueue` 가 `true` 를 반환하여 history 에 들어간다.
+  void resetHistoryToBaseline() {
+    clearQueue();
+    state = switch (state) {
+      final Drawing s => s.copyWith(),
+      final Erasing s => s.copyWith(),
+    };
+  }
+
   /// Clear the entire drawing.
   void clear() {
     if (state.scribble.strokes.isEmpty) return;
