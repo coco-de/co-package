@@ -1,0 +1,42 @@
+name: open_epub
+description: A customizable EPUB reader widget for Flutter. Supports iOS, Android, and Web platforms with features like pagination, scrolling, bookmarks, and customizable themes.
+version: 0.1.3
+homepage: https://github.com/Ohgyuchan/open_epub
+repository: https://github.com/Ohgyuchan/open_epub
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.0.0"
+
+platforms:
+  android:
+  ios:
+  web:
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # EPUB viewer and parser
+  epub_view: ^3.2.0
+  epubx: ^4.0.0
+
+  # Google Fonts
+  google_fonts: ^8.0.0
+  flutter_html: ^3.0.0
+  scrollable_positioned_list: ^0.3.8
+  html: ^0.15.6
+
+  # HTTP for URL loading
+  http: ^1.6.0
+
+  # Settings persistence
+  shared_preferences: ^2.5.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
