@@ -1,13 +1,13 @@
 // Presentation Engine — open_epub 1.0
 // Story: S1.5 (#11) — Reflowable XHTML 렌더
-// BDD: F2.1 (Reflowable 본문 렌더), F2.5 (이미지 인라인 + placeholder)
+// Story: S1.6 (#12) — 글자 크기·줄간격 + BookPosition(spineIndex) 보존
+// BDD: F2.1 / F2.2 / F2.3 / F2.5
 //
-// 본 Story 범위:
-// - 단일 spine item의 XHTML 문자열을 flutter_html로 렌더 (scroll 모드)
-// - 이미지 인라인 표시 + 로딩 실패 시 placeholder
-// - spine 항목 간 다음/이전 이동 (단순 인덱스 이동)
+// 본 widget은 단일 spine 항목을 스크롤로 표시 (S1.5). S1.6에서
+// fontSize / lineHeight property를 추가하여 글자 크기·줄간격 변경 시
+// 본문이 재배치되며 현재 spineIndex가 보존됨을 보장한다.
 //
-// 페이지 분할 / 글자 크기 변경은 S1.6 (#12) 영역.
+// 페이지 모드(spine 단위 PageView)는 [ReflowablePageView]에서 처리.
 
 import 'dart:typed_data';
 
@@ -35,12 +35,20 @@ class ReflowableEngine extends StatefulWidget {
     required this.xhtmlLoader,
     this.imageLoader,
     this.initialSpineIndex = 0,
+    this.fontSize = 16.0,
+    this.lineHeight = 1.5,
   });
 
   final EpubBook book;
   final XhtmlLoader xhtmlLoader;
   final ImageLoader? imageLoader;
   final int initialSpineIndex;
+
+  /// 본문 글자 크기 (px). BDD F2.2 — 변경 시 본문 재배치 + spineIndex 보존.
+  final double fontSize;
+
+  /// 본문 줄간격 (배수). BDD F2.3 — 변경 시 본문 재배치.
+  final double lineHeight;
 
   @override
   State<ReflowableEngine> createState() => ReflowableEngineState();
@@ -107,25 +115,47 @@ class ReflowableEngineState extends State<ReflowableEngine> {
         final xhtml = snapshot.data ?? '';
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Html(
+          child: buildReflowableHtml(
             data: xhtml,
-            extensions: [
-              TagExtension(
-                tagsToExtend: {'img'},
-                builder: (ctx) {
-                  final src = ctx.attributes['src'];
-                  if (src == null || src.isEmpty) {
-                    return const _ImagePlaceholder(reason: 'missing src');
-                  }
-                  return _RemoteImage(src: src, loader: widget.imageLoader);
-                },
-              ),
-            ],
+            fontSize: widget.fontSize,
+            lineHeight: widget.lineHeight,
+            imageLoader: widget.imageLoader,
           ),
         );
       },
     );
   }
+}
+
+/// 사용자 글자 크기·줄간격이 적용된 [Html] widget을 빌드한다.
+/// [ReflowablePageView]와 공유하는 internal helper.
+Html buildReflowableHtml({
+  required String data,
+  required double fontSize,
+  required double lineHeight,
+  required ImageLoader? imageLoader,
+}) {
+  return Html(
+    data: data,
+    style: {
+      'body': Style(
+        fontSize: FontSize(fontSize),
+        lineHeight: LineHeight(lineHeight),
+      ),
+    },
+    extensions: [
+      TagExtension(
+        tagsToExtend: {'img'},
+        builder: (ctx) {
+          final src = ctx.attributes['src'];
+          if (src == null || src.isEmpty) {
+            return const _ImagePlaceholder(reason: 'missing src');
+          }
+          return _RemoteImage(src: src, loader: imageLoader);
+        },
+      ),
+    ],
+  );
 }
 
 @visibleForTesting
