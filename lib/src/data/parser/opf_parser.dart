@@ -1,9 +1,7 @@
 // Data Parser — open_epub 1.0
-// Story: S1.1 (#7) — OPF 파서
-// BDD: F1.1 (책 열기)
-//
-// rendition:layout / page-spread-left|right 처리는 Story S1.4 (#10)에서 추가.
-// S1.1은 metadata + manifest + spine 기본 구조까지 책임진다.
+// Story: S1.1 (#7) — OPF 파서 (initial)
+// Story: S1.4 (#10) — rendition:layout / rendition:spread 메타 추출
+// BDD: F1.1 (책 열기), F3 (Fixed Layout 감지)
 
 import 'package:xml/xml.dart';
 
@@ -67,14 +65,50 @@ class OpfParser {
       throw OpfParseException('OPF metadata missing <dc:title>');
     }
 
-    // rendition:* meta는 S1.4에서 처리. 기본값을 유지한다.
+    // EPUB 3 rendition:* property meta. EPUB 2에는 없으므로 default 유지.
+    String? prop(String property) {
+      for (final m in metadataEl.findElements('meta', namespace: _opfNs)) {
+        if (m.getAttribute('property') == property) {
+          return m.innerText.trim();
+        }
+      }
+      return null;
+    }
+
     return EpubMetadata(
       title: title,
       epubVersion: epubVersion,
       language: dcText('language'),
       author: dcText('creator'),
       identifier: dcText('identifier'),
+      layout: _parseLayout(prop('rendition:layout')),
+      spread: _parseSpread(prop('rendition:spread')),
     );
+  }
+
+  /// rendition:layout 문자열을 enum으로 매핑.
+  /// 비표준 값은 reflowable로 fallback (S1.18 invalid_rendition patch가 진단).
+  EpubLayout _parseLayout(String? raw) {
+    if (raw == 'pre-paginated') return EpubLayout.fixedLayout;
+    return EpubLayout.reflowable;
+  }
+
+  /// rendition:spread 문자열을 enum으로 매핑. 비표준 값은 auto fallback.
+  EpubSpread _parseSpread(String? raw) {
+    switch (raw) {
+      case 'none':
+        return EpubSpread.none;
+      case 'both':
+        return EpubSpread.both;
+      case 'landscape':
+        return EpubSpread.landscape;
+      case 'portrait':
+        return EpubSpread.portrait;
+      case 'auto':
+      case null:
+      default:
+        return EpubSpread.auto;
+    }
   }
 
   List<EpubSpineItem> _parseSpine(XmlElement packageEl) {

@@ -1,8 +1,10 @@
 // Story: S1.1 (#7) — OPF parser tests
-// BDD: F1.1
+// Story: S1.4 (#10) — rendition:layout / rendition:spread extraction
+// BDD: F1.1, F3
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/data/parser/opf_parser.dart';
+import 'package:open_epub/src/domain/entity/epub_metadata.dart';
 
 void main() {
   const parser = OpfParser();
@@ -37,9 +39,9 @@ void main() {
       expect(r.metadata.language, 'ko');
       expect(r.metadata.author, '홍길동');
       expect(r.metadata.identifier, 'urn:uuid:1234');
-      // S1.4에서 추가될 rendition 값은 default 유지
-      expect(r.metadata.renditionLayout, 'reflowable');
-      expect(r.metadata.renditionSpread, 'auto');
+      // EPUB 2에는 rendition meta가 없으므로 default 유지
+      expect(r.metadata.layout, EpubLayout.reflowable);
+      expect(r.metadata.spread, EpubSpread.auto);
     });
 
     test('spine 3개 추출 (manifest와 join, 순서 유지)', () {
@@ -187,6 +189,106 @@ void main() {
       final r = parser.parse(opf);
       expect(r.spine, hasLength(1));
       expect(r.spine[0].idref, 'ok');
+    });
+  });
+
+  group('OpfParser.parse — S1.4 rendition meta', () {
+    String wrapOpf(String renditionMetas) => '''
+<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>x</dc:title>
+    $renditionMetas
+  </metadata>
+  <manifest><item id="a" href="a.xhtml" media-type="application/xhtml+xml"/></manifest>
+  <spine><itemref idref="a"/></spine>
+</package>''';
+
+    test('rendition:layout="pre-paginated" → EpubLayout.fixedLayout', () {
+      final r = parser.parse(
+        wrapOpf('<meta property="rendition:layout">pre-paginated</meta>'),
+      );
+      expect(r.metadata.layout, EpubLayout.fixedLayout);
+    });
+
+    test('rendition:layout="reflowable" → EpubLayout.reflowable', () {
+      final r = parser.parse(
+        wrapOpf('<meta property="rendition:layout">reflowable</meta>'),
+      );
+      expect(r.metadata.layout, EpubLayout.reflowable);
+    });
+
+    test('rendition:layout 비표준 값 → reflowable fallback', () {
+      final r = parser.parse(
+        wrapOpf('<meta property="rendition:layout">galaxy</meta>'),
+      );
+      expect(r.metadata.layout, EpubLayout.reflowable);
+    });
+
+    test('rendition:spread 5종 매핑', () {
+      final cases = {
+        'none': EpubSpread.none,
+        'both': EpubSpread.both,
+        'auto': EpubSpread.auto,
+        'landscape': EpubSpread.landscape,
+        'portrait': EpubSpread.portrait,
+      };
+      for (final entry in cases.entries) {
+        final r = parser.parse(
+          wrapOpf('<meta property="rendition:spread">${entry.key}</meta>'),
+        );
+        expect(
+          r.metadata.spread,
+          entry.value,
+          reason: 'rendition:spread="${entry.key}"',
+        );
+      }
+    });
+
+    test('rendition:spread 비표준 값 → auto fallback', () {
+      final r = parser.parse(
+        wrapOpf('<meta property="rendition:spread">cosmic</meta>'),
+      );
+      expect(r.metadata.spread, EpubSpread.auto);
+    });
+
+    test('rendition meta가 전혀 없으면 default (reflowable + auto)', () {
+      final r = parser.parse(wrapOpf(''));
+      expect(r.metadata.layout, EpubLayout.reflowable);
+      expect(r.metadata.spread, EpubSpread.auto);
+    });
+
+    test('Fixed Layout EPUB + spread:both 조합', () {
+      final r = parser.parse(wrapOpf('''
+        <meta property="rendition:layout">pre-paginated</meta>
+        <meta property="rendition:spread">both</meta>
+      '''));
+      expect(r.metadata.layout, EpubLayout.fixedLayout);
+      expect(r.metadata.spread, EpubSpread.both);
+    });
+  });
+
+  group('OpfParser.parse — page-spread-left/right (S1.1 회귀 + S1.4 확인)', () {
+    test('itemref properties에 page-spread-left가 보존', () {
+      const opf = '''
+<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>x</dc:title>
+    <meta property="rendition:layout">pre-paginated</meta>
+  </metadata>
+  <manifest>
+    <item id="p1" href="p1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="p2" href="p2.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="p1" properties="page-spread-left"/>
+    <itemref idref="p2" properties="page-spread-right"/>
+  </spine>
+</package>''';
+      final r = parser.parse(opf);
+      expect(r.spine[0].properties, contains('page-spread-left'));
+      expect(r.spine[1].properties, contains('page-spread-right'));
     });
   });
 }
