@@ -45,7 +45,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-docs/
+# dart doc 산출물만 무시 (도구로 생성). 설계 문서 docs/*.md는 추적.
+docs/api/
 CLAUDE.md
 
 *.epub
