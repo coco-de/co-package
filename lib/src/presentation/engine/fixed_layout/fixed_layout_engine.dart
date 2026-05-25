@@ -1,17 +1,21 @@
 // Presentation Engine — open_epub 1.0
 // Story: S1.7 (#13) — Fixed Layout 엔진 + viewport fit (단일 페이지)
-// Story: S1.8 (#14) — 핀치 줌 (별도 PR)
-// Story: S1.9 (#15) — spread 자동 분기 (별도 PR)
+// Story: S1.8 (#14) — 핀치 줌 (FixedLayoutPage에 통합 완료)
+// Story: S1.9 (#15) — spread 자동 분기 (1/2-page) + page-spread-left/right
 // BDD: F3 (Fixed Layout 본문 렌더링)
 //
-// 본 widget은 단일 페이지 1-page 모드만 처리. spine 이동(next/previous),
-// 페이지 빌더 호출, viewport fit이 책임 범위. spread / zoom은 후속 Story.
+// 본 engine은:
+// - 단일 페이지 1-page 모드 (S1.7)
+// - 줌은 FixedLayoutPage가 책임 (S1.8)
+// - spread 모드 (2-page) — screen width + rendition:spread에 따라 자동 분기,
+//   page-spread-left/right 슬롯 존중 (S1.9, BDD F3.3/F3.5)
 
 import 'package:flutter/material.dart';
 
 import '../../../api/epub_book.dart';
 import '../../../domain/entity/epub_spine_item.dart';
 import 'fixed_layout_page.dart';
+import 'fixed_layout_spread.dart';
 import 'viewport_fitter.dart';
 
 /// Fixed Layout 페이지 데이터. [FixedLayoutPageBuilder]가 반환한다.
@@ -39,12 +43,17 @@ class FixedLayoutEngine extends StatefulWidget {
     required this.pageBuilder,
     this.initialSpineIndex = 0,
     this.fitter = const ViewportFitter(),
+    this.spreadOverride,
   });
 
   final EpubBook book;
   final FixedLayoutPageBuilder pageBuilder;
   final int initialSpineIndex;
   final ViewportFitter fitter;
+
+  /// null이면 [EpubBook.metadata.spread]를 사용. 테스트 / 사용자 설정으로
+  /// 강제 변경하려면 [EpubSpread]를 명시 (예: [EpubSpread.none]).
+  final EpubSpread? spreadOverride;
 
   @override
   State<FixedLayoutEngine> createState() => FixedLayoutEngineState();
@@ -53,10 +62,16 @@ class FixedLayoutEngine extends StatefulWidget {
 @visibleForTesting
 class FixedLayoutEngineState extends State<FixedLayoutEngine> {
   late int _spineIndex;
-  late Future<FixedLayoutPageData> _currentLoad;
+  List<SpreadRow> _spreadRows = const [];
+  int _rowIndex = 0;
 
   int get spineIndex => _spineIndex;
   int get spineCount => widget.book.spine.length;
+  int get rowIndex => _rowIndex;
+  int get rowCount => _spreadRows.length;
+
+  EpubSpread get effectiveSpread =>
+      widget.spreadOverride ?? widget.book.metadata.spread;
 
   @override
   void initState() {
@@ -65,26 +80,40 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
       0,
       widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
     );
-    _currentLoad = _loadCurrent();
+    _spreadRows = buildSpreadRows(widget.book.spine);
+    _rowIndex = _findRowIndexForSpine(_spineIndex);
   }
 
-  Future<FixedLayoutPageData> _loadCurrent() {
-    if (widget.book.spine.isEmpty) {
-      return Future.value(
-        const FixedLayoutPageData(
-          logicalSize: Size(1, 1),
-          content: SizedBox.shrink(),
-        ),
+  @override
+  void didUpdateWidget(FixedLayoutEngine oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.book != widget.book) {
+      _spineIndex = widget.initialSpineIndex.clamp(
+        0,
+        widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
       );
+      _spreadRows = buildSpreadRows(widget.book.spine);
+      _rowIndex = _findRowIndexForSpine(_spineIndex);
     }
-    return widget.pageBuilder(widget.book.spine[_spineIndex]);
+  }
+
+  int _findRowIndexForSpine(int spineIdx) {
+    if (widget.book.spine.isEmpty) return 0;
+    final target = widget.book.spine[spineIdx];
+    for (var i = 0; i < _spreadRows.length; i++) {
+      final r = _spreadRows[i];
+      if (r.center == target || r.left == target || r.right == target) {
+        return i;
+      }
+    }
+    return 0;
   }
 
   bool nextSpine() {
     if (_spineIndex >= spineCount - 1) return false;
     setState(() {
       _spineIndex++;
-      _currentLoad = _loadCurrent();
+      _rowIndex = _findRowIndexForSpine(_spineIndex);
     });
     return true;
   }
@@ -93,7 +122,7 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
     if (_spineIndex <= 0) return false;
     setState(() {
       _spineIndex--;
-      _currentLoad = _loadCurrent();
+      _rowIndex = _findRowIndexForSpine(_spineIndex);
     });
     return true;
   }
@@ -103,8 +132,67 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
     if (widget.book.spine.isEmpty) {
       return const Center(child: Text('이 책에는 표시할 내용이 없습니다.'));
     }
+
+    return LayoutBuilder(
+      builder: (ctx, constraints) {
+        final useSpread = widget.fitter.shouldUseTwoPageSpread(
+          screenWidth: constraints.maxWidth,
+          screenHeight: constraints.maxHeight,
+          spread: effectiveSpread,
+        );
+
+        if (!useSpread || _spreadRows.isEmpty) {
+          return _buildSinglePage(widget.book.spine[_spineIndex]);
+        }
+
+        final row = _spreadRows[_rowIndex.clamp(0, _spreadRows.length - 1)];
+        return FixedLayoutSpreadRow(
+          row: row,
+          pageBuilder: _buildSinglePage,
+        );
+      },
+    );
+  }
+
+  Widget _buildSinglePage(EpubSpineItem item) {
+    return _AsyncFixedLayoutPage(
+      key: ValueKey(item.idref),
+      item: item,
+      pageBuilder: widget.pageBuilder,
+      fitter: widget.fitter,
+    );
+  }
+}
+
+class _AsyncFixedLayoutPage extends StatefulWidget {
+  const _AsyncFixedLayoutPage({
+    super.key,
+    required this.item,
+    required this.pageBuilder,
+    required this.fitter,
+  });
+
+  final EpubSpineItem item;
+  final FixedLayoutPageBuilder pageBuilder;
+  final ViewportFitter fitter;
+
+  @override
+  State<_AsyncFixedLayoutPage> createState() => _AsyncFixedLayoutPageState();
+}
+
+class _AsyncFixedLayoutPageState extends State<_AsyncFixedLayoutPage> {
+  late Future<FixedLayoutPageData> _load;
+
+  @override
+  void initState() {
+    super.initState();
+    _load = widget.pageBuilder(widget.item);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return FutureBuilder<FixedLayoutPageData>(
-      future: _currentLoad,
+      future: _load,
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
