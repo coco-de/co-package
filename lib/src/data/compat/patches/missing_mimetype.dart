@@ -12,4 +12,7 @@ class MissingMimetypePatch implements EpubPatch {
   String get description => 'mimetype 파일 누락 시 EPUB로 가정하여 진행';
   @override
   PatchSeverity get severity => PatchSeverity.low;
+
+  @override
+  PatchResult? apply(EpubBook book) => null; // 보정 로직은 S1.18에서 구현
 }

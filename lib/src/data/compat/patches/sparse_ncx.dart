@@ -12,4 +12,7 @@ class SparseNcxPatch implements EpubPatch {
   String get description => 'NCX 누락된 spine 항목을 목차에 자동 추가';
   @override
   PatchSeverity get severity => PatchSeverity.medium;
+
+  @override
+  PatchResult? apply(EpubBook book) => null; // 보정 로직은 S1.15에서 구현
 }

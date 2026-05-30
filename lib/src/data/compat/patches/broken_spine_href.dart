@@ -12,4 +12,7 @@ class BrokenSpineHrefPatch implements EpubPatch {
   String get description => 'spine href가 manifest/OPF에 없는 경우 제거';
   @override
   PatchSeverity get severity => PatchSeverity.high;
+
+  @override
+  PatchResult? apply(EpubBook book) => null; // 보정 로직은 S1.17에서 구현
 }

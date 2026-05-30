@@ -12,4 +12,7 @@ class EmptyTocPatch implements EpubPatch {
   String get description => 'NCX/nav 모두 비어 있을 때 spine 기반 자동 목차 생성';
   @override
   PatchSeverity get severity => PatchSeverity.high;
+
+  @override
+  PatchResult? apply(EpubBook book) => null; // 보정 로직은 S1.18에서 구현
 }

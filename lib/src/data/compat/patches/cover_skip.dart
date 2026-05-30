@@ -12,4 +12,7 @@ class CoverSkipPatch implements EpubPatch {
   String get description => 'spine[0]이 cover 메타인 경우 본문에서 제외';
   @override
   PatchSeverity get severity => PatchSeverity.low;
+
+  @override
+  PatchResult? apply(EpubBook book) => null; // 보정 로직은 S1.16에서 구현
 }

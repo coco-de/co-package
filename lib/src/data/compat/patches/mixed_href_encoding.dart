@@ -12,4 +12,7 @@ class MixedHrefEncodingPatch implements EpubPatch {
   String get description => 'href의 percent-encoding 정규화';
   @override
   PatchSeverity get severity => PatchSeverity.low;
+
+  @override
+  PatchResult? apply(EpubBook book) => null; // 보정 로직은 S1.18에서 구현
 }

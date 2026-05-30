@@ -12,4 +12,7 @@ class InvalidRenditionPatch implements EpubPatch {
   String get description => 'rendition:layout 값이 비표준일 때 reflowable로 fallback';
   @override
   PatchSeverity get severity => PatchSeverity.medium;
+
+  @override
+  PatchResult? apply(EpubBook book) => null; // 보정 로직은 S1.18에서 구현
 }
