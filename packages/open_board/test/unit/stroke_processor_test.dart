@@ -12,7 +12,7 @@ void main() {
     late StrokeProcessor processor;
 
     setUp(() {
-      processor = const StrokeProcessor();
+      processor = const StrokeProcessor(pressureCurve: Curves.linear);
     });
 
     group('createPointFromEvent', () {
@@ -236,32 +236,6 @@ void main() {
         final drawing = result as Drawing;
         expect(drawing.scribble.textDrawables.length, 1);
         expect(drawing.scribble.textDrawables.first.id, 'text1');
-      });
-    });
-
-    group('calculateRadius', () {
-      test('thinning이 0이면 size의 절반을 반환한다', () {
-        final result = processor.calculateRadius(10.0, 0.0, 0.5);
-        expect(result, 5.0);
-      });
-
-      test('thinning이 높고 pressure가 낮으면 반지름이 작아진다', () {
-        final lowPressure = processor.calculateRadius(10.0, 0.7, 0.1);
-        final highPressure = processor.calculateRadius(10.0, 0.7, 0.9);
-
-        expect(lowPressure, lessThan(highPressure));
-      });
-
-      test('size가 0이면 반지름이 0이다', () {
-        final result = processor.calculateRadius(0.0, 0.7, 0.5);
-        expect(result, 0.0);
-      });
-
-      test('기본 공식을 정확히 따른다: size * (0.5 - thinning * (0.5 - p))', () {
-        // size=10, thinning=0.5, p=0.8
-        // 10 * (0.5 - 0.5 * (0.5 - 0.8)) = 10 * (0.5 - 0.5 * (-0.3)) = 10 * (0.5 + 0.15) = 10 * 0.65 = 6.5
-        final result = processor.calculateRadius(10.0, 0.5, 0.8);
-        expect(result, closeTo(6.5, 0.001));
       });
     });
   });

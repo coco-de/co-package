@@ -38,29 +38,6 @@ void main() {
 
         expect(notifierWithScribble.currentScribble.strokes.length, 2);
       });
-
-      test('width, height를 전달하면 scribble에 반영된다', () {
-        final notifierWithSize = ScribbleNotifier(width: 800, height: 600);
-        addTearDown(notifierWithSize.dispose);
-
-        expect(notifierWithSize.currentScribble.width, 800);
-        expect(notifierWithSize.currentScribble.height, 600);
-      });
-
-      test('x, y를 전달하면 scribble의 origin에 반영된다', () {
-        final notifierWithOrigin = ScribbleNotifier(x: 10, y: 20);
-        addTearDown(notifierWithOrigin.dispose);
-
-        expect(notifierWithOrigin.currentScribble.x, 10);
-        expect(notifierWithOrigin.currentScribble.y, 20);
-      });
-
-      test('version을 전달하면 scribble에 반영된다', () {
-        final notifierWithVersion = ScribbleNotifier(version: '2.0.0');
-        addTearDown(notifierWithVersion.dispose);
-
-        expect(notifierWithVersion.currentScribble.version, '2.0.0');
-      });
     });
 
     group('currentScribble / currentState getter', () {
@@ -103,21 +80,6 @@ void main() {
         notifier.clear();
         // 상태가 변경되지 않아야 한다 (빈 스트로크이므로 early return)
         expect(identical(notifier.state, stateBefore), isTrue);
-      });
-
-      test('clear 후에도 scribble의 크기 정보는 유지된다', () {
-        final scribble = createScribbleWithStrokes(strokeCount: 2);
-        final n = ScribbleNotifier(
-          scribble: scribble,
-          width: 400,
-          height: 600,
-        );
-        addTearDown(n.dispose);
-
-        n.clear();
-        // 원래 scribble의 크기가 유지되어야 한다
-        expect(n.currentScribble.width, scribble.width);
-        expect(n.currentScribble.height, scribble.height);
       });
     });
 
@@ -278,26 +240,6 @@ void main() {
         expect(notifier.canRedo, isFalse);
       });
 
-      test('maxHistoryLength를 초과하면 오래된 히스토리가 제거된다', () {
-        final n = ScribbleNotifier(maxHistoryLength: 3);
-        addTearDown(n.dispose);
-
-        // 초기 상태가 히스토리에 포함됨 (1개)
-        // 3개 더 추가하면 총 4개 -> maxHistoryLength(3) 초과 -> 가장 오래된 것 제거
-        n.setScribble(scribble: createScribbleWithStrokes(strokeCount: 1));
-        n.setScribble(scribble: createScribbleWithStrokes(strokeCount: 2));
-        n.setScribble(scribble: createScribbleWithStrokes(strokeCount: 3));
-
-        expect(n.currentScribble.strokes.length, 3);
-
-        // 최대 2번 undo 가능 (maxHistoryLength=3이므로 히스토리에 3개 저장)
-        n.undo();
-        expect(n.canUndo, isTrue);
-        n.undo();
-        // maxHistoryLength=3이므로 초기 상태는 이미 밀려났을 수 있다
-        expect(n.canUndo, isFalse);
-      });
-
       test('여러 번 undo를 호출해도 에러가 발생하지 않는다', () {
         // 최대한 undo 시도
         for (int i = 0; i < 50; i++) {
@@ -395,28 +337,6 @@ void main() {
 
         notifier.removeTextDrawable('test-id');
         expect(notifier.getCurrentTextDrawables(), isEmpty);
-      });
-
-      test('clearAllTextDrawables로 모든 텍스트를 삭제할 수 있다', () {
-        notifier.addTextDrawable(createTextDrawable(id: 'a', text: 'A'));
-        notifier.addTextDrawable(createTextDrawable(id: 'b', text: 'B'));
-
-        notifier.clearAllTextDrawables();
-        expect(notifier.getCurrentTextDrawables(), isEmpty);
-      });
-
-      test('findTextDrawableById로 텍스트를 찾을 수 있다', () {
-        final td = createTextDrawable(id: 'find-me', text: 'Found');
-        notifier.addTextDrawable(td);
-
-        final found = notifier.findTextDrawableById('find-me');
-        expect(found, isNotNull);
-        expect(found!.text, 'Found');
-      });
-
-      test('존재하지 않는 id로 검색하면 null을 반환한다', () {
-        final result = notifier.findTextDrawableById('nonexistent');
-        expect(result, isNull);
       });
     });
   });

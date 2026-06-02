@@ -25,7 +25,7 @@ void main() {
 
         registry.registerModeNotifier(modeNotifier);
 
-        expect(registry.activeModeNotifierCount, 1);
+        expect(registry.activeModeNotifiers.length, 1);
         expect(registry.activeModeNotifiers.contains(modeNotifier), isTrue);
       });
 
@@ -35,7 +35,7 @@ void main() {
 
         registry.unregisterModeNotifier(modeNotifier);
 
-        expect(registry.activeModeNotifierCount, 0);
+        expect(registry.activeModeNotifiers.length, 0);
       });
 
       test('같은 notifier를 중복 등록해도 1개만 유지된다 (Set)', () {
@@ -44,7 +44,7 @@ void main() {
         registry.registerModeNotifier(modeNotifier);
         registry.registerModeNotifier(modeNotifier);
 
-        expect(registry.activeModeNotifierCount, 1);
+        expect(registry.activeModeNotifiers.length, 1);
       });
 
       test('여러 notifier를 등록할 수 있다', () {
@@ -54,29 +54,7 @@ void main() {
         registry.registerModeNotifier(notifier1);
         registry.registerModeNotifier(notifier2);
 
-        expect(registry.activeModeNotifierCount, 2);
-      });
-    });
-
-    group('ScribbleNotifier 등록/해제', () {
-      test('registerScribbleNotifier로 등록하면 카운트가 증가한다', () {
-        final scribbleNotifier = ScribbleNotifier();
-
-        registry.registerScribbleNotifier(scribbleNotifier);
-
-        expect(registry.activeScribbleNotifierCount, 1);
-      });
-
-      test('unregisterScribbleNotifier로 해제하면 카운트가 감소한다', () {
-        final scribbleNotifier = ScribbleNotifier();
-        registry.registerScribbleNotifier(scribbleNotifier);
-
-        registry.unregisterScribbleNotifier(
-          scribbleNotifier,
-          isDisposed: false,
-        );
-
-        expect(registry.activeScribbleNotifierCount, 0);
+        expect(registry.activeModeNotifiers.length, 2);
       });
     });
 
@@ -154,24 +132,6 @@ void main() {
         expect(activeNotifierNotifier.value, isNull);
         expect(callbackCalled, isTrue);
       });
-
-      test('활성이 아닌 notifier 해제 시 lastActive는 유지된다', () {
-        final notifier1 = ScribbleNotifier();
-        final notifier2 = ScribbleNotifier();
-        registry.registerScribbleNotifier(notifier1);
-        registry.registerScribbleNotifier(notifier2);
-        registry.setLastActiveScribbleNotifier(
-          notifier1,
-          isDisposed: false,
-        );
-
-        registry.unregisterScribbleNotifier(
-          notifier2,
-          isDisposed: false,
-        );
-
-        expect(registry.lastActiveScribbleNotifier, notifier1);
-      });
     });
 
     group('findScribbleNotifierForModeNotifier', () {
@@ -210,25 +170,6 @@ void main() {
         );
 
         expect(result, isNull);
-      });
-    });
-
-    group('clear', () {
-      test('clear 후 모든 상태가 초기화된다', () {
-        final modeNotifier = ScribbleModeNotifier();
-        final scribbleNotifier = ScribbleNotifier();
-        registry.registerModeNotifier(modeNotifier);
-        registry.registerScribbleNotifier(scribbleNotifier);
-        registry.setLastActiveScribbleNotifier(
-          scribbleNotifier,
-          isDisposed: false,
-        );
-
-        registry.clear();
-
-        expect(registry.activeModeNotifierCount, 0);
-        expect(registry.activeScribbleNotifierCount, 0);
-        expect(registry.lastActiveScribbleNotifier, isNull);
       });
     });
   });

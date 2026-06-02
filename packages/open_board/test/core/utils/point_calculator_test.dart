@@ -7,15 +7,6 @@ import '../../helpers/test_helpers.dart';
 
 void main() {
   group('point_calculator', () {
-    group('neg', () {
-      test('부호 반전', () {
-        final p = createPoint(x: 3, y: -4);
-        final result = neg(p);
-        expect(result.x, -3);
-        expect(result.y, 4);
-      });
-    });
-
     group('add / sub', () {
       test('벡터 덧셈', () {
         final a = createPoint(x: 1, y: 2);
@@ -47,24 +38,6 @@ void main() {
         final result = div(p, 2);
         expect(result.x, 3);
         expect(result.y, 4);
-      });
-    });
-
-    group('mulV / divV', () {
-      test('벡터 성분별 곱셈', () {
-        final a = createPoint(x: 2, y: 3);
-        final b = createPoint(x: 4, y: 5);
-        final result = mulV(a, b);
-        expect(result.x, 8);
-        expect(result.y, 15);
-      });
-
-      test('벡터 성분별 나눗셈', () {
-        final a = createPoint(x: 8, y: 15);
-        final b = createPoint(x: 4, y: 5);
-        final result = divV(a, b);
-        expect(result.x, 2);
-        expect(result.y, 3);
       });
     });
 

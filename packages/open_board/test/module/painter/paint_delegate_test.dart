@@ -34,6 +34,7 @@ void main() {
         allStrokes: [],
         selectedStrokeIds: [],
         showLassoOverlay: false,
+        lassoSelectionState: null,
       );
       expect(delegate, isA<PaintDelegate>());
     });
@@ -270,6 +271,7 @@ void main() {
         allStrokes: [],
         selectedStrokeIds: [],
         showLassoOverlay: false,
+        lassoSelectionState: null,
       );
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
@@ -296,6 +298,7 @@ void main() {
         allStrokes: [lassoStroke],
         selectedStrokeIds: [],
         showLassoOverlay: false,
+        lassoSelectionState: null,
       );
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
@@ -314,6 +317,7 @@ void main() {
         allStrokes: [stroke],
         selectedStrokeIds: [0],
         showLassoOverlay: false,
+        lassoSelectionState: null,
       );
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
@@ -352,6 +356,7 @@ void main() {
         allStrokes: [],
         selectedStrokeIds: [],
         showLassoOverlay: false,
+        lassoSelectionState: null,
       );
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);

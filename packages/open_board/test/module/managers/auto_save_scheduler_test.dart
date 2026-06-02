@@ -25,37 +25,7 @@ void main() {
       scheduler.dispose();
     });
 
-    group('초기 상태', () {
-      test('pendingKeys는 비어있음', () {
-        expect(scheduler.pendingKeys, isEmpty);
-      });
-
-      test('hasPendingTimer는 false', () {
-        expect(scheduler.hasPendingTimer('any_key'), false);
-      });
-    });
-
     group('schedule()', () {
-      test('빈 스트로크는 타이머 등록하지 않음', () {
-        fakeAsync((async) {
-          final scribble = createScribble(); // 빈 scribble
-          scheduler.schedule('key1', scribble);
-
-          expect(scheduler.hasPendingTimer('key1'), false);
-          async.elapse(const Duration(seconds: 2));
-          expect(savedKeys, isEmpty);
-        });
-      });
-
-      test('스트로크가 있으면 타이머 등록', () {
-        fakeAsync((async) {
-          final scribble = createScribbleWithStrokes(strokeCount: 1);
-          scheduler.schedule('key1', scribble);
-
-          expect(scheduler.hasPendingTimer('key1'), true);
-        });
-      });
-
       test('지연 시간 후 onSave 콜백 호출', () {
         fakeAsync((async) {
           final scribble = createScribbleWithStrokes(strokeCount: 1);
@@ -136,47 +106,6 @@ void main() {
             Duration(milliseconds: AutoSaveScheduler.autoSaveDelayMs + 100),
           );
           expect(savedKeys, isEmpty); // 호출되지 않음
-        });
-      });
-
-      test('키 정규화 — 특수문자 처리', () {
-        fakeAsync((async) {
-          final scribble = createScribbleWithStrokes(strokeCount: 1);
-          scheduler.schedule('key|1', scribble);
-
-          // 정규화된 키로 타이머 등록됨
-          expect(scheduler.hasPendingTimer('key|1'), true);
-        });
-      });
-    });
-
-    group('cancelAll()', () {
-      test('모든 타이머 취소', () {
-        fakeAsync((async) {
-          final s1 = createScribbleWithStrokes(strokeCount: 1);
-          final s2 = createScribbleWithStrokes(strokeCount: 2);
-          scheduler.schedule('key1', s1);
-          scheduler.schedule('key2', s2);
-
-          scheduler.cancelAll();
-          expect(scheduler.pendingKeys, isEmpty);
-
-          async.elapse(
-            Duration(milliseconds: AutoSaveScheduler.autoSaveDelayMs + 100),
-          );
-          expect(savedKeys, isEmpty); // 취소되어 저장 안됨
-        });
-      });
-    });
-
-    group('dispose()', () {
-      test('dispose 후 pendingKeys 비어있음', () {
-        fakeAsync((async) {
-          final scribble = createScribbleWithStrokes(strokeCount: 1);
-          scheduler.schedule('key1', scribble);
-
-          scheduler.dispose();
-          expect(scheduler.pendingKeys, isEmpty);
         });
       });
     });

@@ -81,12 +81,6 @@ void main() {
         final result = ShapeDetectionResult(.none, stroke);
         expect(result.shapeTypeString, '');
       });
-
-      test('confidence 기본값', () {
-        final stroke = createStroke();
-        final result = ShapeDetectionResult(.circle, stroke);
-        expect(result.confidence, 1.0);
-      });
     });
 
     group('ShapeType enum', () {

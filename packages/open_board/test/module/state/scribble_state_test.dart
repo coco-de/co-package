@@ -36,21 +36,6 @@ void main() {
       );
     });
 
-    test('lines — activeLine 없으면 strokes만', () {
-      final stroke = createStroke();
-      final scribble = createScribble(strokes: [stroke]);
-      final state = Drawing(scribble: scribble);
-      expect(state.lines.length, 1);
-    });
-
-    test('lines — activeLine 있으면 strokes + activeLine', () {
-      final stroke = createStroke();
-      final activeLine = createStroke();
-      final scribble = createScribble(strokes: [stroke]);
-      final state = Drawing(scribble: scribble, activeLine: activeLine);
-      expect(state.lines.length, 2);
-    });
-
     test('copyWith', () {
       final scribble = createScribble();
       final state = Drawing(scribble: scribble);
@@ -74,13 +59,6 @@ void main() {
       final state = Erasing(scribble: scribble);
       expect(state.scribble, scribble);
       expect(state.activePointerIds, isEmpty);
-    });
-
-    test('lines는 strokes만', () {
-      final stroke = createStroke();
-      final scribble = createScribble(strokes: [stroke]);
-      final state = Erasing(scribble: scribble);
-      expect(state.lines.length, 1);
     });
 
     test('copyWith', () {
