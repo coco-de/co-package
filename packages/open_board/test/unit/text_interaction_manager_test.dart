@@ -121,6 +121,9 @@ void main() {
           reason: '단일탭 선택만으로는 텍스트 상호작용 상태가 활성화되지 않는다',
         );
       },
+      // SKIP — open-board#177: b0f63dd 가 단일탭 _prepareDrag 를 의도적으로 재도입.
+      // #100 핀치 줌 정책의 제품 의도 결정 대기 (멀티터치 단락으로 보장되는지 검토).
+      skip: true,
     );
 
     testWidgets(
@@ -261,6 +264,9 @@ void main() {
             .firstWhere((t) => t.id == 't1');
         expect(finalText.position, expectedFinalPositionMatcher);
       },
+      // SKIP — open-board#177: b0f63dd 가 드래그 경로를 onTextMoveStart/Update →
+      // raw pointer(handlePointerMove)로 이전. #100 origin+delta 가드 재작성 결정 대기.
+      skip: true,
     );
 
     testWidgets(

@@ -248,6 +248,7 @@ void main() {
         book.onPageChanged.listen(events.add);
 
         await book.goToPage(1);
+        await pumpEventQueue();
 
         expect(events.length, 1);
         expect(events[0].fromIndex, 0);
@@ -597,6 +598,7 @@ void main() {
         book.startRecording();
 
         await book.goToPage(1);
+        await pumpEventQueue();
 
         expect(events.length, 1);
         expect(events[0], isA<PageChangedEvent>());
@@ -618,12 +620,13 @@ void main() {
         expect(events.length, 1); // 첫 번째 전환만
       });
 
-      test('addPage 시 PageAddedEvent', () {
+      test('addPage 시 PageAddedEvent', () async {
         final events = <ScribbleBookEvent>[];
         book.eventStream.listen(events.add);
         book.startRecording();
 
         book.addPage(pageId: 'page4');
+        await pumpEventQueue();
 
         expect(events.length, 1);
         expect(events[0], isA<PageAddedEvent>());
@@ -652,6 +655,7 @@ void main() {
         book.startRecording();
 
         await book.toggleDoublePageMode();
+        await pumpEventQueue();
 
         expect(events.length, 1);
         expect(events[0], isA<DoublePageToggledEvent>());
@@ -659,7 +663,7 @@ void main() {
         expect(event.enabled, isTrue);
       });
 
-      test('emitEvent로 커스텀 이벤트 발행', () {
+      test('emitEvent로 커스텀 이벤트 발행', () async {
         final events = <ScribbleBookEvent>[];
         book.eventStream.listen(events.add);
         book.startRecording();
@@ -670,6 +674,7 @@ void main() {
             timestampMicros: ScribbleBookEvent.now(),
           ),
         );
+        await pumpEventQueue();
 
         expect(events.length, 1);
         expect(events[0], isA<PageClearedEvent>());
@@ -691,6 +696,7 @@ void main() {
         await book.goToPage(1);
         book.addPage(pageId: 'page4');
         await book.goToPage(2);
+        await pumpEventQueue();
 
         expect(events.length, 3);
         expect(
