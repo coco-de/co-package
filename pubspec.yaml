@@ -35,6 +35,7 @@ dependencies:
 
   # XML parsing — open_epub 1.0 OPF/NCX/nav 파서가 직접 사용 (S1.1)
   xml: ^6.6.0
+  archive: ^3.6.1
 
 dev_dependencies:
   flutter_test:

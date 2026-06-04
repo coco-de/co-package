@@ -47,6 +47,47 @@ class OpfParser {
     );
   }
 
+  /// OPF에서 목차 문서(NCX/nav)의 href(OPF 기준 상대경로)를 찾는다.
+  ///
+  /// - EPUB 3: manifest item의 `properties`에 `nav` 포함 → [navHref]
+  /// - EPUB 2: `<spine toc="...">`가 가리키는 manifest item, 또는 media-type이
+  ///   `application/x-dtbncx+xml`인 item → [ncxHref]
+  ///
+  /// 둘 다 없으면 각각 null. (호출 전 [parse]로 OPF 유효성이 검증된 상태를 가정)
+  ({String? ncxHref, String? navHref}) tocRefs(String opfXml) {
+    final root = XmlDocument.parse(opfXml).rootElement;
+    final manifestEl = root
+        .findElements('manifest', namespace: _opfNs)
+        .firstOrNull;
+    if (manifestEl == null) return (ncxHref: null, navHref: null);
+
+    String? navHref;
+    String? ncxByMediaType;
+    final hrefById = <String, String>{};
+    for (final item in manifestEl.findElements('item', namespace: _opfNs)) {
+      final id = item.getAttribute('id');
+      final href = item.getAttribute('href');
+      final mediaType = item.getAttribute('media-type') ?? '';
+      if (href == null) continue;
+      if (id != null) hrefById[id] = href;
+      if (_splitProperties(item.getAttribute('properties')).contains('nav')) {
+        navHref ??= href;
+      }
+      if (mediaType == 'application/x-dtbncx+xml') ncxByMediaType ??= href;
+    }
+
+    var ncxHref = ncxByMediaType;
+    final tocId = root
+        .findElements('spine', namespace: _opfNs)
+        .firstOrNull
+        ?.getAttribute('toc');
+    if (tocId != null && hrefById.containsKey(tocId)) {
+      ncxHref = hrefById[tocId];
+    }
+
+    return (ncxHref: ncxHref, navHref: navHref);
+  }
+
   EpubMetadata _parseMetadata(XmlElement packageEl, String epubVersion) {
     final metadataEl = packageEl
         .findElements('metadata', namespace: _opfNs)
