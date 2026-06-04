@@ -1,15 +1,15 @@
 // Public API — open_epub 1.0
 // Story: S1.21 (#37) — EpubBookSession.open() lifecycle + position + analytics
-// (S1.22 swapSource hot-swap은 #38에서 구현)
-// BDD: F1 (책 열기), F1.2/F1.3 (위치 복원/fallback), F11 (analytics)
+// Story: S1.22 (#38) — swapSource() 위치 보존 hot-swap
+// BDD: F1 (책 열기), F1.2/F1.3 (위치 복원/fallback), F10 (hot-swap), F11 (analytics)
 
 import 'dart:async';
 
 import '../data/compat/patch_catalog.dart'
     show BookSessionDiagnostics, BookSessionDiagnosticsData, UnresolvedIssue;
+import '../data/repository/epub_repository_impl.dart';
 import '../domain/usecase/open_epub_use_case.dart';
 import '../domain/usecase/resolve_position_use_case.dart';
-import '../data/repository/epub_repository_impl.dart';
 import 'epub_analytics.dart';
 import 'epub_book.dart';
 import 'epub_position.dart';
@@ -46,6 +46,9 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
   Future<void> nextPage();
   Future<void> previousPage();
 
+  /// 현재 위치를 최대한 보존하며 [newSource]로 책을 교체한다(hot-swap).
+  /// 같은 spineHref가 새 책에 있으면 위치를 그대로 복원하고, 없으면 첫
+  /// 페이지로 fallback하며 진단에 기록한다. (BDD F10)
   Future<void> swapSource(EpubSource newSource);
 
   Future<void> dispose();
@@ -58,37 +61,63 @@ class EpubSessionOptions {
   final EpubSecurityConfig security;
 }
 
-class _EpubBookSessionImpl implements EpubBookSession {
-  _EpubBookSessionImpl._({
+/// 책 1권을 조립·복원한 결과(open/swap 공통). 세션 내부 상태의 스냅샷.
+class _SessionState {
+  _SessionState({
     required this.book,
     required this.diagnostics,
-    required EpubPosition position,
-    required List<String> navHrefs,
-  })  : _position = position,
-        _navHrefs = navHrefs;
+    required this.position,
+    required this.navHrefs,
+  });
+
+  final EpubBook book;
+  final BookSessionDiagnostics diagnostics;
+  final EpubPosition position;
+  final List<String> navHrefs;
+}
+
+class _EpubBookSessionImpl implements EpubBookSession {
+  _EpubBookSessionImpl._(_SessionState state, this._security)
+      : _state = state,
+        _position = state.position;
 
   static Future<EpubBookSession> open(
     EpubSource source,
     EpubPosition? initialPosition,
     EpubSessionOptions options,
   ) async {
-    final useCase = OpenEpubUseCase(
-      EpubRepositoryImpl(security: options.security),
+    final state = await _assemble(source, initialPosition, options.security);
+    final session = _EpubBookSessionImpl._(state, options.security);
+
+    // SessionStarted는 listener가 아직 없을 수 있으므로 버퍼에 쌓고
+    // 첫 구독 시 재생한다(broadcast stream은 과거 이벤트를 보관하지 않음).
+    session._emitLifecycle(
+      EpubSessionStarted(epubVersion: state.book.metadata.epubVersion),
     );
-    final loaded = await useCase.call(source);
+    return session;
+  }
+
+  /// source → 보정 완료 책 + [target] 위치 복원/fallback → 세션 상태.
+  static Future<_SessionState> _assemble(
+    EpubSource source,
+    EpubPosition? target,
+    EpubSecurityConfig security,
+  ) async {
+    final loaded = await OpenEpubUseCase(
+      EpubRepositoryImpl(security: security),
+    ).call(source);
     final book = loaded.book;
 
     if (book.spine.isEmpty) {
       throw StateError('EPUB has no spine items; cannot open a session');
     }
 
-    final resolved = const ResolvePositionUseCase().call(book, initialPosition);
+    final resolved = const ResolvePositionUseCase().call(book, target);
 
     // 페이지 이동에 사용할 linear spine href 순서(없으면 전체 spine).
     final linear = [for (final s in book.spine) if (s.linear) s.href];
-    final navHrefs = linear.isNotEmpty
-        ? linear
-        : [for (final s in book.spine) s.href];
+    final navHrefs =
+        linear.isNotEmpty ? linear : [for (final s in book.spine) s.href];
 
     // 위치 복원 실패 시 진단에 기록(BDD F1.3 — position-restore-failed).
     var diagnostics = loaded.diagnostics;
@@ -105,28 +134,16 @@ class _EpubBookSessionImpl implements EpubBookSession {
       );
     }
 
-    final session = _EpubBookSessionImpl._(
+    return _SessionState(
       book: book,
       diagnostics: diagnostics,
       position: resolved.position,
       navHrefs: navHrefs,
     );
-
-    // SessionStarted는 listener가 아직 없을 수 있으므로 버퍼에 쌓고
-    // 첫 구독 시 재생한다(broadcast stream은 과거 이벤트를 보관하지 않음).
-    session._emitLifecycle(
-      EpubSessionStarted(epubVersion: book.metadata.epubVersion),
-    );
-    return session;
   }
 
-  @override
-  final EpubBook book;
-  @override
-  BookSessionDiagnostics diagnostics;
-
-  final List<String> _navHrefs;
-  EpubPosition _position;
+  _SessionState _state;
+  final EpubSecurityConfig _security;
   final Stopwatch _clock = Stopwatch()..start();
   bool _disposed = false;
 
@@ -140,17 +157,26 @@ class _EpubBookSessionImpl implements EpubBookSession {
   final List<EpubLifecycleEvent> _lifecycleBuffer = [];
 
   @override
+  EpubBook get book => _state.book;
+  @override
+  BookSessionDiagnostics get diagnostics => _state.diagnostics;
+
+  @override
   Stream<EpubLifecycleEvent> get lifecycleEvents => _lifecycle.stream;
   @override
   Stream<EpubProgressEvent> get progressEvents => _progress.stream;
   @override
   Stream<EpubToolUseEvent> get toolUseEvents => _toolUse.stream;
 
+  EpubPosition _position;
+
   @override
   EpubPosition get position => _position;
 
   @override
   double get progress => _position.progress;
+
+  List<String> get _navHrefs => _state.navHrefs;
 
   int get _index {
     final i = _navHrefs.indexOf(_position.spineHref);
@@ -195,8 +221,13 @@ class _EpubBookSessionImpl implements EpubBookSession {
   @override
   Future<void> swapSource(EpubSource newSource) async {
     _ensureActive();
-    // S1.22 (#38): 위치 보존 hot-swap. 본 스토리(S1.21) 범위 밖.
-    throw UnimplementedError('S1.22 (#38): swapSource hot-swap');
+    // 현재 위치를 보존 대상으로 전달 → 새 책에 같은 spineHref가 있으면 복원,
+    // 없으면 첫 페이지 fallback + position-restore-failed 진단. (BDD F10)
+    final next = await _assemble(newSource, _position, _security);
+    _ensureActive();
+    _state = next;
+    _position = next.position;
+    _emitProgress();
   }
 
   @override
@@ -233,7 +264,7 @@ class _EpubBookSessionImpl implements EpubBookSession {
     if (_progress.isClosed) return;
     _progress.add(
       EpubProgressEvent(
-        progress: _position.progress,
+        progress: position.progress,
         sessionElapsed: _clock.elapsed,
       ),
     );

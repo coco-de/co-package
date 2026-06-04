@@ -177,6 +177,51 @@ void main() {
     });
   });
 
+  group('hot-swap (F10 / S1.22)', () {
+    test('같은 spineHref면 위치를 보존하며 책을 교체한다', () async {
+      final session = await EpubBookSession.open(
+        EpubSource.bytes(validEpub3()),
+      );
+      addTearDown(session.dispose);
+
+      await session.nextPage(); // ch2
+      expect(session.position.spineHref, 'ch2.xhtml');
+
+      await session.swapSource(EpubSource.bytes(swappedEpub3()));
+
+      expect(session.book.metadata.title, '교체된 책');
+      expect(session.position.spineHref, 'ch2.xhtml'); // 보존
+    });
+
+    test('교체 대상에 위치가 없으면 fallback + 진단 기록', () async {
+      final session = await EpubBookSession.open(
+        EpubSource.bytes(validEpub3()),
+      );
+      addTearDown(session.dispose);
+
+      await session.nextPage(); // ch2
+      await session.swapSource(EpubSource.bytes(singleChapterEpub3()));
+
+      expect(session.book.metadata.title, '단일 챕터 책');
+      expect(session.position.spineHref, 'ch1.xhtml'); // fallback
+      expect(
+        session.diagnostics.unresolvedIssues.map((i) => i.code),
+        contains('position-restore-failed'),
+      );
+    });
+
+    test('dispose 후 swapSource는 StateError', () async {
+      final session = await EpubBookSession.open(
+        EpubSource.bytes(validEpub3()),
+      );
+      await session.dispose();
+      expect(
+        session.swapSource(EpubSource.bytes(validEpub3())),
+        throwsA(isA<StateError>()),
+      );
+    });
+  });
+
   group('dispose 이후 보호', () {
     test('dispose 후 nextPage는 StateError', () async {
       final session = await EpubBookSession.open(
