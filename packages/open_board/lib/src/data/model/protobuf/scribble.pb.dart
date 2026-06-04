@@ -891,6 +891,210 @@ class TextDrawable extends $pb.GeneratedMessage {
   void clearRotation() => $_clearField(15);
 }
 
+/// / Image drawable on the canvas. The actual bytes/decoding are resolved by the
+/// / host application via `source` (URL or file path); this package only owns
+/// / position, geometry, and identifying metadata.
+class ImageDrawable extends $pb.GeneratedMessage {
+  factory ImageDrawable({
+    $core.String? id,
+    $core.String? source,
+    $core.double? x,
+    $core.double? y,
+    $core.double? width,
+    $core.double? height,
+    $core.double? rotation,
+    $core.double? opacity,
+    $core.bool? hidden,
+    $core.String? createdAt,
+    $core.String? updatedAt,
+    $core.double? naturalWidth,
+    $core.double? naturalHeight,
+  }) {
+    final result = create();
+    if (id != null) result.id = id;
+    if (source != null) result.source = source;
+    if (x != null) result.x = x;
+    if (y != null) result.y = y;
+    if (width != null) result.width = width;
+    if (height != null) result.height = height;
+    if (rotation != null) result.rotation = rotation;
+    if (opacity != null) result.opacity = opacity;
+    if (hidden != null) result.hidden = hidden;
+    if (createdAt != null) result.createdAt = createdAt;
+    if (updatedAt != null) result.updatedAt = updatedAt;
+    if (naturalWidth != null) result.naturalWidth = naturalWidth;
+    if (naturalHeight != null) result.naturalHeight = naturalHeight;
+    return result;
+  }
+
+  ImageDrawable._();
+
+  factory ImageDrawable.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ImageDrawable.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ImageDrawable',
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'source')
+    ..aD(3, _omitFieldNames ? '' : 'x')
+    ..aD(4, _omitFieldNames ? '' : 'y')
+    ..aD(5, _omitFieldNames ? '' : 'width')
+    ..aD(6, _omitFieldNames ? '' : 'height')
+    ..aD(7, _omitFieldNames ? '' : 'rotation')
+    ..aD(8, _omitFieldNames ? '' : 'opacity')
+    ..aOB(9, _omitFieldNames ? '' : 'hidden')
+    ..aOS(10, _omitFieldNames ? '' : 'createdAt', protoName: 'createdAt')
+    ..aOS(11, _omitFieldNames ? '' : 'updatedAt', protoName: 'updatedAt')
+    ..aD(12, _omitFieldNames ? '' : 'naturalWidth', protoName: 'naturalWidth')
+    ..aD(13, _omitFieldNames ? '' : 'naturalHeight', protoName: 'naturalHeight')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ImageDrawable clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ImageDrawable copyWith(void Function(ImageDrawable) updates) =>
+      super.copyWith((message) => updates(message as ImageDrawable))
+          as ImageDrawable;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ImageDrawable create() => ImageDrawable._();
+  @$core.override
+  ImageDrawable createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static ImageDrawable getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ImageDrawable>(create);
+  static ImageDrawable? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  /// / URL or file path. Interpretation is delegated to the host (e.g. kobic).
+  @$pb.TagNumber(2)
+  $core.String get source => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set source($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasSource() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearSource() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.double get x => $_getN(2);
+  @$pb.TagNumber(3)
+  set x($core.double value) => $_setDouble(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasX() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearX() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.double get y => $_getN(3);
+  @$pb.TagNumber(4)
+  set y($core.double value) => $_setDouble(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasY() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearY() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.double get width => $_getN(4);
+  @$pb.TagNumber(5)
+  set width($core.double value) => $_setDouble(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasWidth() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearWidth() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.double get height => $_getN(5);
+  @$pb.TagNumber(6)
+  set height($core.double value) => $_setDouble(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasHeight() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearHeight() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.double get rotation => $_getN(6);
+  @$pb.TagNumber(7)
+  set rotation($core.double value) => $_setDouble(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasRotation() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearRotation() => $_clearField(7);
+
+  /// / 0.0 (fully transparent) ~ 1.0 (fully opaque).
+  @$pb.TagNumber(8)
+  $core.double get opacity => $_getN(7);
+  @$pb.TagNumber(8)
+  set opacity($core.double value) => $_setDouble(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasOpacity() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearOpacity() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.bool get hidden => $_getBF(8);
+  @$pb.TagNumber(9)
+  set hidden($core.bool value) => $_setBool(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasHidden() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearHidden() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $core.String get createdAt => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set createdAt($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasCreatedAt() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearCreatedAt() => $_clearField(10);
+
+  @$pb.TagNumber(11)
+  $core.String get updatedAt => $_getSZ(10);
+  @$pb.TagNumber(11)
+  set updatedAt($core.String value) => $_setString(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasUpdatedAt() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearUpdatedAt() => $_clearField(11);
+
+  /// / Natural pixel dimensions of the source image, used to preserve aspect
+  /// / ratio when resizing. May be 0 if unknown at insertion time.
+  @$pb.TagNumber(12)
+  $core.double get naturalWidth => $_getN(11);
+  @$pb.TagNumber(12)
+  set naturalWidth($core.double value) => $_setDouble(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasNaturalWidth() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearNaturalWidth() => $_clearField(12);
+
+  @$pb.TagNumber(13)
+  $core.double get naturalHeight => $_getN(12);
+  @$pb.TagNumber(13)
+  set naturalHeight($core.double value) => $_setDouble(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasNaturalHeight() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearNaturalHeight() => $_clearField(13);
+}
+
 class Scribble extends $pb.GeneratedMessage {
   factory Scribble({
     $core.double? width,
@@ -902,6 +1106,7 @@ class Scribble extends $pb.GeneratedMessage {
     $core.double? x,
     $core.double? y,
     $core.Iterable<TextDrawable>? textDrawables,
+    $core.Iterable<ImageDrawable>? imageDrawables,
   }) {
     final result = create();
     if (width != null) result.width = width;
@@ -913,6 +1118,7 @@ class Scribble extends $pb.GeneratedMessage {
     if (x != null) result.x = x;
     if (y != null) result.y = y;
     if (textDrawables != null) result.textDrawables.addAll(textDrawables);
+    if (imageDrawables != null) result.imageDrawables.addAll(imageDrawables);
     return result;
   }
 
@@ -939,6 +1145,8 @@ class Scribble extends $pb.GeneratedMessage {
     ..aD(8, _omitFieldNames ? '' : 'y')
     ..pPM<TextDrawable>(9, _omitFieldNames ? '' : 'textDrawables',
         protoName: 'textDrawables', subBuilder: TextDrawable.create)
+    ..pPM<ImageDrawable>(10, _omitFieldNames ? '' : 'imageDrawables',
+        protoName: 'imageDrawables', subBuilder: ImageDrawable.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1027,6 +1235,9 @@ class Scribble extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(9)
   $pb.PbList<TextDrawable> get textDrawables => $_getList(8);
+
+  @$pb.TagNumber(10)
+  $pb.PbList<ImageDrawable> get imageDrawables => $_getList(9);
 }
 
 const $core.bool _omitFieldNames =

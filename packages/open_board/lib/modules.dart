@@ -66,6 +66,12 @@ export 'src/module/stroke/stroke_processor.dart'; // ♻️ 스트로크 생성/
 export 'src/module/stroke/eraser_processor.dart'; // ♻️ 지우개 유틸리티
 export 'src/module/text/text_drawable_manager.dart'; // ♻️ 텍스트 CRUD 관리자
 
+// 🖼️ 이미지 임베드 (Story #172 / Epic #171)
+export 'src/module/adapters/image_picker_adapter.dart';
+export 'src/module/image/image_drawable_factory.dart';
+export 'src/module/image/image_drawable_extensions.dart';
+export 'src/module/image/image_drawable_manager.dart';
+
 // 유틸리티들
 export 'src/core/utils/measure_size.dart'; // ✨ 크기 측정 유틸리티
 

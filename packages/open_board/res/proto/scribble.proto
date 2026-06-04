@@ -96,6 +96,29 @@ message TextDrawable {
   double rotation = 15 [json_name="rotation"];
 }
 
+/// Image drawable on the canvas. The actual bytes/decoding are resolved by the
+/// host application via `source` (URL or file path); this package only owns
+/// position, geometry, and identifying metadata.
+message ImageDrawable {
+  string id = 1 [json_name="id"];
+  /// URL or file path. Interpretation is delegated to the host (e.g. kobic).
+  string source = 2 [json_name="source"];
+  double x = 3 [json_name="x"];
+  double y = 4 [json_name="y"];
+  double width = 5 [json_name="width"];
+  double height = 6 [json_name="height"];
+  double rotation = 7 [json_name="rotation"];
+  /// 0.0 (fully transparent) ~ 1.0 (fully opaque).
+  double opacity = 8 [json_name="opacity"];
+  bool hidden = 9 [json_name="hidden"];
+  string createdAt = 10 [json_name="createdAt"];
+  string updatedAt = 11 [json_name="updatedAt"];
+  /// Natural pixel dimensions of the source image, used to preserve aspect
+  /// ratio when resizing. May be 0 if unknown at insertion time.
+  double naturalWidth = 12 [json_name="naturalWidth"];
+  double naturalHeight = 13 [json_name="naturalHeight"];
+}
+
 message Scribble {
   double width = 1 [json_name="width"];
   double height = 2 [json_name="height"];
@@ -106,5 +129,8 @@ message Scribble {
   double x = 7 [json_name="x"];
   double y = 8 [json_name="y"];
   repeated TextDrawable textDrawables = 9 [json_name="textDrawables"];
+  repeated ImageDrawable imageDrawables = 10 [json_name="imageDrawables"];
+  /// Reserved for upcoming Video/Link drawable rollout (Stories #173, #174).
+  reserved 11, 12;
 }
 
