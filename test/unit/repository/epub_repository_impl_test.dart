@@ -17,7 +17,7 @@ void main() {
 
   group('EpubRepositoryImpl.load — EPUB 3 (nav)', () {
     test('container.xml → OPF → metadata 추출', () async {
-      final book = await repo.load(EpubSource.bytes(validEpub3()));
+      final book = (await repo.load(EpubSource.bytes(validEpub3()))).book;
       expect(book.metadata.title, '테스트 책');
       expect(book.metadata.epubVersion, '3.0');
       expect(book.metadata.language, 'ko');
@@ -26,13 +26,13 @@ void main() {
     });
 
     test('spine은 manifest와 join되어 순서 유지', () async {
-      final book = await repo.load(EpubSource.bytes(validEpub3()));
+      final book = (await repo.load(EpubSource.bytes(validEpub3()))).book;
       expect(book.spine.map((s) => s.href), ['ch1.xhtml', 'ch2.xhtml']);
       expect(book.spine.every((s) => s.linear), isTrue);
     });
 
     test('nav.xhtml 목차가 파싱된다', () async {
-      final book = await repo.load(EpubSource.bytes(validEpub3()));
+      final book = (await repo.load(EpubSource.bytes(validEpub3()))).book;
       expect(book.outline.items.map((i) => i.title), ['1장', '2장']);
       expect(book.outline.items.map((i) => i.spineHref),
           ['ch1.xhtml', 'ch2.xhtml']);
@@ -41,7 +41,7 @@ void main() {
 
   group('EpubRepositoryImpl.load — EPUB 2 (NCX)', () {
     test('OPF spine@toc → NCX 목차 파싱 (보정 전 raw)', () async {
-      final book = await repo.load(EpubSource.bytes(sparseNcxEpub2()));
+      final book = (await repo.load(EpubSource.bytes(sparseNcxEpub2()))).book;
       expect(book.metadata.epubVersion, '2.0');
       expect(book.spine, hasLength(4));
       // 보정(sparse-ncx)은 UseCase 단계에서 적용되므로 repository raw는 1개만.
@@ -64,6 +64,33 @@ void main() {
         small.load(EpubSource.bytes(validEpub3())),
         throwsA(isA<EpubFileTooLarge>()),
       );
+    });
+  });
+
+  group('raw-레벨 보정 진단 (S1.18 #34)', () {
+    test('mimetype 누락 시 missing-mimetype 진단', () async {
+      final loaded = await repo.load(EpubSource.bytes(sparseNcxEpub2()));
+      expect(
+        loaded.patches.map((p) => p.patchId),
+        contains('missing-mimetype'),
+      );
+    });
+
+    test('정상 mimetype이면 missing-mimetype 없음', () async {
+      final loaded = await repo.load(EpubSource.bytes(validEpub3()));
+      expect(
+        loaded.patches.map((p) => p.patchId),
+        isNot(contains('missing-mimetype')),
+      );
+    });
+
+    test('비표준 rendition:layout 시 진단 + reflowable fallback', () async {
+      final loaded = await repo.load(EpubSource.bytes(invalidRenditionEpub3()));
+      expect(
+        loaded.patches.map((p) => p.patchId),
+        contains('invalid-rendition-layout'),
+      );
+      expect(loaded.book.metadata.layout, EpubLayout.reflowable);
     });
   });
 }

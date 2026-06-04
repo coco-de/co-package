@@ -9,13 +9,13 @@ import 'dart:convert';
 
 import 'package:archive/archive.dart';
 
-import '../../api/epub_book.dart';
 import '../../api/epub_security_config.dart';
 import '../../api/epub_source.dart';
 import '../../domain/entity/epub_failure.dart';
 import '../../domain/entity/epub_outline.dart';
 import '../../domain/repository/epub_repository.dart';
-import '../compat/patch_catalog.dart' show PatchedEpubBook;
+import '../compat/patch_catalog.dart'
+    show AppliedPatch, PatchSeverity, PatchedEpubBook;
 import '../parser/container_parser.dart';
 import '../parser/nav_parser.dart';
 import '../parser/ncx_parser.dart';
@@ -43,7 +43,7 @@ class EpubRepositoryImpl implements EpubRepository {
   static const String _containerPath = 'META-INF/container.xml';
 
   @override
-  Future<EpubBook> load(EpubSource source) async {
+  Future<RawEpubLoad> load(EpubSource source) async {
     final bytes = await source.readBytes();
 
     if (bytes.length > _security.maxFileSizeBytes) {
@@ -62,6 +62,21 @@ class EpubRepositoryImpl implements EpubRepository {
       );
     }
 
+    final patches = <AppliedPatch>[];
+
+    // raw-레벨 보정 1: mimetype 파일 검사 (ZIP 레벨 — EpubBook으론 감지 불가).
+    final mimetype = _readString(archive, 'mimetype')?.trim();
+    if (mimetype != 'application/epub+zip') {
+      patches.add(
+        AppliedPatch(
+          patchId: 'missing-mimetype',
+          description: 'mimetype 파일 누락/불일치 — EPUB로 가정하여 진행',
+          severity: PatchSeverity.low,
+          impact: {'found': mimetype ?? '(none)'},
+        ),
+      );
+    }
+
     final containerXml = _readString(archive, _containerPath);
     if (containerXml == null) {
       throw EpubInvalidFile('missing $_containerPath');
@@ -75,13 +90,32 @@ class EpubRepositoryImpl implements EpubRepository {
     final parsed = _opfParser.parse(opfXml);
     final tocRefs = _opfParser.tocRefs(opfXml);
 
+    // raw-레벨 보정 2: 비표준 rendition:layout (OPF raw — 파싱 후 소실됨).
+    final rawLayout = _opfParser.rawRenditionLayout(opfXml);
+    if (rawLayout != null &&
+        rawLayout != 'pre-paginated' &&
+        rawLayout != 'reflowable') {
+      patches.add(
+        AppliedPatch(
+          patchId: 'invalid-rendition-layout',
+          description:
+              '비표준 rendition:layout "$rawLayout" → reflowable fallback',
+          severity: PatchSeverity.medium,
+          impact: {'raw': rawLayout},
+        ),
+      );
+    }
+
     final opfDir = _dirOf(opfPath);
     final outline = _parseOutline(archive, opfDir, tocRefs);
 
-    return PatchedEpubBook(
-      metadata: parsed.metadata,
-      spine: parsed.spine,
-      outline: outline,
+    return RawEpubLoad(
+      book: PatchedEpubBook(
+        metadata: parsed.metadata,
+        spine: parsed.spine,
+        outline: outline,
+      ),
+      patches: patches,
     );
   }
 

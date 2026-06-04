@@ -6,6 +6,7 @@
 // 호출하여 [LoadedEpub]을 산출한다.
 
 import '../../api/epub_source.dart';
+import '../../data/compat/patch_catalog.dart' show BookSessionDiagnosticsData;
 import '../entity/loaded_epub.dart';
 import '../repository/epub_repository.dart';
 import 'apply_patches_use_case.dart';
@@ -19,7 +20,12 @@ class OpenEpubUseCase {
 
   Future<LoadedEpub> call(EpubSource source) async {
     final raw = await _repository.load(source);
-    final result = _patcher.call(raw);
-    return LoadedEpub(book: result.book, diagnostics: result.diagnostics);
+    final result = _patcher.call(raw.book);
+    // raw-레벨 진단(repository) + EpubBook 보정 진단(patcher)을 병합.
+    final diagnostics = BookSessionDiagnosticsData(
+      appliedPatches: [...raw.patches, ...result.diagnostics.appliedPatches],
+      unresolvedIssues: result.diagnostics.unresolvedIssues,
+    );
+    return LoadedEpub(book: result.book, diagnostics: diagnostics);
   }
 }

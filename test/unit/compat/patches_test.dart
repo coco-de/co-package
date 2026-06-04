@@ -6,8 +6,6 @@ import 'package:open_epub/src/data/compat/patch_catalog.dart';
 import 'package:open_epub/src/data/compat/patches/broken_spine_href.dart';
 import 'package:open_epub/src/data/compat/patches/cover_skip.dart';
 import 'package:open_epub/src/data/compat/patches/empty_toc.dart';
-import 'package:open_epub/src/data/compat/patches/invalid_rendition.dart';
-import 'package:open_epub/src/data/compat/patches/missing_mimetype.dart';
 import 'package:open_epub/src/data/compat/patches/mixed_href_encoding.dart';
 import 'package:open_epub/src/domain/entity/epub_metadata.dart';
 import 'package:open_epub/src/domain/entity/epub_outline.dart';
@@ -105,11 +103,7 @@ void main() {
     });
   });
 
-  group('현 모델 한계로 보류된 patch (S1.18, #34)', () {
-    test('invalid-rendition / missing-mimetype은 no-op', () {
-      final b = _book(spine: const [_c1]);
-      expect(const InvalidRenditionPatch().apply(b), isNull);
-      expect(const MissingMimetypePatch().apply(b), isNull);
-    });
-  });
+  // invalid-rendition-layout / missing-mimetype은 raw OPF/ZIP 컨텍스트가 필요해
+  // 카탈로그에서 제거되고 EpubRepositoryImpl이 진단을 직접 기록한다(#34).
+  // → test/unit/repository/epub_repository_impl_test.dart 의 'raw-레벨 보정 진단' 참조.
 }

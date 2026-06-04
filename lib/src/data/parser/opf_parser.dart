@@ -88,6 +88,24 @@ class OpfParser {
     return (ncxHref: ncxHref, navHref: navHref);
   }
 
+  /// OPF metadata의 `rendition:layout` 원문 값을 반환한다(없으면 null).
+  ///
+  /// [parse]는 비표준 값을 [EpubLayout.reflowable]로 fallback하므로 원래 값이
+  /// 소실된다. invalid-rendition-layout 보정 진단(S1.18)을 위해 raw 값을 노출한다.
+  String? rawRenditionLayout(String opfXml) {
+    final root = XmlDocument.parse(opfXml).rootElement;
+    final metadataEl =
+        root.findElements('metadata', namespace: _opfNs).firstOrNull;
+    if (metadataEl == null) return null;
+    for (final m in metadataEl.findElements('meta', namespace: _opfNs)) {
+      if (m.getAttribute('property') == 'rendition:layout') {
+        final v = m.innerText.trim();
+        return v.isEmpty ? null : v;
+      }
+    }
+    return null;
+  }
+
   EpubMetadata _parseMetadata(XmlElement packageEl, String epubVersion) {
     final metadataEl = packageEl
         .findElements('metadata', namespace: _opfNs)

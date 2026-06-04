@@ -16,8 +16,6 @@ import '../../domain/entity/epub_spine_item.dart';
 import 'patches/broken_spine_href.dart';
 import 'patches/cover_skip.dart';
 import 'patches/empty_toc.dart';
-import 'patches/invalid_rendition.dart';
-import 'patches/missing_mimetype.dart';
 import 'patches/mixed_href_encoding.dart';
 import 'patches/sparse_ncx.dart';
 
@@ -51,10 +49,13 @@ class PatchResult {
   final Map<String, Object?> impact;
 }
 
-/// 보정 가능한 모든 patch의 등록부.
+/// 보정 가능한 모든 patch의 등록부. EpubBook(메타/spine/목차) 입력으로 감지·변형
+/// 가능한 보정만 포함한다.
 ///
-/// `image-only-fxl`은 별도 patch가 아니라 DetectTextLayerUseCase(S1.13)가
-/// 텍스트 레이어 부재(info)로 판정하므로 카탈로그에 포함하지 않는다.
+/// 카탈로그에 포함하지 않는 보정:
+/// - `image-only-fxl`: DetectTextLayerUseCase(S1.13)가 텍스트 레이어 부재로 판정.
+/// - `missing-mimetype` / `invalid-rendition-layout`: ZIP/OPF raw 컨텍스트가
+///   필요하므로 EpubRepositoryImpl이 조립 시 진단을 직접 기록한다(S1.18 #34).
 class PatchCatalog {
   const PatchCatalog();
 
@@ -63,8 +64,6 @@ class PatchCatalog {
         CoverSkipPatch(),
         BrokenSpineHrefPatch(),
         MixedHrefEncodingPatch(),
-        MissingMimetypePatch(),
-        InvalidRenditionPatch(),
         EmptyTocPatch(),
       ];
 }

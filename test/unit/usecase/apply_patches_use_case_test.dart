@@ -83,7 +83,7 @@ void main() {
   group('PatchCatalog.all', () {
     const catalog = PatchCatalog();
 
-    test('7종 patch 등록 (image-only-fxl 제외)', () {
+    test('5종 patch 등록 (raw-레벨 2종·image-only-fxl 제외)', () {
       final ids = catalog.all.map((p) => p.patchId).toList();
       expect(
         ids,
@@ -92,13 +92,14 @@ void main() {
           'cover-skip',
           'broken-spine-href',
           'mixed-href-encoding',
-          'missing-mimetype',
-          'invalid-rendition-layout',
           'empty-toc',
         ]),
       );
-      expect(ids.length, 7);
+      expect(ids.length, 5);
       expect(ids, isNot(contains('image-only-fxl')));
+      // raw-레벨 보정은 EpubRepositoryImpl이 진단을 직접 기록(카탈로그 제외).
+      expect(ids, isNot(contains('missing-mimetype')));
+      expect(ids, isNot(contains('invalid-rendition-layout')));
     });
 
     test('patchId 중복 없음', () {

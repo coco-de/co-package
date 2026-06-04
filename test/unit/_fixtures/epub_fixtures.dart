@@ -150,6 +150,43 @@ Uint8List singleChapterEpub3() => zipEpub({
       'OEBPS/ch1.xhtml': '<html><body>only</body></html>',
     });
 
+/// 비표준 rendition:layout 값을 가진 EPUB 3 (invalid-rendition-layout 진단 트리거).
+Uint8List invalidRenditionEpub3() => zipEpub({
+      'mimetype': 'application/epub+zip',
+      'META-INF/container.xml': _containerXml,
+      'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>비표준 rendition 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:test-0005</dc:identifier>
+    <meta property="rendition:layout">weird-value</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"
+        properties="nav"/>
+    <item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="c1"/>
+  </spine>
+</package>
+''',
+      'OEBPS/nav.xhtml': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol><li><a href="ch1.xhtml">1장</a></li></ol>
+    </nav>
+  </body>
+</html>
+''',
+      'OEBPS/ch1.xhtml': '<html><body>x</body></html>',
+    });
+
 /// EPUB 2 (NCX 목차가 4개 spine 중 1개만 커버 → sparse-ncx 보정 트리거).
 Uint8List sparseNcxEpub2() => zipEpub({
       'META-INF/container.xml': _containerXml,
