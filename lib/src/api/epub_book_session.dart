@@ -46,6 +46,12 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
   Future<void> nextPage();
   Future<void> previousPage();
 
+  /// 현재 위치에서 하이라이트 도구 사용 이벤트를 발사한다(분석용, F11).
+  void recordHighlight();
+
+  /// 현재 위치에서 북마크 도구 사용 이벤트를 발사한다(분석용, F11).
+  void recordBookmark();
+
   /// 현재 위치를 최대한 보존하며 [newSource]로 책을 교체한다(hot-swap).
   /// 같은 spineHref가 새 책에 있으면 위치를 그대로 복원하고, 없으면 첫
   /// 페이지로 fallback하며 진단에 기록한다. (BDD F10)
@@ -55,10 +61,16 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
 }
 
 class EpubSessionOptions {
-  const EpubSessionOptions({this.security = const EpubSecurityConfig()});
+  const EpubSessionOptions({
+    this.security = const EpubSecurityConfig(),
+    this.progressThrottle = const Duration(seconds: 30),
+  });
 
   /// 책 열기 시 적용할 보안 가드(크기 제한 등).
   final EpubSecurityConfig security;
+
+  /// progressEvents 발사 최소 간격(BDD F11 — 기본 30초마다 1회).
+  final Duration progressThrottle;
 }
 
 /// 책 1권을 조립·복원한 결과(open/swap 공통). 세션 내부 상태의 스냅샷.
@@ -77,7 +89,7 @@ class _SessionState {
 }
 
 class _EpubBookSessionImpl implements EpubBookSession {
-  _EpubBookSessionImpl._(_SessionState state, this._security)
+  _EpubBookSessionImpl._(_SessionState state, this._security, this._throttle)
       : _state = state,
         _position = state.position;
 
@@ -87,7 +99,11 @@ class _EpubBookSessionImpl implements EpubBookSession {
     EpubSessionOptions options,
   ) async {
     final state = await _assemble(source, initialPosition, options.security);
-    final session = _EpubBookSessionImpl._(state, options.security);
+    final session = _EpubBookSessionImpl._(
+      state,
+      options.security,
+      options.progressThrottle,
+    );
 
     // SessionStarted는 listener가 아직 없을 수 있으므로 버퍼에 쌓고
     // 첫 구독 시 재생한다(broadcast stream은 과거 이벤트를 보관하지 않음).
@@ -144,7 +160,9 @@ class _EpubBookSessionImpl implements EpubBookSession {
 
   _SessionState _state;
   final EpubSecurityConfig _security;
+  final Duration _throttle;
   final Stopwatch _clock = Stopwatch()..start();
+  Duration? _lastProgressAt;
   bool _disposed = false;
 
   late final StreamController<EpubLifecycleEvent> _lifecycle =
@@ -219,6 +237,22 @@ class _EpubBookSessionImpl implements EpubBookSession {
   }
 
   @override
+  void recordHighlight() {
+    _ensureActive();
+    if (!_toolUse.isClosed) {
+      _toolUse.add(EpubHighlightToolUse(position: _position));
+    }
+  }
+
+  @override
+  void recordBookmark() {
+    _ensureActive();
+    if (!_toolUse.isClosed) {
+      _toolUse.add(EpubBookmarkToolUse(position: _position));
+    }
+  }
+
+  @override
   Future<void> swapSource(EpubSource newSource) async {
     _ensureActive();
     // 현재 위치를 보존 대상으로 전달 → 새 책에 같은 spineHref가 있으면 복원,
@@ -262,11 +296,12 @@ class _EpubBookSessionImpl implements EpubBookSession {
 
   void _emitProgress() {
     if (_progress.isClosed) return;
+    final now = _clock.elapsed;
+    // throttle: 직전 발사 이후 [_throttle] 미만이면 억제(위치는 이미 갱신됨).
+    if (_lastProgressAt != null && now - _lastProgressAt! < _throttle) return;
+    _lastProgressAt = now;
     _progress.add(
-      EpubProgressEvent(
-        progress: position.progress,
-        sessionElapsed: _clock.elapsed,
-      ),
+      EpubProgressEvent(progress: _position.progress, sessionElapsed: now),
     );
   }
 

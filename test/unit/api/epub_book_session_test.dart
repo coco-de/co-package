@@ -177,6 +177,65 @@ void main() {
     });
   });
 
+  group('toolUse & progress throttle (S1.23)', () {
+    test('recordHighlight/recordBookmark가 toolUseEvents에 발사된다', () async {
+      final session = await EpubBookSession.open(
+        EpubSource.bytes(validEpub3()),
+      );
+      addTearDown(session.dispose);
+
+      final events = <EpubToolUseEvent>[];
+      session.toolUseEvents.listen(events.add);
+
+      session.recordHighlight();
+      session.recordBookmark();
+      await _tick();
+
+      expect(events.whereType<EpubHighlightToolUse>(), isNotEmpty);
+      expect(events.whereType<EpubBookmarkToolUse>(), isNotEmpty);
+      expect(
+        (events.first as EpubHighlightToolUse).position.spineHref,
+        'ch1.xhtml',
+      );
+    });
+
+    test('progressEvents는 throttle 간격 내 중복을 억제한다', () async {
+      final session = await EpubBookSession.open(
+        EpubSource.bytes(validEpub3()),
+        options: const EpubSessionOptions(
+          progressThrottle: Duration(minutes: 1),
+        ),
+      );
+      addTearDown(session.dispose);
+
+      final events = <EpubProgressEvent>[];
+      session.progressEvents.listen(events.add);
+
+      await session.nextPage();
+      await session.previousPage();
+      await _tick();
+
+      expect(events, hasLength(1)); // 첫 발사만, 이후 throttle로 억제
+    });
+
+    test('throttle 0이면 매 이동마다 발사', () async {
+      final session = await EpubBookSession.open(
+        EpubSource.bytes(validEpub3()),
+        options: const EpubSessionOptions(progressThrottle: Duration.zero),
+      );
+      addTearDown(session.dispose);
+
+      final events = <EpubProgressEvent>[];
+      session.progressEvents.listen(events.add);
+
+      await session.nextPage();
+      await session.previousPage();
+      await _tick();
+
+      expect(events.length, greaterThanOrEqualTo(2));
+    });
+  });
+
   group('hot-swap (F10 / S1.22)', () {
     test('같은 spineHref면 위치를 보존하며 책을 교체한다', () async {
       final session = await EpubBookSession.open(
