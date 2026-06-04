@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/api/epub_security_config.dart';
 import 'package:open_epub/src/api/epub_source.dart';
 import 'package:open_epub/src/data/repository/epub_repository_impl.dart';
+import 'package:open_epub/src/domain/entity/epub_failure.dart';
 import 'package:open_epub/src/domain/entity/epub_metadata.dart';
 
 import '../_fixtures/epub_fixtures.dart';
@@ -50,18 +51,18 @@ void main() {
   });
 
   group('EpubRepositoryImpl.load — 실패 경로', () {
-    test('ZIP이 아니면 EpubLoadException', () {
+    test('ZIP이 아니면 EpubCorrupted', () {
       final junk = EpubSource.bytes(Uint8List.fromList([1, 2, 3, 4, 5]));
-      expect(repo.load(junk), throwsA(isA<EpubLoadException>()));
+      expect(repo.load(junk), throwsA(isA<EpubCorrupted>()));
     });
 
-    test('크기 제한 초과 시 EpubLoadException', () {
+    test('크기 제한 초과 시 EpubFileTooLarge', () {
       final small = EpubRepositoryImpl(
         security: const EpubSecurityConfig(maxFileSizeBytes: 16),
       );
       expect(
         small.load(EpubSource.bytes(validEpub3())),
-        throwsA(isA<EpubLoadException>()),
+        throwsA(isA<EpubFileTooLarge>()),
       );
     });
   });

@@ -6,6 +6,8 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../domain/entity/epub_failure.dart';
+
 // 파일 읽기는 dart:io 의존이라 web에서 컴파일되지 않는다.
 // 조건부 import로 web에서는 UnsupportedError를 던지는 stub을 사용한다.
 import 'epub_file_reader_io.dart'
@@ -55,22 +57,14 @@ class _UrlSource implements EpubSource {
     try {
       res = await http.get(_url, headers: _headers);
     } on Object catch (e) {
-      throw EpubSourceException('failed to fetch $_url: $e');
+      throw EpubNetworkFailure('failed to fetch $_url: $e');
     }
     if (res.statusCode != 200) {
-      throw EpubSourceException('HTTP ${res.statusCode} for $_url');
+      throw EpubNetworkFailure('HTTP ${res.statusCode} for $_url');
     }
     return res.bodyBytes;
   }
 
   @override
   String get debugIdentifier => 'url($_url)';
-}
-
-/// EpubSource 입력단(파일/네트워크) 실패.
-class EpubSourceException implements Exception {
-  EpubSourceException(this.message);
-  final String message;
-  @override
-  String toString() => 'EpubSourceException: $message';
 }

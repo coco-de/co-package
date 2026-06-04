@@ -12,6 +12,7 @@ import 'package:archive/archive.dart';
 import '../../api/epub_book.dart';
 import '../../api/epub_security_config.dart';
 import '../../api/epub_source.dart';
+import '../../domain/entity/epub_failure.dart';
 import '../../domain/entity/epub_outline.dart';
 import '../../domain/repository/epub_repository.dart';
 import '../compat/patch_catalog.dart' show PatchedEpubBook;
@@ -46,9 +47,9 @@ class EpubRepositoryImpl implements EpubRepository {
     final bytes = await source.readBytes();
 
     if (bytes.length > _security.maxFileSizeBytes) {
-      throw EpubLoadException(
-        'EPUB exceeds size limit: ${bytes.length} > '
-        '${_security.maxFileSizeBytes} bytes (${source.debugIdentifier})',
+      throw EpubFileTooLarge(
+        actualBytes: bytes.length,
+        limitBytes: _security.maxFileSizeBytes,
       );
     }
 
@@ -56,20 +57,20 @@ class EpubRepositoryImpl implements EpubRepository {
     try {
       archive = ZipDecoder().decodeBytes(bytes);
     } on Object catch (e) {
-      throw EpubLoadException(
+      throw EpubCorrupted(
         'not a valid ZIP/EPUB container (${source.debugIdentifier}): $e',
       );
     }
 
     final containerXml = _readString(archive, _containerPath);
     if (containerXml == null) {
-      throw EpubLoadException('missing $_containerPath');
+      throw EpubInvalidFile('missing $_containerPath');
     }
     final opfPath = _containerParser.parse(containerXml);
 
     final opfXml = _readString(archive, opfPath);
     if (opfXml == null) {
-      throw EpubLoadException('missing OPF package at "$opfPath"');
+      throw EpubInvalidFile('missing OPF package at "$opfPath"');
     }
     final parsed = _opfParser.parse(opfXml);
     final tocRefs = _opfParser.tocRefs(opfXml);
@@ -145,12 +146,4 @@ class EpubRepositoryImpl implements EpubRepository {
     }
     return parts.join('/');
   }
-}
-
-/// EPUB 컨테이너 로딩/조립 단계의 실패 (ZIP·container·OPF 누락 등).
-class EpubLoadException implements Exception {
-  EpubLoadException(this.message);
-  final String message;
-  @override
-  String toString() => 'EpubLoadException: $message';
 }

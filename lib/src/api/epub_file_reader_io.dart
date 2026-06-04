@@ -4,13 +4,13 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'epub_source.dart' show EpubSourceException;
+import '../domain/entity/epub_failure.dart';
 
 /// 로컬 파일에서 EPUB 바이트를 읽는다. (조건부 import: VM/모바일/데스크톱)
 Future<Uint8List> readFileBytes(String path) async {
   final file = File(path);
   if (!await file.exists()) {
-    throw EpubSourceException('EPUB file not found: $path');
+    throw EpubInvalidFile('EPUB file not found: $path');
   }
   return file.readAsBytes();
 }

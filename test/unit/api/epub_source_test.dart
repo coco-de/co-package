@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/api/epub_source.dart';
+import 'package:open_epub/src/domain/entity/epub_failure.dart';
 
 void main() {
   group('EpubSource.bytes', () {
@@ -30,9 +31,9 @@ void main() {
       expect(src.debugIdentifier, contains('file('));
     });
 
-    test('없는 파일은 EpubSourceException', () {
+    test('없는 파일은 EpubInvalidFile', () {
       final src = EpubSource.file('/no/such/path/x.epub');
-      expect(src.readBytes(), throwsA(isA<EpubSourceException>()));
+      expect(src.readBytes(), throwsA(isA<EpubInvalidFile>()));
     });
   });
 }
