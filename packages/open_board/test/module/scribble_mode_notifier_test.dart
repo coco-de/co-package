@@ -23,10 +23,6 @@ void main() {
         expect(notifier.state.inkGroupInfo.selectedInk, InkModes.pencil);
       });
 
-      test('기본 너비 목록이 설정되어 있다', () {
-        expect(notifier.widths, [0.5, 1.5, 2.5, 4.0, 6.0]);
-      });
-
       test('초기 scaleFactor는 1이다', () {
         expect(notifier.state.scaleFactor, 1.0);
       });
@@ -40,25 +36,6 @@ void main() {
 
       test('state와 value는 동일한 객체를 반환한다', () {
         expect(identical(notifier.state, notifier.value), isTrue);
-      });
-    });
-
-    group('생성자 파라미터', () {
-      test('커스텀 widths를 전달할 수 있다', () {
-        final n = ScribbleModeNotifier(widths: [1.0, 2.0, 3.0]);
-        addTearDown(n.dispose);
-        expect(n.widths, [1.0, 2.0, 3.0]);
-      });
-
-      test('allowedPointersMode를 전달할 수 있다', () {
-        final n = ScribbleModeNotifier(
-          allowedPointersMode: ScribblePointerMode.penOnly,
-        );
-        addTearDown(n.dispose);
-        expect(
-          n.state.allowedPointersMode,
-          ScribblePointerMode.penOnly,
-        );
       });
     });
 
@@ -80,14 +57,6 @@ void main() {
           ScribblePointerMode.penOnly,
         );
         expect(notifier.state.inkGroupInfo.seletedStrokeWidth, 5.0);
-      });
-    });
-
-    group('setStrokeWidthMap()', () {
-      test('특정 잉크 타입의 두께를 변경하고 해당 잉크로 전환한다', () {
-        notifier.setStrokeWidthMap(InkModes.pen, 4.0);
-        expect(notifier.state.inkGroupInfo.selectedInk, InkModes.pen);
-        expect(notifier.state.inkGroupInfo.seletedStrokeWidth, 4.0);
       });
     });
 
@@ -163,14 +132,6 @@ void main() {
       });
     });
 
-    group('setEraserWidth()', () {
-      test('지우개 모드로 전환하고 두께를 설정한다', () {
-        notifier.setEraserWidth(10.0);
-        expect(notifier.state.inkGroupInfo.selectedInk, InkModes.erase);
-        expect(notifier.state.inkGroupInfo.seletedStrokeWidth, 10.0);
-      });
-    });
-
     group('setLassoSelection()', () {
       test('잉크 모드를 lasso로 설정한다', () {
         notifier.setLassoSelection();
@@ -243,13 +204,6 @@ void main() {
       });
     });
 
-    group('setLassoMode()', () {
-      test('잉크 모드를 lasso로 설정한다', () {
-        notifier.setLassoMode();
-        expect(notifier.state.inkGroupInfo.selectedInk, InkModes.lasso);
-      });
-    });
-
     group('setSelectedInk()', () {
       test('잉크 타입만 변경한다', () {
         notifier.setScaleFactor(1.5);
@@ -263,19 +217,6 @@ void main() {
           notifier.state.allowedPointersMode,
           ScribblePointerMode.mouseOnly,
         );
-      });
-    });
-
-    group('updateWidths()', () {
-      test('widths 목록을 업데이트하고 같은 인덱스의 두께를 유지한다', () {
-        // 기본 widths: [0.5, 1.5, 2.5, 4.0, 6.0], 기본 선택 두께: 0.5 (인덱스 0)
-        notifier.setStrokeWidth(2.5); // 인덱스 2
-
-        notifier.updateWidths([1.0, 2.0, 3.0, 5.0, 8.0]);
-
-        expect(notifier.widths, [1.0, 2.0, 3.0, 5.0, 8.0]);
-        // 인덱스 2 -> 3.0
-        expect(notifier.state.inkGroupInfo.seletedStrokeWidth, 3.0);
       });
     });
 

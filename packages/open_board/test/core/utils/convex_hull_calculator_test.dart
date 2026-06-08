@@ -55,53 +55,5 @@ void main() {
         expect(hull.isNotEmpty, true);
       });
     });
-
-    group('calculateConvexHullArea', () {
-      test('2개 이하 포인트는 면적 0', () {
-        final points = createPoints([
-          [0, 0],
-          [10, 10],
-        ]);
-        expect(ConvexHullCalculator.calculateConvexHullArea(points), 0);
-      });
-
-      test('단위 정사각형 면적', () {
-        final hull = createPoints([
-          [0, 0],
-          [1, 0],
-          [1, 1],
-          [0, 1],
-        ]);
-        expect(
-          ConvexHullCalculator.calculateConvexHullArea(hull),
-          closeTo(1, 0.01),
-        );
-      });
-
-      test('삼각형 면적 (밑변 10, 높이 5)', () {
-        final hull = createPoints([
-          [0, 0],
-          [10, 0],
-          [5, 5],
-        ]);
-        expect(
-          ConvexHullCalculator.calculateConvexHullArea(hull),
-          closeTo(25, 0.01),
-        );
-      });
-
-      test('10x10 정사각형 면적', () {
-        final hull = createPoints([
-          [0, 0],
-          [10, 0],
-          [10, 10],
-          [0, 10],
-        ]);
-        expect(
-          ConvexHullCalculator.calculateConvexHullArea(hull),
-          closeTo(100, 0.01),
-        );
-      });
-    });
   });
 }

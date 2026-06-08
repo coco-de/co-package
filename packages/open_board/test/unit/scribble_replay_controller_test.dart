@@ -197,7 +197,7 @@ void main() {
         expect(events.first, isA<PageChangedEvent>());
       });
 
-      test('seek 시 이전 이벤트가 빠르게 발행된다', () {
+      test('seek 시 이전 이벤트가 빠르게 발행된다', () async {
         replay.loadTimeline(
           _createTimeline(
             startMicros: 0,
@@ -211,6 +211,7 @@ void main() {
 
         // 3초 지점으로 seek → 0,1,2,3초 이벤트 발행
         replay.seek(const Duration(seconds: 3));
+        await pumpEventQueue();
 
         expect(events.length, 4); // index 0,1,2,3
       });

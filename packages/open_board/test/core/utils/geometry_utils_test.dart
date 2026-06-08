@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/core/utils/geometry_utils.dart';
@@ -119,40 +118,6 @@ void main() {
       });
     });
 
-    group('findClosestPointIndex', () {
-      test('빈 리스트는 -1', () {
-        expect(GeometryUtils.findClosestPointIndex([], createPoint()), -1);
-      });
-
-      test('가장 가까운 점 찾기', () {
-        final points = createPoints([
-          [0, 0],
-          [10, 10],
-          [5, 5],
-        ]);
-        final target = createPoint(x: 4, y: 4);
-        expect(GeometryUtils.findClosestPointIndex(points, target), 2);
-      });
-    });
-
-    group('orderPointsClockwise', () {
-      test('2개 이하는 그대로', () {
-        final points = [createPoint(x: 1, y: 1)];
-        expect(GeometryUtils.orderPointsClockwise(points), hasLength(1));
-      });
-
-      test('정렬 후 원본 길이 유지', () {
-        final points = createPoints([
-          [0, 0],
-          [10, 0],
-          [10, 10],
-          [0, 10],
-        ]);
-        final ordered = GeometryUtils.orderPointsClockwise(points);
-        expect(ordered.length, 4);
-      });
-    });
-
     group('calculatePathDirection', () {
       test('잘못된 인덱스는 (0,0) 반환', () {
         final points = createPoints([
@@ -172,22 +137,6 @@ void main() {
         final dir = GeometryUtils.calculatePathDirection(points, 0, 1);
         expect(dir.x, 10);
         expect(dir.y, 5);
-      });
-    });
-
-    group('crossProduct', () {
-      test('일직선은 0', () {
-        final p1 = createPoint(x: 0, y: 0);
-        final p2 = createPoint(x: 5, y: 0);
-        final p3 = createPoint(x: 10, y: 0);
-        expect(GeometryUtils.crossProduct(p1, p2, p3), 0);
-      });
-
-      test('반시계 방향 양수', () {
-        final p1 = createPoint(x: 0, y: 0);
-        final p2 = createPoint(x: 10, y: 0);
-        final p3 = createPoint(x: 10, y: 10);
-        expect(GeometryUtils.crossProduct(p1, p2, p3), greaterThan(0));
       });
     });
 

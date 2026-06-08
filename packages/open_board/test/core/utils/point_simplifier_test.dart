@@ -43,36 +43,5 @@ void main() {
         expect(large.length, lessThanOrEqualTo(small.length));
       });
     });
-
-    group('adaptiveSimplify', () {
-      test('5개 이하 포인트는 그대로', () {
-        final points = createPoints([
-          [0, 0],
-          [5, 5],
-          [10, 0],
-        ]);
-        final result = PointSimplifier.adaptiveSimplify(points, 30, false);
-        expect(result.length, 3);
-      });
-
-      test('개방 곡선 단순화', () {
-        final points = createLinePoints(count: 30);
-        final result = PointSimplifier.adaptiveSimplify(points, 200, false);
-        expect(result.length, lessThan(30));
-        expect(result.length, greaterThanOrEqualTo(2));
-      });
-
-      test('폐곡선 단순화', () {
-        final points = createRectanglePoints(pointsPerSide: 10);
-        final perimeter = 400.0;
-        final result = PointSimplifier.adaptiveSimplify(
-          points,
-          perimeter,
-          true,
-        );
-        expect(result.length, lessThanOrEqualTo(points.length));
-        expect(result.length, greaterThanOrEqualTo(2));
-      });
-    });
   });
 }

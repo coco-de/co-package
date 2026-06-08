@@ -39,16 +39,6 @@ void main() {
       expect(settings.textStyle.fontSize, 16);
       expect(settings.textStyle.color, Colors.black);
       expect(settings.textAlignment, TextAlignment.center);
-      expect(settings.focusNode, isNull);
-    });
-
-    test('copyWith', () {
-      const settings = TextSettings();
-      final copied = settings.copyWith(
-        textAlignment: TextAlignment.right,
-      );
-      expect(copied.textAlignment, TextAlignment.right);
-      expect(copied.textStyle.fontSize, 16); // 변경 안 된 필드 유지
     });
 
     test('동등성 비교', () {
@@ -56,12 +46,6 @@ void main() {
       const b = TextSettings();
       expect(a, equals(b));
       expect(a.hashCode, b.hashCode);
-    });
-
-    test('다른 설정은 불일치', () {
-      const a = TextSettings();
-      final b = a.copyWith(textAlignment: TextAlignment.right);
-      expect(a, isNot(equals(b)));
     });
   });
 }

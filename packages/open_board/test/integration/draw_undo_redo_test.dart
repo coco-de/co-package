@@ -93,22 +93,26 @@ void main() {
       expect(controller.canUndo, false);
       expect(controller.canRedo, false);
 
-      // 첫 스트로크 추가: 히스토리에 1개뿐이므로 여전히 undo 불가
+      // 첫 스트로크 추가: `resetHistoryToBaseline()` 이 baseline 을 history 에
+      // 미리 push 하므로 첫 변경도 즉시 undo 가능하다 (히스토리 = [s1, baseline]).
+      // 관련: 이슈 #170 "페이지 최초 필기 시 되돌리기 버튼 비활성화 수정".
+      // (회귀 테스트: scribble_notifier_reset_history_test.dart 참고)
       controller.loadScribble(createScribbleWithStrokes(strokeCount: 1));
-      expect(controller.canUndo, false);
+      expect(controller.canUndo, true);
       expect(controller.canRedo, false);
 
-      // 두 번째 스트로크 추가: 히스토리에 2개이므로 undo 가능
+      // 두 번째 스트로크 추가: history = [s2, s1, baseline]. 여전히 undo 가능.
       controller.loadScribble(createScribbleWithStrokes(strokeCount: 2));
       expect(controller.canUndo, true);
       expect(controller.canRedo, false);
 
-      // undo 후: redo 가능
+      // undo 후: 인덱스가 s1 위치(1)로 이동. 아래로 baseline 이 남아 undo 가능,
+      // 위로 s2 가 있어 redo 도 가능하다.
       controller.undo();
-      expect(controller.canUndo, false);
+      expect(controller.canUndo, true);
       expect(controller.canRedo, true);
 
-      // redo 후: undo 가능, redo 불가
+      // redo 후: 인덱스가 s2(0)로 복귀. undo 가능, redo 불가.
       controller.redo();
       expect(controller.canUndo, true);
       expect(controller.canRedo, false);

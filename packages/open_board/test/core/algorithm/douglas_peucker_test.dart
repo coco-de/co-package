@@ -40,17 +40,17 @@ void main() {
 
     group('simplify', () {
       test('빈 리스트 반환', () {
-        expect(DouglasPeucker.simplify([]), isEmpty);
+        expect(DouglasPeucker.simplify([], tolerance: 1.0), isEmpty);
       });
 
       test('1개 포인트는 그대로 반환', () {
         final points = [Point(1, 1)];
-        expect(DouglasPeucker.simplify(points), hasLength(1));
+        expect(DouglasPeucker.simplify(points, tolerance: 1.0), hasLength(1));
       });
 
       test('2개 미만은 그대로 반환', () {
         final points = [Point(0, 0)];
-        final result = DouglasPeucker.simplify(points);
+        final result = DouglasPeucker.simplify(points, tolerance: 1.0);
         expect(result.length, 1);
       });
 
@@ -69,28 +69,8 @@ void main() {
 
       test('tolerance가 0이면 모든 포인트 유지', () {
         final points = [Point(0, 0), Point(5, 10), Point(10, 0)];
-        final result = DouglasPeucker.simplify(
-          points,
-          tolerance: 0,
-          highestQuality: true,
-        );
+        final result = DouglasPeucker.simplify(points, tolerance: 0);
         expect(result.length, 3);
-      });
-
-      test('highestQuality 옵션으로 전처리 단계 스킵', () {
-        final points = List.generate(
-          20,
-          (i) => Point(i.toDouble(), (i % 3).toDouble()),
-        );
-        final normal = DouglasPeucker.simplify(points, tolerance: 1.0);
-        final hq = DouglasPeucker.simplify(
-          points,
-          tolerance: 1.0,
-          highestQuality: true,
-        );
-        // highestQuality는 전처리를 스킵하므로 결과가 다를 수 있음
-        expect(hq.length, greaterThanOrEqualTo(2));
-        expect(normal.length, greaterThanOrEqualTo(2));
       });
     });
 

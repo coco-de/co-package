@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
-import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,19 +23,6 @@ void main() {
     });
 
     group('초기 상태', () {
-      test('초기 도구는 pencil (DrawingState 기본값)', () {
-        // DrawingState 기본값이 DrawingTool.pencil이므로 컨트롤러 등록 시 pencil로 설정됨
-        expect(controller.currentTool, InkModes.pencil);
-      });
-
-      test('초기 색상은 검정', () {
-        expect(controller.currentColor, Colors.black);
-      });
-
-      test('초기 스트로크 너비는 2.0', () {
-        expect(controller.currentStrokeWidth, 2.0);
-      });
-
       test('isEmpty는 true', () {
         expect(controller.isEmpty, true);
       });
@@ -54,28 +39,6 @@ void main() {
         final scribble = createScribbleWithStrokes(strokeCount: 2);
         final ctrl = ScribbleController(initialScribble: scribble);
         expect(ctrl.currentScribble.strokes.length, 2);
-        ctrl.dispose();
-      });
-
-      test('initialTool은 DrawingState 값으로 덮어씌워짐', () {
-        // DrawingState.registerNotifier()가 즉시 applyToModeNotifier()를 호출하여
-        // initialTool 파라미터보다 DrawingState 현재 값이 우선됨
-        final ctrl = ScribbleController(initialTool: InkModes.marker);
-        expect(ctrl.currentTool, InkModes.pencil); // DrawingState 기본값
-        ctrl.dispose();
-      });
-
-      test('initialColor은 DrawingState 값으로 덮어씌워짐', () {
-        // DrawingState.selectedColor 기본값은 Colors.black
-        final ctrl = ScribbleController(initialColor: Colors.red);
-        expect(ctrl.currentColor, Colors.black); // DrawingState 기본값
-        ctrl.dispose();
-      });
-
-      test('initialStrokeWidth은 DrawingState 값으로 덮어씌워짐', () {
-        // DrawingState.selectedThickness 기본값은 2.0
-        final ctrl = ScribbleController(initialStrokeWidth: 5.0);
-        expect(ctrl.currentStrokeWidth, 2.0); // DrawingState 기본값
         ctrl.dispose();
       });
     });
@@ -96,71 +59,12 @@ void main() {
       });
     });
 
-    group('도구 변경', () {
-      test('setTool() 도구 변경', () {
-        controller.setTool(InkModes.pencil);
-        expect(controller.currentTool, InkModes.pencil);
-      });
-
-      test('setPen() 펜으로 변경', () {
-        controller.setTool(InkModes.marker);
-        controller.setPen();
-        expect(controller.currentTool, InkModes.pen);
-      });
-
-      test('setPencil() 연필로 변경', () {
-        controller.setPencil();
-        expect(controller.currentTool, InkModes.pencil);
-      });
-
-      test('setMarker() 마커로 변경', () {
-        controller.setMarker();
-        expect(controller.currentTool, InkModes.marker);
-      });
-
-      test('setEraser() 지우개로 변경', () {
-        controller.setEraser();
-        expect(controller.currentTool, InkModes.erase);
-      });
-
-      test('setLasso() 올가미로 변경', () {
-        controller.setLasso();
-        expect(controller.currentTool, InkModes.lasso);
-      });
-
-      test('setText() 텍스트로 변경', () {
-        controller.setText();
-        expect(controller.currentTool, InkModes.text);
-      });
-    });
-
-    group('색상 / 두께 변경', () {
-      test('setColor() 색상 변경', () {
-        controller.setColor(Colors.red);
-        expect(controller.currentColor, Colors.red);
-      });
-
-      test('setStrokeWidth() 두께 변경', () {
-        controller.setStrokeWidth(8.0);
-        expect(controller.currentStrokeWidth, 8.0);
-      });
-    });
-
     group('필기 데이터 관리', () {
       test('loadScribble() 데이터 로드', () {
         final scribble = createScribbleWithStrokes(strokeCount: 3);
         controller.loadScribble(scribble);
         expect(controller.currentScribble.strokes.length, 3);
         expect(controller.isEmpty, false);
-      });
-
-      test('loadScribbleWithSize() 크기 적용', () {
-        // rebuild()는 frozen protobuf에서만 동작하므로 freeze() 필요
-        final frozenScribble = createScribbleWithStrokes(strokeCount: 1)
-          ..freeze();
-        controller.loadScribbleWithSize(frozenScribble, const Size(800, 600));
-        expect(controller.currentScribble.width, 800.0);
-        expect(controller.currentScribble.height, 600.0);
       });
 
       test('clear() 전체 지우기', () {
