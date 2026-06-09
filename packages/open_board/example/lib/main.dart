@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:open_board/open_board.dart';
 
+import 'split_drawing_page.dart';
+
 void main() {
   runApp(const OpenBoardExampleApp());
 }
@@ -20,7 +22,7 @@ class OpenBoardExampleApp extends StatelessWidget {
         brightness: Brightness.light,
         useMaterial3: true,
       ),
-      home: const DrawingPage(),
+      home: const SplitDrawingPage(),
     );
   }
 }

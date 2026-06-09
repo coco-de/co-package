@@ -3,6 +3,7 @@ library;
 // 기존 위젯들
 export 'src/module/widgets/scribble_widget.dart';
 export 'src/module/widgets/simple_scribble_widget.dart'; // ✨ 간편한 위젯들
+export 'src/module/widgets/scribble_floating_toolbar.dart'; // ✨ 플로팅 도구 패널
 
 // 컨트롤러
 export 'src/module/scribble_controller.dart'; // ✨ 새로운 컨트롤러
