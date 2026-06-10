@@ -68,6 +68,14 @@ class ScribbleBookController extends ChangeNotifier {
   /// 외부 저장소 위임
   ScribblePersistenceDelegate? persistenceDelegate;
 
+  /// 영속화 차단 모드 (리플레이 등 표시 전용 구동)
+  ///
+  /// true면 페이지 전환 시 저장(_savePage)과 페이지 삭제 시 저장소
+  /// 삭제(deleteScribble/persistenceDelegate)를 수행하지 않는다.
+  /// 리플레이 핸들러가 이 컨트롤러를 구동할 때 리플레이의 중간 캔버스
+  /// 상태가 사용자의 원본 필기 데이터를 덮어쓰거나 삭제하는 것을 막는다.
+  bool suppressPersistence = false;
+
   /// 첫 페이지 단면 전략 (양면 모드에서 첫 페이지만 단면으로 표시)
   final bool firstPageSingle;
 
@@ -399,14 +407,18 @@ class ScribbleBookController extends ChangeNotifier {
       ),
     );
 
-    // 캐시 정리 (컨트롤러 캐시·대기 중 저장 타이머 포함 —
-    // 정리하지 않으면 pageId 재사용 시 삭제된 필기가 부활한다)
-    _pageProvider.evictController(removedKey);
-    await _pageProvider.deleteScribble(removedKey);
+    // 표시 전용 모드(리플레이)에서는 페이지 목록만 갱신하고
+    // 실제 저장소의 필기 데이터는 삭제하지 않는다.
+    if (!suppressPersistence) {
+      // 캐시 정리 (컨트롤러 캐시·대기 중 저장 타이머 포함 —
+      // 정리하지 않으면 pageId 재사용 시 삭제된 필기가 부활한다)
+      _pageProvider.evictController(removedKey);
+      await _pageProvider.deleteScribble(removedKey);
 
-    // 외부 저장소 정리
-    if (persistenceDelegate != null) {
-      await persistenceDelegate!.deleteScribble(removedKey);
+      // 외부 저장소 정리
+      if (persistenceDelegate != null) {
+        await persistenceDelegate!.deleteScribble(removedKey);
+      }
     }
 
     _pageIds.removeAt(index);
@@ -670,6 +682,9 @@ class ScribbleBookController extends ChangeNotifier {
   }
 
   Future<void> _savePage(String pageId) async {
+    // 표시 전용 모드(리플레이)에서는 화면의 중간 상태를 영속화하지 않는다.
+    if (suppressPersistence) return;
+
     final key = _buildKey(pageId);
 
     if (!_pageProvider.hasController(key)) return;

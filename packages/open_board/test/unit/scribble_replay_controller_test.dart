@@ -173,6 +173,38 @@ void main() {
         replay.seek(const Duration(seconds: -5));
         expect(replay.positionMicros, 0);
       });
+
+      test('연속 전진 seek는 이벤트를 중복 발행하지 않는다', () async {
+        final events = <ScribbleBookEvent>[];
+        replay.onEvent.listen(events.add);
+
+        replay.seek(const Duration(seconds: 3));
+        replay.seek(const Duration(seconds: 5));
+        await Future<void>.delayed(.zero);
+
+        // 0~5초 구간 이벤트 6개 — 커서를 스냅샷으로 되감으면
+        // 0~3초 구간(4개)이 중복 발행되어 10개가 된다.
+        expect(events, hasLength(6));
+        final offsets = events.map((e) => e.timestampMicros).toList();
+        expect(offsets, List<int>.generate(6, (i) => i * 1000000));
+      });
+
+      test('후진 seek는 리셋 신호 1회 후 처음부터 재발행한다', () async {
+        final events = <ScribbleBookEvent>[];
+        var resetCount = 0;
+        replay.onEvent.listen(events.add);
+        replay.onReset.listen((_) => resetCount++);
+
+        replay.seek(const Duration(seconds: 5));
+        await Future<void>.delayed(.zero);
+        events.clear();
+
+        replay.seek(const Duration(seconds: 2));
+        await Future<void>.delayed(.zero);
+
+        expect(resetCount, 1, reason: '소비자가 상태를 재구축할 리셋 신호가 필요하다');
+        expect(events, hasLength(3), reason: '리셋 후 0~2초 구간(3개) 재발행');
+      });
     });
 
     group('이벤트 발행', () {

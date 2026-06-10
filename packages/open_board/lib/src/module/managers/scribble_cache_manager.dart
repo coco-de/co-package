@@ -718,6 +718,18 @@
       _memoryCache.clear();
     }
 
+    /// 자동 저장 활성화 여부
+    bool get autoSaveEnabled => _autoSaveEnabled;
+
+    /// 자동 저장 활성화 설정
+    ///
+    /// 리플레이 등 표시 전용 구동 중에는 false로 설정해 중간 애니메이션
+    /// 프레임이 onScribbleChanged → scheduleAutoSave 경로로 원본 파일을
+    /// 오염시키는 것을 막는다.
+    set autoSaveEnabled(bool value) {
+      _autoSaveEnabled = value;
+    }
+
     /// 특정 키의 컨트롤러와 관련 캐시를 모두 제거
     ///
     /// 페이지 삭제 시 호출하지 않으면 컨트롤러 캐시에 남은 옛 필기가

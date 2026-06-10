@@ -406,6 +406,26 @@ void main() {
         );
       });
 
+      test('suppressPersistence 모드에서는 페이지 전환/삭제가 저장소를 건드리지 않는다', () async {
+        // 리플레이 핸들러가 이 컨트롤러를 구동할 때, 리플레이의 중간 캔버스
+        // 상태가 원본 .bin을 덮어쓰거나 실제 페이지 데이터를 삭제하면 안 된다.
+        book.suppressPersistence = true;
+        book.activeController;
+
+        final saveBefore = delegate.saveCount;
+        await book.goToPage(1);
+        expect(delegate.saveCount, saveBefore, reason: '전환 저장이 차단되어야 한다');
+
+        book.addPage(pageId: 'replay_page');
+        final deleteBefore = delegate.deleteCount;
+        final evictBefore = provider.evictCount;
+        await book.removePage(book.pageCount - 1);
+
+        expect(delegate.deleteCount, deleteBefore, reason: '저장소 삭제 차단');
+        expect(provider.evictCount, evictBefore, reason: '컨트롤러 캐시 보존');
+        expect(book.pageIds, isNot(contains('replay_page')), reason: '표시 목록은 갱신');
+      });
+
       test('마지막 페이지 삭제 후 addPage가 삭제된 pageId를 재사용하지 않는다', () async {
         // 자동 생성 id로 페이지 추가 → 삭제 → 다시 추가
         book.addPage();

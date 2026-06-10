@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/events/scribble_book_event.dart';
 import 'package:open_board/src/module/managers/scribble_book_controller.dart';
+import 'package:open_board/src/module/managers/scribble_cache_manager.dart';
 import 'package:open_board/src/module/replay/scribble_replay_controller.dart';
 import 'package:open_board/src/module/replay/stroke_animator.dart';
 
@@ -28,6 +29,7 @@ class ScribbleReplayHandler {
   final Map<String, List<Stroke>> _originalStrokes = {};
 
   StreamSubscription<ScribbleBookEvent>? _subscription;
+  StreamSubscription<void>? _resetSubscription;
   Timer? _animationTimer;
 
   /// 현재 애니메이션 중인 스트로크 정보
@@ -39,6 +41,9 @@ class ScribbleReplayHandler {
 
   /// attach 상태
   bool _isAttached = false;
+
+  /// attach 이전의 자동 저장 상태 (detach 시 복원)
+  bool? _previousAutoSaveEnabled;
 
   ScribbleReplayHandler({
     required ScribbleBookController bookController,
@@ -55,6 +60,20 @@ class ScribbleReplayHandler {
     _isAttached = true;
     _replayController = replayController;
     _subscription = replayController.onEvent.listen(_handleEvent);
+    _resetSubscription = replayController.onReset.listen(
+      (_) => _resetDisplay(),
+    );
+
+    // 🚨 리플레이는 표시 전용 구동 — 영속화를 차단한다.
+    // 차단하지 않으면 페이지 전환 이벤트가 리플레이 중간 캔버스를 사용자
+    // 원본 .bin에 즉시 저장하고, 페이지 삭제 이벤트가 실제 저장소의
+    // 필기 데이터를 영구 삭제한다.
+    _bookController.suppressPersistence = true;
+    final provider = _pageProvider;
+    if (provider is ScribbleCacheManager) {
+      _previousAutoSaveEnabled = provider.autoSaveEnabled;
+      provider.autoSaveEnabled = false;
+    }
 
     // 16ms 주기로 애니메이션 업데이트 (~60fps)
     _animationTimer = Timer.periodic(
@@ -69,12 +88,35 @@ class ScribbleReplayHandler {
     _isAttached = false;
     _subscription?.cancel();
     _subscription = null;
+    _resetSubscription?.cancel();
+    _resetSubscription = null;
     _animationTimer?.cancel();
     _animationTimer = null;
     _replayController = null;
     _originalStrokes.clear();
     _animatingPageId = null;
     _animatingStrokeIndex = null;
+
+    // 영속화 차단 해제 (자동 저장 상태 복원)
+    _bookController.suppressPersistence = false;
+    final provider = _pageProvider;
+    if (provider is ScribbleCacheManager && _previousAutoSaveEnabled != null) {
+      provider.autoSaveEnabled = _previousAutoSaveEnabled!;
+      _previousAutoSaveEnabled = null;
+    }
+  }
+
+  /// 표시 상태 초기화 (뒤로 seek / 완료 후 재시작)
+  ///
+  /// 컨트롤러가 인덱스 0부터 이벤트를 재발행하기 전에 호출되어,
+  /// 기존 표시 상태 위에 이벤트가 이중 적용되는 것을 막는다.
+  void _resetDisplay() {
+    _animatingPageId = null;
+    _animatingStrokeIndex = null;
+    _bookController.activeController.loadScribble(
+      Scribble(),
+      resetHistory: false,
+    );
   }
 
   /// 이벤트 처리
@@ -114,7 +156,13 @@ class ScribbleReplayHandler {
     final strokes = _originalStrokes[_animatingPageId];
     if (strokes == null || _animatingStrokeIndex! >= strokes.length) return;
 
-    final currentTimeMicros = _replayController!.positionMicros;
+    // StrokeAnimator는 Point.timestamp(절대 epoch 마이크로초)와 비교하므로
+    // 상대 오프셋(positionMicros)에 타임라인 시작 시각을 더해 절대 시각으로
+    // 변환한다. 상대 값을 그대로 넘기면 항상 첫 포인트 이전으로 판정되어
+    // 재생 내내 스트로크가 전혀 렌더링되지 않는다.
+    final currentTimeMicros =
+        _replayController!.timelineStartMicros +
+        _replayController!.positionMicros;
 
     // 현재 시각까지의 부분 스트로크 생성
     final displayStrokes = <Stroke>[];
