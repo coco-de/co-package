@@ -423,11 +423,13 @@
       // 기존 회전 + 이번 드래그의 변화량 = 최종 회전
       updatedText.rotation = _originalTextRotation + result.deltaAngle;
 
-      // 텍스트 리스트 업데이트
-      textDrawables[_selectedTextIndex!] = updatedText;
-
-      // ScribbleNotifier에 즉시 업데이트 (히스토리 추가 없이)
-      scribbleNotifier.updateTextDrawable(updatedText.id, updatedText);
+      // ScribbleNotifier에 즉시 업데이트 (히스토리 추가 없이 —
+      // 최종 확정은 onTextTransformEnd의 setScribble이 1회 커밋)
+      scribbleNotifier.updateTextDrawable(
+        updatedText.id,
+        updatedText,
+        addToUndoHistory: false,
+      );
 
       // 오버레이 상태 유지
       _showTextOverlay = true;
@@ -1043,8 +1045,13 @@
 
       final updatedText = textDrawables[index].copyWithPosition(newPosition);
 
-      // ScribbleNotifier에 즉시 업데이트 (히스토리 추가 없이)
-      scribbleNotifier.updateTextDrawable(updatedText.id, updatedText);
+      // ScribbleNotifier에 즉시 업데이트 (히스토리 추가 없이 —
+      // 최종 확정은 _finishTextDrag의 setScribble이 1회 커밋)
+      scribbleNotifier.updateTextDrawable(
+        updatedText.id,
+        updatedText,
+        addToUndoHistory: false,
+      );
 
       // widgetState 동기화
       _syncWithWidgetState();

@@ -67,9 +67,7 @@ class _SplitDrawingPageState extends State<SplitDrawingPage> {
             builder: (context, canUndo, _) => IconButton(
               icon: const Icon(Icons.undo),
               tooltip: 'Undo',
-              onPressed: canUndo
-                  ? () => _drawingState.lastActiveScribbleNotifier?.undo()
-                  : null,
+              onPressed: canUndo ? _drawingState.undo : null,
             ),
           ),
           ValueListenableBuilder<bool>(
@@ -77,9 +75,7 @@ class _SplitDrawingPageState extends State<SplitDrawingPage> {
             builder: (context, canRedo, _) => IconButton(
               icon: const Icon(Icons.redo),
               tooltip: 'Redo',
-              onPressed: canRedo
-                  ? () => _drawingState.lastActiveScribbleNotifier?.redo()
-                  : null,
+              onPressed: canRedo ? _drawingState.redo : null,
             ),
           ),
         ],

@@ -257,7 +257,7 @@ class LiveSessionController extends ChangeNotifier {
       createdAt: scribble.createdAt,
       updatedAt: DateTime.now().toIso8601String(),
     );
-    controller.loadScribble(updated);
+    controller.loadScribble(updated, resetHistory: false);
   }
 
   void _removeRemoteStroke(String pageId, int strokeIndex) {
@@ -276,7 +276,7 @@ class LiveSessionController extends ChangeNotifier {
       createdAt: scribble.createdAt,
       updatedAt: DateTime.now().toIso8601String(),
     );
-    controller.loadScribble(updated);
+    controller.loadScribble(updated, resetHistory: false);
   }
 
   ScribbleController? _getControllerForPage(String pageId) {

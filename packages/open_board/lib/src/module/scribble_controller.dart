@@ -130,9 +130,20 @@ class ScribbleController extends ChangeNotifier {
   /// === 필기 데이터 제어 메서드들 ===
 
   /// 필기 데이터 로드
-  void loadScribble(Scribble scribble) {
+  ///
+  /// 기본값([resetHistory] = true)은 로드된 데이터를 undo baseline으로
+  /// 설정한다. 로드를 히스토리에 push하면 undo 한 번으로 페이지 전체가
+  /// 빈 baseline으로 되돌아가고, 이어지는 페이지 전환 저장으로 원본이
+  /// 영구 유실된다.
+  ///
+  /// 라이브 세션/리플레이처럼 빈번한 외부 갱신은 [resetHistory] = false로
+  /// 호출해 로컬 undo 히스토리를 오염시키지 않는다.
+  void loadScribble(Scribble scribble, {bool resetHistory = true}) {
     _ensureInitialized();
-    _scribbleNotifier.setScribble(scribble: scribble);
+    _scribbleNotifier.setScribble(scribble: scribble, addToUndoHistory: false);
+    if (resetHistory) {
+      _scribbleNotifier.resetHistoryToBaseline();
+    }
   }
 
   /// 전체 지우기

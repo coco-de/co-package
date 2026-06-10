@@ -80,6 +80,13 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 마커 펜이 직선으로 변환되었는지 여부 (변환 후에는 끝점만 추종)
   bool _markerStraightened = false;
 
+  /// 지우개 제스처 시작 시점의 스트로크 수
+  ///
+  /// 한 번의 지우개 제스처(down→move…→up)를 undo 1단위로 만들기 위해
+  /// 제스처 시작 시 스냅샷을 기록하고, up/cancel에서 실제로 스트로크가
+  /// 지워졌을 때만 히스토리에 커밋한다.
+  int? _eraseGestureStartStrokeCount;
+
   ScribbleNotifier({
     /// If you pass a scribble here, the notifier will use that scribble as a
     /// starting point.
@@ -106,6 +113,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
     // 초기화 시 모든 올가미 스트로크 제거
     removeLassoStrokes();
+
+    // super() 초기값과 본문 재할당이 각각 히스토리에 들어가 생성 직후
+    // canUndo == true가 되는 것을 방지한다. (컨트롤러를 거치지 않고
+    // 직접 생성해 ScribbleWidget에 주입하는 공개 API 경로 보정)
+    resetHistoryToBaseline();
   }
 
   /// The state of the scribble at this moment.
@@ -124,19 +136,21 @@ class ScribbleNotifier extends ScribbleNotifierBase
     ScribbleState historyState,
     ScribbleState currentState,
   ) {
-    // 올가미 스트로크가 있는지 확인
-    final hasLassoStrokes = historyState.scribble.strokes.any(
-      (stroke) => stroke.ink == InkModes.lasso,
-    );
-
-    // 올가미 스트로크가 있다면 올가미 도구 선택
-    if (hasLassoStrokes) {
-      setLassoSelection();
-    }
+    // 선택용 올가미 스트로크는 콘텐츠가 아니므로 히스토리 복원 시 정화한다.
+    // (정화하지 않으면 undo 시 올가미 윤곽선이 그려진 콘텐츠처럼 복원된다)
+    final strokes = historyState.scribble.strokes
+        .where((stroke) => stroke.ink != InkModes.lasso)
+        .toList();
+    final cleanedScribble =
+        strokes.length == historyState.scribble.strokes.length
+        ? historyState.scribble
+        : (historyState.scribble.deepCopy()
+            ..strokes.clear()
+            ..strokes.addAll(strokes));
 
     return switch (currentState) {
-      final Drawing s => s.copyWith(scribble: historyState.scribble),
-      final Erasing s => s.copyWith(scribble: historyState.scribble),
+      final Drawing s => s.copyWith(scribble: cleanedScribble),
+      final Erasing s => s.copyWith(scribble: cleanedScribble),
     };
   }
 
@@ -180,7 +194,12 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// Clear the entire drawing.
   void clear() {
-    if (state.scribble.strokes.isEmpty) return;
+    // 텍스트/이미지 객체만 있는 페이지에서도 전체 지우기가 동작해야 한다.
+    if (state.scribble.strokes.isEmpty &&
+        state.scribble.textDrawables.isEmpty &&
+        state.scribble.imageDrawables.isEmpty) {
+      return;
+    }
     state = Drawing(
       scribble: Scribble(
         x: state.scribble.x,
@@ -286,6 +305,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
     }
     // 터치하는 순간 이전 좌표와 현재 좌표를 같게 만든다.
     preLocalPosition = event.localPosition;
+
+    // 지우개 제스처 시작 스냅샷 (첫 포인터 down에서만)
+    if (state is Erasing && state.activePointerIds.isEmpty) {
+      _eraseGestureStartStrokeCount = state.scribble.strokes.length;
+    }
     ScribbleState s = state;
 
     // 올가미 스트로크가 있는지 확인
@@ -463,17 +487,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
         pointerPosition: getPointFromEvent(event),
       );
 
-      // 지우개는 실시간으로 상태를 업데이트해야 함
-      final strokeCountChanged =
-          newState.scribble.strokes.length != state.scribble.strokes.length;
-
-      if (strokeCountChanged) {
-        // 실제 상태도 즉시 업데이트
-        state = newState;
-      } else {
-        // 스트로크 변경이 없어도 포인터 위치는 업데이트
-        temporaryValue = newState;
-      }
+      // 지우개는 실시간으로 화면을 갱신하되 히스토리에는 push하지 않는다.
+      // (move마다 state=로 커밋하면 한 제스처가 수십 개의 undo 항목을 만들고
+      //  maxHistoryLength 한도를 잠식해 지우기 이전 상태가 evict된다)
+      // 제스처 단위 커밋은 onPointerUp/onPointerCancel이 담당한다.
+      temporaryValue = newState;
 
       // 판정 선분이 '직전 move 위치 → 현재 위치'가 되도록 매번 갱신한다.
       // anchor를 50px 지연시키면 곡선 지우기 시 현(chord)이 실제 궤적 안쪽을
@@ -535,8 +553,9 @@ class ScribbleNotifier extends ScribbleNotifierBase
             )
             .toList();
 
-        // 상태 업데이트
-        state = switch (newState) {
+        // 상태 업데이트 — 선택용 올가미 스트로크는 콘텐츠가 아니므로
+        // undo 히스토리에 push하지 않는다 (temporaryValue).
+        temporaryValue = switch (newState) {
           Drawing() => newState.copyWith(
             scribble: Scribble(
               x: newState.scribble.x,
@@ -563,7 +582,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
           ),
         };
       } else {
-        state = newState;
+        temporaryValue = newState;
       }
 
       // 올가미 스트로크가 있는지 확인
@@ -597,12 +616,13 @@ class ScribbleNotifier extends ScribbleNotifierBase
       );
     } else if (state is Erasing) {
       final erased = erasePoint(event, modeState) as Erasing;
-      state = erased.copyWith(
+      final newState = erased.copyWith(
         pointerPosition: pos,
         activePointerIds: state.activePointerIds
             .where((id) => id != event.pointer)
             .toList(),
       );
+      _commitEraseGesture(newState);
     }
 
     // 도형 도구를 사용하거나 도형 인식 기능이 활성화되어 있는 경우 도형 변환 처리
@@ -685,12 +705,29 @@ class ScribbleNotifier extends ScribbleNotifierBase
       );
     } else if (state is Erasing) {
       final erased = erasePoint(event, modeState) as Erasing;
-      state = erased.copyWith(
+      final newState = erased.copyWith(
         pointerPosition: null,
         activePointerIds: state.activePointerIds
             .where((id) => id != event.pointer)
             .toList(),
       );
+      _commitEraseGesture(newState);
+    }
+  }
+
+  /// 지우개 제스처 종료 시 결과를 커밋한다.
+  ///
+  /// 제스처 동안 실제로 스트로크가 지워졌을 때만 히스토리에 push하여
+  /// 한 제스처 = undo 1단위를 보장한다. 빈 탭(아무것도 안 지움)은
+  /// temporaryValue로만 반영해 no-op 히스토리 항목과 redo 스택 파괴를 막는다.
+  void _commitEraseGesture(ScribbleState newState) {
+    final startCount =
+        _eraseGestureStartStrokeCount ?? newState.scribble.strokes.length;
+    _eraseGestureStartStrokeCount = null;
+    if (newState.scribble.strokes.length != startCount) {
+      state = newState;
+    } else {
+      temporaryValue = newState;
     }
   }
 
@@ -877,9 +914,18 @@ class ScribbleNotifier extends ScribbleNotifierBase
   }
 
   /// 텍스트 수정
-  void updateTextDrawable(String id, TextDrawable updatedTextDrawable) {
+  ///
+  /// 드래그/변형 중간 프레임처럼 히스토리에 남기지 않을 업데이트는
+  /// [addToUndoHistory]를 `false`로 전달한다. (최종 확정은 호출 측이
+  /// `setScribble(addToUndoHistory: true)`로 1회 커밋)
+  void updateTextDrawable(
+    String id,
+    TextDrawable updatedTextDrawable, {
+    bool addToUndoHistory = true,
+  }) {
     _updateScribbleWithTextDrawables(
       textDrawableManager.update(state.scribble, id, updatedTextDrawable),
+      addToUndoHistory: addToUndoHistory,
     );
   }
 
@@ -937,8 +983,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
   // ==================== 텍스트 관리 기능 (♻️ TextDrawableManager로 위임) ====================
 
   /// 텍스트로 스크리블 업데이트 (내부 메서드)
-  void _updateScribbleWithTextDrawables(Scribble updatedScribble) {
-    state = switch (state) {
+  void _updateScribbleWithTextDrawables(
+    Scribble updatedScribble, {
+    bool addToUndoHistory = true,
+  }) {
+    final newState = switch (state) {
       Drawing(
         :final activeLine,
         :final activePointerIds,
@@ -956,6 +1005,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
         pointerPosition: pointerPosition,
       ),
     };
+    if (addToUndoHistory) {
+      state = newState;
+    } else {
+      temporaryValue = newState;
+    }
   }
 
   @override

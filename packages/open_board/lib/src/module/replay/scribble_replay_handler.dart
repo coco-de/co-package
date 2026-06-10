@@ -129,7 +129,10 @@ class ScribbleReplayHandler {
 
     if (displayStrokes.isNotEmpty) {
       final scribble = Scribble()..strokes.addAll(displayStrokes);
-      _bookController.activeController.loadScribble(scribble);
+      _bookController.activeController.loadScribble(
+        scribble,
+        resetHistory: false,
+      );
     }
   }
 
@@ -146,6 +149,7 @@ class ScribbleReplayHandler {
 
     _bookController.activeController.loadScribble(
       Scribble()..strokes.addAll(filtered),
+      resetHistory: false,
     );
   }
 
