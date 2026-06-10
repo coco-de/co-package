@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 // 📦 Package imports:
 import 'package:value_notifier_tools/value_notifier_tools.dart';
 import 'package:open_board/src/core/utils/extensions/paint_extension/ex_color.dart';
+import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
 
 // 🌎 Project imports:
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
@@ -568,27 +569,13 @@ class ScribbleNotifier extends ScribbleNotifierBase
         // undo 히스토리에 push하지 않는다 (temporaryValue).
         temporaryValue = switch (newState) {
           Drawing() => newState.copyWith(
-            scribble: Scribble(
-              x: newState.scribble.x,
-              y: newState.scribble.y,
-              width: newState.scribble.width,
-              height: newState.scribble.height,
+            scribble: newState.scribble.copyWithContents(
               strokes: updatedStrokes,
-              textDrawables: newState.scribble.textDrawables, // 텍스트 필드 유지
-              updatedAt: DateTime.now().toIso8601String(),
-              version: newState.scribble.version,
             ),
           ),
           Erasing() => newState.copyWith(
-            scribble: Scribble(
-              x: newState.scribble.x,
-              y: newState.scribble.y,
-              width: newState.scribble.width,
-              height: newState.scribble.height,
+            scribble: newState.scribble.copyWithContents(
               strokes: updatedStrokes,
-              textDrawables: newState.scribble.textDrawables, // 텍스트 필드 유지
-              updatedAt: DateTime.now().toIso8601String(),
-              version: newState.scribble.version,
             ),
           ),
         };
@@ -668,17 +655,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
                 // 상태 업데이트
                 state = Drawing(
-                  scribble: Scribble(
-                    strokes: strokes,
-                    x: scribble.x,
-                    y: scribble.y,
-                    width: scribble.width,
-                    height: scribble.height,
-                    textDrawables: scribble.textDrawables, // 텍스트 필드 유지
-                    createdAt: scribble.createdAt,
-                    updatedAt: DateTime.now().toIso8601String(),
-                    version: scribble.version,
-                  ),
+                  scribble: scribble.copyWithContents(strokes: strokes),
                   activeLine: null,
                   activePointerIds: [],
                   pointerPosition: null,
@@ -825,17 +802,10 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// 모든 올가미 스트로크를 제거하는 메서드
   void removeLassoStrokes() {
-    final updatedScribble = Scribble(
-      x: state.scribble.x,
-      y: state.scribble.y,
-      width: state.scribble.width,
-      height: state.scribble.height,
+    final updatedScribble = state.scribble.copyWithContents(
       strokes: state.scribble.strokes
           .where((stroke) => stroke.ink != InkModes.lasso)
           .toList(),
-      textDrawables: state.scribble.textDrawables, // 텍스트 필드 유지
-      updatedAt: DateTime.now().toIso8601String(),
-      version: state.scribble.version,
     );
 
     // 선택된 포인트 초기화를 위한 콜백 호출

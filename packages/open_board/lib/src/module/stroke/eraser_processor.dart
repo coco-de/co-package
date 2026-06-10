@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 // 🌎 Project imports:
+import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/scribble_mode.state.dart';
@@ -26,11 +27,8 @@ class EraserProcessor {
     ScribbleState state,
     Offset preLocalPosition,
   ) {
-    final newScribble = Scribble(
-      x: state.scribble.x,
-      y: state.scribble.y,
-      width: state.scribble.width,
-      height: state.scribble.height,
+    final newScribble = state.scribble.copyWithContents(
+      touchUpdatedAt: false,
       strokes: state.scribble.strokes
           .where(
             (stroke) => stroke.points.every((pt) {
@@ -82,8 +80,6 @@ class EraserProcessor {
             }),
           )
           .toList(),
-      textDrawables: state.scribble.textDrawables, // 텍스트 필드 유지
-      version: state.scribble.version,
     );
     return switch (state) {
       final Drawing s => s.copyWith(scribble: newScribble),

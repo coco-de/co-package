@@ -211,14 +211,10 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
           _controller.repaintBoundaryKey, // ✨ controller의 key 전달
       transformationController: widget.transformationController,
       contentLogicalSize: widget.contentLogicalSize,
-      onScribble: widget.onScribbleChanged != null
-          ? (notifier) {
-              // ✅ 빈 스트로크도 저장 필요 (지우개로 전부 삭제한 경우)
-              // 무한루프는 ScribbleNotifier의 중복 감지로 방지
-              final scribble = notifier.currentScribble;
-              widget.onScribbleChanged!(scribble);
-            }
-          : null,
+      // onScribbleChanged는 _initializeController에서 컨트롤러 리스너로
+      // 이미 연결되어 모든 변경을 전달한다. 여기서 onScribble로도 감싸
+      // 전달하면 같은 변경에 대해 사용자 콜백이 두 번 호출된다.
+      onScribble: null,
       onScribbleFinished: widget.onScribbleFinished != null
           ? (notifier) {
               final scribble = notifier.currentScribble;

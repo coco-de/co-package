@@ -1,6 +1,7 @@
   import 'dart:math' as math;
   import 'package:flutter/material.dart';
-  import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
+  import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
+import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_board/src/module/scribble.notifier.dart';
   import 'package:open_board/src/module/scribble_painter.dart' as painter;
   import 'package:open_board/src/core/utils/ink_group_info.dart';
@@ -742,15 +743,9 @@
         }
 
         // 스크리블 업데이트
-        final newScribble = Scribble(
-          x: currentScribble.x,
-          y: currentScribble.y,
-          width: currentScribble.width,
-          height: currentScribble.height,
+        final newScribble = currentScribble.copyWithContents(
           strokes: strokes,
           textDrawables: textDrawables,
-          updatedAt: DateTime.now().toIso8601String(),
-          version: currentScribble.version,
         );
 
         scribbleNotifier.setScribble(
@@ -1218,16 +1213,10 @@
       }
 
       // 스크리블 업데이트 (히스토리에 저장하지 않음 - 드래그 중)
-      final updatedScribble = Scribble(
+      final updatedScribble = currentScribble.copyWithContents(
+        touchUpdatedAt: false,
         strokes: strokes,
-        width: currentScribble.width,
-        height: currentScribble.height,
-        x: currentScribble.x,
-        y: currentScribble.y,
         textDrawables: textDrawables,
-        createdAt: currentScribble.createdAt,
-        updatedAt: currentScribble.updatedAt,
-        version: currentScribble.version,
       );
       scribbleNotifier.setScribble(
         scribble: updatedScribble,
@@ -1346,16 +1335,9 @@
       final strokes = List<Stroke>.from(currentScribble.strokes);
       strokes.removeWhere((stroke) => stroke.ink == InkModes.lasso);
 
-      final updatedScribble = Scribble(
+      final updatedScribble = currentScribble.copyWithContents(
+        touchUpdatedAt: false,
         strokes: strokes,
-        width: currentScribble.width,
-        height: currentScribble.height,
-        x: currentScribble.x,
-        y: currentScribble.y,
-        textDrawables: currentScribble.textDrawables,
-        createdAt: currentScribble.createdAt,
-        updatedAt: currentScribble.updatedAt,
-        version: currentScribble.version,
       );
 
       scribbleNotifier.setScribble(

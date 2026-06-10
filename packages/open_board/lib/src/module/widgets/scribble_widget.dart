@@ -5,7 +5,8 @@
 
   import 'package:flutter/material.dart';
   import 'package:flutter/services.dart';
-  import 'package:open_board/src/core/utils/ink_group_info.dart';
+  import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
+import 'package:open_board/src/core/utils/ink_group_info.dart';
   import 'package:open_board/src/core/utils/measure_size.dart';
   import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_board/src/module/lasso/lasso_selection_manager.dart';
@@ -1966,6 +1967,12 @@
       // 그리던 라인을 정리한다. 전달하지 않으면 시스템 제스처/팜 리젝션으로
       // 취소된 포인터가 영구 잔류하여 해당 페이지 필기가 차단된다.
       pointerHandler.handlePointerCancel(event);
+
+      // 텍스트 드래그/크기조절 상태도 정리 — 고착되면 isAnyTextInteracting이
+      // true로 남아 손을 뗀 뒤에도 핀치줌과 필기가 계속 차단된다.
+      if (textManager.handlePointerCancel(event)) {
+        setState(() {});
+      }
     }
 
     // 스트로크 삭제
@@ -1983,15 +1990,8 @@
         }
       }
 
-      final updatedScribble = Scribble(
+      final updatedScribble = currentScribble.copyWithContents(
         strokes: strokes,
-        width: currentScribble.width,
-        height: currentScribble.height,
-        x: currentScribble.x,
-        y: currentScribble.y,
-        textDrawables: currentScribble.textDrawables,
-        createdAt: currentScribble.createdAt,
-        version: currentScribble.version,
       );
 
       widget.notifier.setScribble(
@@ -2600,6 +2600,7 @@
       if (widget.notifier != oldWidget.notifier ||
           widget.modeNotifier != oldWidget.modeNotifier) {
         oldWidget.notifier.onHistoryApplied = null;
+        textManager.dispose();
         pointerHandler.dispose();
         pointerHandler = _createPointerHandler();
         renderLayers = _createRenderLayers();
@@ -2639,6 +2640,9 @@
 
       // 히스토리 적용 콜백 해제 (dispose된 State 참조 방지)
       widget.notifier.onHistoryApplied = null;
+
+      // 편집 중이던 인라인 에디터 오버레이 제거 (좀비 UI/스테일 커밋 방지)
+      textManager.dispose();
 
       widgetState.dispose();
       pointerHandler.dispose();

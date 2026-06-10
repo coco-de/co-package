@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:fixnum/fixnum.dart';
 
 // 🌎 Project imports:
+import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/scribble_mode.state.dart';
@@ -88,15 +89,8 @@ class StrokeProcessor {
     // Drawing.copyWith(activeLine: null)은 null 합류 연산자 때문에
     // activeLine을 null로 설정하지 못하므로 직접 Drawing을 생성합니다.
     return Drawing(
-      scribble: Scribble(
-        x: s.scribble.x,
-        y: s.scribble.y,
-        width: s.scribble.width,
-        height: s.scribble.height,
+      scribble: s.scribble.copyWithContents(
         strokes: [...s.scribble.strokes, s.activeLine!],
-        textDrawables: s.scribble.textDrawables,
-        updatedAt: DateTime.now().toIso8601String(),
-        version: s.scribble.version,
       ),
       activeLine: null,
       activePointerIds: s.activePointerIds,

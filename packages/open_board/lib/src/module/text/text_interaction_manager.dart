@@ -1,5 +1,6 @@
   import 'package:flutter/material.dart';
-  import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
+  import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
+import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_board/src/module/scribble.notifier.dart';
   import 'package:open_board/src/module/scribble_mode.notifier.dart';
   import 'package:open_board/src/module/text/text_drawable_extensions.dart';
@@ -211,7 +212,21 @@
       if (_isEditingText) {
         return false;
       }
+      return _releasePointer();
+    }
 
+    /// 포인터 취소 이벤트 처리
+    ///
+    /// 상위 스크롤러블/제스처 아레나의 포인터 탈취, 시스템 제스처,
+    /// 팜 리젝션 등으로 up 대신 cancel이 오면 드래그/준비/크기조절 상태를
+    /// 정리한다. 정리하지 않으면 isAnyTextInteracting이 true로 고착되어
+    /// 손을 뗀 뒤에도 핀치줌과 필기가 계속 차단된다.
+    bool handlePointerCancel(PointerCancelEvent event) {
+      return _releasePointer();
+    }
+
+    /// 드래그/변형/준비 상태를 종료하고 정리 (up/cancel 공용)
+    bool _releasePointer() {
       // 텍스트 변형 완료 처리 (올가미 매니저와 동일한 방식)
       if (_isTextResizing) {
         _isTextResizing = false;
@@ -228,7 +243,7 @@
         return true;
       }
 
-      // 텍스트 드래그 완료 처리
+      // 텍스트 드래그 완료 처리 (이미 화면에 반영된 이동을 히스토리에 커밋)
       if (_isDraggingText) {
         _finishTextDrag();
         return true;
@@ -247,6 +262,19 @@
       }
 
       return false;
+    }
+
+    /// 매니저 정리 — 편집 중이던 인라인 에디터 오버레이를 제거한다.
+    ///
+    /// 호출하지 않으면 편집 중 페이지 전환/위젯 dispose 시 에디터가
+    /// 새 페이지 위에 좀비 UI로 남고, 키보드가 닫힐 때 옛 페이지의
+    /// notifier에 텍스트가 커밋된다. (OverlayEntry.remove()가 에디터
+    /// State를 dispose시켜 stale 커밋까지 함께 차단된다)
+    void dispose() {
+      _textEditorOverlay?.remove();
+      _textEditorOverlay = null;
+      _isEditingText = false;
+      _editingTextId = null;
     }
 
     /// 선택된 텍스트 삭제
@@ -1083,16 +1111,8 @@
         textDrawables[_draggingTextIndex!] = updatedText;
 
         // 스크리블 즉시 업데이트 (히스토리 추가 없이)
-        final updatedScribble = Scribble(
-          strokes: currentScribble.strokes,
-          width: currentScribble.width,
-          height: currentScribble.height,
-          x: currentScribble.x,
-          y: currentScribble.y,
+        final updatedScribble = currentScribble.copyWithContents(
           textDrawables: textDrawables,
-          createdAt: currentScribble.createdAt,
-          updatedAt: DateTime.now().toIso8601String(),
-          version: currentScribble.version,
         );
 
         scribbleNotifier.setScribble(
