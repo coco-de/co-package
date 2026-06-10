@@ -4,7 +4,8 @@
   import 'dart:math' as math;
   import 'dart:ui' as ui;
 
-  import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
+  import 'package:flutter/foundation.dart'
+      show kDebugMode, kIsWeb, visibleForTesting;
   import 'package:flutter/material.dart';
   import 'package:flutter/rendering.dart';
   import 'package:flutter/services.dart';
@@ -116,6 +117,12 @@
     /// 스트로크 분할/머지 시스템
     /// 양면↔단면 모드 전환 시 분할 결과 캐시
     final Map<String, ScribbleSplitResult> _splitResultCache = {};
+
+    /// 분할 시점의 원본 양면 Scribble (캐시 유효성 검증용)
+    ///
+    /// 캐시를 무조건 우선 사용하면 분할 이후의 모든 편집이 옛 분할
+    /// 결과로 롤백되므로, 사용 전에 현재 데이터와 비교해 다르면 폐기한다.
+    final Map<String, Scribble> _splitSourceCache = {};
 
     ScribbleCacheManager() {
       _autoSaveScheduler = AutoSaveScheduler(
@@ -264,7 +271,9 @@
         }
 
         // 렌더링 상태 확인
-        if (boundary.debugNeedsPaint) {
+        // debugNeedsPaint는 assert 내부에서만 초기화되는 디버그 전용 getter라
+        // release/profile 빌드에서 접근하면 LateInitializationError를 던진다.
+        if (kDebugMode && boundary.debugNeedsPaint) {
           log('⚠️ 위젯이 아직 페인트 대기 중 - 렌더링 완료 대기');
 
           // 렌더링 완료를 위해 프레임 대기
@@ -321,7 +330,9 @@
         image.dispose();
 
         return resultBytes;
-      } on Exception catch (error, stackTrace) {
+      } catch (error, stackTrace) {
+        // Error 계열(LateInitializationError 등)도 "실패 시 null 반환"
+        // 계약을 지키도록 일반 catch를 사용한다.
         log('❌ 스크리블 이미지 캡처 중 오류 발생', error: error, stackTrace: stackTrace);
         return null;
       }
@@ -483,6 +494,9 @@
 
         // 🔥 즉시 저장이 요청되거나 즉시 저장 키로 등록된 경우
         if (immediate || _immediateSaveKeys.contains(normalizedKey)) {
+          // 대기 중인 디바운스 타이머(옛 스냅샷)가 immediate 저장 직후
+          // 발화해 파일을 stale 상태로 되돌리는 것을 방지한다.
+          _saveTimers.remove(normalizedKey)?.cancel();
           return await _saveToFileImmediately(normalizedKey, scribble);
         }
 
@@ -490,8 +504,13 @@
         _saveTimers[normalizedKey]?.cancel();
 
         _saveTimers[normalizedKey] = Timer(_saveDebounceTime, () async {
-          await _saveToFileImmediately(normalizedKey, scribble);
           _saveTimers.remove(normalizedKey);
+          if (_isDisposed) return;
+          // 클로저 캡처본 대신 메모리 캐시의 최신본을 저장한다.
+          final latest = _memoryCache[normalizedKey];
+          if (latest != null) {
+            await _saveToFileImmediately(normalizedKey, latest);
+          }
         });
 
         return true; // 메모리 저장 성공
@@ -516,15 +535,20 @@
     Future<bool> flushSave(String key) async {
       final normalizedKey = _normalizeKey(key);
 
-      // 두 디바운스 레이어를 모두 검사·취소
-      final autoSaveWasPending = _autoSaveScheduler.flush(normalizedKey);
+      // 1단계: AutoSaveScheduler에 대기 중이던 최신 스냅샷이 있으면 그것을
+      // 즉시 저장한다. (이 스냅샷은 아직 _memoryCache에 반영되지 않았으므로
+      // 메모리 캐시를 저장하면 한 세대 전 데이터가 영속화된다)
+      final pending = _autoSaveScheduler.flush(normalizedKey);
+      if (pending != null) {
+        return saveScribble(normalizedKey, pending, immediate: true);
+      }
+
+      // 2단계: saveScribble 내부 디바운스가 대기 중이면 메모리 캐시(이
+      // 레이어에서는 항상 최신)를 즉시 저장한다.
       final pendingTimer = _saveTimers.remove(normalizedKey);
       pendingTimer?.cancel();
+      if (pendingTimer == null) return false;
 
-      // 어느 레이어에서도 대기 중이 아니면 flush 대상 없음
-      if (!autoSaveWasPending && pendingTimer == null) return false;
-
-      // 메모리 캐시의 최신 데이터를 즉시 파일로 저장
       final scribble = _memoryCache[normalizedKey];
       if (scribble == null) return false;
 
@@ -572,6 +596,11 @@
       try {
         final normalizedKey = _normalizeKey(key);
 
+        // 대기 중인 저장 타이머를 취소한다 — 취소하지 않으면 삭제 직후
+        // 타이머가 발화해 삭제된 파일이 부활한다.
+        _saveTimers.remove(normalizedKey)?.cancel();
+        _autoSaveScheduler.invalidate(normalizedKey);
+
         // 메모리 캐시에서 제거
         _memoryCache.remove(normalizedKey);
 
@@ -599,6 +628,14 @@
     Future<bool> deleteScribblesByPrefix(String keyPrefix) async {
       try {
         final normalizedPrefix = _normalizeKey(keyPrefix);
+
+        // 대기 중인 저장 타이머 취소 (삭제된 파일 부활 방지)
+        for (final key in _saveTimers.keys
+            .where((k) => k.startsWith('$normalizedPrefix/'))
+            .toList()) {
+          _saveTimers.remove(key)?.cancel();
+        }
+        _autoSaveScheduler.invalidateByPrefix(normalizedPrefix);
 
         // 메모리 캐시에서 해당 프리픽스 데이터 모두 제거
         _memoryCache.removeWhere(
@@ -681,6 +718,24 @@
       _memoryCache.clear();
     }
 
+    /// 특정 키의 컨트롤러와 관련 캐시를 모두 제거
+    ///
+    /// 페이지 삭제 시 호출하지 않으면 컨트롤러 캐시에 남은 옛 필기가
+    /// 동일 키 재사용(getController) 시 그대로 반환되어 삭제된 필기가
+    /// 새 페이지에 부활한다.
+    @override
+    void evictController(String key) {
+      final normalizedKey = _normalizeKey(key);
+
+      _saveTimers.remove(normalizedKey)?.cancel();
+      _autoSaveScheduler.invalidate(normalizedKey);
+      _memoryCache.remove(normalizedKey);
+      _originalImageSizes.remove(normalizedKey);
+
+      final controller = _controllerCache.remove(normalizedKey);
+      controller?.dispose();
+    }
+
     /// 자동 저장 스케줄링 — AutoSaveScheduler에 위임
     void scheduleAutoSave(String key, Scribble scribble) {
       _autoSaveScheduler.schedule(key, scribble);
@@ -703,6 +758,12 @@
 
       // 자동 저장 스케줄러 정리
       _autoSaveScheduler.dispose();
+
+      // 디바운스 저장 타이머 정리
+      for (final timer in _saveTimers.values) {
+        timer.cancel();
+      }
+      _saveTimers.clear();
 
       // 메모리 캐시 정리
       clearMemoryCache();
@@ -742,19 +803,33 @@
         debugPrint('  - 오른쪽 키: $rightPageKey');
 
         // 🔍 **우선순위 1: 캐시된 분할 결과 확인**
-        final cachedSplitResult = _splitResultCache[doublePageKey];
+        var cachedSplitResult = _splitResultCache[doublePageKey];
         if (cachedSplitResult != null) {
+          // 분할 이후 양면 데이터가 편집되었으면 캐시는 무효 —
+          // 그대로 쓰면 편집 내용이 옛 분할 결과로 롤백된다.
+          final source = _splitSourceCache[doublePageKey];
+          final current = await loadScribble(doublePageKey);
+          if (source == null || current == null || source != current) {
+            debugPrint('🗑️ 분할 캐시 무효 (양면 데이터 변경됨) — 실시간 분할로 폴백');
+            _splitResultCache.remove(doublePageKey);
+            _splitSourceCache.remove(doublePageKey);
+            cachedSplitResult = null;
+          }
+        }
+        if (cachedSplitResult != null) {
+          // 클로저 캡처를 위한 non-null 로컬 (null promotion은 클로저에서 무효)
+          final cached = cachedSplitResult;
           debugPrint('🔄 캐시된 분할 결과 복원 중...');
           debugPrint(
-            '  - 왼쪽 스트로크: ${cachedSplitResult.leftPageScribble.strokes.length}',
+            '  - 왼쪽 스트로크: ${cached.leftPageScribble.strokes.length}',
           );
           debugPrint(
-            '  - 오른쪽 스트로크: ${cachedSplitResult.rightPageScribble.strokes.length}',
+            '  - 오른쪽 스트로크: ${cached.rightPageScribble.strokes.length}',
           );
 
           // 💾 캐시된 결과를 각 페이지에 저장
-          await saveScribble(leftPageKey, cachedSplitResult.leftPageScribble);
-          await saveScribble(rightPageKey, cachedSplitResult.rightPageScribble);
+          await saveScribble(leftPageKey, cached.leftPageScribble);
+          await saveScribble(rightPageKey, cached.rightPageScribble);
 
           // 🎮 컨트롤러에도 반영
           if (hasController(leftPageKey)) {
@@ -762,7 +837,7 @@
               if (!_isDisposed) {
                 getController(
                   leftPageKey,
-                ).loadScribble(cachedSplitResult.leftPageScribble);
+                ).loadScribble(cached.leftPageScribble);
               }
             });
           }
@@ -771,7 +846,7 @@
               if (!_isDisposed) {
                 getController(
                   rightPageKey,
-                ).loadScribble(cachedSplitResult.rightPageScribble);
+                ).loadScribble(cached.rightPageScribble);
               }
             });
           }
@@ -828,8 +903,9 @@
         );
         debugPrint('  - 교차 스트로크: ${splitResult.crossPageStrokes.length}');
 
-        // 🔄 분할 결과 캐시에 저장 (나중에 복원용)
+        // 🔄 분할 결과 캐시에 저장 (나중에 복원용) + 원본 보관(유효성 검증용)
         _splitResultCache[doublePageKey] = splitResult;
+        _splitSourceCache[doublePageKey] = doublePageScribble;
 
         // 🛡️ **중요**: 원본 양면 데이터도 보존 (덮어쓰지 않음)
         // 원본 데이터를 _splitResultCache에 보관하므로 별도 보존 불필요
@@ -907,7 +983,22 @@
         debugPrint('  - 양면 키: $doublePageKey');
 
         // 🔍 기존 분할 결과가 캐시에 있는지 확인
-        final cachedSplitResult = _splitResultCache[doublePageKey];
+        var cachedSplitResult = _splitResultCache[doublePageKey];
+        if (cachedSplitResult != null) {
+          // 분할 이후 단면 페이지가 편집되었으면 캐시는 무효 —
+          // 편집 보존을 위해 실시간 병합 경로로 폴백한다.
+          final currentLeft = await loadScribble(leftPageKey);
+          final currentRight = await loadScribble(rightPageKey);
+          final cacheValid =
+              currentLeft == cachedSplitResult.leftPageScribble &&
+              currentRight == cachedSplitResult.rightPageScribble;
+          if (!cacheValid) {
+            debugPrint('🗑️ 분할 캐시 무효 (단면 페이지 편집됨) — 실시간 병합으로 폴백');
+            _splitResultCache.remove(doublePageKey);
+            _splitSourceCache.remove(doublePageKey);
+            cachedSplitResult = null;
+          }
+        }
         if (cachedSplitResult != null) {
           debugPrint('🔄 캐시된 분할 결과 복원 중...');
 
@@ -959,6 +1050,29 @@
         if (leftScribble != null && leftScribble.strokes.isNotEmpty) {
           mergedScribble.strokes.addAll(leftScribble.strokes);
           debugPrint('  - 왼쪽 스트로크 추가: ${leftScribble.strokes.length}');
+        }
+
+        // 🔄 텍스트/이미지 객체 보존 (왼쪽은 그대로, 오른쪽은 x 오프셋)
+        if (leftScribble != null) {
+          mergedScribble.textDrawables.addAll(
+            leftScribble.textDrawables.map((t) => t.deepCopy()),
+          );
+          mergedScribble.imageDrawables.addAll(
+            leftScribble.imageDrawables.map((i) => i.deepCopy()),
+          );
+        }
+        if (rightScribble != null) {
+          final boundaryX = pageWidth / 2;
+          mergedScribble.textDrawables.addAll(
+            rightScribble.textDrawables.map(
+              (t) => t.deepCopy()..x += boundaryX,
+            ),
+          );
+          mergedScribble.imageDrawables.addAll(
+            rightScribble.imageDrawables.map(
+              (i) => i.deepCopy()..x += boundaryX,
+            ),
+          );
         }
 
         // 🔄 오른쪽 페이지 스트로크를 오른쪽 위치로 이동하여 추가
@@ -1028,6 +1142,7 @@
     /// 🔄 **분할 결과 캐시 정리**
     void clearSplitResultCache() {
       _splitResultCache.clear();
+      _splitSourceCache.clear();
       debugPrint('🗑️ 모든 분할 결과 캐시 제거');
     }
 

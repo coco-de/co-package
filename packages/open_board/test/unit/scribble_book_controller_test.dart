@@ -9,6 +9,7 @@ class FakePageProvider implements ScribblePageProvider {
   String? lastActiveKey;
   int saveCount = 0;
   int deleteCount = 0;
+  int evictCount = 0;
   final Map<String, ScribbleController> _controllers = {};
   final Map<String, Scribble> _scribbles = {};
 
@@ -54,6 +55,13 @@ class FakePageProvider implements ScribblePageProvider {
     _controllers.remove(key);
     _scribbles.remove(key);
     return true;
+  }
+
+  @override
+  void evictController(String key) {
+    evictCount++;
+    _controllers.remove(key)?.dispose();
+    _scribbles.remove(key);
   }
 }
 
@@ -385,6 +393,31 @@ void main() {
         await book.removePage(2);
 
         expect(delegate.deleteCount, 1);
+      });
+
+      test('removePage는 provider 컨트롤러 캐시도 정리한다 (필기 부활 방지)', () async {
+        book.addPage(pageId: 'page3');
+        await book.removePage(2);
+
+        expect(
+          provider.evictCount,
+          1,
+          reason: '컨트롤러 캐시를 정리하지 않으면 동일 키 재사용 시 삭제된 필기가 부활한다',
+        );
+      });
+
+      test('마지막 페이지 삭제 후 addPage가 삭제된 pageId를 재사용하지 않는다', () async {
+        // 자동 생성 id로 페이지 추가 → 삭제 → 다시 추가
+        book.addPage();
+        final generatedId = book.pageIds.last;
+        await book.removePage(book.pageCount - 1);
+
+        book.addPage();
+        expect(
+          book.pageIds.last,
+          isNot(generatedId),
+          reason: 'pageId 재사용 시 캐시에 남은 삭제된 필기가 새 페이지에 표시된다',
+        );
       });
     });
 
