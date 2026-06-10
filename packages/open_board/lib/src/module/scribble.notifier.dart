@@ -367,13 +367,19 @@ class ScribbleNotifier extends ScribbleNotifierBase
     }
   }
 
-  /// preLoacation과 location 사이에 직선을 긋는다.
+  /// preLocalPosition과 localPosition 사이에 직선을 긋는다.
   /// 직선과 선의 point들을 비교하여 직선과 점 사이의 거리가 stroke width 정도 되는걸 찾는다.
-  /// 만약 [preLocalPosition]과 [event.localPosition] 차이가 50px이 되면
-  /// [preLocalPosition]을 [event.localPosition]으로 설정한다.
+  /// 지우기 판정 후에는 [preLocalPosition]을 [event.localPosition]으로 갱신하여
+  /// 판정 선분이 항상 '직전 move 위치 → 현재 위치'가 되도록 한다.
   @override
   bool onPointerUpdate(PointerMoveEvent event, ScribbleModeState modeState) {
     if (!modeState.supportedPointerKinds.contains(event.kind)) return false;
+    // 스트로크를 소유하지 않은 포인터(그리는 중 닿은 두 번째 손가락 등)의
+    // move는 활성 라인에 점을 추가하지 못하도록 무시한다.
+    if (state.activePointerIds.isNotEmpty &&
+        !state.activePointerIds.contains(event.pointer)) {
+      return false;
+    }
     if (!state.active) {
       temporaryValue = switch (state) {
         final Drawing s => s.copyWith(pointerPosition: null),
@@ -469,11 +475,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
         temporaryValue = newState;
       }
 
-      /// 만약 [preLocalPosition]과 [event.localPosition] 차이가 50px이 되면
-      /// [preLocalPosition]을 [event.localPosition]으로 설정한다.
-      if ((event.localPosition - preLocalPosition).distance > 50) {
-        preLocalPosition = event.localPosition;
-      }
+      // 판정 선분이 '직전 move 위치 → 현재 위치'가 되도록 매번 갱신한다.
+      // anchor를 50px 지연시키면 곡선 지우기 시 현(chord)이 실제 궤적 안쪽을
+      // 지나가 닿지 않은 스트로크까지 삭제된다. 이벤트 간 갭 보간(선분 판정)은
+      // 매번 갱신해도 그대로 유지된다.
+      preLocalPosition = event.localPosition;
 
       // 지우개 모드에서는 포인터 위치가 업데이트되었으므로 true 반환
       return true;
@@ -485,6 +491,12 @@ class ScribbleNotifier extends ScribbleNotifierBase
   @override
   void onPointerUp(PointerUpEvent event, ScribbleModeState modeState) {
     if (!modeState.supportedPointerKinds.contains(event.kind)) return;
+    // 스트로크를 소유하지 않은 포인터의 up이 활성 라인에 점프 라인을 추가하고
+    // 스트로크를 조기 종료시키는 것을 방지한다. (팜/두 번째 손가락의 up)
+    if (state.activePointerIds.isNotEmpty &&
+        !state.activePointerIds.contains(event.pointer)) {
+      return;
+    }
     _cancelMarkerStraighten();
     final pos = event.kind == .mouse ? state.pointerPosition : null;
 
@@ -656,6 +668,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
     ScribbleModeState modeState,
   ) {
     if (!modeState.supportedPointerKinds.contains(event.kind)) return;
+    // 소유하지 않은 포인터의 cancel은 활성 스트로크에 영향을 주지 않는다.
+    if (state.activePointerIds.isNotEmpty &&
+        !state.activePointerIds.contains(event.pointer)) {
+      return;
+    }
     _cancelMarkerStraighten();
     if (state is Drawing) {
       final finished =

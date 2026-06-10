@@ -53,6 +53,35 @@ void main() {
         expect(point.p, closeTo(0.75, 0.01));
       });
 
+      test('pressureMax를 초과하는 압력은 1.0으로 클램프된다 (#보정 어긋난 기기)', () {
+        // Android MotionEvent.getPressure()는 보정이 어긋난 기기에서
+        // 선언된 범위를 초과할 수 있다. 클램프하지 않으면 Curve.transform의
+        // assert(t >= 0 && t <= 1)에 걸려 디버그 빌드가 크래시한다.
+        const event = PointerMoveEvent(
+          position: Offset(50, 75),
+          pressureMin: 0.0,
+          pressureMax: 1.0,
+          pressure: 1.2,
+        );
+
+        final point = processor.createPointFromEvent(event);
+
+        expect(point.p, 1.0);
+      });
+
+      test('pressureMin 미만의 압력은 0.0으로 클램프된다', () {
+        const event = PointerMoveEvent(
+          position: Offset(50, 75),
+          pressureMin: 0.5,
+          pressureMax: 1.0,
+          pressure: 0.2,
+        );
+
+        final point = processor.createPointFromEvent(event);
+
+        expect(point.p, 0.0);
+      });
+
       test('커스텀 pressureCurve가 적용된다', () {
         final customProcessor = StrokeProcessor(
           pressureCurve: Curves.easeIn,

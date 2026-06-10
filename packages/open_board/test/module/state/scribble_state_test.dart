@@ -69,6 +69,57 @@ void main() {
     });
   });
 
+  group('copyWith pointerPosition sentinel (#커서 잔상 회귀)', () {
+    // `pointerPosition ?? this.pointerPosition` 병합은 null 전달(커서 제거)을
+    // 침묵 무시하여 터치/펜 지우개 사용 후 회색 커서 잔상이 남는 버그를 만들었다.
+    test('Drawing.copyWith(pointerPosition: null)은 실제로 null을 설정한다', () {
+      final state = Drawing(
+        scribble: createScribble(),
+        pointerPosition: createPoint(x: 10, y: 20),
+      );
+      final copied = state.copyWith(pointerPosition: null);
+      expect(copied.pointerPosition, isNull);
+    });
+
+    test('Drawing.copyWith 미전달 시 기존 pointerPosition 유지', () {
+      final state = Drawing(
+        scribble: createScribble(),
+        pointerPosition: createPoint(x: 10, y: 20),
+      );
+      final copied = state.copyWith(activePointerIds: [1]);
+      expect(copied.pointerPosition, isNotNull);
+      expect(copied.pointerPosition!.x, 10);
+    });
+
+    test('Erasing.copyWith(pointerPosition: null)은 실제로 null을 설정한다', () {
+      final state = Erasing(
+        scribble: createScribble(),
+        pointerPosition: createPoint(x: 10, y: 20),
+      );
+      final copied = state.copyWith(pointerPosition: null);
+      expect(copied.pointerPosition, isNull);
+    });
+
+    test('Erasing.copyWith 미전달 시 기존 pointerPosition 유지', () {
+      final state = Erasing(
+        scribble: createScribble(),
+        pointerPosition: createPoint(x: 10, y: 20),
+      );
+      final copied = state.copyWith(scribble: createScribble(width: 1));
+      expect(copied.pointerPosition, isNotNull);
+      expect(copied.pointerPosition!.y, 20);
+    });
+
+    test('Erasing.copyWith에 새 pointerPosition 전달 시 교체', () {
+      final state = Erasing(
+        scribble: createScribble(),
+        pointerPosition: createPoint(x: 10, y: 20),
+      );
+      final copied = state.copyWith(pointerPosition: createPoint(x: 5, y: 5));
+      expect(copied.pointerPosition!.x, 5);
+    });
+  });
+
   group('ScribbleState sealed class', () {
     test('Drawing은 ScribbleState', () {
       final state = Drawing(scribble: createScribble());

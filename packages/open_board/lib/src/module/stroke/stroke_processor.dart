@@ -67,10 +67,12 @@ class StrokeProcessor {
         ? 0.5
         : (event.pressure - event.pressureMin) /
               (event.pressureMax - event.pressureMin);
+    // 보정이 어긋난 기기는 pressureMax를 초과한 압력을 보고할 수 있으므로
+    // Curve.transform의 [0,1] 정의역에 맞게 클램프한다.
     return Point(
       x: event.localPosition.dx,
       y: event.localPosition.dy,
-      p: pressureCurve.transform(p),
+      p: pressureCurve.transform(clampDouble(p, 0.0, 1.0)),
       timestamp: Int64(DateTime.now().microsecondsSinceEpoch),
     );
   }

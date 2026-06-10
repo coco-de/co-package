@@ -248,6 +248,11 @@
     // 🤚 멀티터치 상태 추적 (2손가락 이상 터치 시 IgnorePointer 비활성화)
     late ValueNotifier<bool> _isMultiTouchNotifier;
 
+    // 🖐️ 아직 떼지 않은 터치 포인터 추적 (kTouchDelay 지연 처리용)
+    // 30ms 지연 콜백이 발화하기 전에 up/cancel된 포인터의 down을 무시하여
+    // 고아 pointer id가 activePointerIds에 영구 잔류하는 것을 방지한다.
+    final Set<int> _pendingTouchDowns = <int>{};
+
     @override
     void initState() {
       super.initState();
@@ -283,7 +288,20 @@
       widgetState = ScribbleWidgetState();
 
       // 포인터 이벤트 핸들러 초기화
-      pointerHandler = PointerEventHandler(
+      pointerHandler = _createPointerHandler();
+
+      // 렌더링 레이어 초기화
+      renderLayers = _createRenderLayers();
+
+      // 매니저들 초기화
+      _initializeManagers();
+
+      // 기존 텍스트 불러오기 (매니저 초기화 후)
+      _loadTextDrawablesFromNotifier();
+    }
+
+    PointerEventHandler _createPointerHandler() {
+      return PointerEventHandler(
         scribbleNotifier: widget.notifier,
         modeNotifier: widget.modeNotifier,
         onStateChanged: () {
@@ -314,9 +332,10 @@
           }
         },
       );
+    }
 
-      // 렌더링 레이어 초기화
-      renderLayers = ScribbleRenderLayers(
+    ScribbleRenderLayers _createRenderLayers() {
+      return ScribbleRenderLayers(
         scribbleNotifier: widget.notifier,
         modeNotifier: widget.modeNotifier,
         widgetState: widgetState,
@@ -327,12 +346,6 @@
         drawPen: widget.drawPen,
         drawEraser: widget.drawEraser,
       );
-
-      // 매니저들 초기화
-      _initializeManagers();
-
-      // 기존 텍스트 불러오기 (매니저 초기화 후)
-      _loadTextDrawablesFromNotifier();
     }
 
     void _initializeManagers() {
@@ -1488,6 +1501,7 @@
 
       if (event.kind == ui.PointerDeviceKind.touch) {
         pointerHandler.incrementTouch();
+        _pendingTouchDowns.add(event.pointer);
 
         // 🖊️ 멀티터치 감지 시 InteractiveViewer 상태 갱신 (핀치 줌/드래그 허용)
         if (pointerHandler.isMultiTouch()) {
@@ -1502,7 +1516,11 @@
         }
 
         Future<void>.delayed(PointerEventHandler.kTouchDelay, () {
+          // 지연 중에 up/cancel된 포인터는 처리하지 않는다.
+          // (up이 먼저 소비되면 여기서 추가된 pointer id를 제거할 기회가 없어
+          //  activePointerIds에 영구 잔류하고 터치 필기가 차단된다)
           if (mounted &&
+              _pendingTouchDowns.contains(event.pointer) &&
               widget.notifier.currentState.activePointerIds.isEmpty &&
               !pointerHandler.isMultiTouch()) {
             _processPointerDown(event);
@@ -1833,6 +1851,7 @@
 
       if (event.kind == ui.PointerDeviceKind.touch) {
         pointerHandler.decrementTouch();
+        _pendingTouchDowns.remove(event.pointer);
       }
 
       // 🖐️ 멀티터치에서 싱글터치로 전환 시 InteractiveViewer 상태 갱신
@@ -1916,6 +1935,7 @@
 
       if (event.kind == ui.PointerDeviceKind.touch) {
         pointerHandler.decrementTouch();
+        _pendingTouchDowns.remove(event.pointer);
       }
 
       // 🖐️ 멀티터치에서 싱글터치로 전환 시 InteractiveViewer 상태 갱신
@@ -1929,6 +1949,11 @@
           _isHandModeDrawingActive) {
         _endHandModeDrawing();
       }
+
+      // 🚨 notifier에 cancel을 전달해 activePointerIds에서 해당 id를 제거하고
+      // 그리던 라인을 정리한다. 전달하지 않으면 시스템 제스처/팜 리젝션으로
+      // 취소된 포인터가 영구 잔류하여 해당 페이지 필기가 차단된다.
+      pointerHandler.handlePointerCancel(event);
     }
 
     // 스트로크 삭제
@@ -2490,7 +2515,8 @@
         }
       }
 
-      if (minX == double.infinity) return Rect.zero;
+      // 유효한 포인트가 하나도 없으면 초기값(maxFinite)이 그대로 남는다.
+      if (minX == double.maxFinite) return Rect.zero;
       return Rect.fromLTRB(minX, minY, maxX, maxY);
     }
 
@@ -2555,6 +2581,28 @@
     @override
     void didUpdateWidget(ScribbleWidget oldWidget) {
       super.didUpdateWidget(oldWidget);
+
+      // 🚨 notifier/modeNotifier 교체 시 매니저들을 새 notifier로 재연결한다.
+      // 재연결하지 않으면 매니저들이 옛(또는 dispose된) notifier에 계속
+      // 필기를 기록해 크래시하거나 입력이 유실된다.
+      if (widget.notifier != oldWidget.notifier ||
+          widget.modeNotifier != oldWidget.modeNotifier) {
+        pointerHandler.dispose();
+        pointerHandler = _createPointerHandler();
+        renderLayers = _createRenderLayers();
+        _initializeManagers();
+        _loadTextDrawablesFromNotifier();
+        _pendingTouchDowns.clear();
+      }
+
+      // 🖐️ 필기 활성화 상태가 토글되면 진행 중이던 터치 추적을 초기화한다.
+      // 비활성화 동안 Listener의 up/cancel 핸들러가 끊겨 터치 카운트가
+      // 고착되면 이후 모든 싱글터치가 멀티터치로 오인된다.
+      if (widget.isScribbleEnable != oldWidget.isScribbleEnable) {
+        pointerHandler.resetTouch();
+        _isMultiTouchNotifier.value = false;
+        _pendingTouchDowns.clear();
+      }
 
       // 모드 변경 감지
       final currentMode = widget.modeNotifier.state.inkGroupInfo.selectedInk;
