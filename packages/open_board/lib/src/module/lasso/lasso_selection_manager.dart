@@ -425,10 +425,11 @@
 
     /// 올가미 상태 초기화
     void resetLassoState() {
-      _selectedStrokeIds = [];
-      _lassoSelectionState = painter.LassoSelectionState();
+      // 텍스트 선택 상태(_selectedTextIds/_originalTextStates)도 함께
+      // 초기화한다 — 잔존하면 선택 해제 후에도 매니저가 텍스트를
+      // 선택 중으로 간주한다.
+      _resetLassoState();
       _showLassoOverlay = false;
-      _isLassoTransforming = false; // 올가미 변형 상태도 초기화
       onStateChanged();
     }
 
@@ -529,23 +530,20 @@
       _startTouchPoint = localPosition;
 
       // 변형 버튼 위치 (OrientedBoundingBox의 좌하단 corners[3])
+      // localPosition(globalToLocal)은 InteractiveViewer 자식 내부의
+      // 캔버스 좌표이므로, 버튼/중심 좌표도 캔버스 좌표 그대로 사용한다.
+      // canvasToScreen으로 viewport 좌표를 섞으면 줌 배율 s≠1에서
+      // 스케일이 1/s로 둔화되고 회전이 특정 각도에서 발산한다.
       final corners = _originalOrientedBoundingBox!.corners;
       final buttonPosition = corners[3]; // 좌하단 = 변형 버튼 위치 (캔버스 좌표)
 
-      // 버튼 위치를 화면 좌표로 변환 (scene → viewport)
-      final screenButtonPosition = _transformer.canvasToScreen(buttonPosition);
-
       // ⭐ 터치 위치와 버튼 위치의 오프셋 저장 (점프 방지)
-      _touchToButtonOffset = screenButtonPosition - localPosition;
+      _touchToButtonOffset = buttonPosition - localPosition;
 
-      // 중심점을 화면 좌표로 변환 (scene → viewport)
-      final center = _originalOrientedBoundingBox!.center;
-      final screenCenter = _transformer.canvasToScreen(center);
-
-      // TransformHandler로 크기조절/회전 시작 (화면 좌표 기준)
+      // TransformHandler로 크기조절/회전 시작 (캔버스 좌표 기준)
       _transformHandler.startResizeRotate(
-        screenButtonPosition,
-        screenCenter,
+        buttonPosition,
+        _originalOrientedBoundingBox!.center,
         initialRotation: _originalOrientedBoundingBox!.rotation,
       );
     }
@@ -605,26 +603,17 @@
         final localPosition = renderBox.globalToLocal(details.globalPosition);
         _startTouchPoint = localPosition;
 
-        // 변형 버튼 위치
+        // 변형 버튼 위치 — 캔버스 좌표 그대로 사용 (onResizeRotateStart와 동일)
         final corners = _originalOrientedBoundingBox!.corners;
         final buttonPosition = corners[3]; // 좌하단
 
-        // 버튼 위치를 화면 좌표로 변환 (scene → viewport)
-        final screenButtonPosition = _transformer.canvasToScreen(
-          buttonPosition,
-        );
-
         // ⭐ 터치 위치와 버튼 위치의 오프셋 저장 (점프 방지)
-        _touchToButtonOffset = screenButtonPosition - localPosition;
+        _touchToButtonOffset = buttonPosition - localPosition;
 
-        // 중심점을 화면 좌표로 변환 (scene → viewport)
-        final center = _originalOrientedBoundingBox!.center;
-        final screenCenter = _transformer.canvasToScreen(center);
-
-        // TransformHandler로 크기조절/회전 시작
+        // TransformHandler로 크기조절/회전 시작 (캔버스 좌표 기준)
         _transformHandler.startResizeRotate(
-          screenButtonPosition,
-          screenCenter,
+          buttonPosition,
+          _originalOrientedBoundingBox!.center,
           initialRotation: _originalOrientedBoundingBox!.rotation,
         );
       }
@@ -677,13 +666,16 @@
           currentScribble.textDrawables,
         );
 
-        // 스트로크 변환
+        // 스트로크 변환 — 캐시(_originalStrokePoints)는 이미 기존 회전이
+        // 반영된 현재 상태이므로, 텍스트 경로와 동일하게 이번 제스처의 순수
+        // 변화량(deltaAngle)만 적용한다. finalRotation을 적용하면 두 번째
+        // 제스처부터 기존 회전이 이중으로 적용된다(2Δ1+Δ2).
         if (hasStrokes) {
           final transformedGroups = _transformHandler.applyResizeRotate(
             _originalStrokePoints!,
             center: center,
             scale: scale,
-            rotation: finalRotation,
+            rotation: result.deltaAngle,
           );
 
           for (int i = 0; i < _selectedStrokeIds.length; i++) {
@@ -1289,6 +1281,17 @@
 
     /// 원본 스트로크 포인트 + 텍스트 상태 캐싱 (변형 시 누적 방지)
     void _cacheOriginalStrokePoints() {
+      // 🛡️ 히스토리 스냅샷 보호 (copy-on-write):
+      // undo 히스토리는 상태를 참조로 보관하므로, 변형 중 protobuf Point를
+      // 제자리(in-place) 수정하면 과거 모든 스냅샷의 좌표가 함께 바뀌어
+      // undo가 원위치를 복원하지 못한다. 제스처 시작 시 깊은 복사본으로
+      // 교체해 이후 in-place 수정이 히스토리와 분리되도록 한다.
+      final current = scribbleNotifier.currentState.scribble;
+      scribbleNotifier.setScribble(
+        scribble: current.deepCopy(),
+        addToUndoHistory: false,
+      );
+
       final scribble = scribbleNotifier.currentState.scribble;
 
       // 스트로크 캐싱

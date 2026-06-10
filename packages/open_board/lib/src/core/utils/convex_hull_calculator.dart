@@ -75,8 +75,11 @@ class ConvexHullCalculator {
     if (sortedPoints.isEmpty) return [];
 
     int k = 0;
-    for (int i = 1; i < sortedPoints.length; i++) {
+    for (int i = 0; i < sortedPoints.length; i++) {
       // 각도가 같으면 가장 먼 점만 유지
+      // (정렬이 동일각 시 가까운 점 우선이므로 그룹 끝까지 전진 후 현재 점을
+      //  보존한다. i-1을 보존하면 마지막 극점이 항상 탈락하고 동일각 그룹에서
+      //  가까운 점이 남아 잘못된 헐이 만들어진다)
       while (i < sortedPoints.length - 1 &&
           GeometryUtils.calculateOrientation(
                 pivot,
@@ -86,7 +89,7 @@ class ConvexHullCalculator {
               0) {
         i++;
       }
-      sortedPoints[k++] = sortedPoints[i - 1];
+      sortedPoints[k++] = sortedPoints[i];
     }
 
     // 실제 정렬된 점 배열 크기 조정

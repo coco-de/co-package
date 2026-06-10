@@ -87,6 +87,12 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 지워졌을 때만 히스토리에 커밋한다.
   int? _eraseGestureStartStrokeCount;
 
+  /// undo/redo로 히스토리 상태가 적용된 직후 호출되는 콜백
+  ///
+  /// 인덱스 기반 선택(올가미 등)은 undo/redo로 스트로크 목록이 바뀌면
+  /// 무효화되므로, 이 콜백으로 선택 상태를 리셋할 기회를 제공한다.
+  VoidCallback? onHistoryApplied;
+
   ScribbleNotifier({
     /// If you pass a scribble here, the notifier will use that scribble as a
     /// starting point.
@@ -147,6 +153,11 @@ class ScribbleNotifier extends ScribbleNotifierBase
         : (historyState.scribble.deepCopy()
             ..strokes.clear()
             ..strokes.addAll(strokes));
+
+    // 히스토리 적용 알림은 상태 변환이 끝난 뒤로 미룬다.
+    if (onHistoryApplied != null) {
+      scheduleMicrotask(() => onHistoryApplied?.call());
+    }
 
     return switch (currentState) {
       final Drawing s => s.copyWith(scribble: cleanedScribble),

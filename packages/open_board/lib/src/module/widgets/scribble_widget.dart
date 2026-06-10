@@ -380,6 +380,18 @@
         transformationController: transformationController,
         onModeChanged: widget.onModeChanged,
       );
+
+      // 🚨 undo/redo로 스트로크 목록이 바뀌면 인덱스 기반 올가미 선택이
+      // 엉뚱한 스트로크를 가리키게 되므로 선택을 리셋한다.
+      widget.notifier.onHistoryApplied = () {
+        if (!mounted) return;
+        if (widgetState.showLassoOverlay ||
+            widgetState.selectedStrokeIds.isNotEmpty) {
+          lassoManager.resetLassoState();
+          _syncLassoManagerState();
+          setState(() {});
+        }
+      };
     }
 
     void _loadTextDrawablesFromNotifier() {
@@ -2587,6 +2599,7 @@
       // 필기를 기록해 크래시하거나 입력이 유실된다.
       if (widget.notifier != oldWidget.notifier ||
           widget.modeNotifier != oldWidget.modeNotifier) {
+        oldWidget.notifier.onHistoryApplied = null;
         pointerHandler.dispose();
         pointerHandler = _createPointerHandler();
         renderLayers = _createRenderLayers();
@@ -2623,6 +2636,9 @@
 
       // 🆕 스케일 변화 리스너 제거
       transformationController?.removeListener(_onTransformationChanged);
+
+      // 히스토리 적용 콜백 해제 (dispose된 State 참조 방지)
+      widget.notifier.onHistoryApplied = null;
 
       widgetState.dispose();
       pointerHandler.dispose();
