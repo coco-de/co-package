@@ -26,6 +26,10 @@ class OpenEpubUseCase {
       appliedPatches: [...raw.patches, ...result.diagnostics.appliedPatches],
       unresolvedIssues: result.diagnostics.unresolvedIssues,
     );
-    return LoadedEpub(book: result.book, diagnostics: diagnostics);
+    return LoadedEpub(
+      book: result.book,
+      diagnostics: diagnostics,
+      resources: raw.resources,
+    );
   }
 }

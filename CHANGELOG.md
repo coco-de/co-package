@@ -1,3 +1,20 @@
+## Unreleased — 1.0 core (E1)
+
+새 1.0 코어 엔진을 별도 entry `package:open_epub/open_epub_v1.dart`로 도입.
+기존 `package:open_epub/open_epub.dart`(0.1.x API)는 그대로 유지된다. 정식
+1.0 릴리스(버전 bump + MIGRATION.md)는 E6에서 진행.
+
+### New (1.0 core, `open_epub_v1.dart`)
+- `EpubBookSession.open()` — EPUB ZIP 해제 → OPF/NCX/nav 파싱 → 호환성 보정 →
+  `EpubBook` 조립 end-to-end. 위치 복원(BookPosition v1 토큰, 실패 시 첫 페이지
+  fallback + `position-restore-failed` 진단), hot-swap(`swapSource`), 분석 스트림
+  (lifecycle/progress/toolUse, progress throttle), 보안 가드(크기 제한, script/iframe
+  sanitize) 포함
+- `EpubReader` 위젯 — layout(reflowable/pre-paginated)에 따라 `ReflowableEngine` /
+  `FixedLayoutEngine` 자동 분기, 복원 실패 안내 배너, 진도 인디케이터
+- `EpubResourceReader` — 컨테이너 내부 리소스(본문/이미지) 접근, `..` 경로 정규화
+- BDD widget 테스트 11 feature 활성화 (skip 해제), patrol E2E 스텁은 E4 범위로 명시
+
 ## 0.1.3
 
 ### Bug Fixes

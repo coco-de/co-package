@@ -229,3 +229,276 @@ Uint8List sparseNcxEpub2() => zipEpub({
       'OEBPS/ch3.xhtml': '<html><body>3</body></html>',
       'OEBPS/ch4.xhtml': '<html><body>4</body></html>',
     });
+
+/// 파일 맵(String 또는 `List<int>`)을 ZIP 바이트로 인코딩한다. 이미지 등
+/// 바이너리 항목이 필요한 책 픽스처용.
+Uint8List zipEpubBinary(Map<String, Object> files) {
+  final archive = Archive();
+  files.forEach((name, content) {
+    final bytes = content is String ? utf8.encode(content) : content as List<int>;
+    archive.addFile(ArchiveFile(name, bytes.length, bytes));
+  });
+  final encoded = ZipEncoder().encode(archive);
+  return Uint8List.fromList(encoded!);
+}
+
+/// 1×1 투명 PNG 바이트 (이미지 렌더 검증용).
+Uint8List onePixelPng() => base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
+      'AAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    );
+
+/// Fixed Layout (pre-paginated) EPUB 3. 4페이지, viewport 600×800,
+/// page-spread-left/right 슬롯 포함 (F3 spread/줌 검증용).
+Uint8List fixedLayoutEpub3() {
+  String page(String body) => '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head><meta name="viewport" content="width=600, height=800"/></head>
+  <body><p>$body</p></body>
+</html>
+''';
+  return zipEpub({
+    'mimetype': 'application/epub+zip',
+    'META-INF/container.xml': _containerXml,
+    'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>고정 레이아웃 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:test-0006</dc:identifier>
+    <meta property="rendition:layout">pre-paginated</meta>
+    <meta property="rendition:spread">auto</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"
+        properties="nav"/>
+    <item id="p1" href="p1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="p2" href="p2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="p3" href="p3.xhtml" media-type="application/xhtml+xml"/>
+    <item id="p4" href="p4.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="p1"/>
+    <itemref idref="p2" properties="page-spread-left"/>
+    <itemref idref="p3" properties="page-spread-right"/>
+    <itemref idref="p4"/>
+  </spine>
+</package>
+''',
+    'OEBPS/nav.xhtml': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol><li><a href="p1.xhtml">1쪽</a></li></ol>
+    </nav>
+  </body>
+</html>
+''',
+    'OEBPS/p1.xhtml': page('1쪽'),
+    'OEBPS/p2.xhtml': page('2쪽'),
+    'OEBPS/p3.xhtml': page('3쪽'),
+    'OEBPS/p4.xhtml': page('4쪽'),
+  });
+}
+
+/// 본문에 script/iframe이 포함된 책 (보안 sanitize 검증용).
+Uint8List epubWithScriptAndIframe() => zipEpub({
+      'mimetype': 'application/epub+zip',
+      'META-INF/container.xml': _containerXml,
+      'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>스크립트 포함 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:test-0007</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"
+        properties="nav"/>
+    <item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine><itemref idref="c1"/></spine>
+</package>
+''',
+      'OEBPS/nav.xhtml': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:epub="http://www.idpf.org/2007/ops">
+  <body><nav epub:type="toc"><ol><li><a href="ch1.xhtml">1장</a></li></ol></nav></body>
+</html>
+''',
+      'OEBPS/ch1.xhtml': '''
+<html xmlns="http://www.w3.org/1999/xhtml"><body>
+  <p>안전한 본문</p>
+  <script src="https://evil.example/x.js"></script>
+  <script>alert('xss')</script>
+  <iframe src="https://evil.example/frame"></iframe>
+</body></html>
+''',
+    });
+
+/// 본문에 이미지가 포함된 책 (이미지 로딩/placeholder 검증용).
+Uint8List epubWithImages() => zipEpubBinary({
+      'mimetype': 'application/epub+zip',
+      'META-INF/container.xml': _containerXml,
+      'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>이미지 포함 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:test-0008</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"
+        properties="nav"/>
+    <item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="i1" href="img/pic.png" media-type="image/png"/>
+  </manifest>
+  <spine><itemref idref="c1"/></spine>
+</package>
+''',
+      'OEBPS/nav.xhtml': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:epub="http://www.idpf.org/2007/ops">
+  <body><nav epub:type="toc"><ol><li><a href="ch1.xhtml">1장</a></li></ol></nav></body>
+</html>
+''',
+      'OEBPS/ch1.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+          '<p>그림</p><img src="img/pic.png"/></body></html>',
+      'OEBPS/img/pic.png': onePixelPng(),
+    });
+
+/// 검색 가능한 한국어 본문 3챕터 책 (F6 검색 검증용).
+Uint8List searchableEpub3() => zipEpub({
+      'mimetype': 'application/epub+zip',
+      'META-INF/container.xml': _containerXml,
+      'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>검색 테스트 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:test-0009</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"
+        properties="nav"/>
+    <item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="c2" href="ch2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="c3" href="ch3.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="c1"/>
+    <itemref idref="c2"/>
+    <itemref idref="c3"/>
+  </spine>
+</package>
+''',
+      'OEBPS/nav.xhtml': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        <li><a href="ch1.xhtml">1장</a></li>
+        <li><a href="ch2.xhtml">2장</a></li>
+        <li><a href="ch3.xhtml">3장</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>
+''',
+      'OEBPS/ch1.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+          '<p>고래는 바다에 산다. 바다는 넓다.</p></body></html>',
+      'OEBPS/ch2.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+          '<p>사자는 초원의 왕이다. 초원은 바다처럼 넓다.</p></body></html>',
+      'OEBPS/ch3.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+          '<p>독수리는 하늘을 난다.</p></body></html>',
+    });
+
+/// 목차가 전혀 없는 EPUB 3 (nav 없음, NCX 없음 — empty-toc 진단 트리거).
+Uint8List noTocEpub3() => zipEpub({
+      'mimetype': 'application/epub+zip',
+      'META-INF/container.xml': _containerXml,
+      'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>목차 없는 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:test-0010</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="c2" href="ch2.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="c1"/>
+    <itemref idref="c2"/>
+  </spine>
+</package>
+''',
+      'OEBPS/ch1.xhtml': '<html><body>1</body></html>',
+      'OEBPS/ch2.xhtml': '<html><body>2</body></html>',
+    });
+
+/// 챕터 수와 문단 수를 지정한 큰 책 (열기 성능 smoke 검증용).
+Uint8List largeEpub3({int chapters = 30, int paragraphsPerChapter = 100}) {
+  final files = <String, String>{
+    'mimetype': 'application/epub+zip',
+    'META-INF/container.xml': _containerXml,
+  };
+  final manifest = StringBuffer();
+  final spine = StringBuffer();
+  final navItems = StringBuffer();
+  for (var i = 1; i <= chapters; i++) {
+    manifest.writeln(
+        '<item id="c$i" href="ch$i.xhtml" media-type="application/xhtml+xml"/>');
+    spine.writeln('<itemref idref="c$i"/>');
+    navItems.writeln('<li><a href="ch$i.xhtml">$i장</a></li>');
+    final body = StringBuffer();
+    for (var p = 0; p < paragraphsPerChapter; p++) {
+      body.writeln('<p>$i장 $p번째 문단 — 성능 검증을 위한 본문 텍스트입니다.</p>');
+    }
+    files['OEBPS/ch$i.xhtml'] =
+        '<html xmlns="http://www.w3.org/1999/xhtml"><body>$body</body></html>';
+  }
+  files['OEBPS/content.opf'] = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>큰 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:test-0011</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"
+        properties="nav"/>
+    $manifest
+  </manifest>
+  <spine>
+    $spine
+  </spine>
+</package>
+''';
+  files['OEBPS/nav.xhtml'] = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:epub="http://www.idpf.org/2007/ops">
+  <body><nav epub:type="toc"><ol>$navItems</ol></nav></body>
+</html>
+''';
+  return zipEpub(files);
+}

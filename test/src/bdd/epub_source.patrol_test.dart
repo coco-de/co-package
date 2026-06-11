@@ -9,6 +9,6 @@ void main() {
   group('epub_source.feature — patrol E2E (stub)', () {
     test('placeholder — replace with patrol scenarios', () {
       expect(true, isTrue);
-    }, skip: 'awaiting patrol wiring in Develop stage');
+    }, skip: 'patrol E2E는 실기기·호스트 앱 필요 — E4 (5-platform CI) 범위');
   });
 }

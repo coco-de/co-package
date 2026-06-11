@@ -8,6 +8,8 @@ import 'dart:async';
 import '../data/compat/patch_catalog.dart'
     show BookSessionDiagnostics, BookSessionDiagnosticsData, UnresolvedIssue;
 import '../data/repository/epub_repository_impl.dart';
+import '../data/security/html_sanitizer.dart';
+import '../domain/entity/epub_resource.dart';
 import '../domain/usecase/open_epub_use_case.dart';
 import '../domain/usecase/resolve_position_use_case.dart';
 import 'epub_analytics.dart';
@@ -35,6 +37,13 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
 
   /// 적용된 보정 + 미해결 이슈(예: position-restore-failed) 진단.
   BookSessionDiagnostics get diagnostics;
+
+  /// 책 내부 리소스 reader (OPF 기준 상대 href — 이미지/CSS 등).
+  EpubResourceReader get resources;
+
+  /// [spineHref]의 본문 XHTML을 읽어 보안 sanitize(script/iframe 차단) 후
+  /// 반환한다. 해당 리소스가 없으면 null.
+  String? readSpineXhtml(String spineHref);
 
   /// 현재 읽기 위치.
   EpubPosition get position;
@@ -80,12 +89,14 @@ class _SessionState {
     required this.diagnostics,
     required this.position,
     required this.navHrefs,
+    required this.resources,
   });
 
   final EpubBook book;
   final BookSessionDiagnostics diagnostics;
   final EpubPosition position;
   final List<String> navHrefs;
+  final EpubResourceReader resources;
 }
 
 class _EpubBookSessionImpl implements EpubBookSession {
@@ -155,6 +166,7 @@ class _EpubBookSessionImpl implements EpubBookSession {
       diagnostics: diagnostics,
       position: resolved.position,
       navHrefs: navHrefs,
+      resources: loaded.resources,
     );
   }
 
@@ -178,6 +190,15 @@ class _EpubBookSessionImpl implements EpubBookSession {
   EpubBook get book => _state.book;
   @override
   BookSessionDiagnostics get diagnostics => _state.diagnostics;
+  @override
+  EpubResourceReader get resources => _state.resources;
+
+  @override
+  String? readSpineXhtml(String spineHref) {
+    final raw = _state.resources.readString(spineHref);
+    if (raw == null) return null;
+    return HtmlSanitizer(_security).sanitize(raw);
+  }
 
   @override
   Stream<EpubLifecycleEvent> get lifecycleEvents => _lifecycle.stream;
@@ -270,9 +291,12 @@ class _EpubBookSessionImpl implements EpubBookSession {
     _disposed = true;
     _clock.stop();
     _emitLifecycle(EpubSessionEnded(sessionElapsed: _clock.elapsed));
-    await _lifecycle.close();
-    await _progress.close();
-    await _toolUse.close();
+    // close()의 done future는 fake-async 환경(widget test 본문)에서 완료되지
+    // 않을 수 있다 — 닫기만 시작하고 완료를 기다리지 않는다. 이벤트 전달은
+    // microtask로 이미 보장된다.
+    unawaited(_lifecycle.close());
+    unawaited(_progress.close());
+    unawaited(_toolUse.close());
   }
 
   void _emitLifecycle(EpubLifecycleEvent event) {

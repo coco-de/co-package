@@ -20,6 +20,7 @@ import '../parser/container_parser.dart';
 import '../parser/nav_parser.dart';
 import '../parser/ncx_parser.dart';
 import '../parser/opf_parser.dart';
+import 'archive_resource_reader.dart';
 
 class EpubRepositoryImpl implements EpubRepository {
   EpubRepositoryImpl({
@@ -116,6 +117,7 @@ class EpubRepositoryImpl implements EpubRepository {
         outline: outline,
       ),
       patches: patches,
+      resources: ArchiveResourceReader(archive, opfDir),
     );
   }
 
@@ -128,7 +130,7 @@ class EpubRepositoryImpl implements EpubRepository {
   ) {
     final navHref = tocRefs.navHref;
     if (navHref != null) {
-      final xml = _readString(archive, _resolve(opfDir, navHref));
+      final xml = _readString(archive, resolveHref(opfDir, navHref));
       if (xml != null) {
         try {
           return _navParser.parse(xml);
@@ -140,7 +142,7 @@ class EpubRepositoryImpl implements EpubRepository {
 
     final ncxHref = tocRefs.ncxHref;
     if (ncxHref != null) {
-      final xml = _readString(archive, _resolve(opfDir, ncxHref));
+      final xml = _readString(archive, resolveHref(opfDir, ncxHref));
       if (xml != null) {
         try {
           return _ncxParser.parse(xml);
@@ -164,20 +166,5 @@ class EpubRepositoryImpl implements EpubRepository {
   String _dirOf(String path) {
     final i = path.lastIndexOf('/');
     return i < 0 ? '' : path.substring(0, i);
-  }
-
-  /// OPF 기준 상대 [href]를 [baseDir]과 결합하고 `.`/`..`를 정규화한다.
-  String _resolve(String baseDir, String href) {
-    final combined = baseDir.isEmpty ? href : '$baseDir/$href';
-    final parts = <String>[];
-    for (final seg in combined.split('/')) {
-      if (seg.isEmpty || seg == '.') continue;
-      if (seg == '..') {
-        if (parts.isNotEmpty) parts.removeLast();
-        continue;
-      }
-      parts.add(seg);
-    }
-    return parts.join('/');
   }
 }

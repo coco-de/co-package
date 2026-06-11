@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:open_epub/open_epub.dart';
 
+// 1.0 코어 데모 페이지. open_epub_v1 barrel은 해당 파일 내부에서만 import한다
+// (레거시 barrel과 같은 파일에서 혼용하면 EpubSource 등 이름이 충돌).
+import 'v1_demo_page.dart' show V1DemoPage;
+
 void main() {
   runApp(const MyApp());
 }
@@ -114,6 +118,22 @@ class _HomePageState extends State<HomePage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // --- 1.0 Core Demo entry ---
+          Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.auto_stories),
+              title: const Text('1.0 코어 데모'),
+              subtitle: const Text(
+                'EpubBookSession + EpubReader (open_epub_v1)',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const V1DemoPage()),
+              ),
+            ),
+          ),
+
           // --- Source ---
           _SectionCard(
             title: 'Source',
@@ -369,7 +389,7 @@ class _ReaderPageState extends State<ReaderPage> {
     switch (widget.config.sourceType) {
       case SourceType.asset:
         setState(() {
-          _source = const EpubSourceAsset('assets/script-749.epub');
+          _source = const EpubSourceAsset('assets/example.epub');
         });
       case SourceType.url:
         setState(() {

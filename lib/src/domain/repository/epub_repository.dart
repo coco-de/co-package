@@ -4,6 +4,7 @@
 import '../../api/epub_book.dart';
 import '../../api/epub_source.dart';
 import '../../data/compat/patch_catalog.dart' show AppliedPatch;
+import '../entity/epub_resource.dart';
 
 abstract class EpubRepository {
   /// EPUB을 ZIP 해제·파싱하여 보정 전 raw [EpubBook]을 조립한다.
@@ -12,10 +13,16 @@ abstract class EpubRepository {
   Future<RawEpubLoad> load(EpubSource source);
 }
 
-/// [EpubRepository.load]의 결과 — raw book + 조립 단계에서 감지된 보정 진단.
+/// [EpubRepository.load]의 결과 — raw book + 조립 단계에서 감지된 보정 진단
+/// + 본문/이미지 접근용 리소스 reader.
 class RawEpubLoad {
-  const RawEpubLoad({required this.book, this.patches = const []});
+  const RawEpubLoad({
+    required this.book,
+    this.patches = const [],
+    this.resources = const EmptyEpubResourceReader(),
+  });
 
   final EpubBook book;
   final List<AppliedPatch> patches;
+  final EpubResourceReader resources;
 }
