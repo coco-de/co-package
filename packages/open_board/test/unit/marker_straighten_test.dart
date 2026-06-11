@@ -94,7 +94,10 @@ void main() {
 
         // 200ms 간격으로 충분한 이동을 계속 발생시켜 타이머가 재시작되도록 함
         for (var t = 0; t < 2000; t += 200) {
-          notifier.onPointerUpdate(_move(Offset(t.toDouble(), t.toDouble())), mode);
+          notifier.onPointerUpdate(
+            _move(Offset(t.toDouble(), t.toDouble())),
+            mode,
+          );
           async.elapse(const Duration(milliseconds: 200));
         }
 
@@ -106,28 +109,8 @@ void main() {
       });
     });
 
-    test('마커가 아닌 펜은 1.5초 정지해도 직선 변환되지 않는다', () {
-      fakeAsync((async) {
-        final notifier = ScribbleNotifier();
-        final info = InkGroupInfo(selectedInk: InkModes.pen);
-        info.setStrokeBox({InkModes.pen: 2.0});
-        final mode = ScribbleModeState(inkGroupInfo: info);
-
-        notifier.onPointerDown(_down(const Offset(5, 5)), mode);
-        notifier.onPointerUpdate(_move(const Offset(20, 20)), mode);
-        notifier.onPointerUpdate(_move(const Offset(40, 40)), mode);
-        notifier.onPointerUpdate(_move(const Offset(60, 60)), mode);
-
-        async.elapse(const Duration(milliseconds: 1500));
-        async.flushMicrotasks();
-
-        final drawing = notifier.state as Drawing;
-        // 펜은 직선화되지 않으므로 모든 포인트가 보존됨
-        expect(drawing.activeLine!.points.length, greaterThan(2));
-
-        notifier.dispose();
-      });
-    });
+    // NOTE: '마커가 아닌 펜' 미변환 테스트는 펜 정지 직선 변환(2초) 도입으로
+    // pen_hold_straighten_test.dart의 잉크별 1.5초 경계 테스트로 대체됨.
 
     test('onPointerUp 후 타이머가 정리되어 추가 이벤트 없이 종료된다', () {
       fakeAsync((async) {

@@ -43,10 +43,6 @@ class ShapePaintDelegate implements PaintDelegate {
       default:
         if (stroke.segments.isNotEmpty) {
           _drawPolygon(canvas, paint, stroke);
-
-          if (stroke.shapeType == "triangle" && stroke.segments.length >= 3) {
-          } else if (stroke.shapeType == "rectangle" &&
-              stroke.segments.length >= 4) {}
         }
         break;
     }
@@ -159,14 +155,12 @@ class ShapePaintDelegate implements PaintDelegate {
     final path = Path();
 
     if (stroke.segments.isNotEmpty) {
+      // 세그먼트는 닫힌 링(마지막 end == 첫 start)으로 생성되므로
+      // 각 세그먼트의 end를 따라가면 폐곡선이 완성된다.
       path.moveTo(stroke.segments[0].start.x, stroke.segments[0].start.y);
 
       for (final segment in stroke.segments) {
-        path.lineTo(segment.start.x, segment.start.y);
-      }
-
-      if (stroke.segments.isNotEmpty) {
-        path.lineTo(stroke.segments[0].start.x, stroke.segments[0].start.y);
+        path.lineTo(segment.end.x, segment.end.y);
       }
     } else {
       final points = stroke.points;
@@ -184,13 +178,6 @@ class ShapePaintDelegate implements PaintDelegate {
   void _drawPolyline(ui.Canvas canvas, Paint paint, Stroke stroke) {
     if (stroke.points.isEmpty) return;
 
-    final polyPaint = Paint()
-      ..color = Color(stroke.color)
-      ..strokeWidth = stroke.options.size
-      ..style = .stroke
-      ..strokeCap = .round
-      ..strokeJoin = .round;
-
     final path = Path();
 
     if (stroke.segments.isNotEmpty) {
@@ -207,6 +194,6 @@ class ShapePaintDelegate implements PaintDelegate {
       }
     }
 
-    canvas.drawPath(path, polyPaint);
+    canvas.drawPath(path, paint);
   }
 }

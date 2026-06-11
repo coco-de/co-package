@@ -154,16 +154,44 @@ class ShapeDetector {
         simplifiedPoints,
         transformedStroke,
       );
-      if (circleResult != null) return circleResult;
+      if (circleResult != null) {
+        _stampTimestamps(stroke, circleResult.transformedStroke);
+        return circleResult;
+      }
     }
 
     // 5. 코너 기반 도형 감지
-    return _detectPolygonalShapes(
+    final result = _detectPolygonalShapes(
       simplifiedPoints,
       transformedStroke,
       isClosed,
       almostClosed,
     );
+    _stampTimestamps(stroke, result.transformedStroke);
+    return result;
+  }
+
+  /// 변환 점들에 원본 스트로크의 timestamp를 선형 보간으로 스탬프한다.
+  ///
+  /// 변환 기하 점은 합성 점이라 timestamp가 0인데, 이대로 두면
+  /// timestamp 정렬 소비자(페이지 병합 등)에서 동률 정렬로 점 순서가
+  /// 뒤섞일 수 있고 리플레이에서도 진행 정보가 사라진다.
+  void _stampTimestamps(Stroke source, Stroke transformed) {
+    final points = transformed.points;
+    if (points.isEmpty || source.points.isEmpty) return;
+
+    final t0 = source.points.first.timestamp;
+    final t1 = source.points.last.timestamp;
+    for (var i = 0; i < points.length; i++) {
+      final ts = points.length < 2
+          ? t1
+          : t0 + (t1 - t0) * i ~/ (points.length - 1);
+      // 코너 점은 원본 점 객체를 공유할 수 있으므로 in-place 변형 대신
+      // 복제본에 스탬프해 원본 스트로크를 변형하지 않는다.
+      if (points[i].timestamp != ts) {
+        points[i] = points[i].deepCopy()..timestamp = ts;
+      }
+    }
   }
 
   /// 포인트 단순화 수행
@@ -187,12 +215,15 @@ class ShapeDetector {
   }
 
   /// 변환된 스트로크 생성
+  ///
+  /// points는 비워둔 채 시작한다. 원본 손그림 점을 그대로 담으면 이후
+  /// 변환 점들과 섞여 타원 재계산(PCA)이 부정확해지고 직선의 시작점이
+  /// 어긋나므로, 변환된 기하만 채워 넣는다.
   Stroke _createTransformedStroke(Stroke stroke) {
     return Stroke(
       color: stroke.color,
       ink: "shape",
       width: stroke.width,
-      points: stroke.points,
       createdAt: stroke.createdAt,
       options: stroke.options,
     );
@@ -268,14 +299,6 @@ class ShapeDetector {
       return ShapeDetectionResult(quadType, transformedStroke);
     }
 
-    // 삼각형 확인 (코너가 3개인 경우)
-    if (corners.length == 3 && (isClosed || almostClosed)) {
-      _createPolygonFromCorners(transformedStroke, corners, true);
-
-      final triangleType = _determineTriangleType(corners);
-      return ShapeDetectionResult(triangleType, transformedStroke);
-    }
-
     // 다각형 확인
     if (corners.length >= 5 && isClosed) {
       _createPolygonFromCorners(transformedStroke, corners, true);
@@ -292,10 +315,18 @@ class ShapeDetector {
     }
 
     // 기본값: 폴리라인
-    _createPolylineFromCorners(
-      transformedStroke,
-      corners.isEmpty ? simplifiedPoints : corners,
-    );
+    // 코너가 2개 미만이면 선분을 만들 수 없고, 분류 게이트를 통과하지 못한
+    // 폐곡선을 코너 몇 점으로 축약하면 사용자가 그린 닫힘 변이 소실되므로
+    // 단순화된 점들로 형태를 보존한다.
+    final useSimplified = corners.length < 2 || isClosed || almostClosed;
+    final fallbackPoints = useSimplified
+        ? [
+            ...simplifiedPoints,
+            if ((isClosed || almostClosed) && simplifiedPoints.isNotEmpty)
+              simplifiedPoints.first,
+          ]
+        : corners;
+    _createPolylineFromCorners(transformedStroke, fallbackPoints);
     return ShapeDetectionResult(.polyline, transformedStroke);
   }
 
@@ -551,10 +582,7 @@ class ShapeDetector {
   bool _isClosedShape(List<Point> points, double perimeter) {
     if (points.length < 3) return false;
 
-    final distance = GeometryUtils.calculateDistance(
-      points.first,
-      points.last,
-    );
+    final distance = GeometryUtils.calculateDistance(points.first, points.last);
     final threshold = perimeter * _closedThreshold;
 
     // 추가 검증 로직
@@ -617,10 +645,7 @@ class ShapeDetector {
   bool _isAlmostClosed(List<Point> points, double perimeter) {
     if (points.length < 3) return false;
 
-    final distance = GeometryUtils.calculateDistance(
-      points.first,
-      points.last,
-    );
+    final distance = GeometryUtils.calculateDistance(points.first, points.last);
     final threshold = perimeter * 0.25;
 
     return distance < threshold;
