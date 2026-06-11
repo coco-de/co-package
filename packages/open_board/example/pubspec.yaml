@@ -13,6 +13,7 @@ dependencies:
     path: ../
   flutter_smooth_markdown: ^0.7.2
   path_provider: ^2.1.5
+  marionette_flutter: ^0.5.0
 
 dev_dependencies:
   flutter_test:

@@ -1,11 +1,17 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:marionette_flutter/marionette_flutter.dart';
 import 'package:open_board/open_board.dart';
 
 import 'split_drawing_page.dart';
 
 void main() {
+  // AI 에이전트 런타임 구동(탭/스크린샷 등) 지원 — 디버그 모드 전용
+  if (kDebugMode) {
+    MarionetteBinding.ensureInitialized();
+  }
   runApp(const OpenBoardExampleApp());
 }
 
