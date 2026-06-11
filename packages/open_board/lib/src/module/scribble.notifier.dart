@@ -83,9 +83,6 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 선의 1번째 점이 되는 이전 좌표를 저장하는 변수
   Offset preLocalPosition = const Offset(0, 0);
 
-  /// 도형 인식 기능 활성화 상태
-  bool _shapeRecognitionEnabled = false;
-
   /// 펜 정지 감지 타이머
   Timer? _straightenTimer;
 
@@ -639,7 +636,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
             .toList(),
       );
 
-      // 도형 도구/도형 인식 사용 시 마지막 스트로크를 변환해 한 번에 커밋한다.
+      // 도형 도구 사용 시 마지막 스트로크를 변환해 한 번에 커밋한다.
       // (손그림 커밋 + 변환 커밋을 각각 push하면 도형 1개에 undo 2회가 필요)
       state = _transformLastStrokeToShape(newState, modeState) ?? newState;
     } else if (state is Erasing) {
@@ -654,7 +651,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
     }
   }
 
-  /// 도형 도구/도형 인식이 활성화된 경우 마지막 스트로크를 도형으로 변환한
+  /// 도형 도구가 선택된 경우 마지막 스트로크를 도형으로 변환한
   /// 상태를 반환한다. 변환 대상이 아니면 null을 반환한다.
   ///
   /// 반환된 상태는 호출 측에서 한 번만 히스토리에 커밋해
@@ -663,20 +660,14 @@ class ScribbleNotifier extends ScribbleNotifierBase
     Drawing drawing,
     ScribbleModeState modeState,
   ) {
-    if (modeState.inkGroupInfo.selectedInk != InkModes.shape &&
-        !_shapeRecognitionEnabled) {
-      return null;
-    }
+    if (modeState.inkGroupInfo.selectedInk != InkModes.shape) return null;
 
     final scribble = drawing.scribble;
     if (scribble.strokes.isEmpty) return null;
 
     // shape 타입인 경우에만 도형 변환 수행
     final stroke = scribble.strokes.last;
-    if (stroke.ink != InkModes.shape &&
-        !(stroke.ink != InkModes.lasso && _shapeRecognitionEnabled)) {
-      return null;
-    }
+    if (stroke.ink != InkModes.shape) return null;
 
     // ShapeDetector를 사용하여 도형 인식 및 변환
     final result = ShapeDetector.instance.detectAndTransform(stroke);
