@@ -14,6 +14,9 @@ void main() {
     // 1.0 코어 데모 진입 타일
     expect(find.text('1.0 코어 데모'), findsOneWidget);
 
+    // 하이라이트 데모 진입 타일 (#43)
+    expect(find.text('하이라이트 데모'), findsOneWidget);
+
     // 기존 0.1.x 데모 진입 버튼 (ListView 하단 — 스크롤해야 빌드된다)
     await tester.scrollUntilVisible(find.text('Open Reader'), 200);
     expect(find.text('Open Reader'), findsOneWidget);

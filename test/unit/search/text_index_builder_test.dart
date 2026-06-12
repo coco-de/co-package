@@ -49,7 +49,7 @@ void main() {
 
   test('snippet은 주변 문맥을 포함한다', () async {
     final index = await builder.build(_book(), spineTexts: {
-      'ch1.xhtml': 'a' * 50 + 'NEEDLE' + 'b' * 50,
+      'ch1.xhtml': "${'a' * 50}NEEDLE${'b' * 50}",
     });
     final hits = await index.search('NEEDLE');
     expect(hits.single.snippet, contains('NEEDLE'));

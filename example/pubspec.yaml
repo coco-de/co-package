@@ -17,10 +17,16 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+  # 하이라이트 데모 영속 (#43)
+  shared_preferences: ^2.5.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+  # 테스트용 최소 EPUB ZIP 생성 (#43)
+  archive: ^3.6.1
 
 flutter:
   uses-material-design: true

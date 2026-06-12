@@ -4,6 +4,7 @@ import 'package:open_epub/open_epub.dart';
 
 // 1.0 코어 데모 페이지. open_epub_v1 barrel은 해당 파일 내부에서만 import한다
 // (레거시 barrel과 같은 파일에서 혼용하면 EpubSource 등 이름이 충돌).
+import 'highlight_demo_page.dart' show HighlightDemoPage;
 import 'v1_demo_page.dart' show V1DemoPage;
 
 void main() {
@@ -130,6 +131,20 @@ class _HomePageState extends State<HomePage> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const V1DemoPage()),
+              ),
+            ),
+          ),
+
+          // --- Highlight Demo entry (#43) ---
+          Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.border_color_outlined),
+              title: const Text('하이라이트 데모'),
+              subtitle: const Text('텍스트 선택 → 색상 → 하이라이트 + 메모 (open_epub_v1)'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HighlightDemoPage()),
               ),
             ),
           ),
