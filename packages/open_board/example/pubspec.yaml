@@ -11,6 +11,10 @@ dependencies:
     sdk: flutter
   open_board:
     path: ../
+  open_epub:
+    git:
+      url: https://github.com/coco-de/open-epub.git
+      ref: f9fb96c7d34c2315cd0b493ae0a08db52659a30e # main HEAD (2026-06-12), 태그 없어 SHA 고정
   flutter_smooth_markdown: ^0.7.2
   path_provider: ^2.1.5
   marionette_flutter: ^0.5.0
@@ -21,3 +25,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/books/

@@ -33,13 +33,21 @@ jobs:
           sed -i '/^  path_provider_platform_interface:/d' pubspec.yaml
           sed -i '/^  plugin_platform_interface:/d' pubspec.yaml
 
+      # example 이 비공개 저장소 coco-de/open-epub 을 git 의존성으로 사용
+      # PRIVATE_REPO_PAT: fine-grained PAT (coco-de/open-epub, Contents: Read-only)
+      - name: Configure git auth for private dependencies
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.PRIVATE_REPO_PAT }}@github.com/coco-de/".insteadOf "https://github.com/coco-de/"
+
       - name: Install dependencies
         working-directory: example
         run: flutter pub get
 
-      - name: Build web (WebAssembly)
+      - name: Build web (WebAssembly, fallback to JS)
         working-directory: example
-        run: flutter build web --wasm --release --base-href /open-board/
+        run: |
+          flutter build web --wasm --release --base-href /open-board/ || \
+          flutter build web --release --base-href /open-board/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
