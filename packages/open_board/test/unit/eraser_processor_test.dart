@@ -20,9 +20,7 @@ void main() {
       test('수직 선분에 대한 교점을 계산한다', () {
         // 수직 선분: x=100 (preLocalPosition=(100,0), event=(100,200))
         // 포인트: (50, 80)
-        const event = PointerMoveEvent(
-          position: Offset(100, 200),
-        );
+        const event = PointerMoveEvent(position: Offset(100, 200));
         final point = createPoint(x: 50, y: 80);
         const preLocalPosition = Offset(100, 0);
 
@@ -40,9 +38,7 @@ void main() {
       test('수평 선분에 대한 교점을 계산한다', () {
         // 수평 선분: y=100 (preLocalPosition=(0,100), event=(200,100))
         // 포인트: (80, 50)
-        const event = PointerMoveEvent(
-          position: Offset(200, 100),
-        );
+        const event = PointerMoveEvent(position: Offset(200, 100));
         final point = createPoint(x: 80, y: 50);
         const preLocalPosition = Offset(0, 100);
 
@@ -60,9 +56,7 @@ void main() {
       test('대각선 선분에 대한 교점을 계산한다', () {
         // 대각선 선분: (0,0) → (100,100), 기울기 1
         // 포인트: (0, 100) → 수선의 발은 (50, 50)
-        const event = PointerMoveEvent(
-          position: Offset(100, 100),
-        );
+        const event = PointerMoveEvent(position: Offset(100, 100));
         final point = createPoint(x: 0, y: 100);
         const preLocalPosition = Offset(0, 0);
 
@@ -82,9 +76,7 @@ void main() {
 
       setUp(() {
         modeState = ScribbleModeState(
-          inkGroupInfo: InkGroupInfo(
-            selectedInk: InkModes.erase,
-          ),
+          inkGroupInfo: InkGroupInfo(selectedInk: InkModes.erase),
           scaleFactor: 1.0,
         );
       });
@@ -96,15 +88,10 @@ void main() {
           options: createStrokeOptions(size: 2.0, thinning: 0.0),
         );
         final scribble = createScribble(strokes: [stroke]);
-        final state = Erasing(
-          scribble: scribble,
-          activePointerIds: const [1],
-        );
+        final state = Erasing(scribble: scribble, activePointerIds: const [1]);
 
         // 지우개를 (50, 50) 위로 이동
-        const event = PointerMoveEvent(
-          position: Offset(50, 50),
-        );
+        const event = PointerMoveEvent(position: Offset(50, 50));
         const preLocalPosition = Offset(48, 48);
 
         final result = processor.eraseAtPoint(
@@ -118,6 +105,50 @@ void main() {
         expect(result.scribble.strokes, isEmpty);
       });
 
+      test('점이 희소한 직선 스트로크의 변 중간을 가로지르면 지워진다', () {
+        // 정지 직선화/도형 변환 스트로크는 점이 양 끝 2개뿐이다
+        final stroke = createStroke(
+          points: [createPoint(x: 0, y: 50), createPoint(x: 200, y: 50)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final scribble = createScribble(strokes: [stroke]);
+        final state = Erasing(scribble: scribble, activePointerIds: const [1]);
+
+        // 직선 중간(100, 50)을 세로로 가로지르는 지우개 스와이프
+        const event = PointerMoveEvent(position: Offset(100, 70));
+        const preLocalPosition = Offset(100, 30);
+
+        final result = processor.eraseAtPoint(
+          event,
+          modeState,
+          state,
+          preLocalPosition,
+        );
+
+        expect(result.scribble.strokes, isEmpty);
+      });
+
+      test('점이 희소한 직선에서 멀리 떨어진 스와이프는 지우지 않는다', () {
+        final stroke = createStroke(
+          points: [createPoint(x: 0, y: 50), createPoint(x: 200, y: 50)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final scribble = createScribble(strokes: [stroke]);
+        final state = Erasing(scribble: scribble, activePointerIds: const [1]);
+
+        const event = PointerMoveEvent(position: Offset(100, 200));
+        const preLocalPosition = Offset(100, 160);
+
+        final result = processor.eraseAtPoint(
+          event,
+          modeState,
+          state,
+          preLocalPosition,
+        );
+
+        expect(result.scribble.strokes.length, 1);
+      });
+
       test('멀리 있는 스트로크는 유지한다', () {
         // 스트로크가 (500, 500) 근처에 있음
         final stroke = createStroke(
@@ -125,15 +156,10 @@ void main() {
           options: createStrokeOptions(size: 2.0, thinning: 0.0),
         );
         final scribble = createScribble(strokes: [stroke]);
-        final state = Erasing(
-          scribble: scribble,
-          activePointerIds: const [1],
-        );
+        final state = Erasing(scribble: scribble, activePointerIds: const [1]);
 
         // 지우개는 (50, 50) 근처
-        const event = PointerMoveEvent(
-          position: Offset(50, 50),
-        );
+        const event = PointerMoveEvent(position: Offset(50, 50));
         const preLocalPosition = Offset(48, 48);
 
         final result = processor.eraseAtPoint(
@@ -153,14 +179,9 @@ void main() {
           options: createStrokeOptions(size: 2.0, thinning: 0.0),
         );
         final scribble = createScribble(strokes: [stroke]);
-        final state = Drawing(
-          scribble: scribble,
-          activePointerIds: const [1],
-        );
+        final state = Drawing(scribble: scribble, activePointerIds: const [1]);
 
-        const event = PointerMoveEvent(
-          position: Offset(50, 50),
-        );
+        const event = PointerMoveEvent(position: Offset(50, 50));
         const preLocalPosition = Offset(48, 48);
 
         final result = processor.eraseAtPoint(
@@ -184,14 +205,9 @@ void main() {
           strokes: [stroke],
           textDrawables: [textDrawable],
         );
-        final state = Erasing(
-          scribble: scribble,
-          activePointerIds: const [1],
-        );
+        final state = Erasing(scribble: scribble, activePointerIds: const [1]);
 
-        const event = PointerMoveEvent(
-          position: Offset(50, 50),
-        );
+        const event = PointerMoveEvent(position: Offset(50, 50));
         const preLocalPosition = Offset(48, 48);
 
         final result = processor.eraseAtPoint(
@@ -215,14 +231,9 @@ void main() {
           options: createStrokeOptions(size: 2.0, thinning: 0.0),
         );
         final scribble = createScribble(strokes: [nearStroke, farStroke]);
-        final state = Erasing(
-          scribble: scribble,
-          activePointerIds: const [1],
-        );
+        final state = Erasing(scribble: scribble, activePointerIds: const [1]);
 
-        const event = PointerMoveEvent(
-          position: Offset(50, 50),
-        );
+        const event = PointerMoveEvent(position: Offset(50, 50));
         const preLocalPosition = Offset(48, 48);
 
         final result = processor.eraseAtPoint(

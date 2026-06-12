@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/events/scribble_book_event.dart';
 import 'package:open_board/src/module/live/data/renderer/remote_stroke_renderer.dart';
@@ -249,15 +250,8 @@ class LiveSessionController extends ChangeNotifier {
 
     final scribble = controller.currentScribble;
     final strokes = [...scribble.strokes, finalized.stroke];
-    final updated = Scribble(
-      strokes: strokes,
-      width: scribble.width,
-      height: scribble.height,
-      textDrawables: scribble.textDrawables,
-      createdAt: scribble.createdAt,
-      updatedAt: DateTime.now().toIso8601String(),
-    );
-    controller.loadScribble(updated);
+    final updated = scribble.copyWithContents(strokes: strokes);
+    controller.loadScribble(updated, resetHistory: false);
   }
 
   void _removeRemoteStroke(String pageId, int strokeIndex) {
@@ -268,15 +262,8 @@ class LiveSessionController extends ChangeNotifier {
     if (strokeIndex < 0 || strokeIndex >= scribble.strokes.length) return;
 
     final strokes = [...scribble.strokes]..removeAt(strokeIndex);
-    final updated = Scribble(
-      strokes: strokes,
-      width: scribble.width,
-      height: scribble.height,
-      textDrawables: scribble.textDrawables,
-      createdAt: scribble.createdAt,
-      updatedAt: DateTime.now().toIso8601String(),
-    );
-    controller.loadScribble(updated);
+    final updated = scribble.copyWithContents(strokes: strokes);
+    controller.loadScribble(updated, resetHistory: false);
   }
 
   ScribbleController? _getControllerForPage(String pageId) {

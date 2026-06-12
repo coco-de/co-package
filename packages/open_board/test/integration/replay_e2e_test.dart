@@ -57,6 +57,12 @@ class FakePageProvider implements ScribblePageProvider {
     _scribbles.remove(key);
     return true;
   }
+
+  @override
+  void evictController(String key) {
+    _controllers.remove(key)?.dispose();
+    _scribbles.remove(key);
+  }
 }
 
 void main() {

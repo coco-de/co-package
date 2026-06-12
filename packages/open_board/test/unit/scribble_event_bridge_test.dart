@@ -49,6 +49,12 @@ class FakePageProvider implements ScribblePageProvider {
     _scribbles.remove(key);
     return true;
   }
+
+  @override
+  void evictController(String key) {
+    _controllers.remove(key)?.dispose();
+    _scribbles.remove(key);
+  }
 }
 
 void main() {
@@ -146,6 +152,96 @@ void main() {
       expect(removeEvents, hasLength(1));
       expect(removeEvents.first.pageId, 'page1');
       expect(removeEvents.first.strokeIndex, 1);
+    });
+
+    test('중간 스트로크 제거 시 실제 인덱스로 StrokeRemovedEvent 발행', () async {
+      // 카운트 휴리스틱은 어떤 스트로크가 지워졌는지 모른 채 항상 마지막
+      // 인덱스를 발행해, 리플레이/원격에서 엉뚱한 스트로크가 삭제됐다.
+      book.startRecording();
+
+      final s0 = Stroke(points: [Point(x: 10, y: 10)]);
+      final s1 = Stroke(points: [Point(x: 20, y: 20)]);
+      final s2 = Stroke(points: [Point(x: 30, y: 30)]);
+      book.activeController.loadScribble(Scribble(strokes: [s0, s1, s2]));
+
+      bridge.attach();
+
+      final events = <ScribbleBookEvent>[];
+      book.eventStream.listen(events.add);
+
+      // 첫 번째(s0)만 제거 — 지우개로 중간 스트로크를 지운 상황
+      book.activeController.loadScribble(
+        Scribble(strokes: [s1.deepCopy(), s2.deepCopy()]),
+      );
+
+      await Future<void>.delayed(.zero);
+
+      final removeEvents = events.whereType<StrokeRemovedEvent>().toList();
+      expect(removeEvents, hasLength(1));
+      expect(
+        removeEvents.first.strokeIndex,
+        0,
+        reason: '항상 마지막 인덱스를 발행하면 수신 측에서 s0 대신 s2가 지워진다',
+      );
+    });
+
+    test('비연속 다중 제거는 내림차순 인덱스로 발행', () async {
+      book.startRecording();
+
+      final s0 = Stroke(points: [Point(x: 10, y: 10)]);
+      final s1 = Stroke(points: [Point(x: 20, y: 20)]);
+      final s2 = Stroke(points: [Point(x: 30, y: 30)]);
+      book.activeController.loadScribble(Scribble(strokes: [s0, s1, s2]));
+
+      bridge.attach();
+
+      final events = <ScribbleBookEvent>[];
+      book.eventStream.listen(events.add);
+
+      // s0, s2 제거 (비연속)
+      book.activeController.loadScribble(
+        Scribble(strokes: [s1.deepCopy()]),
+      );
+
+      await Future<void>.delayed(.zero);
+
+      final removeEvents = events.whereType<StrokeRemovedEvent>().toList();
+      expect(removeEvents.map((e) => e.strokeIndex).toList(), [2, 0]);
+    });
+
+    test('카운트 동률 교체(도형 인식)는 Removed+Added 쌍으로 발행', () async {
+      // 도형 인식은 마지막 스트로크를 removeLast+add로 교체한다(net 0).
+      // 카운트 휴리스틱은 이를 감지하지 못해 원격/녹화에 변환 전
+      // 자유곡선이 남는 desync가 발생했다.
+      book.startRecording();
+
+      final raw = Stroke(points: [Point(x: 10, y: 10)]);
+      book.activeController.loadScribble(Scribble(strokes: [raw]));
+
+      bridge.attach();
+
+      final events = <ScribbleBookEvent>[];
+      book.eventStream.listen(events.add);
+
+      // 같은 개수, 내용만 교체 (도형 변환 시뮬레이션)
+      final shape = Stroke(
+        points: [Point(x: 10, y: 10), Point(x: 50, y: 50)],
+        shapeType: 'line',
+      );
+      book.activeController.loadScribble(Scribble(strokes: [shape]));
+
+      await Future<void>.delayed(.zero);
+
+      final removeEvents = events.whereType<StrokeRemovedEvent>().toList();
+      final addEvents = events.whereType<StrokeAddedEvent>().toList();
+      expect(removeEvents, hasLength(1));
+      expect(removeEvents.first.strokeIndex, 0);
+      expect(addEvents, hasLength(1));
+      expect(
+        addEvents.first.stroke.shapeType,
+        'line',
+        reason: '교체된 최종 스트로크(변환된 도형)가 발행되어야 한다',
+      );
     });
 
     test('detach 후에는 이벤트 발행하지 않음', () async {

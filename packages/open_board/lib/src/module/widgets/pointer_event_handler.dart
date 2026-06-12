@@ -100,8 +100,27 @@ class PointerEventHandler {
     onScribbleFinished(scribbleNotifier);
   }
 
+  /// 포인터 취소 처리
+  ///
+  /// 시스템 제스처/팜 리젝션 등으로 포인터가 탈취되면 up 대신 cancel이 온다.
+  /// notifier에 전달하지 않으면 activePointerIds에 해당 id가 영구 잔류하여
+  /// 이후 해당 페이지에서 터치 필기가 차단된다.
+  void handlePointerCancel(PointerCancelEvent event) {
+    isDragging = false;
+    _currentPointerKind = null;
+
+    final adjustedEvent = adjustPointerEvent(event);
+    scribbleNotifier.onPointerCancel(adjustedEvent, modeNotifier.state);
+  }
+
   /// 멀티터치 확인
   bool isMultiTouch() => _activeTouchCount >= 2;
+
+  /// 터치 카운트 초기화
+  ///
+  /// isScribbleEnable 토글 등으로 up/cancel 핸들러가 끊겨
+  /// 카운트가 고착되는 것을 복구할 때 사용한다.
+  void resetTouch() => _activeTouchCount = 0;
 
   void dispose() {
     _activeTouchCount = 0;

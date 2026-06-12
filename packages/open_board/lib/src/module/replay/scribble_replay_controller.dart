@@ -91,6 +91,10 @@ class ScribbleReplayController extends ChangeNotifier {
   final StreamController<int> _positionController =
       StreamController<int>.broadcast();
 
+  /// 상태 리셋 신호 스트림 (뒤로 seek / 완료 후 재시작)
+  final StreamController<void> _resetController =
+      StreamController<void>.broadcast();
+
   /// dispose 여부
   bool _isDisposed = false;
 
@@ -137,11 +141,25 @@ class ScribbleReplayController extends ChangeNotifier {
   /// 현재 재생 인덱스
   int get currentIndex => _currentIndex;
 
+  /// 타임라인 시작 시각 (마이크로초, 절대 epoch 기준)
+  ///
+  /// [positionMicros]는 시작 시각 기준 상대 오프셋이므로, Point.timestamp
+  /// 같은 절대 타임스탬프와 비교하려면 이 값을 더해야 한다.
+  int get timelineStartMicros => _timelineStartMicros;
+
   /// 리플레이 이벤트 스트림
   Stream<ScribbleBookEvent> get onEvent => _eventController.stream;
 
   /// 재생 위치 스트림 (마이크로초)
   Stream<int> get onPositionChanged => _positionController.stream;
+
+  /// 상태 리셋 신호 스트림
+  ///
+  /// 뒤로 seek하거나 완료 후 재생을 다시 시작하면 인덱스 0부터 이벤트가
+  /// 재발행된다. 소비자(핸들러)는 이 신호를 받으면 표시 상태를 초기화한
+  /// 뒤 재발행되는 이벤트를 적용해야 한다. (신호 없이 재발행하면 기존
+  /// 상태 위에 이벤트가 이중 적용되어 페이지 중복·상태 오염이 발생한다)
+  Stream<void> get onReset => _resetController.stream;
 
   // ===== 타임라인 로드 =====
 
@@ -252,7 +270,9 @@ class ScribbleReplayController extends ChangeNotifier {
   void play() {
     if (_timeline.isEmpty) return;
     if (_state == ReplayState.completed) {
-      // 완료 상태에서 play → 처음부터 재생
+      // 완료 상태에서 play → 소비자 상태 리셋 후 처음부터 재생
+      // (리셋 없이 재발행하면 최종 상태 위에 전체 이벤트가 이중 적용된다)
+      _emitReset();
       _currentIndex = 0;
       _playStartOffsetMicros = 0;
     }
@@ -278,20 +298,28 @@ class ScribbleReplayController extends ChangeNotifier {
   /// 특정 위치로 이동
   void seek(Duration position) {
     final targetMicros = position.inMicroseconds.clamp(0, durationMicros);
+    final beforeMicros = positionMicros;
 
-    // 가장 가까운 스냅샷 찾기
-    final snapshotEntry = _findNearestSnapshot(targetMicros);
-
-    if (snapshotEntry != null) {
-      _currentIndex = snapshotEntry.value.eventIndex;
+    if (targetMicros >= beforeMicros && _state != ReplayState.completed) {
+      // 전진 seek: 현재 커서 위치에서 그대로 fast-forward.
+      // 커서를 스냅샷 인덱스로 되감으면 이미 발행한 구간이 중복 발행되어
+      // PageAdded 재적용(assert 크래시)·인덱스 기반 삭제 오적용이 일어난다.
+      _fastForwardTo(targetMicros);
     } else {
+      // 후진 seek(또는 completed 후 재탐색): 소비자 상태를 리셋한 뒤
+      // 처음부터 목표 위치까지 재발행한다. ReplaySnapshot은 이벤트
+      // 인덱스만 보관할 뿐 보드 상태가 없으므로, 중간 인덱스에서
+      // 재개하면 그 이전 이벤트가 누락된 잘못된 상태가 된다.
+      _emitReset();
       _currentIndex = 0;
+      _fastForwardTo(targetMicros);
     }
 
-    // 스냅샷 이후 ~ 목표 위치까지 이벤트 빠르게 발행
-    _fastForwardTo(targetMicros);
-
     _playStartOffsetMicros = targetMicros;
+    if (_state == ReplayState.completed &&
+        targetMicros < durationMicros) {
+      _state = ReplayState.paused;
+    }
 
     if (_state == ReplayState.playing) {
       _playStartWallMicros = DateTime.now().microsecondsSinceEpoch;
@@ -378,6 +406,12 @@ class ScribbleReplayController extends ChangeNotifier {
     }
   }
 
+  void _emitReset() {
+    if (!_resetController.isClosed) {
+      _resetController.add(null);
+    }
+  }
+
   void _fastForwardTo(int targetMicros) {
     while (_currentIndex < _timeline.length) {
       final event = _timeline[_currentIndex];
@@ -411,22 +445,11 @@ class ScribbleReplayController extends ChangeNotifier {
     }
   }
 
-  MapEntry<int, ReplaySnapshot>? _findNearestSnapshot(int targetMicros) {
-    if (_snapshots.isEmpty) return null;
-
-    // 목표 이전의 가장 가까운 스냅샷 찾기
-    MapEntry<int, ReplaySnapshot>? nearest;
-    for (final entry in _snapshots.entries) {
-      if (entry.value.offsetMicros <= targetMicros) {
-        if (nearest == null ||
-            entry.value.offsetMicros > nearest.value.offsetMicros) {
-          nearest = entry;
-        }
-      }
-    }
-
-    return nearest;
-  }
+  // NOTE: ReplaySnapshot은 이벤트 인덱스만 보관할 뿐 보드 상태가 없어
+  // 중간 인덱스에서 재개하면 그 이전 이벤트가 누락된 잘못된 상태가 된다.
+  // 후진 seek는 리셋 후 처음부터 재발행하며, 스냅샷 기반 빠른 seek는
+  // 녹화기의 TimelineSnapshot(pageStrokeCounts 등) 상태 복원이 구현될 때
+  // 다시 활용한다.
 
   @override
   void dispose() {
@@ -435,6 +458,7 @@ class ScribbleReplayController extends ChangeNotifier {
     _playTimer?.cancel();
     _eventController.close();
     _positionController.close();
+    _resetController.close();
     super.dispose();
   }
 }

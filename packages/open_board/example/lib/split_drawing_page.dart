@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:open_board/open_board.dart';
 
@@ -38,6 +41,107 @@ class _SplitDrawingPageState extends State<SplitDrawingPage> {
     super.dispose();
   }
 
+  // ===== AI 에이전트 검증용 입력 주입 (디버그 데모 전용) =====
+  //
+  // 런타임 구동 도구(marionette)는 합성 탭만 보낼 수 있어 자유 드로잉
+  // 제스처를 만들 수 없다. 아래 버튼들은 notifier에 stylus 포인터
+  // 이벤트 시퀀스를 주입해 실제 입력 파이프라인(그리기/지우기)을
+  // 프로그래매틱으로 재현한다.
+  int _injectSeq = 1;
+
+  void _injectStroke(ScribbleController controller, Offset start) {
+    final n = controller.scribbleNotifier;
+    final m = controller.modeNotifier;
+    _drawingState.setLastActiveScribbleNotifier(n);
+    _drawingState.applyToModeNotifier(m);
+    n.setStrokeInk();
+
+    final pointer = _injectSeq++;
+    n.onPointerDown(
+      PointerDownEvent(
+        kind: PointerDeviceKind.stylus,
+        pointer: pointer,
+        position: start,
+      ),
+      m.state,
+    );
+    for (var i = 1; i <= 14; i++) {
+      n.onPointerUpdate(
+        PointerMoveEvent(
+          kind: PointerDeviceKind.stylus,
+          pointer: pointer,
+          position: start + Offset(i * 10.0, math.sin(i / 2) * 30),
+        ),
+        m.state,
+      );
+    }
+    n.onPointerUp(
+      PointerUpEvent(
+        kind: PointerDeviceKind.stylus,
+        pointer: pointer,
+        position: start + const Offset(140, 0),
+      ),
+      m.state,
+    );
+    debugPrint(
+      '[inject] strokes=${n.currentScribble.strokes.length} '
+      'canUndo=${n.canUndo} '
+      'lastActiveSame=${identical(_drawingState.lastActiveScribbleNotifier, n)} '
+      'globalCanUndo=${_drawingState.canUndoNotifier.value}',
+    );
+    _drawingState.updateUndoRedoState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        debugPrint(
+          '[inject:post2] globalCanUndo=${_drawingState.canUndoNotifier.value} '
+          'notifierCanUndo=${n.canUndo}',
+        );
+      });
+    });
+    setState(() {});
+  }
+
+  void _injectErase(ScribbleController controller, Offset start) {
+    final n = controller.scribbleNotifier;
+    final m = controller.modeNotifier;
+    _drawingState.setLastActiveScribbleNotifier(n);
+    m.setEraser();
+    n.setEraser();
+
+    final pointer = _injectSeq++;
+    n.onPointerDown(
+      PointerDownEvent(
+        kind: PointerDeviceKind.stylus,
+        pointer: pointer,
+        position: start,
+      ),
+      m.state,
+    );
+    for (var i = 1; i <= 14; i++) {
+      n.onPointerUpdate(
+        PointerMoveEvent(
+          kind: PointerDeviceKind.stylus,
+          pointer: pointer,
+          position: start + Offset(i * 10.0, 0),
+        ),
+        m.state,
+      );
+    }
+    n.onPointerUp(
+      PointerUpEvent(
+        kind: PointerDeviceKind.stylus,
+        pointer: pointer,
+        position: start + const Offset(140, 0),
+      ),
+      m.state,
+    );
+    // 도구 복원
+    m.setPen();
+    n.setStrokeInk();
+    _drawingState.updateUndoRedoState();
+    setState(() {});
+  }
+
   Widget _canvas(ScribbleController controller, String label) {
     return ScribbleWidget(
       notifier: controller.scribbleNotifier,
@@ -62,14 +166,63 @@ class _SplitDrawingPageState extends State<SplitDrawingPage> {
       appBar: AppBar(
         title: const Text('분할 필기 — 하나의 플로팅 도구'),
         actions: [
+          IconButton(
+            key: const ValueKey('test_status'),
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'TestStatus',
+            onPressed: () {
+              final l = _left.scribbleNotifier;
+              final r = _right.scribbleNotifier;
+              debugPrint(
+                '[status] A(strokes=${l.currentScribble.strokes.length} '
+                'undo=${l.canUndo} redo=${l.canRedo}) '
+                'B(strokes=${r.currentScribble.strokes.length} '
+                'undo=${r.canUndo} redo=${r.canRedo}) '
+                'global(undo=${_drawingState.canUndoNotifier.value} '
+                'redo=${_drawingState.canRedoNotifier.value}) '
+                'lastActive=${identical(_drawingState.lastActiveScribbleNotifier, r) ? "B" : identical(_drawingState.lastActiveScribbleNotifier, l) ? "A" : "?"}',
+              );
+            },
+          ),
+          IconButton(
+            key: const ValueKey('test_redo'),
+            icon: const Icon(Icons.redo_outlined),
+            tooltip: 'TestRedo',
+            onPressed: () {
+              _drawingState.redo();
+              setState(() {});
+            },
+          ),
+          IconButton(
+            key: const ValueKey('test_draw_a'),
+            icon: const Icon(Icons.draw_outlined),
+            tooltip: 'TestDrawA',
+            onPressed: () => _injectStroke(_left, const Offset(120, 380)),
+          ),
+          IconButton(
+            key: const ValueKey('test_draw_b'),
+            icon: const Icon(Icons.draw),
+            tooltip: 'TestDrawB',
+            onPressed: () => _injectStroke(_right, const Offset(120, 300)),
+          ),
+          IconButton(
+            key: const ValueKey('test_erase_b'),
+            icon: const Icon(Icons.cleaning_services_outlined),
+            tooltip: 'TestEraseB',
+            onPressed: () => _injectErase(_right, const Offset(110, 300)),
+          ),
+          IconButton(
+            key: const ValueKey('test_erase_b_empty'),
+            icon: const Icon(Icons.cleaning_services),
+            tooltip: 'TestEraseBEmpty',
+            onPressed: () => _injectErase(_right, const Offset(110, 520)),
+          ),
           ValueListenableBuilder<bool>(
             valueListenable: _drawingState.canUndoNotifier,
             builder: (context, canUndo, _) => IconButton(
               icon: const Icon(Icons.undo),
               tooltip: 'Undo',
-              onPressed: canUndo
-                  ? () => _drawingState.lastActiveScribbleNotifier?.undo()
-                  : null,
+              onPressed: canUndo ? _drawingState.undo : null,
             ),
           ),
           ValueListenableBuilder<bool>(
@@ -77,9 +230,7 @@ class _SplitDrawingPageState extends State<SplitDrawingPage> {
             builder: (context, canRedo, _) => IconButton(
               icon: const Icon(Icons.redo),
               tooltip: 'Redo',
-              onPressed: canRedo
-                  ? () => _drawingState.lastActiveScribbleNotifier?.redo()
-                  : null,
+              onPressed: canRedo ? _drawingState.redo : null,
             ),
           ),
         ],

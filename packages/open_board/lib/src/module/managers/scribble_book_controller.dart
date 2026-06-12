@@ -32,6 +32,12 @@ abstract class ScribblePageProvider {
 
   /// 필기 데이터 삭제
   Future<bool> deleteScribble(String key);
+
+  /// 키에 해당하는 컨트롤러와 관련 캐시를 모두 제거
+  ///
+  /// 페이지 삭제 시 컨트롤러 캐시를 정리하지 않으면 동일 키 재사용 시
+  /// 삭제된 필기가 부활한다. 기존 구현체 호환을 위해 기본은 no-op.
+  void evictController(String key) {}
 }
 
 /// 다중 페이지 필기 관리 컨트롤러
@@ -62,6 +68,14 @@ class ScribbleBookController extends ChangeNotifier {
   /// 외부 저장소 위임
   ScribblePersistenceDelegate? persistenceDelegate;
 
+  /// 영속화 차단 모드 (리플레이 등 표시 전용 구동)
+  ///
+  /// true면 페이지 전환 시 저장(_savePage)과 페이지 삭제 시 저장소
+  /// 삭제(deleteScribble/persistenceDelegate)를 수행하지 않는다.
+  /// 리플레이 핸들러가 이 컨트롤러를 구동할 때 리플레이의 중간 캔버스
+  /// 상태가 사용자의 원본 필기 데이터를 덮어쓰거나 삭제하는 것을 막는다.
+  bool suppressPersistence = false;
+
   /// 첫 페이지 단면 전략 (양면 모드에서 첫 페이지만 단면으로 표시)
   final bool firstPageSingle;
 
@@ -75,6 +89,12 @@ class ScribbleBookController extends ChangeNotifier {
 
   /// 페이지 ID 목록 (순서 보장)
   final List<String> _pageIds;
+
+  /// 자동 생성 pageId 시퀀스 (단조 증가 — 삭제된 id 재사용 방지)
+  int _nextPageSeq = 0;
+
+  /// 이번 세션에서 자동 생성된 pageId 집합 (삭제 후 재사용 방지)
+  final Set<String> _usedPageIds = {};
 
   /// 현재 페이지 인덱스
   int _currentPageIndex;
@@ -387,12 +407,18 @@ class ScribbleBookController extends ChangeNotifier {
       ),
     );
 
-    // 캐시 정리
-    _pageProvider.deleteScribble(removedKey);
+    // 표시 전용 모드(리플레이)에서는 페이지 목록만 갱신하고
+    // 실제 저장소의 필기 데이터는 삭제하지 않는다.
+    if (!suppressPersistence) {
+      // 캐시 정리 (컨트롤러 캐시·대기 중 저장 타이머 포함 —
+      // 정리하지 않으면 pageId 재사용 시 삭제된 필기가 부활한다)
+      _pageProvider.evictController(removedKey);
+      await _pageProvider.deleteScribble(removedKey);
 
-    // 외부 저장소 정리
-    if (persistenceDelegate != null) {
-      await persistenceDelegate!.deleteScribble(removedKey);
+      // 외부 저장소 정리
+      if (persistenceDelegate != null) {
+        await persistenceDelegate!.deleteScribble(removedKey);
+      }
     }
 
     _pageIds.removeAt(index);
@@ -526,11 +552,11 @@ class ScribbleBookController extends ChangeNotifier {
       if (removedCount > 0) {
         totalRemoved += removedCount;
 
-        final newScribble = Scribble()
-          ..strokes.addAll(filtered)
-          ..textDrawables.addAll(adjacentScribble.textDrawables)
-          ..width = adjacentScribble.width
-          ..height = adjacentScribble.height;
+        // deepCopy 기반 재구성 — 필드를 수동 복사하면 imageDrawables 등
+        // 새로 추가된 필드가 누락되어 인접 페이지 데이터가 유실된다.
+        final newScribble = adjacentScribble.deepCopy()
+          ..strokes.clear()
+          ..strokes.addAll(filtered);
 
         adjacentController.loadScribble(newScribble);
         await _pageProvider.saveScribble(
@@ -642,16 +668,23 @@ class ScribbleBookController extends ChangeNotifier {
   }
 
   String _generatePageId() {
-    var counter = _pageIds.length;
-    var id = 'page_$counter';
-    while (_pageIds.contains(id)) {
-      counter++;
-      id = 'page_$counter';
+    // 삭제된 pageId의 재사용을 막기 위해 단조 증가 시퀀스를 사용한다.
+    // ('page_{현재 길이}'부터 탐색하면 마지막 페이지 삭제 후 addPage 시
+    //  동일 id가 재사용되어 캐시에 남은 삭제된 필기가 부활한다)
+    var id = 'page_$_nextPageSeq';
+    while (_usedPageIds.contains(id) || _pageIds.contains(id)) {
+      _nextPageSeq++;
+      id = 'page_$_nextPageSeq';
     }
+    _nextPageSeq++;
+    _usedPageIds.add(id);
     return id;
   }
 
   Future<void> _savePage(String pageId) async {
+    // 표시 전용 모드(리플레이)에서는 화면의 중간 상태를 영속화하지 않는다.
+    if (suppressPersistence) return;
+
     final key = _buildKey(pageId);
 
     if (!_pageProvider.hasController(key)) return;

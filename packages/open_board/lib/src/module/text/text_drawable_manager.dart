@@ -1,4 +1,5 @@
 // 🌎 Project imports:
+import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 
 /// 텍스트 CRUD 관리 클래스
@@ -45,20 +46,14 @@ class TextDrawableManager {
   }
 
   /// 텍스트 목록을 Scribble에 적용한 새 Scribble을 반환합니다.
+  ///
+  /// copyWithContents를 사용해 imageDrawables 등 나머지 필드를 보존한다.
+  /// (필드 나열로 재구성하면 텍스트 조작 한 번에 페이지의 모든 이미지가
+  /// 소실된다)
   Scribble applyToScribble(
     Scribble scribble,
     List<TextDrawable> textDrawables,
   ) {
-    return Scribble(
-      x: scribble.x,
-      y: scribble.y,
-      width: scribble.width,
-      height: scribble.height,
-      strokes: scribble.strokes,
-      textDrawables: textDrawables,
-      createdAt: scribble.createdAt,
-      updatedAt: DateTime.now().toIso8601String(),
-      version: scribble.version,
-    );
+    return scribble.copyWithContents(textDrawables: textDrawables);
   }
 }

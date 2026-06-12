@@ -282,9 +282,7 @@ class _ScribbleFloatingToolbarState extends State<ScribbleFloatingToolbar> {
           builder: (context, canUndo, _) => IconButton(
             icon: const Icon(Icons.undo),
             tooltip: 'Undo',
-            onPressed: canUndo
-                ? () => _state.lastActiveScribbleNotifier?.undo()
-                : null,
+            onPressed: canUndo ? _state.undo : null,
           ),
         ),
         ValueListenableBuilder<bool>(
@@ -292,15 +290,13 @@ class _ScribbleFloatingToolbarState extends State<ScribbleFloatingToolbar> {
           builder: (context, canRedo, _) => IconButton(
             icon: const Icon(Icons.redo),
             tooltip: 'Redo',
-            onPressed: canRedo
-                ? () => _state.lastActiveScribbleNotifier?.redo()
-                : null,
+            onPressed: canRedo ? _state.redo : null,
           ),
         ),
         IconButton(
           icon: const Icon(Icons.delete_outline),
           tooltip: 'Clear',
-          onPressed: () => _state.lastActiveScribbleNotifier?.clear(),
+          onPressed: _state.clearActive,
         ),
       ],
     );

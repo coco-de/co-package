@@ -127,9 +127,6 @@
           return;
         }
 
-        // 내용이 있는 경우 저장
-        final textColor = widget.selectedColor;
-
         // 스케일을 고려한 실제 폰트 크기 계산
         final double actualFontSize;
         if (!widget.isNew) {
@@ -137,17 +134,35 @@
           final baseFontSize = widget.drawable.style.fontSize! / widget.scale;
           actualFontSize = baseFontSize;
         } else {
-          // 새 텍스트 생성인 경우
-          const baseFontSize = 16.0; // 기본 크기
+          // 새 텍스트 생성인 경우: _addNewTextAt이 펜 굵기 기반으로 계산해
+          // textSettings에 넣어둔 크기를 사용한다. (상수 16으로 고정하면
+          // 입력 중 크게 보이던 텍스트가 커밋 순간 축소되고
+          // '펜 굵기→텍스트 크기' 기능 전체가 사장된다)
+          final baseFontSize =
+              (widget.textSettings.textStyle.fontSize ?? 16.0) / widget.scale;
           actualFontSize = baseFontSize;
         }
 
-        // 텍스트 스타일 생성 (스케일 적용 안 함)
-        final style = widget.textSettings.textStyle.copyWith(
-          color: textColor,
-          fontSize: actualFontSize,
-          letterSpacing: 0,
-        );
+        // 텍스트 스타일/정렬 생성 (스케일 적용 안 함)
+        // 기존 텍스트 재편집 시에는 텍스트 고유 스타일(색/굵기/폰트/정렬)을
+        // 보존한다 — 현재 펜 설정으로 덮어쓰면 글자 하나만 고쳐도 색·정렬이
+        // 바뀌고, 정렬 변경은 position 해석이 달라져 위치까지 이동한다.
+        final TextStyle style;
+        final TextAlignment alignment;
+        if (widget.isNew) {
+          style = widget.textSettings.textStyle.copyWith(
+            color: widget.selectedColor,
+            fontSize: actualFontSize,
+            letterSpacing: 0,
+          );
+          alignment = widget.textSettings.textAlignment;
+        } else {
+          style = widget.drawable.style.copyWith(
+            fontSize: actualFontSize,
+            letterSpacing: 0,
+          );
+          alignment = widget.drawable.alignment;
+        }
 
         // 텍스트 drawable 업데이트
         // - 새 텍스트도 widget.drawable에 이미 올바른 캔버스 좌표(x, y)와
@@ -156,7 +171,7 @@
         final drawable = widget.drawable
             .copyWithText(text)
             .copyWithStyle(style)
-            .copyWithAlignment(widget.textSettings.textAlignment)
+            .copyWithAlignment(alignment)
             .copyWithHidden(false);
 
         widget.onComplete(drawable);
@@ -212,11 +227,18 @@
       final actualFontSize = baseFontSize * widget.scale;
 
       // TextDrawable과 동일한 스타일 생성
-      final textStyle = widget.textSettings.textStyle.copyWith(
-        fontSize: actualFontSize,
-        color: textColor,
-        letterSpacing: 0,
-      );
+      // 기존 텍스트 재편집 시에는 커밋(_completeEditing)과 동일하게 텍스트
+      // 고유 스타일을 사용해 편집 중 표시 색상도 원본과 일치시킨다.
+      final textStyle = widget.isNew
+          ? widget.textSettings.textStyle.copyWith(
+              fontSize: actualFontSize,
+              color: textColor,
+              letterSpacing: 0,
+            )
+          : widget.drawable.style.copyWith(
+              fontSize: actualFontSize,
+              letterSpacing: 0,
+            );
 
       // TextPainter로 텍스트 크기 측정 (TextDrawablePainter와 동일한 방식)
       final textSpan = TextSpan(

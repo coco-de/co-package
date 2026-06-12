@@ -69,17 +69,41 @@ extension MergeScribble on Scribble {
       }
     }
 
+    final leftPageScribble = _createScribbleFromStrokes(
+      leftPageStrokes,
+      pageWidth / 2,
+      pageHeight,
+    );
+    final rightPageScribble = _createScribbleFromStrokes(
+      rightPageStrokes,
+      pageWidth / 2,
+      pageHeight,
+    );
+
+    // 텍스트/이미지 객체도 x 좌표 기준으로 좌/우 분배한다.
+    // (분배하지 않으면 모드 전환 시 텍스트·이미지가 유실된다)
+    for (final text in textDrawables) {
+      if (text.x < pageBoundaryX) {
+        leftPageScribble.textDrawables.add(text.deepCopy());
+      } else {
+        rightPageScribble.textDrawables.add(
+          text.deepCopy()..x -= pageBoundaryX,
+        );
+      }
+    }
+    for (final image in imageDrawables) {
+      if (image.x < pageBoundaryX) {
+        leftPageScribble.imageDrawables.add(image.deepCopy());
+      } else {
+        rightPageScribble.imageDrawables.add(
+          image.deepCopy()..x -= pageBoundaryX,
+        );
+      }
+    }
+
     return ScribbleSplitResult(
-      leftPageScribble: _createScribbleFromStrokes(
-        leftPageStrokes,
-        pageWidth / 2,
-        pageHeight,
-      ),
-      rightPageScribble: _createScribbleFromStrokes(
-        rightPageStrokes,
-        pageWidth / 2,
-        pageHeight,
-      ),
+      leftPageScribble: leftPageScribble,
+      rightPageScribble: rightPageScribble,
       crossPageStrokes: crossPageStrokes,
       originalPageBoundary: pageBoundaryX,
     );
@@ -127,11 +151,31 @@ extension MergeScribble on Scribble {
     // 중복 스트로크 제거
     final deduplicatedStrokes = _removeDuplicateStrokes(mergedStrokes);
 
-    return _createScribbleFromStrokes(
+    final merged = _createScribbleFromStrokes(
       deduplicatedStrokes,
       targetPageWidth,
       targetPageHeight,
     );
+
+    // 텍스트/이미지 객체 복원 (왼쪽은 그대로, 오른쪽은 원좌표로 역변환)
+    merged.textDrawables.addAll(
+      splitResult.leftPageScribble.textDrawables.map((t) => t.deepCopy()),
+    );
+    merged.textDrawables.addAll(
+      splitResult.rightPageScribble.textDrawables.map(
+        (t) => t.deepCopy()..x += splitResult.originalPageBoundary,
+      ),
+    );
+    merged.imageDrawables.addAll(
+      splitResult.leftPageScribble.imageDrawables.map((i) => i.deepCopy()),
+    );
+    merged.imageDrawables.addAll(
+      splitResult.rightPageScribble.imageDrawables.map(
+        (i) => i.deepCopy()..x += splitResult.originalPageBoundary,
+      ),
+    );
+
+    return merged;
   }
 
   /// 🔄 스트로크의 경계 박스 계산

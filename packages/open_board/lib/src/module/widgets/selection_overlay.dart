@@ -24,7 +24,9 @@ List<Widget> buildSelectionOverlay({
   Offset? deleteButtonPosition,
   Offset? transformButtonPosition,
 }) {
-  const handleSize = 28.0; // 버튼 터치 영역 크기 (시각 버튼 35px + 여유)
+  // 버튼 터치 영역 크기 — 시각 버튼(35px)보다 작으면 버튼 가장자리 탭이
+  // 무반응이 된다. 올가미 쪽 핸들(49px)과 동일하게 여유를 둔다.
+  const handleSize = 49.0;
 
   final finalBoundingBox = boundingBox;
 

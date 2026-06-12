@@ -120,6 +120,34 @@ class DrawingState {
     _undoRedoTracker.updateUndoRedoState();
   }
 
+  /// ↩️ 활성 notifier에 undo를 위임하고 버튼 상태를 갱신한다.
+  ///
+  /// UndoRedoTracker는 notifier를 listen하지 않으므로, notifier 메서드를
+  /// 직접 호출하면 canUndo/canRedo 버튼 상태가 갱신되지 않는다.
+  /// 툴바류 UI는 반드시 이 파사드를 사용한다.
+  void undo() {
+    final notifier = lastActiveScribbleNotifier;
+    if (notifier != null && notifier.canUndo) {
+      notifier.undo();
+    }
+    updateUndoRedoState();
+  }
+
+  /// ↪️ 활성 notifier에 redo를 위임하고 버튼 상태를 갱신한다.
+  void redo() {
+    final notifier = lastActiveScribbleNotifier;
+    if (notifier != null && notifier.canRedo) {
+      notifier.redo();
+    }
+    updateUndoRedoState();
+  }
+
+  /// 🗑️ 활성 notifier의 전체 지우기를 위임하고 버튼 상태를 갱신한다.
+  void clearActive() {
+    lastActiveScribbleNotifier?.clear();
+    updateUndoRedoState();
+  }
+
   /// 🔔 Undo/Redo 상태 변경 콜백 등록
   void registerUndoRedoUpdateCallback(VoidCallback callback) {
     canUndoNotifier.addListener(callback);
