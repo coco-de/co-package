@@ -80,7 +80,12 @@ export 'src/domain/usecase/build_search_index_use_case.dart'
 
 // 위젯 + 엔진
 export 'src/presentation/widgets/epub_reader.dart'
-    show EpubReader, EpubSessionReadyCallback;
+    show
+        EpubReader,
+        EpubSessionReadyCallback,
+        EpubPageChangedCallback,
+        EpubPositionChangedCallback,
+        EpubViewportChangedCallback;
 export 'src/presentation/engine/reflowable/reflowable_engine.dart'
     show ReflowableEngine, XhtmlLoader, ImageLoader, EpubLinkTapCallback;
 export 'src/presentation/engine/reflowable/reflowable_page_view.dart'

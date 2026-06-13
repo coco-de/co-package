@@ -23,12 +23,13 @@ class FixedLayoutPage extends StatefulWidget {
     this.maxZoom = 4.0,
     this.doubleTapZoom = 2.0,
     this.enableZoom = true,
-  }) : assert(minZoom > 0, 'minZoom must be > 0'),
-       assert(maxZoom >= minZoom, 'maxZoom must be >= minZoom'),
-       assert(
-         doubleTapZoom >= minZoom && doubleTapZoom <= maxZoom,
-         'doubleTapZoom must be within [minZoom, maxZoom]',
-       );
+    this.transformationController,
+  })  : assert(minZoom > 0, 'minZoom must be > 0'),
+        assert(maxZoom >= minZoom, 'maxZoom must be >= minZoom'),
+        assert(
+          doubleTapZoom >= minZoom && doubleTapZoom <= maxZoom,
+          'doubleTapZoom must be within [minZoom, maxZoom]',
+        );
 
   final Size logicalSize;
   final Widget content;
@@ -47,6 +48,11 @@ class FixedLayoutPage extends StatefulWidget {
   /// false면 InteractiveViewer 비활성 (테스트 / 비 줌 모드).
   final bool enableZoom;
 
+  /// 호스트가 zoom/pan을 공유·관찰하려면 주입한다(open-board 필기 오버레이가
+  /// 같은 변환 행렬로 본문과 필기 레이어를 정렬, S8.3). null이면 내부 생성.
+  /// 주입 시 dispose는 호스트 책임.
+  final TransformationController? transformationController;
+
   @override
   State<FixedLayoutPage> createState() => FixedLayoutPageState();
 }
@@ -54,6 +60,9 @@ class FixedLayoutPage extends StatefulWidget {
 @visibleForTesting
 class FixedLayoutPageState extends State<FixedLayoutPage> {
   late final TransformationController _controller;
+
+  /// 내부 생성 컨트롤러만 dispose한다(주입된 것은 호스트 소유).
+  bool _ownsController = false;
 
   TransformationController get controller => _controller;
 
@@ -66,12 +75,14 @@ class FixedLayoutPageState extends State<FixedLayoutPage> {
   @override
   void initState() {
     super.initState();
-    _controller = TransformationController();
+    final injected = widget.transformationController;
+    _controller = injected ?? TransformationController();
+    _ownsController = injected == null;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (_ownsController) _controller.dispose();
     super.dispose();
   }
 

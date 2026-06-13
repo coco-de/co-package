@@ -6,6 +6,7 @@
 // 또는 FixedLayoutEngine으로 분기. 선택적 사용 — kobic은 자체 BLoC을 통해
 // EpubBookSession을 직접 다룬다.
 
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -19,10 +20,22 @@ import '../../domain/entity/epub_highlight.dart';
 import '../../domain/entity/epub_spine_item.dart';
 import '../engine/fixed_layout/fixed_layout_engine.dart';
 import '../engine/reflowable/reflowable_engine.dart';
+import '../engine/reflowable/reflowable_page_view.dart';
 
 /// 세션 open 완료 시점에 호출 — 호출자가 analytics 스트림 구독·위치 저장 등
 /// 세션 수준 기능에 접근할 수 있게 한다.
 typedef EpubSessionReadyCallback = void Function(EpubBookSession session);
+
+/// 페이지(spine) 전환 콜백. (spineIndex, spineCount). open-board 필기
+/// 오버레이가 페이지별 필기 저장/복원에 사용한다. (S8.1)
+typedef EpubPageChangedCallback = void Function(int spineIndex, int spineCount);
+
+/// 현재 읽기 위치 변경 콜백. position.toToken()은 필기·주석의 안정 앵커
+/// (page-index 대신 — repagination에도 보존, S8.4).
+typedef EpubPositionChangedCallback = void Function(EpubPosition position);
+
+/// 본문 viewport 크기 변경 콜백. 오버레이 정합에 사용. (S8.2)
+typedef EpubViewportChangedCallback = void Function(Size viewportSize);
 
 /// open_epub 1.0 최상위 reader widget.
 ///
@@ -41,6 +54,10 @@ class EpubReader extends StatefulWidget {
     this.showProgressIndicator = true,
     this.highlights = const [],
     this.onLinkTap,
+    this.paged = false,
+    this.onPageChanged,
+    this.onPositionChanged,
+    this.onViewportChanged,
   });
 
   final EpubSource source;
@@ -67,6 +84,19 @@ class EpubReader extends StatefulWidget {
   /// [SpineTextExtractor.highlightIdFromHref]로 하이라이트 id를, 그 외는
   /// [EpubBookSession.resolveLink]로 책 내부 위치를 얻는다(호스트 라우팅). (S7.3/S7.5)
   final EpubLinkTapCallback? onLinkTap;
+
+  /// Reflowable을 spine 단위 PageView(스와이프)로 표시한다. open-board 필기
+  /// 오버레이처럼 페이지 전환 이벤트가 필요한 호스트가 사용. (S8.1)
+  final bool paged;
+
+  /// 페이지(spine) 전환 콜백. (S8.1)
+  final EpubPageChangedCallback? onPageChanged;
+
+  /// 위치 변경 콜백 — position.toToken()을 필기 앵커로 사용. (S8.4)
+  final EpubPositionChangedCallback? onPositionChanged;
+
+  /// 본문 viewport 크기 변경 콜백. (S8.2)
+  final EpubViewportChangedCallback? onViewportChanged;
 
   @override
   State<EpubReader> createState() => _EpubReaderState();
@@ -117,13 +147,17 @@ class _EpubReaderState extends State<EpubReader> {
           showProgressIndicator: widget.showProgressIndicator,
           highlights: widget.highlights,
           onLinkTap: widget.onLinkTap,
+          paged: widget.paged,
+          onPageChanged: widget.onPageChanged,
+          onPositionChanged: widget.onPositionChanged,
+          onViewportChanged: widget.onViewportChanged,
         );
       },
     );
   }
 }
 
-class _SessionView extends StatelessWidget {
+class _SessionView extends StatefulWidget {
   const _SessionView({
     required this.session,
     required this.fontSize,
@@ -131,6 +165,10 @@ class _SessionView extends StatelessWidget {
     required this.showProgressIndicator,
     required this.highlights,
     required this.onLinkTap,
+    required this.paged,
+    required this.onPageChanged,
+    required this.onPositionChanged,
+    required this.onViewportChanged,
   });
 
   final EpubBookSession session;
@@ -139,38 +177,100 @@ class _SessionView extends StatelessWidget {
   final bool showProgressIndicator;
   final List<EpubHighlight> highlights;
   final EpubLinkTapCallback? onLinkTap;
+  final bool paged;
+  final EpubPageChangedCallback? onPageChanged;
+  final EpubPositionChangedCallback? onPositionChanged;
+  final EpubViewportChangedCallback? onViewportChanged;
+
+  @override
+  State<_SessionView> createState() => _SessionViewState();
+}
+
+class _SessionViewState extends State<_SessionView> {
+  Size? _lastViewport;
+
+  EpubBookSession get _session => widget.session;
 
   int get _initialSpineIndex {
-    final spine = session.book.spine;
-    final i = spine.indexWhere((s) => s.href == session.position.spineHref);
+    final spine = _session.book.spine;
+    final i = spine.indexWhere((s) => s.href == _session.position.spineHref);
     return i < 0 ? 0 : i;
   }
 
   String? get _restoreFailedMessage {
-    for (final issue in session.diagnostics.unresolvedIssues) {
+    for (final issue in _session.diagnostics.unresolvedIssues) {
       if (issue.code == 'position-restore-failed') return issue.message;
     }
     return null;
   }
 
   @override
+  void initState() {
+    super.initState();
+    // 초기 위치/페이지를 한 번 보고(open-board가 첫 페이지 필기를 로드, S8.1).
+    if (widget.onPositionChanged != null || widget.onPageChanged != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        widget.onPositionChanged?.call(_session.position);
+        widget.onPageChanged?.call(
+          _initialSpineIndex,
+          _session.book.spine.length,
+        );
+      });
+    }
+  }
+
+  EpubPosition _positionForSpine(int index) {
+    final spine = _session.book.spine;
+    final href = spine[index].href;
+    final denom = spine.length <= 1 ? 1 : spine.length - 1;
+    final p = index / denom;
+    if (_session.book.layout == EpubLayout.fixedLayout) {
+      return EpubFixedPosition(spineHref: href, progress: p, pageIndex: 0);
+    }
+    return EpubReflowablePosition(spineHref: href, progress: p, charOffset: 0);
+  }
+
+  void _handlePageChanged(int index) {
+    final pos = _positionForSpine(index);
+    // 세션 위치를 동기화(progress/analytics 일관) — 결과는 기다리지 않는다.
+    unawaited(_session.jumpTo(pos));
+    widget.onPositionChanged?.call(pos);
+    widget.onPageChanged?.call(index, _session.book.spine.length);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final book = session.book;
-    final engine = book.layout == EpubLayout.fixedLayout
-        ? FixedLayoutEngine(
-            book: book,
-            initialSpineIndex: _initialSpineIndex,
-            pageBuilder: _buildFixedPage,
-          )
-        : ReflowableEngine(
-            book: book,
-            initialSpineIndex: _initialSpineIndex,
-            xhtmlLoader: _loadXhtml,
-            imageLoader: _loadImage,
-            fontSize: fontSize,
-            lineHeight: lineHeight,
-            onLinkTap: onLinkTap,
-          );
+    final book = _session.book;
+    final Widget engine;
+    if (book.layout == EpubLayout.fixedLayout) {
+      engine = FixedLayoutEngine(
+        book: book,
+        initialSpineIndex: _initialSpineIndex,
+        pageBuilder: _buildFixedPage,
+      );
+    } else if (widget.paged) {
+      engine = ReflowablePageView(
+        book: book,
+        initialSpineIndex: _initialSpineIndex,
+        xhtmlLoader: _loadXhtml,
+        imageLoader: _loadImage,
+        fontSize: widget.fontSize,
+        lineHeight: widget.lineHeight,
+        onLinkTap: widget.onLinkTap,
+        onPageChanged: _handlePageChanged,
+      );
+    } else {
+      engine = ReflowableEngine(
+        book: book,
+        initialSpineIndex: _initialSpineIndex,
+        xhtmlLoader: _loadXhtml,
+        imageLoader: _loadImage,
+        fontSize: widget.fontSize,
+        lineHeight: widget.lineHeight,
+        onLinkTap: widget.onLinkTap,
+      );
+    }
 
     final restoreMessage = _restoreFailedMessage;
     return Column(
@@ -189,12 +289,12 @@ class _SessionView extends StatelessWidget {
               ),
             ),
           ),
-        Expanded(child: engine),
-        if (showProgressIndicator)
+        Expanded(child: _maybeReportViewport(engine)),
+        if (widget.showProgressIndicator)
           Padding(
             padding: const EdgeInsets.all(8),
             child: Text(
-              '${(session.progress * 100).round()}%',
+              '${(_session.progress * 100).round()}%',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -202,29 +302,49 @@ class _SessionView extends StatelessWidget {
     );
   }
 
+  /// onViewportChanged가 있으면 LayoutBuilder로 본문 영역 크기를 관찰해
+  /// 변경 시 보고한다(빌드 중 콜백 회피 — post-frame). (S8.2)
+  Widget _maybeReportViewport(Widget child) {
+    if (widget.onViewportChanged == null) return child;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        if (size != _lastViewport) {
+          _lastViewport = size;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) widget.onViewportChanged?.call(size);
+          });
+        }
+        return child;
+      },
+    );
+  }
+
   Future<String> _loadXhtml(String spineHref) async {
-    if (highlights.isEmpty) return session.readSpineXhtml(spineHref) ?? '';
+    if (widget.highlights.isEmpty) {
+      return _session.readSpineXhtml(spineHref) ?? '';
+    }
     // 하이라이트가 있으면 코어 렌더 경로로 주입. onLinkTap이 있으면 탭 가능
     // 링크로 감싸 하이라이트 탭(S7.3)을 받는다.
-    return session.readSpineXhtmlWithHighlights(
+    return _session.readSpineXhtmlWithHighlights(
           spineHref,
-          highlights,
-          tappable: onLinkTap != null,
+          widget.highlights,
+          tappable: widget.onLinkTap != null,
         ) ??
         '';
   }
 
   Future<Uint8List?> _loadImage(String src) async =>
-      session.resources.readBytes(src);
+      _session.resources.readBytes(src);
 
   Future<FixedLayoutPageData> _buildFixedPage(EpubSpineItem item) async {
-    final xhtml = session.readSpineXhtml(item.href) ?? '';
+    final xhtml = _session.readSpineXhtml(item.href) ?? '';
     return FixedLayoutPageData(
       logicalSize: _viewportSize(xhtml),
       content: buildReflowableHtml(
         data: xhtml,
-        fontSize: fontSize,
-        lineHeight: lineHeight,
+        fontSize: widget.fontSize,
+        lineHeight: widget.lineHeight,
         imageLoader: _loadImage,
       ),
     );
