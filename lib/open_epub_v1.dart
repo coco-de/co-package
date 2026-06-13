@@ -11,7 +11,8 @@
 //   EpubReader(source: EpubSource.bytes(bytes))
 
 // 세션 + 옵션
-export 'src/api/epub_book_session.dart' show EpubBookSession, EpubSessionOptions;
+export 'src/api/epub_book_session.dart'
+    show EpubBookSession, EpubSessionOptions;
 
 // 책 모델 + 도메인 엔티티
 export 'src/api/epub_book.dart' show EpubBook;
@@ -21,6 +22,11 @@ export 'src/domain/entity/epub_outline.dart' show EpubOutline, EpubOutlineItem;
 export 'src/domain/entity/epub_spine_item.dart' show EpubSpineItem;
 export 'src/domain/entity/epub_resource.dart'
     show EpubResource, EpubResourceReader;
+
+// 선택 + 하이라이트 (E1.5)
+export 'src/domain/entity/epub_selection.dart' show EpubSelection;
+export 'src/domain/entity/epub_highlight.dart' show EpubHighlight;
+export 'src/data/text/spine_text_extractor.dart' show SpineTextExtractor;
 
 // 소스
 export 'src/api/epub_source.dart' show EpubSource;

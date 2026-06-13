@@ -9,7 +9,12 @@ import '../data/compat/patch_catalog.dart'
     show BookSessionDiagnostics, BookSessionDiagnosticsData, UnresolvedIssue;
 import '../data/repository/epub_repository_impl.dart';
 import '../data/security/html_sanitizer.dart';
+import '../data/text/spine_text_extractor.dart';
+import '../domain/entity/epub_highlight.dart';
+import '../domain/entity/epub_outline.dart';
 import '../domain/entity/epub_resource.dart';
+import '../domain/entity/epub_selection.dart';
+import '../domain/usecase/build_search_index_use_case.dart';
 import '../domain/usecase/open_epub_use_case.dart';
 import '../domain/usecase/resolve_position_use_case.dart';
 import 'epub_analytics.dart';
@@ -44,6 +49,38 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
   /// [spineHref]의 본문 XHTML을 읽어 보안 sanitize(script/iframe 차단) 후
   /// 반환한다. 해당 리소스가 없으면 null.
   String? readSpineXhtml(String spineHref);
+
+  /// [spineHref] 본문을 sanitize한 뒤 [highlights]를 배경색 span으로 주입해
+  /// 반환한다. 코어 하이라이트 렌더 경로(데모의 host-측 DOM 주입 대체).
+  /// 다른 spine의 하이라이트는 무시한다. 리소스가 없으면 null. (S1.5-4)
+  String? readSpineXhtmlWithHighlights(
+    String spineHref,
+    Iterable<EpubHighlight> highlights,
+  );
+
+  /// 책 목차(설계 §4.3 — 세션 레벨 노출). (S1.5-8)
+  EpubOutline get outline;
+
+  /// 현재 선택 영역 stream. 호스트(UI)가 [reportSelection]로 push한다.
+  /// 선택 해제 시 null. (S1.5-2, 설계 §4.3)
+  Stream<EpubSelection?> get selectionStream;
+
+  /// 시각 선택 변경을 코어로 전달한다 → [selectionStream]에 발사. (S1.5-2)
+  void reportSelection(EpubSelection? selection);
+
+  /// [spineHref] 본문에서 [selectedText]를 찾아 [EpubSelection]으로 변환한다.
+  /// 일치하지 않으면 null. [occurrence]로 N번째 일치 선택. (S1.5-3)
+  EpubSelection? resolveSelection(
+    String spineHref,
+    String selectedText, {
+    int occurrence = 0,
+  });
+
+  /// 전체 spine 본문을 추출해 검색 인덱스를 빌드한다. (S1.5-5/8)
+  Future<BookSearchIndex> buildSearchIndex();
+
+  /// 검색 결과 1건을 점프 가능한 [EpubReflowablePosition]으로 변환한다. (S1.5-6)
+  EpubReflowablePosition positionForHit(BookSearchHit hit);
 
   /// 현재 읽기 위치.
   EpubPosition get position;
@@ -142,7 +179,10 @@ class _EpubBookSessionImpl implements EpubBookSession {
     final resolved = const ResolvePositionUseCase().call(book, target);
 
     // 페이지 이동에 사용할 linear spine href 순서(없으면 전체 spine).
-    final linear = [for (final s in book.spine) if (s.linear) s.href];
+    final linear = [
+      for (final s in book.spine)
+        if (s.linear) s.href
+    ];
     final navHrefs =
         linear.isNotEmpty ? linear : [for (final s in book.spine) s.href];
 
@@ -183,8 +223,12 @@ class _EpubBookSessionImpl implements EpubBookSession {
       StreamController<EpubProgressEvent>.broadcast();
   final StreamController<EpubToolUseEvent> _toolUse =
       StreamController<EpubToolUseEvent>.broadcast();
+  final StreamController<EpubSelection?> _selection =
+      StreamController<EpubSelection?>.broadcast();
 
   final List<EpubLifecycleEvent> _lifecycleBuffer = [];
+
+  static const SpineTextExtractor _extractor = SpineTextExtractor();
 
   @override
   EpubBook get book => _state.book;
@@ -198,6 +242,75 @@ class _EpubBookSessionImpl implements EpubBookSession {
     final raw = _state.resources.readString(spineHref);
     if (raw == null) return null;
     return HtmlSanitizer(_security).sanitize(raw);
+  }
+
+  @override
+  String? readSpineXhtmlWithHighlights(
+    String spineHref,
+    Iterable<EpubHighlight> highlights,
+  ) {
+    final sanitized = readSpineXhtml(spineHref);
+    if (sanitized == null) return null;
+    final forSpine = [
+      for (final h in highlights)
+        if (h.spineHref == spineHref) h,
+    ];
+    if (forSpine.isEmpty) return sanitized;
+    return _extractor.injectHighlights(sanitized, forSpine);
+  }
+
+  @override
+  EpubOutline get outline => _state.book.outline;
+
+  @override
+  Stream<EpubSelection?> get selectionStream => _selection.stream;
+
+  @override
+  void reportSelection(EpubSelection? selection) {
+    _ensureActive();
+    if (!_selection.isClosed) _selection.add(selection);
+  }
+
+  @override
+  EpubSelection? resolveSelection(
+    String spineHref,
+    String selectedText, {
+    int occurrence = 0,
+  }) {
+    final xhtml = readSpineXhtml(spineHref);
+    if (xhtml == null) return null;
+    return _extractor.resolveSelection(
+      spineHref: spineHref,
+      xhtml: xhtml,
+      selectedText: selectedText,
+      occurrence: occurrence,
+    );
+  }
+
+  @override
+  Future<BookSearchIndex> buildSearchIndex() async {
+    final spineTexts = <String, String>{};
+    for (final item in _state.book.spine) {
+      final xhtml = readSpineXhtml(item.href);
+      if (xhtml == null) continue;
+      spineTexts[item.href] = _extractor.extractPlainText(xhtml);
+    }
+    return const BuildSearchIndexUseCase().call(
+      _state.book,
+      spineTexts: spineTexts,
+    );
+  }
+
+  @override
+  EpubReflowablePosition positionForHit(BookSearchHit hit) {
+    final i = _navHrefs.indexOf(hit.spineHref);
+    final index = i < 0 ? 0 : i;
+    final denom = _navHrefs.length <= 1 ? 1 : _navHrefs.length - 1;
+    return EpubReflowablePosition(
+      spineHref: hit.spineHref,
+      progress: index / denom,
+      charOffset: hit.charOffset,
+    );
   }
 
   @override
@@ -297,6 +410,7 @@ class _EpubBookSessionImpl implements EpubBookSession {
     unawaited(_lifecycle.close());
     unawaited(_progress.close());
     unawaited(_toolUse.close());
+    unawaited(_selection.close());
   }
 
   void _emitLifecycle(EpubLifecycleEvent event) {
