@@ -15,6 +15,7 @@ import '../../api/epub_book_session.dart';
 import '../../api/epub_position.dart';
 import '../../api/epub_source.dart';
 import '../../domain/entity/epub_failure.dart';
+import '../../domain/entity/epub_highlight.dart';
 import '../../domain/entity/epub_spine_item.dart';
 import '../engine/fixed_layout/fixed_layout_engine.dart';
 import '../engine/reflowable/reflowable_engine.dart';
@@ -38,6 +39,8 @@ class EpubReader extends StatefulWidget {
     this.fontSize = 16.0,
     this.lineHeight = 1.5,
     this.showProgressIndicator = true,
+    this.highlights = const [],
+    this.onLinkTap,
   });
 
   final EpubSource source;
@@ -56,6 +59,14 @@ class EpubReader extends StatefulWidget {
 
   /// 하단 진도 인디케이터("45%") 표시 여부.
   final bool showProgressIndicator;
+
+  /// 본문에 렌더할 하이라이트(Reflowable). 변경 시 본문이 다시 그려진다. (S7)
+  final List<EpubHighlight> highlights;
+
+  /// 본문 링크/하이라이트 탭 콜백. href가 `openepub-hl:ID`면
+  /// [SpineTextExtractor.highlightIdFromHref]로 하이라이트 id를, 그 외는
+  /// [EpubBookSession.resolveLink]로 책 내부 위치를 얻는다(호스트 라우팅). (S7.3/S7.5)
+  final EpubLinkTapCallback? onLinkTap;
 
   @override
   State<EpubReader> createState() => _EpubReaderState();
@@ -104,6 +115,8 @@ class _EpubReaderState extends State<EpubReader> {
           fontSize: widget.fontSize,
           lineHeight: widget.lineHeight,
           showProgressIndicator: widget.showProgressIndicator,
+          highlights: widget.highlights,
+          onLinkTap: widget.onLinkTap,
         );
       },
     );
@@ -116,12 +129,16 @@ class _SessionView extends StatelessWidget {
     required this.fontSize,
     required this.lineHeight,
     required this.showProgressIndicator,
+    required this.highlights,
+    required this.onLinkTap,
   });
 
   final EpubBookSession session;
   final double fontSize;
   final double lineHeight;
   final bool showProgressIndicator;
+  final List<EpubHighlight> highlights;
+  final EpubLinkTapCallback? onLinkTap;
 
   int get _initialSpineIndex {
     final spine = session.book.spine;
@@ -152,6 +169,7 @@ class _SessionView extends StatelessWidget {
             imageLoader: _loadImage,
             fontSize: fontSize,
             lineHeight: lineHeight,
+            onLinkTap: onLinkTap,
           );
 
     final restoreMessage = _restoreFailedMessage;
@@ -184,8 +202,17 @@ class _SessionView extends StatelessWidget {
     );
   }
 
-  Future<String> _loadXhtml(String spineHref) async =>
-      session.readSpineXhtml(spineHref) ?? '';
+  Future<String> _loadXhtml(String spineHref) async {
+    if (highlights.isEmpty) return session.readSpineXhtml(spineHref) ?? '';
+    // 하이라이트가 있으면 코어 렌더 경로로 주입. onLinkTap이 있으면 탭 가능
+    // 링크로 감싸 하이라이트 탭(S7.3)을 받는다.
+    return session.readSpineXhtmlWithHighlights(
+          spineHref,
+          highlights,
+          tappable: onLinkTap != null,
+        ) ??
+        '';
+  }
 
   Future<Uint8List?> _loadImage(String src) async =>
       session.resources.readBytes(src);
@@ -215,8 +242,7 @@ class _SessionView extends StatelessWidget {
   }
 
   static double? _viewportDimension(String xhtml, String name) {
-    final match =
-        RegExp('$name\\s*=\\s*(\\d+(?:\\.\\d+)?)').firstMatch(xhtml);
+    final match = RegExp('$name\\s*=\\s*(\\d+(?:\\.\\d+)?)').firstMatch(xhtml);
     return match == null ? null : double.tryParse(match.group(1)!);
   }
 }

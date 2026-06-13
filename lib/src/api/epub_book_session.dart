@@ -50,13 +50,24 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
   /// 반환한다. 해당 리소스가 없으면 null.
   String? readSpineXhtml(String spineHref);
 
-  /// [spineHref] 본문을 sanitize한 뒤 [highlights]를 배경색 span으로 주입해
+  /// [spineHref] 본문을 sanitize한 뒤 [highlights]를 배경색으로 주입해
   /// 반환한다. 코어 하이라이트 렌더 경로(데모의 host-측 DOM 주입 대체).
   /// 다른 spine의 하이라이트는 무시한다. 리소스가 없으면 null. (S1.5-4)
+  ///
+  /// [tappable]이 true면 하이라이트를 탭 가능한 링크로 감싸 엔진 `onLinkTap`
+  /// → [SpineTextExtractor.highlightIdFromHref]로 식별할 수 있다. (S7.3)
   String? readSpineXhtmlWithHighlights(
     String spineHref,
-    Iterable<EpubHighlight> highlights,
-  );
+    Iterable<EpubHighlight> highlights, {
+    bool tappable = false,
+  });
+
+  /// 본문 링크 href를 책 내부 점프 위치로 변환한다. (S7.5)
+  ///
+  /// `ch2.xhtml`·`ch2.xhtml#frag` 같은 책 내부 상대 경로는 해당 spine의
+  /// [EpubReflowablePosition]으로, 외부 URL(http/https/mailto 등)이나 알 수
+  /// 없는 대상은 null로 반환한다(호스트가 외부 처리). fragment는 현재 무시.
+  EpubPosition? resolveLink(String href, {String? fromSpineHref});
 
   /// 책 목차(설계 §4.3 — 세션 레벨 노출). (S1.5-8)
   EpubOutline get outline;
@@ -247,8 +258,9 @@ class _EpubBookSessionImpl implements EpubBookSession {
   @override
   String? readSpineXhtmlWithHighlights(
     String spineHref,
-    Iterable<EpubHighlight> highlights,
-  ) {
+    Iterable<EpubHighlight> highlights, {
+    bool tappable = false,
+  }) {
     final sanitized = readSpineXhtml(spineHref);
     if (sanitized == null) return null;
     final forSpine = [
@@ -256,7 +268,45 @@ class _EpubBookSessionImpl implements EpubBookSession {
         if (h.spineHref == spineHref) h,
     ];
     if (forSpine.isEmpty) return sanitized;
-    return _extractor.injectHighlights(sanitized, forSpine);
+    return _extractor.injectHighlights(sanitized, forSpine, tappable: tappable);
+  }
+
+  @override
+  EpubPosition? resolveLink(String href, {String? fromSpineHref}) {
+    final trimmed = href.trim();
+    if (trimmed.isEmpty) return null;
+    // 외부 스킴(http/https/mailto/tel 등)·하이라이트 링크는 책 내부 대상 아님.
+    if (trimmed.contains('://') ||
+        trimmed.startsWith('mailto:') ||
+        trimmed.startsWith('tel:') ||
+        SpineTextExtractor.highlightIdFromHref(trimmed) != null) {
+      return null;
+    }
+    // fragment 제거 (#frag는 현재 무시 — spine 단위 점프).
+    final path = trimmed.split('#').first;
+    if (path.isEmpty) return null; // 같은 문서 내 앵커("#frag")는 위치 유지.
+    final match = _matchSpineHref(path);
+    if (match == null) return null;
+    final i = _navHrefs.indexOf(match);
+    final index = i < 0 ? 0 : i;
+    final denom = _navHrefs.length <= 1 ? 1 : _navHrefs.length - 1;
+    return EpubReflowablePosition(
+      spineHref: match,
+      progress: index / denom,
+      charOffset: 0,
+    );
+  }
+
+  /// 링크 경로를 spine href로 매칭한다. 정확 일치 우선, 없으면 파일명 일치.
+  String? _matchSpineHref(String path) {
+    for (final item in _state.book.spine) {
+      if (item.href == path) return item.href;
+    }
+    final file = path.split('/').last;
+    for (final item in _state.book.spine) {
+      if (item.href.split('/').last == file) return item.href;
+    }
+    return null;
   }
 
   @override

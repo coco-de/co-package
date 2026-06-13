@@ -23,6 +23,10 @@ typedef XhtmlLoader = Future<String> Function(String spineHref);
 /// null 반환 또는 throw 시 placeholder가 표시된다.
 typedef ImageLoader = Future<Uint8List?> Function(String src);
 
+/// 본문 내 링크(`<a href>`) 탭 콜백. href는 책 내부 상대 경로(예: "ch2.xhtml"),
+/// 외부 URL, 또는 하이라이트 링크(openepub-hl:ID)일 수 있다. (S7.3/S7.5)
+typedef EpubLinkTapCallback = void Function(String href);
+
 /// Reflowable EPUB 책의 본문을 표시하는 최상위 엔진 widget.
 ///
 /// 페이지 분할은 본 Story 범위가 아니므로 현재 spine 항목 전체를 스크롤로
@@ -37,6 +41,7 @@ class ReflowableEngine extends StatefulWidget {
     this.initialSpineIndex = 0,
     this.fontSize = 16.0,
     this.lineHeight = 1.5,
+    this.onLinkTap,
   });
 
   final EpubBook book;
@@ -49,6 +54,9 @@ class ReflowableEngine extends StatefulWidget {
 
   /// 본문 줄간격 (배수). BDD F2.3 — 변경 시 본문 재배치.
   final double lineHeight;
+
+  /// 본문 링크/하이라이트 탭 콜백. (S7.3/S7.5)
+  final EpubLinkTapCallback? onLinkTap;
 
   @override
   State<ReflowableEngine> createState() => ReflowableEngineState();
@@ -120,6 +128,7 @@ class ReflowableEngineState extends State<ReflowableEngine> {
             fontSize: widget.fontSize,
             lineHeight: widget.lineHeight,
             imageLoader: widget.imageLoader,
+            onLinkTap: widget.onLinkTap,
           ),
         );
       },
@@ -134,9 +143,15 @@ Html buildReflowableHtml({
   required double fontSize,
   required double lineHeight,
   required ImageLoader? imageLoader,
+  EpubLinkTapCallback? onLinkTap,
 }) {
   return Html(
     data: data,
+    onLinkTap: onLinkTap == null
+        ? null
+        : (url, _, __) {
+            if (url != null && url.isNotEmpty) onLinkTap(url);
+          },
     style: {
       'body': Style(
         fontSize: FontSize(fontSize),

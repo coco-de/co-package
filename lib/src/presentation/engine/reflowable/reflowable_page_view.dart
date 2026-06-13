@@ -26,6 +26,7 @@ class ReflowablePageView extends StatefulWidget {
     this.lineHeight = 1.5,
     this.paginationStrategy = const SinglePagePerSpineStrategy(),
     this.onPageChanged,
+    this.onLinkTap,
   });
 
   final EpubBook book;
@@ -36,6 +37,9 @@ class ReflowablePageView extends StatefulWidget {
   final double lineHeight;
   final PaginationStrategy paginationStrategy;
   final ValueChanged<int>? onPageChanged;
+
+  /// 본문 링크/하이라이트 탭 콜백. (S7.3/S7.5)
+  final EpubLinkTapCallback? onLinkTap;
 
   @override
   State<ReflowablePageView> createState() => ReflowablePageViewState();
@@ -138,6 +142,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
                 fontSize: widget.fontSize,
                 lineHeight: widget.lineHeight,
                 imageLoader: widget.imageLoader,
+                onLinkTap: widget.onLinkTap,
               ),
             );
           },

@@ -28,6 +28,11 @@ export 'src/domain/entity/epub_selection.dart' show EpubSelection;
 export 'src/domain/entity/epub_highlight.dart' show EpubHighlight;
 export 'src/data/text/spine_text_extractor.dart' show SpineTextExtractor;
 
+// Reader interop primitives (E7)
+export 'src/data/text/search_highlighter.dart' show SearchHighlighter;
+export 'src/presentation/interop/epub_selection_toolbar.dart'
+    show EpubSelectionAction, epubSelectionButtonItems;
+
 // 소스
 export 'src/api/epub_source.dart' show EpubSource;
 
@@ -77,7 +82,7 @@ export 'src/domain/usecase/build_search_index_use_case.dart'
 export 'src/presentation/widgets/epub_reader.dart'
     show EpubReader, EpubSessionReadyCallback;
 export 'src/presentation/engine/reflowable/reflowable_engine.dart'
-    show ReflowableEngine, XhtmlLoader, ImageLoader;
+    show ReflowableEngine, XhtmlLoader, ImageLoader, EpubLinkTapCallback;
 export 'src/presentation/engine/reflowable/reflowable_page_view.dart'
     show ReflowablePageView;
 export 'src/presentation/engine/fixed_layout/fixed_layout_engine.dart'

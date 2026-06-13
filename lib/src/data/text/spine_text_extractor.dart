@@ -67,10 +67,29 @@ class SpineTextExtractor {
     );
   }
 
-  /// [highlights]를 평문 오프셋 기준으로 [xhtml] 원본에 배경색 span으로
-  /// 주입한다. 태그를 파손하지 않으며, 여러 텍스트 노드에 걸친 하이라이트는
-  /// 노드별로 분할해 감싼다. 범위를 벗어나거나 빈 하이라이트는 건너뛴다.
-  String injectHighlights(String xhtml, Iterable<EpubHighlight> highlights) {
+  /// 하이라이트 탭 라우팅용 링크 스킴. [injectHighlights]가 `tappable: true`로
+  /// 주입한 `<a href>`의 prefix이며, flutter_html `onLinkTap`이 이 스킴으로
+  /// 시작하는 url을 하이라이트 탭으로 식별한다. (S7.3)
+  static const String highlightLinkScheme = 'openepub-hl:';
+
+  /// onLinkTap이 받은 [href]가 하이라이트 링크면 그 id를, 아니면 null. (S7.3)
+  static String? highlightIdFromHref(String href) =>
+      href.startsWith(highlightLinkScheme)
+          ? href.substring(highlightLinkScheme.length)
+          : null;
+
+  /// [highlights]를 평문 오프셋 기준으로 [xhtml] 원본에 배경색으로 주입한다.
+  /// 태그를 파손하지 않으며, 여러 텍스트 노드에 걸친 하이라이트는 노드별로
+  /// 분할해 감싼다. 범위를 벗어나거나 빈 하이라이트는 건너뛴다.
+  ///
+  /// [tappable]이 true면 `<span>` 대신 `<a href="openepub-hl:ID">`로 감싸
+  /// flutter_html `onLinkTap`으로 탭을 받을 수 있게 한다(밑줄/링크색은
+  /// 제거). (S7.3)
+  String injectHighlights(
+    String xhtml,
+    Iterable<EpubHighlight> highlights, {
+    bool tappable = false,
+  }) {
     final runs = _runs(xhtml);
     if (runs.isEmpty) return xhtml;
     final plainLength = runs.fold<int>(0, (sum, r) => sum + r.length);
@@ -84,8 +103,16 @@ class SpineTextExtractor {
       if (end <= start) continue;
       if (start >= plainLength) continue;
       final clampedEnd = end > plainLength ? plainLength : end;
-      final open = '<span style="background-color:${_cssHex(h.colorArgb)};">';
-      _emitSpansForRange(runs, start, clampedEnd, open, inserts);
+      final color = _cssHex(h.colorArgb);
+      final (open, close) = tappable
+          ? (
+              '<a href="$highlightLinkScheme${h.id}" '
+                  'style="background-color:$color;color:inherit;'
+                  'text-decoration:none;">',
+              '</a>',
+            )
+          : ('<span style="background-color:$color;">', '</span>');
+      _emitSpansForRange(runs, start, clampedEnd, open, close, inserts);
     }
     if (inserts.isEmpty) return xhtml;
 
@@ -112,6 +139,7 @@ class SpineTextExtractor {
     int start,
     int end,
     String open,
+    String close,
     List<_Insert> inserts,
   ) {
     var plainCursor = 0;
@@ -126,7 +154,7 @@ class SpineTextExtractor {
       final srcOpen = run.start + (sliceStartPlain - runStartPlain);
       final srcClose = run.start + (sliceEndPlain - runStartPlain);
       inserts.add(_Insert(srcOpen, open, 1));
-      inserts.add(_Insert(srcClose, '</span>', 0));
+      inserts.add(_Insert(srcClose, close, 0));
     }
   }
 
