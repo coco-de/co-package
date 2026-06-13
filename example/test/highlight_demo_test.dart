@@ -352,6 +352,43 @@ void main() {
       expect(toolUseEvents.whereType<EpubHighlightToolUse>(), hasLength(1));
     });
 
+    testWidgets('선택 시 하이라이트 FAB 노출·소비 (@P0 회귀 #45)', (tester) async {
+      // Given 책이 열려 있고 선택이 없으면 FAB가 보이지 않는다
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      final state = _state(tester);
+      final fab = find.widgetWithText(FloatingActionButton, '하이라이트');
+      expect(fab, findsNothing);
+
+      // When 본문 텍스트를 선택하면 (SelectionArea 드래그 치환)
+      state.debugSetSelection('고래는 바다에');
+      await tester.pump();
+
+      // Then "하이라이트" FAB가 나타난다 (데스크톱 웹 진입점)
+      expect(fab, findsOneWidget);
+      // 그리고 FAB의 onPressed는 선택 상태 기반 플로우를 연다
+      expect(
+        tester.widget<FloatingActionButton>(fab).onPressed,
+        isNotNull,
+      );
+
+      // When FAB가 여는 플로우(선택 상태 사용)로 색상을 저장하면
+      unawaited(state.startHighlightFlow());
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('색상 노랑'));
+      await tester.pump();
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      // Then 하이라이트가 저장·렌더되고 선택이 소비되어 FAB가 사라진다
+      expect(state.highlights, hasLength(1));
+      expect(
+        _highlightedPlainText(tester, highlightPalette['노랑']!),
+        contains('고래는 바다에'),
+      );
+      expect(fab, findsNothing);
+    });
+
     testWidgets('비선형 cover가 있는 책 — 챕터·하이라이트 정합 (@P0 회귀)', (tester) async {
       // Given linear="no" cover가 spine 첫 항목인 책이 열려 있다
       // (번들 example.epub와 같은 구조 — 인덱스 공간 불일치 회귀 검증)

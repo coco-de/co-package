@@ -8,7 +8,12 @@
 //
 // 동작 방식:
 //   - SelectionArea가 ReflowableEngine(내부 Text.rich)을 감싸 본문 선택 지원
-//   - 컨텍스트 메뉴 "하이라이트" → 색상 4종 + 메모 입력 시트 → 저장
+//   - 텍스트 선택 시 "하이라이트" FAB가 나타남 (#45). 데스크톱 웹에서는
+//     SelectionArea의 contextMenuBuilder 툴바가 표시되지 않으므로(드래그
+//     선택 후 미표시 + BrowserContextMenu가 우클릭을 가로챔) FAB가 전
+//     플랫폼에서 동작하는 기본 진입점이다. 모바일·네이티브에서는 컨텍스트
+//     메뉴의 "하이라이트"도 함께 동작한다.
+//   - 색상 4종 + 메모 입력 시트 → 저장
 //   - 저장된 하이라이트는 xhtmlLoader에서 XHTML에 배경색 span으로 주입
 //   - shared_preferences에 JSON으로 영속, session.recordHighlight()로
 //     toolUseEvents(F11) 연동
@@ -24,7 +29,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show BrowserContextMenu, rootBundle;
 import 'package:open_epub/open_epub_v1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -186,6 +191,8 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
 
   String? _selectedText;
 
+  bool get _hasSelection => (_selectedText ?? '').trim().isNotEmpty;
+
   @visibleForTesting
   EpubBookSession? get session => _session;
 
@@ -195,9 +202,23 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
   @visibleForTesting
   int get spineIndex => _spineIndex;
 
+  /// 테스트에서 본문 선택을 시뮬레이션한다 (SelectionArea 드래그는 위젯
+  /// 테스트에서 재현 불가).
+  @visibleForTesting
+  void debugSetSelection(String? text) {
+    if (!mounted) return;
+    setState(() => _selectedText = text);
+  }
+
   @override
   void initState() {
     super.initState();
+    // 데스크톱 웹에서 우클릭 시 브라우저 네이티브 메뉴가 Flutter 선택 툴바를
+    // 가로채므로, 이 페이지에 있는 동안 비활성화한다(#45). FAB가 주 진입점이고
+    // 이는 우클릭 경로를 보조로 살리기 위함이다.
+    if (kIsWeb) {
+      unawaited(BrowserContextMenu.disableContextMenu());
+    }
     _openFuture = _open();
   }
 
@@ -231,6 +252,9 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
 
   @override
   void dispose() {
+    if (kIsWeb) {
+      unawaited(BrowserContextMenu.enableContextMenu());
+    }
     unawaited(_session?.dispose());
     super.dispose();
   }
@@ -285,6 +309,8 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
     setState(() {
       _highlights = [..._highlights, highlight];
       _revision++;
+      // 선택이 소비됨 — FAB를 숨긴다 (엔진 재생성으로도 곧 비워지지만 즉시 반영).
+      _selectedText = null;
     });
     await _store.save(_highlights);
     // F11 — 호스트가 하이라이트 도구 사용을 analytics로 기록.
@@ -449,6 +475,19 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
           ),
         ],
       ),
+      // 선택이 있을 때만 나타나는 명시적 진입점(#45). TapRegion의 groupId를
+      // SelectableRegion으로 맞춰, FAB를 눌러도 SelectionArea가 "바깥 탭"으로
+      // 간주해 선택을 지우지 않도록 한다.
+      floatingActionButton: (_session != null && _hasSelection)
+          ? TapRegion(
+              groupId: SelectableRegion,
+              child: FloatingActionButton.extended(
+                onPressed: () => unawaited(startHighlightFlow()),
+                icon: const Icon(Icons.border_color_outlined),
+                label: const Text('하이라이트'),
+              ),
+            )
+          : null,
       body: FutureBuilder<EpubBookSession>(
         future: _openFuture,
         builder: (context, snapshot) {
@@ -468,8 +507,14 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
             children: [
               Expanded(
                 child: SelectionArea(
-                  onSelectionChanged: (content) =>
-                      _selectedText = content?.plainText,
+                  onSelectionChanged: (content) {
+                    final next = content?.plainText;
+                    // FAB 표시/숨김은 선택 유무로 갈리므로 그 경계에서만 rebuild
+                    // (드래그 중 매 프레임 setState 회피).
+                    final had = _hasSelection;
+                    _selectedText = next;
+                    if (had != _hasSelection) setState(() {});
+                  },
                   contextMenuBuilder: (context, selectableRegionState) =>
                       AdaptiveTextSelectionToolbar.buttonItems(
                     anchors: selectableRegionState.contextMenuAnchors,
@@ -513,7 +558,9 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
             children: [
               Expanded(
                 child: Text(
-                  '텍스트를 길게 눌러 선택한 뒤 "하이라이트"를 탭하세요',
+                  _hasSelection
+                      ? '"하이라이트" 버튼을 눌러 색을 칠하세요'
+                      : '본문 텍스트를 선택하면 하이라이트 버튼이 나타납니다',
                   style: theme.textTheme.bodySmall,
                   overflow: TextOverflow.ellipsis,
                 ),
