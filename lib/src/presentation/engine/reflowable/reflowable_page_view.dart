@@ -27,6 +27,7 @@ class ReflowablePageView extends StatefulWidget {
     this.paginationStrategy = const SinglePagePerSpineStrategy(),
     this.onPageChanged,
     this.onLinkTap,
+    this.onNavigatorReady,
   });
 
   final EpubBook book;
@@ -40,6 +41,11 @@ class ReflowablePageView extends StatefulWidget {
 
   /// 본문 링크/하이라이트 탭 콜백. (S7.3/S7.5)
   final EpubLinkTapCallback? onLinkTap;
+
+  /// 마운트 시 페이지 이동 함수(goToPage)를 부모에게 넘긴다 — 부모(EpubReader)가
+  /// EpubViewController에 연결해 prev/next 등 프로그램적 내비게이션을 제공. (S8.1)
+  final void Function(Future<void> Function(int index) goToPage)?
+      onNavigatorReady;
 
   @override
   State<ReflowablePageView> createState() => ReflowablePageViewState();
@@ -61,6 +67,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
       widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
     );
     _controller = PageController(initialPage: _pageIndex);
+    widget.onNavigatorReady?.call(goToPage);
   }
 
   @override

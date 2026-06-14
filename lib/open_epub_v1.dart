@@ -14,6 +14,9 @@
 export 'src/api/epub_book_session.dart'
     show EpubBookSession, EpubSessionOptions;
 
+// 1.0 reader 페이지 내비게이션 컨트롤러 (S8.1)
+export 'src/api/epub_reader_controller.dart' show EpubViewController;
+
 // 책 모델 + 도메인 엔티티
 export 'src/api/epub_book.dart' show EpubBook;
 export 'src/domain/entity/epub_metadata.dart'

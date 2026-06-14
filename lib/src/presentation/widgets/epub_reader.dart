@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import '../../api/epub_book.dart';
 import '../../api/epub_book_session.dart';
 import '../../api/epub_position.dart';
+import '../../api/epub_reader_controller.dart';
 import '../../api/epub_source.dart';
 import '../../domain/entity/epub_failure.dart';
 import '../../domain/entity/epub_highlight.dart';
@@ -58,6 +59,7 @@ class EpubReader extends StatefulWidget {
     this.onPageChanged,
     this.onPositionChanged,
     this.onViewportChanged,
+    this.controller,
   });
 
   final EpubSource source;
@@ -97,6 +99,10 @@ class EpubReader extends StatefulWidget {
 
   /// 본문 viewport 크기 변경 콜백. (S8.2)
   final EpubViewportChangedCallback? onViewportChanged;
+
+  /// 페이지 내비게이션 컨트롤러(prev/next 등). 지정 시 자동으로 paged 모드로
+  /// 표시된다. 레거시 EpubReaderController가 아닌 1.0 전용 타입. (S8.1)
+  final EpubViewController? controller;
 
   @override
   State<EpubReader> createState() => _EpubReaderState();
@@ -147,10 +153,12 @@ class _EpubReaderState extends State<EpubReader> {
           showProgressIndicator: widget.showProgressIndicator,
           highlights: widget.highlights,
           onLinkTap: widget.onLinkTap,
-          paged: widget.paged,
+          // controller가 있으면 프로그램적 내비게이션을 위해 paged 강제.
+          paged: widget.paged || widget.controller != null,
           onPageChanged: widget.onPageChanged,
           onPositionChanged: widget.onPositionChanged,
           onViewportChanged: widget.onViewportChanged,
+          controller: widget.controller,
         );
       },
     );
@@ -169,6 +177,7 @@ class _SessionView extends StatefulWidget {
     required this.onPageChanged,
     required this.onPositionChanged,
     required this.onViewportChanged,
+    required this.controller,
   });
 
   final EpubBookSession session;
@@ -181,6 +190,7 @@ class _SessionView extends StatefulWidget {
   final EpubPageChangedCallback? onPageChanged;
   final EpubPositionChangedCallback? onPositionChanged;
   final EpubViewportChangedCallback? onViewportChanged;
+  final EpubViewController? controller;
 
   @override
   State<_SessionView> createState() => _SessionViewState();
@@ -208,16 +218,25 @@ class _SessionViewState extends State<_SessionView> {
   void initState() {
     super.initState();
     // 초기 위치/페이지를 한 번 보고(open-board가 첫 페이지 필기를 로드, S8.1).
+    // 내부 PageView 이동 함수는 ReflowablePageView가 onNavigatorReady로 넘겨준다.
+    final count = _session.book.spine.length;
+    widget.controller?.syncState(
+      currentSpineIndex: _initialSpineIndex,
+      spineCount: count,
+    );
     if (widget.onPositionChanged != null || widget.onPageChanged != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         widget.onPositionChanged?.call(_session.position);
-        widget.onPageChanged?.call(
-          _initialSpineIndex,
-          _session.book.spine.length,
-        );
+        widget.onPageChanged?.call(_initialSpineIndex, count);
       });
     }
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.detachNavigator();
+    super.dispose();
   }
 
   EpubPosition _positionForSpine(int index) {
@@ -235,6 +254,10 @@ class _SessionViewState extends State<_SessionView> {
     final pos = _positionForSpine(index);
     // 세션 위치를 동기화(progress/analytics 일관) — 결과는 기다리지 않는다.
     unawaited(_session.jumpTo(pos));
+    widget.controller?.syncState(
+      currentSpineIndex: index,
+      spineCount: _session.book.spine.length,
+    );
     widget.onPositionChanged?.call(pos);
     widget.onPageChanged?.call(index, _session.book.spine.length);
   }
@@ -259,6 +282,8 @@ class _SessionViewState extends State<_SessionView> {
         lineHeight: widget.lineHeight,
         onLinkTap: widget.onLinkTap,
         onPageChanged: _handlePageChanged,
+        onNavigatorReady: (navigate) =>
+            widget.controller?.attachNavigator(navigate),
       );
     } else {
       engine = ReflowableEngine(
