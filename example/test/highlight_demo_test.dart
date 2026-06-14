@@ -30,8 +30,8 @@ Uint8List _zipEpub(Map<String, String> files) {
 /// 번들 example.epub처럼 비선형(linear="no") cover가 spine 앞에 있는 책.
 /// linear 필터 인덱스 vs 전체 spine 인덱스 불일치 회귀 검증용.
 Uint8List _coverFirstEpub() => _zipEpub({
-      'mimetype': 'application/epub+zip',
-      'META-INF/container.xml': '''
+  'mimetype': 'application/epub+zip',
+  'META-INF/container.xml': '''
 <?xml version="1.0"?>
 <container version="1.0"
     xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -41,7 +41,7 @@ Uint8List _coverFirstEpub() => _zipEpub({
   </rootfiles>
 </container>
 ''',
-      'OEBPS/content.opf': '''
+  'OEBPS/content.opf': '''
 <?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0"
     unique-identifier="bookid">
@@ -63,7 +63,7 @@ Uint8List _coverFirstEpub() => _zipEpub({
   </spine>
 </package>
 ''',
-      'OEBPS/nav.xhtml': '''
+  'OEBPS/nav.xhtml': '''
 <?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml"
     xmlns:epub="http://www.idpf.org/2007/ops">
@@ -74,20 +74,20 @@ Uint8List _coverFirstEpub() => _zipEpub({
   </body>
 </html>
 ''',
-      'OEBPS/cover.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
-          '<p>표지</p></body></html>',
-      'OEBPS/ch1.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
-          '<p>고래는 바다에 산다.</p></body></html>',
-      'OEBPS/ch2.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
-          '<p>사자는 초원의 왕이다.</p></body></html>',
-    });
+  'OEBPS/cover.xhtml':
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      '<p>표지</p></body></html>',
+  'OEBPS/ch1.xhtml':
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      '<p>고래는 바다에 산다.</p></body></html>',
+  'OEBPS/ch2.xhtml':
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      '<p>사자는 초원의 왕이다.</p></body></html>',
+});
 
 Uint8List _demoEpub() => _zipEpub({
-      'mimetype': 'application/epub+zip',
-      'META-INF/container.xml': '''
+  'mimetype': 'application/epub+zip',
+  'META-INF/container.xml': '''
 <?xml version="1.0"?>
 <container version="1.0"
     xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -97,7 +97,7 @@ Uint8List _demoEpub() => _zipEpub({
   </rootfiles>
 </container>
 ''',
-      'OEBPS/content.opf': '''
+  'OEBPS/content.opf': '''
 <?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0"
     unique-identifier="bookid">
@@ -117,7 +117,7 @@ Uint8List _demoEpub() => _zipEpub({
   </spine>
 </package>
 ''',
-      'OEBPS/nav.xhtml': '''
+  'OEBPS/nav.xhtml': '''
 <?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml"
     xmlns:epub="http://www.idpf.org/2007/ops">
@@ -131,17 +131,16 @@ Uint8List _demoEpub() => _zipEpub({
   </body>
 </html>
 ''',
-      'OEBPS/ch1.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
-          '<p>고래는 바다에 산다. 바다는 넓다.</p></body></html>',
-      'OEBPS/ch2.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
-          '<p>사자는 초원의 왕이다.</p></body></html>',
-    });
+  'OEBPS/ch1.xhtml':
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      '<p>고래는 바다에 산다. 바다는 넓다.</p></body></html>',
+  'OEBPS/ch2.xhtml':
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      '<p>사자는 초원의 왕이다.</p></body></html>',
+});
 
-Widget _wrap() => MaterialApp(
-      home: HighlightDemoPage(bytesOverride: _demoEpub()),
-    );
+Widget _wrap() =>
+    MaterialApp(home: HighlightDemoPage(bytesOverride: _demoEpub()));
 
 HighlightDemoPageState _state(WidgetTester tester) =>
     tester.state<HighlightDemoPageState>(find.byType(HighlightDemoPage));
@@ -154,8 +153,7 @@ String _highlightedPlainText(WidgetTester tester, Color color) {
 
   void collect(InlineSpan span, bool inHighlight) {
     if (span is! TextSpan) return;
-    final isHighlighted =
-        inHighlight || span.style?.backgroundColor == color;
+    final isHighlighted = inHighlight || span.style?.backgroundColor == color;
     if (isHighlighted && span.text != null) buffer.write(span.text);
     for (final child in span.children ?? const <InlineSpan>[]) {
       collect(child, isHighlighted);
@@ -177,11 +175,12 @@ String _highlightedPlainText(WidgetTester tester, Color color) {
             (widget.decoration as BoxDecoration).color == color),
   );
   for (final element in boxFinder.evaluate()) {
-    for (final richText
-        in tester.widgetList<RichText>(find.descendant(
-      of: find.byWidget(element.widget),
-      matching: find.byType(RichText),
-    ))) {
+    for (final richText in tester.widgetList<RichText>(
+      find.descendant(
+        of: find.byWidget(element.widget),
+        matching: find.byType(RichText),
+      ),
+    )) {
       buffer.write(richText.text.toPlainText());
     }
   }
@@ -193,7 +192,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  group('DemoHighlight / injectHighlightSpans (unit)', () {
+  group('DemoHighlight (unit)', () {
     test('JSON round-trip 무손실', () {
       const original = DemoHighlight(
         id: 'h1',
@@ -212,97 +211,10 @@ void main() {
       expect(restored.note, original.note);
     });
 
-    test('첫 일치 구간을 배경색 span으로 감싼다', () {
-      const xhtml = '<p>고래는 바다에 산다.</p>';
-      const highlight = DemoHighlight(
-        id: 'h1',
-        spineHref: 'ch1.xhtml',
-        text: '고래는 바다에',
-        colorName: '초록',
-      );
-      final out = injectHighlightSpans(xhtml, const [highlight]);
-      expect(
-        out,
-        '<p><span style="background-color:#C8E6C9;">고래는 바다에</span>'
-        ' 산다.</p>',
-      );
-    });
-
-    test('본문과 일치하지 않으면 원문 그대로 (@edge)', () {
-      const xhtml = '<p>고래는 바다에 산다.</p>';
-      const highlight = DemoHighlight(
-        id: 'h1',
-        spineHref: 'ch1.xhtml',
-        text: '여러 문단에 걸친 선택 텍스트',
-        colorName: '노랑',
-      );
-      expect(injectHighlightSpans(xhtml, const [highlight]), xhtml);
-    });
-
-    test('하이라이트 여러 건을 각각 주입한다', () {
-      const xhtml = '<p>고래는 바다에 산다. 바다는 넓다.</p>';
-      const highlights = [
-        DemoHighlight(
-            id: 'h1', spineHref: 'c', text: '고래는', colorName: '노랑'),
-        DemoHighlight(
-            id: 'h2', spineHref: 'c', text: '넓다', colorName: '분홍'),
-      ];
-      final out = injectHighlightSpans(xhtml, highlights);
-      expect(out, contains('background-color:#FFF59D;">고래는</span>'));
-      expect(out, contains('background-color:#F8BBD0;">넓다</span>'));
-    });
-
-    test('태그명과 일치하는 본문 단어는 태그를 파손하지 않는다', () {
-      // 본문 단어 "head"의 raw 첫 일치는 <head> 태그명 — 태그 내부 일치는
-      // 건너뛰고 본문 텍스트에만 주입되어야 한다.
-      const xhtml = '<html><head><title>제목</title></head>'
-          '<body><p>the head of the whale</p></body></html>';
-      const highlight = DemoHighlight(
-        id: 'h1',
-        spineHref: 'c',
-        text: 'head',
-        colorName: '노랑',
-      );
-      final out = injectHighlightSpans(xhtml, const [highlight]);
-      expect(out, contains('<head><title>제목</title></head>'));
-      expect(
-        out,
-        contains('the <span style="background-color:#FFF59D;">head</span>'),
-      );
-    });
-
-    test('속성 값과 일치하는 텍스트는 속성을 파손하지 않는다', () {
-      const xhtml = '<body><p><img alt="고래 그림"/>고래 그림 설명</p></body>';
-      const highlight = DemoHighlight(
-        id: 'h1',
-        spineHref: 'c',
-        text: '고래 그림',
-        colorName: '파랑',
-      );
-      final out = injectHighlightSpans(xhtml, const [highlight]);
-      expect(out, contains('<img alt="고래 그림"/>'));
-      expect(
-        out,
-        contains('<span style="background-color:#BBDEFB;">고래 그림</span> 설명'),
-      );
-    });
-
-    test('body 이전 영역(title 텍스트)에는 주입하지 않는다', () {
-      const xhtml = '<html><head><title>고래 이야기</title></head>'
-          '<body><p>고래 이야기의 시작</p></body></html>';
-      const highlight = DemoHighlight(
-        id: 'h1',
-        spineHref: 'c',
-        text: '고래 이야기',
-        colorName: '초록',
-      );
-      final out = injectHighlightSpans(xhtml, const [highlight]);
-      expect(out, contains('<title>고래 이야기</title>'));
-      expect(
-        out,
-        contains('<span style="background-color:#C8E6C9;">고래 이야기</span>의'),
-      );
-    });
+    // 하이라이트 주입 로직은 코어 API(SpineTextExtractor.injectHighlights +
+    // EpubBookSession.readSpineXhtmlWithHighlights)로 이관됨 — 단위 검증은
+    // open_epub 패키지의 spine_text_extractor_test.dart가, end-to-end 렌더는
+    // 아래 F5-demo 위젯 테스트가 담당한다.
   });
 
   group('HighlightStore (unit)', () {
@@ -367,10 +279,7 @@ void main() {
       // Then "하이라이트" FAB가 나타난다 (데스크톱 웹 진입점)
       expect(fab, findsOneWidget);
       // 그리고 FAB의 onPressed는 선택 상태 기반 플로우를 연다
-      expect(
-        tester.widget<FloatingActionButton>(fab).onPressed,
-        isNotNull,
-      );
+      expect(tester.widget<FloatingActionButton>(fab).onPressed, isNotNull);
 
       // When FAB가 여는 플로우(선택 상태 사용)로 색상을 저장하면
       unawaited(state.startHighlightFlow());
@@ -420,8 +329,9 @@ void main() {
       expect(state.session!.position.spineHref, 'ch2.xhtml');
     });
 
-    testWidgets('챕터 이동 후 하이라이트 — analytics 위치가 화면과 일치 (@P0 회귀)',
-        (tester) async {
+    testWidgets('챕터 이동 후 하이라이트 — analytics 위치가 화면과 일치 (@P0 회귀)', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap());
       await tester.pumpAndSettle();
       final state = _state(tester);
@@ -435,8 +345,7 @@ void main() {
       await tester.pump();
 
       // Then toolUse 이벤트의 position은 2장을 가리킨다
-      final event =
-          toolUseEvents.whereType<EpubHighlightToolUse>().single;
+      final event = toolUseEvents.whereType<EpubHighlightToolUse>().single;
       expect(event.position.spineHref, 'ch2.xhtml');
     });
 
@@ -546,10 +455,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Then 본문 하이라이트 표시가 사라지고 목록은 비어 있다
-      expect(
-        _highlightedPlainText(tester, highlightPalette['노랑']!),
-        isEmpty,
-      );
+      expect(_highlightedPlainText(tester, highlightPalette['노랑']!), isEmpty);
       expect(state.highlights, isEmpty);
       // 영속 저장소에서도 제거된다
       final stored = await const HighlightStore().load();
@@ -562,18 +468,12 @@ void main() {
       final state = _state(tester);
 
       // Given 본문 원문과 일치하지 않는 텍스트가 저장된다
-      await state.addHighlight(
-        text: '여러 문단에 걸친\n선택 텍스트',
-        colorName: '초록',
-      );
+      await state.addHighlight(text: '여러 문단에 걸친\n선택 텍스트', colorName: '초록');
       await tester.pumpAndSettle();
 
       // Then 목록에는 항목이 보이지만 본문 표시는 생략된다 + 크래시 없음
       expect(state.highlights, hasLength(1));
-      expect(
-        _highlightedPlainText(tester, highlightPalette['초록']!),
-        isEmpty,
-      );
+      expect(_highlightedPlainText(tester, highlightPalette['초록']!), isEmpty);
       expect(tester.takeException(), isNull);
     });
 

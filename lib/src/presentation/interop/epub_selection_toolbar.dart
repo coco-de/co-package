@@ -5,9 +5,16 @@
 // 위한 어댑터. 호스트는 SelectionArea(contextMenuBuilder:)에서 기본 항목과
 // 합쳐 쓴다. kobic의 custom_text_selection_toolbar_wrapper에 대응.
 //
-// 좌표/선택 rect는 Flutter SelectionArea가 노출하지 않으므로(S7.1/S7.2 한계),
-// 액션 콜백은 위치 정보 없이 호출된다 — 호스트는 selectionStream의
-// EpubSelection(텍스트·offset)으로 컨텍스트를 얻는다.
+// 선택 앵커 좌표(S7.1/S7.2): contextMenuBuilder가 받는 SelectableRegionState의
+// `contextMenuAnchors`(primary/secondary Offset)가 곧 선택 영역의 앵커
+// 글로벌 좌표다 — 사전 풍선·커스텀 툴바 위치 잡기에 그대로 쓴다. 즉 "선택
+// 앵커"는 Flutter가 이미 제공하므로 open_epub이 따로 노출할 것이 없다.
+//
+// 남은 한계: 임의의 저장된 offset(현재 선택이 아닌)에 대한 문자별 rect 매핑은
+// flutter_html이 RichText 레이아웃 박스를 공개 API로 노출하지 않아 불가하다.
+// pdfrx의 charRects 등가물이 필요하면 커스텀 RichText 렌더러를 도입해야
+// 한다(별도 과제). 액션 콜백 자체는 위치 정보 없이 호출되며, 호스트는
+// selectionStream의 EpubSelection(텍스트·offset)으로 컨텍스트를 얻는다.
 
 import 'package:flutter/widgets.dart';
 

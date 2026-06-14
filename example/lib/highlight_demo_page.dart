@@ -14,15 +14,18 @@
 //     플랫폼에서 동작하는 기본 진입점이다. 모바일·네이티브에서는 컨텍스트
 //     메뉴의 "하이라이트"도 함께 동작한다.
 //   - 색상 4종 + 메모 입력 시트 → 저장
-//   - 저장된 하이라이트는 xhtmlLoader에서 XHTML에 배경색 span으로 주입
+//   - 저장된 하이라이트는 코어 API로 렌더 — session.resolveSelection으로
+//     선택 평문을 locator(start/end)로 해석하고 readSpineXhtmlWithHighlights가
+//     배경색을 주입한다(E1.5). 데모 자체 DOM 주입 로직은 제거됨.
 //   - shared_preferences에 JSON으로 영속, session.recordHighlight()로
 //     toolUseEvents(F11) 연동
 //
-// 한계(데모 수준, 코어 charOffset 기반 정밀 하이라이트는 E3/S3.13 범위):
-//   - 위치 추적은 "선택 평문의 첫 일치" 기반 — 여러 문단에 걸친 선택 등
-//     원문과 일치하지 않으면 목록에는 남고 본문 표시만 생략된다.
+// 한계(데모 수준):
+//   - 위치 해석은 코어 resolveSelection의 "선택 평문 첫 일치" 기반 — 여러
+//     문단에 걸친 선택 등 원문과 일치하지 않으면 목록에는 남고 본문 표시만
+//     생략된다(@edge).
 //   - 하이라이트 추가/삭제 시 엔진을 재생성해 본문을 다시 그리므로 챕터 내
-//     스크롤 위치가 최상단으로 초기화된다 (엔진 reload API는 E3 검토 대상).
+//     스크롤 위치가 최상단으로 초기화된다 (엔진 reload API는 후속 검토 대상).
 
 import 'dart:async';
 import 'dart:convert';
@@ -41,11 +44,6 @@ const Map<String, Color> highlightPalette = {
   '분홍': Color(0xFFF8BBD0),
 };
 
-String _cssHex(Color color) {
-  final rgb = color.toARGB32() & 0xFFFFFF;
-  return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
-}
-
 /// 데모 하이라이트 1건. 선택 평문 텍스트 + 색상 + 메모.
 @immutable
 class DemoHighlight {
@@ -58,12 +56,12 @@ class DemoHighlight {
   });
 
   factory DemoHighlight.fromJson(Map<String, dynamic> json) => DemoHighlight(
-        id: json['id'] as String,
-        spineHref: json['spineHref'] as String,
-        text: json['text'] as String,
-        colorName: json['colorName'] as String,
-        note: (json['note'] as String?) ?? '',
-      );
+    id: json['id'] as String,
+    spineHref: json['spineHref'] as String,
+    text: json['text'] as String,
+    colorName: json['colorName'] as String,
+    note: (json['note'] as String?) ?? '',
+  );
 
   final String id;
   final String spineHref;
@@ -74,58 +72,20 @@ class DemoHighlight {
   Color get color => highlightPalette[colorName] ?? highlightPalette['노랑']!;
 
   DemoHighlight copyWith({String? note}) => DemoHighlight(
-        id: id,
-        spineHref: spineHref,
-        text: text,
-        colorName: colorName,
-        note: note ?? this.note,
-      );
+    id: id,
+    spineHref: spineHref,
+    text: text,
+    colorName: colorName,
+    note: note ?? this.note,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spineHref': spineHref,
-        'text': text,
-        'colorName': colorName,
-        'note': note,
-      };
-}
-
-/// XHTML 본문에 하이라이트 배경색 span을 주입한다 (각 하이라이트당 첫 일치
-/// 1회). 일치하지 않는 하이라이트는 건너뛴다 — 본문 표시만 생략되고 목록에는
-/// 남는다 (BDD @edge).
-///
-/// 마크업 안전 가드: 검색은 `<body` 이후부터 시작하고, 태그 내부(`<`와 `>`
-/// 사이 — 태그명/속성/이미 주입된 span의 style 포함)에 걸린 일치는 건너뛰고
-/// 다음 일치를 찾는다. "head" 같은 본문 단어가 태그를 파손하는 것을 방지.
-String injectHighlightSpans(String xhtml, Iterable<DemoHighlight> highlights) {
-  var out = xhtml;
-  for (final highlight in highlights) {
-    final text = highlight.text;
-    if (text.isEmpty) continue;
-    final start = _indexOfInTextContent(out, text);
-    if (start < 0) continue;
-    final replacement =
-        '<span style="background-color:${_cssHex(highlight.color)};">'
-        '$text</span>';
-    out = out.replaceRange(start, start + text.length, replacement);
-  }
-  return out;
-}
-
-/// [xhtml]의 body 영역 텍스트 콘텐츠에서 [text]의 첫 일치 위치를 찾는다.
-/// 태그 내부 일치는 건너뛴다. 없으면 -1.
-int _indexOfInTextContent(String xhtml, String text) {
-  final bodyStart = xhtml.indexOf('<body');
-  var searchFrom = bodyStart < 0 ? 0 : bodyStart;
-  while (true) {
-    final start = xhtml.indexOf(text, searchFrom);
-    if (start < 0) return -1;
-    final lastOpen = xhtml.lastIndexOf('<', start);
-    final lastClose = xhtml.lastIndexOf('>', start);
-    final insideTag = lastOpen > lastClose;
-    if (!insideTag) return start;
-    searchFrom = start + 1;
-  }
+    'id': id,
+    'spineHref': spineHref,
+    'text': text,
+    'colorName': colorName,
+    'note': note,
+  };
 }
 
 /// shared_preferences 기반 하이라이트 저장소.
@@ -226,11 +186,13 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
     final bytes = widget.bytesOverride ?? await _loadAssetBytes();
     final session = await EpubBookSession.open(EpubSource.bytes(bytes));
     final saved = await _store.load();
-    final seq = 1 + saved.fold<int>(-1, (max, h) {
-      final match = RegExp(r'^h(\d+)').firstMatch(h.id);
-      final value = match == null ? -1 : int.parse(match.group(1)!);
-      return value > max ? value : max;
-    });
+    final seq =
+        1 +
+        saved.fold<int>(-1, (max, h) {
+          final match = RegExp(r'^h(\d+)').firstMatch(h.id);
+          final value = match == null ? -1 : int.parse(match.group(1)!);
+          return value > max ? value : max;
+        });
     if (mounted) {
       setState(() {
         _session = session;
@@ -284,8 +246,9 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
   int get _engineSpineIndex {
     final session = _session;
     if (session == null) return 0;
-    final index =
-        session.book.spine.indexWhere((s) => s.href == _currentSpineHref);
+    final index = session.book.spine.indexWhere(
+      (s) => s.href == _currentSpineHref,
+    );
     return index < 0 ? 0 : index;
   }
 
@@ -320,7 +283,10 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
   @visibleForTesting
   Future<void> removeHighlight(String id) async {
     setState(() {
-      _highlights = [for (final h in _highlights) if (h.id != id) h];
+      _highlights = [
+        for (final h in _highlights)
+          if (h.id != id) h,
+      ];
       _revision++;
     });
     await _store.save(_highlights);
@@ -379,9 +345,25 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
   // --- 본문 로딩 (하이라이트 주입) ---
 
   Future<String> _loadDecoratedXhtml(String spineHref) async {
-    final raw = _session?.readSpineXhtml(spineHref) ?? '';
-    final forSpine = _highlights.where((h) => h.spineHref == spineHref);
-    return injectHighlightSpans(raw, forSpine);
+    final session = _session;
+    if (session == null) return '';
+    // 코어 API로 하이라이트를 렌더한다(자체 DOM 주입 대체). 저장된 평문
+    // text를 현재 spine 본문에서 locator(start/end)로 해석한 뒤 배경색을
+    // 주입한다 — 일치하지 않으면 건너뛴다(목록엔 남고 본문 표시만 생략, @edge).
+    final coreHighlights = <EpubHighlight>[];
+    for (final h in _highlights.where((h) => h.spineHref == spineHref)) {
+      final selection = session.resolveSelection(spineHref, h.text);
+      if (selection == null) continue;
+      coreHighlights.add(
+        EpubHighlight.fromSelection(
+          selection,
+          id: h.id,
+          colorArgb: h.color.toARGB32(),
+        ),
+      );
+    }
+    return session.readSpineXhtmlWithHighlights(spineHref, coreHighlights) ??
+        '';
   }
 
   Future<Uint8List?> _loadImage(String src) async =>
@@ -398,11 +380,12 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
       _showSnack('먼저 본문 텍스트를 선택하세요.');
       return;
     }
-    final result = await showModalBottomSheet<({String colorName, String note})>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => _HighlightSheet(excerpt: text),
-    );
+    final result =
+        await showModalBottomSheet<({String colorName, String note})>(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => _HighlightSheet(excerpt: text),
+        );
     if (result == null) return;
     await addHighlight(
       text: text,
@@ -517,18 +500,18 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
                   },
                   contextMenuBuilder: (context, selectableRegionState) =>
                       AdaptiveTextSelectionToolbar.buttonItems(
-                    anchors: selectableRegionState.contextMenuAnchors,
-                    buttonItems: [
-                      ContextMenuButtonItem(
-                        label: '하이라이트',
-                        onPressed: () {
-                          selectableRegionState.hideToolbar();
-                          unawaited(startHighlightFlow());
-                        },
+                        anchors: selectableRegionState.contextMenuAnchors,
+                        buttonItems: [
+                          ContextMenuButtonItem(
+                            label: '하이라이트',
+                            onPressed: () {
+                              selectableRegionState.hideToolbar();
+                              unawaited(startHighlightFlow());
+                            },
+                          ),
+                          ...selectableRegionState.contextMenuButtonItems,
+                        ],
                       ),
-                      ...selectableRegionState.contextMenuButtonItems,
-                    ],
-                  ),
                   child: ReflowableEngine(
                     key: ValueKey('engine-$_spineIndex-rev$_revision'),
                     book: session.book,
@@ -601,8 +584,9 @@ class _NoteDialog extends StatefulWidget {
 }
 
 class _NoteDialogState extends State<_NoteDialog> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.initialNote);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialNote,
+  );
 
   @override
   void dispose() {
@@ -711,10 +695,10 @@ class _HighlightSheetState extends State<_HighlightSheet> {
               ),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: () => Navigator.pop(
-                  context,
-                  (colorName: _colorName, note: _noteController.text),
-                ),
+                onPressed: () => Navigator.pop(context, (
+                  colorName: _colorName,
+                  note: _noteController.text,
+                )),
                 child: const Text('저장'),
               ),
             ],
