@@ -1,15 +1,30 @@
+// ignore_for_file: member-ordering
+// member-ordering 면제(이 파일 한정): DCM은 State에서 initState를 private
+// 메서드보다 앞에, build를 뒤에 두길 동시에 요구해 본 데모의 가독성 배치와
+// 상충한다. 기능/품질 규칙(widget 추출, async, empty-block 등)은 모두 준수.
+
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:open_board/open_board.dart';
-import 'package:open_epub/open_epub.dart';
+import 'package:open_epub/open_epub_v1.dart';
 
 import 'widgets/drawing_toolbar.dart';
 
-/// open_epub 리더 위에 페이지 연동 필기를 올리는 데모.
+/// open_epub 1.0 리더 위에 페이지 연동 필기를 올리는 데모.
 ///
 /// - 읽기 모드: 필기 레이어가 포인터를 통과시켜 EPUB 스와이프/탭 동작
 /// - 필기 모드: ScribbleWidget이 제스처를 소비해 페이지 스와이프 차단
-/// - 페이지 전환 시 ScribbleCacheManager로 페이지별 필기 저장/복원
+/// - 챕터 전환 시 ScribbleCacheManager로 spineHref별 필기 저장/복원
+///
+/// 1.0 마이그레이션 포인트:
+/// - 위젯: EpubReaderWidget(0.1.x) → EpubReader(1.0, open_epub_v1.dart)
+/// - 컨트롤러: EpubReaderController(0.1.x) → EpubViewController(1.0)
+/// - 필기 키: 페이지 번호 → spineHref(EpubPosition) 앵커. 글자 크기 고정 +
+///   spineHref 기준이라 재배치(repagination)에도 필기가 어긋나지 않는다(S8.4).
 class EpubAnnotationDemoPage extends StatefulWidget {
   const EpubAnnotationDemoPage({super.key});
 
@@ -18,110 +33,84 @@ class EpubAnnotationDemoPage extends StatefulWidget {
 }
 
 class _EpubAnnotationDemoPageState extends State<EpubAnnotationDemoPage> {
-  final _epubController = EpubReaderController();
+  static const _contentId = 'epub-demo';
+
+  // 페이지 내비게이션 + 현재 인덱스/총 개수 관찰 (1.0 EpubViewController).
+  final _epubController = EpubViewController();
   final _cacheManager = ScribbleCacheManager.instance;
 
-  // 필기 레이어(InteractiveViewer)와 EPUB 레이어가 공유하는 변환 행렬.
-  // 필기 모드에서 줌/팬 시 EPUB 본문이 함께 확대/이동된다.
+  // 필기 레이어와 EPUB 레이어가 공유하는 변환 행렬(줌/팬 동기).
   final _transformController = TransformationController();
 
-  // 도구/색상/두께의 단일 소스. ScribbleWidget 이 이 싱글턴을 리스닝하며
-  // 위젯 재생성(페이지 전환) 시에도 forceSyncAll 로 이 값을 notifier 에 적용하므로,
-  // 툴바는 반드시 DrawingState 를 통해 도구를 변경해야 함
+  // 도구/색상/두께의 단일 소스.
   final _drawingState = DrawingState();
 
   bool _isAnnotationMode = false;
-  int _currentPage = 1; // onPageChanged 의 1-based 값
-  int _totalPages = 0;
 
-  static const _contentId = 'epub-demo';
+  // 현재 표시 중인 spine — 필기 저장/복원 키(페이지 번호 대신 안정 앵커).
+  String? _currentSpineHref;
 
-  String _pageKey(int page) => '$_contentId/epub-page-$page';
+  // asset에서 로드한 EPUB 바이트(1.0 EpubSource.bytes). null이면 로딩 중.
+  Uint8List? _bytes;
 
   ScribbleController get _activeController =>
-      _cacheManager.getController(_pageKey(_currentPage));
+      _cacheManager.getController(_pageKey(_currentSpineHref ?? '__init__'));
+
+  String _pageKey(String spineHref) => '$_contentId/$spineHref';
 
   @override
   void initState() {
     super.initState();
     // 웹 마우스 + 모바일 터치 모두 허용 (데모 접근성 우선)
-    // mouseOnly 모드는 마우스/터치/스타일러스 드로잉을 모두 허용
-    // (_canStartDrawing 이 DrawingState 싱글턴의 pointerMode 를 참조)
     _drawingState.pointerMode.value = DrawingPointerMode.mouseOnly;
     _drawingState.selectedTool.value = DrawingTool.pen;
     _drawingState.selectedColor.value = Colors.black;
     _drawingState.selectedThickness.value = 2.0;
-    _drawingState.selectedTool.addListener(_refresh);
-    _drawingState.selectedColor.addListener(_refresh);
-    _drawingState.selectedThickness.addListener(_refresh);
     _cacheManager.setPointerMode('all');
-    // onPageChanged 콜백은 페이지 전환 시에만 호출되므로,
-    // 초기 로드 시 페이지 정보(setPageInfo)까지 받으려면 컨트롤러를 직접 리스닝
-    _epubController.addListener(_onEpubControllerChanged);
-  }
-
-  void _refresh() {
-    if (mounted) setState(() {});
+    unawaited(_loadBook());
   }
 
   @override
   void dispose() {
-    _drawingState.selectedTool.removeListener(_refresh);
-    _drawingState.selectedColor.removeListener(_refresh);
-    _drawingState.selectedThickness.removeListener(_refresh);
-    _epubController.removeListener(_onEpubControllerChanged);
     _epubController.dispose();
     _transformController.dispose();
-    // 싱글턴이므로 dispose 하지 않고 현재 페이지 필기만 즉시 영속화
-    _cacheManager.flushSave(_pageKey(_currentPage));
+    // 싱글턴이므로 dispose 하지 않고 현재 페이지 필기만 즉시 영속화.
+    final href = _currentSpineHref;
+    if (href != null) unawaited(_cacheManager.flushSave(_pageKey(href)));
     super.dispose();
   }
 
-  void _onEpubControllerChanged() {
-    final total = _epubController.totalPages;
-    if (total <= 0) return;
-    final page = _epubController.currentPage + 1; // 0-based → 1-based
-    if (page != _currentPage || total != _totalPages) {
-      _onEpubPageChanged(page, total);
-    }
+  Future<void> _loadBook() async {
+    final data = await rootBundle.load('assets/books/alice.epub');
+    if (!mounted) return;
+    setState(() => _bytes = data.buffer.asUint8List());
   }
 
-  Future<void> _onEpubPageChanged(int current, int total) async {
-    final previousPage = _currentPage;
-    final repaginated = _totalPages != 0 && _totalPages != total;
-
-    // 이전 페이지 필기 즉시 영속화 (디바운스 flush)
-    if (previousPage != current) {
-      await _cacheManager.flushSave(_pageKey(previousPage));
+  /// EpubReader가 챕터(spine) 전환을 보고하면 이전 필기를 저장하고 새 필기를
+  /// 복원한다. EpubReader는 초기 위치도 1회 보고하므로 첫 챕터도 처리된다.
+  Future<void> _onPositionChanged(EpubPosition position) async {
+    final href = position.spineHref;
+    if (href == _currentSpineHref) return;
+    final previous = _currentSpineHref;
+    if (previous != null) {
+      await _cacheManager.flushSave(_pageKey(previous));
     }
-
     if (!mounted) return;
-    setState(() {
-      _currentPage = current;
-      _totalPages = total;
-    });
+    setState(() => _currentSpineHref = href);
 
-    // 새 페이지 컨트롤러 확보 + 비어있으면 저장본 복원
-    final controller = _cacheManager.getController(_pageKey(current));
+    final key = _pageKey(href);
+    final controller = _cacheManager.getController(key);
     if (controller.currentScribble.strokes.isEmpty) {
-      final saved = await _cacheManager.loadScribble(_pageKey(current));
+      final saved = await _cacheManager.loadScribble(key);
       if (saved != null && saved.strokes.isNotEmpty) {
         controller.loadScribble(saved);
       }
     }
-
-    // 총 페이지 수 변동 = repagination → 필기 위치 어긋남 경고
-    if (repaginated && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('본문이 재배치되어 기존 필기 위치가 어긋날 수 있습니다.'),
-        ),
-      );
-    }
   }
 
   Future<void> _toggleMode() async {
-    await _cacheManager.flushSave(_pageKey(_currentPage));
+    final href = _currentSpineHref;
+    if (href != null) await _cacheManager.flushSave(_pageKey(href));
     if (!mounted) return;
     setState(() {
       _isAnnotationMode = !_isAnnotationMode;
@@ -135,6 +124,7 @@ class _EpubAnnotationDemoPageState extends State<EpubAnnotationDemoPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final bytes = _bytes;
 
     return Scaffold(
       appBar: AppBar(
@@ -159,141 +149,167 @@ class _EpubAnnotationDemoPageState extends State<EpubAnnotationDemoPage> {
           ],
         ],
       ),
-      body: Column(
-        children: [
-          _buildInfoBanner(cs),
-          // 툴바를 항상 레이아웃에 유지해 EPUB 뷰포트 높이를 고정
-          // (조건부 렌더링 시 모드 토글마다 repagination 이 발생해 필기가 어긋남)
-          IgnorePointer(
-            ignoring: !_isAnnotationMode,
-            child: Opacity(
-              opacity: _isAnnotationMode ? 1.0 : 0.35,
-              child: _buildAnnotationToolbar(),
-            ),
-          ),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final size = Size(constraints.maxWidth, constraints.maxHeight);
-                return Stack(
-                  children: [
-                    // 1) EPUB 리더 (하단 레이어)
-                    // showTopBar/settingsStorageKey 차단으로 폰트 변경에 의한
-                    // repagination 경로를 막아 필기-본문 정합을 유지
-                    // 필기 레이어의 줌/팬 변환을 동일하게 적용해 본문이 함께 확대됨
-                    ValueListenableBuilder<Matrix4>(
-                      valueListenable: _transformController,
-                      builder: (context, matrix, child) => ClipRect(
-                        child: Transform(
-                          transform: matrix,
-                          child: child,
-                        ),
-                      ),
-                      child: EpubReaderWidget(
-                        source:
-                            const EpubSourceAsset('assets/books/alice.epub'),
-                        controller: _epubController,
-                        showTopBar: false,
-                        showBottomBar: false,
-                        settingsStorageKey: null,
-                        localization: EpubReaderLocalization.english,
-                        // 페이지 변경 감지는 _onEpubControllerChanged 리스너가 담당
-                        // (onPageChanged 콜백은 초기 로드 시 호출되지 않음)
-                        onError: (error) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('EPUB error: $error')),
-                          );
-                        },
+      body: bytes == null
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _InfoBanner(colorScheme: cs),
+                // 툴바를 항상 레이아웃에 유지해 EPUB 뷰포트 높이를 고정.
+                IgnorePointer(
+                  ignoring: !_isAnnotationMode,
+                  child: Opacity(
+                    opacity: _isAnnotationMode ? 1.0 : 0.35,
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([
+                        _drawingState.selectedTool,
+                        _drawingState.selectedColor,
+                        _drawingState.selectedThickness,
+                      ]),
+                      builder: (context, _) => DrawingToolbar(
+                        selectedTool: _drawingState.selectedTool.value,
+                        selectedColor: _drawingState.selectedColor.value,
+                        selectedWidth: _drawingState.selectedThickness.value,
+                        onToolSelected: (tool) =>
+                            _drawingState.selectedTool.value = tool,
+                        onColorSelected: (color) =>
+                            _drawingState.selectedColor.value = color,
+                        onWidthChanged: (width) =>
+                            _drawingState.selectedThickness.value = width,
                       ),
                     ),
-                    // 2) 필기 오버레이 (상단 레이어)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        // 읽기 모드: 포인터 통과 → EPUB 스와이프/탭 동작
-                        ignoring: !_isAnnotationMode,
-                        child: SimpleScribbleWidget(
-                          // 페이지 전환 시 컨트롤러 재바인딩
-                          key: ValueKey('epub-overlay-$_currentPage'),
-                          controller: _activeController,
-                          isScribbleEnabled: _isAnnotationMode,
-                          // 줌/팬 허용 — 변환 행렬을 _transformController 로 공유해
-                          // EPUB 본문과 필기가 함께 확대/이동됨
-                          transformationController: _transformController,
-                          panDirection: PanDirection.both,
-                          maxScale: 4.0,
-                          allowedPointersMode: ScribblePointerMode.all,
-                          contentLogicalSize: size,
-                          child: SizedBox.fromSize(size: size),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+                  ),
+                ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final size = Size(
+                        constraints.maxWidth,
+                        constraints.maxHeight,
+                      );
+                      return Stack(
+                        children: [
+                          // 1) EPUB 리더 (하단 레이어). 필기 레이어의 줌/팬
+                          // 변환을 동일하게 적용해 본문이 함께 확대된다.
+                          ValueListenableBuilder<Matrix4>(
+                            valueListenable: _transformController,
+                            builder: (context, matrix, child) => ClipRect(
+                              child: Transform(transform: matrix, child: child),
+                            ),
+                            child: EpubReader(
+                              source: EpubSource.bytes(bytes),
+                              controller: _epubController,
+                              showProgressIndicator: false,
+                              onPositionChanged: (position) =>
+                                  unawaited(_onPositionChanged(position)),
+                            ),
+                          ),
+                          // 2) 필기 오버레이 (상단 레이어)
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              // 읽기 모드: 포인터 통과 → EPUB 스와이프/탭 동작
+                              ignoring: !_isAnnotationMode,
+                              child: SimpleScribbleWidget(
+                                // 챕터 전환 시 컨트롤러 재바인딩
+                                key: ValueKey(
+                                  'epub-overlay-${_currentSpineHref ?? ''}',
+                                ),
+                                controller: _activeController,
+                                isScribbleEnabled: _isAnnotationMode,
+                                // 변환 행렬 공유 — 본문과 필기가 함께 확대/이동
+                                transformationController: _transformController,
+                                panDirection: PanDirection.both,
+                                maxScale: 4.0,
+                                allowedPointersMode: ScribblePointerMode.all,
+                                contentLogicalSize: size,
+                                child: SizedBox.fromSize(size: size),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                _PageNavBar(controller: _epubController, colorScheme: cs),
+              ],
             ),
-          ),
-          _buildPageNavigationBar(cs),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _toggleMode,
+        onPressed: () => unawaited(_toggleMode()),
         icon: Icon(_isAnnotationMode ? Icons.menu_book : Icons.draw),
         label: Text(_isAnnotationMode ? '읽기 모드' : '필기 모드'),
       ),
     );
   }
+}
 
-  Widget _buildInfoBanner(ColorScheme cs) {
+/// 데모 안내 배너.
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({required this.colorScheme});
+
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
     final webNote = kIsWeb ? ' 웹에서는 세션 내에서만 필기가 유지됩니다.' : '';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      color: cs.surfaceContainerLow,
+      color: colorScheme.surfaceContainerLow,
       child: Text(
-        '필기는 페이지 번호 기준으로 저장됩니다. '
-        '창 크기 변경 시 본문이 재배치되어 필기 위치가 어긋날 수 있습니다.$webNote\n'
+        '필기는 챕터(spineHref) 기준으로 저장됩니다 — open_epub 1.0 EpubReader + '
+        'EpubViewController 연동.$webNote\n'
         "Sample: Alice's Adventures in Wonderland (Project Gutenberg #11)",
-        style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant, height: 1.4),
+        style: TextStyle(
+          fontSize: 11,
+          color: colorScheme.onSurfaceVariant,
+          height: 1.4,
+        ),
       ),
     );
   }
+}
 
-  Widget _buildAnnotationToolbar() {
-    return DrawingToolbar(
-      selectedTool: _drawingState.selectedTool.value,
-      selectedColor: _drawingState.selectedColor.value,
-      selectedWidth: _drawingState.selectedThickness.value,
-      onToolSelected: (tool) => _drawingState.selectedTool.value = tool,
-      onColorSelected: (color) => _drawingState.selectedColor.value = color,
-      onWidthChanged: (width) => _drawingState.selectedThickness.value = width,
-    );
-  }
+/// 챕터 이전/다음 + 진행 표시 바. EpubViewController 상태를 구독한다.
+class _PageNavBar extends StatelessWidget {
+  const _PageNavBar({required this.controller, required this.colorScheme});
 
-  Widget _buildPageNavigationBar(ColorScheme cs) {
+  final EpubViewController controller;
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      color: cs.surfaceContainerLow,
+      color: colorScheme.surfaceContainerLow,
       child: SafeArea(
         top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              onPressed:
-                  _currentPage > 1 ? _epubController.previousPage : null,
-              icon: const Icon(Icons.chevron_left),
-            ),
-            Text(
-              _totalPages > 0 ? '$_currentPage / $_totalPages' : '로딩 중...',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            IconButton(
-              onPressed: _currentPage < _totalPages
-                  ? _epubController.nextPage
-                  : null,
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ],
+        child: ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) {
+            final count = controller.spineCount;
+            final index = controller.currentSpineIndex;
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: controller.hasPrevious
+                      ? () => unawaited(controller.previousPage())
+                      : null,
+                  icon: const Icon(Icons.chevron_left),
+                ),
+                Text(
+                  count > 0 ? '${index + 1} / $count' : '로딩 중...',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                IconButton(
+                  onPressed: controller.hasNext
+                      ? () => unawaited(controller.nextPage())
+                      : null,
+                  icon: const Icon(Icons.chevron_right),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
