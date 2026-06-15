@@ -824,12 +824,27 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
               final isMouseOnlyMode =
                   drawingState.pointerMode.value ==
                   DrawingPointerMode.mouseOnly;
+
+              // 🖍️ 하이라이터 모드에서 이 입력이 "텍스트 선택 담당" 장치인지 판정.
+              //   포인터모드(펜/손)와 입력 장치를 매칭한다:
+              //   - 손모드(mouseOnly): 손가락(touch)/마우스만 선택.
+              //   - 펜모드(penOnly): 스타일러스만 선택 (일부 플랫폼은 stylus를
+              //     unknown/invertedStylus로 보고하므로 함께 포함).
+              //   비매칭 장치(예: 펜모드의 손가락)는 선택도 필기도 하지 않고,
+              //   외곽 Listener swipe + InteractiveViewer 핀치로 화면 탐색만 한다.
+              bool isTextSelectionDevice(ui.PointerDeviceKind? kind) {
+                if (isMouseOnlyMode) {
+                  return kind == ui.PointerDeviceKind.touch ||
+                      kind == ui.PointerDeviceKind.mouse;
+                }
+                return kind == ui.PointerDeviceKind.stylus ||
+                    kind == ui.PointerDeviceKind.invertedStylus ||
+                    kind == ui.PointerDeviceKind.unknown;
+              }
+
               final shouldIgnoreForTextSelection =
                   isHighlighterMode &&
-                  (currentPointerKind == ui.PointerDeviceKind.stylus ||
-                      currentPointerKind == ui.PointerDeviceKind.touch ||
-                      (isMouseOnlyMode &&
-                          currentPointerKind == ui.PointerDeviceKind.mouse));
+                  isTextSelectionDevice(currentPointerKind);
 
 
               // 🎯 포인터 종류 감지를 위한 최상위 Listener
@@ -918,48 +933,26 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                                   return Listener(
                                     behavior: widget.isScribbleEnable
                                         ? (isHighlighterMode &&
-                                                  (currentPointerKind ==
-                                                          ui
-                                                              .PointerDeviceKind
-                                                              .touch ||
-                                                      currentPointerKind ==
-                                                          ui
-                                                              .PointerDeviceKind
-                                                              .stylus ||
-                                                      (isMouseOnlyMode &&
-                                                          currentPointerKind ==
-                                                              ui
-                                                                  .PointerDeviceKind
-                                                                  .mouse)))
+                                                  isTextSelectionDevice(
+                                                    currentPointerKind,
+                                                  ))
                                               ? HitTestBehavior
-                                                    .translucent // 손/펜/마우스(핸드모드)일 때: 투과 (텍스트 선택 가능)
+                                                    .translucent // 선택 장치: 투과
                                               : HitTestBehavior
-                                                    .opaque // 필기 모드: 모든 터치 차단
+                                                    .opaque // 필기/비선택: 차단
                                         : HitTestBehavior.translucent,
                                     // 🎨 하이라이트 모드에서 각 이벤트에서 포인터 종류를 직접 확인하여 즉시 처리
                                     // ⚡ 최상위 Listener에서 이미 포인터 종류를 감지했으므로, 여기서는 차단만 처리
                                     onPointerDown: widget.isScribbleEnable
                                         ? (event) {
-                                            // ⚡ 하이라이트 모드에서 손/펜/마우스(핸드모드)면 차단
-                                            // 🔧 단, 터치 카운트는 항상 관리하여 멀티터치 줌/팬 지원
+                                            // 🖍️ 하이라이터 모드는 텍스트 선택 전용 —
+                                            //   필기하지 않는다. 선택 장치는
+                                            //   IgnorePointer 투과로 pdfrx 도달,
+                                            //   비선택 장치는 외곽 Listener/
+                                            //   InteractiveViewer 로 화면 탐색만 한다.
+                                            //   (터치 카운트는 최상위 Listener 관리)
                                             if (isHighlighterMode) {
-                                              if (event.kind ==
-                                                      ui
-                                                          .PointerDeviceKind
-                                                          .touch ||
-                                                  event.kind ==
-                                                      ui
-                                                          .PointerDeviceKind
-                                                          .stylus ||
-                                                  (isMouseOnlyMode &&
-                                                      event.kind ==
-                                                          ui
-                                                              .PointerDeviceKind
-                                                              .mouse)) {
-                                                // 🔧 터치 카운트는 외부 Listener에서 관리
-                                                // (IgnorePointer 차단 방지)
-                                                return;
-                                              }
+                                              return;
                                             }
                                             try {
                                               _handlePointerDown(event);
@@ -970,21 +963,8 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                                         : null,
                                     onPointerMove: widget.isScribbleEnable
                                         ? (event) {
-                                            // ⚡ 하이라이트 모드에서 손/펜/마우스(핸드모드)면 차단
-                                            if (isHighlighterMode &&
-                                                (event.kind ==
-                                                        ui
-                                                            .PointerDeviceKind
-                                                            .touch ||
-                                                    event.kind ==
-                                                        ui
-                                                            .PointerDeviceKind
-                                                            .stylus ||
-                                                    (isMouseOnlyMode &&
-                                                        event.kind ==
-                                                            ui
-                                                                .PointerDeviceKind
-                                                                .mouse))) {
+                                            // 🖍️ 하이라이터 모드는 텍스트 선택 전용 — 필기 차단
+                                            if (isHighlighterMode) {
                                               return;
                                             }
                                             try {
@@ -996,22 +976,8 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                                         : null,
                                     onPointerUp: widget.isScribbleEnable
                                         ? (event) {
-                                            // ⚡ 하이라이트 모드에서 손/펜/마우스(핸드모드)면 차단
-                                            // 🔧 터치 카운트는 외부 Listener에서 관리
-                                            if (isHighlighterMode &&
-                                                (event.kind ==
-                                                        ui
-                                                            .PointerDeviceKind
-                                                            .touch ||
-                                                    event.kind ==
-                                                        ui
-                                                            .PointerDeviceKind
-                                                            .stylus ||
-                                                    (isMouseOnlyMode &&
-                                                        event.kind ==
-                                                            ui
-                                                                .PointerDeviceKind
-                                                                .mouse))) {
+                                            // 🖍️ 하이라이터 모드는 텍스트 선택 전용 — 필기 차단
+                                            if (isHighlighterMode) {
                                               return;
                                             }
                                             try {
@@ -1023,22 +989,8 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                                         : null,
                                     onPointerCancel: widget.isScribbleEnable
                                         ? (event) {
-                                            // ⚡ 하이라이트 모드에서 손/펜/마우스(핸드모드)면 차단
-                                            // 🔧 터치 카운트는 외부 Listener에서 관리
-                                            if (isHighlighterMode &&
-                                                (event.kind ==
-                                                        ui
-                                                            .PointerDeviceKind
-                                                            .touch ||
-                                                    event.kind ==
-                                                        ui
-                                                            .PointerDeviceKind
-                                                            .stylus ||
-                                                    (isMouseOnlyMode &&
-                                                        event.kind ==
-                                                            ui
-                                                                .PointerDeviceKind
-                                                                .mouse))) {
+                                            // 🖍️ 하이라이터 모드는 텍스트 선택 전용 — 필기 차단
+                                            if (isHighlighterMode) {
                                               return;
                                             }
                                             try {
@@ -1050,13 +1002,9 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                                         : null,
                                     onPointerHover: widget.isScribbleEnable
                                         ? (event) {
-                                            // ⚡ 하이라이트 모드에서 마우스(핸드모드)면 차단 (hover는 주로 마우스에서 발생)
-                                            if (isHighlighterMode &&
-                                                isMouseOnlyMode &&
-                                                event.kind ==
-                                                    ui
-                                                        .PointerDeviceKind
-                                                        .mouse) {
+                                            // 🖍️ 하이라이터 모드는 텍스트 선택 전용 —
+                                            //   hover 필기 미리보기 차단
+                                            if (isHighlighterMode) {
                                               return;
                                             }
                                             try {
