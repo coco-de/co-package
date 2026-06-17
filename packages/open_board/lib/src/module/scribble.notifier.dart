@@ -379,9 +379,13 @@ class ScribbleNotifier extends ScribbleNotifierBase
               ? "pending"
               : "",
           options: StrokeOptions(
-            size:
-                modeState.inkGroupInfo.seletedStrokeWidth /
-                modeState.scaleFactor,
+            // 두께를 문서(캔버스) 좌표 기준으로 고정한다 — 줌과 무관하게 항상
+            // 동일한 두께로 필기된다. 이전에는 `seletedStrokeWidth / scaleFactor`
+            // 로 그리는 순간의 화면 픽셀 두께만 맞췄으나, 서로 다른 줌에서 그린
+            // 선이 다른 문서 두께로 저장돼 같은 슬라이더 값이라도 두께가 제각각이
+            // 되던 문제가 있었다. modeState.options(단일 진실 공급원)를 사용해
+            // 커서 미리보기와 실제 스트로크 두께를 일치시킨다 — size == width.
+            size: modeState.options.size,
             // fixedPen은 압력/두께 변화 없이 균일한 고정 두께를 유지한다.
             //   - thinning 0: 속도/압력에 따른 두께 변화 비활성화
             //   - simulatePressure false: 시뮬레이션 압력 무시

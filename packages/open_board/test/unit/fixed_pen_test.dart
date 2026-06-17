@@ -95,16 +95,16 @@ void main() {
     });
   });
 
-  group('FixedPen — ScribbleModeState options', () {
-    test('options.size는 strokeWidth / scaleFactor로 계산된다', () {
+  group('ScribbleModeState options — 문서 좌표 고정 두께', () {
+    test('확대(scaleFactor>1)에서도 options.size는 strokeWidth와 동일하다', () {
       final info = InkGroupInfo(selectedInk: InkModes.fixedPen);
       info.setStrokeBox({InkModes.fixedPen: 2.0});
       final state = ScribbleModeState(
         scaleFactor: 2.0,
         inkGroupInfo: info,
       );
-      // 2.0 / 2.0 = 1.0
-      expect(state.options.size, closeTo(1.0, 0.001));
+      // 줌 보정 제거 → 2.0 그대로 (이전 동작: 2.0/2.0 = 1.0)
+      expect(state.options.size, closeTo(2.0, 0.001));
     });
 
     test('scaleFactor 1.0에서 options.size는 strokeWidth와 동일하다', () {
@@ -115,6 +115,17 @@ void main() {
         inkGroupInfo: info,
       );
       expect(state.options.size, closeTo(3.0, 0.001));
+    });
+
+    test('축소(scaleFactor<1)에서도 options.size는 strokeWidth와 동일하다', () {
+      final info = InkGroupInfo(selectedInk: InkModes.fixedPen);
+      info.setStrokeBox({InkModes.fixedPen: 2.0});
+      final state = ScribbleModeState(
+        scaleFactor: 0.5,
+        inkGroupInfo: info,
+      );
+      // 줌 보정 제거 → 2.0 그대로 (이전 동작: 2.0/0.5 = 4.0 으로 더 굵게 저장됨)
+      expect(state.options.size, closeTo(2.0, 0.001));
     });
   });
 
