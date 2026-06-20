@@ -14,6 +14,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
   import 'package:open_board/src/module/scribble_mode.notifier.dart';
   import 'package:open_board/src/module/state/drawing_state.dart';
   import 'package:open_board/src/module/state/scribble.state.dart';
+  import 'package:open_board/src/module/state/viewer_gesture_bus.dart';
   import 'package:open_board/src/module/text/text_interaction_manager.dart';
   import 'package:open_board/src/module/text/text_painter.dart';
   // 새로 생성한 클래스들 import
@@ -265,6 +266,10 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       final drawingState = DrawingState();
       drawingState.selectedTool.addListener(_onDrawingToolChanged);
 
+      // 🚧 G1(kobic #7026): 도구바 핸들 드래그 신호 구독 — true 전환 시
+      // resetTouch 로 누출된 stroke 정리 (캔버스 IgnorePointer 게이트는 build 에서).
+      ViewerGestureBus().isPanelDragging.addListener(_onPanelDraggingChanged);
+
       // 등록 후 즉시 강제 동기화 실행
       WidgetsBinding.instance.addPostFrameCallback((_) {
         drawingState.forceSyncAll();
@@ -490,6 +495,18 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       // 🔄 modeNotifier도 동기화 (DrawingState → modeNotifier)
       if (widget.modeNotifier.state.inkGroupInfo.selectedInk != currentMode) {
         widget.modeNotifier.setSelectedInk(currentMode);
+      }
+    }
+
+    /// 🚧 G1(kobic #7026): 도구바 핸들 드래그 시작 신호 처리.
+    ///
+    /// 핸들 pen-down 이 캔버스 `Listener`(arena 미참여)에도 도달해 누출한 stroke 를
+    /// `resetTouch()` 로 즉시 정리한다. 입력 차단(IgnorePointer)은 build 에서
+    /// `ViewerGestureBus.isPanelDragging` 를 구독해 반응형으로 처리한다.
+    void _onPanelDraggingChanged() {
+      if (!mounted) return;
+      if (ViewerGestureBus().isPanelDragging.value) {
+        pointerHandler.resetTouch();
       }
     }
 
@@ -908,10 +925,19 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                   valueListenable: _isMultiTouchNotifier,
                   builder: (context, isMultiTouch, child) {
                     // 멀티터치 시 ignoring=false로 설정하여 InteractiveViewer로 이벤트 전달
-                    final shouldIgnore =
-                        shouldIgnoreForTextSelection && !isMultiTouch;
-                    return IgnorePointer(
-                      ignoring: shouldIgnore, // 멀티터치 시 FALSE → 줌/팬 가능
+                    // 🚧 G1(kobic #7026): 도구바 핸들 드래그 중에는 캔버스 입력을
+                    // 차단해 stroke 오발을 막는다 (ViewerGestureBus 반응형 구독).
+                    return ValueListenableBuilder<bool>(
+                      valueListenable: ViewerGestureBus().isPanelDragging,
+                      builder: (_, isPanelDragging, innerChild) {
+                        final shouldIgnore =
+                            (shouldIgnoreForTextSelection && !isMultiTouch) ||
+                            isPanelDragging;
+                        return IgnorePointer(
+                          ignoring: shouldIgnore, // 멀티터치 시 FALSE → 줌/팬 가능
+                          child: innerChild,
+                        );
+                      },
                       child: child,
                     );
                   },
@@ -2582,6 +2608,11 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       // 🔄 DrawingState 도구 변경 리스너 해제
       final drawingState = DrawingState();
       drawingState.selectedTool.removeListener(_onDrawingToolChanged);
+
+      // 🚧 G1(kobic #7026): 도구바 핸들 드래그 신호 구독 해제.
+      ViewerGestureBus().isPanelDragging.removeListener(
+        _onPanelDraggingChanged,
+      );
 
       // 🆕 스케일 변화 리스너 제거
       transformationController?.removeListener(_onTransformationChanged);
