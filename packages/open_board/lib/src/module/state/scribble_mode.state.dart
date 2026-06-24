@@ -30,15 +30,18 @@ class ScribbleModeState {
     required this.inkGroupInfo,
   });
 
-  /// 펜 두께를 문서(캔버스) 좌표 기준으로 고정한다.
+  /// 펜 크기 — 두께 정책을 스트로크 생성(`ScribbleNotifier`)과 일치시킨다
+  /// (단일 진실 공급원). 커서 미리보기 원 크기가 실제 그려질 두께와 일치한다.
   ///
-  /// 이전에는 `seletedStrokeWidth / scaleFactor` 로 줌을 보정해 그리는 순간의
-  /// 화면 픽셀 두께만 일정하게 맞췄으나(= fixed pen 동작), 그 결과 서로 다른 줌
-  /// 레벨에서 그린 선이 다른 문서 두께로 저장돼 같은 슬라이더 값이라도 두께가
-  /// 제각각이 되는 문제가 있었다. 줌과 무관하게 항상 동일한 두께로 필기되도록
-  /// scaleFactor 나눗셈을 제거한다 — 캔버스는 InteractiveViewer 자식이라 본문과
-  /// 함께 자연스럽게 스케일된다.
-  StrokeOptions get options => .new(size: inkGroupInfo.seletedStrokeWidth);
+  /// BrushMode 표준안(kobic #7160): `fixedPen`(화면비례)만 줌 배율로 보정해
+  /// 화면상 물리 두께를 유지(반응형)하고, 그 외(`pen`=필압, `uniformPen`=균일)는
+  /// 콘텐츠 좌표계 고정 두께라 확대 시 본문과 함께 스케일된다(캔버스가
+  /// InteractiveViewer 자식).
+  StrokeOptions get options => .new(
+    size: inkGroupInfo.selectedInk == InkModes.fixedPen
+        ? inkGroupInfo.seletedStrokeWidth / scaleFactor
+        : inkGroupInfo.seletedStrokeWidth,
+  );
 
   /// Returns a set of [PointerDeviceKind] that represents the currently
   /// supported devices, depending on [state.allowedPointersMode].

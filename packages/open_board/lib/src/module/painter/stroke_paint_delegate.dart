@@ -38,6 +38,11 @@ class StrokePaintDelegate with SketchLinePainter implements PaintDelegate {
       case "fixedPen":
         drawFixedPen(canvas, stroke);
         break;
+      case "uniformPen":
+        // 균일 두께(thinning 0 + simulatePressure false) fill 렌더링을 공유한다.
+        // size 보정은 스트로크 생성 시점에만 적용되므로 여기선 frozen size 사용.
+        drawFixedPen(canvas, stroke);
+        break;
       case "shape":
         // shape 타입인 경우 간단하게 선으로 처리
         drawPen(canvas, stroke);

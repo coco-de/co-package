@@ -1331,6 +1331,8 @@
           return ScribbleTool.marker;
         case DrawingTool.fixedPen:
           return ScribbleTool.fixedPen;
+        case DrawingTool.uniformPen:
+          return ScribbleTool.uniformPen;
         case DrawingTool.erase:
           return ScribbleTool.eraser;
         case DrawingTool.highlighter:

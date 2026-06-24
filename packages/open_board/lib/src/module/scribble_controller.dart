@@ -401,6 +401,7 @@ class ScribbleTool {
   static const String pencil = InkModes.pencil;
   static const String marker = InkModes.marker;
   static const String fixedPen = InkModes.fixedPen;
+  static const String uniformPen = InkModes.uniformPen;
   static const String eraser = InkModes.erase;
   static const String lasso = InkModes.lasso;
   static const String text = InkModes.text;

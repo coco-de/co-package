@@ -419,6 +419,8 @@ IconData drawingToolIcon(DrawingTool tool) {
       return Icons.brush;
     case DrawingTool.fixedPen:
       return Icons.precision_manufacturing;
+    case DrawingTool.uniformPen:
+      return Icons.border_color;
     case DrawingTool.erase:
       return Icons.auto_fix_normal;
     case DrawingTool.text:
@@ -443,6 +445,8 @@ String drawingToolLabel(DrawingTool tool) {
       return 'Highlighter';
     case DrawingTool.fixedPen:
       return 'Fixed';
+    case DrawingTool.uniformPen:
+      return 'Uniform';
     case DrawingTool.erase:
       return 'Eraser';
     case DrawingTool.text:

@@ -367,37 +367,37 @@ class ScribbleNotifier extends ScribbleNotifierBase
         Erasing() => s,
       };
     } else if (state is Drawing) {
+      final selectedInk = modeState.inkGroupInfo.selectedInk;
+      final strokeWidth = modeState.inkGroupInfo.seletedStrokeWidth;
       s = (state as Drawing).copyWith(
         pointerPosition: getPointFromEvent(event),
         activeLine: Stroke(
           points: [getPointFromEvent(event)],
           color: colorToInt(modeState.inkGroupInfo.selectedColor),
-          ink: modeState.inkGroupInfo.selectedInk,
-          width: modeState.inkGroupInfo.seletedStrokeWidth,
+          ink: selectedInk,
+          width: strokeWidth,
           createdAt: DateTime.now().toIso8601String(),
-          shapeType: modeState.inkGroupInfo.selectedInk == InkModes.shape
-              ? "pending"
-              : "",
+          shapeType: selectedInk == InkModes.shape ? "pending" : "",
           options: StrokeOptions(
-            // 두께를 문서(캔버스) 좌표 기준으로 고정한다 — 줌과 무관하게 항상
-            // 동일한 두께로 필기된다. 이전에는 `seletedStrokeWidth / scaleFactor`
-            // 로 그리는 순간의 화면 픽셀 두께만 맞췄으나, 서로 다른 줌에서 그린
-            // 선이 다른 문서 두께로 저장돼 같은 슬라이더 값이라도 두께가 제각각이
-            // 되던 문제가 있었다. modeState.options(단일 진실 공급원)를 사용해
-            // 커서 미리보기와 실제 스트로크 두께를 일치시킨다 — size == width.
+            // size 두께 정책은 modeState.options(단일 진실 공급원)에 위임한다.
+            // BrushMode 표준안(kobic #7160): fixedPen(화면비례)만 줌 배율로 보정해
+            // 화면상 물리 두께를 일정하게 유지(반응형), 그 외(pen=필압,
+            // uniformPen=균일)는 콘텐츠 좌표계 고정 두께라 확대 시 콘텐츠와 함께
+            // 굵어진다. 커서 미리보기와 실제 스트로크 두께가 일치한다.
             size: modeState.options.size,
-            // fixedPen은 압력/두께 변화 없이 균일한 고정 두께를 유지한다.
-            //   - thinning 0: 속도/압력에 따른 두께 변화 비활성화
-            //   - simulatePressure false: 시뮬레이션 압력 무시
-            thinning: modeState.inkGroupInfo.selectedInk == "pen" ? 0.7 : 0.0,
+            // 필압(두께 변화)은 pen 만 적용. uniformPen/fixedPen 은 균일 두께.
+            thinning: selectedInk == InkModes.pen ? 0.7 : 0.0,
             smoothing: 0.5,
             streamline: 0.5,
             taperStart: 0.0,
             taperEnd: 0.0,
             capStart: true,
             capEnd: true,
+            // 균일 계열(uniformPen/fixedPen)은 가짜 압력도 끈다. penOnly
+            // (스타일러스)는 실제 압력을 쓰므로 시뮬레이션 비활성화.
             simulatePressure:
-                modeState.inkGroupInfo.selectedInk != "fixedPen" &&
+                selectedInk != InkModes.fixedPen &&
+                selectedInk != InkModes.uniformPen &&
                 modeState.allowedPointersMode != .penOnly,
           ),
         ),

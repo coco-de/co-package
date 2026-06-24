@@ -101,6 +101,17 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
     );
   }
 
+  /// 균일 두께 펜 모드로 설정 (필압 무시 + 콘텐츠 좌표 고정 두께, 줌 보정 없음)
+  void setUniformPen() {
+    state = ScribbleModeState(
+      scaleFactor: state.scaleFactor,
+      allowedPointersMode: state.allowedPointersMode,
+      inkGroupInfo: state.inkGroupInfo.copyWith(
+        selectedInk: InkModes.uniformPen,
+      ),
+    );
+  }
+
   /// 도형 모드로 설정
   void setShape() {
     state = ScribbleModeState(

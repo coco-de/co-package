@@ -95,16 +95,18 @@ void main() {
     });
   });
 
-  group('ScribbleModeState options — 문서 좌표 고정 두께', () {
-    test('확대(scaleFactor>1)에서도 options.size는 strokeWidth와 동일하다', () {
+  group('ScribbleModeState options — fixedPen 화면비례 줌 보정 (#7160)', () {
+    // fixedPen 은 화면비례(반응형) — 화면상 물리 두께를 유지하도록 scaleFactor 로
+    // 보정한다. 균일(콘텐츠 고정)은 uniformPen 이 담당(uniform_pen_test 참조).
+    test('확대(scaleFactor>1)에서 options.size는 strokeWidth/scaleFactor로 보정된다', () {
       final info = InkGroupInfo(selectedInk: InkModes.fixedPen);
       info.setStrokeBox({InkModes.fixedPen: 2.0});
       final state = ScribbleModeState(
         scaleFactor: 2.0,
         inkGroupInfo: info,
       );
-      // 줌 보정 제거 → 2.0 그대로 (이전 동작: 2.0/2.0 = 1.0)
-      expect(state.options.size, closeTo(2.0, 0.001));
+      // 화면 물리 두께 유지: 2.0 / 2.0 = 1.0
+      expect(state.options.size, closeTo(1.0, 0.001));
     });
 
     test('scaleFactor 1.0에서 options.size는 strokeWidth와 동일하다', () {
@@ -117,15 +119,15 @@ void main() {
       expect(state.options.size, closeTo(3.0, 0.001));
     });
 
-    test('축소(scaleFactor<1)에서도 options.size는 strokeWidth와 동일하다', () {
+    test('축소(scaleFactor<1)에서 options.size는 strokeWidth/scaleFactor로 보정된다', () {
       final info = InkGroupInfo(selectedInk: InkModes.fixedPen);
       info.setStrokeBox({InkModes.fixedPen: 2.0});
       final state = ScribbleModeState(
         scaleFactor: 0.5,
         inkGroupInfo: info,
       );
-      // 줌 보정 제거 → 2.0 그대로 (이전 동작: 2.0/0.5 = 4.0 으로 더 굵게 저장됨)
-      expect(state.options.size, closeTo(2.0, 0.001));
+      // 화면 물리 두께 유지: 2.0 / 0.5 = 4.0
+      expect(state.options.size, closeTo(4.0, 0.001));
     });
   });
 

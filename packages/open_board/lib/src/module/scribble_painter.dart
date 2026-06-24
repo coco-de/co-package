@@ -132,6 +132,10 @@ class ScribblePainter extends CustomPainter with SketchLinePainter {
         case "fixedPen":
           strokeDelegate.drawFixedPen(canvas, line);
           break;
+        case "uniformPen":
+          // 균일 두께 fill 렌더링 공유(thinning 0 + simulatePressure false).
+          strokeDelegate.drawFixedPen(canvas, line);
+          break;
         case "lasso":
           final lassoDelegate = LassoPaintDelegate(
             allStrokes: state.scribble.strokes,

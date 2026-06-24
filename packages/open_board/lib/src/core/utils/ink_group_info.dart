@@ -9,6 +9,12 @@ class InkModes {
   static const String pencil = 'pencil';
   static const String marker = 'marker';
   static const String fixedPen = 'fixedPen';
+
+  /// 균일 두께 펜 — 압력/속도에 따른 두께 변화 없이(thinning 0, simulatePressure
+  /// false) 콘텐츠 좌표계 고정 두께를 유지한다. `fixedPen`(화면 물리 두께 보정)과
+  /// 달리 줌 배율 보정을 적용하지 않아 확대 시 콘텐츠와 함께 굵어진다.
+  static const String uniformPen = 'uniformPen';
+
   static const String erase = 'erase';
   static const String lasso = 'lasso';
   static const String shape = 'shape';
@@ -24,6 +30,7 @@ class InkGroupInfo {
     InkModes.pencil: ColorS.getColors(inkType: InkModes.pencil)[0],
     InkModes.marker: ColorS.getColors(inkType: InkModes.marker)[0],
     InkModes.fixedPen: ColorS.getColors(inkType: InkModes.pen)[0],
+    InkModes.uniformPen: ColorS.getColors(inkType: InkModes.pen)[0],
     InkModes.erase: ColorS.getColors(inkType: InkModes.erase)[0],
     InkModes.lasso: Colors.blue,
     InkModes.shape: ColorS.getColors(inkType: InkModes.shape)[0],
@@ -35,6 +42,7 @@ class InkGroupInfo {
     InkModes.pencil: 0.5,
     InkModes.marker: 2.5,
     InkModes.fixedPen: 0.5,
+    InkModes.uniformPen: 0.5,
     InkModes.erase: 2.5,
     InkModes.lasso: 1.8,
     InkModes.shape: 1.0,

@@ -13,6 +13,11 @@ enum DrawingTool {
   pencil,
   marker,
   fixedPen,
+
+  /// 균일 두께 펜 — 필압 무시 + 콘텐츠 좌표 고정 두께(줌 보정 없음). `fixedPen`
+  /// (화면 물리 두께 보정)과 두께 정책만 다르다.
+  uniformPen,
+
   erase,
   highlighter,
   text,

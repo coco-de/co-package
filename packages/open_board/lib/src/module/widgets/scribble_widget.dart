@@ -247,9 +247,6 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
     // 🎨 하이라이트 모드에서의 포인터 종류 추적 (펜/손 구분)
     late ValueNotifier<ui.PointerDeviceKind?> _currentPointerKindForHighlighter;
 
-    // 🤚 멀티터치 상태 추적 (2손가락 이상 터치 시 IgnorePointer 비활성화)
-    late ValueNotifier<bool> _isMultiTouchNotifier;
-
     // 🖐️ 아직 떼지 않은 터치 포인터 추적 (kTouchDelay 지연 처리용)
     // 30ms 지연 콜백이 발화하기 전에 up/cancel된 포인터의 down을 무시하여
     // 고아 pointer id가 activePointerIds에 영구 잔류하는 것을 방지한다.
@@ -281,8 +278,6 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       _currentPointerKindForHighlighter = ValueNotifier<ui.PointerDeviceKind?>(
         null,
       );
-      _isMultiTouchNotifier = ValueNotifier<bool>(false);
-
       // transformationController 먼저 초기화 (매니저들이 의존하므로)
       transformationController =
           widget.transformationController ?? TransformationController();
@@ -517,6 +512,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         DrawingTool.pencil => InkModes.pencil,
         DrawingTool.marker => InkModes.marker,
         DrawingTool.fixedPen => InkModes.fixedPen,
+        DrawingTool.uniformPen => InkModes.uniformPen,
         DrawingTool.highlighter => InkModes.marker, // 하이라이터는 마커로 처리
         DrawingTool.text => InkModes.text,
         DrawingTool.lasso => InkModes.lasso,
@@ -859,11 +855,6 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                     kind == ui.PointerDeviceKind.unknown;
               }
 
-              final shouldIgnoreForTextSelection =
-                  isHighlighterMode &&
-                  isTextSelectionDevice(currentPointerKind);
-
-
               // 🎯 포인터 종류 감지를 위한 최상위 Listener
               // ⚡ onPointerDown에서 펜/마우스/손 모두 감지
               // ⚠️ 중요: IgnorePointer의 ignoring 값이 빌드 시점에 결정되므로 첫 이벤트는 이전 상태로 처리될 수 있음
@@ -883,16 +874,11 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                           // ⚡ 즉시 포인터 종류 설정
                           _currentPointerKindForHighlighter.value = event.kind;
                         }
-                        // 🔧 터치 카운트를 외부 Listener에서 관리
-                        // IgnorePointer가 내부 Listener를 차단하므로
-                        // 여기서 관리해야 멀티터치 핀치 줌이 작동함
+                        // 🔧 터치 카운트 균형 유지 — 내부 Listener 는 하이라이트
+                        //   모드에서 pdfrx 투과로 단락되므로, pointerHandler 카운트를
+                        //   외부 Listener 에서 증감해 모드 전환 시 정합을 보장한다.
                         if (event.kind == ui.PointerDeviceKind.touch) {
                           pointerHandler.incrementTouch();
-                          _isMultiTouchNotifier.value = pointerHandler
-                              .isMultiTouch();
-                          if (pointerHandler.isMultiTouch()) {
-                            setState(() {});
-                          }
                         }
                       }
                     : null,
@@ -900,11 +886,6 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                     ? (event) {
                         if (event.kind == ui.PointerDeviceKind.touch) {
                           pointerHandler.decrementTouch();
-                          _isMultiTouchNotifier.value = pointerHandler
-                              .isMultiTouch();
-                          if (!pointerHandler.isMultiTouch()) {
-                            setState(() {});
-                          }
                         }
                       }
                     : null,
@@ -912,33 +893,38 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                     ? (event) {
                         if (event.kind == ui.PointerDeviceKind.touch) {
                           pointerHandler.decrementTouch();
-                          _isMultiTouchNotifier.value = pointerHandler
-                              .isMultiTouch();
-                          if (!pointerHandler.isMultiTouch()) {
-                            setState(() {});
-                          }
                         }
                       }
                     : null,
-                // 🤚 멀티터치 상태에 따라 IgnorePointer 동적 제어
+                // 🚧 G1(kobic #7026): 도구바 핸들 드래그 중에는 캔버스 입력을
+                // 차단해 stroke 오발을 막는다 (ViewerGestureBus 반응형 구독).
                 child: ValueListenableBuilder<bool>(
-                  valueListenable: _isMultiTouchNotifier,
-                  builder: (context, isMultiTouch, child) {
-                    // 멀티터치 시 ignoring=false로 설정하여 InteractiveViewer로 이벤트 전달
-                    // 🚧 G1(kobic #7026): 도구바 핸들 드래그 중에는 캔버스 입력을
-                    // 차단해 stroke 오발을 막는다 (ViewerGestureBus 반응형 구독).
-                    return ValueListenableBuilder<bool>(
-                      valueListenable: ViewerGestureBus().isPanelDragging,
-                      builder: (_, isPanelDragging, innerChild) {
-                        final shouldIgnore =
-                            (shouldIgnoreForTextSelection && !isMultiTouch) ||
-                            isPanelDragging;
-                        return IgnorePointer(
-                          ignoring: shouldIgnore, // 멀티터치 시 FALSE → 줌/팬 가능
-                          child: innerChild,
-                        );
-                      },
-                      child: child,
+                  valueListenable: ViewerGestureBus().isPanelDragging,
+                  builder: (context, isPanelDragging, innerChild) {
+                    // 🐛 #7092: 하이라이트 모드에서 손가락 핀치 줌이 전혀 안 되던 버그
+                    //   수정. 이전엔 `&& !isMultiTouch` 로 두 번째 손가락에서
+                    //   ignoring=false 로 뒤집어 InteractiveViewer 로 넘기려 했으나,
+                    //   하이라이트 모드의 내부 IV 는 비활성(_shouldEnableScale/Pan=
+                    //   false)이고 실제 줌은 pdfrx onInteractionUpdate →
+                    //   externalTransformController forward(kobic 측)로 처리된다.
+                    //   ignoring 뒤집힘이 진행 중인 핀치의 hit-test 경로를 바꿔(첫
+                    //   손가락은 이미 pdfrx 로 라우팅됨) 두 손가락이 한 recognizer 에
+                    //   모이지 못해 scale 미형성 → 줌 전혀 안 됨.
+                    //   선택 장치(손가락/스타일러스)는 항상 투명 스크리블 오버레이를
+                    //   투과(ignoring=true)시켜 pdfrx 가 모든 포인터를 받게 한다 →
+                    //   단일=텍스트 선택/화면 탐색, 두 손가락=핀치 줌 정상 동작.
+                    // 🐛 #7092: highlighter 면 포인터 종류와 무관하게 항상 투과한다.
+                    //   shouldIgnoreForTextSelection(= isTextSelectionDevice 기반)
+                    //   에 의존하면, 손가락 입력 직후 currentPointerKind 가 touch 로
+                    //   남아 첫 펜(stylus) 입력이 직전 상태로 hit-test 되어 오버레이가
+                    //   가로채 "손가락 후 첫 펜 드래그 실패" 버그가 났다(포인터 종류는
+                    //   한 이벤트 늦게 갱신). 항상 투과시키면 단일 입력은 pdfrx 가
+                    //   장치별로 처리(손=탐색/선택, 펜=선택), 두 손가락 줌은 inner
+                    //   IV(부모)가 처리하므로 lag 가 사라진다.
+                    final shouldIgnore = isHighlighterMode || isPanelDragging;
+                    return IgnorePointer(
+                      ignoring: shouldIgnore,
+                      child: innerChild,
                     );
                   },
                   child: ValueListenableBuilder<bool>(
@@ -1305,21 +1291,22 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
 
     /// 🎯 InteractiveViewer pan 제스처 허용 여부 (panDirection에 따라 제어)
     bool _shouldEnablePan() {
-      // 🎯 하이라이트 모드: 외곽 InteractiveViewer 에 pan 양보 (GestureArena
-      //    경합 방지). 외곽 IV 가 panEnabled=isZoomedIn 으로 zoom 상태에서만
-      //    pan 을 처리하므로 일관된 동작 보장 + 단일 손가락 drag 는 PDF
-      //    텍스트 선택으로 통과.
-      //    ⚠️ multi-touch 체크보다 먼저 — highlight 모드에서는 멀티터치라도
-      //       내부 IV 가 캡처하지 않아야 외곽 IV 가 일관되게 win.
+      // 🖊️ 멀티터치(두 손가락) 시에는 항상 pan 허용 (핀치 줌/드래그용).
+      //   🐛 #7092: highlighter 체크보다 먼저 둔다. 기존엔 highlighter 를 먼저
+      //   false 처리해 "외곽 IV 가 핀치를 처리"하도록 의도했으나, 내부 IV 의
+      //   ScaleGestureRecognizer 는 scale/pan 비활성이어도 제스처를 캡처(소비)
+      //   하므로 외곽 IV·pdfrx 가 핀치를 받지 못해 하이라이트 줌이 전혀 동작하지
+      //   않았다. 두 손가락이면 내부 IV 가 직접 pan 을 처리한다(펜 도구와 동일).
+      if (pointerHandler.isMultiTouch()) {
+        return true; // ✅ 두 손가락 터치 시 pan 허용
+      }
+
+      // 🎯 단일 손가락 highlighter: pan 비활성 → drag 가 pdfrx 텍스트 선택으로
+      //    통과한다.
       final drawingState = DrawingState();
       final currentTool = drawingState.selectedTool.value;
       if (currentTool == DrawingTool.highlighter) {
         return false;
-      }
-
-      // 🖊️ 멀티터치(두 손가락) 시에는 항상 pan 허용 (핀치 줌/드래그용)
-      if (pointerHandler.isMultiTouch()) {
-        return true; // ✅ 두 손가락 터치 시 pan 허용
       }
 
       // 🖊️ 손모드에서 그리기 중일 때는 스크롤 차단 (단, 싱글 터치일 때만)
@@ -1356,16 +1343,24 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       //    내부 IV 와 외곽 IV 가 동시에 ScaleGestureRecognizer 를 등록하면
       //    첫 핀치에서 어느 쪽이 win 할지 불안정해 모드 전환 직후 확대/축소
       //    동작이 일관되지 않는다 (kobic Issue: #5877 후속 보강).
-      //    ⚠️ multi-touch 체크보다 먼저.
+      // 🖊️ 멀티터치(두 손가락) 시에는 항상 scale 허용 (핀치 줌용).
+      //   🐛 #7092: highlighter 체크보다 먼저. 내부 IV 의 ScaleGestureRecognizer
+      //   는 scale 비활성이어도 핀치 제스처를 캡처(소비)하므로, highlighter 를
+      //   먼저 false 처리하면 제스처만 소비되고 줌이 적용되지 않아 "하이라이트
+      //   줌 안 됨" 버그가 됐다. 두 손가락이면 내부 IV 가 직접 scale 을 적용한다.
+      if (pointerHandler.isMultiTouch()) {
+        return true; // ✅ 두 손가락 터치 시 핀치 줌 허용
+      }
+
+      // 🎯 highlighter: scale 항상 활성. ScaleGestureRecognizer 는 2-pointer 가
+      //    있어야 scale 로 인정하므로, 단일 손가락은 IV 가 캡처하지 않고 pdfrx
+      //    텍스트 선택으로 양보된다(외곽 _ExternalPinchZoomViewer 와 동일 패턴).
+      //    반대로 scale=false 로 두면 IV 가 단일 손가락 제스처를 greedy 하게
+      //    소비해 텍스트 선택이 막혔다 (#7092 회귀). 두 손가락은 위 multi 분기.
       final drawingState = DrawingState();
       final currentTool = drawingState.selectedTool.value;
       if (currentTool == DrawingTool.highlighter) {
-        return false;
-      }
-
-      // 🖊️ 멀티터치(두 손가락) 시에는 항상 scale 허용 (핀치 줌용)
-      if (pointerHandler.isMultiTouch()) {
-        return true; // ✅ 두 손가락 터치 시 핀치 줌 허용
+        return true;
       }
 
       // ✅ 확대/축소는 필기 모드에서도 허용 (펜 그리기 중에만 비활성화)
@@ -1690,6 +1685,9 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
           break;
         case DrawingTool.fixedPen:
           currentInk = InkModes.fixedPen;
+          break;
+        case DrawingTool.uniformPen:
+          currentInk = InkModes.uniformPen;
           break;
         case DrawingTool.highlighter:
           currentInk = InkModes.marker; // 하이라이터는 마커로 처리
@@ -2588,7 +2586,6 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       // 고착되면 이후 모든 싱글터치가 멀티터치로 오인된다.
       if (widget.isScribbleEnable != oldWidget.isScribbleEnable) {
         pointerHandler.resetTouch();
-        _isMultiTouchNotifier.value = false;
         _pendingTouchDowns.clear();
       }
 
@@ -2628,7 +2625,6 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       strokeCountNotifier.dispose();
       isInteractiveNotifier.dispose();
       _currentPointerKindForHighlighter.dispose();
-      _isMultiTouchNotifier.dispose();
       super.dispose();
     }
 
