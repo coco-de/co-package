@@ -65,4 +65,13 @@ extension TextDrawableExtensions on TextDrawable {
       ..hidden = isHidden
       ..updatedAt = DateTime.now().toIso8601String();
   }
+
+  /// Create a copy with updated inline hyperlink spans.
+  TextDrawable copyWithLinkSpans(Iterable<TextLinkSpan> newLinkSpans) {
+    return TextDrawable()
+      ..mergeFromMessage(this)
+      ..linkSpans.clear()
+      ..linkSpans.addAll(newLinkSpans)
+      ..updatedAt = DateTime.now().toIso8601String();
+  }
 }

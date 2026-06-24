@@ -78,6 +78,20 @@ message Stroke {
   double confidence = 9 [json_name="confidence"];
 }
 
+/// An inline hyperlink span covering a `[start, end)` character range (UTF-16
+/// code units) of the owning [TextDrawable.text]. Currently only external web
+/// URLs are supported; internal page links may be added later as an additive
+/// field (e.g. a `oneof` target).
+message TextLinkSpan {
+  /// Inclusive start offset (UTF-16 code units) into [TextDrawable.text].
+  int32 start = 1 [json_name="start"];
+  /// Exclusive end offset (UTF-16 code units) into [TextDrawable.text].
+  int32 end = 2 [json_name="end"];
+  /// External web URL (e.g. `https://...`). Interpretation/opening is delegated
+  /// to the host application (e.g. kobic), consistent with `ImageDrawable.source`.
+  string url = 3 [json_name="url"];
+}
+
 message TextDrawable {
   string id = 1 [json_name="id"];
   string text = 2 [json_name="text"];
@@ -94,6 +108,8 @@ message TextDrawable {
   string createdAt = 13 [json_name="createdAt"];
   string updatedAt = 14 [json_name="updatedAt"];
   double rotation = 15 [json_name="rotation"];
+  /// Inline external hyperlink spans over ranges of [text] (kobic #7162).
+  repeated TextLinkSpan linkSpans = 16 [json_name="linkSpans"];
 }
 
 /// Image drawable on the canvas. The actual bytes/decoding are resolved by the

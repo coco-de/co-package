@@ -144,6 +144,21 @@ final $typed_data.Uint8List strokeDescriptor = $convert.base64Decode(
     'YgASgJUglzaGFwZVR5cGUSFAoFd2lkdGgYByABKAFSBXdpZHRoEiQKCHNlZ21lbnRzGAggAygL'
     'MgguU2VnbWVudFIIc2VnbWVudHMSHgoKY29uZmlkZW5jZRgJIAEoAVIKY29uZmlkZW5jZQ==');
 
+@$core.Deprecated('Use textLinkSpanDescriptor instead')
+const TextLinkSpan$json = {
+  '1': 'TextLinkSpan',
+  '2': [
+    {'1': 'start', '3': 1, '4': 1, '5': 5, '10': 'start'},
+    {'1': 'end', '3': 2, '4': 1, '5': 5, '10': 'end'},
+    {'1': 'url', '3': 3, '4': 1, '5': 9, '10': 'url'},
+  ],
+};
+
+/// Descriptor for `TextLinkSpan`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List textLinkSpanDescriptor = $convert.base64Decode(
+    'CgxUZXh0TGlua1NwYW4SFAoFc3RhcnQYASABKAVSBXN0YXJ0EhAKA2VuZBgCIAEoBVIDZW5kEh'
+    'AKA3VybBgDIAEoCVIDdXJs');
+
 @$core.Deprecated('Use textDrawableDescriptor instead')
 const TextDrawable$json = {
   '1': 'TextDrawable',
@@ -163,6 +178,14 @@ const TextDrawable$json = {
     {'1': 'createdAt', '3': 13, '4': 1, '5': 9, '10': 'createdAt'},
     {'1': 'updatedAt', '3': 14, '4': 1, '5': 9, '10': 'updatedAt'},
     {'1': 'rotation', '3': 15, '4': 1, '5': 1, '10': 'rotation'},
+    {
+      '1': 'linkSpans',
+      '3': 16,
+      '4': 3,
+      '5': 11,
+      '6': '.TextLinkSpan',
+      '10': 'linkSpans'
+    },
   ],
 };
 
@@ -175,7 +198,7 @@ final $typed_data.Uint8List textDrawableDescriptor = $convert.base64Decode(
     'cmxpbmVkGAogASgIUgxpc1VuZGVybGluZWQSHAoJdGV4dEFsaWduGAsgASgJUgl0ZXh0QWxpZ2'
     '4SFgoGaGlkZGVuGAwgASgIUgZoaWRkZW4SHAoJY3JlYXRlZEF0GA0gASgJUgljcmVhdGVkQXQS'
     'HAoJdXBkYXRlZEF0GA4gASgJUgl1cGRhdGVkQXQSGgoIcm90YXRpb24YDyABKAFSCHJvdGF0aW'
-    '9u');
+    '9uEisKCWxpbmtTcGFucxgQIAMoCzINLlRleHRMaW5rU3BhblIJbGlua1NwYW5z');
 
 @$core.Deprecated('Use imageDrawableDescriptor instead')
 const ImageDrawable$json = {
