@@ -36,13 +36,15 @@ typedef FixedLayoutPageBuilder = Future<FixedLayoutPageData> Function(
   EpubSpineItem item,
 );
 
-/// fixed-layout 페이지 위에 같은 논리 좌표 공간으로 합성되는 전경 오버레이
-/// 빌더(open-board 절대좌표 필기 캔버스 등, S8.6). [item]은 해당 spine,
-/// [logicalSize]는 페이지 논리 크기(=절대좌표 공간).
-typedef FixedLayoutForegroundBuilder = Widget Function(
+/// fixed-layout 페이지 콘텐츠를 논리 좌표 공간에서 감싸는 빌더(open-board
+/// 절대좌표 필기 캔버스가 [content]를 child로 받는 용도 등, S8.6). [item]은 해당
+/// spine, [logicalSize]는 페이지 논리 크기(=절대좌표 공간), [content]는 원본
+/// 페이지 위젯.
+typedef FixedLayoutContentBuilder = Widget Function(
   BuildContext context,
   EpubSpineItem item,
   Size logicalSize,
+  Widget content,
 );
 
 class FixedLayoutEngine extends StatefulWidget {
@@ -53,7 +55,7 @@ class FixedLayoutEngine extends StatefulWidget {
     this.initialSpineIndex = 0,
     this.fitter = const ViewportFitter(),
     this.spreadOverride,
-    this.foregroundBuilder,
+    this.contentBuilder,
     this.enableZoom = true,
   });
 
@@ -66,9 +68,9 @@ class FixedLayoutEngine extends StatefulWidget {
   /// 강제 변경하려면 [EpubSpread]를 명시 (예: [EpubSpread.none]).
   final EpubSpread? spreadOverride;
 
-  /// 각 페이지 위에 전경 오버레이(필기 등)를 합성한다. null이면 오버레이 없음.
-  /// 빌더의 로컬 좌표가 곧 페이지 절대좌표이며 fit·zoom·pan과 함께 변환된다(S8.6).
-  final FixedLayoutForegroundBuilder? foregroundBuilder;
+  /// 각 페이지 콘텐츠를 논리 좌표 공간에서 감싼다(필기 등). null이면 원본 그대로.
+  /// 반환 위젯의 로컬 좌표가 곧 페이지 절대좌표이며 fit·zoom·pan과 함께 변환된다(S8.6).
+  final FixedLayoutContentBuilder? contentBuilder;
 
   /// false면 페이지 줌/팬을 비활성화한다(드로잉 중 pan 충돌 방지). default true.
   final bool enableZoom;
@@ -178,7 +180,7 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
       item: item,
       pageBuilder: widget.pageBuilder,
       fitter: widget.fitter,
-      foregroundBuilder: widget.foregroundBuilder,
+      contentBuilder: widget.contentBuilder,
       enableZoom: widget.enableZoom,
     );
   }
@@ -190,14 +192,14 @@ class _AsyncFixedLayoutPage extends StatefulWidget {
     required this.item,
     required this.pageBuilder,
     required this.fitter,
-    this.foregroundBuilder,
+    this.contentBuilder,
     this.enableZoom = true,
   });
 
   final EpubSpineItem item;
   final FixedLayoutPageBuilder pageBuilder;
   final ViewportFitter fitter;
-  final FixedLayoutForegroundBuilder? foregroundBuilder;
+  final FixedLayoutContentBuilder? contentBuilder;
   final bool enableZoom;
 
   @override
@@ -233,15 +235,16 @@ class _AsyncFixedLayoutPageState extends State<_AsyncFixedLayoutPage> {
           );
         }
         final page = snap.data!;
-        final fg = widget.foregroundBuilder;
+        final wrap = widget.contentBuilder;
         return FixedLayoutPage(
           logicalSize: page.logicalSize,
           content: page.content,
           fitter: widget.fitter,
           enableZoom: widget.enableZoom,
-          foregroundBuilder: fg == null
+          contentBuilder: wrap == null
               ? null
-              : (ctx, logicalSize) => fg(ctx, widget.item, logicalSize),
+              : (ctx, logicalSize, content) =>
+                  wrap(ctx, widget.item, logicalSize, content),
         );
       },
     );

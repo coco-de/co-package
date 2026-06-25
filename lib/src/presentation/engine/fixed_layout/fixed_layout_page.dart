@@ -24,7 +24,7 @@ class FixedLayoutPage extends StatefulWidget {
     this.doubleTapZoom = 2.0,
     this.enableZoom = true,
     this.transformationController,
-    this.foregroundBuilder,
+    this.contentBuilder,
   })  : assert(minZoom > 0, 'minZoom must be > 0'),
         assert(maxZoom >= minZoom, 'maxZoom must be >= minZoom'),
         assert(
@@ -54,16 +54,18 @@ class FixedLayoutPage extends StatefulWidget {
   /// 주입 시 dispose는 호스트 책임.
   final TransformationController? transformationController;
 
-  /// 페이지 콘텐츠 위에 **같은 논리 좌표 공간**으로 합성되는 전경 오버레이를
-  /// 빌드한다(open-board 절대좌표 필기 캔버스 등, S8.6). [logicalSize]는 페이지
-  /// 논리 크기 — 빌더의 로컬 좌표가 곧 페이지 절대좌표이며, fit·zoom·pan과 함께
-  /// 자동 변환된다. null이면 오버레이 없음.
+  /// 페이지 콘텐츠를 **논리 좌표 공간**에서 감싸 다른 위젯으로 치환한다(S8.6).
+  /// open-board 같은 필기 위젯이 `content`를 child로 받아 절대좌표 필기 캔버스를
+  /// 얹는 용도. [logicalSize]는 페이지 논리 크기(=절대좌표 공간)이며, 반환 위젯은
+  /// `content`와 동일하게 `SizedBox(logicalSize)` 안에서 fit·zoom·pan과 함께
+  /// 변환된다. null이면 `content`를 그대로 렌더.
   ///
-  /// 오버레이는 `content`와 동일한 `SizedBox(logicalSize)` 안에 Stack으로 쌓이므로
-  /// 별도 좌표 변환 없이 절대좌표로 그릴 수 있다. 드로잉 중 pan/zoom 충돌을 막으려면
-  /// [enableZoom]을 false로 두어 InteractiveViewer를 비활성화한다.
-  final Widget Function(BuildContext context, Size logicalSize)?
-  foregroundBuilder;
+  /// 단순 전경 오버레이는 `(ctx, size, content) => Stack([content, overlay])` 로,
+  /// 필기 통합은 `(ctx, size, content) => ScribbleWidget(child: content, ...)` 로
+  /// 구현할 수 있다(wrapper가 overlay를 포함). 필기 위젯이 자체 줌을 제공하면
+  /// [enableZoom]을 false로 두어 페이지의 InteractiveViewer 중첩을 피한다.
+  final Widget Function(BuildContext context, Size logicalSize, Widget content)?
+  contentBuilder;
 
   @override
   State<FixedLayoutPage> createState() => FixedLayoutPageState();
@@ -125,19 +127,13 @@ class FixedLayoutPageState extends State<FixedLayoutPage> {
         final fittedW = widget.logicalSize.width * scale;
         final fittedH = widget.logicalSize.height * scale;
 
-        // 전경 오버레이가 있으면 content와 같은 논리 좌표 공간에 Stack으로 쌓는다.
-        // 두 자식 모두 SizedBox(logicalSize)의 tight 제약을 받아 페이지 절대좌표를
+        // contentBuilder가 있으면 content를 논리 좌표 공간에서 감싼다. 반환 위젯은
+        // content와 동일한 SizedBox(logicalSize)의 tight 제약을 받아 페이지 절대좌표를
         // 공유하므로, FittedBox·InteractiveViewer 변환이 동일하게 적용된다(S8.6).
-        final overlay = widget.foregroundBuilder;
-        final Widget logicalChild = overlay == null
+        final wrap = widget.contentBuilder;
+        final Widget logicalChild = wrap == null
             ? widget.content
-            : Stack(
-                fit: StackFit.expand,
-                children: [
-                  widget.content,
-                  overlay(ctx, widget.logicalSize),
-                ],
-              );
+            : wrap(ctx, widget.logicalSize, widget.content);
 
         final fitted = Align(
           alignment: widget.alignment,

@@ -1,6 +1,7 @@
-// Story: S8.6 (E8) — fixed-layout 전경 오버레이 builder seam
-// open-board 절대좌표 필기 캔버스를 페이지 논리 좌표 공간에 합성하기 위한
-// FixedLayoutPage / FixedLayoutEngine / EpubReader 의 foregroundBuilder.
+// Story: S8.6 (E8) — fixed-layout 콘텐츠 wrapper builder seam
+// open-board 절대좌표 필기 캔버스가 페이지 content를 child로 받아 논리 좌표
+// 공간에 필기를 얹기 위한 FixedLayoutPage / FixedLayoutEngine / EpubReader 의
+// contentBuilder.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,10 +13,12 @@ import 'package:open_epub/src/presentation/engine/fixed_layout/fixed_layout_engi
 import 'package:open_epub/src/presentation/engine/fixed_layout/fixed_layout_page.dart';
 
 void main() {
-  group('FixedLayoutPage.foregroundBuilder (S8.6)', () {
-    testWidgets('전경 오버레이를 content 위에 같은 논리 크기로 합성한다', (tester) async {
-      const overlayKey = Key('overlay');
+  group('FixedLayoutPage.contentBuilder (S8.6)', () {
+    testWidgets('content를 같은 논리 크기로 감싸 치환한다', (tester) async {
+      const contentKey = Key('content');
+      const wrapKey = Key('wrap');
       Size? capturedSize;
+      Widget? capturedContent;
 
       await tester.pumpWidget(
         _wrap(
@@ -23,12 +26,14 @@ void main() {
           height: 300,
           child: FixedLayoutPage(
             logicalSize: const Size(600, 800),
-            content: const SizedBox(width: 600, height: 800),
-            foregroundBuilder: (context, logicalSize) {
+            content: const SizedBox(key: contentKey, width: 600, height: 800),
+            contentBuilder: (context, logicalSize, content) {
               capturedSize = logicalSize;
-              return const SizedBox.expand(
-                key: overlayKey,
-                child: ColoredBox(color: Color(0x11000000)),
+              capturedContent = content;
+              return ColoredBox(
+                key: wrapKey,
+                color: const Color(0x11000000),
+                child: content,
               );
             },
           ),
@@ -36,16 +41,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 오버레이가 트리에 존재하고 페이지 논리 크기를 전달받는다.
-      expect(find.byKey(overlayKey), findsOneWidget);
+      // wrapper가 트리에 존재하고 원본 content를 child로 받는다.
+      expect(find.byKey(wrapKey), findsOneWidget);
+      expect(find.byKey(contentKey), findsOneWidget);
       expect(capturedSize, const Size(600, 800));
+      expect(capturedContent, isNotNull);
 
-      // 오버레이는 content와 같은 논리 좌표(600×800)로 배치된다.
-      expect(tester.getSize(find.byKey(overlayKey)), const Size(600, 800));
+      // wrapper는 content와 같은 논리 좌표(600×800)로 배치된다.
+      expect(tester.getSize(find.byKey(wrapKey)), const Size(600, 800));
     });
 
-    testWidgets('foregroundBuilder가 null이면 오버레이가 없다', (tester) async {
-      const overlayKey = Key('overlay');
+    testWidgets('contentBuilder가 null이면 content를 그대로 렌더', (tester) async {
+      const wrapKey = Key('wrap');
       await tester.pumpWidget(
         _wrap(
           width: 400,
@@ -57,7 +64,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.byKey(overlayKey), findsNothing);
+      expect(find.byKey(wrapKey), findsNothing);
     });
 
     testWidgets('enableZoom: false면 InteractiveViewer를 비활성화한다(드로잉 잠금)', (
@@ -71,20 +78,20 @@ void main() {
             logicalSize: const Size(600, 800),
             content: const SizedBox(width: 600, height: 800),
             enableZoom: false,
-            foregroundBuilder: (context, logicalSize) =>
-                const SizedBox.expand(key: Key('overlay')),
+            contentBuilder: (context, logicalSize, content) =>
+                ColoredBox(key: const Key('wrap'), color: const Color(0x00000000), child: content),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
       expect(find.byType(InteractiveViewer), findsNothing);
-      expect(find.byKey(const Key('overlay')), findsOneWidget);
+      expect(find.byKey(const Key('wrap')), findsOneWidget);
     });
   });
 
-  group('FixedLayoutEngine.foregroundBuilder (S8.6)', () {
-    testWidgets('현재 spine item과 논리 크기를 받아 각 페이지 위에 합성한다', (tester) async {
+  group('FixedLayoutEngine.contentBuilder (S8.6)', () {
+    testWidgets('현재 spine item·논리 크기·content를 받아 각 페이지를 감싼다', (tester) async {
       final book = _fakeBook(['a.xhtml', 'b.xhtml']);
       EpubSpineItem? capturedItem;
       Size? capturedSize;
@@ -99,27 +106,33 @@ void main() {
               logicalSize: const Size(800, 600),
               content: Text(item.href),
             ),
-            foregroundBuilder: (context, item, logicalSize) {
+            contentBuilder: (context, item, logicalSize, content) {
               capturedItem = item;
               capturedSize = logicalSize;
-              return const SizedBox.expand(key: Key('fg'));
+              return ColoredBox(
+                key: const Key('wrap'),
+                color: const Color(0x00000000),
+                child: content,
+              );
             },
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('fg')), findsOneWidget);
+      expect(find.byKey(const Key('wrap')), findsOneWidget);
+      expect(find.text('a.xhtml'), findsOneWidget);
       expect(capturedItem?.href, 'a.xhtml');
       expect(capturedSize, const Size(800, 600));
 
-      // 페이지 전환 시 오버레이 빌더가 새 spine으로 다시 호출된다.
+      // 페이지 전환 시 wrapper가 새 spine·content로 다시 호출된다.
       final state = tester.state<FixedLayoutEngineState>(
         find.byType(FixedLayoutEngine),
       );
       expect(state.nextSpine(), isTrue);
       await tester.pumpAndSettle();
       expect(capturedItem?.href, 'b.xhtml');
+      expect(find.text('b.xhtml'), findsOneWidget);
     });
 
     testWidgets('enableZoom: false가 페이지까지 전달된다', (tester) async {
@@ -135,14 +148,13 @@ void main() {
               logicalSize: const Size(800, 600),
               content: Text(item.href),
             ),
-            foregroundBuilder: (context, item, logicalSize) =>
-                const SizedBox.expand(key: Key('fg')),
+            contentBuilder: (context, item, logicalSize, content) => content,
           ),
         ),
       );
       await tester.pumpAndSettle();
       expect(find.byType(InteractiveViewer), findsNothing);
-      expect(find.byKey(const Key('fg')), findsOneWidget);
+      expect(find.text('a.xhtml'), findsOneWidget);
     });
   });
 }

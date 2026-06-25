@@ -98,7 +98,7 @@ export 'src/presentation/engine/fixed_layout/fixed_layout_engine.dart'
         FixedLayoutEngine,
         FixedLayoutPageData,
         FixedLayoutPageBuilder,
-        FixedLayoutForegroundBuilder;
+        FixedLayoutContentBuilder;
 export 'src/presentation/engine/fixed_layout/fixed_layout_page.dart'
     show FixedLayoutPage;
 export 'src/presentation/engine/fixed_layout/viewport_fitter.dart'
