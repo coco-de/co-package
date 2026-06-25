@@ -87,8 +87,11 @@ message TextLinkSpan {
   int32 start = 1 [json_name="start"];
   /// Exclusive end offset (UTF-16 code units) into [TextDrawable.text].
   int32 end = 2 [json_name="end"];
-  /// External web URL (e.g. `https://...`). Interpretation/opening is delegated
-  /// to the host application (e.g. kobic), consistent with `ImageDrawable.source`.
+  /// Link target. Interpretation/opening is delegated to the host application
+  /// (e.g. kobic), consistent with `ImageDrawable.source`:
+  ///   - External web URL (e.g. `https://...`) — host opens in a browser.
+  ///   - In-document page link `page:N` (1-based) — host navigates to page N
+  ///     (`jumpToPage`). (#7222)
   string url = 3 [json_name="url"];
 }
 

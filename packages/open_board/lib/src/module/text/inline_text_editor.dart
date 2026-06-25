@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/link_span_offsets.dart';
@@ -63,6 +64,11 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
   /// 링크 입력 다이얼로그 표시 중 포커스 손실에 의한 조기 완료를 막는 플래그.
   bool _suppressComplete = false;
 
+  static TextLinkSpan _cloneSpan(TextLinkSpan span) => TextLinkSpan()
+    ..start = span.start
+    ..end = span.end
+    ..url = span.url;
+
   @override
   void initState() {
     super.initState();
@@ -97,8 +103,9 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
   /// 현재 날짜를 yyyy-mm-dd 형식으로 텍스트 필드에 삽입
   void _insertTodayDate() {
     final now = DateTime.now();
-    final dateString =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    final dateString = '${now.year}-$month-$day';
 
     final currentText = textEditingController.text;
     final selection = textEditingController.selection;
@@ -121,11 +128,6 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     // 포커스를 다시 텍스트 필드로 이동
     textFieldNode.requestFocus();
   }
-
-  static TextLinkSpan _cloneSpan(TextLinkSpan span) => TextLinkSpan()
-    ..start = span.start
-    ..end = span.end
-    ..url = span.url;
 
   /// 텍스트 변경 시 호출 — 링크 span offset 을 편집에 맞게 재배치한다.
   void _onControllerChanged() {
@@ -154,10 +156,10 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
   /// 선택 영역에 링크를 추가하거나 기존 링크를 편집한다.
   Future<void> _onAddOrEditLink(TextSelection selection) async {
     if (!selection.isValid || selection.isCollapsed) return;
-    final existingUrl = _selectionLinkUrl(selection);
-    final url = await _showUrlDialog(initialUrl: existingUrl);
-    if (url == null || !mounted || disposed) return; // 취소/언마운트
-    _applyLink(selection, url);
+    final existingTarget = _selectionLinkUrl(selection);
+    final target = await _showLinkDialog(initialTarget: existingTarget);
+    if (target == null || !mounted || disposed) return; // 취소/언마운트
+    _applyLink(selection, target);
   }
 
   /// 선택 영역과 겹치는 링크들을 제거한다.
@@ -203,51 +205,104 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     }
   }
 
-  /// URL 입력 다이얼로그. 확인 시 정규화된 URL, 취소/빈값 시 null 을 반환.
-  Future<String?> _showUrlDialog({String? initialUrl}) async {
+  /// 링크 입력 다이얼로그 — 외부 URL / 내부 페이지 선택 (#7222).
+  ///
+  /// 확인 시 정규화된 링크 타깃(외부: `https://...`, 내부: `page:N`)을, 취소/
+  /// 빈값/비정수 페이지면 null 을 반환한다. [initialTarget] 이 `page:N` 이면
+  /// 내부 모드로, 그 외엔 외부 모드로 시작한다.
+  Future<String?> _showLinkDialog({String? initialTarget}) async {
     _suppressComplete = true;
-    final controller = TextEditingController(text: initialUrl ?? '');
+    final initialPage = parsePageLinkTarget(initialTarget);
+    final startsInternal = initialPage != null;
+    final urlController = TextEditingController(
+      text: startsInternal ? '' : (initialTarget ?? ''),
+    );
+    final pageController = TextEditingController(
+      text: initialPage?.toString() ?? '',
+    );
     try {
       final result = await showDialog<String>(
         context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: const Text('링크 입력'),
-            content: TextField(
-              controller: controller,
-              autofocus: true,
-              keyboardType: TextInputType.url,
-              decoration: const InputDecoration(
-                hintText: 'https://example.com',
-                labelText: 'URL',
-              ),
-              onSubmitted: (_) =>
-                  Navigator.of(dialogContext).pop(controller.text),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('취소'),
-              ),
-              TextButton(
-                onPressed: () =>
-                    Navigator.of(dialogContext).pop(controller.text),
-                child: const Text('확인'),
-              ),
-            ],
+        builder: (_) {
+          var isInternal = startsInternal;
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              String? buildResult() => isInternal
+                  ? formatPageLinkTarget(pageController.text)
+                  : _normalizeUrl(urlController.text);
+
+              return AlertDialog(
+                title: const Text('링크 입력'),
+                content: Column(
+                  mainAxisSize: .min,
+                  crossAxisAlignment: .stretch,
+                  children: [
+                    SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment(value: false, label: Text('외부 URL')),
+                        ButtonSegment(value: true, label: Text('내부 페이지')),
+                      ],
+                      selected: {isInternal},
+                      onSelectionChanged: (selection) => setDialogState(
+                        () => isInternal = selection.contains(true),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (isInternal)
+                      TextField(
+                        controller: pageController,
+                        autofocus: true,
+                        keyboardType: .number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        decoration: const InputDecoration(
+                          hintText: '1',
+                          labelText: '페이지 번호',
+                        ),
+                        onSubmitted: (_) =>
+                            Navigator.of(context).pop(buildResult()),
+                      )
+                    else
+                      TextField(
+                        controller: urlController,
+                        autofocus: true,
+                        keyboardType: .url,
+                        decoration: const InputDecoration(
+                          hintText: 'https://example.com',
+                          labelText: 'URL',
+                        ),
+                        onSubmitted: (_) =>
+                            Navigator.of(context).pop(buildResult()),
+                      ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('취소'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(buildResult()),
+                    child: const Text('확인'),
+                  ),
+                ],
+              );
+            },
           );
         },
       );
-      return _normalizeUrl(result);
+      return result;
     } finally {
-      controller.dispose();
+      urlController.dispose();
+      pageController.dispose();
       _suppressComplete = false;
     }
   }
 
   /// 입력 URL 정규화. 빈 값이면 null, scheme 없으면 https 를 붙인다.
-  String? _normalizeUrl(String? raw) {
-    final trimmed = raw?.trim() ?? '';
+  String? _normalizeUrl(String raw) {
+    final trimmed = raw.trim();
     if (trimmed.isEmpty) return null;
     final hasScheme =
         trimmed.contains('://') ||
@@ -340,6 +395,57 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     }
   }
 
+  /// 선택 영역이 있을 때 "링크 추가/편집/삭제" 항목을 추가한 선택 툴바.
+  /// 지연 콜백 — 위젯이 아직 활성(mounted·미dispose)일 때만 편집 완료.
+  void _completeEditingIfActive() {
+    if (mounted && !disposed) {
+      _completeEditing();
+    }
+  }
+
+  /// 컨텍스트 메뉴 "링크 추가/편집" 탭 — 툴바를 닫고 링크 다이얼로그로 진입.
+  void _onLinkMenuTap(TextSelection selection) {
+    ContextMenuController.removeAny();
+    unawaited(_onAddOrEditLink(selection));
+  }
+
+  /// 컨텍스트 메뉴 "링크 삭제" 탭 — 툴바를 닫고 선택 영역 링크 제거.
+  void _onLinkRemoveTap(TextSelection selection) {
+    ContextMenuController.removeAny();
+    _removeLink(selection);
+  }
+
+  Widget _buildContextMenu(
+    BuildContext context,
+    EditableTextState editableTextState,
+  ) {
+    final buttonItems = editableTextState.contextMenuButtonItems;
+    final selection = textEditingController.selection;
+    if (selection.isValid && !selection.isCollapsed) {
+      final hasLink = _selectionLinkUrl(selection) != null;
+      buttonItems.insert(
+        0,
+        ContextMenuButtonItem(
+          label: hasLink ? '링크 편집' : '링크 추가',
+          onPressed: () => _onLinkMenuTap(selection),
+        ),
+      );
+      if (hasLink) {
+        buttonItems.insert(
+          1,
+          ContextMenuButtonItem(
+            label: '링크 삭제',
+            onPressed: () => _onLinkRemoveTap(selection),
+          ),
+        );
+      }
+    }
+    return AdaptiveTextSelectionToolbar.buttonItems(
+      anchors: editableTextState.contextMenuAnchors,
+      buttonItems: buttonItems,
+    );
+  }
+
   @override
   void dispose() {
     disposed = true;
@@ -353,7 +459,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
-    final value = MediaQuery.of(context).viewInsets.bottom;
+    final value = MediaQuery.viewInsetsOf(context).bottom;
 
     if (value < bottomViewInsets && textFieldNode.hasFocus) {
       // 키보드가 닫히면 편집 완료
@@ -361,44 +467,6 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     }
 
     bottomViewInsets = value;
-  }
-
-  /// 선택 영역이 있을 때 "링크 추가/편집/삭제" 항목을 추가한 선택 툴바.
-  Widget _buildContextMenu(
-    BuildContext context,
-    EditableTextState editableTextState,
-  ) {
-    final buttonItems = editableTextState.contextMenuButtonItems;
-    final selection = textEditingController.selection;
-    if (selection.isValid && !selection.isCollapsed) {
-      final hasLink = _selectionLinkUrl(selection) != null;
-      buttonItems.insert(
-        0,
-        ContextMenuButtonItem(
-          label: hasLink ? '링크 편집' : '링크 추가',
-          onPressed: () {
-            ContextMenuController.removeAny();
-            unawaited(_onAddOrEditLink(selection));
-          },
-        ),
-      );
-      if (hasLink) {
-        buttonItems.insert(
-          1,
-          ContextMenuButtonItem(
-            label: '링크 삭제',
-            onPressed: () {
-              ContextMenuController.removeAny();
-              _removeLink(selection);
-            },
-          ),
-        );
-      }
-    }
-    return AdaptiveTextSelectionToolbar.buttonItems(
-      anchors: editableTextState.contextMenuAnchors,
-      buttonItems: buttonItems,
-    );
   }
 
   @override
@@ -409,11 +477,15 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     // TextDrawable과 동일한 스타일 적용
     final textColor = widget.selectedColor;
 
+    // 반복 참조되는 drawable 스타일/폰트 크기를 변수로 hoist.
+    final drawableStyle = widget.drawable.style;
+    final existingFontSize = drawableStyle.fontSize;
+
     // 기본 폰트 크기 계산 (기존 텍스트의 경우 현재 스케일 고려)
     double baseFontSize;
     // 기존 텍스트인 경우: 현재 폰트 크기를 현재 스케일로 나누어 원본 크기 계산
-    baseFontSize = !widget.isNew && widget.drawable.style.fontSize != null
-        ? widget.drawable.style.fontSize! / widget.scale
+    baseFontSize = !widget.isNew && existingFontSize != null
+        ? existingFontSize / widget.scale
         : math.max(
             20,
             widget.textSettings.textStyle.fontSize ?? 20.0,
@@ -429,7 +501,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
             color: textColor,
             letterSpacing: 0,
           )
-        : widget.drawable.style.copyWith(
+        : drawableStyle.copyWith(
             fontSize: actualFontSize,
             letterSpacing: 0,
           );
@@ -445,7 +517,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     final textPainter = TextPainter(
       text: textSpan,
       textAlign: widget.textSettings.textAlignment.textAlign,
-      textDirection: TextDirection.ltr,
+      textDirection: .ltr,
     );
 
     // 화면 너비에서 여백을 뺀 크기로 레이아웃
@@ -488,7 +560,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     }
 
     return Material(
-      type: MaterialType.transparency,
+      type: .transparency,
       child: Stack(
         children: [
           // 배경 터치 시 완료 처리
@@ -512,8 +584,8 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                 width: editorWidth,
                 height: editorHeight,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blue, width: 2),
-                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  border: .all(color: Colors.blue, width: 2),
+                  borderRadius: const .all(.circular(4)),
                 ),
                 child: Row(
                   children: [
@@ -526,15 +598,15 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                         style: textStyle,
                         textAlign: widget.textSettings.textAlignment.textAlign,
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
+                          contentPadding: const .symmetric(
                             horizontal: 4,
                           ),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none,
-                          errorBorder: InputBorder.none,
-                          focusedErrorBorder: InputBorder.none,
+                          border: .none,
+                          enabledBorder: .none,
+                          focusedBorder: .none,
+                          disabledBorder: .none,
+                          errorBorder: .none,
+                          focusedErrorBorder: .none,
                           isDense: true,
                           hintStyle: textStyle.copyWith(
                             color: textColor.withValues(alpha: 0.5),
@@ -542,9 +614,8 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                         ),
                         maxLines: null,
                         minLines: 1,
-                        keyboardType: TextInputType.multiline,
-                        textInputAction:
-                            TextInputAction.newline, // 🔥 엔터키를 줄바꿈으로 변경
+                        keyboardType: .multiline,
+                        textInputAction: .newline, // 🔥 엔터키를 줄바꿈으로 변경
                         // 🔥 onSubmitted 제거 - 엔터키로 편집 완료하지 않음
                       ),
                     ),
@@ -563,15 +634,13 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                         child: InkWell(
                           onTap: _insertTodayDate,
                           borderRadius: const .only(
-                            topRight: Radius.circular(2),
-                            bottomRight: Radius.circular(2),
+                            topRight: .circular(2),
+                            bottomRight: .circular(2),
                           ),
-                          child: Container(
-                            child: Icon(
-                              Icons.calendar_today,
-                              size: math.min(20, editorHeight * 0.6),
-                              color: Colors.blue,
-                            ),
+                          child: Icon(
+                            Icons.calendar_today,
+                            size: math.min(20, editorHeight * 0.6),
+                            color: Colors.blue,
                           ),
                         ),
                       ),
@@ -589,12 +658,11 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
   void focusListener() {
     if (!mounted || disposed) return;
     if (!textFieldNode.hasFocus) {
-      // 포커스를 잃으면 편집 완료
-      Future<void>.delayed(const Duration(milliseconds: 100), () {
-        if (mounted && !disposed) {
-          _completeEditing();
-        }
-      });
+      // 포커스를 잃으면 (지연 후) 편집 완료.
+      Future<void>.delayed(
+        const Duration(milliseconds: 100),
+        _completeEditingIfActive,
+      );
     }
   }
 }

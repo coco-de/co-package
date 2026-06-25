@@ -1,3 +1,8 @@
+// 테스트 단언에서 `.single`/`.first` 는 "정확히 1개"/"비어있지 않음"을 의도적으로
+// 단언하는 관용구다 — 가정 위반 시 즉시 실패하는 것이 기대 동작이라 safe 변형
+// (singleOrNull/firstOrNull) 으로 바꾸지 않는다. (kobic 에서도 이 규칙은 style 로
+// 완화됨 — project-config.md.)
+// ignore_for_file: avoid-unsafe-collection-methods
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
@@ -165,10 +170,11 @@ void main() {
         ..linkSpans.add(_span(0, 5, 'https://a.com'));
       final copy = original.copyWithLinkSpans([_span(1, 3, 'https://b.com')]);
 
+      final copySpan = copy.linkSpans.single;
       expect(original.linkSpans.single.url, 'https://a.com');
-      expect(copy.linkSpans.single.url, 'https://b.com');
-      expect(copy.linkSpans.single.start, 1);
-      expect(copy.linkSpans.single.end, 3);
+      expect(copySpan.url, 'https://b.com');
+      expect(copySpan.start, 1);
+      expect(copySpan.end, 3);
     });
 
     test('protobuf writeToBuffer/fromBuffer 로 linkSpans 가 보존된다', () {
@@ -177,12 +183,15 @@ void main() {
         ..linkSpans.add(_span(6, 11, 'https://b.com'));
 
       final restored = TextDrawable.fromBuffer(drawable.writeToBuffer());
+      final spans = restored.linkSpans;
+      final first = spans[0];
+      final second = spans[1];
 
-      expect(restored.linkSpans.length, 2);
-      expect(restored.linkSpans[0].start, 0);
-      expect(restored.linkSpans[0].end, 5);
-      expect(restored.linkSpans[0].url, 'https://a.com');
-      expect(restored.linkSpans[1].url, 'https://b.com');
+      expect(spans.length, 2);
+      expect(first.start, 0);
+      expect(first.end, 5);
+      expect(first.url, 'https://a.com');
+      expect(second.url, 'https://b.com');
     });
   });
 
@@ -213,6 +222,53 @@ void main() {
     test('링크 없는 텍스트는 null', () {
       final drawable = createTextDrawable(text: 'plain', x: 100, y: 100);
       expect(findLinkAtCanvasPoint([drawable], const Offset(102, 100)), isNull);
+    });
+  });
+
+  group('page link target (#7222)', () {
+    test('parsePageLinkTarget — page:N 을 1-based 번호로', () {
+      expect(parsePageLinkTarget('page:1'), 1);
+      expect(parsePageLinkTarget('page:42'), 42);
+      expect(parsePageLinkTarget('  page:7  '), 7); // trim
+    });
+
+    test('parsePageLinkTarget — 비-페이지/잘못된 값은 null', () {
+      expect(parsePageLinkTarget(null), isNull);
+      expect(parsePageLinkTarget('https://example.com'), isNull);
+      expect(parsePageLinkTarget('page:0'), isNull); // 1 미만
+      expect(parsePageLinkTarget('page:-3'), isNull);
+      expect(parsePageLinkTarget('page:'), isNull);
+      expect(parsePageLinkTarget('page:1a'), isNull);
+      expect(parsePageLinkTarget('xpage:1'), isNull);
+    });
+
+    test('formatPageLinkTarget — 양의 정수만 page:N', () {
+      expect(formatPageLinkTarget('1'), 'page:1');
+      expect(formatPageLinkTarget(' 42 '), 'page:42');
+      expect(formatPageLinkTarget(''), isNull);
+      expect(formatPageLinkTarget('0'), isNull);
+      expect(formatPageLinkTarget('-2'), isNull);
+      expect(formatPageLinkTarget('abc'), isNull);
+    });
+
+    test('round-trip: format → parse', () {
+      final target = formatPageLinkTarget('15');
+      expect(target, 'page:15');
+      expect(parsePageLinkTarget(target), 15);
+    });
+
+    test('내부 링크 span 도 렌더링에서 링크로 취급(파란+밑줄)', () {
+      final drawable = createTextDrawable(text: 'go to ch.3')
+        ..linkSpans.add(
+          TextLinkSpan()
+            ..start = 0
+            ..end = 5
+            ..url = 'page:3',
+        );
+      final span = buildLinkAwareTextSpan(drawable);
+      final linkChild = span.children!.first as TextSpan;
+      expect(linkChild.style?.color, kTextLinkColor);
+      expect(linkChild.style?.decoration, TextDecoration.underline);
     });
   });
 }

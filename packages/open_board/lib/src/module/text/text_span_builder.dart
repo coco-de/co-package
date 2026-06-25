@@ -96,3 +96,30 @@ TextLinkSpan? linkSpanAtOffset(TextDrawable drawable, int offset) {
   }
   return null;
 }
+
+/// Scheme prefix for an in-document page link target stored in
+/// [TextLinkSpan.url] (e.g. `page:42`). (#7222)
+///
+/// External link targets are full URLs (`https://...`); an in-document link
+/// instead stores `page:N` (1-based). [TextLinkSpan.url] is an opaque string
+/// the host application interprets, so the renderer/hit-test treat both the
+/// same (blue + underline) and only the host (kobic) routes `page:N` to
+/// in-document navigation (`jumpToPage`).
+const String kPageLinkScheme = 'page:';
+
+/// Parses an in-document page link target (`page:N`, N >= 1) into its 1-based
+/// page number, or `null` when [target] is not a well-formed page link.
+int? parsePageLinkTarget(String? target) {
+  if (target == null) return null;
+  final match = RegExp('^$kPageLinkScheme(\\d+)\$').firstMatch(target.trim());
+  if (match == null) return null;
+  final page = int.tryParse(match.group(1) ?? '');
+  return (page != null && page >= 1) ? page : null;
+}
+
+/// Formats a page number entered as text into a `page:N` target, or `null`
+/// when [raw] is empty / not a positive (>= 1) integer.
+String? formatPageLinkTarget(String raw) {
+  final page = int.tryParse(raw.trim());
+  return (page != null && page >= 1) ? '$kPageLinkScheme$page' : null;
+}
