@@ -1,5 +1,10 @@
 library;
 
+// 배럴은 feature 그룹(주석) 단위로 묶여 알파벳순(directives_ordering)을 따르지
+// 않는다 — 의도적 구조이므로 정렬 lint 를 파일 단위로 무시한다 (#7261 에서 export
+// 추가 시 기존 정렬 부채 일괄 suppress).
+// ignore_for_file: directives_ordering, unnecessary_library_directive
+
 // 기존 위젯들
 export 'src/module/widgets/scribble_widget.dart';
 export 'src/module/widgets/simple_scribble_widget.dart'; // ✨ 간편한 위젯들
@@ -66,6 +71,11 @@ export 'src/module/transform_handler.dart'; // ♻️ 이동/크기조절/회전
 export 'src/module/stroke/stroke_processor.dart'; // ♻️ 스트로크 생성/계산 유틸리티
 export 'src/module/stroke/eraser_processor.dart'; // ♻️ 지우개 유틸리티
 export 'src/module/text/text_drawable_manager.dart'; // ♻️ 텍스트 CRUD 관리자
+// 읽기전용 텍스트 주석 렌더/링크 hit-test 재사용 (kobic 공유 오버레이, #7261).
+// TextDrawablePainter: buildLinkAwareTextSpan 으로 링크 포함 텍스트 렌더 + getTextBounds.
+// findLinkAtCanvasPoint: 캔버스 좌표 → 링크 span hit-test (컨트롤러 없는 순수 경로).
+export 'src/module/text/text_painter.dart' show TextDrawablePainter;
+export 'src/module/text/link_hit_test.dart' show findLinkAtCanvasPoint;
 
 // 🖼️ 이미지 임베드 (Story #172 / Epic #171)
 export 'src/module/adapters/image_picker_adapter.dart';
