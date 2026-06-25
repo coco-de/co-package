@@ -670,6 +670,91 @@ class Stroke extends $pb.GeneratedMessage {
   void clearConfidence() => $_clearField(9);
 }
 
+/// / An inline hyperlink span covering a `[start, end)` character range (UTF-16
+/// / code units) of the owning [TextDrawable.text]. Currently only external web
+/// / URLs are supported; internal page links may be added later as an additive
+/// / field (e.g. a `oneof` target).
+class TextLinkSpan extends $pb.GeneratedMessage {
+  factory TextLinkSpan({
+    $core.int? start,
+    $core.int? end,
+    $core.String? url,
+  }) {
+    final result = create();
+    if (start != null) result.start = start;
+    if (end != null) result.end = end;
+    if (url != null) result.url = url;
+    return result;
+  }
+
+  TextLinkSpan._();
+
+  factory TextLinkSpan.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory TextLinkSpan.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'TextLinkSpan',
+      createEmptyInstance: create)
+    ..aI(1, _omitFieldNames ? '' : 'start')
+    ..aI(2, _omitFieldNames ? '' : 'end')
+    ..aOS(3, _omitFieldNames ? '' : 'url')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TextLinkSpan clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TextLinkSpan copyWith(void Function(TextLinkSpan) updates) =>
+      super.copyWith((message) => updates(message as TextLinkSpan))
+          as TextLinkSpan;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static TextLinkSpan create() => TextLinkSpan._();
+  @$core.override
+  TextLinkSpan createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static TextLinkSpan getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<TextLinkSpan>(create);
+  static TextLinkSpan? _defaultInstance;
+
+  /// / Inclusive start offset (UTF-16 code units) into [TextDrawable.text].
+  @$pb.TagNumber(1)
+  $core.int get start => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set start($core.int value) => $_setSignedInt32(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasStart() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStart() => $_clearField(1);
+
+  /// / Exclusive end offset (UTF-16 code units) into [TextDrawable.text].
+  @$pb.TagNumber(2)
+  $core.int get end => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set end($core.int value) => $_setSignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEnd() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEnd() => $_clearField(2);
+
+  /// / External web URL (e.g. `https://...`). Interpretation/opening is delegated
+  /// / to the host application (e.g. kobic), consistent with `ImageDrawable.source`.
+  @$pb.TagNumber(3)
+  $core.String get url => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set url($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasUrl() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearUrl() => $_clearField(3);
+}
+
 class TextDrawable extends $pb.GeneratedMessage {
   factory TextDrawable({
     $core.String? id,
@@ -687,6 +772,7 @@ class TextDrawable extends $pb.GeneratedMessage {
     $core.String? createdAt,
     $core.String? updatedAt,
     $core.double? rotation,
+    $core.Iterable<TextLinkSpan>? linkSpans,
   }) {
     final result = create();
     if (id != null) result.id = id;
@@ -704,6 +790,7 @@ class TextDrawable extends $pb.GeneratedMessage {
     if (createdAt != null) result.createdAt = createdAt;
     if (updatedAt != null) result.updatedAt = updatedAt;
     if (rotation != null) result.rotation = rotation;
+    if (linkSpans != null) result.linkSpans.addAll(linkSpans);
     return result;
   }
 
@@ -734,6 +821,8 @@ class TextDrawable extends $pb.GeneratedMessage {
     ..aOS(13, _omitFieldNames ? '' : 'createdAt', protoName: 'createdAt')
     ..aOS(14, _omitFieldNames ? '' : 'updatedAt', protoName: 'updatedAt')
     ..aD(15, _omitFieldNames ? '' : 'rotation')
+    ..pPM<TextLinkSpan>(16, _omitFieldNames ? '' : 'linkSpans',
+        protoName: 'linkSpans', subBuilder: TextLinkSpan.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -889,6 +978,10 @@ class TextDrawable extends $pb.GeneratedMessage {
   $core.bool hasRotation() => $_has(14);
   @$pb.TagNumber(15)
   void clearRotation() => $_clearField(15);
+
+  /// / Inline external hyperlink spans over ranges of [text] (kobic #7162).
+  @$pb.TagNumber(16)
+  $pb.PbList<TextLinkSpan> get linkSpans => $_getList(15);
 }
 
 /// / Image drawable on the canvas. The actual bytes/decoding are resolved by the

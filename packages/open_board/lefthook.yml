@@ -11,7 +11,7 @@ pre-commit:
     # dcm 포맷 체크 (dart format 제거 — 충돌 방지)
     format:
       glob: "*.dart"
-      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm}.dart"
+      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm,pb,pbenum,pbjson,pbserver}.dart"
       run: dcm format {staged_files}
       stage_fixed: true
 
@@ -19,7 +19,7 @@ pre-commit:
     # NOTE: --fatal-infos로 info 레벨도 차단, dcm은 --no-fatal-style 사용
     analyze:
       glob: "*.dart"
-      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm}.dart"
+      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm,pb,pbenum,pbjson,pbserver}.dart"
       run: dart analyze --fatal-infos {staged_files} && dcm analyze --no-fatal-style {staged_files}
 
 pre-push:
@@ -28,14 +28,14 @@ pre-push:
     # dcm 포맷 체크 (dart format 제거 — 충돌 방지)
     format-check:
       glob: "*.dart"
-      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm}.dart"
+      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm,pb,pbenum,pbjson,pbserver}.dart"
       run: dcm format --dry-run {push_files}
 
     # dart + dcm 통합 분석
     # NOTE: pre-push는 게이트 역할 → --fatal-infos + --fatal-style로 모든 이슈 차단
     analyze:
       glob: "*.dart"
-      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm}.dart"
+      exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm,pb,pbenum,pbjson,pbserver}.dart"
       run: dart analyze --fatal-infos {push_files} && dcm analyze --fatal-style {push_files}
 
 commit-msg:

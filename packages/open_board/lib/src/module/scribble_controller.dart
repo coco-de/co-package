@@ -2,13 +2,14 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
-import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
+import 'package:open_board/src/module/text/link_hit_test.dart';
 
 /// ✨ ScribbleWidget을 편리하게 사용하기 위한 컨트롤러
 ///
@@ -58,7 +59,7 @@ class ScribbleController extends ChangeNotifier {
   Scribble? _pendingInitialScribble;
   String _pendingInitialTool = InkModes.pen;
   Color _pendingInitialColor = Colors.black;
-  double _pendingInitialStrokeWidth = 2.0;
+  double _pendingInitialStrokeWidth = 2;
 
   ScribbleController({
     this.onScribbleChanged,
@@ -115,6 +116,20 @@ class ScribbleController extends ChangeNotifier {
   /// 필기 데이터가 비어있는지 확인
   bool get isEmpty =>
       currentScribble.strokes.isEmpty && currentScribble.textDrawables.isEmpty;
+
+  /// 캔버스 좌표 [canvasPoint] 위에 있는 텍스트 주석의 인라인 외부 링크를
+  /// 반환한다. 링크가 없으면 null.
+  ///
+  /// 읽기 모드에서 호스트(예: kobic 뷰어)가 필기 레이어 위의 탭을 가로채
+  /// 링크 여부를 판정할 때 사용한다. [canvasPoint] 는 필기 캔버스 좌표계
+  /// 기준이어야 한다 (필요 시 호스트가 transform 으로 변환).
+  TextLinkSpan? linkAtCanvasPoint(Offset canvasPoint) {
+    _ensureInitialized();
+    return findLinkAtCanvasPoint(
+      _scribbleNotifier.currentScribble.textDrawables,
+      canvasPoint,
+    );
+  }
 
   /// 통계 정보
   ScribbleStats get stats => .from(currentScribble);
@@ -304,10 +319,10 @@ class ScribbleController extends ChangeNotifier {
 
   /// Notifier들 초기화
   void _initializeNotifiers({
-    Scribble? initialScribble,
     required String initialTool,
     required Color initialColor,
     required double initialStrokeWidth,
+    Scribble? initialScribble,
   }) {
     // ScribbleNotifier 초기화
     _scribbleNotifier = ScribbleNotifier(
@@ -365,7 +380,7 @@ class ScribbleStats {
   });
 
   factory ScribbleStats.from(Scribble scribble) {
-    int totalPoints = 0;
+    var totalPoints = 0;
     for (final stroke in scribble.strokes) {
       totalPoints += stroke.points.length;
     }
