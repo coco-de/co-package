@@ -9,12 +9,12 @@ import 'package:open_board/src/module/state/scribble.state.dart';
 
 @immutable
 class ScribbleModeState {
-  InkGroupInfo inkGroupInfo;
+  final InkGroupInfo inkGroupInfo;
 
   // double selectedWidth;
-  double scaleFactor;
+  final double scaleFactor;
 
-  ScribblePointerMode allowedPointersMode;
+  final ScribblePointerMode allowedPointersMode;
 
   ScribbleModeState({
     /// 현재 위젯 줌 배율 (InteractiveViewer).
