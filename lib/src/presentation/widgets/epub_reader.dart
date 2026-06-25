@@ -60,6 +60,8 @@ class EpubReader extends StatefulWidget {
     this.onPositionChanged,
     this.onViewportChanged,
     this.controller,
+    this.fixedLayoutForegroundBuilder,
+    this.fixedLayoutZoomEnabled = true,
   });
 
   final EpubSource source;
@@ -103,6 +105,15 @@ class EpubReader extends StatefulWidget {
   /// 페이지 내비게이션 컨트롤러(prev/next 등). 지정 시 자동으로 paged 모드로
   /// 표시된다. 레거시 EpubReaderController가 아닌 1.0 전용 타입. (S8.1)
   final EpubViewController? controller;
+
+  /// fixed-layout 페이지 위에 합성할 전경 오버레이 빌더(open-board 절대좌표
+  /// 필기 캔버스 등, S8.6). 빌더의 로컬 좌표가 곧 페이지 절대좌표이며 fit·
+  /// zoom·pan과 함께 변환된다. reflowable 본문에는 적용되지 않는다.
+  final FixedLayoutForegroundBuilder? fixedLayoutForegroundBuilder;
+
+  /// fixed-layout 페이지 줌/팬 활성 여부. 필기(드로잉) 중에는 false로 두어
+  /// InteractiveViewer pan과 드로잉 제스처 충돌을 막는다. default true. (S8.6)
+  final bool fixedLayoutZoomEnabled;
 
   @override
   State<EpubReader> createState() => _EpubReaderState();
@@ -159,6 +170,8 @@ class _EpubReaderState extends State<EpubReader> {
           onPositionChanged: widget.onPositionChanged,
           onViewportChanged: widget.onViewportChanged,
           controller: widget.controller,
+          fixedLayoutForegroundBuilder: widget.fixedLayoutForegroundBuilder,
+          fixedLayoutZoomEnabled: widget.fixedLayoutZoomEnabled,
         );
       },
     );
@@ -178,6 +191,8 @@ class _SessionView extends StatefulWidget {
     required this.onPositionChanged,
     required this.onViewportChanged,
     required this.controller,
+    required this.fixedLayoutForegroundBuilder,
+    required this.fixedLayoutZoomEnabled,
   });
 
   final EpubBookSession session;
@@ -191,6 +206,8 @@ class _SessionView extends StatefulWidget {
   final EpubPositionChangedCallback? onPositionChanged;
   final EpubViewportChangedCallback? onViewportChanged;
   final EpubViewController? controller;
+  final FixedLayoutForegroundBuilder? fixedLayoutForegroundBuilder;
+  final bool fixedLayoutZoomEnabled;
 
   @override
   State<_SessionView> createState() => _SessionViewState();
@@ -271,6 +288,8 @@ class _SessionViewState extends State<_SessionView> {
         book: book,
         initialSpineIndex: _initialSpineIndex,
         pageBuilder: _buildFixedPage,
+        foregroundBuilder: widget.fixedLayoutForegroundBuilder,
+        enableZoom: widget.fixedLayoutZoomEnabled,
       );
     } else if (widget.paged) {
       engine = ReflowablePageView(

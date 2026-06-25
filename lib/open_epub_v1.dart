@@ -94,7 +94,11 @@ export 'src/presentation/engine/reflowable/reflowable_engine.dart'
 export 'src/presentation/engine/reflowable/reflowable_page_view.dart'
     show ReflowablePageView;
 export 'src/presentation/engine/fixed_layout/fixed_layout_engine.dart'
-    show FixedLayoutEngine, FixedLayoutPageData, FixedLayoutPageBuilder;
+    show
+        FixedLayoutEngine,
+        FixedLayoutPageData,
+        FixedLayoutPageBuilder,
+        FixedLayoutForegroundBuilder;
 export 'src/presentation/engine/fixed_layout/fixed_layout_page.dart'
     show FixedLayoutPage;
 export 'src/presentation/engine/fixed_layout/viewport_fitter.dart'
