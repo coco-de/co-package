@@ -22,7 +22,7 @@ dependencies:
   epubx: ^4.0.0
 
   # Google Fonts
-  google_fonts: ^8.0.0
+  google_fonts: ^8.1.0
   flutter_html: ^3.0.0
   scrollable_positioned_list: ^0.3.8
   html: ^0.15.6
@@ -31,10 +31,10 @@ dependencies:
   http: ^1.6.0
 
   # Settings persistence
-  shared_preferences: ^2.5.4
+  shared_preferences: ^2.5.5
 
   # XML parsing — open_epub 1.0 OPF/NCX/nav 파서가 직접 사용 (S1.1)
-  xml: ^6.6.0
+  xml: ^6.6.1
   archive: ^3.6.1
 
 dev_dependencies:
