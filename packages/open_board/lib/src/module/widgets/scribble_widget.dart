@@ -3,6 +3,7 @@
   import 'dart:math' as math;
   import 'dart:ui' as ui;
 
+  import 'package:flutter/gestures.dart';
   import 'package:flutter/material.dart';
   import 'package:flutter/services.dart';
   import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
@@ -808,6 +809,11 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                           ),
                         ),
                       ),
+
+                      // 3. 🚫 스타일러스 pan 차단 오버레이 — 필기 도구 활성 시 stylus
+                      //   가 InteractiveViewer pan/scale 을 선점하지 못하게 한다
+                      //   (kobic #7364). translucent 라 필기 입력은 그대로 통과.
+                      _buildStylusPanBlocker(),
                     ],
                   ),
                 ),
@@ -1365,6 +1371,57 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
 
       // ✅ 확대/축소는 필기 모드에서도 허용 (펜 그리기 중에만 비활성화)
       return _shouldEnableInteractiveGestures();
+    }
+
+    /// 🚫 스타일러스(펜) 포인터가 InteractiveViewer 의 pan/scale 제스처를 선점해
+    ///    "필기 중 본문이 함께 이동(pan)" 되던 race 를 원천 차단한다 (kobic #7364).
+    ///
+    ///    기존 [_shouldEnablePan]/[_shouldEnableScale] 토글은 `_isPenDrawing()`
+    ///    (→ `pointerHandler.isDragging`)에 의존하는데, stylus pen-down 시점엔
+    ///    아직 dragging 전이라 pan 이 활성 상태로 남아 InteractiveViewer 의 pan
+    ///    recognizer 가 gesture arena 에서 stylus 드래그를 선점한다. 토글은
+    ///    rebuild 의존이라 이미 시작된 제스처를 멈추지 못한다(timing race).
+    ///
+    ///    필기 도구가 활성일 때 캔버스 위에 [HitTestBehavior.translucent] 오버레이
+    ///    하나를 얹어, stylus 전용 [EagerGestureRecognizer] 가 pen-down 즉시
+    ///    gesture arena 를 승리(다른 멤버 거부)시킨다. translucent 라 같은 포인터가
+    ///    아래의 필기 `Listener` 에도 그대로 전달되어 필기는 정상 동작하고, pan/
+    ///    scale 만 stylus 에 대해 차단된다. supportedDevices 를 스타일러스로
+    ///    한정해 손가락 스크롤·두 손가락 핀치(touch)·마우스는 종전대로 동작한다.
+    Widget _buildStylusPanBlocker() {
+      return Positioned.fill(
+        child: ValueListenableBuilder<DrawingTool>(
+          valueListenable: DrawingState().selectedTool,
+          builder: (context, tool, child) {
+            // 하이라이터는 stylus 가 pdfrx 텍스트 선택을 해야 하므로 제외한다.
+            final enabled =
+                widget.isScribbleEnable && tool != DrawingTool.highlighter;
+            if (!enabled) {
+              return const SizedBox.shrink();
+            }
+            return RawGestureDetector(
+              behavior: .translucent,
+              gestures: {
+                EagerGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                      EagerGestureRecognizer
+                    >(
+                      // recognizer lifecycle 은 RawGestureDetector 가 소유·dispose
+                      // 한다 (GestureRecognizerFactory 표준 패턴).
+                      // ignore: avoid-undisposed-instances
+                      () => EagerGestureRecognizer(
+                        supportedDevices: const {
+                          ui.PointerDeviceKind.stylus,
+                          ui.PointerDeviceKind.invertedStylus,
+                        },
+                      ),
+                      (instance) {}, // ignore: no-empty-block
+                    ),
+              },
+            );
+          },
+        ),
+      );
     }
 
     /// 🖊️ 손모드에서 그리기 시작 시 스크롤 차단
