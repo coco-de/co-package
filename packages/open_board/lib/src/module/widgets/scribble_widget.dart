@@ -1413,6 +1413,14 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                         supportedDevices: const {
                           ui.PointerDeviceKind.stylus,
                           ui.PointerDeviceKind.invertedStylus,
+                          // 🌐 kobic UB-173: 웹 펜은 PointerDeviceKind.unknown 으로
+                          //   전달된다. 드로잉 경로(_canStartDrawing/
+                          //   _handlePointerDown)는 이미 stylus||unknown 을 펜으로
+                          //   취급하므로, pan 차단도 동일하게 unknown 을 포함해
+                          //   웹 펜모드 필기 중 본문이 함께 이동(pan)하던 버그를
+                          //   막는다. touch/mouse 는 종전대로 미포함(스크롤·핀치·
+                          //   마우스 네비게이션 영향 없음).
+                          ui.PointerDeviceKind.unknown,
                         },
                       ),
                       (instance) {}, // ignore: no-empty-block

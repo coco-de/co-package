@@ -9,11 +9,13 @@ import 'package:open_board/src/module/state/viewer_gesture_bus.dart';
 import 'package:open_board/src/module/widgets/scribble_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 필기 서브트리에 "스타일러스 전용 pan 차단" [RawGestureDetector] 가 있는지 검사.
+/// 필기 서브트리에 "펜 전용 pan 차단" [RawGestureDetector] 가 있는지 검사.
 ///
-/// `_blockStylusPan` 이 추가한 [EagerGestureRecognizer] 는 stylus/invertedStylus
-/// 만 [GestureRecognizer.supportedDevices] 로 가지며 touch 는 포함하지 않는다.
-/// (kobic #7364 — 스타일러스 필기 시 컨텐츠가 함께 이동하던 race 차단)
+/// `_buildStylusPanBlocker` 가 추가한 [EagerGestureRecognizer] 는 stylus/
+/// invertedStylus 와 unknown(웹 펜) 을 [GestureRecognizer.supportedDevices] 로
+/// 가지며 touch/mouse 는 포함하지 않는다.
+/// (kobic #7364 — 스타일러스 필기 시 컨텐츠가 함께 이동하던 race 차단,
+///  kobic UB-173 — 웹 펜(unknown) 도 동일하게 차단)
 bool _hasStylusPanBlocker(WidgetTester tester) {
   final detectors = tester.widgetList<RawGestureDetector>(
     find.byType(RawGestureDetector),
@@ -29,6 +31,8 @@ bool _hasStylusPanBlocker(WidgetTester tester) {
     if (devices != null &&
         devices.contains(PointerDeviceKind.stylus) &&
         devices.contains(PointerDeviceKind.invertedStylus) &&
+        // 🌐 kobic UB-173: 웹 펜은 unknown 으로 전달되므로 차단 대상에 포함돼야 한다.
+        devices.contains(PointerDeviceKind.unknown) &&
         !devices.contains(PointerDeviceKind.touch) &&
         !devices.contains(PointerDeviceKind.mouse)) {
       return true;
