@@ -21,6 +21,7 @@ import 'package:open_board/src/module/state/drawing_state.dart';
 import 'package:open_board/src/module/stroke/stroke_processor.dart';
 import 'package:open_board/src/module/stroke/eraser_processor.dart';
 import 'package:open_board/src/module/text/text_drawable_manager.dart';
+import 'package:open_board/src/module/image/image_drawable_manager.dart';
 
 abstract class ScribbleNotifierBase extends ValueNotifier<ScribbleState> {
   ScribbleNotifierBase(super.value);
@@ -79,6 +80,10 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   /// ♻️ 텍스트 관리자
   final TextDrawableManager textDrawableManager = const TextDrawableManager();
+
+  /// 🖼️ 이미지 관리자
+  final ImageDrawableManager imageDrawableManager =
+      const ImageDrawableManager();
 
   /// 선의 1번째 점이 되는 이전 좌표를 저장하는 변수
   Offset preLocalPosition = const Offset(0, 0);
@@ -1026,6 +1031,41 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 현재 텍스트 목록 가져오기
   List<TextDrawable> getCurrentTextDrawables() =>
       textDrawableManager.getAll(state.scribble);
+
+  // ==================== 이미지 관리 기능 (🖼️ ImageDrawableManager로 위임) ====================
+
+  /// 이미지 추가
+  void addImageDrawable(ImageDrawable imageDrawable) {
+    _updateScribbleWithTextDrawables(
+      imageDrawableManager.add(state.scribble, imageDrawable),
+    );
+  }
+
+  /// 이미지 수정
+  ///
+  /// 드래그/변형 중간 프레임처럼 히스토리에 남기지 않을 업데이트는
+  /// [addToUndoHistory]를 `false`로 전달한다. (최종 확정은 호출 측이 1회 커밋)
+  void updateImageDrawable(
+    String id,
+    ImageDrawable updatedImageDrawable, {
+    bool addToUndoHistory = true,
+  }) {
+    _updateScribbleWithTextDrawables(
+      imageDrawableManager.update(state.scribble, id, updatedImageDrawable),
+      addToUndoHistory: addToUndoHistory,
+    );
+  }
+
+  /// 이미지 삭제
+  void removeImageDrawable(String id) {
+    _updateScribbleWithTextDrawables(
+      imageDrawableManager.remove(state.scribble, id),
+    );
+  }
+
+  /// 현재 이미지 목록 가져오기
+  List<ImageDrawable> getCurrentImageDrawables() =>
+      imageDrawableManager.getAll(state.scribble);
 
   /// 점이 다각형 내부에 있는지 확인하는 함수
   bool _isPointInPolygon(Offset point, List<Offset> polygon) {

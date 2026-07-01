@@ -117,13 +117,19 @@ class StateSynchronizer {
         case DrawingTool.lasso:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
           modeNotifier.setLassoSelection();
+
+        case DrawingTool.image:
+          // 이미지 임베드 모드는 잉크 그리기가 아니라 위젯 레이어 상호작용이므로
+          // 색/두께를 건드리지 않고 모드만 전환한다.
+          modeNotifier.setImage();
       }
 
-      // 상태 불일치 감지 (지우개/올가미/텍스트 제외)
+      // 상태 불일치 감지 (지우개/올가미/텍스트/이미지 제외)
       final afterState = modeNotifier.state;
       if (currentTool != DrawingTool.erase &&
           currentTool != DrawingTool.lasso &&
-          currentTool != DrawingTool.text) {
+          currentTool != DrawingTool.text &&
+          currentTool != DrawingTool.image) {
         final expectedColor = currentTool == DrawingTool.marker
             ? currentColor.withValues(alpha: 0.5)
             : currentColor;
@@ -228,6 +234,7 @@ class StateSynchronizer {
         case DrawingTool.shape:
         case DrawingTool.text:
         case DrawingTool.lasso:
+        case DrawingTool.image:
           scribbleNotifier.setStrokeInk();
           break;
         case DrawingTool.erase:

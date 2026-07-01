@@ -19,6 +19,7 @@ class InkModes {
   static const String lasso = 'lasso';
   static const String shape = 'shape';
   static const String text = 'text';
+  static const String image = 'image';
 }
 
 /// shape 도구의 "타겟 도형" 상수.

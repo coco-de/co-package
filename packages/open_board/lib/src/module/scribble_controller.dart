@@ -421,4 +421,5 @@ class ScribbleTool {
   static const String lasso = InkModes.lasso;
   static const String text = InkModes.text;
   static const String shape = InkModes.shape;
+  static const String image = InkModes.image;
 }

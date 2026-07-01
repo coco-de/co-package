@@ -519,6 +519,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         DrawingTool.lasso => InkModes.lasso,
         DrawingTool.erase => InkModes.erase,
         DrawingTool.shape => InkModes.shape,
+        DrawingTool.image => InkModes.image,
       };
     } // ✨ child 크기 변경 콜백 처리
 
@@ -1768,6 +1769,9 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
           break;
         case DrawingTool.lasso:
           currentInk = InkModes.lasso;
+          break;
+        case DrawingTool.image:
+          currentInk = InkModes.image;
           break;
       }
 

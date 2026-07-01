@@ -1343,6 +1343,8 @@
           return ScribbleTool.shape;
         case DrawingTool.lasso:
           return ScribbleTool.lasso;
+        case DrawingTool.image:
+          return ScribbleTool.image;
       }
     }
 

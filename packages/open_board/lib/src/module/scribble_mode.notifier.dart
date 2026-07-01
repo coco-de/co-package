@@ -148,6 +148,15 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
     );
   }
 
+  /// 이미지 임베드 선택/변형 모드로 설정
+  void setImage() {
+    state = ScribbleModeState(
+      scaleFactor: state.scaleFactor,
+      allowedPointersMode: state.allowedPointersMode,
+      inkGroupInfo: state.inkGroupInfo.copyWith(selectedInk: InkModes.image),
+    );
+  }
+
   /// Sets the color of the pen to the given color.
   void setColor(Color color) {
     state = ScribbleModeState(

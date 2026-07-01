@@ -27,12 +27,21 @@ class ScribbleWidgetState {
   bool isTextTransforming = false;
   bool isTextResizing = false;
 
+  // 🖼️ 이미지 관련 상태
+  String? selectedImageId;
+  bool isImageTransforming = false;
+  bool isImageResizing = false;
+
   // 타이머
   Timer? lassoSelectionTimer;
 
   /// 변형 중인지 확인
   bool get isTransforming =>
-      isLassoTransforming || isTextTransforming || isTextResizing;
+      isLassoTransforming ||
+      isTextTransforming ||
+      isTextResizing ||
+      isImageTransforming ||
+      isImageResizing;
 
   /// 올가미 상태 초기화
   void resetLassoState() {
@@ -52,6 +61,13 @@ class ScribbleWidgetState {
     isTextResizing = false;
   }
 
+  /// 이미지 상태 초기화
+  void resetImageState() {
+    selectedImageId = null;
+    isImageTransforming = false;
+    isImageResizing = false;
+  }
+
   /// 변형 상태 초기화
   void resetTransformState() {
     // Transform state is managed by LassoSelectionManager and TextInteractionManager
@@ -61,6 +77,7 @@ class ScribbleWidgetState {
   void resetAll() {
     resetLassoState();
     resetTextState();
+    resetImageState();
     resetTransformState();
   }
 

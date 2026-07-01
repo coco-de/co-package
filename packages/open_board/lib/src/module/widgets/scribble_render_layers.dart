@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'package:open_board/src/core/utils/ink_group_info.dart';
+import 'package:open_board/src/module/image/image_drawable_layer.dart';
 import 'package:open_board/src/module/widgets/selection_overlay.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
@@ -106,6 +108,28 @@ class ScribbleRenderLayers {
           editingTextId: widgetState.editingTextId,
         ),
       ),
+    );
+  }
+
+  /// 🖼️ 이미지 임베드 레이어 빌드
+  ///
+  /// 이미지 모드(`InkModes.image`)일 때만 상호작용(선택/이동/크기조절/회전/삭제)을
+  /// 허용하고, 그 외 모드에서는 [IgnorePointer] 로 감싸 이미지만 정적 렌더링하여
+  /// 스트로크/텍스트 포인터 파이프라인을 방해하지 않는다.
+  Widget buildImageLayer() {
+    return ValueListenableBuilder<ScribbleModeState>(
+      valueListenable: modeNotifier,
+      builder: (context, modeState, _) {
+        final imageMode = modeState.inkGroupInfo.selectedInk == InkModes.image;
+        return IgnorePointer(
+          ignoring: !imageMode,
+          child: ImageDrawableLayer(
+            notifier: scribbleNotifier,
+            widgetState: widgetState,
+            interactive: imageMode,
+          ),
+        );
+      },
     );
   }
 
@@ -336,6 +360,9 @@ class ScribbleRenderLayers {
 
       // 6. 텍스트 선택 오버레이 레이어 (드래그 핸들러)
       ...textOverlayLayers,
+
+      // 7. 🖼️ 이미지 임베드 레이어 (렌더 + 이미지 모드 시 선택/변형)
+      buildImageLayer(),
     ];
   }
 

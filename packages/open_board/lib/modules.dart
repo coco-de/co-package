@@ -82,6 +82,8 @@ export 'src/module/adapters/image_picker_adapter.dart';
 export 'src/module/image/image_drawable_factory.dart';
 export 'src/module/image/image_drawable_extensions.dart';
 export 'src/module/image/image_drawable_manager.dart';
+export 'src/module/image/image_drawable_layer.dart';
+export 'src/module/image/image_source_resolver.dart';
 
 // 유틸리티들
 export 'src/core/utils/measure_size.dart'; // ✨ 크기 측정 유틸리티

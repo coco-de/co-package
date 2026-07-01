@@ -429,6 +429,8 @@ IconData drawingToolIcon(DrawingTool tool) {
       return Icons.crop_square;
     case DrawingTool.lasso:
       return Icons.gesture;
+    case DrawingTool.image:
+      return Icons.image;
   }
 }
 
@@ -455,5 +457,7 @@ String drawingToolLabel(DrawingTool tool) {
       return 'Shape';
     case DrawingTool.lasso:
       return 'Lasso';
+    case DrawingTool.image:
+      return 'Image';
   }
 }
