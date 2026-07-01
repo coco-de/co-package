@@ -85,14 +85,15 @@ class DrawingState {
   /// Redo 가능 여부 실시간 추적 ValueNotifier
   ValueNotifier<bool> get canRedoNotifier => _undoRedoTracker.canRedoNotifier;
 
-  /// 🖊️ 필기 활동(획 시작) 틱. 매 pointer-down([setLastActiveScribbleNotifier])
-  /// 마다 증가한다.
+  /// 🖊️ 필기 활동(실제 사용자 획) 틱. [markDrawingActivity]()(pointer-down)마다
+  /// 증가한다.
   ///
   /// `canUndoNotifier`/`canRedoNotifier` 는 `ValueNotifier<bool>` 이라 값이 실제로
   /// 바뀔 때만 알림한다 → 이미 히스토리가 있는 레이어(canUndo 가 이미 true)에서
   /// 연속 획을 그으면 edge 가 없어 "필기 활동"을 감지할 수 없다. "사용자가 그리는
   /// 중" UI(예: Undo/Redo pill auto-hide)는 이 틱을 구독하면 boolean edge 유무와
-  /// 무관하게 매 획을 활동으로 인식할 수 있다.
+  /// 무관하게 매 획을 활동으로 인식할 수 있다. 페이지/탭 전환(프로그램적 활성
+  /// 컨트롤러 설정)은 활동으로 치지 않는다(#7496).
   ValueNotifier<int> get drawingActivityNotifier => _drawingActivityNotifier;
 
   /// 📝 ScribbleModeNotifier 등록 (ScribbleWidget에서 자동 호출)
@@ -121,12 +122,20 @@ class DrawingState {
     );
   }
 
-  /// 🎯 마지막 활성 ScribbleNotifier 설정 (필기 시작 시 호출)
-  void setLastActiveScribbleNotifier(ScribbleNotifier scribbleNotifier) {
-    // 🖊️ 획 시작 = 필기 활동. 활성 레이어 변경 여부·canUndo/canRedo 값과 무관하게
-    // 매 pointer-down 마다 발화한다(연속 획도 활동으로 인식).
+  /// 🖊️ 필기 활동(실제 사용자 획) 신호. `pointer_event_handler` 의 pointer-down
+  /// 에서만 호출해야 한다.
+  ///
+  /// ⚠️ [setLastActiveScribbleNotifier] 는 사용자 획뿐 아니라 페이지/탭 전환 시
+  /// 캐시 매니저의 활성 컨트롤러 설정(`ScribbleCacheManager.setActiveController`)
+  /// 에서도 호출된다. 활동 틱을 그 안에서 bump 하면 페이지 이동만으로도 활동으로
+  /// 오인되어 "그리는 중" UI 가 깜빡인다(kobic #7496). 따라서 활동 틱은 실제
+  /// pointer-down 경로에서만 이 메서드로 명시 발화한다.
+  void markDrawingActivity() {
     if (!_isDisposed) _drawingActivityNotifier.value++;
+  }
 
+  /// 🎯 마지막 활성 ScribbleNotifier 설정 (필기 시작 / 페이지·탭 전환 시 호출)
+  void setLastActiveScribbleNotifier(ScribbleNotifier scribbleNotifier) {
     final changed = _registry.setLastActiveScribbleNotifier(
       scribbleNotifier,
       isDisposed: _isDisposed,

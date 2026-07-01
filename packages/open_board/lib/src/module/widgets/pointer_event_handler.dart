@@ -59,6 +59,10 @@ class PointerEventHandler {
     final drawingState = DrawingState();
     drawingState.setLastActiveScribbleNotifier(scribbleNotifier);
 
+    // 🖊️ 실제 사용자 획 시작 = 필기 활동. 프로그램적 페이지/탭 전환
+    // (setActiveController)이 아닌 이 pointer-down 경로에서만 발화한다(#7496).
+    drawingState.markDrawingActivity();
+
     // 🎯 전역 상태를 현재 modeNotifier에 즉시 적용 (도구 상태 동기화)
     drawingState.applyToModeNotifier(modeNotifier);
 
