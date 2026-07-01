@@ -244,6 +244,46 @@ void main() {
       recorder.endRecording();
     });
 
+    test('결정적 사각형(2점 bounding-box)을 렌더링한다', () {
+      final stroke = createStroke(
+        shapeType: 'rectangle',
+        points: createPoints([
+          [0, 0],
+          [100, 60],
+        ]),
+      );
+      final delegate = ShapePaintDelegate(strokes: [stroke]);
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+
+      expect(
+        () => delegate.paint(canvas, const Size(400, 600)),
+        returnsNormally,
+      );
+
+      recorder.endRecording();
+    });
+
+    test('결정적 타원(2점 bounding-box)을 렌더링한다', () {
+      final stroke = createStroke(
+        shapeType: 'ellipse',
+        points: createPoints([
+          [0, 0],
+          [100, 60],
+        ]),
+      );
+      final delegate = ShapePaintDelegate(strokes: [stroke]);
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+
+      expect(
+        () => delegate.paint(canvas, const Size(400, 600)),
+        returnsNormally,
+      );
+
+      recorder.endRecording();
+    });
+
     test('점이 부족한 도형은 무시한다', () {
       final stroke = createStroke(
         shapeType: 'line',

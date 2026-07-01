@@ -174,4 +174,16 @@ class ScribbleModeNotifier extends ScribbleModeNotifierBase {
       inkGroupInfo: state.inkGroupInfo.copyWith(selectedInk: inkType),
     );
   }
+
+  /// shape 도구의 타겟 도형([ShapeTargets])을 설정한다.
+  ///
+  /// '' 이면 자유 도형(자동 인식), 'line'/'ellipse'/'rectangle' 이면
+  /// 드래그 bounding-box 결정적 드로잉. shape 잉크가 선택된 경우에만 참조된다.
+  void setShapeType(String shapeType) {
+    state = ScribbleModeState(
+      scaleFactor: state.scaleFactor,
+      allowedPointersMode: state.allowedPointersMode,
+      inkGroupInfo: state.inkGroupInfo.copyWith(shapeType: shapeType),
+    );
+  }
 }

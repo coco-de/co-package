@@ -21,9 +21,34 @@ class InkModes {
   static const String text = 'text';
 }
 
+/// shape 도구의 "타겟 도형" 상수.
+///
+/// 값이 [none]('') 이면 자유 도형(자유 필기 후 `ShapeDetector` 자동 인식),
+/// 그 외([line]/[ellipse]/[rectangle])면 드래그 bounding-box 로 해당 도형을
+/// 결정적으로 그린다. 문자열은 `Stroke.shapeType` 및 `ShapePaintDelegate`
+/// 렌더 케이스와 정합한다.
+class ShapeTargets {
+  /// 자유 도형 — 자동 인식(기존 동작).
+  static const String none = '';
+
+  /// 선분.
+  static const String line = 'line';
+
+  /// 타원.
+  static const String ellipse = 'ellipse';
+
+  /// 사각형.
+  static const String rectangle = 'rectangle';
+}
+
 class InkGroupInfo {
   /// 선택된 잉크
   String selectedInk;
+
+  /// shape 도구의 타겟 도형([ShapeTargets]). '' 이면 자유 도형(자동 인식),
+  /// 'line'/'ellipse'/'rectangle' 이면 드래그 bounding-box 결정적 드로잉.
+  /// shape 잉크가 선택된 경우에만 참조된다.
+  String shapeType;
 
   Map<String, Color> _colorBox = {
     InkModes.pen: ColorS.getColors(inkType: InkModes.pen)[0],
@@ -49,7 +74,7 @@ class InkGroupInfo {
     InkModes.text: 14.0,
   };
 
-  InkGroupInfo({required this.selectedInk});
+  InkGroupInfo({required this.selectedInk, this.shapeType = ''});
 
   Color get selectedColor => _colorBox[selectedInk] ?? Colors.black;
 
@@ -67,9 +92,11 @@ class InkGroupInfo {
     String? selectedInk,
     Color? inkColor,
     double? strokeWidth,
+    String? shapeType,
   }) {
     InkGroupInfo newInkInfo = InkGroupInfo(
       selectedInk: selectedInk ?? this.selectedInk,
+      shapeType: shapeType ?? this.shapeType,
     );
 
     newInkInfo.setColorBox(_colorBox);

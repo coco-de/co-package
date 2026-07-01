@@ -14,6 +14,7 @@ void main() {
   late ValueNotifier<DrawingTool> selectedTool;
   late ValueNotifier<Color> selectedColor;
   late ValueNotifier<double> selectedThickness;
+  late ValueNotifier<String> selectedShapeType;
 
   setUp(() {
     registry = NotifierRegistry();
@@ -25,6 +26,7 @@ void main() {
     selectedTool = ValueNotifier(DrawingTool.pencil);
     selectedColor = ValueNotifier(Colors.black);
     selectedThickness = ValueNotifier(2.0);
+    selectedShapeType = ValueNotifier('');
   });
 
   tearDown(() {
@@ -32,6 +34,7 @@ void main() {
     selectedTool.dispose();
     selectedColor.dispose();
     selectedThickness.dispose();
+    selectedShapeType.dispose();
   });
 
   group('StateSynchronizer', () {
@@ -45,6 +48,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -64,6 +68,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -83,6 +88,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -101,6 +107,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -118,6 +125,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -133,6 +141,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -150,6 +159,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -157,6 +167,24 @@ void main() {
 
         expect(modeNotifier.state.inkGroupInfo.selectedInk, 'shape');
         expect(modeNotifier.state.inkGroupInfo.selectedColor, Colors.orange);
+      });
+
+      test('도형 도구 적용 시 타겟 도형(shapeType)이 전달된다', () {
+        final modeNotifier = ScribbleModeNotifier();
+        selectedTool.value = .shape;
+        selectedShapeType.value = 'ellipse';
+
+        synchronizer.applyToModeNotifier(
+          modeNotifier,
+          pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
+          selectedTool: selectedTool,
+          selectedColor: selectedColor,
+          selectedThickness: selectedThickness,
+        );
+
+        expect(modeNotifier.state.inkGroupInfo.selectedInk, 'shape');
+        expect(modeNotifier.state.inkGroupInfo.shapeType, 'ellipse');
       });
 
       test('mouseOnly 포인터 모드 시 all 포인터 모드가 설정된다', () {
@@ -167,6 +195,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -186,6 +215,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -211,6 +241,7 @@ void main() {
 
         synchronizer.syncToAllNotifiers(
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -226,6 +257,7 @@ void main() {
         // 예외 없이 실행되면 성공
         synchronizer.syncToAllNotifiers(
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,
@@ -246,6 +278,7 @@ void main() {
         synchronizer.applyToModeNotifier(
           modeNotifier,
           pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
           selectedTool: selectedTool,
           selectedColor: selectedColor,
           selectedThickness: selectedThickness,

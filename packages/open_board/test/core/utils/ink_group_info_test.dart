@@ -16,12 +16,34 @@ void main() {
     });
   });
 
+  group('ShapeTargets', () {
+    test('상수 값 확인', () {
+      expect(ShapeTargets.none, '');
+      expect(ShapeTargets.line, 'line');
+      expect(ShapeTargets.ellipse, 'ellipse');
+      expect(ShapeTargets.rectangle, 'rectangle');
+    });
+  });
+
   group('InkGroupInfo', () {
     test('기본 생성자', () {
       final info = InkGroupInfo(selectedInk: InkModes.pencil);
       expect(info.selectedInk, InkModes.pencil);
       expect(info.selectedColor, isA<Color>());
       expect(info.seletedStrokeWidth, isA<double>());
+    });
+
+    test('shapeType 기본값은 빈 문자열이다', () {
+      final info = InkGroupInfo(selectedInk: InkModes.shape);
+      expect(info.shapeType, '');
+    });
+
+    test('shapeType 생성자 지정', () {
+      final info = InkGroupInfo(
+        selectedInk: InkModes.shape,
+        shapeType: ShapeTargets.ellipse,
+      );
+      expect(info.shapeType, ShapeTargets.ellipse);
     });
 
     test('selectedColor 반환', () {
@@ -51,6 +73,21 @@ void main() {
         final info = InkGroupInfo(selectedInk: InkModes.pen);
         final copied = info.copyWith(strokeWidth: 5.0);
         expect(copied.seletedStrokeWidth, 5.0);
+      });
+
+      test('shapeType 변경', () {
+        final info = InkGroupInfo(selectedInk: InkModes.shape);
+        final copied = info.copyWith(shapeType: ShapeTargets.rectangle);
+        expect(copied.shapeType, ShapeTargets.rectangle);
+      });
+
+      test('shapeType 미전달 시 기존 값 보존', () {
+        final info = InkGroupInfo(
+          selectedInk: InkModes.shape,
+          shapeType: ShapeTargets.line,
+        );
+        final copied = info.copyWith(strokeWidth: 3.0);
+        expect(copied.shapeType, ShapeTargets.line);
       });
 
       test('copyWith은 새 인스턴스 반환', () {

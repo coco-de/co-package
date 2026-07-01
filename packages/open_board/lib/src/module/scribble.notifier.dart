@@ -369,6 +369,10 @@ class ScribbleNotifier extends ScribbleNotifierBase
     } else if (state is Drawing) {
       final selectedInk = modeState.inkGroupInfo.selectedInk;
       final strokeWidth = modeState.inkGroupInfo.seletedStrokeWidth;
+      // shape 도구의 타겟 도형: '' 이면 자유 도형(자유 필기 후 자동 인식,
+      // shapeType 'pending'), 그 외(line/ellipse/rectangle)면 그 자체를
+      // shapeType 으로 두어 드래그 bounding-box 결정적 드로잉을 한다.
+      final shapeTarget = modeState.inkGroupInfo.shapeType;
       s = (state as Drawing).copyWith(
         pointerPosition: getPointFromEvent(event),
         activeLine: Stroke(
@@ -377,7 +381,9 @@ class ScribbleNotifier extends ScribbleNotifierBase
           ink: selectedInk,
           width: strokeWidth,
           createdAt: DateTime.now().toIso8601String(),
-          shapeType: selectedInk == InkModes.shape ? "pending" : "",
+          shapeType: selectedInk == InkModes.shape
+              ? (shapeTarget.isEmpty ? "pending" : shapeTarget)
+              : "",
           options: StrokeOptions(
             // size 두께 정책은 modeState.options(단일 진실 공급원)에 위임한다.
             // BrushMode 표준안(kobic #7160): fixedPen(화면비례)만 줌 배율로 보정해
@@ -448,6 +454,33 @@ class ScribbleNotifier extends ScribbleNotifierBase
     final selectedInk = modeState.inkGroupInfo.selectedInk;
     final isStraightenableInk = kStraightenableInks.contains(selectedInk);
     if (state is Drawing) {
+      // 결정적 도형(타원/사각형/선분): 포인트를 누적하지 않고 시작점→현재점
+      // 2점 rubber-band 로 activeLine 을 재구성한다. (자유 도형은 shapeTarget=''
+      // 이라 이 분기를 타지 않고 기존 손그림+자동 인식 경로를 유지한다.)
+      final shapeTarget = modeState.inkGroupInfo.shapeType;
+      if (selectedInk == InkModes.shape && shapeTarget.isNotEmpty) {
+        final drawing = state as Drawing;
+        final activeLine = drawing.activeLine;
+        if (activeLine != null && activeLine.points.isNotEmpty) {
+          final startPoint = activeLine.points.first;
+          final endPoint = getPointFromEvent(event);
+          final updatedStroke = Stroke(
+            points: [startPoint, endPoint],
+            color: activeLine.color,
+            ink: activeLine.ink,
+            width: activeLine.width,
+            createdAt: activeLine.createdAt,
+            options: activeLine.options,
+            shapeType: shapeTarget,
+          );
+          temporaryValue = drawing.copyWith(
+            activeLine: updatedStroke,
+            pointerPosition: endPoint,
+          );
+          return true;
+        }
+      }
+
       // 펜 직선화 이후: 새 포인트를 추가하지 않고 끝점만 갱신
       if (_strokeStraightened && isStraightenableInk) {
         final drawing = state as Drawing;
@@ -626,23 +659,69 @@ class ScribbleNotifier extends ScribbleNotifierBase
         }
       }
     } else if (state is Drawing) {
-      // 직선화된 스트로크는 끝점이 이미 마지막 move를 추종하고 있으므로,
-      // up 지점을 추가하면 직선 끝이 꺾인다. 점 추가를 건너뛴다.
-      final finished =
-          finishLineForState(
-                wasStraightened ? state : addPoint(event, state, modeState),
-              )
-              as Drawing;
-      final newState = finished.copyWith(
-        pointerPosition: pos,
-        activePointerIds: state.activePointerIds
-            .where((id) => id != event.pointer)
-            .toList(),
-      );
+      final shapeTarget = modeState.inkGroupInfo.selectedInk == InkModes.shape
+          ? modeState.inkGroupInfo.shapeType
+          : "";
+      final remainingPointerIds = state.activePointerIds
+          .where((id) => id != event.pointer)
+          .toList();
 
-      // 도형 도구 사용 시 마지막 스트로크를 변환해 한 번에 커밋한다.
-      // (손그림 커밋 + 변환 커밋을 각각 push하면 도형 1개에 undo 2회가 필요)
-      state = _transformLastStrokeToShape(newState, modeState) ?? newState;
+      if (shapeTarget.isNotEmpty) {
+        // 결정적 도형: 시작점→up 점 2점으로 확정하고 자동 인식은 건너뛴다.
+        final drawing = state as Drawing;
+        final activeLine = drawing.activeLine;
+        final startPoint = (activeLine != null && activeLine.points.isNotEmpty)
+            ? activeLine.points.first
+            : null;
+        final endPoint = getPointFromEvent(event);
+        if (activeLine != null &&
+            startPoint != null &&
+            (startPoint.x != endPoint.x || startPoint.y != endPoint.y)) {
+          final finalStroke = Stroke(
+            points: [startPoint, endPoint],
+            color: activeLine.color,
+            ink: activeLine.ink,
+            width: activeLine.width,
+            createdAt: activeLine.createdAt,
+            options: activeLine.options,
+            shapeType: shapeTarget,
+          );
+          final finished =
+              finishLineForState(drawing.copyWith(activeLine: finalStroke))
+                  as Drawing;
+          state = finished.copyWith(
+            pointerPosition: pos,
+            activePointerIds: remainingPointerIds,
+          );
+        } else {
+          // 드래그가 없으면(시작==끝) 도형을 만들지 않고 활성 라인만 폐기한다.
+          // copyWith(activeLine: null)은 null 병합으로 지워지지 않으므로 직접 생성.
+          state = Drawing(
+            scribble: drawing.scribble,
+            activeLine: null,
+            activePointerIds: remainingPointerIds,
+            selectedStrokeIds: drawing.selectedStrokeIds,
+            pointerPosition: pos,
+          );
+        }
+      } else {
+        // 자유 도형/일반 필기: 기존 손그림 커밋 + 자동 인식 경로.
+        // 직선화된 스트로크는 끝점이 이미 마지막 move를 추종하고 있으므로,
+        // up 지점을 추가하면 직선 끝이 꺾인다. 점 추가를 건너뛴다.
+        final finished =
+            finishLineForState(
+                  wasStraightened ? state : addPoint(event, state, modeState),
+                )
+                as Drawing;
+        final newState = finished.copyWith(
+          pointerPosition: pos,
+          activePointerIds: remainingPointerIds,
+        );
+
+        // 도형 도구 사용 시 마지막 스트로크를 변환해 한 번에 커밋한다.
+        // (손그림 커밋 + 변환 커밋을 각각 push하면 도형 1개에 undo 2회가 필요)
+        state = _transformLastStrokeToShape(newState, modeState) ?? newState;
+      }
     } else if (state is Erasing) {
       final erased = erasePoint(event, modeState) as Erasing;
       final newState = erased.copyWith(

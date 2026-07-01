@@ -41,8 +41,12 @@ class DrawingState {
   late ValueNotifier<DrawingTool> selectedTool;
 
   late ValueNotifier<Color> selectedColor;
-  late ValueNotifier<double>
-  selectedThickness; // ===== 하위 객체들 (Facade 패턴) =====
+  late ValueNotifier<double> selectedThickness;
+
+  /// shape 도구의 타겟 도형(ShapeTargets). '' 이면 자유 도형(자동 인식),
+  /// 'line'/'ellipse'/'rectangle' 이면 드래그 bounding-box 결정적 드로잉.
+  late ValueNotifier<String>
+  selectedShapeType; // ===== 하위 객체들 (Facade 패턴) =====
   final NotifierRegistry _registry = NotifierRegistry();
   late final StateSynchronizer _synchronizer = StateSynchronizer(_registry);
 
@@ -173,6 +177,7 @@ class DrawingState {
       selectedTool: selectedTool,
       selectedColor: selectedColor,
       selectedThickness: selectedThickness,
+      selectedShapeType: selectedShapeType,
     );
   }
 
@@ -201,6 +206,7 @@ class DrawingState {
     selectedTool = ValueNotifier(DrawingTool.pencil);
     selectedColor = ValueNotifier(Colors.black);
     selectedThickness = ValueNotifier(2.0);
+    selectedShapeType = ValueNotifier('');
 
     // 🎯 활성 ScribbleNotifier 관리 ValueNotifier들 초기화
     final activeScribbleNotifierNotifier = ValueNotifier<ScribbleNotifier?>(
@@ -221,6 +227,7 @@ class DrawingState {
       selectedTool: selectedTool,
       selectedColor: selectedColor,
       selectedThickness: selectedThickness,
+      selectedShapeType: selectedShapeType,
     );
   }
 

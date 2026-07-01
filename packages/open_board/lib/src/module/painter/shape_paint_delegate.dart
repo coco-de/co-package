@@ -34,9 +34,25 @@ class ShapePaintDelegate implements PaintDelegate {
       case "line":
         _drawLine(canvas, paint, stroke);
         break;
+      case "rectangle":
+      case "square":
+        // 결정적 사각형: 세그먼트 없이 2점(bounding-box) → drawRect.
+        // 자동 인식 사각형(세그먼트 보유)은 기존 폴리곤 렌더.
+        if (stroke.segments.isEmpty && stroke.points.length == 2) {
+          _drawRect(canvas, paint, stroke);
+        } else if (stroke.segments.isNotEmpty) {
+          _drawPolygon(canvas, paint, stroke);
+        }
+        break;
       case "circle":
       case "ellipse":
-        _drawCircle(canvas, paint, stroke);
+        // 결정적 타원: 2점(bounding-box) → drawOval.
+        // 자동 인식 타원(다점)은 PCA 기반 렌더.
+        if (stroke.points.length == 2) {
+          _drawOvalFromBounds(canvas, paint, stroke);
+        } else {
+          _drawCircle(canvas, paint, stroke);
+        }
         break;
       case "polyline":
         _drawPolyline(canvas, paint, stroke);
@@ -46,6 +62,26 @@ class ShapePaintDelegate implements PaintDelegate {
         }
         break;
     }
+  }
+
+  /// 2점(bounding-box) 사각형 그리기 — 결정적 도형 도구용.
+  void _drawRect(ui.Canvas canvas, Paint paint, Stroke stroke) {
+    final start = stroke.points.first;
+    final end = stroke.points.last;
+    canvas.drawRect(
+      Rect.fromPoints(Offset(start.x, start.y), Offset(end.x, end.y)),
+      paint,
+    );
+  }
+
+  /// 2점(bounding-box) 타원 그리기 — 결정적 도형 도구용.
+  void _drawOvalFromBounds(ui.Canvas canvas, Paint paint, Stroke stroke) {
+    final start = stroke.points.first;
+    final end = stroke.points.last;
+    canvas.drawOval(
+      Rect.fromPoints(Offset(start.x, start.y), Offset(end.x, end.y)),
+      paint,
+    );
   }
 
   /// 직선 그리기

@@ -21,6 +21,7 @@ class StateSynchronizer {
     required ValueNotifier<DrawingTool> selectedTool,
     required ValueNotifier<Color> selectedColor,
     required ValueNotifier<double> selectedThickness,
+    required ValueNotifier<String> selectedShapeType,
   }) {
     try {
       final currentTool = selectedTool.value;
@@ -109,6 +110,9 @@ class StateSynchronizer {
           modeNotifier.setShape();
           modeNotifier.setColor(currentColor);
           modeNotifier.setStrokeWidth(currentThickness);
+          // 타겟 도형(자유/타원/사각형/선분)을 전달 — setColor/setStrokeWidth
+          // 뒤에 호출해 copyWith 재구성으로 덮이지 않게 한다.
+          modeNotifier.setShapeType(selectedShapeType.value);
 
         case DrawingTool.lasso:
           if (beforeState.inkGroupInfo.selectedInk == 'erase') {}
@@ -145,6 +149,7 @@ class StateSynchronizer {
     required ValueNotifier<DrawingTool> selectedTool,
     required ValueNotifier<Color> selectedColor,
     required ValueNotifier<double> selectedThickness,
+    required ValueNotifier<String> selectedShapeType,
   }) {
     final notifiers = _registry.activeModeNotifiers;
     if (notifiers.isEmpty) return;
@@ -156,6 +161,7 @@ class StateSynchronizer {
         selectedTool: selectedTool,
         selectedColor: selectedColor,
         selectedThickness: selectedThickness,
+        selectedShapeType: selectedShapeType,
       );
     }
 

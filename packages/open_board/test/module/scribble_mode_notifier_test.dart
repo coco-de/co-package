@@ -125,6 +125,32 @@ void main() {
       });
     });
 
+    group('setShapeType()', () {
+      test('타겟 도형을 설정한다', () {
+        notifier.setShapeType(ShapeTargets.ellipse);
+        expect(notifier.state.inkGroupInfo.shapeType, ShapeTargets.ellipse);
+      });
+
+      test('타겟 도형 변경 후 다른 설정은 유지된다', () {
+        notifier.setScaleFactor(1.5);
+        notifier.setShape();
+
+        notifier.setShapeType(ShapeTargets.rectangle);
+
+        expect(notifier.state.inkGroupInfo.shapeType, ShapeTargets.rectangle);
+        expect(notifier.state.inkGroupInfo.selectedInk, InkModes.shape);
+        expect(notifier.state.scaleFactor, 1.5);
+      });
+
+      test('빈 문자열로 자유 도형(자동 인식)으로 되돌린다', () {
+        notifier.setShapeType(ShapeTargets.line);
+        expect(notifier.state.inkGroupInfo.shapeType, ShapeTargets.line);
+
+        notifier.setShapeType(ShapeTargets.none);
+        expect(notifier.state.inkGroupInfo.shapeType, '');
+      });
+    });
+
     group('setEraser()', () {
       test('잉크 모드를 erase로 설정한다', () {
         notifier.setEraser();
