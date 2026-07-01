@@ -59,6 +59,9 @@ class DrawingState {
       DrawingSettingsPersistence(); // ✨ dispose 상태 추적 (위젯 생명주기 오류 방지)
   bool _isDisposed = false;
 
+  /// 🖊️ 필기 활동(획 시작) 틱 (재초기화 가능).
+  late ValueNotifier<int> _drawingActivityNotifier;
+
   factory DrawingState() {
     if (_instance == null || _instance!._isDisposed) {
       // 🔄 인스턴스가 없거나 dispose된 경우 새로 생성
@@ -81,6 +84,16 @@ class DrawingState {
 
   /// Redo 가능 여부 실시간 추적 ValueNotifier
   ValueNotifier<bool> get canRedoNotifier => _undoRedoTracker.canRedoNotifier;
+
+  /// 🖊️ 필기 활동(획 시작) 틱. 매 pointer-down([setLastActiveScribbleNotifier])
+  /// 마다 증가한다.
+  ///
+  /// `canUndoNotifier`/`canRedoNotifier` 는 `ValueNotifier<bool>` 이라 값이 실제로
+  /// 바뀔 때만 알림한다 → 이미 히스토리가 있는 레이어(canUndo 가 이미 true)에서
+  /// 연속 획을 그으면 edge 가 없어 "필기 활동"을 감지할 수 없다. "사용자가 그리는
+  /// 중" UI(예: Undo/Redo pill auto-hide)는 이 틱을 구독하면 boolean edge 유무와
+  /// 무관하게 매 획을 활동으로 인식할 수 있다.
+  ValueNotifier<int> get drawingActivityNotifier => _drawingActivityNotifier;
 
   /// 📝 ScribbleModeNotifier 등록 (ScribbleWidget에서 자동 호출)
   void registerNotifier(ScribbleModeNotifier modeNotifier) {
@@ -110,6 +123,10 @@ class DrawingState {
 
   /// 🎯 마지막 활성 ScribbleNotifier 설정 (필기 시작 시 호출)
   void setLastActiveScribbleNotifier(ScribbleNotifier scribbleNotifier) {
+    // 🖊️ 획 시작 = 필기 활동. 활성 레이어 변경 여부·canUndo/canRedo 값과 무관하게
+    // 매 pointer-down 마다 발화한다(연속 획도 활동으로 인식).
+    if (!_isDisposed) _drawingActivityNotifier.value++;
+
     final changed = _registry.setLastActiveScribbleNotifier(
       scribbleNotifier,
       isDisposed: _isDisposed,
@@ -211,6 +228,9 @@ class DrawingState {
     selectedColor = ValueNotifier(Colors.black);
     selectedThickness = ValueNotifier(2.0);
     selectedShapeType = ValueNotifier('');
+
+    // 🖊️ 필기 활동(획 시작) 틱 초기화
+    _drawingActivityNotifier = ValueNotifier(0);
 
     // 🎯 활성 ScribbleNotifier 관리 ValueNotifier들 초기화
     final activeScribbleNotifierNotifier = ValueNotifier<ScribbleNotifier?>(
