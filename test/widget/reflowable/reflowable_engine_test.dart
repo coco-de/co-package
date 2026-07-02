@@ -170,8 +170,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(loaded, ['ch01.xhtml']);
+      // 연속 스크롤(kobic#7572): 첫 spine부터 로드하되, 뷰포트에 다음 spine이
+      // 걸리면 함께 lazy load될 수 있다.
+      expect(loaded.first, 'ch01.xhtml');
       expect(find.textContaining('ch01.xhtml'), findsOneWidget);
+      final state = tester.state<ReflowableEngineState>(
+        find.byType(ReflowableEngine),
+      );
+      expect(state.spineIndex, 0);
     });
 
     testWidgets('initialSpineIndex 직접 지정', (tester) async {
@@ -191,15 +197,12 @@ void main() {
 
     testWidgets('nextSpine() / previousSpine() 으로 항목 이동', (tester) async {
       final book = _fakeBook(['ch01.xhtml', 'ch02.xhtml', 'ch03.xhtml']);
-      final loaded = <String>[];
       await tester.pumpWidget(
         _wrap(
           ReflowableEngine(
             book: book,
-            xhtmlLoader: (href) async {
-              loaded.add(href);
-              return _wrapXhtml('<p>$href</p>');
-            },
+            // 각 spine이 뷰포트보다 길어야 스크롤 이동이 관찰된다.
+            xhtmlLoader: (href) async => _wrapXhtml(_tallBody(href)),
           ),
         ),
       );
@@ -236,6 +239,58 @@ void main() {
       expect(state.previousSpine(), isFalse);
     });
 
+    testWidgets('연속 세로 스크롤로 다음 spine 진입 시 onSpineChanged 알림 (kobic#7572)',
+        (tester) async {
+      final book = _fakeBook(['ch01.xhtml', 'ch02.xhtml', 'ch03.xhtml']);
+      final changes = <int>[];
+      await tester.pumpWidget(
+        _wrap(
+          ReflowableEngine(
+            book: book,
+            xhtmlLoader: (href) async => _wrapXhtml(_tallBody(href)),
+            onSpineChanged: changes.add,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 초기 spine에 대해서는 알리지 않는다.
+      expect(changes, isEmpty);
+
+      // 세로 드래그로 ch01을 지나 ch02 상단이 뷰포트 top에 오도록 스크롤.
+      final list = find.byType(ReflowableEngine);
+      while (changes.isEmpty) {
+        await tester.drag(list, const Offset(0, -600));
+        await tester.pumpAndSettle();
+      }
+      expect(changes.last, 1);
+
+      final state = tester.state<ReflowableEngineState>(list);
+      expect(state.spineIndex, 1);
+      expect(find.textContaining('ch02.xhtml'), findsOneWidget);
+    });
+
+    testWidgets('spine 콘텐츠가 뷰포트보다 짧아도 스크롤로 다음 spine 도달 (dead-end 회귀 방지)',
+        (tester) async {
+      // kobic#7572 재현 조건: spine 하나가 화면 한 장보다 짧은 책.
+      final book = _fakeBook(['ch01.xhtml', 'ch02.xhtml', 'ch03.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowableEngine(
+            book: book,
+            xhtmlLoader: (href) async => _wrapXhtml('<p>$href</p>'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 짧은 spine 3개가 한 뷰포트 안에 연속으로 함께 렌더된다 —
+      // 이전 구현(현재 spine만 렌더 + 이동 수단 없음)에서는 불가능했다.
+      expect(find.textContaining('ch01.xhtml'), findsOneWidget);
+      expect(find.textContaining('ch02.xhtml'), findsOneWidget);
+      expect(find.textContaining('ch03.xhtml'), findsOneWidget);
+    });
+
     testWidgets('initialSpineIndex가 범위 초과 시 clamp', (tester) async {
       final book = _fakeBook(['ch01.xhtml', 'ch02.xhtml']);
       await tester.pumpWidget(
@@ -243,7 +298,9 @@ void main() {
           ReflowableEngine(
             book: book,
             initialSpineIndex: 99,
-            xhtmlLoader: (href) async => _wrapXhtml('<p>$href</p>'),
+            // 뷰포트보다 긴 본문 — 짧으면 스크롤 위치가 존재하지 않아
+            // 연속 스크롤에서 top spine이 0으로 판정된다.
+            xhtmlLoader: (href) async => _wrapXhtml(_tallBody(href)),
           ),
         ),
       );
@@ -267,6 +324,10 @@ String _wrapXhtml(String body) => '''
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"><body>$body</body></html>
 ''';
+
+/// 뷰포트(600px)보다 확실히 긴 본문 — 스크롤/spine 전환 테스트용.
+String _tallBody(String href) =>
+    '<p>$href</p>${List.filled(40, '<p>filler line</p>').join()}';
 
 EpubBook _fakeBook(List<String> hrefs) => _FakeEpubBook(
       spine: hrefs

@@ -1,11 +1,15 @@
 // Presentation Engine — open_epub 1.0
 // Story: S1.5 (#11) — Reflowable XHTML 렌더
 // Story: S1.6 (#12) — 글자 크기·줄간격 + BookPosition(spineIndex) 보존
+// Fix: kobic#7572 — 스크롤 모드 전체 spine 연속 세로 스크롤
 // BDD: F2.1 / F2.2 / F2.3 / F2.5
 //
-// 본 widget은 단일 spine 항목을 스크롤로 표시 (S1.5). S1.6에서
-// fontSize / lineHeight property를 추가하여 글자 크기·줄간격 변경 시
-// 본문이 재배치되며 현재 spineIndex가 보존됨을 보장한다.
+// 본 widget은 책 전체 spine을 하나의 연속 세로 스크롤로 표시한다
+// (kobic#7572). 이전 구현은 현재 spine 하나만 SingleChildScrollView로
+// 렌더해, spine 콘텐츠가 뷰포트보다 짧으면 스크롤할 것이 없고 다음 spine으로
+// 갈 제스처도 없어 스크롤 모드가 dead-end였다. 각 spine은 lazy load되며,
+// 화면 상단에 보이는 spine이 바뀌면 [ReflowableEngine.onSpineChanged]로
+// 알린다(위치 동기화·진행률용).
 //
 // 페이지 모드(spine 단위 PageView)는 [ReflowablePageView]에서 처리.
 
@@ -13,6 +17,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../../api/epub_book.dart';
 
@@ -27,11 +32,15 @@ typedef ImageLoader = Future<Uint8List?> Function(String src);
 /// 외부 URL, 또는 하이라이트 링크(openepub-hl:ID)일 수 있다. (S7.3/S7.5)
 typedef EpubLinkTapCallback = void Function(String href);
 
-/// Reflowable EPUB 책의 본문을 표시하는 최상위 엔진 widget.
+/// 화면 상단에 보이는 spine 인덱스가 바뀔 때 호출된다. (kobic#7572)
+typedef SpineChangedCallback = void Function(int spineIndex);
+
+/// Reflowable EPUB 책의 본문을 표시하는 최상위 엔진 widget (스크롤 모드).
 ///
-/// 페이지 분할은 본 Story 범위가 아니므로 현재 spine 항목 전체를 스크롤로
-/// 표시한다. S1.6 (#12)에서 `ReflowablePageView` + `PaginationStrategy`로
-/// 페이지 모드를 도입한다.
+/// 전체 spine을 [ScrollablePositionedList]로 연속 표시한다. 페이지 내 분할
+/// 없이 spine 단위로 lazy load하며, 스크롤로 자연스럽게 다음/이전 spine으로
+/// 이어진다. 프로그램적 이동은 [ReflowableEngineState.nextSpine] /
+/// [ReflowableEngineState.previousSpine]으로 가능하다.
 class ReflowableEngine extends StatefulWidget {
   const ReflowableEngine({
     super.key,
@@ -42,6 +51,7 @@ class ReflowableEngine extends StatefulWidget {
     this.fontSize = 16.0,
     this.lineHeight = 1.5,
     this.onLinkTap,
+    this.onSpineChanged,
   });
 
   final EpubBook book;
@@ -58,6 +68,10 @@ class ReflowableEngine extends StatefulWidget {
   /// 본문 링크/하이라이트 탭 콜백. (S7.3/S7.5)
   final EpubLinkTapCallback? onLinkTap;
 
+  /// 스크롤로 화면 상단 spine이 바뀔 때 알림 (위치 동기화·진행률, kobic#7572).
+  /// 초기 spine에 대해서는 호출하지 않는다.
+  final SpineChangedCallback? onSpineChanged;
+
   @override
   State<ReflowableEngine> createState() => ReflowableEngineState();
 }
@@ -65,10 +79,23 @@ class ReflowableEngine extends StatefulWidget {
 @visibleForTesting
 class ReflowableEngineState extends State<ReflowableEngine> {
   late int _spineIndex;
-  late Future<String> _currentLoad;
+  final ItemScrollController _scrollController = ItemScrollController();
+  final ItemPositionsListener _positionsListener =
+      ItemPositionsListener.create();
+
+  /// spine href별 XHTML 로드 future 캐시 — 스크롤로 재방문 시 재로드 방지.
+  final Map<String, Future<String>> _loads = {};
+
+  /// 사용자 드래그(+관성)로 스크롤 중인지. 위치 리스너 기반 spine 판정은
+  /// 사용자 스크롤 중에만 적용한다 — 초기 진입/프로그램적 jump/Html 확장
+  /// 재배치가 만들어내는 stale 위치 보고가 현재 spine을 덮어쓰지 않도록.
+  bool _userScrolling = false;
 
   int get spineIndex => _spineIndex;
   int get spineCount => widget.book.spine.length;
+
+  /// 현재 spine 기준 앞뒤로 선제 로드할 spine 수 (부드러운 스크롤, kobic#7572).
+  static const int _prefetchRadius = 2;
 
   @override
   void initState() {
@@ -77,58 +104,178 @@ class ReflowableEngineState extends State<ReflowableEngine> {
       0,
       widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
     );
-    _currentLoad = _loadCurrent();
+    _positionsListener.itemPositions.addListener(_onItemPositionsChanged);
+    _prefetchAround(_spineIndex);
   }
 
-  Future<String> _loadCurrent() {
-    if (widget.book.spine.isEmpty) return Future.value('');
-    return widget.xhtmlLoader(widget.book.spine[_spineIndex].href);
+  @override
+  void didUpdateWidget(ReflowableEngine oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.book != widget.book) {
+      _loads.clear();
+      _spineIndex = widget.initialSpineIndex.clamp(
+        0,
+        widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
+      );
+      _prefetchAround(_spineIndex);
+    }
+  }
+
+  @override
+  void dispose() {
+    _positionsListener.itemPositions.removeListener(_onItemPositionsChanged);
+    super.dispose();
+  }
+
+  Future<String> _loadSpine(String href) =>
+      _loads.putIfAbsent(href, () => widget.xhtmlLoader(href));
+
+  /// [center] 주변 spine의 XHTML 로드를 미리 시작한다 — 스크롤이 다음 spine에
+  /// 닿기 전에 데이터가 준비되어 로딩 끊김을 줄인다 (kobic#7572).
+  void _prefetchAround(int center) {
+    final spine = widget.book.spine;
+    if (spine.isEmpty) return;
+    final start = (center - _prefetchRadius).clamp(0, spine.length - 1);
+    final end = (center + _prefetchRadius).clamp(0, spine.length - 1);
+    for (var i = start; i <= end; i++) {
+      // 결과는 캐시에만 적재 — 실패는 item 빌드 시 FutureBuilder가 표시.
+      _loadSpine(spine[i].href).ignore();
+    }
+  }
+
+  /// 화면에 보이는 item 중 가장 위(최소 leading edge)의 spine을 현재로 판정.
+  void _onItemPositionsChanged() {
+    if (!_userScrolling) return;
+    final positions = _positionsListener.itemPositions.value;
+    if (positions.isEmpty) return;
+    ItemPosition? top;
+    for (final position in positions) {
+      // 뷰포트에 실제로 걸쳐 있는 item만 (trailing이 0 이하면 위로 지나감).
+      if (position.itemTrailingEdge <= 0 || position.itemLeadingEdge >= 1) {
+        continue;
+      }
+      if (top == null || position.itemLeadingEdge < top.itemLeadingEdge) {
+        top = position;
+      }
+    }
+    if (top == null || top.index == _spineIndex) return;
+    _spineIndex = top.index;
+    _prefetchAround(top.index);
+    widget.onSpineChanged?.call(top.index);
+  }
+
+  /// 드래그로 시작된 스크롤(+이어지는 관성)만 사용자 스크롤로 표시한다.
+  /// 프로그램적 jump나 레이아웃 재배치의 스크롤 알림은 제외된다.
+  bool _onScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollStartNotification) {
+      _userScrolling = notification.dragDetails != null;
+    } else if (notification is ScrollEndNotification) {
+      // 마지막 위치 보고는 postFrame으로 늦게 도착하므로 여기서 한 번 더 판정.
+      _onItemPositionsChanged();
+      _userScrolling = false;
+    }
+    return false;
+  }
+
+  /// 프로그램적 spine 이동 — 대상 item이 아직 layout에 없으면
+  /// [ItemScrollController.scrollTo]의 crossfade 전환이 불안정하므로
+  /// 결정적인 [ItemScrollController.jumpTo]로 재앵커하고 상태를 직접 갱신한다.
+  void _jumpToSpine(int index) {
+    if (_scrollController.isAttached) {
+      _scrollController.jumpTo(index: index);
+    }
+    if (index == _spineIndex) return;
+    _spineIndex = index;
+    _prefetchAround(index);
+    widget.onSpineChanged?.call(index);
   }
 
   /// 다음 spine 항목으로 이동. 마지막이면 false.
   bool nextSpine() {
     if (_spineIndex >= spineCount - 1) return false;
-    setState(() {
-      _spineIndex++;
-      _currentLoad = _loadCurrent();
-    });
+    _jumpToSpine(_spineIndex + 1);
     return true;
   }
 
   /// 이전 spine 항목으로 이동. 처음이면 false.
   bool previousSpine() {
     if (_spineIndex <= 0) return false;
-    setState(() {
-      _spineIndex--;
-      _currentLoad = _loadCurrent();
-    });
+    _jumpToSpine(_spineIndex - 1);
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.book.spine.isEmpty) {
+    final spine = widget.book.spine;
+    if (spine.isEmpty) {
       return const _EmptyState();
     }
 
-    return FutureBuilder<String>(
-      future: _currentLoad,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return _ErrorState(error: snapshot.error!);
-        }
-        final xhtml = snapshot.data ?? '';
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: buildReflowableHtml(
-            data: xhtml,
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onScrollNotification,
+      child: LayoutBuilder(
+        builder: (context, constraints) => ScrollablePositionedList.builder(
+          itemCount: spine.length,
+          initialScrollIndex: _spineIndex,
+          itemScrollController: _scrollController,
+          itemPositionsListener: _positionsListener,
+          // 뷰포트 밖 2화면 분량을 미리 빌드해 스크롤 중 로딩 끊김을 줄인다
+          // (kobic#7572). Html 파싱이 스크롤 도달 전에 끝나도록.
+          minCacheExtent: constraints.maxHeight * 2,
+          itemBuilder: (context, index) => _SpineItemView(
+            // 같은 href가 spine에 중복 등장할 수 있어 index로 구분.
+            key: ValueKey('reflowable-spine-$index'),
+            load: _loadSpine(spine[index].href),
             fontSize: widget.fontSize,
             lineHeight: widget.lineHeight,
             imageLoader: widget.imageLoader,
             onLinkTap: widget.onLinkTap,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 단일 spine 항목 뷰 — lazy load + 로딩/에러 상태를 item 단위로 표시.
+class _SpineItemView extends StatelessWidget {
+  const _SpineItemView({
+    super.key,
+    required this.load,
+    required this.fontSize,
+    required this.lineHeight,
+    required this.imageLoader,
+    required this.onLinkTap,
+  });
+
+  final Future<String> load;
+  final double fontSize;
+  final double lineHeight;
+  final ImageLoader? imageLoader;
+  final EpubLinkTapCallback? onLinkTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: load,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Padding(
+            padding: EdgeInsets.all(48),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return _ErrorState(error: snapshot.error!);
+        }
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: buildReflowableHtml(
+            data: snapshot.data ?? '',
+            fontSize: fontSize,
+            lineHeight: lineHeight,
+            imageLoader: imageLoader,
+            onLinkTap: onLinkTap,
           ),
         );
       },

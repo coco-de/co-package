@@ -90,7 +90,12 @@ export 'src/presentation/widgets/epub_reader.dart'
         EpubPositionChangedCallback,
         EpubViewportChangedCallback;
 export 'src/presentation/engine/reflowable/reflowable_engine.dart'
-    show ReflowableEngine, XhtmlLoader, ImageLoader, EpubLinkTapCallback;
+    show
+        ReflowableEngine,
+        XhtmlLoader,
+        ImageLoader,
+        EpubLinkTapCallback,
+        SpineChangedCallback;
 export 'src/presentation/engine/reflowable/reflowable_page_view.dart'
     show ReflowablePageView;
 export 'src/presentation/engine/fixed_layout/fixed_layout_engine.dart'

@@ -314,6 +314,9 @@ class _SessionViewState extends State<_SessionView> {
         fontSize: widget.fontSize,
         lineHeight: widget.lineHeight,
         onLinkTap: widget.onLinkTap,
+        // 스크롤로 spine이 넘어가면 paged와 동일하게 세션 위치·컨트롤러를
+        // 동기화하고 호스트에 보고한다 (kobic#7572 — 진행률·챕터명 갱신).
+        onSpineChanged: _handlePageChanged,
       );
     }
 
