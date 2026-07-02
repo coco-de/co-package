@@ -87,6 +87,132 @@ void main() {
     });
   });
 
+  group('resolveSelection — 정규화 폴백 (open-epub#62)', () {
+    test('소스 개행·들여쓰기를 걸친 선택을 원본 offset으로 해석한다', () {
+      // 렌더된 텍스트는 공백 접기로 "고래는 바다에 산다." — SelectionArea가
+      // 반환하는 선택 평문에는 소스 개행이 없다.
+      const xhtml = '<body><p>고래는 바다에\n      산다. 바다는 넓다.</p></body>';
+      final sel = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: '바다에 산다',
+      );
+      expect(sel, isNotNull);
+      final plain = _extractor.extractPlainText(xhtml);
+      // 원본 공간 offset — 개행·들여쓰기가 포함된 구간을 정확히 가리킨다.
+      expect(plain.substring(sel!.start, sel.end), '바다에\n      산다');
+      expect(sel.selectedText, '바다에 산다');
+    });
+
+    test('탭·CR·연속 공백도 하나로 접어 매칭한다', () {
+      const xhtml = '<body><p>alpha\t\r\n  beta</p></body>';
+      final sel = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: 'alpha beta',
+      );
+      expect(sel, isNotNull);
+      final plain = _extractor.extractPlainText(xhtml);
+      expect(plain.substring(sel!.start, sel.end), 'alpha\t\r\n  beta');
+    });
+
+    test('named 엔티티(&amp; 등)를 디코드해 매칭한다', () {
+      const xhtml = '<body><p>Tom &amp; Jerry\nshow</p></body>';
+      // 렌더: "Tom & Jerry show"
+      final sel = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: 'Tom & Jerry show',
+      );
+      expect(sel, isNotNull);
+      final plain = _extractor.extractPlainText(xhtml);
+      expect(plain.substring(sel!.start, sel.end), 'Tom &amp; Jerry\nshow');
+    });
+
+    test('숫자 문자 참조(&#8217; 등)를 디코드해 매칭한다', () {
+      const xhtml = '<body><p>It&#8217;s\nfine</p></body>';
+      // 렌더: "It’s fine"
+      final sel = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: 'It’s fine',
+      );
+      expect(sel, isNotNull);
+      final plain = _extractor.extractPlainText(xhtml);
+      expect(plain.substring(sel!.start, sel.end), 'It&#8217;s\nfine');
+    });
+
+    test('&nbsp;는 일반 스페이스와 동일하게 매칭한다', () {
+      const xhtml = '<body><p>hello&nbsp;world</p></body>';
+      final sel = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: 'hello world',
+      );
+      expect(sel, isNotNull);
+      final plain = _extractor.extractPlainText(xhtml);
+      expect(plain.substring(sel!.start, sel.end), 'hello&nbsp;world');
+    });
+
+    test('검색어(렌더된 텍스트)는 디코드하지 않는다 — 리터럴 "&amp;" 표시 매칭', () {
+      // 원본 "&amp;amp;" 는 렌더에서 "&amp;" 로 표시. 개행 때문에 정확 일치가
+      // 실패해 정규화 폴백을 타더라도, 검색어를 디코드하지 않아야 원본 디코드
+      // 결과("&amp;")와 일치한다.
+      const xhtml = '<body><p>code:\n&amp;amp; token</p></body>';
+      final sel = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: 'code: &amp;',
+      );
+      expect(sel, isNotNull);
+      final plain = _extractor.extractPlainText(xhtml);
+      expect(plain.substring(sel!.start, sel.end), 'code:\n&amp;amp;');
+    });
+
+    test('정규화 폴백 결과가 injectHighlights와 offset 계약을 유지한다', () {
+      const xhtml = '<body><p>고래는 바다에\n  산다.</p></body>';
+      final sel = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: '바다에 산다',
+      )!;
+      final out = _extractor.injectHighlights(xhtml, [
+        _hl(sel.start, sel.end),
+      ]);
+      expect(
+        out,
+        contains('<span style="background-color:#FFF59D;">바다에\n  산다</span>'),
+      );
+    });
+
+    test('occurrence는 정규화 공간에서 N번째 일치를 선택한다', () {
+      const xhtml = '<body><p>바다는\n넓다. 바다는\n깊다.</p></body>';
+      final first = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: '바다는 넓다',
+      );
+      final second = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: '바다는 깊다',
+      );
+      expect(first, isNotNull);
+      expect(second, isNotNull);
+      expect(second!.start, greaterThan(first!.end));
+    });
+
+    test('정규화해도 일치하지 않으면 null', () {
+      const xhtml = '<body><p>고래는 바다에\n산다.</p></body>';
+      final sel = _extractor.resolveSelection(
+        spineHref: 'ch.xhtml',
+        xhtml: xhtml,
+        selectedText: '고래는 하늘에 산다',
+      );
+      expect(sel, isNull);
+    });
+  });
+
   group('injectHighlights (S1.5-4)', () {
     test('단일 텍스트 노드를 배경색 span으로 감싼다', () {
       const xhtml = '<body><p>고래는 바다에 산다.</p></body>';

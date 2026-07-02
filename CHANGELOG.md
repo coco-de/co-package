@@ -5,6 +5,18 @@
 1.0 릴리스(버전 bump + MIGRATION.md)는 E6에서 진행.
 
 ### New (1.0 core, `open_epub_v1.dart`)
+- 하이라이트 선택 해석·재렌더 수정 (#62, kobic#7590)
+  - `SpineTextExtractor.resolveSelection` — 정확 일치 실패 시 **정규화 매칭
+    폴백**: HTML 공백 접기 + 엔티티(named/numeric) 디코드를 반영한 정규화
+    공간에서 매칭하고 원본 offset으로 역매핑. SelectionArea의 렌더된 선택
+    평문이 소스 개행·들여쓰기·`&amp;`를 걸쳐도 해석된다. offset 계약
+    (`injectHighlights` 원본 공간)은 그대로 유지
+  - `ReflowableEngine`/`ReflowablePageView`에 `contentRevision` 파라미터 —
+    identity가 바뀌면 spine XHTML 캐시를 버리고 재로드. `EpubReader`가
+    `highlights`를 전달해 하이라이트 저장/삭제·늦게 도착한 복원이 본문에
+    즉시 반영된다. 재로드 동안 직전 콘텐츠를 유지해 스크롤 점프/스피너
+    flash 없음. `ReflowablePageView`의 매 rebuild loader 재호출(FutureBuilder
+    안티패턴)도 함께 해소
 - fixed-layout 양면/단면 토글 + 페이지 내비게이션 (kobic#7576)
   - `EpubReader.fixedLayoutSpreadOverride` — 호스트가 `EpubSpread`를 강제해
     양면(landscape)/단면(none) 사용자 토글을 구동. null이면 기존처럼

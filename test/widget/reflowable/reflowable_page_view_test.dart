@@ -15,7 +15,8 @@ import 'package:open_epub/src/presentation/engine/reflowable/reflowable_page_vie
 
 void main() {
   group('ReflowablePageView — 페이지 모드 (BDD F2.4)', () {
-    testWidgets('spine N개 → PageView로 표시, initialSpineIndex 적용', (tester) async {
+    testWidgets('spine N개 → PageView로 표시, initialSpineIndex 적용',
+        (tester) async {
       final book = _fakeBook(['ch01.xhtml', 'ch02.xhtml', 'ch03.xhtml']);
       await tester.pumpWidget(
         _wrap(
@@ -159,7 +160,8 @@ void main() {
   });
 
   group('ReflowableEngine + ReflowablePageView — 글자 크기·줄간격 적용', () {
-    testWidgets('fontSize property가 Html style에 반영 (ReflowableEngine)', (tester) async {
+    testWidgets('fontSize property가 Html style에 반영 (ReflowableEngine)',
+        (tester) async {
       final book = _fakeBook(['ch.xhtml']);
       await tester.pumpWidget(
         _wrap(
@@ -253,6 +255,92 @@ void main() {
       expect(state.pageIndex, 2);
     });
   });
+
+  group('ReflowablePageView — contentRevision 캐시 무효화 (open-epub#62)', () {
+    testWidgets('같은 revision rebuild는 loader 재호출 없음(캐시)', (tester) async {
+      final book = _fakeBook(['ch.xhtml']);
+      var loadCount = 0;
+      Future<String> loader(String href) async {
+        loadCount++;
+        return _wrapXhtml('<p>body</p>');
+      }
+
+      final rev0 = <String>['r0'];
+      Widget build(Object revision, double fontSize) => _wrap(
+            ReflowablePageView(
+              book: book,
+              xhtmlLoader: loader,
+              fontSize: fontSize,
+              contentRevision: revision,
+            ),
+          );
+
+      await tester.pumpWidget(build(rev0, 16));
+      await tester.pumpAndSettle();
+      final loadsAfterFirst = loadCount;
+
+      // fontSize만 변경(같은 revision) → 캐시 유지.
+      await tester.pumpWidget(build(rev0, 24));
+      await tester.pumpAndSettle();
+      expect(loadCount, loadsAfterFirst);
+    });
+
+    testWidgets('revision identity 변경 시 재로드 + 새 콘텐츠 렌더', (tester) async {
+      final book = _fakeBook(['ch.xhtml']);
+      var version = 0;
+      Future<String> loader(String href) async =>
+          _wrapXhtml('<p>revision v$version</p>');
+
+      Widget build(Object revision) => _wrap(
+            ReflowablePageView(
+              book: book,
+              xhtmlLoader: loader,
+              contentRevision: revision,
+            ),
+          );
+
+      await tester.pumpWidget(build(<String>['r0']));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('revision v0'), findsOneWidget);
+
+      version = 1;
+      await tester.pumpWidget(build(<String>['r1']));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('revision v1'), findsOneWidget);
+    });
+
+    testWidgets('재로드 동안 직전 콘텐츠 유지(스피너 flash 없음)', (tester) async {
+      final book = _fakeBook(['ch.xhtml']);
+      var delayed = false;
+      final gate = Completer<void>();
+      Future<String> loader(String href) async {
+        if (delayed) await gate.future;
+        return _wrapXhtml('<p>${delayed ? 'after' : 'before'} reload</p>');
+      }
+
+      Widget build(Object revision) => _wrap(
+            ReflowablePageView(
+              book: book,
+              xhtmlLoader: loader,
+              contentRevision: revision,
+            ),
+          );
+
+      await tester.pumpWidget(build(const ['r0']));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('before reload'), findsOneWidget);
+
+      delayed = true;
+      await tester.pumpWidget(build(const ['r1']));
+      await tester.pump();
+      expect(find.textContaining('before reload'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(find.textContaining('after reload'), findsOneWidget);
+    });
+  });
 }
 
 // -------- helpers --------
@@ -269,7 +357,8 @@ String _wrapXhtml(String body) => '''
 
 EpubBook _fakeBook(List<String> hrefs) => _FakeEpubBook(
       spine: hrefs
-          .map((h) => EpubSpineItem(idref: h, href: h, mediaType: 'application/xhtml+xml'))
+          .map((h) => EpubSpineItem(
+              idref: h, href: h, mediaType: 'application/xhtml+xml'))
           .toList(growable: false),
     );
 
@@ -278,7 +367,8 @@ class _FakeEpubBook implements EpubBook {
   @override
   final List<EpubSpineItem> spine;
   @override
-  EpubMetadata get metadata => const EpubMetadata(title: 'fake', epubVersion: '3.0');
+  EpubMetadata get metadata =>
+      const EpubMetadata(title: 'fake', epubVersion: '3.0');
   @override
   EpubOutline get outline => EpubOutline.empty;
   @override

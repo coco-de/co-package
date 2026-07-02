@@ -52,6 +52,7 @@ class ReflowableEngine extends StatefulWidget {
     this.lineHeight = 1.5,
     this.onLinkTap,
     this.onSpineChanged,
+    this.contentRevision,
   });
 
   final EpubBook book;
@@ -71,6 +72,12 @@ class ReflowableEngine extends StatefulWidget {
   /// 스크롤로 화면 상단 spine이 바뀔 때 알림 (위치 동기화·진행률, kobic#7572).
   /// 초기 spine에 대해서는 호출하지 않는다.
   final SpineChangedCallback? onSpineChanged;
+
+  /// [xhtmlLoader] 결과에 영향을 주는 외부 상태의 revision(예: 하이라이트
+  /// 목록). identity가 바뀌면 캐시된 spine XHTML을 버리고 다시 로드한다 —
+  /// 하이라이트 저장/삭제·늦게 도착한 복원이 본문에 즉시 반영되도록.
+  /// (open-epub#62)
+  final Object? contentRevision;
 
   @override
   State<ReflowableEngine> createState() => ReflowableEngineState();
@@ -117,6 +124,12 @@ class ReflowableEngineState extends State<ReflowableEngine> {
         0,
         widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
       );
+      _prefetchAround(_spineIndex);
+    } else if (!identical(oldWidget.contentRevision, widget.contentRevision)) {
+      // 하이라이트 등 콘텐츠 revision 변경 — 캐시를 버리고 현재 위치 주변부터
+      // 재로드한다. 각 item은 재로드 동안 직전 콘텐츠를 유지해(_SpineItemView)
+      // 스크롤 점프 없이 교체된다. (open-epub#62)
+      _loads.clear();
       _prefetchAround(_spineIndex);
     }
   }
@@ -238,7 +251,11 @@ class ReflowableEngineState extends State<ReflowableEngine> {
 }
 
 /// 단일 spine 항목 뷰 — lazy load + 로딩/에러 상태를 item 단위로 표시.
-class _SpineItemView extends StatelessWidget {
+///
+/// 콘텐츠 revision 변경으로 [load]가 교체되면 새 로드가 끝날 때까지 직전
+/// 콘텐츠를 유지한다 — item 높이가 스피너로 무너지며 생기는 스크롤 점프 방지.
+/// (open-epub#62)
+class _SpineItemView extends StatefulWidget {
   const _SpineItemView({
     super.key,
     required this.load,
@@ -255,27 +272,37 @@ class _SpineItemView extends StatelessWidget {
   final EpubLinkTapCallback? onLinkTap;
 
   @override
+  State<_SpineItemView> createState() => _SpineItemViewState();
+}
+
+class _SpineItemViewState extends State<_SpineItemView> {
+  /// 마지막으로 성공 로드된 XHTML — 재로드 동안 표시 유지용.
+  String? _lastData;
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<String>(
-      future: load,
+      future: widget.load,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+        if (snapshot.hasData) _lastData = snapshot.data;
+        final data = snapshot.hasData ? snapshot.data : _lastData;
+        if (data == null) {
+          if (snapshot.hasError) {
+            return _ErrorState(error: snapshot.error!);
+          }
           return const Padding(
             padding: EdgeInsets.all(48),
             child: Center(child: CircularProgressIndicator()),
           );
         }
-        if (snapshot.hasError) {
-          return _ErrorState(error: snapshot.error!);
-        }
         return Padding(
           padding: const EdgeInsets.all(16),
           child: buildReflowableHtml(
-            data: snapshot.data ?? '',
-            fontSize: fontSize,
-            lineHeight: lineHeight,
-            imageLoader: imageLoader,
-            onLinkTap: onLinkTap,
+            data: data,
+            fontSize: widget.fontSize,
+            lineHeight: widget.lineHeight,
+            imageLoader: widget.imageLoader,
+            onLinkTap: widget.onLinkTap,
           ),
         );
       },

@@ -28,6 +28,7 @@ class ReflowablePageView extends StatefulWidget {
     this.onPageChanged,
     this.onLinkTap,
     this.onNavigatorReady,
+    this.contentRevision,
   });
 
   final EpubBook book;
@@ -47,6 +48,11 @@ class ReflowablePageView extends StatefulWidget {
   final void Function(Future<void> Function(int index) goToPage)?
       onNavigatorReady;
 
+  /// [xhtmlLoader] 결과에 영향을 주는 외부 상태의 revision(예: 하이라이트
+  /// 목록). identity가 바뀌면 캐시된 spine XHTML을 버리고 다시 로드한다.
+  /// (open-epub#62)
+  final Object? contentRevision;
+
   @override
   State<ReflowablePageView> createState() => ReflowablePageViewState();
 }
@@ -55,6 +61,10 @@ class ReflowablePageView extends StatefulWidget {
 class ReflowablePageViewState extends State<ReflowablePageView> {
   late PageController _controller;
   late int _pageIndex;
+
+  /// spine href별 XHTML 로드 future 캐시 — 매 rebuild마다 loader를 재호출해
+  /// FutureBuilder가 스피너로 리셋되던 안티패턴 해소. (open-epub#62)
+  final Map<String, Future<String>> _loads = {};
 
   int get pageIndex => _pageIndex;
   int get pageCount => widget.book.spine.length;
@@ -76,12 +86,17 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     // fontSize/lineHeight만 바뀐 경우 PageController/page는 그대로 유지.
     // book이 바뀌면 controller 재생성.
     if (oldWidget.book != widget.book) {
+      _loads.clear();
       _pageIndex = widget.initialSpineIndex.clamp(
         0,
         widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
       );
       _controller.dispose();
       _controller = PageController(initialPage: _pageIndex);
+    } else if (!identical(oldWidget.contentRevision, widget.contentRevision)) {
+      // 하이라이트 등 콘텐츠 revision 변경 — 캐시를 버리고 재로드. 각 페이지는
+      // 재로드 동안 직전 콘텐츠를 유지한다(_SpinePageView). (open-epub#62)
+      _loads.clear();
     }
   }
 
@@ -110,6 +125,9 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
   Future<void> nextPage() => goToPage(_pageIndex + 1);
   Future<void> previousPage() => goToPage(_pageIndex - 1);
 
+  Future<String> _loadSpine(String href) =>
+      _loads.putIfAbsent(href, () => widget.xhtmlLoader(href));
+
   @override
   Widget build(BuildContext context) {
     if (widget.book.spine.isEmpty) {
@@ -123,36 +141,75 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
         setState(() => _pageIndex = i);
         widget.onPageChanged?.call(i);
       },
-      itemBuilder: (context, index) {
-        final spineItem = widget.book.spine[index];
-        return FutureBuilder<String>(
-          future: widget.xhtmlLoader(spineItem.href),
-          builder: (context, snap) {
-            if (snap.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snap.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    '본문을 불러올 수 없습니다.\n${snap.error}',
-                    textAlign: TextAlign.center,
-                  ),
+      itemBuilder: (context, index) => _SpinePageView(
+        // 같은 href가 spine에 중복 등장할 수 있어 index로 구분.
+        key: ValueKey('reflowable-page-$index'),
+        load: _loadSpine(widget.book.spine[index].href),
+        fontSize: widget.fontSize,
+        lineHeight: widget.lineHeight,
+        imageLoader: widget.imageLoader,
+        onLinkTap: widget.onLinkTap,
+      ),
+    );
+  }
+}
+
+/// 단일 spine 페이지 뷰 — 콘텐츠 revision 변경으로 [load]가 교체되면 새 로드가
+/// 끝날 때까지 직전 콘텐츠를 유지한다(스피너 flash 방지). (open-epub#62)
+class _SpinePageView extends StatefulWidget {
+  const _SpinePageView({
+    super.key,
+    required this.load,
+    required this.fontSize,
+    required this.lineHeight,
+    required this.imageLoader,
+    required this.onLinkTap,
+  });
+
+  final Future<String> load;
+  final double fontSize;
+  final double lineHeight;
+  final ImageLoader? imageLoader;
+  final EpubLinkTapCallback? onLinkTap;
+
+  @override
+  State<_SpinePageView> createState() => _SpinePageViewState();
+}
+
+class _SpinePageViewState extends State<_SpinePageView> {
+  /// 마지막으로 성공 로드된 XHTML — 재로드 동안 표시 유지용.
+  String? _lastData;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: widget.load,
+      builder: (context, snap) {
+        if (snap.hasData) _lastData = snap.data;
+        final data = snap.hasData ? snap.data : _lastData;
+        if (data == null) {
+          if (snap.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  '본문을 불러올 수 없습니다.\n${snap.error}',
+                  textAlign: TextAlign.center,
                 ),
-              );
-            }
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: buildReflowableHtml(
-                data: snap.data ?? '',
-                fontSize: widget.fontSize,
-                lineHeight: widget.lineHeight,
-                imageLoader: widget.imageLoader,
-                onLinkTap: widget.onLinkTap,
               ),
             );
-          },
+          }
+          return const Center(child: CircularProgressIndicator());
+        }
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: buildReflowableHtml(
+            data: data,
+            fontSize: widget.fontSize,
+            lineHeight: widget.lineHeight,
+            imageLoader: widget.imageLoader,
+            onLinkTap: widget.onLinkTap,
+          ),
         );
       },
     );

@@ -99,8 +99,7 @@ void main() {
         _wrap(
           ReflowableEngine(
             book: book,
-            xhtmlLoader: (_) async =>
-                _wrapXhtml('<img src="missing.png"/>'),
+            xhtmlLoader: (_) async => _wrapXhtml('<img src="missing.png"/>'),
             imageLoader: (_) async => null,
           ),
         ),
@@ -311,6 +310,79 @@ void main() {
       expect(state.spineIndex, 1); // last valid
     });
   });
+
+  group('ReflowableEngine — contentRevision 캐시 무효화 (open-epub#62)', () {
+    testWidgets('contentRevision identity 변경 시 spine XHTML 재로드',
+        (tester) async {
+      final book = _fakeBook(['ch01.xhtml']);
+      var version = 0;
+      var loadCount = 0;
+      Future<String> loader(String href) async {
+        loadCount++;
+        return _wrapXhtml('<p>revision v$version</p>');
+      }
+
+      Widget build(Object revision) => _wrap(
+            ReflowableEngine(
+              book: book,
+              xhtmlLoader: loader,
+              contentRevision: revision,
+            ),
+          );
+
+      final rev0 = <String>['r0'];
+      await tester.pumpWidget(build(rev0));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('revision v0'), findsOneWidget);
+      final loadsAfterFirst = loadCount;
+
+      // 같은 identity → 캐시 유지, 재로드 없음.
+      version = 1;
+      await tester.pumpWidget(build(rev0));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('revision v0'), findsOneWidget);
+      expect(loadCount, loadsAfterFirst);
+
+      // identity 변경 → 캐시 무효화, 새 콘텐츠 렌더.
+      await tester.pumpWidget(build(<String>['r1']));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('revision v1'), findsOneWidget);
+      expect(loadCount, greaterThan(loadsAfterFirst));
+    });
+
+    testWidgets('재로드 동안 직전 콘텐츠 유지(스피너로 무너지지 않음)', (tester) async {
+      final book = _fakeBook(['ch01.xhtml']);
+      var delayed = false;
+      final gate = Completer<void>();
+      Future<String> loader(String href) async {
+        if (delayed) await gate.future;
+        return _wrapXhtml('<p>${delayed ? 'after' : 'before'} reload</p>');
+      }
+
+      Widget build(Object revision) => _wrap(
+            ReflowableEngine(
+              book: book,
+              xhtmlLoader: loader,
+              contentRevision: revision,
+            ),
+          );
+
+      await tester.pumpWidget(build(const ['r0']));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('before reload'), findsOneWidget);
+
+      delayed = true;
+      await tester.pumpWidget(build(const ['r1']));
+      await tester.pump();
+      // 새 로드가 끝나기 전 — 직전 콘텐츠 유지, 스피너 없음.
+      expect(find.textContaining('before reload'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(find.textContaining('after reload'), findsOneWidget);
+    });
+  });
 }
 
 // -------- helpers --------
@@ -331,7 +403,8 @@ String _tallBody(String href) =>
 
 EpubBook _fakeBook(List<String> hrefs) => _FakeEpubBook(
       spine: hrefs
-          .map((h) => EpubSpineItem(idref: h, href: h, mediaType: 'application/xhtml+xml'))
+          .map((h) => EpubSpineItem(
+              idref: h, href: h, mediaType: 'application/xhtml+xml'))
           .toList(growable: false),
     );
 
@@ -340,7 +413,8 @@ class _FakeEpubBook implements EpubBook {
   @override
   final List<EpubSpineItem> spine;
   @override
-  EpubMetadata get metadata => const EpubMetadata(title: 'fake', epubVersion: '3.0');
+  EpubMetadata get metadata =>
+      const EpubMetadata(title: 'fake', epubVersion: '3.0');
   @override
   EpubOutline get outline => EpubOutline.empty;
   @override
@@ -354,6 +428,7 @@ class _DelayedLoader {
     _completers.add(c);
     return c.future;
   }
+
   void complete(String value) {
     for (final c in _completers) {
       if (!c.isCompleted) c.complete(value);

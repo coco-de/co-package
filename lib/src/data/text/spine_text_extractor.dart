@@ -40,10 +40,13 @@ class SpineTextExtractor {
 
   /// [selectedText]를 평문에서 찾아 [EpubSelection]으로 변환한다.
   ///
-  /// [occurrence]번째 일치(0-based)를 사용한다. 정확히 일치하는 것이 없으면
-  /// 앞뒤 공백을 정리한 텍스트로 1회 더 시도하고, 그래도 없으면 null.
-  /// (여러 문단에 걸친 선택 등 본문과 일치하지 않으면 null — 호스트는 목록에
-  ///  유지하되 본문 표시는 생략, BDD @edge와 동일.)
+  /// [occurrence]번째 일치(0-based)를 사용한다. 정확 일치가 없으면 렌더 규칙
+  /// (HTML 공백 접기 + 엔티티 디코드)을 반영한 **정규화 매칭**으로 폴백한다 —
+  /// SelectionArea가 반환하는 선택 평문은 렌더된 텍스트라 원본의 소스 개행·
+  /// 들여쓰기·`&amp;` 같은 엔티티와 문자 단위로 다르기 때문(open-epub#62).
+  /// 반환 offset은 항상 원본 평문 공간이므로 [injectHighlights]와 호환된다.
+  /// 그래도 없으면 null. (여러 문단에 걸친 선택 등 본문과 일치하지 않으면
+  /// null — 호스트는 목록에 유지하되 본문 표시는 생략, BDD @edge와 동일.)
   EpubSelection? resolveSelection({
     required String spineHref,
     required String xhtml,
@@ -58,13 +61,145 @@ class SpineTextExtractor {
       if (needle.isEmpty) return null;
       idx = _nthIndexOf(plain, needle, occurrence);
     }
+    if (idx >= 0) {
+      return EpubSelection(
+        spineHref: spineHref,
+        start: idx,
+        end: idx + needle.length,
+        selectedText: needle,
+      );
+    }
+    return _resolveNormalized(
+      spineHref: spineHref,
+      plain: plain,
+      selectedText: selectedText,
+      occurrence: occurrence,
+    );
+  }
+
+  /// 정규화 공간(엔티티 디코드 + 공백 접기)에서 매칭하고 원본 offset으로
+  /// 역매핑한다. (open-epub#62)
+  EpubSelection? _resolveNormalized({
+    required String spineHref,
+    required String plain,
+    required String selectedText,
+    required int occurrence,
+  }) {
+    // 검색어(렌더된 텍스트)는 공백 접기만 적용 — 엔티티는 이미 디코드된
+    // 상태이며, 본문에 리터럴로 보이는 "&amp;" 텍스트와의 매칭을 지키기 위해
+    // 검색어 쪽은 디코드하지 않는다.
+    final needle =
+        _collapseWhitespace(_MappedText.identity(selectedText)).text.trim();
+    if (needle.isEmpty) return null;
+
+    final normalized = _collapseWhitespace(_decodeEntities(plain));
+    final idx = _nthIndexOf(normalized.text, needle, occurrence);
     if (idx < 0) return null;
+
+    final rawStart = normalized.rawStarts[idx];
+    final rawEnd = normalized.rawEnds[idx + needle.length - 1];
     return EpubSelection(
       spineHref: spineHref,
-      start: idx,
-      end: idx + needle.length,
+      start: rawStart,
+      end: rawEnd,
       selectedText: needle,
     );
+  }
+
+  /// HTML 공백 접기에서 하나로 접히는 문자인지. `&nbsp;`(U+00A0)는 표준상
+  /// 접히지 않지만, 렌더러/플랫폼별 선택 평문 차이를 흡수하기 위해 포함한다.
+  static bool _isCollapsibleWhitespace(int code) =>
+      code == 0x20 || // space
+      code == 0x09 || // tab
+      code == 0x0A || // LF
+      code == 0x0B || // VT
+      code == 0x0C || // FF
+      code == 0x0D || // CR
+      code == 0xA0; // NBSP
+
+  static const Map<String, String> _namedEntities = {
+    'amp': '&',
+    'lt': '<',
+    'gt': '>',
+    'quot': '"',
+    'apos': "'",
+    'nbsp': ' ',
+  };
+
+  /// [plain]의 문자 참조(named/numeric)를 디코드한 매핑 텍스트를 만든다.
+  /// 디코드된 문자는 엔티티 원본 구간 전체(`&...;`)로 역매핑된다.
+  _MappedText _decodeEntities(String plain) {
+    final buffer = StringBuffer();
+    final starts = <int>[];
+    final ends = <int>[];
+    var i = 0;
+    while (i < plain.length) {
+      final decoded = plain.codeUnitAt(i) == 0x26 ? _entityAt(plain, i) : null;
+      if (decoded == null) {
+        starts.add(i);
+        ends.add(i + 1);
+        buffer.write(plain[i]);
+        i++;
+        continue;
+      }
+      final (value, rawLength) = decoded;
+      for (var unit = 0; unit < value.length; unit++) {
+        starts.add(i);
+        ends.add(i + rawLength);
+      }
+      buffer.write(value);
+      i += rawLength;
+    }
+    return _MappedText(buffer.toString(), starts, ends);
+  }
+
+  /// [pos]('&')에서 시작하는 문자 참조를 파싱한다. (디코드 문자열, 원본 길이)
+  /// 를 반환하고, 유효한 참조가 아니면 null.
+  (String, int)? _entityAt(String plain, int pos) {
+    final semi = plain.indexOf(';', pos + 1);
+    // 엔티티 이름/숫자 참조는 짧다 — 멀리 있는 ';'는 참조 아님으로 간주.
+    if (semi < 0 || semi - pos > 10) return null;
+    final body = plain.substring(pos + 1, semi);
+    if (body.isEmpty) return null;
+    final rawLength = semi - pos + 1;
+    if (body.startsWith('#')) {
+      final digits = body.substring(1);
+      final code = digits.startsWith('x') || digits.startsWith('X')
+          ? int.tryParse(digits.substring(1), radix: 16)
+          : int.tryParse(digits);
+      if (code == null || code <= 0 || code > 0x10FFFF) return null;
+      return (String.fromCharCode(code), rawLength);
+    }
+    final named = _namedEntities[body];
+    return named == null ? null : (named, rawLength);
+  }
+
+  /// 연속 공백을 단일 스페이스로 접는다. 선두 공백 run은 제거한다(트림과
+  /// 매칭 안정성 — 후미는 남아도 indexOf 매칭에 영향 없음).
+  _MappedText _collapseWhitespace(_MappedText source) {
+    final text = source.text;
+    final buffer = StringBuffer();
+    final starts = <int>[];
+    final ends = <int>[];
+    var i = 0;
+    while (i < text.length) {
+      if (!_isCollapsibleWhitespace(text.codeUnitAt(i))) {
+        starts.add(source.rawStarts[i]);
+        ends.add(source.rawEnds[i]);
+        buffer.write(text[i]);
+        i++;
+        continue;
+      }
+      final runStart = i;
+      do {
+        i++;
+      } while (i < text.length && _isCollapsibleWhitespace(text.codeUnitAt(i)));
+      if (buffer.isEmpty) continue; // 선두 공백 run 제거
+      starts.add(source.rawStarts[runStart]);
+      ends.add(source.rawEnds[i - 1]);
+      buffer.write(' ');
+    }
+    return _MappedText(buffer.toString(), starts, ends);
   }
 
   /// 하이라이트 탭 라우팅용 링크 스킴. [injectHighlights]가 `tappable: true`로
@@ -253,4 +388,21 @@ class _Insert {
   final int pos;
   final String text;
   final int priority;
+}
+
+/// 문자 단위 원본 구간 매핑을 가진 텍스트 — 정규화 매칭의 역매핑용.
+/// [rawStarts]/[rawEnds]는 [text]의 각 code unit이 유래한 원본 [start,end).
+class _MappedText {
+  const _MappedText(this.text, this.rawStarts, this.rawEnds);
+
+  /// 원본 그대로(1:1 매핑) — 검색어처럼 역매핑이 자기 자신인 텍스트.
+  factory _MappedText.identity(String text) => _MappedText(
+        text,
+        List<int>.generate(text.length, (i) => i),
+        List<int>.generate(text.length, (i) => i + 1),
+      );
+
+  final String text;
+  final List<int> rawStarts;
+  final List<int> rawEnds;
 }

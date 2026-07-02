@@ -321,6 +321,9 @@ class _SessionViewState extends State<_SessionView> {
         onPageChanged: _handlePageChanged,
         onNavigatorReady: (navigate) =>
             widget.controller?.attachNavigator(navigate),
+        // 하이라이트 목록이 바뀌면 spine XHTML을 다시 로드해 본문에 즉시
+        // 반영한다. (open-epub#62)
+        contentRevision: widget.highlights,
       );
     } else {
       engine = ReflowableEngine(
@@ -334,6 +337,9 @@ class _SessionViewState extends State<_SessionView> {
         // 스크롤로 spine이 넘어가면 paged와 동일하게 세션 위치·컨트롤러를
         // 동기화하고 호스트에 보고한다 (kobic#7572 — 진행률·챕터명 갱신).
         onSpineChanged: _handlePageChanged,
+        // 하이라이트 목록이 바뀌면 spine XHTML을 다시 로드해 본문에 즉시
+        // 반영한다. (open-epub#62)
+        contentRevision: widget.highlights,
       );
     }
 
