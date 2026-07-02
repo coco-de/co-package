@@ -5,6 +5,16 @@
 1.0 릴리스(버전 bump + MIGRATION.md)는 E6에서 진행.
 
 ### New (1.0 core, `open_epub_v1.dart`)
+- fixed-layout 양면/단면 토글 + 페이지 내비게이션 (kobic#7576)
+  - `EpubReader.fixedLayoutSpreadOverride` — 호스트가 `EpubSpread`를 강제해
+    양면(landscape)/단면(none) 사용자 토글을 구동. null이면 기존처럼
+    `rendition:spread` 메타데이터를 따른다
+  - fixed-layout에도 reflowable paged와 동일한 내비게이션 계약 배선 —
+    `EpubViewController.goToSpine`(목차 점프), `onPageChanged` /
+    `onPositionChanged`(진행률·위치 영속화) 동작
+  - 수평 스와이프 페이지 넘김 — `InteractiveViewer.onInteractionEnd` 속도
+    기반이라 팬/줌 제스처와 아레나 경합 없음. 줌 1.0x에서만 동작, spread
+    렌더 중에는 row 단위 이동
 - `EpubBookSession.open()` — EPUB ZIP 해제 → OPF/NCX/nav 파싱 → 호환성 보정 →
   `EpubBook` 조립 end-to-end. 위치 복원(BookPosition v1 토큰, 실패 시 첫 페이지
   fallback + `position-restore-failed` 진단), hot-swap(`swapSource`), 분석 스트림

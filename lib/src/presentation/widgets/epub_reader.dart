@@ -18,6 +18,7 @@ import '../../api/epub_reader_controller.dart';
 import '../../api/epub_source.dart';
 import '../../domain/entity/epub_failure.dart';
 import '../../domain/entity/epub_highlight.dart';
+import '../../domain/entity/epub_metadata.dart';
 import '../../domain/entity/epub_spine_item.dart';
 import '../engine/fixed_layout/fixed_layout_engine.dart';
 import '../engine/reflowable/reflowable_engine.dart';
@@ -62,6 +63,7 @@ class EpubReader extends StatefulWidget {
     this.controller,
     this.fixedLayoutContentBuilder,
     this.fixedLayoutZoomEnabled = true,
+    this.fixedLayoutSpreadOverride,
   });
 
   final EpubSource source;
@@ -115,6 +117,12 @@ class EpubReader extends StatefulWidget {
   /// fixed-layout 페이지 줌/팬 활성 여부. 필기(드로잉) 중에는 false로 두어
   /// InteractiveViewer pan과 드로잉 제스처 충돌을 막는다. default true. (S8.6)
   final bool fixedLayoutZoomEnabled;
+
+  /// fixed-layout spread(양면/단면) 강제 설정. null이면 EPUB의
+  /// `rendition:spread` 메타데이터를 따른다. 호스트의 양면/단면 토글이 사용
+  /// — 예: [EpubSpread.none]=항상 단면, [EpubSpread.landscape]=가로에서만
+  /// 양면. reflowable 본문에는 영향 없음. (kobic#7576)
+  final EpubSpread? fixedLayoutSpreadOverride;
 
   @override
   State<EpubReader> createState() => _EpubReaderState();
@@ -173,6 +181,7 @@ class _EpubReaderState extends State<EpubReader> {
           controller: widget.controller,
           fixedLayoutContentBuilder: widget.fixedLayoutContentBuilder,
           fixedLayoutZoomEnabled: widget.fixedLayoutZoomEnabled,
+          fixedLayoutSpreadOverride: widget.fixedLayoutSpreadOverride,
         );
       },
     );
@@ -194,6 +203,7 @@ class _SessionView extends StatefulWidget {
     required this.controller,
     required this.fixedLayoutContentBuilder,
     required this.fixedLayoutZoomEnabled,
+    required this.fixedLayoutSpreadOverride,
   });
 
   final EpubBookSession session;
@@ -209,6 +219,7 @@ class _SessionView extends StatefulWidget {
   final EpubViewController? controller;
   final FixedLayoutContentBuilder? fixedLayoutContentBuilder;
   final bool fixedLayoutZoomEnabled;
+  final EpubSpread? fixedLayoutSpreadOverride;
 
   @override
   State<_SessionView> createState() => _SessionViewState();
@@ -291,6 +302,12 @@ class _SessionViewState extends State<_SessionView> {
         pageBuilder: _buildFixedPage,
         contentBuilder: widget.fixedLayoutContentBuilder,
         enableZoom: widget.fixedLayoutZoomEnabled,
+        spreadOverride: widget.fixedLayoutSpreadOverride,
+        // 스와이프·프로그램적 이동을 reflowable paged와 동일 계약으로 배선
+        // — 세션 위치/컨트롤러/onPageChanged 동기화 (kobic#7576).
+        onSpineChanged: _handlePageChanged,
+        onNavigatorReady: (navigate) =>
+            widget.controller?.attachNavigator(navigate),
       );
     } else if (widget.paged) {
       engine = ReflowablePageView(

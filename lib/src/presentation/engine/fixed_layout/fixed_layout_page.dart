@@ -25,6 +25,8 @@ class FixedLayoutPage extends StatefulWidget {
     this.enableZoom = true,
     this.transformationController,
     this.contentBuilder,
+    this.onSwipeLeft,
+    this.onSwipeRight,
   })  : assert(minZoom > 0, 'minZoom must be > 0'),
         assert(maxZoom >= minZoom, 'maxZoom must be >= minZoom'),
         assert(
@@ -65,7 +67,17 @@ class FixedLayoutPage extends StatefulWidget {
   /// 구현할 수 있다(wrapper가 overlay를 포함). 필기 위젯이 자체 줌을 제공하면
   /// [enableZoom]을 false로 두어 페이지의 InteractiveViewer 중첩을 피한다.
   final Widget Function(BuildContext context, Size logicalSize, Widget content)?
-  contentBuilder;
+      contentBuilder;
+
+  /// 줌 1.0x 상태에서 좌측 방향 수평 fling 시 호출(다음 페이지 넘김 용도).
+  /// [InteractiveViewer.onInteractionEnd] 속도로 감지하므로 팬/줌 제스처와
+  /// 아레나 경합이 없고, 줌 인 상태에서는 팬이 우선이라 호출되지 않는다.
+  /// [enableZoom]이 false면 InteractiveViewer가 없어 스와이프도 감지되지
+  /// 않는다(필기 등 드로잉 제스처와의 충돌 회피). (kobic#7576)
+  final VoidCallback? onSwipeLeft;
+
+  /// 줌 1.0x 상태에서 우측 방향 수평 fling 시 호출(이전 페이지 넘김 용도).
+  final VoidCallback? onSwipeRight;
 
   @override
   State<FixedLayoutPage> createState() => FixedLayoutPageState();
@@ -98,6 +110,24 @@ class FixedLayoutPageState extends State<FixedLayoutPage> {
   void dispose() {
     if (_ownsController) _controller.dispose();
     super.dispose();
+  }
+
+  /// 수평 fling 판정 최소 속도 (px/s).
+  static const double _swipeVelocityThreshold = 250;
+
+  /// InteractiveViewer 제스처 종료 — 줌 1.0x + 수평 우세 fling이면 페이지 넘김
+  /// 스와이프로 판정한다 (kobic#7576).
+  void _onInteractionEnd(ScaleEndDetails details) {
+    if (widget.onSwipeLeft == null && widget.onSwipeRight == null) return;
+    if (isZoomedIn) return; // 줌 인 중에는 팬 우선 — 페이지 넘김 안 함.
+    final velocity = details.velocity.pixelsPerSecond;
+    if (velocity.dx.abs() < _swipeVelocityThreshold) return;
+    if (velocity.dx.abs() < velocity.dy.abs()) return; // 수직 우세 제스처 무시.
+    if (velocity.dx < 0) {
+      widget.onSwipeLeft?.call();
+    } else {
+      widget.onSwipeRight?.call();
+    }
   }
 
   /// 더블 탭 시 호출. tap 위치를 중심으로 toggle.
@@ -162,6 +192,7 @@ class FixedLayoutPageState extends State<FixedLayoutPage> {
             maxScale: widget.maxZoom,
             panEnabled: true,
             scaleEnabled: true,
+            onInteractionEnd: _onInteractionEnd,
             child: fitted,
           ),
         );

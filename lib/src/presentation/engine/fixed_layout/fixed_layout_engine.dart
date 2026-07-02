@@ -2,6 +2,7 @@
 // Story: S1.7 (#13) — Fixed Layout 엔진 + viewport fit (단일 페이지)
 // Story: S1.8 (#14) — 핀치 줌 (FixedLayoutPage에 통합 완료)
 // Story: S1.9 (#15) — spread 자동 분기 (1/2-page) + page-spread-left/right
+// kobic#7576 — 페이지 내비게이션(스와이프·jumpToSpine·onSpineChanged) 배선
 // BDD: F3 (Fixed Layout 본문 렌더링)
 //
 // 본 engine은:
@@ -9,6 +10,8 @@
 // - 줌은 FixedLayoutPage가 책임 (S1.8)
 // - spread 모드 (2-page) — screen width + rendition:spread에 따라 자동 분기,
 //   page-spread-left/right 슬롯 존중 (S1.9, BDD F3.3/F3.5)
+// - 페이지 넘김 — 수평 스와이프(줌 1.0x일 때) + [FixedLayoutEngineState.jumpToSpine]
+//   프로그램적 이동. spread 렌더 중에는 row 단위로 이동한다 (kobic#7576)
 
 import 'package:flutter/material.dart';
 
@@ -57,12 +60,23 @@ class FixedLayoutEngine extends StatefulWidget {
     this.spreadOverride,
     this.contentBuilder,
     this.enableZoom = true,
+    this.onSpineChanged,
+    this.onNavigatorReady,
   });
 
   final EpubBook book;
   final FixedLayoutPageBuilder pageBuilder;
   final int initialSpineIndex;
   final ViewportFitter fitter;
+
+  /// 표시 spine이 바뀔 때 호출된다(스와이프·프로그램적 이동). 인자는 새 spine
+  /// 인덱스(0-based). 호스트가 세션 위치·진행률 동기화에 사용 (kobic#7576).
+  final ValueChanged<int>? onSpineChanged;
+
+  /// 프로그램적 spine 이동 함수를 호스트에 넘겨준다 — [ReflowablePageView]의
+  /// onNavigatorReady와 동일 패턴(`EpubViewController.attachNavigator` 시그니처).
+  final void Function(Future<void> Function(int index) navigate)?
+      onNavigatorReady;
 
   /// null이면 [EpubBook.metadata.spread]를 사용. 테스트 / 사용자 설정으로
   /// 강제 변경하려면 [EpubSpread]를 명시 (예: [EpubSpread.none]).
@@ -85,6 +99,10 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
   List<SpreadRow> _spreadRows = const [];
   int _rowIndex = 0;
 
+  /// 마지막 build가 2-page spread로 렌더했는지 — 페이지 이동 단위(row/spine)
+  /// 결정에 사용한다 (kobic#7576).
+  bool _renderedSpread = false;
+
   int get spineIndex => _spineIndex;
   int get spineCount => widget.book.spine.length;
   int get rowIndex => _rowIndex;
@@ -102,6 +120,7 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
     );
     _spreadRows = buildSpreadRows(widget.book.spine);
     _rowIndex = _findRowIndexForSpine(_spineIndex);
+    widget.onNavigatorReady?.call((index) async => jumpToSpine(index));
   }
 
   @override
@@ -129,23 +148,68 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
     return 0;
   }
 
+  /// spine 인덱스를 갱신하고 호스트에 통지한다. 모든 이동 경로의 단일 진입점.
+  void _setSpine(int index) {
+    setState(() {
+      _spineIndex = index;
+      _rowIndex = _findRowIndexForSpine(index);
+    });
+    widget.onSpineChanged?.call(index);
+  }
+
+  /// [index] spine으로 이동한다(범위 클램프). 동일 인덱스면 no-op.
+  /// spread 렌더 중이면 해당 spine이 속한 row가 표시된다 (kobic#7576).
+  void jumpToSpine(int index) {
+    if (widget.book.spine.isEmpty) return;
+    final clamped = index.clamp(0, spineCount - 1);
+    if (clamped == _spineIndex) return;
+    _setSpine(clamped);
+  }
+
   bool nextSpine() {
     if (_spineIndex >= spineCount - 1) return false;
-    setState(() {
-      _spineIndex++;
-      _rowIndex = _findRowIndexForSpine(_spineIndex);
-    });
+    _setSpine(_spineIndex + 1);
     return true;
   }
 
   bool previousSpine() {
     if (_spineIndex <= 0) return false;
-    setState(() {
-      _spineIndex--;
-      _rowIndex = _findRowIndexForSpine(_spineIndex);
-    });
+    _setSpine(_spineIndex - 1);
     return true;
   }
+
+  /// 다음 표시 단위로 이동 — spread 렌더 중이면 다음 row(한 스와이프에 두
+  /// 페이지), 아니면 다음 spine (kobic#7576).
+  bool nextPage() {
+    if (_renderedSpread && _spreadRows.isNotEmpty) {
+      return _jumpToRow(_rowIndex + 1);
+    }
+    return nextSpine();
+  }
+
+  /// 이전 표시 단위로 이동 — [nextPage]와 대칭.
+  bool previousPage() {
+    if (_renderedSpread && _spreadRows.isNotEmpty) {
+      return _jumpToRow(_rowIndex - 1);
+    }
+    return previousSpine();
+  }
+
+  bool _jumpToRow(int rowIdx) {
+    if (rowIdx < 0 || rowIdx >= _spreadRows.length) return false;
+    final row = _spreadRows[rowIdx];
+    final target = row.center ?? row.left ?? row.right;
+    if (target == null) return false;
+    final idx = widget.book.spine.indexOf(target);
+    if (idx < 0) return false;
+    _setSpine(idx);
+    return true;
+  }
+
+  /// FixedLayoutPage가 줌 1.0x에서 감지한 수평 fling — 좌 fling=다음 페이지.
+  void _onSwipeLeft() => nextPage();
+
+  void _onSwipeRight() => previousPage();
 
   @override
   Widget build(BuildContext context) {
@@ -160,8 +224,9 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
           screenHeight: constraints.maxHeight,
           spread: effectiveSpread,
         );
+        _renderedSpread = useSpread && _spreadRows.isNotEmpty;
 
-        if (!useSpread || _spreadRows.isEmpty) {
+        if (!_renderedSpread) {
           return _buildSinglePage(widget.book.spine[_spineIndex]);
         }
 
@@ -182,6 +247,8 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
       fitter: widget.fitter,
       contentBuilder: widget.contentBuilder,
       enableZoom: widget.enableZoom,
+      onSwipeLeft: _onSwipeLeft,
+      onSwipeRight: _onSwipeRight,
     );
   }
 }
@@ -194,6 +261,8 @@ class _AsyncFixedLayoutPage extends StatefulWidget {
     required this.fitter,
     this.contentBuilder,
     this.enableZoom = true,
+    this.onSwipeLeft,
+    this.onSwipeRight,
   });
 
   final EpubSpineItem item;
@@ -201,6 +270,8 @@ class _AsyncFixedLayoutPage extends StatefulWidget {
   final ViewportFitter fitter;
   final FixedLayoutContentBuilder? contentBuilder;
   final bool enableZoom;
+  final VoidCallback? onSwipeLeft;
+  final VoidCallback? onSwipeRight;
 
   @override
   State<_AsyncFixedLayoutPage> createState() => _AsyncFixedLayoutPageState();
@@ -241,6 +312,8 @@ class _AsyncFixedLayoutPageState extends State<_AsyncFixedLayoutPage> {
           content: page.content,
           fitter: widget.fitter,
           enableZoom: widget.enableZoom,
+          onSwipeLeft: widget.onSwipeLeft,
+          onSwipeRight: widget.onSwipeRight,
           contentBuilder: wrap == null
               ? null
               : (ctx, logicalSize, content) =>
