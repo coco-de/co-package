@@ -42,7 +42,7 @@ ReflowablePageViewState _pageViewState(WidgetTester tester) =>
 Future<void> bookOpenOnMobile(BddWorld world, WidgetTester tester) async {
   await _pumpPageModeViewer(world, tester);
   expect(_pageViewState(tester).pageIndex, 0);
-  expect(find.textContaining('1장'), findsOneWidget);
+  expect(find.textContaining('1장', findRichText: true), findsOneWidget);
 }
 
 /// Usage: When 사용자가 좌로 스와이프한다
@@ -54,7 +54,7 @@ Future<void> userSwipesLeft(BddWorld world, WidgetTester tester) async {
 /// Usage: Then 다음 페이지가 표시된다
 Future<void> nextPageShown(BddWorld world, WidgetTester tester) async {
   expect(_pageViewState(tester).pageIndex, 1);
-  expect(find.textContaining('2장'), findsOneWidget);
+  expect(find.textContaining('2장', findRichText: true), findsOneWidget);
 }
 
 /// Usage: Given 데스크톱 `<platform>`에서 책이 열려 있다

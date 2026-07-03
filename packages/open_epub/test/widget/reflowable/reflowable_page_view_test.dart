@@ -4,7 +4,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub_engine/src/api/epub_book.dart';
 import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
@@ -33,7 +33,7 @@ void main() {
       );
       expect(state.pageIndex, 1);
       expect(state.pageCount, 3);
-      expect(find.textContaining('ch02.xhtml'), findsOneWidget);
+      expect(find.textContaining('ch02.xhtml', findRichText: true), findsOneWidget);
     });
 
     testWidgets('jumpToPage()로 페이지 이동 (animation 없음)', (tester) async {
@@ -160,7 +160,7 @@ void main() {
   });
 
   group('ReflowableEngine + ReflowablePageView — 글자 크기·줄간격 적용', () {
-    testWidgets('fontSize property가 Html style에 반영 (ReflowableEngine)',
+    testWidgets('fontSize property가 HtmlWidget textStyle에 반영 (ReflowableEngine)',
         (tester) async {
       final book = _fakeBook(['ch.xhtml']);
       await tester.pumpWidget(
@@ -174,10 +174,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      final html = tester.widget<Html>(find.byType(Html));
-      final bodyStyle = html.style['body'];
-      expect(bodyStyle?.fontSize?.value, 24);
-      expect(bodyStyle?.lineHeight?.size, 2.0);
+      final html = tester.widget<HtmlWidget>(find.byType(HtmlWidget));
+      expect(html.textStyle?.fontSize, 24);
+      expect(html.textStyle?.height, 2.0);
     });
 
     testWidgets('fontSize 변경 시 spineIndex 보존 (BDD F2.2)', (tester) async {
@@ -301,12 +300,12 @@ void main() {
 
       await tester.pumpWidget(build(<String>['r0']));
       await tester.pumpAndSettle();
-      expect(find.textContaining('revision v0'), findsOneWidget);
+      expect(find.textContaining('revision v0', findRichText: true), findsOneWidget);
 
       version = 1;
       await tester.pumpWidget(build(<String>['r1']));
       await tester.pumpAndSettle();
-      expect(find.textContaining('revision v1'), findsOneWidget);
+      expect(find.textContaining('revision v1', findRichText: true), findsOneWidget);
     });
 
     testWidgets('재로드 동안 직전 콘텐츠 유지(스피너 flash 없음)', (tester) async {
@@ -328,17 +327,17 @@ void main() {
 
       await tester.pumpWidget(build(const ['r0']));
       await tester.pumpAndSettle();
-      expect(find.textContaining('before reload'), findsOneWidget);
+      expect(find.textContaining('before reload', findRichText: true), findsOneWidget);
 
       delayed = true;
       await tester.pumpWidget(build(const ['r1']));
       await tester.pump();
-      expect(find.textContaining('before reload'), findsOneWidget);
+      expect(find.textContaining('before reload', findRichText: true), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
 
       gate.complete();
       await tester.pumpAndSettle();
-      expect(find.textContaining('after reload'), findsOneWidget);
+      expect(find.textContaining('after reload', findRichText: true), findsOneWidget);
     });
   });
 }

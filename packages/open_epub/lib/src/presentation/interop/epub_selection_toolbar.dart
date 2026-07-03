@@ -11,7 +11,8 @@
 // 앵커"는 Flutter가 이미 제공하므로 open_epub이 따로 노출할 것이 없다.
 //
 // 남은 한계: 임의의 저장된 offset(현재 선택이 아닌)에 대한 문자별 rect 매핑은
-// flutter_html이 RichText 레이아웃 박스를 공개 API로 노출하지 않아 불가하다.
+// 렌더러(flutter_widget_from_html, S11.3)가 RichText 레이아웃 박스를 공개 API로
+// 노출하지 않아 불가하다.
 // pdfrx의 charRects 등가물이 필요하면 커스텀 RichText 렌더러를 도입해야
 // 한다(별도 과제). 액션 콜백 자체는 위치 정보 없이 호출되며, 호스트는
 // selectionStream의 EpubSelection(텍스트·offset)으로 컨텍스트를 얻는다.

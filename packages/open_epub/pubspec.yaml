@@ -25,9 +25,15 @@ dependencies:
   # 발행 토폴로지(E6 확정)와 정합; path 의존은 발행 가능 패키지에서 금지된다.
   open_epub_engine: ^0.0.1
 
-  # Reflowable 본문 렌더러. S11.3(#90)에서 flutter_widget_from_html + fwfh_svg로
-  # 교체 예정(ADR-009). 그때까지 유지.
-  flutter_html: ^3.0.0
+  # Reflowable 본문 렌더러 (S11.3 #90, ADR-009). flutter_html에서 교체 —
+  # 활발히 유지보수되고 SVG(fwfh_svg)를 즉시 지원한다.
+  #
+  # all-in-one `flutter_widget_from_html` 대신 core + fwfh_svg만 채택한다:
+  # all-in-one은 fwfh_webview(=`<iframe>`→WebView)·video·audio를 끌어와 이
+  # 리더의 보안 모델(script/iframe 의도적 차단, F1-Adv1)과 충돌하기 때문. core는
+  # SVG만 mixin으로 더한다.
+  flutter_widget_from_html_core: ^0.17.0
+  fwfh_svg: ^0.16.0
 
   # 전체 spine 연속 세로 스크롤의 위치 추적 (kobic#7572, reflowable_engine)
   scrollable_positioned_list: ^0.3.8
