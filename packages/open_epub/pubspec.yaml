@@ -48,5 +48,9 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+  # S11.4(#91): 인라인 <svg> 렌더(fwfh_svg) 회귀 단언용. fwfh_svg가 이미 전이
+  # 의존하므로 새 해석 없이 SvgPicture 타입만 테스트에서 참조한다.
+  flutter_svg: ^2.0.0
+
 flutter:
   uses-material-design: true
