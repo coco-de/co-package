@@ -8,7 +8,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/open_epub_v1.dart';
+import 'package:open_epub/open_epub.dart';
 
 import 'package:open_epub_engine/testing.dart';
 import '_common_steps.dart';

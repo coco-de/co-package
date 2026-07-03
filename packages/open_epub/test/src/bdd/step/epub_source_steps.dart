@@ -2,7 +2,7 @@
 // Story: S1.20, S1.21, S1.23, S1.25 — 책 열기 / 위치 복원 / analytics
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/open_epub_v1.dart';
+import 'package:open_epub/open_epub.dart';
 
 import 'package:open_epub_engine/testing.dart';
 import '_common_steps.dart';
