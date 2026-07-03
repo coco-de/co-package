@@ -59,6 +59,67 @@ class EpubCfiMapper {
     return mapping.decodedToRaw(decodedOffset.clamp(0, mapping.decoded.length));
   }
 
+  /// 문서-내 CFI([charOffsetToCfi] 출력)에 spine step을 붙여 **전체-책 CFI**로
+  /// 만든다. 표준 형식 `epubcfi(/6/N[idref]!/docpath)` — `/6`=spine 요소,
+  /// `N`=2*(spineIndex+1)=itemref, `!`=spine 문서로의 indirection. (S12.4 interop)
+  String? toBookCfi(
+    String docCfi, {
+    required int spineIndex,
+    String? idref,
+  }) {
+    if (spineIndex < 0) return null;
+    final inner = _unwrap(docCfi);
+    if (inner == null || inner.isEmpty) return null;
+    final step = 2 * (spineIndex + 1);
+    final assertion = (idref != null && idref.isNotEmpty) ? '[$idref]' : '';
+    final docPart = inner.startsWith('!') ? inner : '!$inner';
+    return 'epubcfi(/6/$step$assertion$docPart)';
+  }
+
+  /// 전체-책 CFI에서 spine step과 문서-내 CFI를 분리한다. spine indirection(`!`)이
+  /// 없으면(문서-내 CFI) null. (S12.4 interop)
+  BookCfiParts? splitBookCfi(String bookCfi) {
+    final inner = _unwrap(bookCfi);
+    if (inner == null) return null;
+    final bang = inner.indexOf('!');
+    if (bang < 0) return null;
+    final spineStep = inner.substring(0, bang);
+    final docPath = inner.substring(bang + 1);
+    if (docPath.isEmpty) return null;
+    return BookCfiParts(
+      spineIndex: _spineIndexFromStep(spineStep),
+      idref: _idrefFromStep(spineStep),
+      docCfi: 'epubcfi($docPath)',
+    );
+  }
+
+  String? _unwrap(String cfi) {
+    final t = cfi.trim();
+    if (!t.startsWith('epubcfi(') || !t.endsWith(')')) return null;
+    return t.substring('epubcfi('.length, t.length - 1);
+  }
+
+  /// spine step("/6/4[chap01]")의 마지막 `/N`에서 spineIndex(=N/2-1)를 구한다.
+  int? _spineIndexFromStep(String step) {
+    final segments = step.split('/').where((s) => s.isNotEmpty).toList();
+    if (segments.isEmpty) return null;
+    var last = segments.last;
+    final bracket = last.indexOf('[');
+    if (bracket >= 0) last = last.substring(0, bracket);
+    final n = int.tryParse(last);
+    if (n == null || n < 2 || n.isOdd) return null;
+    return n ~/ 2 - 1;
+  }
+
+  /// spine step의 마지막 `[idref]` assertion을 추출한다(없으면 null).
+  String? _idrefFromStep(String step) {
+    final open = step.lastIndexOf('[');
+    final close = step.lastIndexOf(']');
+    if (open < 0 || close <= open) return null;
+    final id = step.substring(open + 1, close);
+    return id.isEmpty ? null : id;
+  }
+
   /// [charOffset]을 [xhtml] 평문(extractPlainText) 길이 범위로 clamp한다.
   /// 저장된 위치의 charOffset이 (콘텐츠 변경으로) 범위를 벗어난 경우의 1차 가드.
   int clampCharOffset(String xhtml, int charOffset) {
@@ -163,4 +224,23 @@ class EpubCfiMapper {
       }
     }
   }
+}
+
+/// [EpubCfiMapper.splitBookCfi]의 결과 — 전체-책 CFI에서 분리한 spine 식별 정보와
+/// 문서-내 CFI. (S12.4 interop)
+class BookCfiParts {
+  const BookCfiParts({
+    required this.spineIndex,
+    required this.idref,
+    required this.docCfi,
+  });
+
+  /// spine step `/6/N`에서 유도한 인덱스(N/2-1). 파싱 불가 시 null.
+  final int? spineIndex;
+
+  /// spine step의 `[idref]` assertion(있으면). spineIndex 대조/폴백용.
+  final String? idref;
+
+  /// `!` 이후 문서-내 CFI(`epubcfi(...)`).
+  final String docCfi;
 }
