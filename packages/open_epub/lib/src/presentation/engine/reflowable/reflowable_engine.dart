@@ -16,7 +16,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:fwfh_svg/fwfh_svg.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';
@@ -310,40 +311,47 @@ class _SpineItemViewState extends State<_SpineItemView> {
   }
 }
 
-/// 사용자 글자 크기·줄간격이 적용된 [Html] widget을 빌드한다.
+/// fwfh WidgetFactory + `<svg>` 렌더(fwfh_svg). ADR-009.
+///
+/// 인라인 `<svg>`(EPUB3 커버·수식 폴백)를 [SvgFactory]가 처리한다. `<img>`는
+/// [buildReflowableHtml]의 customWidgetBuilder가 EPUB 아카이브 로더로 가로채므로
+/// 여기서 별도 처리하지 않는다.
+class _EpubWidgetFactory extends WidgetFactory with SvgFactory {}
+
+/// 사용자 글자 크기·줄간격이 적용된 본문 렌더 widget(fwfh)을 빌드한다.
 /// [ReflowablePageView]와 공유하는 internal helper.
-Html buildReflowableHtml({
+///
+/// S11.3(#90): flutter_html → flutter_widget_from_html 교체(ADR-009).
+/// - textStyle: base 글자 크기(px)·줄간격(height 배수)
+/// - onTapUrl: 본문 링크·하이라이트(openepub-hl:) 탭 라우팅(S7.3/S7.5)
+/// - customWidgetBuilder: 모든 `<img>`를 [ImageLoader] 경로로 가로채 아카이브
+///   바이트를 렌더하고, 실패/빈 src는 placeholder로 대체(never-empty 기반)
+/// - buildAsync=false: 렌더를 동기화해 페이지 전환·회귀 테스트가 결정적이도록
+Widget buildReflowableHtml({
   required String data,
   required double fontSize,
   required double lineHeight,
   required ImageLoader? imageLoader,
   EpubLinkTapCallback? onLinkTap,
 }) {
-  return Html(
-    data: data,
-    onLinkTap: onLinkTap == null
-        ? null
-        : (url, _, __) {
-            if (url != null && url.isNotEmpty) onLinkTap(url);
-          },
-    style: {
-      'body': Style(
-        fontSize: FontSize(fontSize),
-        lineHeight: LineHeight(lineHeight),
-      ),
+  return HtmlWidget(
+    data,
+    buildAsync: false,
+    textStyle: TextStyle(fontSize: fontSize, height: lineHeight),
+    factoryBuilder: () => _EpubWidgetFactory(),
+    onTapUrl: (url) {
+      if (url.isNotEmpty) onLinkTap?.call(url);
+      // 항상 handled로 표시 — 외부 url_launcher 시도(미의존)를 막는다.
+      return true;
     },
-    extensions: [
-      TagExtension(
-        tagsToExtend: {'img'},
-        builder: (ctx) {
-          final src = ctx.attributes['src'];
-          if (src == null || src.isEmpty) {
-            return const _ImagePlaceholder(reason: 'missing src');
-          }
-          return _RemoteImage(src: src, loader: imageLoader);
-        },
-      ),
-    ],
+    customWidgetBuilder: (element) {
+      if (element.localName != 'img') return null;
+      final src = element.attributes['src'];
+      if (src == null || src.isEmpty) {
+        return const _ImagePlaceholder(reason: 'missing src');
+      }
+      return _RemoteImage(src: src, loader: imageLoader);
+    },
   );
 }
 

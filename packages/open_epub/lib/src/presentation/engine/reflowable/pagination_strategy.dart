@@ -2,8 +2,8 @@
 // Story: S1.6 (#12) — Reflowable 페이지네이션
 //
 // 페이지 분할 전략의 추상 인터페이스. 정확한 viewport 기반 페이지 분할은
-// flutter_html의 렌더 height 측정이 필요하여 본 Story 범위 외 (S4.10 성능
-// 벤치 단계와 함께 더 정교한 strategy 추가 예정).
+// 렌더러(flutter_widget_from_html, S11.3)의 렌더 height 측정이 필요하여 본 Story
+// 범위 외 (S4.10 성능 벤치 단계와 함께 더 정교한 strategy 추가 예정).
 //
 // 본 Story에서는 [SinglePagePerSpineStrategy] (1 spine = 1 page)를 default로
 // 제공한다. 사용자 입장에서 "다음 페이지"는 곧 "다음 spine 항목"이고, 한

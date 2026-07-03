@@ -8,8 +8,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:open_epub/open_epub.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_page_view.dart';
 
@@ -65,10 +65,10 @@ Future<void> _pumpPageView(BddWorld world, WidgetTester tester) async {
 ReflowablePageViewState _pageViewState(WidgetTester tester) =>
     tester.state<ReflowablePageViewState>(find.byType(ReflowablePageView));
 
-/// 화면에 있는 모든 [Html] 위젯의 body 스타일.
-List<Style?> _bodyStyles(WidgetTester tester) => tester
-    .widgetList<Html>(find.byType(Html))
-    .map((h) => h.style['body'])
+/// 화면에 있는 모든 [HtmlWidget]의 base text style (fwfh, S11.3).
+List<TextStyle?> _bodyStyles(WidgetTester tester) => tester
+    .widgetList<HtmlWidget>(find.byType(HtmlWidget))
+    .map((h) => h.textStyle)
     .toList(growable: false);
 
 /// Usage: Given 현재 글자 크기는 "`<size>`"(`<percent>`%)이다
@@ -88,7 +88,7 @@ Future<void> currentFontSizeIs(
   final styles = _bodyStyles(tester);
   expect(styles, isNotEmpty);
   expect(
-    styles.map((s) => s?.fontSize?.value),
+    styles.map((s) => s?.fontSize),
     everyElement(closeTo(ui.fontSize, 1e-9)),
   );
 }
@@ -107,12 +107,12 @@ Future<void> bodyTextReflowsAtPercent(
   final styles = _bodyStyles(tester);
   expect(styles, isNotEmpty);
   expect(
-    styles.map((s) => s?.fontSize?.value),
+    styles.map((s) => s?.fontSize),
     everyElement(closeTo(expected, 1e-9)),
   );
   // 재배치된 본문이 실제로 표시되는지 (현재 페이지 = 2번째 챕터).
   final chapter = _ui(world).savedPageIndex + 1;
-  expect(find.textContaining('$chapter장'), findsWidgets);
+  expect(find.textContaining('$chapter장', findRichText: true), findsWidgets);
 }
 
 /// Usage: Then 현재 BookPosition은 보존된다
@@ -129,7 +129,7 @@ Future<void> currentLineHeightIs(
   final styles = _bodyStyles(tester);
   expect(styles, isNotEmpty);
   expect(
-    styles.map((s) => s?.lineHeight?.size),
+    styles.map((s) => s?.height),
     everyElement(closeTo(value, 1e-9)),
   );
 }
@@ -147,10 +147,10 @@ Future<void> bodyReflowsWithNewLineHeight(
   final styles = _bodyStyles(tester);
   expect(styles, isNotEmpty);
   expect(
-    styles.map((s) => s?.lineHeight?.size),
+    styles.map((s) => s?.height),
     everyElement(closeTo(_ui(world).lineHeight, 1e-9)),
   );
-  expect(find.textContaining('1장'), findsWidgets);
+  expect(find.textContaining('1장', findRichText: true), findsWidgets);
 }
 
 /// Usage: Then 페이지 전환 시 깨짐이 없다
@@ -162,13 +162,13 @@ Future<void> pageTransitionsAreCrisp(
   await tester.pumpAndSettle();
   expect(tester.takeException(), isNull);
   expect(state.pageIndex, 1);
-  expect(find.textContaining('2장'), findsWidgets);
+  expect(find.textContaining('2장', findRichText: true), findsWidgets);
 
   unawaited(state.previousPage());
   await tester.pumpAndSettle();
   expect(tester.takeException(), isNull);
   expect(state.pageIndex, 0);
-  expect(find.textContaining('1장'), findsWidgets);
+  expect(find.textContaining('1장', findRichText: true), findsWidgets);
 }
 
 /// Usage: Given Reflowable EPUB이 페이지 모드로 열려 있다
@@ -191,12 +191,12 @@ Future<void> nextPageRenderedWithinMs(
   final budget = Duration(milliseconds: ms);
   var elapsed = Duration.zero;
   while (
-      elapsed < budget && find.textContaining('2장').evaluate().isEmpty) {
+      elapsed < budget && find.textContaining('2장', findRichText: true).evaluate().isEmpty) {
     await tester.pump(frame);
     elapsed += frame;
   }
   expect(
-    find.textContaining('2장'),
+    find.textContaining('2장', findRichText: true),
     findsWidgets,
     reason: '다음 페이지가 ${ms}ms 안에 화면에 그려져야 합니다',
   );
@@ -234,7 +234,7 @@ Future<void> pageIsDisplayed(BddWorld world, WidgetTester tester) async {
 
 /// Usage: Then 이미지가 본문과 함께 렌더된다
 Future<void> imageRendersWithBody(BddWorld world, WidgetTester tester) async {
-  expect(find.textContaining('그림'), findsOneWidget);
+  expect(find.textContaining('그림', findRichText: true), findsOneWidget);
   expect(find.byType(Image), findsOneWidget);
   expect(find.byIcon(Icons.image_not_supported_outlined), findsNothing);
 }
@@ -256,5 +256,5 @@ Future<void> placeholderShownOnImageFail(
   await tester.pumpAndSettle();
   expect(find.byIcon(Icons.image_not_supported_outlined), findsOneWidget);
   // 본문 텍스트는 그대로 표시된다.
-  expect(find.textContaining('그림'), findsOneWidget);
+  expect(find.textContaining('그림', findRichText: true), findsOneWidget);
 }
