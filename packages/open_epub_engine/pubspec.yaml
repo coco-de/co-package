@@ -4,10 +4,13 @@ description: >-
   open_epub 1.0 코어의 커스텀 파서를 추출·확장하고, epub_pro(BSD-3/MIT)의 CFI
   서브시스템을 채택했다. epubx/epub_view를 대체한다.
 version: 0.0.1
-publish_to: "none" # 모노레포 내부 패키지 (pub 게시 전까지)
+publish_to: "none" # 모노레포 내부 패키지 (발행은 GA/E6까지 유예)
 
 environment:
-  sdk: ">=3.5.0 <4.0.0"
+  sdk: ">=3.6.0 <4.0.0" # pub workspace 최소 요건
+
+# 모노레포 pub workspace 멤버 (S10.1, ADR-008)
+resolution: workspace
 
 dependencies:
   # EPUB 컨테이너(ZIP) 해제
@@ -18,5 +21,5 @@ dependencies:
   path: ^1.9.0
 
 dev_dependencies:
-  lints: ^5.0.0
+  lints: ^6.0.0 # 워크스페이스 flutter_lints 6과 정합
   test: ^1.25.0
