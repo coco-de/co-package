@@ -1,8 +1,8 @@
 // Story: S7.6 (E7) — SearchHighlighter 단위 테스트
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/text/search_highlighter.dart';
-import 'package:open_epub/src/domain/usecase/build_search_index_use_case.dart';
+import 'package:open_epub_engine/src/data/text/search_highlighter.dart';
+import 'package:open_epub_engine/src/domain/usecase/build_search_index_use_case.dart';
 
 void main() {
   const sh = SearchHighlighter();

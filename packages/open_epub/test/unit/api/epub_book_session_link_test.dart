@@ -1,9 +1,9 @@
 // Story: S7.5 (E7) — EpubBookSession.resolveLink (책 내부 링크 내비게이션)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_book_session.dart';
-import 'package:open_epub/src/api/epub_position.dart';
-import 'package:open_epub/src/api/epub_source.dart';
+import 'package:open_epub_engine/src/api/epub_book_session.dart';
+import 'package:open_epub_engine/src/api/epub_position.dart';
+import 'package:open_epub_engine/src/api/epub_source.dart';
 
 import '../_fixtures/epub_fixtures.dart';
 

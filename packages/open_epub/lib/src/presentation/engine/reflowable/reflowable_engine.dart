@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-import '../../../api/epub_book.dart';
+import 'package:open_epub_engine/open_epub_engine.dart';
 
 /// spine href를 받아 해당 XHTML 콘텐츠 문자열을 비동기 로드.
 typedef XhtmlLoader = Future<String> Function(String spineHref);

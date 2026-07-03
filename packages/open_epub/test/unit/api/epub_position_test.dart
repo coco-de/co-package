@@ -4,7 +4,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_position.dart';
+import 'package:open_epub_engine/src/api/epub_position.dart';
 
 void main() {
   group('EpubReflowablePosition — toToken / fromToken round-trip', () {

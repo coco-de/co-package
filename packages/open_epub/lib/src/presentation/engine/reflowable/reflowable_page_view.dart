@@ -11,7 +11,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../api/epub_book.dart';
+import 'package:open_epub_engine/open_epub_engine.dart';
 import 'pagination_strategy.dart';
 import 'reflowable_engine.dart';
 

@@ -1,9 +1,9 @@
 // Story: S1.5-1/4 (E1.5) — EpubSelection / EpubHighlight 엔티티 테스트
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_position.dart';
-import 'package:open_epub/src/domain/entity/epub_highlight.dart';
-import 'package:open_epub/src/domain/entity/epub_selection.dart';
+import 'package:open_epub_engine/src/api/epub_position.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_highlight.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_selection.dart';
 
 void main() {
   group('EpubSelection', () {

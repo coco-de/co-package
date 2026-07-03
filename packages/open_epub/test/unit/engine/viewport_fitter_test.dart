@@ -2,7 +2,7 @@
 // BDD: F3.1 (viewport fit), F3.3 (auto spread breakpoint)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
 import 'package:open_epub/src/presentation/engine/fixed_layout/viewport_fitter.dart';
 
 void main() {

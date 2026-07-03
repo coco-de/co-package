@@ -2,8 +2,8 @@
 // BDD: F5.5, F5.6, F7.4 / RFC-2 (tech-spec §3)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/domain/entity/text_layer_verdict.dart';
-import 'package:open_epub/src/domain/usecase/detect_text_layer_use_case.dart';
+import 'package:open_epub_engine/src/domain/entity/text_layer_verdict.dart';
+import 'package:open_epub_engine/src/domain/usecase/detect_text_layer_use_case.dart';
 
 void main() {
   const detector = DetectTextLayerUseCase();

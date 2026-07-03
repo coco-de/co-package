@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_position.dart';
-import 'package:open_epub/src/api/epub_source.dart';
+import 'package:open_epub_engine/src/api/epub_position.dart';
+import 'package:open_epub_engine/src/api/epub_source.dart';
 import 'package:open_epub/src/presentation/widgets/epub_reader.dart';
 
 import '../unit/_fixtures/epub_fixtures.dart';

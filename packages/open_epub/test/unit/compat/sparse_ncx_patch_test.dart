@@ -2,11 +2,11 @@
 // BDD: F4.3 (sparse-NCX 자동 보정)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/compat/patch_catalog.dart';
-import 'package:open_epub/src/data/compat/patches/sparse_ncx.dart';
-import 'package:open_epub/src/domain/entity/epub_metadata.dart';
-import 'package:open_epub/src/domain/entity/epub_outline.dart';
-import 'package:open_epub/src/domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/src/data/compat/patch_catalog.dart';
+import 'package:open_epub_engine/src/data/compat/patches/sparse_ncx.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_outline.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_spine_item.dart';
 
 EpubSpineItem _si(String href, {bool linear = true}) => EpubSpineItem(
       idref: href,

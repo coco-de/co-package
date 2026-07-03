@@ -10,3 +10,4 @@ environment:
 workspace:
   - packages/open_epub
   - packages/open_epub_engine
+  - packages/open_epub/example # S10.3: 엔진 sibling을 로컬 해석하도록 워크스페이스 편입

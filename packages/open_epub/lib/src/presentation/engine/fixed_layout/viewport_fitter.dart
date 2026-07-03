@@ -5,7 +5,7 @@
 
 import 'dart:math' as math;
 
-import '../../../domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/open_epub_engine.dart';
 
 /// Fixed Layout 페이지의 viewport 적합 계산.
 ///

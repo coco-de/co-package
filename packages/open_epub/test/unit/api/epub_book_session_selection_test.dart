@@ -1,10 +1,10 @@
 // Story: S1.5-2/3/4/6/7/8 (E1.5) — EpubBookSession selection/highlight/search 통합
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_book_session.dart';
-import 'package:open_epub/src/api/epub_source.dart';
-import 'package:open_epub/src/domain/entity/epub_highlight.dart';
-import 'package:open_epub/src/domain/entity/epub_selection.dart';
+import 'package:open_epub_engine/src/api/epub_book_session.dart';
+import 'package:open_epub_engine/src/api/epub_source.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_highlight.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_selection.dart';
 
 import '../_fixtures/epub_fixtures.dart';
 

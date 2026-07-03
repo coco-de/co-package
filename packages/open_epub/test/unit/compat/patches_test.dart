@@ -2,14 +2,14 @@
 // BDD: F9.2 (보정 적용)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/compat/patch_catalog.dart';
-import 'package:open_epub/src/data/compat/patches/broken_spine_href.dart';
-import 'package:open_epub/src/data/compat/patches/cover_skip.dart';
-import 'package:open_epub/src/data/compat/patches/empty_toc.dart';
-import 'package:open_epub/src/data/compat/patches/mixed_href_encoding.dart';
-import 'package:open_epub/src/domain/entity/epub_metadata.dart';
-import 'package:open_epub/src/domain/entity/epub_outline.dart';
-import 'package:open_epub/src/domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/src/data/compat/patch_catalog.dart';
+import 'package:open_epub_engine/src/data/compat/patches/broken_spine_href.dart';
+import 'package:open_epub_engine/src/data/compat/patches/cover_skip.dart';
+import 'package:open_epub_engine/src/data/compat/patches/empty_toc.dart';
+import 'package:open_epub_engine/src/data/compat/patches/mixed_href_encoding.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_outline.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_spine_item.dart';
 
 PatchedEpubBook _book({
   required List<EpubSpineItem> spine,

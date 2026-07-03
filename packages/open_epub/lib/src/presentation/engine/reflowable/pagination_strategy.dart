@@ -9,7 +9,7 @@
 // 제공한다. 사용자 입장에서 "다음 페이지"는 곧 "다음 spine 항목"이고, 한
 // spine 내부는 SingleChildScrollView로 스크롤된다.
 
-import '../../../domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/open_epub_engine.dart';
 
 /// 페이지 분할 결과. 각 페이지는 spine 인덱스 + spine 내부 offset 범위를 갖는다.
 class PaginationResult {

@@ -6,10 +6,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_book.dart';
-import 'package:open_epub/src/domain/entity/epub_metadata.dart';
-import 'package:open_epub/src/domain/entity/epub_outline.dart';
-import 'package:open_epub/src/domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/src/api/epub_book.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_outline.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_spine_item.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_engine.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_page_view.dart';
 

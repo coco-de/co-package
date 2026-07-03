@@ -1,8 +1,8 @@
 // Story: S7.3 (E7) — 탭 가능한 하이라이트 주입 + 링크 스킴 파서
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/text/spine_text_extractor.dart';
-import 'package:open_epub/src/domain/entity/epub_highlight.dart';
+import 'package:open_epub_engine/src/data/text/spine_text_extractor.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_highlight.dart';
 
 const _extractor = SpineTextExtractor();
 

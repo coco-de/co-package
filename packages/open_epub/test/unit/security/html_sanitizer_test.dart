@@ -2,8 +2,8 @@
 // BDD: Edge-security (script/iframe 차단)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_security_config.dart';
-import 'package:open_epub/src/data/security/html_sanitizer.dart';
+import 'package:open_epub_engine/src/api/epub_security_config.dart';
+import 'package:open_epub_engine/src/data/security/html_sanitizer.dart';
 
 void main() {
   test('기본 설정은 script/iframe을 제거하고 본문은 보존', () {
