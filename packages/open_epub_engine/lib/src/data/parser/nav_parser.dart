@@ -25,6 +25,7 @@
 
 import 'package:xml/xml.dart';
 
+import '../../domain/entity/epub_navigation.dart';
 import '../../domain/entity/epub_outline.dart';
 
 class NavParser {
@@ -61,6 +62,77 @@ class NavParser {
     if (firstOl == null) return EpubOutline.empty;
 
     return EpubOutline(items: _parseOl(firstOl));
+  }
+
+  /// nav.xhtml에서 보조 내비게이션(landmarks / page-list)을 추출한다. (S13.1)
+  ///
+  /// 각 nav는 `epub:type`으로 구분한다. 해당 nav가 없으면 빈 리스트.
+  /// XML이 유효하지 않거나 `<html>` 루트가 아니면 [EpubNavigation.empty]
+  /// (toc 파싱과 달리 예외를 던지지 않는다 — 보조 정보이므로 관대하게 처리).
+  EpubNavigation parseNavigation(String navXhtml) {
+    final XmlDocument doc;
+    try {
+      doc = XmlDocument.parse(navXhtml);
+    } on XmlException {
+      return EpubNavigation.empty;
+    }
+    final root = doc.rootElement;
+    if (root.localName != 'html' || root.namespaceUri != _xhtmlNs) {
+      return EpubNavigation.empty;
+    }
+    final body = root.findElements('body', namespace: _xhtmlNs).firstOrNull;
+    if (body == null) return EpubNavigation.empty;
+
+    final navs = body.findAllElements('nav', namespace: _xhtmlNs).toList();
+    final landmarksNav = _navByType(navs, 'landmarks');
+    final pageListNav = _navByType(navs, 'page-list');
+
+    return EpubNavigation(
+      landmarks:
+          landmarksNav == null ? const [] : _parseLandmarks(landmarksNav),
+      pageList: pageListNav == null ? const [] : _parsePageList(pageListNav),
+    );
+  }
+
+  XmlElement? _navByType(List<XmlElement> navs, String type) {
+    for (final n in navs) {
+      if (n.getAttribute('type', namespace: _epubOpsNs) == type) return n;
+    }
+    return null;
+  }
+
+  List<EpubLandmark> _parseLandmarks(XmlElement nav) {
+    final ol = nav.findElements('ol', namespace: _xhtmlNs).firstOrNull;
+    if (ol == null) return const [];
+    final result = <EpubLandmark>[];
+    for (final li in ol.findElements('li', namespace: _xhtmlNs)) {
+      final anchor = li.findElements('a', namespace: _xhtmlNs).firstOrNull;
+      final href = anchor?.getAttribute('href');
+      final title = anchor?.innerText.trim();
+      // landmark의 epub:type은 <a>에 붙는다 (예: epub:type="bodymatter").
+      final type = anchor?.getAttribute('type', namespace: _epubOpsNs)?.trim();
+      if (href == null || href.isEmpty || title == null || title.isEmpty) {
+        continue;
+      }
+      result.add(EpubLandmark(type: type ?? '', title: title, href: href));
+    }
+    return result.isEmpty ? const [] : result;
+  }
+
+  List<EpubPageTarget> _parsePageList(XmlElement nav) {
+    final ol = nav.findElements('ol', namespace: _xhtmlNs).firstOrNull;
+    if (ol == null) return const [];
+    final result = <EpubPageTarget>[];
+    for (final li in ol.findElements('li', namespace: _xhtmlNs)) {
+      final anchor = li.findElements('a', namespace: _xhtmlNs).firstOrNull;
+      final href = anchor?.getAttribute('href');
+      final label = anchor?.innerText.trim();
+      if (href == null || href.isEmpty || label == null || label.isEmpty) {
+        continue;
+      }
+      result.add(EpubPageTarget(label: label, href: href));
+    }
+    return result.isEmpty ? const [] : result;
   }
 
   /// epub:type="toc"인 nav를 우선 검색, 없으면 첫 nav. body 하위로 한정.

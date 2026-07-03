@@ -30,6 +30,7 @@ class OpenEpubUseCase {
       book: result.book,
       diagnostics: diagnostics,
       resources: raw.resources,
+      navigation: raw.navigation,
     );
   }
 }

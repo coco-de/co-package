@@ -12,6 +12,7 @@ import 'package:archive/archive.dart';
 import '../../api/epub_security_config.dart';
 import '../../api/epub_source.dart';
 import '../../domain/entity/epub_failure.dart';
+import '../../domain/entity/epub_navigation.dart';
 import '../../domain/entity/epub_outline.dart';
 import '../../domain/repository/epub_repository.dart';
 import '../compat/patch_catalog.dart'
@@ -109,6 +110,7 @@ class EpubRepositoryImpl implements EpubRepository {
 
     final opfDir = _dirOf(opfPath);
     final outline = _parseOutline(archive, opfDir, tocRefs);
+    final navigation = _parseNavigation(archive, opfDir, tocRefs);
 
     return RawEpubLoad(
       book: PatchedEpubBook(
@@ -118,7 +120,22 @@ class EpubRepositoryImpl implements EpubRepository {
       ),
       patches: patches,
       resources: ArchiveResourceReader(archive, opfDir),
+      navigation: navigation,
     );
+  }
+
+  /// nav.xhtml(EPUB 3)에서 landmarks / page-list 보조 내비게이션을 추출한다.
+  /// nav가 없거나(EPUB 2) 파싱 실패 시 [EpubNavigation.empty]. (S13.1, gap #2)
+  EpubNavigation _parseNavigation(
+    Archive archive,
+    String opfDir,
+    ({String? ncxHref, String? navHref}) tocRefs,
+  ) {
+    final navHref = tocRefs.navHref;
+    if (navHref == null) return EpubNavigation.empty;
+    final xml = _readString(archive, resolveHref(opfDir, navHref));
+    if (xml == null) return EpubNavigation.empty;
+    return _navParser.parseNavigation(xml);
   }
 
   /// nav.xhtml(EPUB 3) 우선, 없으면 NCX(EPUB 2). 파일이 없거나 파싱 실패 시

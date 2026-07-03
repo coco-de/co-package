@@ -25,6 +25,7 @@ export 'src/api/epub_source.dart';
 export 'src/domain/entity/epub_failure.dart';
 export 'src/domain/entity/epub_highlight.dart';
 export 'src/domain/entity/epub_metadata.dart';
+export 'src/domain/entity/epub_navigation.dart';
 export 'src/domain/entity/epub_outline.dart';
 export 'src/domain/entity/epub_resource.dart';
 export 'src/domain/entity/epub_selection.dart';
