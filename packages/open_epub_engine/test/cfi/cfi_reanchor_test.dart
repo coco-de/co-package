@@ -4,7 +4,6 @@
 import 'dart:typed_data';
 
 import 'package:open_epub_engine/open_epub_engine.dart';
-import 'package:open_epub_engine/src/cfi/epub_cfi_mapper.dart';
 import 'package:open_epub_engine/testing.dart';
 import 'package:test/test.dart';
 

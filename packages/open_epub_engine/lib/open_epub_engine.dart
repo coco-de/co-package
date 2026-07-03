@@ -56,3 +56,7 @@ export 'src/data/search/text_index_builder.dart';
 export 'src/data/security/html_sanitizer.dart';
 export 'src/data/text/search_highlighter.dart';
 export 'src/data/text/spine_text_extractor.dart';
+
+// ── CFI (S12, ADR-010) — charOffset↔CFI 매퍼 + interop. 이식한 프리미티브
+//    (src/cfi/core·dom, epub_pro MIT)는 내부 구현으로 두고, 어댑터만 노출한다.
+export 'src/cfi/epub_cfi_mapper.dart' show EpubCfiMapper, BookCfiParts;

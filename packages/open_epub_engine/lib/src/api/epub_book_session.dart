@@ -104,6 +104,15 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
   Future<void> nextPage();
   Future<void> previousPage();
 
+  /// reflowable [position]을 외부 상호운용용 표준 CFI 문자열로 내보낸다(export).
+  /// `epubcfi(/6/N[idref]!/docpath:offset)` 형식. FXL/미해석 위치는 null.
+  /// canonical 토큰과 별개인 additive interop API다(토큰 스키마 무변경). (S12.4)
+  String? exportPositionCfi(EpubReflowablePosition position);
+
+  /// 표준 CFI 문자열을 이 책의 reflowable 위치로 가져온다(import). spine step으로
+  /// spineHref를, 문서-내 경로로 charOffset을 해석한다. 해석 실패 시 null. (S12.4)
+  EpubReflowablePosition? importPositionCfi(String bookCfi);
+
   /// 현재 위치에서 하이라이트 도구 사용 이벤트를 발사한다(분석용, F11).
   void recordHighlight();
 
@@ -447,6 +456,47 @@ class _EpubBookSessionImpl implements EpubBookSession {
     _ensureActive();
     _position = position;
     _emitProgress();
+  }
+
+  @override
+  String? exportPositionCfi(EpubReflowablePosition position) {
+    final spineIndex =
+        book.spine.indexWhere((s) => s.href == position.spineHref);
+    if (spineIndex < 0) return null;
+    final xhtml = readSpineXhtml(position.spineHref);
+    if (xhtml == null) return null;
+    final docCfi = _cfiMapper.charOffsetToCfi(xhtml, position.charOffset);
+    if (docCfi == null) return null;
+    return _cfiMapper.toBookCfi(
+      docCfi,
+      spineIndex: spineIndex,
+      idref: book.spine[spineIndex].idref,
+    );
+  }
+
+  @override
+  EpubReflowablePosition? importPositionCfi(String bookCfi) {
+    final parts = _cfiMapper.splitBookCfi(bookCfi);
+    if (parts == null) return null;
+    // spineIndex 우선, 범위 밖이거나 없으면 idref로 매칭.
+    var idx = parts.spineIndex;
+    if ((idx == null || idx < 0 || idx >= book.spine.length) &&
+        parts.idref != null) {
+      final byIdref = book.spine.indexWhere((s) => s.idref == parts.idref);
+      if (byIdref >= 0) idx = byIdref;
+    }
+    if (idx == null || idx < 0 || idx >= book.spine.length) return null;
+    final href = book.spine[idx].href;
+    final xhtml = readSpineXhtml(href);
+    if (xhtml == null) return null;
+    final charOffset = _cfiMapper.cfiToCharOffset(xhtml, parts.docCfi);
+    if (charOffset == null) return null;
+    final denom = book.spine.length <= 1 ? 1 : book.spine.length - 1;
+    return EpubReflowablePosition(
+      spineHref: href,
+      progress: idx / denom,
+      charOffset: charOffset,
+    );
   }
 
   @override

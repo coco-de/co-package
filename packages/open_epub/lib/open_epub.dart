@@ -50,6 +50,11 @@ export 'package:open_epub_engine/open_epub_engine.dart'
         EpubPositionTooLargeException,
         EpubPositionDecodeException;
 
+// CFI 매퍼 + interop (S12, ADR-010) — 콘텐츠 교체 시 하이라이트/북마크 재앵커,
+// 외부 CFI export/import. 위치 export/import는 EpubBookSession에도 있다.
+export 'package:open_epub_engine/open_epub_engine.dart'
+    show EpubCfiMapper, BookCfiParts;
+
 // 분석 이벤트
 export 'package:open_epub_engine/open_epub_engine.dart'
     show
