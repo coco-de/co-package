@@ -25,25 +25,17 @@ dependencies:
   # 발행 토폴로지(E6 확정)와 정합; path 의존은 발행 가능 패키지에서 금지된다.
   open_epub_engine: ^0.0.1
 
-  # EPUB viewer and parser
-  epub_view: ^3.2.0
-  epubx: ^4.0.0
-
-  # Google Fonts
-  google_fonts: ^8.1.0
+  # Reflowable 본문 렌더러. S11.3(#90)에서 flutter_widget_from_html + fwfh_svg로
+  # 교체 예정(ADR-009). 그때까지 유지.
   flutter_html: ^3.0.0
+
+  # 전체 spine 연속 세로 스크롤의 위치 추적 (kobic#7572, reflowable_engine)
   scrollable_positioned_list: ^0.3.8
-  html: ^0.15.6
 
-  # HTTP for URL loading
-  http: ^1.6.0
-
-  # Settings persistence
-  shared_preferences: ^2.5.5
-
-  # XML parsing — open_epub 1.0 OPF/NCX/nav 파서가 직접 사용 (S1.1)
-  xml: ^6.6.1
-  archive: ^3.6.1
+  # S11.2(#89): 레거시 EpubReaderWidget 제거로 미사용이 된 의존성 drop —
+  # epubx/epub_view/html(레거시 파서·렌더), google_fonts/shared_preferences/http
+  # (레거시 위젯·설정·로더), xml/archive(파서는 S10.3에서 엔진으로 이동). EPUB
+  # 컨테이너 해제·OPF/NCX 파싱은 이제 open_epub_engine이 전담한다.
 
 dev_dependencies:
   flutter_test:
