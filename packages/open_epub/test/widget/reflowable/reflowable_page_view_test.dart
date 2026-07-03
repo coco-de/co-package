@@ -340,6 +340,49 @@ void main() {
       expect(find.textContaining('after reload', findRichText: true), findsOneWidget);
     });
   });
+
+  // F2-Edge1 (flow-permutation): Reflowable 모드에서 글자 크기 변경 직후 페이지
+  // 전환 → 새 페이지네이션(새 글자 크기)으로 다음 페이지가 렌더된다. 렌더러
+  // fwfh 교체(S11.3) 후 페이지네이션 회귀 방지.
+  group('ReflowablePageView — 페이지네이션 회귀 (F2-Edge1, S11.6)', () {
+    testWidgets('글자 크기 변경 직후 페이지 전환 → 새 글자 크기로 다음 페이지 렌더',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml', 'c.xhtml']);
+      Widget at(double fontSize) => _wrap(
+            ReflowablePageView(
+              book: book,
+              fontSize: fontSize,
+              xhtmlLoader: (href) async => _wrapXhtml('<p>$href 본문</p>'),
+            ),
+          );
+
+      // 16px, page 0
+      await tester.pumpWidget(at(16));
+      await tester.pumpAndSettle();
+      var state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.pageIndex, 0);
+
+      // 글자 크기 변경 (본문 재배치)
+      await tester.pumpWidget(at(24));
+      await tester.pumpAndSettle();
+
+      // 변경 직후 다음 페이지로 전환
+      state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      unawaited(state.nextPage());
+      await tester.pumpAndSettle();
+      expect(state.pageIndex, 1);
+
+      // 새 페이지가 새 글자 크기(24px)로 렌더 + b.xhtml 본문 표시
+      final htmls = tester.widgetList<HtmlWidget>(find.byType(HtmlWidget));
+      expect(htmls, isNotEmpty);
+      expect(htmls.every((h) => h.textStyle?.fontSize == 24), isTrue);
+      expect(find.textContaining('b.xhtml', findRichText: true), findsOneWidget);
+    });
+  });
 }
 
 // -------- helpers --------
