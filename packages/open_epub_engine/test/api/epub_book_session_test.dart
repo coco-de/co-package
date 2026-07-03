@@ -136,10 +136,12 @@ void main() {
 
   group('위치 복원 (F1.2 / F1.3)', () {
     test('유효한 initialPosition은 그대로 복원된다', () async {
+      // ch2 본문("2장")은 평문 2자 — charOffset은 그 범위 내여야 '유효'다.
+      // (S12.3부터 open 시 out-of-range charOffset은 콘텐츠 길이로 clamp된다.)
       const saved = EpubReflowablePosition(
         spineHref: 'ch2.xhtml',
         progress: 0.45,
-        charOffset: 100,
+        charOffset: 1,
       );
       final session = await EpubBookSession.open(
         EpubSource.bytes(validEpub3()),
