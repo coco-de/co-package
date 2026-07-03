@@ -1,0 +1,22 @@
+name: open_epub_engine
+description: >-
+  Pure-Dart EPUB 2/3 parser, object model, and CFI locator engine for open_epub.
+  open_epub 1.0 코어의 커스텀 파서를 추출·확장하고, epub_pro(BSD-3/MIT)의 CFI
+  서브시스템을 채택했다. epubx/epub_view를 대체한다.
+version: 0.0.1
+publish_to: "none" # 모노레포 내부 패키지 (pub 게시 전까지)
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  # EPUB 컨테이너(ZIP) 해제
+  archive: ^3.6.1
+  # OPF/NCX/nav/SMIL XML 파싱
+  xml: ^6.6.1
+  # 경로 정규화 (spine href 상대경로 해석 등)
+  path: ^1.9.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0
