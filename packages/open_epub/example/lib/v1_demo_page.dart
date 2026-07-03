@@ -1,6 +1,6 @@
 // open_epub 1.0 코어 데모 페이지.
 //
-// 이 파일에서만 `package:open_epub/open_epub_v1.dart`를 import한다.
+// 이 파일에서만 `package:open_epub/open_epub.dart`를 import한다.
 // 레거시 barrel(`open_epub.dart`)과 이름이 겹치는 타입(EpubSource 등)이 있어
 // 한 파일에서 두 entry를 혼용할 수 없다 — main.dart는 이 페이지 위젯
 // 클래스(V1DemoPage)만 import한다.
@@ -17,7 +17,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:open_epub/open_epub_v1.dart';
+import 'package:open_epub/open_epub.dart';
 
 class V1DemoPage extends StatefulWidget {
   const V1DemoPage({super.key});

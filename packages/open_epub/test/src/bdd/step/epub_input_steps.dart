@@ -9,7 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/open_epub_v1.dart';
+import 'package:open_epub/open_epub.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_page_view.dart'
     show ReflowablePageViewState;
 

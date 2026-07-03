@@ -6,7 +6,7 @@
 // 오버레이가 페이지 연동 + 외부 네비게이션 버튼을 다는 데 사용한다.
 //
 // 레거시 0.1.x의 EpubReaderController(`open_epub.dart`)와는 다른 1.0 전용
-// 타입이다(이름 충돌 회피 위해 `View` 접두). 1.0은 `open_epub_v1.dart`로만
+// 타입이다(이름 충돌 회피 위해 `View` 접두). 1.0은 `open_epub.dart`로만
 // 노출되므로 같은 파일에서 두 타입을 동시에 import할 일은 없다.
 
 import 'package:flutter/foundation.dart';

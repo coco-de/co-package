@@ -2,7 +2,7 @@
 # BDD doc anchor: F5-demo
 # Architecture: example/lib/highlight_demo_page.dart
 # Stories: #43
-# 1.0 공개 API(open_epub_v1.dart)만 사용 — 코어 하이라이트 영속은 E3(S3.13) 범위
+# 1.0 공개 API(open_epub.dart)만 사용 — 코어 하이라이트 영속은 E3(S3.13) 범위
 
 Feature: 텍스트 선택 → 색상 하이라이트 + 메모 기록
   독자는 본문 텍스트를 선택해 원하는 색으로 하이라이트하고 메모를 남길 수 있다.

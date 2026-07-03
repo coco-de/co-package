@@ -7,7 +7,7 @@
 // 호스트 저장소/패널은 [BookmarkWorld]의 하니스 치환으로 검증한다.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/open_epub_v1.dart';
+import 'package:open_epub/open_epub.dart';
 
 import '_common_steps.dart';
 

@@ -13,7 +13,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/open_epub_v1.dart';
+import 'package:open_epub/open_epub.dart';
 import 'package:open_epub_engine/src/data/parser/container_parser.dart'
     show ContainerParser;
 import 'package:open_epub_engine/src/data/parser/opf_parser.dart'

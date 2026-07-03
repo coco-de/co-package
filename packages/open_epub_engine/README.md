@@ -28,7 +28,7 @@ open_epub_engine/
 ## 소비 (open_epub)
 
 `open_epub`(Flutter 리더)이 이 엔진을 소비한다. presentation/컨트롤러는 공개 배럴
-`package:open_epub_engine/open_epub_engine.dart`를, 1.0 진입점 `open_epub_v1.dart`는 이동
+`package:open_epub_engine/open_epub_engine.dart`를, 1.0 진입점 `open_epub.dart`는 이동
 타입을 엔진 배럴에서 재-export 한다(공개 표면 불변). Flutter 의존은 `open_epub`에만 잔류하며,
 엔진의 pure-Dart 경계는 `test/architecture/no_flutter_import_test.dart` 가드로 강제된다(S10.4).
 

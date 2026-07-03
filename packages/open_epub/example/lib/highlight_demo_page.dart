@@ -1,9 +1,9 @@
 // 하이라이트 데모 페이지 (#43).
 //
 // 텍스트 선택 → 색상 선택 → 하이라이트 → 메모 기록 흐름을 1.0 공개 API
-// (open_epub_v1.dart)만으로 구현한 호스트 앱 레퍼런스.
+// (open_epub.dart)만으로 구현한 호스트 앱 레퍼런스.
 //
-// 이 파일에서만 `package:open_epub/open_epub_v1.dart`를 import한다
+// 이 파일에서만 `package:open_epub/open_epub.dart`를 import한다
 // (레거시 barrel과 EpubSource 이름 충돌 — v1_demo_page.dart와 같은 규칙).
 //
 // 동작 방식:
@@ -33,7 +33,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show BrowserContextMenu, rootBundle;
-import 'package:open_epub/open_epub_v1.dart';
+import 'package:open_epub/open_epub.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 하이라이트 색상 팔레트 (BDD F5 — 4색).
