@@ -1,8 +1,8 @@
 // Story: S1.5-3/4/5 (E1.5) — SpineTextExtractor 단위 테스트
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/text/spine_text_extractor.dart';
-import 'package:open_epub/src/domain/entity/epub_highlight.dart';
+import 'package:open_epub_engine/src/data/text/spine_text_extractor.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_highlight.dart';
 
 const _extractor = SpineTextExtractor();
 

@@ -5,8 +5,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_source.dart';
-import 'package:open_epub/src/domain/entity/epub_failure.dart';
+import 'package:open_epub_engine/src/api/epub_source.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_failure.dart';
 
 void main() {
   group('EpubSource.bytes', () {

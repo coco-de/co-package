@@ -4,11 +4,11 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_security_config.dart';
-import 'package:open_epub/src/api/epub_source.dart';
-import 'package:open_epub/src/data/repository/epub_repository_impl.dart';
-import 'package:open_epub/src/domain/entity/epub_failure.dart';
-import 'package:open_epub/src/domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/src/api/epub_security_config.dart';
+import 'package:open_epub_engine/src/api/epub_source.dart';
+import 'package:open_epub_engine/src/data/repository/epub_repository_impl.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_failure.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
 
 import '../_fixtures/epub_fixtures.dart';
 

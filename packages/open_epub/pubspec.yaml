@@ -20,6 +20,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # 모노레포 내부 엔진 (S10.3, ADR-008) — 순수-Dart 파서/모델/코덱/도메인 레이어.
+  # resolution: workspace 가 개발 중 로컬 멤버로 해석한다. 버전 제약을 명시해
+  # 발행 토폴로지(E6 확정)와 정합; path 의존은 발행 가능 패키지에서 금지된다.
+  open_epub_engine: ^0.0.1
+
   # EPUB viewer and parser
   epub_view: ^3.2.0
   epubx: ^4.0.0

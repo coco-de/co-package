@@ -2,7 +2,7 @@
 // BDD: F4 (EPUB 3 nav 목차)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/parser/nav_parser.dart';
+import 'package:open_epub_engine/src/data/parser/nav_parser.dart';
 
 void main() {
   const parser = NavParser();

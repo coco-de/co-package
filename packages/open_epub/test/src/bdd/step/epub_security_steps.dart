@@ -14,11 +14,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub_v1.dart';
-import 'package:open_epub/src/data/parser/container_parser.dart'
+import 'package:open_epub_engine/src/data/parser/container_parser.dart'
     show ContainerParser;
-import 'package:open_epub/src/data/parser/opf_parser.dart'
+import 'package:open_epub_engine/src/data/parser/opf_parser.dart'
     show OpfParseException;
-import 'package:open_epub/src/data/repository/archive_resource_reader.dart'
+import 'package:open_epub_engine/src/data/repository/archive_resource_reader.dart'
     show resolveHref;
 
 import '../../../unit/_fixtures/epub_fixtures.dart';

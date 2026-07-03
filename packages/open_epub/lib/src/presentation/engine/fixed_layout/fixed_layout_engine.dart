@@ -15,8 +15,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../api/epub_book.dart';
-import '../../../domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/open_epub_engine.dart';
 import 'fixed_layout_page.dart';
 import 'fixed_layout_spread.dart';
 import 'viewport_fitter.dart';

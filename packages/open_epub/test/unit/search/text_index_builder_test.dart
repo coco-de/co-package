@@ -2,11 +2,11 @@
 // BDD: F7.1
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/compat/patch_catalog.dart' show PatchedEpubBook;
-import 'package:open_epub/src/data/search/text_index_builder.dart';
-import 'package:open_epub/src/domain/entity/epub_metadata.dart';
-import 'package:open_epub/src/domain/entity/epub_outline.dart';
-import 'package:open_epub/src/domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/src/data/compat/patch_catalog.dart' show PatchedEpubBook;
+import 'package:open_epub_engine/src/data/search/text_index_builder.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_outline.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_spine_item.dart';
 
 PatchedEpubBook _book() => PatchedEpubBook(
       metadata: const EpubMetadata(title: 't', epubVersion: '3.0'),

@@ -2,8 +2,8 @@
 // BDD: F4 (목차)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/parser/ncx_parser.dart';
-import 'package:open_epub/src/domain/entity/epub_outline.dart';
+import 'package:open_epub_engine/src/data/parser/ncx_parser.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_outline.dart';
 
 void main() {
   const parser = NcxParser();

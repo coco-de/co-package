@@ -4,43 +4,45 @@
 // (`EpubSource` 등)이 있어 1.0 코어는 별도 entry로 노출한다. 한 파일에서 두
 // entry를 동시에 import하면 충돌하므로 둘 중 하나만 사용한다.
 //
+// S10.3(#80): 순수-Dart 코어(파서·모델·코덱·도메인)는 open_epub_engine으로
+// 추출됐다. 아래 이동 타입들은 엔진 배럴에서 재-export하며, 공개 표면(show 목록)은
+// 이동 전과 동일하게 유지한다. Flutter 렌더/위젯/컨트롤러만 open_epub에 잔류한다.
+//
 // 핵심 흐름:
 //   final session = await EpubBookSession.open(EpubSource.bytes(bytes));
 //   session.book / session.position / session.lifecycleEvents ...
 // 또는 위젯으로:
 //   EpubReader(source: EpubSource.bytes(bytes))
 
+// ── open_epub_engine 재-export (S10.3 이동 레이어) ─────────────────────────
+
 // 세션 + 옵션
-export 'src/api/epub_book_session.dart'
+export 'package:open_epub_engine/open_epub_engine.dart'
     show EpubBookSession, EpubSessionOptions;
 
-// 1.0 reader 페이지 내비게이션 컨트롤러 (S8.1)
-export 'src/api/epub_reader_controller.dart' show EpubViewController;
-
 // 책 모델 + 도메인 엔티티
-export 'src/api/epub_book.dart' show EpubBook;
-export 'src/domain/entity/epub_metadata.dart'
+export 'package:open_epub_engine/open_epub_engine.dart' show EpubBook;
+export 'package:open_epub_engine/open_epub_engine.dart'
     show EpubMetadata, EpubLayout, EpubSpread;
-export 'src/domain/entity/epub_outline.dart' show EpubOutline, EpubOutlineItem;
-export 'src/domain/entity/epub_spine_item.dart' show EpubSpineItem;
-export 'src/domain/entity/epub_resource.dart'
+export 'package:open_epub_engine/open_epub_engine.dart'
+    show EpubOutline, EpubOutlineItem;
+export 'package:open_epub_engine/open_epub_engine.dart' show EpubSpineItem;
+export 'package:open_epub_engine/open_epub_engine.dart'
     show EpubResource, EpubResourceReader;
 
 // 선택 + 하이라이트 (E1.5)
-export 'src/domain/entity/epub_selection.dart' show EpubSelection;
-export 'src/domain/entity/epub_highlight.dart' show EpubHighlight;
-export 'src/data/text/spine_text_extractor.dart' show SpineTextExtractor;
+export 'package:open_epub_engine/open_epub_engine.dart' show EpubSelection;
+export 'package:open_epub_engine/open_epub_engine.dart' show EpubHighlight;
+export 'package:open_epub_engine/open_epub_engine.dart' show SpineTextExtractor;
 
-// Reader interop primitives (E7)
-export 'src/data/text/search_highlighter.dart' show SearchHighlighter;
-export 'src/presentation/interop/epub_selection_toolbar.dart'
-    show EpubSelectionAction, epubSelectionButtonItems;
+// Reader interop primitive — 엔진측 (E7)
+export 'package:open_epub_engine/open_epub_engine.dart' show SearchHighlighter;
 
 // 소스
-export 'src/api/epub_source.dart' show EpubSource;
+export 'package:open_epub_engine/open_epub_engine.dart' show EpubSource;
 
 // 위치 (BookPosition v1)
-export 'src/api/epub_position.dart'
+export 'package:open_epub_engine/open_epub_engine.dart'
     show
         EpubPosition,
         EpubReflowablePosition,
@@ -49,7 +51,7 @@ export 'src/api/epub_position.dart'
         EpubPositionDecodeException;
 
 // 분석 이벤트
-export 'src/api/epub_analytics.dart'
+export 'package:open_epub_engine/open_epub_engine.dart'
     show
         EpubBookSessionAnalytics,
         EpubLifecycleEvent,
@@ -61,10 +63,10 @@ export 'src/api/epub_analytics.dart'
         EpubBookmarkToolUse;
 
 // 보안
-export 'src/api/epub_security_config.dart' show EpubSecurityConfig;
+export 'package:open_epub_engine/open_epub_engine.dart' show EpubSecurityConfig;
 
 // 실패 계층
-export 'src/domain/entity/epub_failure.dart'
+export 'package:open_epub_engine/open_epub_engine.dart'
     show
         EpubFailure,
         EpubInvalidFile,
@@ -74,12 +76,21 @@ export 'src/domain/entity/epub_failure.dart'
         EpubUnknown;
 
 // 보정 진단
-export 'src/data/compat/patch_catalog.dart'
+export 'package:open_epub_engine/open_epub_engine.dart'
     show BookSessionDiagnostics, AppliedPatch, UnresolvedIssue, PatchSeverity;
 
 // 검색
-export 'src/domain/usecase/build_search_index_use_case.dart'
+export 'package:open_epub_engine/open_epub_engine.dart'
     show BuildSearchIndexUseCase, BookSearchIndex, BookSearchHit;
+
+// ── open_epub 잔류 (Flutter 렌더/위젯/컨트롤러/interop) ─────────────────────
+
+// 1.0 reader 페이지 내비게이션 컨트롤러 (S8.1)
+export 'src/api/epub_reader_controller.dart' show EpubViewController;
+
+// Reader interop primitive — Flutter측 (E7)
+export 'src/presentation/interop/epub_selection_toolbar.dart'
+    show EpubSelectionAction, epubSelectionButtonItems;
 
 // 위젯 + 엔진
 export 'src/presentation/widgets/epub_reader.dart'

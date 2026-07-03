@@ -1,8 +1,8 @@
 // Story: S1.10 — BookPositionCodec façade tests
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_position.dart';
-import 'package:open_epub/src/data/codec/book_position_codec.dart';
+import 'package:open_epub_engine/src/api/epub_position.dart';
+import 'package:open_epub_engine/src/data/codec/book_position_codec.dart';
 
 void main() {
   const codec = BookPositionCodec();

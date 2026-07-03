@@ -2,7 +2,7 @@
 // BDD: F1.1, Edge-security
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/parser/container_parser.dart';
+import 'package:open_epub_engine/src/data/parser/container_parser.dart';
 
 void main() {
   group('ContainerParser.parse', () {

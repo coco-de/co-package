@@ -11,8 +11,8 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub_v1.dart';
-import 'package:open_epub/src/domain/entity/text_layer_verdict.dart';
-import 'package:open_epub/src/domain/usecase/detect_text_layer_use_case.dart';
+import 'package:open_epub_engine/src/domain/entity/text_layer_verdict.dart';
+import 'package:open_epub_engine/src/domain/usecase/detect_text_layer_use_case.dart';
 
 import '../../../unit/_fixtures/epub_fixtures.dart';
 import '_common_steps.dart';

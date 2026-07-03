@@ -3,8 +3,8 @@
 // BDD: F1.1, F3
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/data/parser/opf_parser.dart';
-import 'package:open_epub/src/domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/src/data/parser/opf_parser.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
 
 void main() {
   const parser = OpfParser();

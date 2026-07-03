@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/open_epub_engine.dart';
 
 /// Spread 모드에서 한 슬롯에 표시되는 자리.
 enum SpreadSlot { left, right, center }

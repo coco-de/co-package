@@ -2,7 +2,7 @@
 // BDD: F3.5 (page-spread-left/right 슬롯 존중)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_spine_item.dart';
 import 'package:open_epub/src/presentation/engine/fixed_layout/fixed_layout_spread.dart';
 
 void main() {

@@ -2,10 +2,10 @@
 // BDD: F1 (첫 열람), F1.2/F1.3 (위치 복원/fallback), F11 (analytics)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_analytics.dart';
-import 'package:open_epub/src/api/epub_book_session.dart';
-import 'package:open_epub/src/api/epub_position.dart';
-import 'package:open_epub/src/api/epub_source.dart';
+import 'package:open_epub_engine/src/api/epub_analytics.dart';
+import 'package:open_epub_engine/src/api/epub_book_session.dart';
+import 'package:open_epub_engine/src/api/epub_position.dart';
+import 'package:open_epub_engine/src/api/epub_source.dart';
 
 import '../_fixtures/epub_fixtures.dart';
 

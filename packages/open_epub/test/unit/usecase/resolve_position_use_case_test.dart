@@ -2,13 +2,13 @@
 // BDD: F1.2 (위치 복원), F1.3 (복원 실패 fallback)
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/api/epub_position.dart';
-import 'package:open_epub/src/data/compat/patch_catalog.dart'
+import 'package:open_epub_engine/src/api/epub_position.dart';
+import 'package:open_epub_engine/src/data/compat/patch_catalog.dart'
     show PatchedEpubBook;
-import 'package:open_epub/src/domain/entity/epub_metadata.dart';
-import 'package:open_epub/src/domain/entity/epub_outline.dart';
-import 'package:open_epub/src/domain/entity/epub_spine_item.dart';
-import 'package:open_epub/src/domain/usecase/resolve_position_use_case.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_outline.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/src/domain/usecase/resolve_position_use_case.dart';
 
 PatchedEpubBook _book({EpubLayout layout = EpubLayout.reflowable}) =>
     PatchedEpubBook(

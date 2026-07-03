@@ -11,15 +11,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../../api/epub_book.dart';
-import '../../api/epub_book_session.dart';
-import '../../api/epub_position.dart';
+import 'package:open_epub_engine/open_epub_engine.dart';
+
 import '../../api/epub_reader_controller.dart';
-import '../../api/epub_source.dart';
-import '../../domain/entity/epub_failure.dart';
-import '../../domain/entity/epub_highlight.dart';
-import '../../domain/entity/epub_metadata.dart';
-import '../../domain/entity/epub_spine_item.dart';
 import '../engine/fixed_layout/fixed_layout_engine.dart';
 import '../engine/reflowable/reflowable_engine.dart';
 import '../engine/reflowable/reflowable_page_view.dart';

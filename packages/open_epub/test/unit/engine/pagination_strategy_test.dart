@@ -1,7 +1,7 @@
 // Story: S1.6 (#12) — PaginationStrategy tests
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_epub/src/domain/entity/epub_spine_item.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_spine_item.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/pagination_strategy.dart';
 
 void main() {
