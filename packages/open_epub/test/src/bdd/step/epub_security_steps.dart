@@ -21,7 +21,7 @@ import 'package:open_epub_engine/src/data/parser/opf_parser.dart'
 import 'package:open_epub_engine/src/data/repository/archive_resource_reader.dart'
     show resolveHref;
 
-import '../../../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 import '_common_steps.dart';
 
 const String _containerXml = '''

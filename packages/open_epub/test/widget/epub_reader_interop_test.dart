@@ -6,7 +6,7 @@ import 'package:open_epub_engine/src/api/epub_position.dart';
 import 'package:open_epub_engine/src/api/epub_source.dart';
 import 'package:open_epub/src/presentation/widgets/epub_reader.dart';
 
-import '../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 
 void main() {
   testWidgets('paged EpubReader가 초기 페이지·위치·viewport를 보고한다', (tester) async {

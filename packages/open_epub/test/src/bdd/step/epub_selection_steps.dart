@@ -14,7 +14,7 @@ import 'package:open_epub/open_epub_v1.dart';
 import 'package:open_epub_engine/src/domain/entity/text_layer_verdict.dart';
 import 'package:open_epub_engine/src/domain/usecase/detect_text_layer_use_case.dart';
 
-import '../../../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 import '_common_steps.dart';
 
 /// feature 전용 상태 (선택 대상 페이지 XHTML + 텍스트 레이어 판정 결과).

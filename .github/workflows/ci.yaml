@@ -1,0 +1,63 @@
+# CI — 모노레포 두 잡 병렬 (S10.5, 아키텍처 §10.3 / ADR-005)
+#
+# open_epub_engine 은 pure-Dart → `dart test`(빠름, Flutter 런타임 불필요).
+# open_epub 은 Flutter → `flutter test`.
+# 두 잡은 서로 독립(needs 없음)이라 병렬 실행된다.
+#
+# 주의: pub workspace(resolution: workspace)는 전 멤버를 함께 해석하므로 의존성
+# 해석(pub get)에는 Flutter SDK가 필요하다(open_epub 멤버 때문). 엔진 잡도 Flutter를
+# 설치해 워크스페이스를 해석하되, 테스트는 pure `dart test` 로 실행한다.
+name: CI
+
+on:
+  push:
+    branches: [main, "project/**"]
+  pull_request:
+
+# 동일 ref 중복 실행 취소
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  engine:
+    name: open_epub_engine · dart test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      # 워크스페이스 전체 해석 (open_epub 멤버 때문에 Flutter 필요)
+      - name: pub get (workspace)
+        run: flutter pub get
+      - name: analyze (engine)
+        working-directory: packages/open_epub_engine
+        run: dart analyze --fatal-infos
+      - name: test (engine, pure Dart)
+        working-directory: packages/open_epub_engine
+        run: dart test
+
+  reader:
+    name: open_epub · flutter test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: pub get (workspace)
+        run: flutter pub get
+      - name: analyze (reader)
+        working-directory: packages/open_epub
+        run: flutter analyze
+      - name: test (reader)
+        working-directory: packages/open_epub
+        run: flutter test

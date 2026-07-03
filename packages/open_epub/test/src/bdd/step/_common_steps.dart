@@ -11,7 +11,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub_v1.dart';
 
-import '../../../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 
 /// 시나리오 1개의 상태를 담는 테스트 하니스. 각 테스트에서 새로 만들고
 /// tearDown에서 [dispose]한다.

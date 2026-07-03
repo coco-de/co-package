@@ -11,7 +11,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub_v1.dart';
 
-import '../../../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 import '_common_steps.dart';
 
 /// "Copy to Clipboard" step이 복사한 JSON (시나리오 내 When → Then 전달).
