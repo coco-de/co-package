@@ -325,8 +325,14 @@ class _EpubWidgetFactory extends WidgetFactory with SvgFactory {}
 /// - textStyle: base 글자 크기(px)·줄간격(height 배수)
 /// - onTapUrl: 본문 링크·하이라이트(openepub-hl:) 탭 라우팅(S7.3/S7.5)
 /// - customWidgetBuilder: 모든 `<img>`를 [ImageLoader] 경로로 가로채 아카이브
-///   바이트를 렌더하고, 실패/빈 src는 placeholder로 대체(never-empty 기반)
+///   바이트를 렌더하고, 실패/빈 src는 alt 텍스트→placeholder로 대체
 /// - buildAsync=false: 렌더를 동기화해 페이지 전환·회귀 테스트가 결정적이도록
+///
+/// S11.4(#91): never-empty 계약(ADR-009).
+/// - 렌더 가능한 콘텐츠가 전혀 없으면 공백 대신 안내 위젯([_BlankContentNotice]).
+/// - `<img>` 실패: alt 텍스트가 있으면 우선 표시, 없으면 아이콘 placeholder.
+/// - `<math>`: 실제 MathML 렌더는 E14. 그때까지 공백 대신 [_FormulaPlaceholder].
+/// - 인라인 `<svg>`: [SvgFactory](fwfh_svg)가 렌더.
 Widget buildReflowableHtml({
   required String data,
   required double fontSize,
@@ -334,6 +340,10 @@ Widget buildReflowableHtml({
   required ImageLoader? imageLoader,
   EpubLinkTapCallback? onLinkTap,
 }) {
+  // never-empty: 렌더 가능한 콘텐츠(텍스트·이미지·svg·math)가 없으면 공백 금지.
+  if (_isBlankContent(data)) {
+    return const _BlankContentNotice();
+  }
   return HtmlWidget(
     data,
     buildAsync: false,
@@ -345,14 +355,41 @@ Widget buildReflowableHtml({
       return true;
     },
     customWidgetBuilder: (element) {
-      if (element.localName != 'img') return null;
-      final src = element.attributes['src'];
-      if (src == null || src.isEmpty) {
-        return const _ImagePlaceholder(reason: 'missing src');
+      switch (element.localName) {
+        case 'img':
+          final src = element.attributes['src'];
+          final alt = element.attributes['alt'];
+          if (src == null || src.isEmpty) {
+            return _ImagePlaceholder(reason: 'missing src', alt: alt);
+          }
+          return _RemoteImage(src: src, loader: imageLoader, alt: alt);
+        case 'math':
+          // MathML 실렌더는 E14(gap #5). 그때까지 never-empty placeholder.
+          return _FormulaPlaceholder(alt: element.attributes['alttext']);
+        default:
+          return null;
       }
-      return _RemoteImage(src: src, loader: imageLoader);
     },
   );
+}
+
+/// never-empty 계약(ADR-009): 렌더 가능한 콘텐츠가 하나도 없으면 true.
+///
+/// 시각 요소(`<img>`/`<svg>`/`<image>`/`<math>`)가 있으면 비어있지 않다. 없으면
+/// 태그·공백 엔티티를 제거해 실제 텍스트가 남는지 본다. (F2 빈 렌더 재발 방지)
+bool _isBlankContent(String html) {
+  final lower = html.toLowerCase();
+  if (lower.contains('<img') ||
+      lower.contains('<svg') ||
+      lower.contains('<image') ||
+      lower.contains('<math')) {
+    return false;
+  }
+  final text = html
+      .replaceAll(RegExp('<[^>]*>'), ' ')
+      .replaceAll(RegExp(r'&nbsp;|&#160;|&#xa0;', caseSensitive: false), ' ')
+      .trim();
+  return text.isEmpty;
 }
 
 @visibleForTesting
@@ -389,12 +426,12 @@ class RemoteImageState extends State<_RemoteImage> {
         }
         final bytes = snap.data;
         if (bytes == null) {
-          return const _ImagePlaceholder(reason: 'image load failed');
+          return _ImagePlaceholder(reason: 'image load failed', alt: widget.alt);
         }
         return Image.memory(
           bytes,
           errorBuilder: (_, __, ___) =>
-              const _ImagePlaceholder(reason: 'image decode failed'),
+              _ImagePlaceholder(reason: 'image decode failed', alt: widget.alt),
         );
       },
     );
@@ -402,35 +439,115 @@ class RemoteImageState extends State<_RemoteImage> {
 }
 
 class _RemoteImage extends StatefulWidget {
-  const _RemoteImage({required this.src, required this.loader});
+  const _RemoteImage({required this.src, required this.loader, this.alt});
   final String src;
   final ImageLoader? loader;
+
+  /// `<img alt>` — 로드 실패 시 아이콘 대신/함께 표시할 대체 텍스트.
+  final String? alt;
 
   @override
   State<_RemoteImage> createState() => RemoteImageState();
 }
 
+/// 이미지 로드 실패·미지원 콘텐츠의 placeholder. never-empty 계약(ADR-009):
+/// [alt] 텍스트가 있으면 아이콘과 함께 표시해 공백을 남기지 않는다.
 class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder({required this.reason});
+  const _ImagePlaceholder({required this.reason, this.alt});
   final String reason;
+  final String? alt;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final altText = alt?.trim();
+    final hasAlt = altText != null && altText.isNotEmpty;
     return Semantics(
-      label: 'image placeholder ($reason)',
+      label: hasAlt ? altText : 'image placeholder ($reason)',
       child: Container(
-        height: 120,
+        constraints: const BoxConstraints(minHeight: 120),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+          color: scheme.surfaceContainerHighest,
+          border: Border.all(color: scheme.outlineVariant),
           borderRadius: BorderRadius.circular(4),
         ),
         alignment: Alignment.center,
-        child: Icon(
-          Icons.image_not_supported_outlined,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.image_not_supported_outlined,
+              color: scheme.onSurfaceVariant,
+            ),
+            if (hasAlt) ...[
+              const SizedBox(height: 8),
+              Text(
+                altText,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// `<math>`(MathML) placeholder. 실제 렌더는 E14(gap #5). never-empty 계약상
+/// 공백 대신 [alt](alttext)나 "수식" 안내를 표시한다.
+class _FormulaPlaceholder extends StatelessWidget {
+  const _FormulaPlaceholder({this.alt});
+  final String? alt;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final altText = alt?.trim();
+    final label = (altText != null && altText.isNotEmpty) ? altText : '수식';
+    return Semantics(
+      label: label,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.functions, size: 18, color: scheme.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(color: scheme.onSurfaceVariant),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// never-empty 계약(ADR-009): 렌더 가능한 콘텐츠가 전혀 없는 spine에 표시되는
+/// 안내. 빈 화면(공백) 대신 사용자에게 상태를 명확히 알린다.
+class _BlankContentNotice extends StatelessWidget {
+  const _BlankContentNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: Text(
+          '이 페이지에는 표시할 내용이 없습니다.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
