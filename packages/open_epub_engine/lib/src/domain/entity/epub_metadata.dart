@@ -32,6 +32,37 @@ enum EpubSpread {
   portrait,
 }
 
+/// EPUB의 렌더링 방향(`rendition:orientation`, EPUB 3). FXL에서 주로 의미.
+enum EpubOrientation {
+  /// 디바이스/화면에 따라 자동 (default).
+  auto,
+
+  /// 가로 고정.
+  landscape,
+
+  /// 세로 고정.
+  portrait,
+}
+
+/// FXL 논리 뷰포트 크기(`rendition:viewport` = "width=W, height=H", EPUB 3.0).
+/// 순수-Dart 값(Flutter Size 아님) — reader가 Size로 매핑한다. (S13.2, gap #1)
+class EpubViewport {
+  const EpubViewport({required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  @override
+  bool operator ==(Object other) =>
+      other is EpubViewport && width == other.width && height == other.height;
+
+  @override
+  int get hashCode => Object.hash(width, height);
+
+  @override
+  String toString() => 'EpubViewport(${width}x$height)';
+}
+
 /// EPUB OPF의 `<metadata>` 추출 결과.
 class EpubMetadata {
   const EpubMetadata({
@@ -42,6 +73,8 @@ class EpubMetadata {
     this.identifier,
     this.layout = EpubLayout.reflowable,
     this.spread = EpubSpread.auto,
+    this.orientation = EpubOrientation.auto,
+    this.viewport,
   });
 
   final String title;
@@ -59,4 +92,12 @@ class EpubMetadata {
 
   /// `rendition:spread` 메타로 결정. EPUB 2 또는 미명시 시 [EpubSpread.auto].
   final EpubSpread spread;
+
+  /// `rendition:orientation` 메타. EPUB 2 또는 미명시 시 [EpubOrientation.auto].
+  /// (S13.2, gap #1)
+  final EpubOrientation orientation;
+
+  /// `rendition:viewport` 메타(FXL 논리 크기). 없으면 null — FXL은 각 spine 문서의
+  /// `<meta name="viewport">`가 우선이며, 이는 책 전역 기본값이다. (S13.2, gap #1)
+  final EpubViewport? viewport;
 }

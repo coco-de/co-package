@@ -162,7 +162,41 @@ class OpfParser {
       identifier: dcText('identifier'),
       layout: _parseLayout(prop('rendition:layout')),
       spread: _parseSpread(prop('rendition:spread')),
+      orientation: _parseOrientation(prop('rendition:orientation')),
+      viewport: _parseViewport(prop('rendition:viewport')),
     );
+  }
+
+  /// rendition:orientation 문자열을 enum으로 매핑. 비표준/미명시는 auto. (gap #1)
+  EpubOrientation _parseOrientation(String? raw) {
+    switch (raw) {
+      case 'landscape':
+        return EpubOrientation.landscape;
+      case 'portrait':
+        return EpubOrientation.portrait;
+      case 'auto':
+      case null:
+      default:
+        return EpubOrientation.auto;
+    }
+  }
+
+  /// rendition:viewport("width=1200, height=1600")를 [EpubViewport]로 파싱.
+  /// width/height 중 하나라도 없거나 비정상이면 null. (gap #1)
+  EpubViewport? _parseViewport(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final width = _dimension(raw, 'width');
+    final height = _dimension(raw, 'height');
+    if (width == null || height == null || width <= 0 || height <= 0) {
+      return null;
+    }
+    return EpubViewport(width: width, height: height);
+  }
+
+  double? _dimension(String raw, String name) {
+    final match =
+        RegExp('$name\\s*=\\s*(\\d+(?:\\.\\d+)?)').firstMatch(raw);
+    return match == null ? null : double.tryParse(match.group(1)!);
   }
 
   /// rendition:layout 문자열을 enum으로 매핑.
