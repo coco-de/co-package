@@ -1,5 +1,8 @@
 // Domain Entity — open_epub 1.0
 // Story: S1.4 (#10) — Spine 파싱 + rendition:layout 감지
+// Story: S10.6 (#83) — version getter (package@version → EpubVersion enum)
+
+import '../../schema/opf/package/epub_version.dart';
 
 /// EPUB의 layout 모드. `rendition:layout` 메타(EPUB 3) 또는 default(EPUB 2)
 /// 로부터 도출된다. Architecture §2.1의 public API.
@@ -43,6 +46,10 @@ class EpubMetadata {
 
   final String title;
   final String epubVersion; // "2.0" | "3.0" | "3.3"
+
+  /// [epubVersion] 원문을 [EpubVersion] enum으로 파싱한 값 (package@version → enum).
+  /// nav/NCX 교차검증이 필요하면 `OpfParser.detectVersion`을 사용한다. (S10.6, gap #9)
+  EpubVersion get version => EpubVersion.parse(epubVersion);
   final String? language;
   final String? author;
   final String? identifier;
