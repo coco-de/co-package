@@ -38,6 +38,19 @@ class SpineTextExtractor {
     return buffer.toString();
   }
 
+  /// canonical charOffset(=[extractPlainText] 공간, raw) ↔ 디코드된 평문 offset
+  /// 매핑을 반환한다. 디코드된 평문은 DOM 텍스트 노드(엔티티 디코드)와 같은
+  /// 공간이므로, CFI 매퍼(S12.2)가 charOffset을 CFI(:offset, 디코드 공간)와
+  /// 브리지하는 데 쓴다. (open-epub CFI, ADR-010)
+  PlainTextDecodeMapping decodePlainText(String xhtml) {
+    final mapped = _decodeEntities(extractPlainText(xhtml));
+    return PlainTextDecodeMapping._(
+      mapped.text,
+      mapped.rawStarts,
+      mapped.rawEnds,
+    );
+  }
+
   /// [selectedText]를 평문에서 찾아 [EpubSelection]으로 변환한다.
   ///
   /// [occurrence]번째 일치(0-based)를 사용한다. 정확 일치가 없으면 렌더 규칙
@@ -392,6 +405,43 @@ class _Insert {
 
 /// 문자 단위 원본 구간 매핑을 가진 텍스트 — 정규화 매칭의 역매핑용.
 /// [rawStarts]/[rawEnds]는 [text]의 각 code unit이 유래한 원본 [start,end).
+/// [SpineTextExtractor.decodePlainText]의 결과 — 디코드된 body 평문 + raw
+/// charOffset(extractPlainText 공간) ↔ 디코드 offset 양방향 변환. (S12.2 CFI)
+class PlainTextDecodeMapping {
+  const PlainTextDecodeMapping._(this.decoded, this._rawStarts, this._rawEnds);
+
+  /// 엔티티가 디코드된 body 평문. DOM 텍스트 노드 concat과 동일 공간.
+  final String decoded;
+  final List<int> _rawStarts;
+  final List<int> _rawEnds;
+
+  /// 디코드 offset → raw charOffset. 경계 밖은 clamp.
+  int decodedToRaw(int decodedOffset) {
+    if (decodedOffset <= 0) return 0;
+    if (decodedOffset >= decoded.length) {
+      return _rawEnds.isEmpty ? 0 : _rawEnds.last;
+    }
+    return _rawStarts[decodedOffset];
+  }
+
+  /// raw charOffset → 디코드 offset. rawStarts는 비감소이므로 이진 탐색으로
+  /// rawStarts[j] < rawOffset 인 디코드 char 개수를 구한다(=그 앞 문자 수).
+  int rawToDecoded(int rawOffset) {
+    if (rawOffset <= 0) return 0;
+    var lo = 0;
+    var hi = decoded.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (_rawStarts[mid] < rawOffset) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo;
+  }
+}
+
 class _MappedText {
   const _MappedText(this.text, this.rawStarts, this.rawEnds);
 
