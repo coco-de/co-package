@@ -21,7 +21,7 @@ void main() {
 
     test('같은 EPUB의 hot-swap (@P0)', () async {
       await authorOpenedPreview(world, 'draft.epub');
-      await currentBookPositionIs(world, 'ch03.xhtml', 512);
+      await currentBookPositionIs(world, 'ch03.xhtml', 5);
       await authorSendsNewBytes(world);
       await spineStructureUnchanged(world);
       await viewerImmediatelyRefreshes(world);

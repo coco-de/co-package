@@ -196,7 +196,10 @@ Future<void> bookPositionRestored(BddWorld world) async {
   expect(position, isA<EpubReflowablePosition>());
   final reflowable = position as EpubReflowablePosition;
   expect(reflowable.spineHref, 'ch03.xhtml');
-  expect(reflowable.charOffset, 512);
+  // charOffset 5는 ch03 본문("3장 본문 (vN)", 평문 10자) 범위 내 → swap 후에도
+  // anchor-of-record로 보존(S12.3 재앵커: 범위 내 offset은 유지, out-of-range만
+  // CFI/clamp 보강).
+  expect(reflowable.charOffset, 5);
   // 복원 성공 — fallback 진단이 없어야 한다.
   expect(world.diagnosticCodes, isNot(contains('position-restore-failed')));
 }

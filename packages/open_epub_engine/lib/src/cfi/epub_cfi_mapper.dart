@@ -59,6 +59,37 @@ class EpubCfiMapper {
     return mapping.decodedToRaw(decodedOffset.clamp(0, mapping.decoded.length));
   }
 
+  /// [charOffset]을 [xhtml] 평문(extractPlainText) 길이 범위로 clamp한다.
+  /// 저장된 위치의 charOffset이 (콘텐츠 변경으로) 범위를 벗어난 경우의 1차 가드.
+  int clampCharOffset(String xhtml, int charOffset) {
+    final len = _extractor.extractPlainText(xhtml).length;
+    return charOffset.clamp(0, len);
+  }
+
+  /// 콘텐츠 교체(hot-swap 등) 시 reflowable 위치를 재앵커한다. ADR-010 우선순위:
+  ///
+  /// 1. **charOffset(anchor-of-record)**: [oldCharOffset]이 새 콘텐츠 평문 범위
+  ///    안이면 그대로 유지(동일/유사 콘텐츠에서 최적, 불필요한 drift 방지).
+  /// 2. **CFI fuzzy fallback**: 범위를 벗어나면 old 콘텐츠에서 CFI를 만들어 new
+  ///    콘텐츠에 구조적으로 해석해 근접 위치를 복원.
+  /// 3. **clamp**: CFI 해석 실패 시 새 길이로 clamp.
+  int reanchorAcrossContent({
+    required String oldXhtml,
+    required int oldCharOffset,
+    required String newXhtml,
+  }) {
+    final newLen = _extractor.extractPlainText(newXhtml).length;
+    if (oldCharOffset >= 0 && oldCharOffset <= newLen) {
+      return oldCharOffset;
+    }
+    final cfi = charOffsetToCfi(oldXhtml, oldCharOffset);
+    if (cfi != null) {
+      final resolved = cfiToCharOffset(newXhtml, cfi);
+      if (resolved != null) return resolved.clamp(0, newLen);
+    }
+    return oldCharOffset.clamp(0, newLen);
+  }
+
   /// range CFI 등에서 시작 지점 경로(parent + start)를 합성한다.
   CFIPath _effectiveStartPath(CFIStructure structure) {
     final parent = structure.parent;

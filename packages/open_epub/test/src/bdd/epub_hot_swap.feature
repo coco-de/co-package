@@ -9,7 +9,7 @@ Feature: 에디터 EpubSourceBytes hot-swap
   @P0
   Scenario: 같은 EPUB의 hot-swap
     Given Author가 EPUB "draft.epub"을 미리보기로 열었다
-    And 현재 BookPosition은 spineHref="ch03.xhtml" charOffset=512이다
+    And 현재 BookPosition은 spineHref="ch03.xhtml" charOffset=5이다
     When Author가 EPUB을 수정하여 새 bytes를 전달한다
     And spine 구조가 동일하다
     Then 뷰어가 즉시 갱신된다

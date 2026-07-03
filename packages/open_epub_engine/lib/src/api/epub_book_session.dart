@@ -5,6 +5,7 @@
 
 import 'dart:async';
 
+import '../cfi/epub_cfi_mapper.dart';
 import '../data/compat/patch_catalog.dart'
     show BookSessionDiagnostics, BookSessionDiagnosticsData, UnresolvedIssue;
 import '../data/repository/epub_repository_impl.dart';
@@ -173,11 +174,16 @@ class _EpubBookSessionImpl implements EpubBookSession {
   }
 
   /// source → 보정 완료 책 + [target] 위치 복원/fallback → 세션 상태.
+  ///
+  /// [oldContent]가 주어지면(hot-swap) reflowable charOffset이 새 콘텐츠 범위를
+  /// 벗어날 때 CFI로 재앵커한다(ADR-010). 없으면(최초 open) 범위 밖 charOffset을
+  /// clamp한다. charOffset이 유효 범위면 그대로 유지(anchor-of-record).
   static Future<_SessionState> _assemble(
     EpubSource source,
     EpubPosition? target,
-    EpubSecurityConfig security,
-  ) async {
+    EpubSecurityConfig security, {
+    Map<String, String>? oldContent,
+  }) async {
     final loaded = await OpenEpubUseCase(
       EpubRepositoryImpl(security: security),
     ).call(source);
@@ -188,6 +194,12 @@ class _EpubBookSessionImpl implements EpubBookSession {
     }
 
     final resolved = const ResolvePositionUseCase().call(book, target);
+    final position = _reanchorReflowable(
+      resolved,
+      loaded.resources,
+      security,
+      oldContent,
+    );
 
     // 페이지 이동에 사용할 linear spine href 순서(없으면 전체 spine).
     final linear = [
@@ -215,10 +227,55 @@ class _EpubBookSessionImpl implements EpubBookSession {
     return _SessionState(
       book: book,
       diagnostics: diagnostics,
-      position: resolved.position,
+      position: position,
       navHrefs: navHrefs,
       resources: loaded.resources,
     );
+  }
+
+  static const EpubCfiMapper _cfiMapper = EpubCfiMapper();
+
+  /// reflowable 위치의 charOffset을 새 콘텐츠에 맞춰 재앵커한다(ADR-010).
+  /// [oldContent]가 있으면 CFI fuzzy fallback, 없으면 clamp. fallback 위치나
+  /// non-reflowable은 그대로 반환.
+  static EpubPosition _reanchorReflowable(
+    ResolvedPosition resolved,
+    EpubResourceReader resources,
+    EpubSecurityConfig security,
+    Map<String, String>? oldContent,
+  ) {
+    final position = resolved.position;
+    if (resolved.wasFallback || position is! EpubReflowablePosition) {
+      return position;
+    }
+    final newXhtml = _readSanitized(resources, position.spineHref, security);
+    if (newXhtml == null) return position;
+
+    final oldXhtml = oldContent?[position.spineHref];
+    final newOffset = oldXhtml != null
+        ? _cfiMapper.reanchorAcrossContent(
+            oldXhtml: oldXhtml,
+            oldCharOffset: position.charOffset,
+            newXhtml: newXhtml,
+          )
+        : _cfiMapper.clampCharOffset(newXhtml, position.charOffset);
+    if (newOffset == position.charOffset) return position;
+    return EpubReflowablePosition(
+      spineHref: position.spineHref,
+      progress: position.progress,
+      charOffset: newOffset,
+      pageIndex: position.pageIndex,
+    );
+  }
+
+  static String? _readSanitized(
+    EpubResourceReader resources,
+    String spineHref,
+    EpubSecurityConfig security,
+  ) {
+    final raw = resources.readString(spineHref);
+    if (raw == null) return null;
+    return HtmlSanitizer(security).sanitize(raw);
   }
 
   _SessionState _state;
@@ -441,7 +498,17 @@ class _EpubBookSessionImpl implements EpubBookSession {
     _ensureActive();
     // 현재 위치를 보존 대상으로 전달 → 새 책에 같은 spineHref가 있으면 복원,
     // 없으면 첫 페이지 fallback + position-restore-failed 진단. (BDD F10)
-    final next = await _assemble(newSource, _position, _security);
+    //
+    // reflowable이면 현재 spine의 (구)콘텐츠를 함께 넘겨, charOffset이 새
+    // 콘텐츠 범위를 벗어날 때 CFI로 재앵커한다(ADR-010, S12.3).
+    final pos = _position;
+    Map<String, String>? oldContent;
+    if (pos is EpubReflowablePosition) {
+      final oldXhtml = readSpineXhtml(pos.spineHref);
+      if (oldXhtml != null) oldContent = {pos.spineHref: oldXhtml};
+    }
+    final next =
+        await _assemble(newSource, _position, _security, oldContent: oldContent);
     _ensureActive();
     _state = next;
     _position = next.position;
