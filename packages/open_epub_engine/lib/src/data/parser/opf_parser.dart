@@ -7,6 +7,8 @@ import 'package:xml/xml.dart';
 
 import '../../domain/entity/epub_metadata.dart';
 import '../../domain/entity/epub_spine_item.dart';
+import '../../schema/opf/package/epub_version.dart';
+import '../../schema/opf/package/epub_version_detection.dart';
 
 /// OPF(`*.opf`) XML을 파싱하여 [EpubMetadata]와 spine 항목 리스트로 변환.
 ///
@@ -86,6 +88,24 @@ class OpfParser {
     }
 
     return (ncxHref: ncxHref, navHref: navHref);
+  }
+
+  /// `package@version` 선언과 목차 구조(nav/NCX 존재)를 교차검증해 실효 버전을
+  /// 도출한다. (gap #9, S10.6)
+  ///
+  /// - version 속성이 없거나 미지원이면 [EpubVersion.unknown]으로 보고 feature로 추론.
+  /// - 선언과 feature가 모순되면 [EpubVersionDetection.hasMismatch]로 표시.
+  ///
+  /// (호출 전 [parse]로 OPF 유효성이 검증된 상태를 가정)
+  EpubVersionDetection detectVersion(String opfXml) {
+    final root = XmlDocument.parse(opfXml).rootElement;
+    final declared = EpubVersion.parse(root.getAttribute('version'));
+    final toc = tocRefs(opfXml);
+    return EpubVersionDetection.resolve(
+      declared: declared,
+      hasNav: toc.navHref != null,
+      hasNcx: toc.ncxHref != null,
+    );
   }
 
   /// OPF metadata의 `rendition:layout` 원문 값을 반환한다(없으면 null).

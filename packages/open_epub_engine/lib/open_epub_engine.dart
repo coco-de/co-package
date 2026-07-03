@@ -10,6 +10,8 @@ library;
 
 // ── Schema (OPF/NCX/nav 모델) ──────────────────────────────────────────────
 export 'src/schema/opf/package/epub_version.dart' show EpubVersion;
+export 'src/schema/opf/package/epub_version_detection.dart'
+    show EpubVersionDetection;
 
 // ── API (공개 진입 표면) ───────────────────────────────────────────────────
 export 'src/api/epub_analytics.dart';
