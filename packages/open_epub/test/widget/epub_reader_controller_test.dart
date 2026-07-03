@@ -6,7 +6,7 @@ import 'package:open_epub/src/api/epub_reader_controller.dart';
 import 'package:open_epub_engine/src/api/epub_source.dart';
 import 'package:open_epub/src/presentation/widgets/epub_reader.dart';
 
-import '../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 
 void main() {
   testWidgets('controller가 페이지를 프로그램적으로 이동하고 상태를 갱신한다', (tester) async {

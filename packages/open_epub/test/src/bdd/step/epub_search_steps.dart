@@ -11,7 +11,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub_v1.dart';
 
-import '../../../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 import '_common_steps.dart';
 
 /// 검색 시나리오 상태를 추가로 담는 [BddWorld].

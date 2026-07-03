@@ -4,7 +4,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub_v1.dart';
 
-import '../../../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 import '_common_steps.dart';
 
 /// Usage: Then EPUB 뷰어가 2.0초 안에 첫 페이지를 표시한다

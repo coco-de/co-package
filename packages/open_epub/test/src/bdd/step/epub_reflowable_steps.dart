@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub_v1.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_page_view.dart';
 
-import '../../../unit/_fixtures/epub_fixtures.dart';
+import 'package:open_epub_engine/testing.dart';
 import '_common_steps.dart';
 
 /// 100% 기준 본문 글자 크기 (px).
