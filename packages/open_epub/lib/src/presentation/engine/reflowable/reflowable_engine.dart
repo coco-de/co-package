@@ -16,11 +16,14 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:fwfh_svg/fwfh_svg.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';
+
+import 'mathml_to_tex.dart';
 
 /// spine href를 받아 해당 XHTML 콘텐츠 문자열을 비동기 로드.
 typedef XhtmlLoader = Future<String> Function(String spineHref);
@@ -331,7 +334,8 @@ class _EpubWidgetFactory extends WidgetFactory with SvgFactory {}
 /// S11.4(#91): never-empty 계약(ADR-009).
 /// - 렌더 가능한 콘텐츠가 전혀 없으면 공백 대신 안내 위젯([_BlankContentNotice]).
 /// - `<img>` 실패: alt 텍스트가 있으면 우선 표시, 없으면 아이콘 placeholder.
-/// - `<math>`: 실제 MathML 렌더는 E14. 그때까지 공백 대신 [_FormulaPlaceholder].
+/// - `<math>`: [mathmlToTex]로 TeX 변환 후 [Math.tex] 렌더(S14.2, gap #5).
+///   변환 불가/파싱 실패 시 [_FormulaPlaceholder]로 폴백(never-empty).
 /// - 인라인 `<svg>`: [SvgFactory](fwfh_svg)가 렌더.
 Widget buildReflowableHtml({
   required String data,
@@ -364,8 +368,12 @@ Widget buildReflowableHtml({
           }
           return _RemoteImage(src: src, loader: imageLoader, alt: alt);
         case 'math':
-          // MathML 실렌더는 E14(gap #5). 그때까지 never-empty placeholder.
-          return _FormulaPlaceholder(alt: element.attributes['alttext']);
+          // MathML → TeX 변환 후 flutter_math_fork로 렌더(S14.2, gap #5).
+          // 변환 불가(null)면 placeholder, TeX 파싱 실패는 위젯이 폴백.
+          final tex = mathmlToTex(element);
+          final alt = element.attributes['alttext'];
+          if (tex == null) return _FormulaPlaceholder(alt: alt);
+          return _MathFormula(tex: tex, fontSize: fontSize, alt: alt);
         default:
           return null;
       }
@@ -495,8 +503,35 @@ class _ImagePlaceholder extends StatelessWidget {
   }
 }
 
-/// `<math>`(MathML) placeholder. 실제 렌더는 E14(gap #5). never-empty 계약상
-/// 공백 대신 [alt](alttext)나 "수식" 안내를 표시한다.
+/// MathML → TeX 변환 결과를 flutter_math_fork로 렌더한다(S14.2, gap #5).
+/// TeX 파싱/빌드 실패 시 [Math.tex]의 onErrorFallback이 [_FormulaPlaceholder]로
+/// 폴백해 never-empty 계약(ADR-009)을 유지한다.
+class _MathFormula extends StatelessWidget {
+  const _MathFormula({required this.tex, required this.fontSize, this.alt});
+
+  final String tex;
+  final double fontSize;
+
+  /// alttext — 렌더 실패 시 placeholder에 표시할 대체 텍스트.
+  final String? alt;
+
+  @override
+  Widget build(BuildContext context) {
+    final altText = alt?.trim();
+    return Semantics(
+      label: (altText != null && altText.isNotEmpty) ? altText : '수식',
+      child: Math.tex(
+        tex,
+        mathStyle: MathStyle.text,
+        textStyle: TextStyle(fontSize: fontSize),
+        onErrorFallback: (_) => _FormulaPlaceholder(alt: alt),
+      ),
+    );
+  }
+}
+
+/// `<math>`(MathML) placeholder. 변환/렌더 실패 시 never-empty 계약상 공백 대신
+/// [alt](alttext)나 "수식" 안내를 표시한다. (S14.2)
 class _FormulaPlaceholder extends StatelessWidget {
   const _FormulaPlaceholder({this.alt});
   final String? alt;

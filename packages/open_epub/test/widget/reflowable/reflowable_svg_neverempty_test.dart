@@ -2,6 +2,7 @@
 // BDD: F2.5 확장 (이미지/SVG/수식 placeholder), design gate C-coverage
 
 import 'package:flutter/material.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_engine.dart';
@@ -81,24 +82,49 @@ void main() {
     });
   });
 
-  group('S11.4 — <math> placeholder (E14 전까지 never-empty)', () {
-    testWidgets('<math>는 공백 대신 수식 placeholder로 대체', (tester) async {
+  // S14.2 (#106) — MathML을 TeX로 변환해 flutter_math_fork(Math)로 렌더.
+  // (S11.4의 "E14 전까지 placeholder" 동작을 대체)
+  group('S14.2 — <math> TeX 렌더 (gap #5)', () {
+    testWidgets('<math>는 Math 위젯으로 렌더된다(placeholder 아님)', (tester) async {
       await tester.pumpWidget(
         _host('<body><math><mi>x</mi><mo>+</mo><mn>1</mn></math></body>'),
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.byIcon(Icons.functions), findsOneWidget);
-      expect(find.text('수식'), findsOneWidget);
+      expect(find.byType(Math), findsOneWidget);
+      // 정상 변환 → placeholder 아이콘 없음
+      expect(find.byIcon(Icons.functions), findsNothing);
     });
 
-    testWidgets('<math alttext>는 alttext를 표시', (tester) async {
+    testWidgets('분수·지수 중첩 MathML도 Math로 렌더', (tester) async {
       await tester.pumpWidget(
-        _host('<body><math alttext="x 제곱"><msup><mi>x</mi>'
-            '<mn>2</mn></msup></math></body>'),
+        _host('<body><math><mfrac><msup><mi>x</mi><mn>2</mn></msup>'
+            '<mn>2</mn></mfrac></math></body>'),
       );
       await tester.pumpAndSettle();
-      expect(find.text('x 제곱'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      expect(find.byType(Math), findsOneWidget);
+    });
+
+    testWidgets('본문 텍스트와 수식이 함께 렌더(수식이 본문을 밀어내지 않음)',
+        (tester) async {
+      await tester.pumpWidget(
+        _host('<body><p>공식:</p><math><msup><mi>e</mi>'
+            '<mi>x</mi></msup></math></body>'),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(Math), findsOneWidget);
+      expect(find.textContaining('공식', findRichText: true), findsOneWidget);
+    });
+
+    testWidgets('변환 불가(빈 math)는 never-empty placeholder로 폴백', (tester) async {
+      // 자식·alttext·annotation 모두 없어 mathmlToTex=null → placeholder.
+      await tester.pumpWidget(_host('<body><math></math></body>'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(Math), findsNothing);
+      expect(find.byIcon(Icons.functions), findsOneWidget);
+      expect(find.text('수식'), findsOneWidget);
     });
   });
 }
