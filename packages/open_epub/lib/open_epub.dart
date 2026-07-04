@@ -27,6 +27,9 @@ export 'package:open_epub_engine/open_epub_engine.dart'
 // 읽기 능력 신호 — RTL 페이지 방향 토글(S14.1)·MO 존재 확인 등.
 export 'package:open_epub_engine/open_epub_engine.dart'
     show BookCapabilities, EpubPageProgression, EpubWritingMode;
+// Media Overlays(SMIL) — session.loadMediaOverlay 반환 타입 (S15.1).
+export 'package:open_epub_engine/open_epub_engine.dart'
+    show EpubMediaOverlay, EpubMediaPar;
 export 'package:open_epub_engine/open_epub_engine.dart'
     show EpubOutline, EpubOutlineItem;
 export 'package:open_epub_engine/open_epub_engine.dart' show EpubSpineItem;

@@ -287,7 +287,11 @@ class OpfParser {
       final href = item.getAttribute('href');
       final mediaType = item.getAttribute('media-type');
       if (id == null || href == null || mediaType == null) continue;
-      manifest[id] = _ManifestItem(href: href, mediaType: mediaType);
+      manifest[id] = _ManifestItem(
+        href: href,
+        mediaType: mediaType,
+        mediaOverlayId: item.getAttribute('media-overlay'),
+      );
     }
 
     final spine = <EpubSpineItem>[];
@@ -297,6 +301,10 @@ class OpfParser {
       final item = manifest[idref];
       if (item == null) continue; // broken-spine-href → S1.17이 진단 기록
 
+      // media-overlay id(SMIL manifest item 참조) → SMIL href 해석. (S15.1)
+      final moId = item.mediaOverlayId;
+      final mediaOverlayHref = moId == null ? null : manifest[moId]?.href;
+
       spine.add(
         EpubSpineItem(
           idref: idref,
@@ -304,6 +312,7 @@ class OpfParser {
           mediaType: item.mediaType,
           linear: ref.getAttribute('linear') != 'no',
           properties: _splitProperties(ref.getAttribute('properties')),
+          mediaOverlayHref: mediaOverlayHref,
         ),
       );
     }
@@ -318,9 +327,16 @@ class OpfParser {
 }
 
 class _ManifestItem {
-  const _ManifestItem({required this.href, required this.mediaType});
+  const _ManifestItem({
+    required this.href,
+    required this.mediaType,
+    this.mediaOverlayId,
+  });
   final String href;
   final String mediaType;
+
+  /// `media-overlay` 속성 값 — 이 문서의 SMIL manifest item id 참조. (S15.1)
+  final String? mediaOverlayId;
 }
 
 class OpfParseException implements Exception {
