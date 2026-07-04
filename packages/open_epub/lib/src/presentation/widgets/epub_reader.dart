@@ -528,6 +528,7 @@ class _SessionViewState extends State<_SessionView> {
       logicalSize: _viewportSize(xhtml),
       content: buildReflowableHtml(
         data: xhtml,
+        baseHref: item.href,
         fontSize: widget.fontSize,
         lineHeight: widget.lineHeight,
         imageLoader: _loadImage,

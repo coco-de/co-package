@@ -156,6 +156,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
         // 같은 href가 spine에 중복 등장할 수 있어 index로 구분.
         key: ValueKey('reflowable-page-$index'),
         load: _loadSpine(widget.book.spine[index].href),
+        baseHref: widget.book.spine[index].href,
         fontSize: widget.fontSize,
         lineHeight: widget.lineHeight,
         imageLoader: widget.imageLoader,
@@ -172,6 +173,7 @@ class _SpinePageView extends StatefulWidget {
   const _SpinePageView({
     super.key,
     required this.load,
+    required this.baseHref,
     required this.fontSize,
     required this.lineHeight,
     required this.imageLoader,
@@ -180,6 +182,9 @@ class _SpinePageView extends StatefulWidget {
   });
 
   final Future<String> load;
+
+  /// 이 spine 문서의 OPF 기준 href — 본문 내 상대 리소스(`<img>`) 해석 기준.
+  final String baseHref;
   final double fontSize;
   final double lineHeight;
   final ImageLoader? imageLoader;
@@ -219,6 +224,7 @@ class _SpinePageViewState extends State<_SpinePageView> {
           padding: const EdgeInsets.all(16),
           child: buildReflowableHtml(
             data: data,
+            baseHref: widget.baseHref,
             fontSize: widget.fontSize,
             lineHeight: widget.lineHeight,
             imageLoader: widget.imageLoader,

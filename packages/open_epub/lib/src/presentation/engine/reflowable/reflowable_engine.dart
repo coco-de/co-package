@@ -33,6 +33,41 @@ typedef XhtmlLoader = Future<String> Function(String spineHref);
 /// null 반환 또는 throw 시 placeholder가 표시된다.
 typedef ImageLoader = Future<Uint8List?> Function(String src);
 
+/// 문서 내 상대 리소스 참조([src])를 문서 자신의 위치([baseHref], OPF 기준 상대
+/// 경로) 기준으로 해석해 OPF 기준 상대 href로 정규화한다.
+///
+/// 예: `baseHref="text/ch3.xhtml"`, `src="../images/x.png"` → `"images/x.png"`.
+/// 리소스 reader([EpubResourceReader.readBytes])는 href를 OPF 디렉터리 기준으로
+/// 결합하므로, 하위 폴더(예: `OEBPS/text/`)에 있는 본문이 `../images/`처럼 문서
+/// 기준 상대경로로 리소스를 가리키면 문서 위치를 먼저 반영해야 한다. 이 처리가
+/// 없으면 `..`가 OPF 디렉터리를 지워 리소스를 못 찾고 이미지가 통째로 깨진다.
+/// (rank1 버그 — marionette 통합테스트에서 발견)
+///
+/// `data:`·`http(s):`·`file:` 등 스킴이 있거나 절대경로(`/…`)면 원문을 그대로
+/// 반환한다. [baseHref]가 없으면(null/빈 문자열) src를 그대로 반환한다.
+String resolveDocumentHref(String? baseHref, String src) {
+  if (src.isEmpty) return src;
+  // 스킴(data:, http:, https:, file: 등)이나 절대경로는 해석 대상이 아니다.
+  if (src.startsWith('/') ||
+      RegExp(r'^[a-zA-Z][a-zA-Z0-9+.\-]*:').hasMatch(src)) {
+    return src;
+  }
+  if (baseHref == null || baseHref.isEmpty) return src;
+  final slash = baseHref.lastIndexOf('/');
+  final baseDir = slash < 0 ? '' : baseHref.substring(0, slash);
+  final combined = baseDir.isEmpty ? src : '$baseDir/$src';
+  final parts = <String>[];
+  for (final seg in combined.split('/')) {
+    if (seg.isEmpty || seg == '.') continue;
+    if (seg == '..') {
+      if (parts.isNotEmpty) parts.removeLast();
+      continue;
+    }
+    parts.add(seg);
+  }
+  return parts.join('/');
+}
+
 /// 본문 내 링크(`<a href>`) 탭 콜백. href는 책 내부 상대 경로(예: "ch2.xhtml"),
 /// 외부 URL, 또는 하이라이트 링크(openepub-hl:ID)일 수 있다. (S7.3/S7.5)
 typedef EpubLinkTapCallback = void Function(String href);
@@ -249,6 +284,7 @@ class ReflowableEngineState extends State<ReflowableEngine> {
             // 같은 href가 spine에 중복 등장할 수 있어 index로 구분.
             key: ValueKey('reflowable-spine-$index'),
             load: _loadSpine(spine[index].href),
+            baseHref: spine[index].href,
             fontSize: widget.fontSize,
             lineHeight: widget.lineHeight,
             imageLoader: widget.imageLoader,
@@ -270,6 +306,7 @@ class _SpineItemView extends StatefulWidget {
   const _SpineItemView({
     super.key,
     required this.load,
+    required this.baseHref,
     required this.fontSize,
     required this.lineHeight,
     required this.imageLoader,
@@ -278,6 +315,9 @@ class _SpineItemView extends StatefulWidget {
   });
 
   final Future<String> load;
+
+  /// 이 spine 문서의 OPF 기준 href — 본문 내 상대 리소스(`<img>`) 해석 기준.
+  final String baseHref;
   final double fontSize;
   final double lineHeight;
   final ImageLoader? imageLoader;
@@ -312,6 +352,7 @@ class _SpineItemViewState extends State<_SpineItemView> {
           padding: const EdgeInsets.all(16),
           child: buildReflowableHtml(
             data: data,
+            baseHref: widget.baseHref,
             fontSize: widget.fontSize,
             lineHeight: widget.lineHeight,
             imageLoader: widget.imageLoader,
@@ -358,6 +399,7 @@ Widget buildReflowableHtml({
   required ImageLoader? imageLoader,
   EpubLinkTapCallback? onLinkTap,
   bool forceVertical = false,
+  String? baseHref,
 }) {
   // never-empty: 렌더 가능한 콘텐츠(텍스트·이미지·svg·math)가 없으면 공백 금지.
   if (_isBlankContent(data)) {
@@ -394,7 +436,10 @@ Widget buildReflowableHtml({
           if (src == null || src.isEmpty) {
             return _ImagePlaceholder(reason: 'missing src', alt: alt);
           }
-          return _RemoteImage(src: src, loader: imageLoader, alt: alt);
+          // src를 문서 위치(baseHref) 기준으로 OPF 상대 href로 정규화한다 —
+          // 하위 폴더 본문의 `../images/…` 상대경로가 깨지지 않도록. (rank1)
+          final resolved = resolveDocumentHref(baseHref, src);
+          return _RemoteImage(src: resolved, loader: imageLoader, alt: alt);
         case 'math':
           // MathML → TeX 변환 후 flutter_math_fork로 렌더(S14.2, gap #5).
           // 변환 불가(null)면 placeholder, TeX 파싱 실패는 위젯이 폴백.
