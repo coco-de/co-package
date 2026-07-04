@@ -406,6 +406,47 @@ Built-in themes available via `colorThemes`:
 | Green | #E8F5E9 | #1B5E20 |
 | Blue Gray | #ECEFF1 | #263238 |
 
+## Security & Scripting Policy
+
+open_epub renders book content **without a JavaScript runtime**. EPUB3 Scripted
+Content (`<script>`, inline event handlers, `javascript:` URLs, embedded
+`<iframe>`/WebView) is **intentionally not supported** — this is a security
+decision, not a missing feature, and there is no plan to enable it.
+
+**Why**
+
+- Executing book-supplied scripts would expose the reader to arbitrary code
+  execution, data exfiltration, and resource abuse. Book content is not trusted
+  with that capability.
+- The reflowable/fixed-layout renderer is `flutter_widget_from_html_core`, which
+  has no JS engine, no DOM, and no WebView. The all-in-one
+  `flutter_widget_from_html` is deliberately **not** used because it pulls in
+  `fwfh_webview` (`<iframe>` → WebView), video, and audio.
+- EPUB3 permits reading systems to disable scripting (it is an optional
+  feature). Content marked `epub:scripted` should ship a static fallback.
+
+**Defense in depth**
+
+1. **Engine sanitize** — before rendering, `html_sanitizer` strips `<script>`
+   and `<iframe>` elements (paired and self-closing). Controlled by
+   `EpubSecurityConfig.blockExternalScripts` / `blockIframes` (both `true` by
+   default).
+2. **Renderer never executes** — `flutter_widget_from_html_core` does not render
+   `<script>`/`<style>` and ignores inline event-handler attributes such as
+   `onclick`; `javascript:` links are not routed (gated by `onTapUrl`).
+
+**Scope**
+
+- Applies to both reflowable body and fixed-layout XHTML pages (same render
+  path).
+- Static content is unaffected: script-free SVG, images, and math
+  (MathML → TeX) render normally. Only executable code is blocked.
+
+This policy is locked by widget regression tests (script/iframe not rendered,
+inline handlers ignored). Other hardening — zip-slip path normalization,
+cross-origin image handling, and a file-size limit — is configured through
+`EpubSecurityConfig`.
+
 ## License
 
 MIT
