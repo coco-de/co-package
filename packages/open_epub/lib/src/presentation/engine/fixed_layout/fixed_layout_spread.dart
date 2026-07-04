@@ -50,10 +50,21 @@ class SpreadRow {
 ///
 /// 규칙:
 /// 1. page-spread-center는 단독 row.
-/// 2. 명시적 page-spread-left/right는 해당 슬롯으로 강제.
-/// 3. 미명시 항목은 흐름에 따라 좌→우 채움. 단, 다음 항목이 right 강제면
-///    빈 left를 두지 않고 cur는 left에 단독 row로 배치.
-List<SpreadRow> buildSpreadRows(List<EpubSpineItem> spine) {
+/// 2. 명시적 page-spread-left/right는 해당 슬롯으로 강제(물리적 위치 — RTL에도
+///    불변).
+/// 3. 미명시 항목은 흐름에 따라 좌→우 채움. 단, 다음 항목이 left/center 강제면
+///    빈 칸을 두지 않고 cur는 단독 row로 배치.
+///
+/// [rightToLeft](RTL, `page-progression-direction=rtl`)는 **양쪽 다 미명시인
+/// 흐름 페어링**과 **미명시 단독 페이지**에만 반전을 적용한다 — 먼저 읽는
+/// 페이지가 물리적으로 오른쪽에 온다(cur=right, next=left). 명시 슬롯
+/// (page-spread-left/right/center)은 물리적 위치이므로 RTL에도 그대로 유지되어
+/// LTR과 동일하게 배치된다(회귀 0). row 진행(다음 row=다음 spine)은 방향과
+/// 무관하게 spine 읽기 순서를 유지한다. (S14.1, gap #4 페이지 방향 반전)
+List<SpreadRow> buildSpreadRows(
+  List<EpubSpineItem> spine, {
+  bool rightToLeft = false,
+}) {
   final rows = <SpreadRow>[];
   var i = 0;
   while (i < spine.length) {
@@ -80,16 +91,27 @@ List<SpreadRow> buildSpreadRows(List<EpubSpineItem> spine) {
       final nextSlot = slotFromSpineProperties(next.properties);
       if (nextSlot == SpreadSlot.left || nextSlot == SpreadSlot.center) {
         // 다음이 left 강제면 cur는 단독 또는 right로 둘 수 없음
-        // (cur가 left 강제거나 미명시) → cur만 좌측에 두고 row 마감.
-        rows.add(SpreadRow(left: cur));
+        // (cur가 left 강제거나 미명시) → cur만 단독 row. RTL·미명시면 물리적
+        // 오른쪽, 그 외(LTR 또는 명시 left)는 왼쪽.
+        final soloRight = rightToLeft && curSlot == null;
+        rows.add(soloRight ? SpreadRow(right: cur) : SpreadRow(left: cur));
         i++;
         continue;
       }
-      // next가 right 강제 또는 미명시 → cur=left, next=right
-      rows.add(SpreadRow(left: cur, right: next));
+      // next가 right 강제 또는 미명시 → cur=left, next=right.
+      // RTL이면서 양쪽 다 미명시일 때만 좌우를 반전한다(명시 슬롯은 물리적 유지).
+      final reversePair =
+          rightToLeft && curSlot == null && nextSlot == null;
+      rows.add(
+        reversePair
+            ? SpreadRow(left: next, right: cur)
+            : SpreadRow(left: cur, right: next),
+      );
       i += 2;
     } else {
-      rows.add(SpreadRow(left: cur));
+      // 마지막 단독. RTL·미명시면 물리적 오른쪽, 그 외는 왼쪽.
+      final soloRight = rightToLeft && curSlot == null;
+      rows.add(soloRight ? SpreadRow(right: cur) : SpreadRow(left: cur));
       i++;
     }
   }

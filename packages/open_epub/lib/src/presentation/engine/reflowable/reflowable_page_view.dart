@@ -29,6 +29,7 @@ class ReflowablePageView extends StatefulWidget {
     this.onLinkTap,
     this.onNavigatorReady,
     this.contentRevision,
+    this.reverse = false,
   });
 
   final EpubBook book;
@@ -39,6 +40,11 @@ class ReflowablePageView extends StatefulWidget {
   final double lineHeight;
   final PaginationStrategy paginationStrategy;
   final ValueChanged<int>? onPageChanged;
+
+  /// 우→좌 진행(RTL, `page-progression-direction=rtl`). true면 PageView 스크롤
+  /// 방향을 반전해 다음 페이지가 왼쪽에서 나타난다. 페이지 인덱스 계약(다음=+1)은
+  /// 불변이며 시각적 방향만 바뀐다. (S14.1, gap #4)
+  final bool reverse;
 
   /// 본문 링크/하이라이트 탭 콜백. (S7.3/S7.5)
   final EpubLinkTapCallback? onLinkTap;
@@ -136,6 +142,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
 
     return PageView.builder(
       controller: _controller,
+      reverse: widget.reverse,
       itemCount: pageCount,
       onPageChanged: (i) {
         setState(() => _pageIndex = i);

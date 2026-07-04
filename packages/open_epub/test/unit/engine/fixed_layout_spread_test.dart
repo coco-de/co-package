@@ -125,6 +125,79 @@ void main() {
       expect(buildSpreadRows(const []), isEmpty);
     });
   });
+
+  // S14.1 (#105) — RTL page-progression: 미명시 흐름 페어링/단독만 좌우 반전,
+  // 명시 슬롯은 물리적 위치 유지(LTR과 동일).
+  group('buildSpreadRows — RTL (rightToLeft)', () {
+    test('미명시 4개 → 먼저 읽는 페이지가 물리적 오른쪽', () {
+      final spine = _items([
+        ('a', const []),
+        ('b', const []),
+        ('c', const []),
+        ('d', const []),
+      ]);
+      final rows = buildSpreadRows(spine, rightToLeft: true);
+      expect(rows, hasLength(2));
+      // a가 먼저 → 오른쪽, b → 왼쪽
+      expect(rows[0].right?.idref, 'a');
+      expect(rows[0].left?.idref, 'b');
+      expect(rows[1].right?.idref, 'c');
+      expect(rows[1].left?.idref, 'd');
+    });
+
+    test('미명시 마지막 단독 → 물리적 오른쪽', () {
+      final spine = _items([
+        ('a', const []),
+        ('b', const []),
+        ('c', const []),
+      ]);
+      final rows = buildSpreadRows(spine, rightToLeft: true);
+      expect(rows, hasLength(2));
+      expect(rows[0].right?.idref, 'a');
+      expect(rows[0].left?.idref, 'b');
+      // c 단독 → 오른쪽(RTL), 왼쪽 비움
+      expect(rows[1].right?.idref, 'c');
+      expect(rows[1].left, isNull);
+    });
+
+    test('명시 page-spread-left/right 페어는 RTL에도 물리적 위치 불변', () {
+      final spine = _items([
+        ('a', ['page-spread-left']),
+        ('b', ['page-spread-right']),
+      ]);
+      final rows = buildSpreadRows(spine, rightToLeft: true);
+      expect(rows, hasLength(1));
+      // 명시 슬롯 → LTR과 동일
+      expect(rows[0].left?.idref, 'a');
+      expect(rows[0].right?.idref, 'b');
+    });
+
+    test('center 페이지는 RTL에도 단독 row', () {
+      final spine = _items([
+        ('cover', ['rendition:page-spread-center']),
+        ('a', const []),
+        ('b', const []),
+      ]);
+      final rows = buildSpreadRows(spine, rightToLeft: true);
+      expect(rows, hasLength(2));
+      expect(rows[0].isCenter, isTrue);
+      expect(rows[1].right?.idref, 'a');
+      expect(rows[1].left?.idref, 'b');
+    });
+
+    test('rightToLeft=false는 LTR과 동일(기본값 회귀)', () {
+      final spine = _items([
+        ('a', const []),
+        ('b', const []),
+      ]);
+      final ltr = buildSpreadRows(spine);
+      final explicitLtr = buildSpreadRows(spine, rightToLeft: false);
+      expect(explicitLtr[0].left?.idref, ltr[0].left?.idref);
+      expect(explicitLtr[0].right?.idref, ltr[0].right?.idref);
+      expect(explicitLtr[0].left?.idref, 'a');
+      expect(explicitLtr[0].right?.idref, 'b');
+    });
+  });
 }
 
 List<EpubSpineItem> _items(List<(String, List<String>)> data) => [

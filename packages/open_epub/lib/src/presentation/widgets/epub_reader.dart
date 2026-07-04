@@ -58,6 +58,7 @@ class EpubReader extends StatefulWidget {
     this.fixedLayoutContentBuilder,
     this.fixedLayoutZoomEnabled = true,
     this.fixedLayoutSpreadOverride,
+    this.readingDirection,
   });
 
   final EpubSource source;
@@ -118,6 +119,13 @@ class EpubReader extends StatefulWidget {
   /// 양면. reflowable 본문에는 영향 없음. (kobic#7576)
   final EpubSpread? fixedLayoutSpreadOverride;
 
+  /// 페이지 넘김 방향 강제. null이면 책의 `page-progression-direction`
+  /// (`session.capabilities.pageProgressionDirection`)을 따른다(auto). 호스트의
+  /// 방향 토글이 [EpubPageProgression.ltr]/[EpubPageProgression.rtl]을 명시해
+  /// 덮어쓴다. [EpubPageProgression.rtl]이면 reflowable(paged)·fixed-layout 모두
+  /// 넘김/스와이프 방향이 우→좌로 반전된다. (S14.1, gap #4)
+  final EpubPageProgression? readingDirection;
+
   @override
   State<EpubReader> createState() => _EpubReaderState();
 }
@@ -176,6 +184,7 @@ class _EpubReaderState extends State<EpubReader> {
           fixedLayoutContentBuilder: widget.fixedLayoutContentBuilder,
           fixedLayoutZoomEnabled: widget.fixedLayoutZoomEnabled,
           fixedLayoutSpreadOverride: widget.fixedLayoutSpreadOverride,
+          readingDirection: widget.readingDirection,
         );
       },
     );
@@ -198,6 +207,7 @@ class _SessionView extends StatefulWidget {
     required this.fixedLayoutContentBuilder,
     required this.fixedLayoutZoomEnabled,
     required this.fixedLayoutSpreadOverride,
+    required this.readingDirection,
   });
 
   final EpubBookSession session;
@@ -214,6 +224,7 @@ class _SessionView extends StatefulWidget {
   final FixedLayoutContentBuilder? fixedLayoutContentBuilder;
   final bool fixedLayoutZoomEnabled;
   final EpubSpread? fixedLayoutSpreadOverride;
+  final EpubPageProgression? readingDirection;
 
   @override
   State<_SessionView> createState() => _SessionViewState();
@@ -235,6 +246,15 @@ class _SessionViewState extends State<_SessionView> {
       if (issue.code == 'position-restore-failed') return issue.message;
     }
     return null;
+  }
+
+  /// 유효 읽기 방향이 RTL인지 — override(readingDirection)가 있으면 그것을,
+  /// 없으면 책의 `page-progression-direction`(capabilities)을 따른다(auto).
+  /// auto/ltr은 false. (S14.1, gap #4)
+  bool get _isRtl {
+    final direction =
+        widget.readingDirection ?? _session.capabilities.pageProgressionDirection;
+    return direction == EpubPageProgression.rtl;
   }
 
   @override
@@ -297,6 +317,8 @@ class _SessionViewState extends State<_SessionView> {
         contentBuilder: widget.fixedLayoutContentBuilder,
         enableZoom: widget.fixedLayoutZoomEnabled,
         spreadOverride: widget.fixedLayoutSpreadOverride,
+        // RTL이면 spread 좌우 배치·스와이프 방향 반전. (S14.1)
+        rightToLeft: _isRtl,
         // 스와이프·프로그램적 이동을 reflowable paged와 동일 계약으로 배선
         // — 세션 위치/컨트롤러/onPageChanged 동기화 (kobic#7576).
         onSpineChanged: _handlePageChanged,
@@ -313,6 +335,8 @@ class _SessionViewState extends State<_SessionView> {
         lineHeight: widget.lineHeight,
         onLinkTap: widget.onLinkTap,
         onPageChanged: _handlePageChanged,
+        // RTL이면 PageView 스크롤 방향 반전(다음=좌향). (S14.1)
+        reverse: _isRtl,
         onNavigatorReady: (navigate) =>
             widget.controller?.attachNavigator(navigate),
         // 하이라이트 목록이 바뀌면 spine XHTML을 다시 로드해 본문에 즉시
