@@ -2,7 +2,6 @@
 // gap #6 배선분
 
 import 'package:open_epub_engine/open_epub_engine.dart';
-import 'package:open_epub_engine/src/data/parser/opf_parser.dart';
 import 'package:open_epub_engine/testing.dart';
 import 'package:test/test.dart';
 
