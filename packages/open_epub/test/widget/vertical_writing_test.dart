@@ -92,6 +92,27 @@ void main() {
       expect(find.byType(VerticalTextBlock), findsNothing);
       expect(find.byType(HtmlWidget), findsOneWidget);
     });
+
+    // marionette 통합테스트(노회찬평전 EPUB2)에서 발견: 세로 경로가 raw
+    // extractPlainText를 써서 &#160; 등 HTML 엔티티가 '& # 1 6 0 ;'로 셀마다
+    // 렌더되던 버그 → decodePlainText로 디코드. (S15.4 회귀)
+    testWidgets('세로 조판 시 HTML 엔티티가 디코드된다', (tester) async {
+      await tester.pumpWidget(_html(
+        '<body style="writing-mode: vertical-rl">'
+        '<p>가&#160;나&#8217;다</p></body>',
+      ));
+      await tester.pumpAndSettle();
+      final block =
+          tester.widget<VerticalTextBlock>(find.byType(VerticalTextBlock));
+      // 엔티티 원문(&#, 숫자, 세미콜론)이 그대로 남아있지 않아야 한다.
+      expect(block.text, isNot(contains('&#')));
+      expect(block.text, isNot(contains('160')));
+      // &#8217; → 오른작은따옴표(U+2019)로 디코드.
+      expect(block.text, contains('’'));
+      // 본문 글자는 보존.
+      expect(block.text, contains('가'));
+      expect(block.text, contains('다'));
+    });
   });
 
   group('EpubReader — 세로쓰기 override 통합 (S15.4)', () {
