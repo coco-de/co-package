@@ -341,6 +341,62 @@ void main() {
     });
   });
 
+  // S14.1 (#105) — RTL page-progression: paged 모드에서 넘김 방향 반전.
+  group('ReflowablePageView — RTL 넘김 방향 (S14.1, F2)', () {
+    testWidgets('reverse=true → PageView.reverse 반영(다음=좌향)',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml', 'c.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            reverse: true,
+            xhtmlLoader: (href) async => _wrapXhtml('<p>$href</p>'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final pageView = tester.widget<PageView>(find.byType(PageView));
+      expect(pageView.reverse, isTrue);
+    });
+
+    testWidgets('reverse 기본값 false(LTR 회귀)', (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _wrapXhtml('<p>$href</p>'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final pageView = tester.widget<PageView>(find.byType(PageView));
+      expect(pageView.reverse, isFalse);
+    });
+
+    testWidgets('RTL이어도 페이지 인덱스 계약(다음=+1)은 불변', (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml', 'c.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            reverse: true,
+            xhtmlLoader: (href) async => _wrapXhtml('<p>$href</p>'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.pageIndex, 0);
+      unawaited(state.nextPage());
+      await tester.pumpAndSettle();
+      expect(state.pageIndex, 1);
+    });
+  });
+
   // F2-Edge1 (flow-permutation): Reflowable 모드에서 글자 크기 변경 직후 페이지
   // 전환 → 새 페이지네이션(새 글자 크기)으로 다음 페이지가 렌더된다. 렌더러
   // fwfh 교체(S11.3) 후 페이지네이션 회귀 방지.

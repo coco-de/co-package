@@ -220,6 +220,67 @@ void main() {
       expect(find.text('b.xhtml'), findsNothing);
     });
   });
+
+  // S14.1 (#105) — RTL page-progression: 스와이프→페이지 매핑 반전.
+  group('FixedLayoutEngine — RTL 스와이프 반전 (S14.1)', () {
+    testWidgets('rightToLeft: 우측 fling → 다음, 좌측 fling → 이전', (tester) async {
+      final book = _fakeBook(
+        spread: EpubSpread.none,
+        spine: const [('a', []), ('b', [])],
+      );
+      await tester.pumpWidget(_wrap(
+        width: 400,
+        height: 600,
+        child: FixedLayoutEngine(
+          book: book,
+          pageBuilder: _textPageBuilder,
+          rightToLeft: true,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // RTL: 우측 fling = 다음 페이지
+      await tester.fling(find.text('a.xhtml'), const Offset(200, 0), 1000);
+      await tester.pumpAndSettle();
+      expect(find.text('b.xhtml'), findsOneWidget);
+      expect(find.text('a.xhtml'), findsNothing);
+
+      // RTL: 좌측 fling = 이전 페이지
+      await tester.fling(find.text('b.xhtml'), const Offset(-200, 0), 1000);
+      await tester.pumpAndSettle();
+      expect(find.text('a.xhtml'), findsOneWidget);
+    });
+
+    testWidgets('rightToLeft 토글 시 현재 spine 위치 유지', (tester) async {
+      final book = _fakeBook(
+        spread: EpubSpread.none,
+        spine: const [('a', []), ('b', []), ('c', [])],
+      );
+      Widget at(bool rtl) => _wrap(
+            width: 400,
+            height: 600,
+            child: FixedLayoutEngine(
+              book: book,
+              pageBuilder: _textPageBuilder,
+              rightToLeft: rtl,
+            ),
+          );
+      await tester.pumpWidget(at(false));
+      await tester.pumpAndSettle();
+      final state = tester.state<FixedLayoutEngineState>(
+        find.byType(FixedLayoutEngine),
+      );
+      state.jumpToSpine(2);
+      await tester.pumpAndSettle();
+      expect(state.spineIndex, 2);
+
+      // 방향 토글 — 위치는 보존되어야 함
+      await tester.pumpWidget(at(true));
+      await tester.pumpAndSettle();
+      expect(state.spineIndex, 2);
+      expect(find.text('c.xhtml'), findsOneWidget);
+    });
+  });
 }
 
 // -------- helpers --------

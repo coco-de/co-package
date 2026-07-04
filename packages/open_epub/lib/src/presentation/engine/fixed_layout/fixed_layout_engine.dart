@@ -61,12 +61,18 @@ class FixedLayoutEngine extends StatefulWidget {
     this.enableZoom = true,
     this.onSpineChanged,
     this.onNavigatorReady,
+    this.rightToLeft = false,
   });
 
   final EpubBook book;
   final FixedLayoutPageBuilder pageBuilder;
   final int initialSpineIndex;
   final ViewportFitter fitter;
+
+  /// 우→좌 진행(RTL, `page-progression-direction=rtl`). true면 2-page spread
+  /// 내부 좌우 배치를 뒤집고(먼저 읽는 페이지가 오른쪽), 수평 스와이프→페이지
+  /// 매핑을 반전한다(오른쪽 스와이프=다음). (S14.1, gap #4)
+  final bool rightToLeft;
 
   /// 표시 spine이 바뀔 때 호출된다(스와이프·프로그램적 이동). 인자는 새 spine
   /// 인덱스(0-based). 호스트가 세션 위치·진행률 동기화에 사용 (kobic#7576).
@@ -117,7 +123,10 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
       0,
       widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
     );
-    _spreadRows = buildSpreadRows(widget.book.spine);
+    _spreadRows = buildSpreadRows(
+      widget.book.spine,
+      rightToLeft: widget.rightToLeft,
+    );
     _rowIndex = _findRowIndexForSpine(_spineIndex);
     widget.onNavigatorReady?.call((index) async => jumpToSpine(index));
   }
@@ -130,7 +139,17 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
         0,
         widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
       );
-      _spreadRows = buildSpreadRows(widget.book.spine);
+      _spreadRows = buildSpreadRows(
+        widget.book.spine,
+        rightToLeft: widget.rightToLeft,
+      );
+      _rowIndex = _findRowIndexForSpine(_spineIndex);
+    } else if (oldWidget.rightToLeft != widget.rightToLeft) {
+      // 방향만 토글 — 현재 위치는 유지하고 row 좌우 배치만 다시 구성한다.
+      _spreadRows = buildSpreadRows(
+        widget.book.spine,
+        rightToLeft: widget.rightToLeft,
+      );
       _rowIndex = _findRowIndexForSpine(_spineIndex);
     }
   }
@@ -205,10 +224,11 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
     return true;
   }
 
-  /// FixedLayoutPage가 줌 1.0x에서 감지한 수평 fling — 좌 fling=다음 페이지.
-  void _onSwipeLeft() => nextPage();
+  /// FixedLayoutPage가 줌 1.0x에서 감지한 수평 fling. LTR은 좌 fling=다음,
+  /// RTL([rightToLeft])은 우 fling=다음으로 반전한다. (S14.1, gap #4)
+  void _onSwipeLeft() => widget.rightToLeft ? previousPage() : nextPage();
 
-  void _onSwipeRight() => previousPage();
+  void _onSwipeRight() => widget.rightToLeft ? nextPage() : previousPage();
 
   @override
   Widget build(BuildContext context) {

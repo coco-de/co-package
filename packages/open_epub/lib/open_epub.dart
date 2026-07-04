@@ -24,6 +24,9 @@ export 'package:open_epub_engine/open_epub_engine.dart'
 export 'package:open_epub_engine/open_epub_engine.dart' show EpubBook;
 export 'package:open_epub_engine/open_epub_engine.dart'
     show EpubMetadata, EpubLayout, EpubSpread;
+// 읽기 능력 신호 — RTL 페이지 방향 토글(S14.1)·MO 존재 확인 등.
+export 'package:open_epub_engine/open_epub_engine.dart'
+    show BookCapabilities, EpubPageProgression, EpubWritingMode;
 export 'package:open_epub_engine/open_epub_engine.dart'
     show EpubOutline, EpubOutlineItem;
 export 'package:open_epub_engine/open_epub_engine.dart' show EpubSpineItem;
