@@ -35,6 +35,16 @@ dependencies:
   flutter_widget_from_html_core: ^0.17.0
   fwfh_svg: ^0.16.0
 
+  # S14.2(#106, gap #5): MathML 자체 폴백 렌더. fwfh는 <math>를 지원하지 않으므로
+  # customWidgetBuilder에서 MathML→TeX 변환 후 flutter_math_fork로 렌더한다.
+  # 변환 불가/파싱 실패 시 placeholder로 폴백(never-empty, ADR-009).
+  flutter_math_fork: ^0.7.3
+
+  # S14.2(#106): MathML presentation 트리(dom.Element) 순회로 TeX 변환. fwfh가
+  # 전이 의존하지만, MathML 자식 순회를 위해 직접 참조하므로 명시 의존으로 둔다.
+  # (S11.2에서 레거시 파서용으로 drop됐던 것을 렌더 목적으로 재도입)
+  html: ^0.15.4
+
   # 전체 spine 연속 세로 스크롤의 위치 추적 (kobic#7572, reflowable_engine)
   scrollable_positioned_list: ^0.3.8
 
