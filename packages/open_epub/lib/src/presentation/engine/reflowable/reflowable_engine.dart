@@ -24,6 +24,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:open_epub_engine/open_epub_engine.dart';
 
 import 'mathml_to_tex.dart';
+import 'vertical_text_block.dart';
 
 /// spine href를 받아 해당 XHTML 콘텐츠 문자열을 비동기 로드.
 typedef XhtmlLoader = Future<String> Function(String spineHref);
@@ -57,12 +58,17 @@ class ReflowableEngine extends StatefulWidget {
     this.onLinkTap,
     this.onSpineChanged,
     this.contentRevision,
+    this.forceVertical = false,
   });
 
   final EpubBook book;
   final XhtmlLoader xhtmlLoader;
   final ImageLoader? imageLoader;
   final int initialSpineIndex;
+
+  /// 세로쓰기 강제(스타일시트로만 vertical-* 선언한 책용). 단순 텍스트 spine에만
+  /// 적용된다. (S15.4, gap #4 조판분)
+  final bool forceVertical;
 
   /// 본문 글자 크기 (px). BDD F2.2 — 변경 시 본문 재배치 + spineIndex 보존.
   final double fontSize;
@@ -247,6 +253,7 @@ class ReflowableEngineState extends State<ReflowableEngine> {
             lineHeight: widget.lineHeight,
             imageLoader: widget.imageLoader,
             onLinkTap: widget.onLinkTap,
+            forceVertical: widget.forceVertical,
           ),
         ),
       ),
@@ -267,6 +274,7 @@ class _SpineItemView extends StatefulWidget {
     required this.lineHeight,
     required this.imageLoader,
     required this.onLinkTap,
+    required this.forceVertical,
   });
 
   final Future<String> load;
@@ -274,6 +282,7 @@ class _SpineItemView extends StatefulWidget {
   final double lineHeight;
   final ImageLoader? imageLoader;
   final EpubLinkTapCallback? onLinkTap;
+  final bool forceVertical;
 
   @override
   State<_SpineItemView> createState() => _SpineItemViewState();
@@ -307,6 +316,7 @@ class _SpineItemViewState extends State<_SpineItemView> {
             lineHeight: widget.lineHeight,
             imageLoader: widget.imageLoader,
             onLinkTap: widget.onLinkTap,
+            forceVertical: widget.forceVertical,
           ),
         );
       },
@@ -337,16 +347,31 @@ class _EpubWidgetFactory extends WidgetFactory with SvgFactory {}
 /// - `<math>`: [mathmlToTex]로 TeX 변환 후 [Math.tex] 렌더(S14.2, gap #5).
 ///   변환 불가/파싱 실패 시 [_FormulaPlaceholder]로 폴백(never-empty).
 /// - 인라인 `<svg>`: [SvgFactory](fwfh_svg)가 렌더.
+///
+/// S15.4(#111): [forceVertical]이거나 본문이 `writing-mode: vertical-*`를 인라인
+/// 선언하면, 단순 텍스트 콘텐츠(이미지·SVG·수식·표 없음)에 한해 [VerticalTextBlock]
+/// 세로 조판으로 렌더한다(gap #4 조판분). 복잡 콘텐츠는 가로 렌더로 폴백.
 Widget buildReflowableHtml({
   required String data,
   required double fontSize,
   required double lineHeight,
   required ImageLoader? imageLoader,
   EpubLinkTapCallback? onLinkTap,
+  bool forceVertical = false,
 }) {
   // never-empty: 렌더 가능한 콘텐츠(텍스트·이미지·svg·math)가 없으면 공백 금지.
   if (_isBlankContent(data)) {
     return const _BlankContentNotice();
+  }
+  // 세로쓰기: 인라인 선언 또는 override + 단순 텍스트 콘텐츠일 때만. (S15.4)
+  if ((forceVertical || declaresVerticalWriting(data)) &&
+      isSimpleTextContent(data)) {
+    return VerticalTextBlock(
+      text: const SpineTextExtractor().extractPlainText(data),
+      fontSize: fontSize,
+      lineHeight: lineHeight,
+      leftToRight: isVerticalLr(data),
+    );
   }
   return HtmlWidget(
     data,

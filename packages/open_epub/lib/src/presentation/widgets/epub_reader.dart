@@ -62,6 +62,7 @@ class EpubReader extends StatefulWidget {
     this.fixedLayoutSpreadOverride,
     this.readingDirection,
     this.mediaOverlayController,
+    this.verticalWriting = false,
   });
 
   final EpubSource source;
@@ -135,6 +136,13 @@ class EpubReader extends StatefulWidget {
   /// 본문에만 적용된다. (S15.3, gap #6 동기화분)
   final MediaOverlayController? mediaOverlayController;
 
+  /// 세로쓰기(vertical-rl/lr) 조판 강제. 스타일시트로만 writing-mode를 선언해
+  /// 본문 인라인 감지가 안 되는 책용(호스트가 capabilities/자체 판단으로 지정).
+  /// 본문이 인라인으로 vertical-*를 선언하면 이 값과 무관하게 자동 세로 조판된다.
+  /// 단순 텍스트 spine에만 적용되고 이미지·수식 등 복잡 콘텐츠는 가로로 폴백한다.
+  /// reflowable 본문에만 적용. (S15.4, gap #4 조판분, 실용 구현)
+  final bool verticalWriting;
+
   @override
   State<EpubReader> createState() => _EpubReaderState();
 }
@@ -195,6 +203,7 @@ class _EpubReaderState extends State<EpubReader> {
           fixedLayoutSpreadOverride: widget.fixedLayoutSpreadOverride,
           readingDirection: widget.readingDirection,
           mediaOverlayController: widget.mediaOverlayController,
+          verticalWriting: widget.verticalWriting,
         );
       },
     );
@@ -219,6 +228,7 @@ class _SessionView extends StatefulWidget {
     required this.fixedLayoutSpreadOverride,
     required this.readingDirection,
     required this.mediaOverlayController,
+    required this.verticalWriting,
   });
 
   final EpubBookSession session;
@@ -237,6 +247,7 @@ class _SessionView extends StatefulWidget {
   final EpubSpread? fixedLayoutSpreadOverride;
   final EpubPageProgression? readingDirection;
   final MediaOverlayController? mediaOverlayController;
+  final bool verticalWriting;
 
   @override
   State<_SessionView> createState() => _SessionViewState();
@@ -381,6 +392,8 @@ class _SessionViewState extends State<_SessionView> {
         onPageChanged: _handlePageChanged,
         // RTL이면 PageView 스크롤 방향 반전(다음=좌향). (S14.1)
         reverse: _isRtl,
+        // 세로쓰기 강제(단순 텍스트 spine 세로 조판). (S15.4)
+        forceVertical: widget.verticalWriting,
         onNavigatorReady: (navigate) =>
             widget.controller?.attachNavigator(navigate),
         // 하이라이트 목록/낭독 활성 par가 바뀌면 spine XHTML을 다시 로드해 본문에
@@ -402,6 +415,8 @@ class _SessionViewState extends State<_SessionView> {
         // 하이라이트 목록/낭독 활성 par가 바뀌면 spine XHTML을 다시 로드해 본문에
         // 즉시 반영한다. (open-epub#62, S15.3)
         contentRevision: _contentRevision,
+        // 세로쓰기 강제(단순 텍스트 spine 세로 조판). (S15.4)
+        forceVertical: widget.verticalWriting,
       );
     }
 
