@@ -99,6 +99,14 @@ export 'package:open_epub_engine/open_epub_engine.dart'
 // 1.0 reader 페이지 내비게이션 컨트롤러 (S8.1)
 export 'src/api/epub_reader_controller.dart' show EpubViewController;
 
+// Media Overlays 재생 (S15.2) — 추상 플레이어 + 기본 구현 + 재생 컨트롤러.
+export 'src/presentation/media_overlay/media_audio_player.dart'
+    show MediaAudioPlayer;
+export 'src/presentation/media_overlay/just_audio_media_player.dart'
+    show JustAudioMediaPlayer;
+export 'src/presentation/media_overlay/media_overlay_controller.dart'
+    show MediaOverlayController, MediaOverlayState, MediaOverlayAudioLoader;
+
 // Reader interop primitive — Flutter측 (E7)
 export 'src/presentation/interop/epub_selection_toolbar.dart'
     show EpubSelectionAction, epubSelectionButtonItems;
