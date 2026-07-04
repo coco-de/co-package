@@ -45,6 +45,11 @@ dependencies:
   # (S11.2에서 레거시 파서용으로 drop됐던 것을 렌더 목적으로 재도입)
   html: ^0.15.4
 
+  # S15.2(#109, gap #6 재생분): Media Overlays 오디오 재생 기본 구현. MediaAudioPlayer
+  # 추상 인터페이스 뒤에 두어 호스트가 자체 오디오 스택으로 교체 가능하며, 테스트는
+  # fake player로 결정적으로 검증한다(플러그인 경계는 미단언).
+  just_audio: ^0.10.0
+
   # 전체 spine 연속 세로 스크롤의 위치 추적 (kobic#7572, reflowable_engine)
   scrollable_positioned_list: ^0.3.8
 
