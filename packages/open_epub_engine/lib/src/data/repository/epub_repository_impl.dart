@@ -111,6 +111,7 @@ class EpubRepositoryImpl implements EpubRepository {
     final opfDir = _dirOf(opfPath);
     final outline = _parseOutline(archive, opfDir, tocRefs);
     final navigation = _parseNavigation(archive, opfDir, tocRefs);
+    final capabilities = _opfParser.parseCapabilities(opfXml);
 
     return RawEpubLoad(
       book: PatchedEpubBook(
@@ -121,6 +122,7 @@ class EpubRepositoryImpl implements EpubRepository {
       patches: patches,
       resources: ArchiveResourceReader(archive, opfDir),
       navigation: navigation,
+      capabilities: capabilities,
     );
   }
 

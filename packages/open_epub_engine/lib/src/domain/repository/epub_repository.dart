@@ -4,6 +4,7 @@
 import '../../api/epub_book.dart';
 import '../../api/epub_source.dart';
 import '../../data/compat/patch_catalog.dart' show AppliedPatch;
+import '../entity/epub_capabilities.dart';
 import '../entity/epub_navigation.dart';
 import '../entity/epub_resource.dart';
 
@@ -22,6 +23,7 @@ class RawEpubLoad {
     this.patches = const [],
     this.resources = const EmptyEpubResourceReader(),
     this.navigation = EpubNavigation.empty,
+    this.capabilities = BookCapabilities.defaults,
   });
 
   final EpubBook book;
@@ -30,4 +32,7 @@ class RawEpubLoad {
 
   /// toc 외 보조 내비게이션(landmarks / page-list). (S13.1, gap #2)
   final EpubNavigation navigation;
+
+  /// 책의 읽기전용 능력 신호(PPD/writingMode/미디어오버레이). (S13.3, gap #3)
+  final BookCapabilities capabilities;
 }

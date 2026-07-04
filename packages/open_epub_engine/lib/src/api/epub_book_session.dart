@@ -11,6 +11,7 @@ import '../data/compat/patch_catalog.dart'
 import '../data/repository/epub_repository_impl.dart';
 import '../data/security/html_sanitizer.dart';
 import '../data/text/spine_text_extractor.dart';
+import '../domain/entity/epub_capabilities.dart';
 import '../domain/entity/epub_highlight.dart';
 import '../domain/entity/epub_navigation.dart';
 import '../domain/entity/epub_outline.dart';
@@ -77,6 +78,10 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
   /// toc 외 보조 내비게이션 — landmarks(주요 위치 바로가기) / page-list(인쇄
   /// 페이지 번호). EPUB 2 또는 부재 시 [EpubNavigation.empty]. (S13.1, gap #2)
   EpubNavigation get navigation;
+
+  /// 책의 읽기전용 능력 신호 — 진행 방향(PPD)·writingMode·미디어오버레이 존재.
+  /// 호스트가 RTL/MO를 파싱 없이 확인한다. (S13.3, gap #3, 아키텍처 §4.4)
+  BookCapabilities get capabilities;
 
   /// 현재 선택 영역 stream. 호스트(UI)가 [reportSelection]로 push한다.
   /// 선택 해제 시 null. (S1.5-2, 설계 §4.3)
@@ -154,6 +159,7 @@ class _SessionState {
     required this.navHrefs,
     required this.resources,
     this.navigation = EpubNavigation.empty,
+    this.capabilities = BookCapabilities.defaults,
   });
 
   final EpubBook book;
@@ -162,6 +168,7 @@ class _SessionState {
   final List<String> navHrefs;
   final EpubResourceReader resources;
   final EpubNavigation navigation;
+  final BookCapabilities capabilities;
 }
 
 class _EpubBookSessionImpl implements EpubBookSession {
@@ -247,6 +254,7 @@ class _EpubBookSessionImpl implements EpubBookSession {
       navHrefs: navHrefs,
       resources: loaded.resources,
       navigation: loaded.navigation,
+      capabilities: loaded.capabilities,
     );
   }
 
@@ -388,6 +396,9 @@ class _EpubBookSessionImpl implements EpubBookSession {
 
   @override
   EpubNavigation get navigation => _state.navigation;
+
+  @override
+  BookCapabilities get capabilities => _state.capabilities;
 
   @override
   Stream<EpubSelection?> get selectionStream => _selection.stream;
