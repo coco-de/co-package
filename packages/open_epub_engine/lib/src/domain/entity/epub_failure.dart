@@ -39,6 +39,23 @@ class EpubCorrupted extends EpubFailure {
   const EpubCorrupted(super.message);
 }
 
+/// 콘텐츠가 미지원 암호화(상업 DRM: ADEPT/LCP/AES 등)로 보호되어 열 수 없음.
+/// IDPF/Adobe 폰트 난독화는 [FontObfuscation]으로 투명 해제되므로 여기 해당 안 함.
+/// (S13.5, #102, gap #8)
+class EpubEncryptedUnsupported extends EpubFailure {
+  EpubEncryptedUnsupported({required this.algorithm, this.uri})
+      : super(
+          'content is protected by unsupported encryption '
+          '"$algorithm"${uri != null ? ' ($uri)' : ''}',
+        );
+
+  /// XML Encryption의 EncryptionMethod Algorithm URI.
+  final String algorithm;
+
+  /// 암호화된 리소스 경로(있으면).
+  final String? uri;
+}
+
 /// 분류되지 않은 기타 실패.
 class EpubUnknown extends EpubFailure {
   const EpubUnknown(super.message);
