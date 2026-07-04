@@ -111,7 +111,7 @@ class EpubRepositoryImpl implements EpubRepository {
     }
 
     final opfDir = _dirOf(opfPath);
-    final outline = _parseOutline(archive, opfDir, tocRefs);
+    final outline = _parseOutline(archive, opfDir, tocRefs, patches);
     final navigation = _parseNavigation(archive, opfDir, tocRefs);
     final capabilities = _opfParser.parseCapabilities(opfXml);
 
@@ -186,17 +186,25 @@ class EpubRepositoryImpl implements EpubRepository {
 
   /// nav.xhtml(EPUB 3) 우선, 없으면 NCX(EPUB 2). 파일이 없거나 파싱 실패 시
   /// [EpubOutline.empty] (목차 부재는 sparse-ncx/empty-toc 보정이 진단).
+  ///
+  /// nav 구조 결함(비표준 epub:type, 불완전 항목, span 헤더)을 복원하면 각각
+  /// [patches]에 AppliedPatch로 기록한다. (S13.7, gap #10a)
   EpubOutline _parseOutline(
     Archive archive,
     String opfDir,
     ({String? ncxHref, String? navHref}) tocRefs,
+    List<AppliedPatch> patches,
   ) {
     final navHref = tocRefs.navHref;
     if (navHref != null) {
       final xml = _readString(archive, resolveHref(opfDir, navHref));
       if (xml != null) {
         try {
-          return _navParser.parse(xml);
+          final result = _navParser.parseDiagnosed(xml);
+          for (final defect in result.defects) {
+            patches.add(_navDefectPatch(defect));
+          }
+          return result.outline;
         } on Object {
           // nav 파싱 실패 → NCX로 폴백 시도
         }
@@ -216,6 +224,37 @@ class EpubRepositoryImpl implements EpubRepository {
     }
 
     return EpubOutline.empty;
+  }
+
+  /// nav 결함 코드 → AppliedPatch. (S13.7, gap #10a)
+  AppliedPatch _navDefectPatch(String defect) {
+    switch (defect) {
+      case NavParseResult.nonstandardTocType:
+        return const AppliedPatch(
+          patchId: NavParseResult.nonstandardTocType,
+          description:
+              'nav.xhtml에 epub:type="toc"가 없어 첫 <nav>를 목차로 복원',
+          severity: PatchSeverity.low,
+        );
+      case NavParseResult.incompleteEntries:
+        return const AppliedPatch(
+          patchId: NavParseResult.incompleteEntries,
+          description: 'nav 목차의 불완전한 항목(빈 href/title)을 건너뜀',
+          severity: PatchSeverity.low,
+        );
+      case NavParseResult.spanHeading:
+        return const AppliedPatch(
+          patchId: NavParseResult.spanHeading,
+          description: '링크 없는 <span> 헤더 + 하위 목차를 섹션 그룹으로 복원',
+          severity: PatchSeverity.low,
+        );
+      default:
+        return AppliedPatch(
+          patchId: defect,
+          description: 'nav 구조 결함 복원',
+          severity: PatchSeverity.low,
+        );
+    }
   }
 
   String? _readString(Archive archive, String path) {
