@@ -366,8 +366,11 @@ Widget buildReflowableHtml({
   // 세로쓰기: 인라인 선언 또는 override + 단순 텍스트 콘텐츠일 때만. (S15.4)
   if ((forceVertical || declaresVerticalWriting(data)) &&
       isSimpleTextContent(data)) {
+    // decodePlainText: HTML 엔티티(&#160; 등)를 디코드한 평문. extractPlainText는
+    // raw(엔티티 미디코드)라 세로 셀에 '& # 1 6 0 ;'가 그대로 렌더되는 버그가 있어
+    // 디코드 결과를 쓴다. (S15.4 marionette 통합테스트에서 발견)
     return VerticalTextBlock(
-      text: const SpineTextExtractor().extractPlainText(data),
+      text: const SpineTextExtractor().decodePlainText(data).decoded,
       fontSize: fontSize,
       lineHeight: lineHeight,
       leftToRight: isVerticalLr(data),
