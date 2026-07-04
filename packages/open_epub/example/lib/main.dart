@@ -5,7 +5,7 @@ import 'package:marionette_flutter/marionette_flutter.dart';
 // open_epub 1.0 데모 진입점. S11.1(#88)에서 레거시 EpubReaderWidget 데모를
 // 제거하고, 1.0 코어(EpubBookSession + EpubReader) 데모만 노출한다.
 import 'highlight_demo_page.dart' show HighlightDemoPage;
-import 'reader_demo_page.dart' show ReaderDemoPage;
+import 'sample_library_page.dart' show SampleLibraryPage;
 import 'v1_demo_page.dart' show V1DemoPage;
 
 const bool _isFlutterTest =
@@ -55,17 +55,17 @@ class HomePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // --- 실제 책 리더 데모 (marionette 통합테스트 대상) ---
+          // --- EPUB3 샘플 라이브러리 (marionette 통합테스트 대상) ---
           Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              key: const ValueKey('demo-real-book'),
-              leading: const Icon(Icons.menu_book),
-              title: const Text('실제 책 데모'),
-              subtitle: const Text('노회찬평전(EPUB2) · 넘김/글자크기/RTL/세로쓰기'),
+              key: const ValueKey('demo-sample-library'),
+              leading: const Icon(Icons.local_library),
+              title: const Text('EPUB3 샘플 라이브러리'),
+              subtitle: const Text('RTL·MathML·세로쓰기·Media Overlay·CFI 기능 검증'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ReaderDemoPage()),
+                MaterialPageRoute(builder: (_) => const SampleLibraryPage()),
               ),
             ),
           ),
