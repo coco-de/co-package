@@ -6,6 +6,7 @@ import '../../api/epub_source.dart';
 import '../../data/compat/patch_catalog.dart' show AppliedPatch;
 import '../entity/epub_capabilities.dart';
 import '../entity/epub_navigation.dart';
+import '../entity/epub_rendition.dart';
 import '../entity/epub_resource.dart';
 
 abstract class EpubRepository {
@@ -24,6 +25,7 @@ class RawEpubLoad {
     this.resources = const EmptyEpubResourceReader(),
     this.navigation = EpubNavigation.empty,
     this.capabilities = BookCapabilities.defaults,
+    this.renditions = const [],
   });
 
   final EpubBook book;
@@ -35,4 +37,8 @@ class RawEpubLoad {
 
   /// 책의 읽기전용 능력 신호(PPD/writingMode/미디어오버레이). (S13.3, gap #3)
   final BookCapabilities capabilities;
+
+  /// container.xml의 모든 rendition(복수 rootfile). 기본 rendition만 열린 상태.
+  /// (S13.4, gap #7)
+  final List<EpubRendition> renditions;
 }

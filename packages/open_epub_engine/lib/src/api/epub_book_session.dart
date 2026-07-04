@@ -15,6 +15,7 @@ import '../domain/entity/epub_capabilities.dart';
 import '../domain/entity/epub_highlight.dart';
 import '../domain/entity/epub_navigation.dart';
 import '../domain/entity/epub_outline.dart';
+import '../domain/entity/epub_rendition.dart';
 import '../domain/entity/epub_resource.dart';
 import '../domain/entity/epub_selection.dart';
 import '../domain/usecase/build_search_index_use_case.dart';
@@ -82,6 +83,11 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
   /// 책의 읽기전용 능력 신호 — 진행 방향(PPD)·writingMode·미디어오버레이 존재.
   /// 호스트가 RTL/MO를 파싱 없이 확인한다. (S13.3, gap #3, 아키텍처 §4.4)
   BookCapabilities get capabilities;
+
+  /// container.xml의 모든 rendition(복수 rootfile). 기본 rendition만 현재 세션에
+  /// 열려 있으며, 호스트는 다른 rendition을 골라 새 세션을 열 수 있다. 단일
+  /// rendition이면 항목 1개(default). (S13.4, gap #7)
+  List<EpubRendition> get renditions;
 
   /// 현재 선택 영역 stream. 호스트(UI)가 [reportSelection]로 push한다.
   /// 선택 해제 시 null. (S1.5-2, 설계 §4.3)
@@ -160,6 +166,7 @@ class _SessionState {
     required this.resources,
     this.navigation = EpubNavigation.empty,
     this.capabilities = BookCapabilities.defaults,
+    this.renditions = const [],
   });
 
   final EpubBook book;
@@ -169,6 +176,7 @@ class _SessionState {
   final EpubResourceReader resources;
   final EpubNavigation navigation;
   final BookCapabilities capabilities;
+  final List<EpubRendition> renditions;
 }
 
 class _EpubBookSessionImpl implements EpubBookSession {
@@ -255,6 +263,7 @@ class _EpubBookSessionImpl implements EpubBookSession {
       resources: loaded.resources,
       navigation: loaded.navigation,
       capabilities: loaded.capabilities,
+      renditions: loaded.renditions,
     );
   }
 
@@ -399,6 +408,9 @@ class _EpubBookSessionImpl implements EpubBookSession {
 
   @override
   BookCapabilities get capabilities => _state.capabilities;
+
+  @override
+  List<EpubRendition> get renditions => _state.renditions;
 
   @override
   Stream<EpubSelection?> get selectionStream => _selection.stream;
