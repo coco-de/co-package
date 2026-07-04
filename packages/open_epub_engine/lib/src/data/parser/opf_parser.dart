@@ -5,6 +5,7 @@
 
 import 'package:xml/xml.dart';
 
+import '../../domain/entity/epub_capabilities.dart';
 import '../../domain/entity/epub_metadata.dart';
 import '../../domain/entity/epub_spine_item.dart';
 import '../../schema/opf/package/epub_version.dart';
@@ -124,6 +125,47 @@ class OpfParser {
       }
     }
     return null;
+  }
+
+  /// spine `page-progression-direction` + 미디어 오버레이 존재를 읽어 책의
+  /// 읽기전용 [BookCapabilities]를 도출한다. writingMode는 OPF에 없어 기본값
+  /// (세로쓰기 감지는 Phase 5). (S13.3, gap #3)
+  BookCapabilities parseCapabilities(String opfXml) {
+    final root = XmlDocument.parse(opfXml).rootElement;
+    final spineEl = root.findElements('spine', namespace: _opfNs).firstOrNull;
+    final ppd = _parsePageProgression(
+      spineEl?.getAttribute('page-progression-direction'),
+    );
+    return BookCapabilities(
+      pageProgressionDirection: ppd,
+      hasMediaOverlay: _detectMediaOverlay(root),
+    );
+  }
+
+  EpubPageProgression _parsePageProgression(String? raw) {
+    switch (raw) {
+      case 'ltr':
+        return EpubPageProgression.ltr;
+      case 'rtl':
+        return EpubPageProgression.rtl;
+      case 'default':
+      case null:
+      default:
+        return EpubPageProgression.auto;
+    }
+  }
+
+  /// manifest에 SMIL(application/smil+xml) 리소스나 media-overlay 참조가 있으면
+  /// 미디어 오버레이 보유로 본다. (gap #6 신호)
+  bool _detectMediaOverlay(XmlElement packageEl) {
+    final manifestEl =
+        packageEl.findElements('manifest', namespace: _opfNs).firstOrNull;
+    if (manifestEl == null) return false;
+    for (final item in manifestEl.findElements('item', namespace: _opfNs)) {
+      if (item.getAttribute('media-type') == 'application/smil+xml') return true;
+      if (item.getAttribute('media-overlay') != null) return true;
+    }
+    return false;
   }
 
   EpubMetadata _parseMetadata(XmlElement packageEl, String epubVersion) {
