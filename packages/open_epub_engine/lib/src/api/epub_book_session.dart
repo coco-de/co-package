@@ -5,14 +5,19 @@
 
 import 'dart:async';
 
+import 'package:collection/collection.dart';
+
 import '../cfi/epub_cfi_mapper.dart';
 import '../data/compat/patch_catalog.dart'
     show BookSessionDiagnostics, BookSessionDiagnosticsData, UnresolvedIssue;
+import '../data/parser/smil_parser.dart';
+import '../data/repository/archive_resource_reader.dart' show resolveHref;
 import '../data/repository/epub_repository_impl.dart';
 import '../data/security/html_sanitizer.dart';
 import '../data/text/spine_text_extractor.dart';
 import '../domain/entity/epub_capabilities.dart';
 import '../domain/entity/epub_highlight.dart';
+import '../domain/entity/epub_media_overlay.dart';
 import '../domain/entity/epub_navigation.dart';
 import '../domain/entity/epub_outline.dart';
 import '../domain/entity/epub_rendition.dart';
@@ -83,6 +88,13 @@ abstract class EpubBookSession implements EpubBookSessionAnalytics {
   /// 책의 읽기전용 능력 신호 — 진행 방향(PPD)·writingMode·미디어오버레이 존재.
   /// 호스트가 RTL/MO를 파싱 없이 확인한다. (S13.3, gap #3, 아키텍처 §4.4)
   BookCapabilities get capabilities;
+
+  /// [spineHref] 문서에 연결된 Media Overlay(.smil)를 온디맨드로 읽어 파싱한다.
+  /// spine item의 `mediaOverlayHref`(manifest `media-overlay` 해석)로 SMIL을
+  /// 찾아 [SmilParser]로 파싱하고, 각 par의 `textSrc`/`audioSrc`를 OPF 기준 상대
+  /// 경로로 정규화해(리소스 reader가 바로 소비 가능) 반환한다. MO가 없거나 리소스
+  /// 부재/파싱 실패면 [EpubMediaOverlay.empty]. (S15.1, gap #6 배선분)
+  Future<EpubMediaOverlay> loadMediaOverlay(String spineHref);
 
   /// container.xml의 모든 rendition(복수 rootfile). 기본 rendition만 현재 세션에
   /// 열려 있으며, 호스트는 다른 rendition을 골라 새 세션을 열 수 있다. 단일
@@ -344,6 +356,53 @@ class _EpubBookSessionImpl implements EpubBookSession {
     final raw = _state.resources.readString(spineHref);
     if (raw == null) return null;
     return HtmlSanitizer(_security).sanitize(raw);
+  }
+
+  static const SmilParser _smilParser = SmilParser();
+
+  @override
+  Future<EpubMediaOverlay> loadMediaOverlay(String spineHref) async {
+    final spine = _state.book.spine;
+    final item = spine.firstWhereOrNull((s) => s.href == spineHref);
+    final smilHref = item?.mediaOverlayHref;
+    if (smilHref == null) return EpubMediaOverlay.empty;
+
+    final smilXml = _state.resources.readString(smilHref);
+    if (smilXml == null) return EpubMediaOverlay.empty;
+
+    final parsed = _smilParser.parse(smilXml);
+    if (parsed.isEmpty) return EpubMediaOverlay.empty;
+
+    // par src는 SMIL 파일 기준 상대경로 → OPF 기준 상대경로로 정규화해
+    // 리소스 reader(readBytes/readString)가 바로 읽을 수 있게 한다.
+    final smilDir = _dirname(smilHref);
+    return EpubMediaOverlay(
+      pars: [
+        for (final par in parsed.pars)
+          EpubMediaPar(
+            textSrc: _resolveRelative(smilDir, par.textSrc),
+            audioSrc: par.audioSrc == null
+                ? null
+                : _resolveRelative(smilDir, par.audioSrc!),
+            clipBegin: par.clipBegin,
+            clipEnd: par.clipEnd,
+          ),
+      ],
+    );
+  }
+
+  /// SMIL 디렉토리 기준 상대 [src]를 OPF 기준 상대 경로로 정규화한다. `#fragment`
+  /// (예: ch1.xhtml#s1)는 경로만 해석하고 fragment는 보존한다. (S15.1)
+  static String _resolveRelative(String baseDir, String src) {
+    final hash = src.indexOf('#');
+    final path = hash < 0 ? src : src.substring(0, hash);
+    final fragment = hash < 0 ? '' : src.substring(hash);
+    return resolveHref(baseDir, path) + fragment;
+  }
+
+  static String _dirname(String path) {
+    final i = path.lastIndexOf('/');
+    return i < 0 ? '' : path.substring(0, i);
   }
 
   @override

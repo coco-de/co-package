@@ -454,6 +454,72 @@ Uint8List noTocEpub3() => zipEpub({
       'OEBPS/ch2.xhtml': '<html><body>2</body></html>',
     });
 
+/// Media Overlays(SMIL) EPUB 3. spine ch1은 `media-overlay`로 SMIL과 연결되고,
+/// SMIL은 하위 디렉토리(OEBPS/smil/)에 있어 par src의 경로 해석(OPF 기준)을
+/// 검증한다. ch2는 MO 없음(회귀). (S15.1, gap #6 배선)
+Uint8List mediaOverlayEpub3() => zipEpub({
+      'mimetype': 'application/epub+zip',
+      'META-INF/container.xml': _containerXml,
+      'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>낭독 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:test-mo-0001</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"
+        properties="nav"/>
+    <item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"
+        media-overlay="c1_mo"/>
+    <item id="c2" href="ch2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="c1_mo" href="smil/ch1.smil"
+        media-type="application/smil+xml"/>
+    <item id="aud1" href="audio/ch1.mp3" media-type="audio/mpeg"/>
+  </manifest>
+  <spine>
+    <itemref idref="c1"/>
+    <itemref idref="c2"/>
+  </spine>
+</package>
+''',
+      'OEBPS/nav.xhtml': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:epub="http://www.idpf.org/2007/ops">
+  <body><nav epub:type="toc"><ol>
+    <li><a href="ch1.xhtml">1장</a></li>
+  </ol></nav></body>
+</html>
+''',
+      // SMIL은 smil/ 하위 → text/audio src는 SMIL 기준 상대(`../`).
+      'OEBPS/smil/ch1.smil': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0">
+  <body>
+    <seq>
+      <par>
+        <text src="../ch1.xhtml#s1"/>
+        <audio src="../audio/ch1.mp3" clipBegin="0s" clipEnd="2.5s"/>
+      </par>
+      <par>
+        <text src="../ch1.xhtml#s2"/>
+        <audio src="../audio/ch1.mp3" clipBegin="2.5s" clipEnd="5s"/>
+      </par>
+    </seq>
+  </body>
+</smil>
+''',
+      'OEBPS/ch1.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+          '<p id="s1">첫 문장.</p><p id="s2">둘째 문장.</p></body></html>',
+      'OEBPS/ch2.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+          '<p>MO 없는 장.</p></body></html>',
+      'OEBPS/audio/ch1.mp3': 'FAKE_AUDIO_BYTES',
+    });
+
 /// 챕터 수와 문단 수를 지정한 큰 책 (열기 성능 smoke 검증용).
 Uint8List largeEpub3({int chapters = 30, int paragraphsPerChapter = 100}) {
   final files = <String, String>{
