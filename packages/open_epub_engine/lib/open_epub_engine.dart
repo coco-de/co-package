@@ -28,6 +28,7 @@ export 'src/domain/entity/epub_capabilities.dart';
 export 'src/domain/entity/epub_metadata.dart';
 export 'src/domain/entity/epub_navigation.dart';
 export 'src/domain/entity/epub_outline.dart';
+export 'src/domain/entity/epub_rendition.dart';
 export 'src/domain/entity/epub_resource.dart';
 export 'src/domain/entity/epub_selection.dart';
 export 'src/domain/entity/epub_spine_item.dart';

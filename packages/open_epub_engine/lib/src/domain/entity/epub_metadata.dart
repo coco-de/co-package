@@ -75,6 +75,7 @@ class EpubMetadata {
     this.spread = EpubSpread.auto,
     this.orientation = EpubOrientation.auto,
     this.viewport,
+    this.modified,
   });
 
   final String title;
@@ -100,4 +101,8 @@ class EpubMetadata {
   /// `rendition:viewport` 메타(FXL 논리 크기). 없으면 null — FXL은 각 spine 문서의
   /// `<meta name="viewport">`가 우선이며, 이는 책 전역 기본값이다. (S13.2, gap #1)
   final EpubViewport? viewport;
+
+  /// `<meta property="dcterms:modified">` 최종 수정 시각(ISO8601 원문). EPUB 3
+  /// 필수 확장 메타. 없으면 null. (S13.4, gap #7)
+  final String? modified;
 }

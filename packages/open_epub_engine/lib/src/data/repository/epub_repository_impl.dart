@@ -84,6 +84,7 @@ class EpubRepositoryImpl implements EpubRepository {
       throw EpubInvalidFile('missing $_containerPath');
     }
     final opfPath = _containerParser.parse(containerXml);
+    final renditions = _containerParser.parseRootfiles(containerXml);
 
     final opfXml = _readString(archive, opfPath);
     if (opfXml == null) {
@@ -123,6 +124,7 @@ class EpubRepositoryImpl implements EpubRepository {
       resources: ArchiveResourceReader(archive, opfDir),
       navigation: navigation,
       capabilities: capabilities,
+      renditions: renditions,
     );
   }
 

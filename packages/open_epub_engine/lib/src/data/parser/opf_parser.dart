@@ -206,6 +206,7 @@ class OpfParser {
       spread: _parseSpread(prop('rendition:spread')),
       orientation: _parseOrientation(prop('rendition:orientation')),
       viewport: _parseViewport(prop('rendition:viewport')),
+      modified: prop('dcterms:modified'),
     );
   }
 
