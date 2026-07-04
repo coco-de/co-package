@@ -30,8 +30,9 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
-/example/build/
+# 모노레포: build/ 산출물을 모든 depth에서 무시 (S10.1)
+build/
+**/build/
 /coverage/
 
 # Symbolication related
