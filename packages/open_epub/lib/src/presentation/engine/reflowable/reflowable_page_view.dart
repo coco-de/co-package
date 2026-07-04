@@ -30,6 +30,7 @@ class ReflowablePageView extends StatefulWidget {
     this.onNavigatorReady,
     this.contentRevision,
     this.reverse = false,
+    this.forceVertical = false,
   });
 
   final EpubBook book;
@@ -45,6 +46,9 @@ class ReflowablePageView extends StatefulWidget {
   /// 방향을 반전해 다음 페이지가 왼쪽에서 나타난다. 페이지 인덱스 계약(다음=+1)은
   /// 불변이며 시각적 방향만 바뀐다. (S14.1, gap #4)
   final bool reverse;
+
+  /// 세로쓰기 강제 — 단순 텍스트 spine을 [VerticalTextBlock]으로 렌더. (S15.4)
+  final bool forceVertical;
 
   /// 본문 링크/하이라이트 탭 콜백. (S7.3/S7.5)
   final EpubLinkTapCallback? onLinkTap;
@@ -156,6 +160,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
         lineHeight: widget.lineHeight,
         imageLoader: widget.imageLoader,
         onLinkTap: widget.onLinkTap,
+        forceVertical: widget.forceVertical,
       ),
     );
   }
@@ -171,6 +176,7 @@ class _SpinePageView extends StatefulWidget {
     required this.lineHeight,
     required this.imageLoader,
     required this.onLinkTap,
+    required this.forceVertical,
   });
 
   final Future<String> load;
@@ -178,6 +184,7 @@ class _SpinePageView extends StatefulWidget {
   final double lineHeight;
   final ImageLoader? imageLoader;
   final EpubLinkTapCallback? onLinkTap;
+  final bool forceVertical;
 
   @override
   State<_SpinePageView> createState() => _SpinePageViewState();
@@ -216,6 +223,7 @@ class _SpinePageViewState extends State<_SpinePageView> {
             lineHeight: widget.lineHeight,
             imageLoader: widget.imageLoader,
             onLinkTap: widget.onLinkTap,
+            forceVertical: widget.forceVertical,
           ),
         );
       },

@@ -128,6 +128,9 @@ export 'src/presentation/engine/reflowable/reflowable_engine.dart'
         SpineChangedCallback;
 export 'src/presentation/engine/reflowable/reflowable_page_view.dart'
     show ReflowablePageView;
+// 세로쓰기 실용 조판 위젯 (S15.4) — 호스트가 직접 세로 텍스트를 렌더할 때.
+export 'src/presentation/engine/reflowable/vertical_text_block.dart'
+    show VerticalTextBlock;
 export 'src/presentation/engine/fixed_layout/fixed_layout_engine.dart'
     show
         FixedLayoutEngine,
