@@ -23,6 +23,16 @@ env:
   FLUTTER_VERSION: "3.44.4"
 
 jobs:
+  # ADR-005 라이선스 고지 게이트 — 이식(epub_pro CFI) 코드의 attribution 누락 차단.
+  # SDK 불필요(파일 검사)라 checkout만으로 빠르게 병렬 실행된다.
+  license-check:
+    name: license-check (ADR-005)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: third-party attribution 검증
+        run: bash tool/check_licenses.sh
+
   engine:
     name: open_epub_engine · dart test
     runs-on: ubuntu-latest
