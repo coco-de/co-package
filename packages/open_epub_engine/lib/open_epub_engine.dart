@@ -25,6 +25,7 @@ export 'src/api/epub_source.dart';
 export 'src/domain/entity/epub_failure.dart';
 export 'src/domain/entity/epub_highlight.dart';
 export 'src/domain/entity/epub_capabilities.dart';
+export 'src/domain/entity/epub_media_overlay.dart';
 export 'src/domain/entity/epub_metadata.dart';
 export 'src/domain/entity/epub_navigation.dart';
 export 'src/domain/entity/epub_outline.dart';
@@ -50,6 +51,7 @@ export 'src/data/parser/container_parser.dart';
 export 'src/data/parser/nav_parser.dart';
 export 'src/data/parser/ncx_parser.dart';
 export 'src/data/parser/opf_parser.dart';
+export 'src/data/parser/smil_parser.dart';
 
 // ── Data — Codec / Compat / Search / Security / Text / Repository ──────────
 export 'src/data/codec/book_position_codec.dart';
