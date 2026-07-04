@@ -56,6 +56,7 @@ export 'src/data/codec/book_position_codec.dart';
 export 'src/data/compat/patch_catalog.dart';
 export 'src/data/repository/epub_repository_impl.dart';
 export 'src/data/search/text_index_builder.dart';
+export 'src/data/security/encryption_parser.dart';
 export 'src/data/security/html_sanitizer.dart';
 export 'src/data/text/search_highlighter.dart';
 export 'src/data/text/spine_text_extractor.dart';

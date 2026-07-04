@@ -19,6 +19,8 @@ dependencies:
   xml: ^6.6.1
   # 이식한 epub_pro CFI 프리미티브가 사용 (S12.1, #94)
   collection: ^1.19.0
+  # IDPF 폰트 난독화 해제(SHA-1) (S13.5, #102)
+  crypto: ^3.0.0
   # 경로 정규화 (spine href 상대경로 해석 등)
   path: ^1.9.0
   # EpubSource.url 원격 로딩 (S1.20, api/epub_source.dart)

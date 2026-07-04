@@ -21,6 +21,7 @@ import '../parser/container_parser.dart';
 import '../parser/nav_parser.dart';
 import '../parser/ncx_parser.dart';
 import '../parser/opf_parser.dart';
+import '../security/encryption_parser.dart';
 import 'archive_resource_reader.dart';
 
 class EpubRepositoryImpl implements EpubRepository {
@@ -114,6 +115,14 @@ class EpubRepositoryImpl implements EpubRepository {
     final navigation = _parseNavigation(archive, opfDir, tocRefs);
     final capabilities = _opfParser.parseCapabilities(opfXml);
 
+    // encryption.xml — IDPF/Adobe 폰트 난독화는 투명 해제 맵으로, 콘텐츠(spine)에
+    // 걸린 미지원 암호화(상업 DRM)는 EpubEncryptedUnsupported로. (S13.5, gap #8)
+    final obfuscated = _parseEncryption(
+      archive,
+      opfDir,
+      parsed.spine.map((s) => s.href),
+    );
+
     return RawEpubLoad(
       book: PatchedEpubBook(
         metadata: parsed.metadata,
@@ -121,11 +130,44 @@ class EpubRepositoryImpl implements EpubRepository {
         outline: outline,
       ),
       patches: patches,
-      resources: ArchiveResourceReader(archive, opfDir),
+      resources: ArchiveResourceReader(
+        archive,
+        opfDir,
+        obfuscatedResources: obfuscated,
+        identifier: parsed.metadata.identifier,
+      ),
       navigation: navigation,
       capabilities: capabilities,
       renditions: renditions,
     );
+  }
+
+  /// META-INF/encryption.xml을 파싱한다. 폰트 난독화 항목은 ZIP 루트 경로 →
+  /// 알고리즘 맵으로 반환(투명 해제용). spine 콘텐츠 문서가 미지원 암호화로
+  /// 보호되면 [EpubEncryptedUnsupported]를 던진다. (S13.5, gap #8)
+  Map<String, String> _parseEncryption(
+    Archive archive,
+    String opfDir,
+    Iterable<String> spineHrefs,
+  ) {
+    final xml = _readString(archive, 'META-INF/encryption.xml');
+    if (xml == null) return const {};
+    final entries = const EncryptionParser().parse(xml);
+    if (entries.isEmpty) return const {};
+
+    final spinePaths = {
+      for (final href in spineHrefs) resolveHref(opfDir, href),
+    };
+    final obfuscated = <String, String>{};
+    for (final e in entries) {
+      if (e.isFontObfuscation) {
+        obfuscated[e.uri] = e.algorithm;
+      } else if (spinePaths.contains(e.uri)) {
+        // 본문 문서가 미지원 암호화로 보호됨 → 렌더 불가.
+        throw EpubEncryptedUnsupported(algorithm: e.algorithm, uri: e.uri);
+      }
+    }
+    return obfuscated;
   }
 
   /// nav.xhtml(EPUB 3)에서 landmarks / page-list 보조 내비게이션을 추출한다.
