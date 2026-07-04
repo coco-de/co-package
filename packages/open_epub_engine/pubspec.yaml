@@ -25,6 +25,8 @@ dependencies:
   path: ^1.9.0
   # EpubSource.url 원격 로딩 (S1.20, api/epub_source.dart)
   http: ^1.6.0
+  # @visibleForTesting — data layer는 flutter 의존 없이 순수 Dart 유지 (S9.1 #65)
+  meta: ^1.9.0
 
 dev_dependencies:
   lints: ^6.0.0 # 워크스페이스 flutter_lints 6과 정합
