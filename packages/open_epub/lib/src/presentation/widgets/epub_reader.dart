@@ -17,6 +17,8 @@ import '../../api/epub_reader_controller.dart';
 import '../engine/fixed_layout/fixed_layout_engine.dart';
 import '../engine/reflowable/reflowable_engine.dart';
 import '../engine/reflowable/reflowable_page_view.dart';
+import '../media_overlay/media_overlay_controller.dart';
+import '../media_overlay/media_overlay_highlight.dart';
 
 /// 세션 open 완료 시점에 호출 — 호출자가 analytics 스트림 구독·위치 저장 등
 /// 세션 수준 기능에 접근할 수 있게 한다.
@@ -59,6 +61,7 @@ class EpubReader extends StatefulWidget {
     this.fixedLayoutZoomEnabled = true,
     this.fixedLayoutSpreadOverride,
     this.readingDirection,
+    this.mediaOverlayController,
   });
 
   final EpubSource source;
@@ -126,6 +129,12 @@ class EpubReader extends StatefulWidget {
   /// 넘김/스와이프 방향이 우→좌로 반전된다. (S14.1, gap #4)
   final EpubPageProgression? readingDirection;
 
+  /// Media Overlays 낭독 컨트롤러. 지정 시 현재 재생 중인 par(활성 문장)의
+  /// 텍스트 fragment를 본문에 하이라이트한다(낭독 하이라이트, 사용자 하이라이트와
+  /// 공존). 재생 제어(start/pause)는 호스트가 이 컨트롤러로 직접 한다. reflowable
+  /// 본문에만 적용된다. (S15.3, gap #6 동기화분)
+  final MediaOverlayController? mediaOverlayController;
+
   @override
   State<EpubReader> createState() => _EpubReaderState();
 }
@@ -185,6 +194,7 @@ class _EpubReaderState extends State<EpubReader> {
           fixedLayoutZoomEnabled: widget.fixedLayoutZoomEnabled,
           fixedLayoutSpreadOverride: widget.fixedLayoutSpreadOverride,
           readingDirection: widget.readingDirection,
+          mediaOverlayController: widget.mediaOverlayController,
         );
       },
     );
@@ -208,6 +218,7 @@ class _SessionView extends StatefulWidget {
     required this.fixedLayoutZoomEnabled,
     required this.fixedLayoutSpreadOverride,
     required this.readingDirection,
+    required this.mediaOverlayController,
   });
 
   final EpubBookSession session;
@@ -225,6 +236,7 @@ class _SessionView extends StatefulWidget {
   final bool fixedLayoutZoomEnabled;
   final EpubSpread? fixedLayoutSpreadOverride;
   final EpubPageProgression? readingDirection;
+  final MediaOverlayController? mediaOverlayController;
 
   @override
   State<_SessionView> createState() => _SessionViewState();
@@ -232,6 +244,13 @@ class _SessionView extends StatefulWidget {
 
 class _SessionViewState extends State<_SessionView> {
   Size? _lastViewport;
+
+  /// 본문 재로드 트리거 토큰 — 하이라이트 목록 또는 낭독 활성 par가 바뀌면
+  /// identity를 새로 만들어 엔진이 spine XHTML을 다시 로드(=낭독 하이라이트 갱신)
+  /// 하게 한다. (S15.3)
+  Object _contentRevision = Object();
+  List<EpubHighlight>? _revHighlights;
+  String? _revActiveTextSrc;
 
   EpubBookSession get _session => widget.session;
 
@@ -274,10 +293,34 @@ class _SessionViewState extends State<_SessionView> {
         widget.onPageChanged?.call(_initialSpineIndex, count);
       });
     }
+    widget.mediaOverlayController?.activeParIndex
+        .addListener(_onMediaOverlayChanged);
+  }
+
+  @override
+  void didUpdateWidget(_SessionView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(
+      oldWidget.mediaOverlayController,
+      widget.mediaOverlayController,
+    )) {
+      oldWidget.mediaOverlayController?.activeParIndex
+          .removeListener(_onMediaOverlayChanged);
+      widget.mediaOverlayController?.activeParIndex
+          .addListener(_onMediaOverlayChanged);
+    }
+  }
+
+  /// 낭독 활성 par가 바뀌면 rebuild — build에서 contentRevision을 갱신해 본문이
+  /// 새 하이라이트로 다시 로드된다. (S15.3)
+  void _onMediaOverlayChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    widget.mediaOverlayController?.activeParIndex
+        .removeListener(_onMediaOverlayChanged);
     widget.controller?.detachNavigator();
     super.dispose();
   }
@@ -307,6 +350,7 @@ class _SessionViewState extends State<_SessionView> {
 
   @override
   Widget build(BuildContext context) {
+    _syncContentRevision();
     final book = _session.book;
     final Widget engine;
     if (book.layout == EpubLayout.fixedLayout) {
@@ -339,9 +383,9 @@ class _SessionViewState extends State<_SessionView> {
         reverse: _isRtl,
         onNavigatorReady: (navigate) =>
             widget.controller?.attachNavigator(navigate),
-        // 하이라이트 목록이 바뀌면 spine XHTML을 다시 로드해 본문에 즉시
-        // 반영한다. (open-epub#62)
-        contentRevision: widget.highlights,
+        // 하이라이트 목록/낭독 활성 par가 바뀌면 spine XHTML을 다시 로드해 본문에
+        // 즉시 반영한다. (open-epub#62, S15.3)
+        contentRevision: _contentRevision,
       );
     } else {
       engine = ReflowableEngine(
@@ -355,9 +399,9 @@ class _SessionViewState extends State<_SessionView> {
         // 스크롤로 spine이 넘어가면 paged와 동일하게 세션 위치·컨트롤러를
         // 동기화하고 호스트에 보고한다 (kobic#7572 — 진행률·챕터명 갱신).
         onSpineChanged: _handlePageChanged,
-        // 하이라이트 목록이 바뀌면 spine XHTML을 다시 로드해 본문에 즉시
-        // 반영한다. (open-epub#62)
-        contentRevision: widget.highlights,
+        // 하이라이트 목록/낭독 활성 par가 바뀌면 spine XHTML을 다시 로드해 본문에
+        // 즉시 반영한다. (open-epub#62, S15.3)
+        contentRevision: _contentRevision,
       );
     }
 
@@ -410,17 +454,54 @@ class _SessionViewState extends State<_SessionView> {
   }
 
   Future<String> _loadXhtml(String spineHref) async {
+    String base;
     if (widget.highlights.isEmpty) {
-      return _session.readSpineXhtml(spineHref) ?? '';
+      base = _session.readSpineXhtml(spineHref) ?? '';
+    } else {
+      // 하이라이트가 있으면 코어 렌더 경로로 주입. onLinkTap이 있으면 탭 가능
+      // 링크로 감싸 하이라이트 탭(S7.3)을 받는다.
+      base = _session.readSpineXhtmlWithHighlights(
+            spineHref,
+            widget.highlights,
+            tappable: widget.onLinkTap != null,
+          ) ??
+          '';
     }
-    // 하이라이트가 있으면 코어 렌더 경로로 주입. onLinkTap이 있으면 탭 가능
-    // 링크로 감싸 하이라이트 탭(S7.3)을 받는다.
-    return _session.readSpineXhtmlWithHighlights(
-          spineHref,
-          widget.highlights,
-          tappable: widget.onLinkTap != null,
-        ) ??
-        '';
+    // 낭독 하이라이트 — 이 spine이 현재 활성 par를 담고 있으면 fragment 강조.
+    // (S15.3) 사용자 하이라이트 위에 별개 레이어로 얹는다.
+    final fragment = _activeMediaOverlayFragment(spineHref);
+    if (fragment != null) {
+      base = injectMediaOverlayHighlight(base, fragment);
+    }
+    return base;
+  }
+
+  /// 현재 낭독 활성 par가 [spineHref] 문서를 가리키면 그 fragment id, 아니면 null.
+  /// (S15.3)
+  String? _activeMediaOverlayFragment(String spineHref) {
+    final par = widget.mediaOverlayController?.activePar;
+    if (par == null) return null;
+    final split = splitTextSrc(par.textSrc);
+    if (split.fragment == null) return null;
+    return _sameSpineFile(split.path, spineHref) ? split.fragment : null;
+  }
+
+  /// 두 OPF 기준 상대 경로가 같은 문서를 가리키는지(경로 표기 차이 폴백 포함).
+  static bool _sameSpineFile(String a, String b) {
+    if (a == b) return true;
+    return a.split('/').last == b.split('/').last;
+  }
+
+  /// build 시 하이라이트/낭독 활성 par 변경을 감지해 [_contentRevision] identity를
+  /// 갱신한다 — 바뀌지 않으면 identity 유지(불필요 재로드 방지). (S15.3)
+  void _syncContentRevision() {
+    final activeTextSrc = widget.mediaOverlayController?.activePar?.textSrc;
+    if (!identical(_revHighlights, widget.highlights) ||
+        _revActiveTextSrc != activeTextSrc) {
+      _revHighlights = widget.highlights;
+      _revActiveTextSrc = activeTextSrc;
+      _contentRevision = Object();
+    }
   }
 
   Future<Uint8List?> _loadImage(String src) async =>
