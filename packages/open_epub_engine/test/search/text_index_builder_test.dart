@@ -56,4 +56,41 @@ void main() {
     expect(hits.single.snippet, startsWith('…'));
     expect(hits.single.snippet, endsWith('…'));
   });
+
+  group('소문자 캐싱 (S9.7 #71)', () {
+    test('build 시 1회 계산하고 여러 번 search해도 재계산하지 않는다', () async {
+      final index = await builder.build(_book(), spineTexts: {
+        'ch1.xhtml': 'The Quick BROWN Fox',
+        'ch2.xhtml': 'Foo BAR foo',
+      });
+      final lowered1 = debugLoweredTexts(index);
+      expect(lowered1, ['the quick brown fox', 'foo bar foo']);
+
+      // 여러 번 검색한 뒤에도 동일 String 인스턴스가 그대로 재사용되어야 한다.
+      // search()가 toLowerCase()를 재실행했다면 새 인스턴스가 되어 identity가 깨진다.
+      await index.search('quick');
+      await index.search('foo');
+      await index.search('BAR');
+      final lowered2 = debugLoweredTexts(index);
+      expect(lowered2, hasLength(lowered1.length));
+      for (var i = 0; i < lowered1.length; i++) {
+        expect(identical(lowered1[i], lowered2[i]), isTrue,
+            reason: 'search()는 캐시된 소문자 텍스트를 재계산하지 않아야 한다');
+      }
+    });
+
+    test('반복 검색 결과가 변경 전과 동일하다(회귀)', () async {
+      final index = await builder.build(_book(), spineTexts: {
+        'ch1.xhtml': 'Hello WORLD foo',
+        'ch2.xhtml': 'foo BAR Foo',
+      });
+      final first = await index.search('foo');
+      final second = await index.search('foo');
+      expect(second, hasLength(3));
+      expect(
+        second.map((h) => (h.spineHref, h.charOffset)),
+        first.map((h) => (h.spineHref, h.charOffset)),
+      );
+    });
+  });
 }
