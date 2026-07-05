@@ -264,6 +264,12 @@ class _SessionViewState extends State<_SessionView> {
   List<EpubHighlight>? _revHighlights;
   String? _revActiveTextSrc;
 
+  /// 진행률(0.0~1.0) — 진행바/페이지 번호 표시를 좁은 범위 [ValueListenableBuilder]
+  /// 로 분리하기 위한 notifier. 스크롤/페이지 이동 시 진행률 갱신이 엔진(리스트
+  /// 본문) 리빌드를 유발하지 않고 진행률 표시만 갱신되게 한다. (S9.4 #68)
+  late final ValueNotifier<double> _progress =
+      ValueNotifier<double>(_session.progress);
+
   EpubBookSession get _session => widget.session;
 
   int get _initialSpineIndex {
@@ -334,6 +340,7 @@ class _SessionViewState extends State<_SessionView> {
     widget.mediaOverlayController?.activeParIndex
         .removeListener(_onMediaOverlayChanged);
     widget.controller?.detachNavigator();
+    _progress.dispose();
     super.dispose();
   }
 
@@ -350,6 +357,9 @@ class _SessionViewState extends State<_SessionView> {
 
   void _handlePageChanged(int index) {
     final pos = _positionForSpine(index);
+    // 진행률만 좁은 범위로 갱신 — setState 없이 진행률 표시(ValueListenableBuilder)
+    // 만 리빌드하고 엔진(리스트 본문)은 리빌드하지 않는다. (S9.4 #68)
+    _progress.value = pos.progress;
     // 세션 위치를 동기화(progress/analytics 일관) — 결과는 기다리지 않는다.
     unawaited(_session.jumpTo(pos));
     widget.controller?.syncState(
@@ -442,9 +452,14 @@ class _SessionViewState extends State<_SessionView> {
         if (widget.showProgressIndicator)
           Padding(
             padding: const EdgeInsets.all(8),
-            child: Text(
-              '${(_session.progress * 100).round()}%',
-              style: Theme.of(context).textTheme.bodySmall,
+            // 진행률만 구독 — 스크롤/페이지 이동 시 이 Text만 리빌드되고 위의
+            // 엔진(리스트 본문)은 리빌드되지 않는다. (S9.4 #68)
+            child: ValueListenableBuilder<double>(
+              valueListenable: _progress,
+              builder: (context, progress, _) => Text(
+                '${(progress * 100).round()}%',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
           ),
       ],
