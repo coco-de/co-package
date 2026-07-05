@@ -228,9 +228,83 @@ void main() {
       expect(find.text('done'), findsOneWidget);
     });
   });
+
+  group('FixedLayoutEngine — breakpoint 재마운트 방지 (S9.2 #66)', () {
+    testWidgets(
+        'single↔spread 리사이즈 시 로드된 페이지의 pageBuilder 재호출/줌 초기화 없음',
+        (tester) async {
+      // breakpoint(1024px)를 실제로 넘나들려면 SizedBox가 아니라 뷰 크기 자체를
+      // 바꿔야 한다(SizedBox는 화면 폭에 클램프됨).
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final calls = <String, int>{};
+      final book = _fakeBook(['p1.xhtml', 'p2.xhtml', 'p3.xhtml', 'p4.xhtml']);
+      final engine = FixedLayoutEngine(
+        book: book,
+        spreadOverride: EpubSpread.auto,
+        pageBuilder: (item) async {
+          calls[item.href] = (calls[item.href] ?? 0) + 1;
+          return FixedLayoutPageData(
+            logicalSize: const Size(800, 600),
+            content: Text(item.href),
+          );
+        },
+      );
+      final app = MaterialApp(home: Scaffold(body: engine));
+
+      Future<void> resizeTo(double width) async {
+        tester.view.physicalSize = Size(width, 800);
+        await tester.pumpWidget(app);
+        await tester.pumpAndSettle();
+      }
+
+      // 좁은 화면(<1024px) → 단일 페이지. p1만 로드.
+      await resizeTo(800);
+      expect(find.text('p1.xhtml'), findsOneWidget);
+      expect(find.text('p2.xhtml'), findsNothing);
+      expect(calls['p1.xhtml'], 1);
+
+      // p1을 2.0x로 줌.
+      final p1State1 = _pageStateFor(tester, 'p1.xhtml');
+      p1State1.controller.value = Matrix4.identity()..scaleByDouble(2, 2, 2, 1);
+      await tester.pump();
+      expect(p1State1.currentScale, closeTo(2, 0.001));
+
+      // 넓은 화면(≥1024px) → 2-page spread(p1,p2). p1 재로딩 없음, p2 신규 로드.
+      await resizeTo(1200);
+      expect(find.text('p1.xhtml'), findsOneWidget);
+      expect(find.text('p2.xhtml'), findsOneWidget);
+      expect(calls['p1.xhtml'], 1, reason: 'p1은 재마운트/재로딩되지 않아야 한다');
+      expect(calls['p2.xhtml'], 1);
+
+      // 같은 State가 이전(reparent)되어 줌 상태가 보존된다.
+      final p1State2 = _pageStateFor(tester, 'p1.xhtml');
+      expect(identical(p1State1, p1State2), isTrue,
+          reason: 'GlobalKey로 element State가 이전(remount 아님)되어야 한다');
+      expect(p1State2.currentScale, closeTo(2, 0.001),
+          reason: 'TransformationController(줌/팬) 상태가 유지되어야 한다');
+
+      // 다시 좁은 화면 → 단일. 여전히 p1 재로딩/줌 초기화 없음.
+      await resizeTo(800);
+      expect(calls['p1.xhtml'], 1);
+      final p1State3 = _pageStateFor(tester, 'p1.xhtml');
+      expect(identical(p1State1, p1State3), isTrue);
+      expect(p1State3.currentScale, closeTo(2, 0.001));
+    });
+  });
 }
 
 // -------- helpers --------
+
+/// [href] 콘텐츠를 렌더 중인 FixedLayoutPage의 State를 찾는다.
+FixedLayoutPageState _pageStateFor(WidgetTester tester, String href) =>
+    tester.state<FixedLayoutPageState>(
+      find.ancestor(
+        of: find.text(href),
+        matching: find.byType(FixedLayoutPage),
+      ),
+    );
 
 Widget _wrap({
   required double width,

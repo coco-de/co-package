@@ -2,6 +2,7 @@
 // Story: S1.7 (#13) — Fixed Layout 엔진 + viewport fit (단일 페이지)
 // Story: S1.8 (#14) — 핀치 줌 (FixedLayoutPage에 통합 완료)
 // Story: S1.9 (#15) — spread 자동 분기 (1/2-page) + page-spread-left/right
+// Story: S9.2 (#66) — spread breakpoint 전환 시 페이지 재마운트 방지(GlobalKey 이전)
 // kobic#7576 — 페이지 내비게이션(스와이프·jumpToSpine·onSpineChanged) 배선
 // BDD: F3 (Fixed Layout 본문 렌더링)
 //
@@ -108,6 +109,18 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
   /// 결정에 사용한다 (kobic#7576).
   bool _renderedSpread = false;
 
+  /// spine idref별 안정적 [GlobalKey]. 단일 페이지(`_AsyncFixedLayoutPage`)와
+  /// spread row(`FixedLayoutSpreadRow` 내부의 같은 페이지 위젯)는 runtimeType이
+  /// 달라, breakpoint(1024px)를 넘나드는 리사이즈마다 같은 슬롯에서 조건부로
+  /// 교체되면 `Widget.canUpdate`가 실패해 서브트리가 unmount/remount된다(로드
+  /// 결과·줌/팬 상태 소실). 페이지에 GlobalKey를 부여하면 Flutter가 element(그
+  /// State와 `TransformationController`)를 remount 대신 **이전(reparent)** 하므로
+  /// 이미 로드된 페이지의 상태가 breakpoint 전환에도 보존된다. (S9.2 #66)
+  final Map<String, GlobalKey> _pageKeys = {};
+
+  GlobalKey _pageKeyFor(String idref) =>
+      _pageKeys.putIfAbsent(idref, GlobalKey.new);
+
   int get spineIndex => _spineIndex;
   int get spineCount => widget.book.spine.length;
   int get rowIndex => _rowIndex;
@@ -135,6 +148,8 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
   void didUpdateWidget(FixedLayoutEngine oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.book != widget.book) {
+      // 다른 책 — 이전 idref의 페이지 상태를 이전할 이유가 없으므로 키 캐시 초기화.
+      _pageKeys.clear();
       _spineIndex = widget.initialSpineIndex.clamp(
         0,
         widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
@@ -260,7 +275,9 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
 
   Widget _buildSinglePage(EpubSpineItem item) {
     return _AsyncFixedLayoutPage(
-      key: ValueKey(item.idref),
+      // GlobalKey — 단일↔spread 전환 시 element(및 줌/팬 상태)를 remount 없이
+      // 이전한다. 각 페이지는 한 시점에 화면에 최대 1회만 등장하므로 유일하다. (S9.2 #66)
+      key: _pageKeyFor(item.idref),
       item: item,
       pageBuilder: widget.pageBuilder,
       fitter: widget.fitter,
