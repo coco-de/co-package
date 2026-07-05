@@ -9,6 +9,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';
@@ -509,10 +510,19 @@ class _SessionViewState extends State<_SessionView> {
 
   /// build 시 하이라이트/낭독 활성 par 변경을 감지해 [_contentRevision] identity를
   /// 갱신한다 — 바뀌지 않으면 identity 유지(불필요 재로드 방지). (S15.3)
+  ///
+  /// 하이라이트는 참조(`identical`)가 아닌 내용(`listEquals`)으로 비교한다 —
+  /// 호스트가 Bloc/Provider의 copyWith나 `.map().toList()`로 매 빌드마다 내용이
+  /// 같은 새 List 인스턴스를 넘기는 것이 일반적이며, 이때 참조 비교는 매번
+  /// contentRevision을 갱신해 전 spine을 불필요하게 재로딩·재파싱했다. (#67 S9.3)
   void _syncContentRevision() {
     final activeTextSrc = widget.mediaOverlayController?.activePar?.textSrc;
-    if (!identical(_revHighlights, widget.highlights) ||
-        _revActiveTextSrc != activeTextSrc) {
+    if (epubContentRevisionChanged(
+      prevHighlights: _revHighlights,
+      nextHighlights: widget.highlights,
+      prevActiveTextSrc: _revActiveTextSrc,
+      nextActiveTextSrc: activeTextSrc,
+    )) {
       _revHighlights = widget.highlights;
       _revActiveTextSrc = activeTextSrc;
       _contentRevision = Object();
@@ -575,3 +585,18 @@ class _OpenErrorView extends StatelessWidget {
     );
   }
 }
+
+/// 본문 재로드가 필요한 콘텐츠 변경(하이라이트 목록·낭독 활성 par)이 있었는지 판정.
+///
+/// 하이라이트는 참조가 아닌 **내용**(`listEquals`)으로 비교한다 — 호스트가 매
+/// 빌드마다 내용이 같은 새 List 인스턴스를 넘겨도 재로드를 트리거하지 않도록.
+/// (#67 S9.3) [EpubHighlight]는 값 동등성을 가지므로 내용 비교가 정확하다.
+@visibleForTesting
+bool epubContentRevisionChanged({
+  required List<EpubHighlight>? prevHighlights,
+  required List<EpubHighlight> nextHighlights,
+  required String? prevActiveTextSrc,
+  required String? nextActiveTextSrc,
+}) =>
+    !listEquals(prevHighlights, nextHighlights) ||
+    prevActiveTextSrc != nextActiveTextSrc;
