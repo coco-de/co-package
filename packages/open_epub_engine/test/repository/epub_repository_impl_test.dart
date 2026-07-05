@@ -93,4 +93,39 @@ void main() {
       expect(loaded.book.metadata.layout, EpubLayout.reflowable);
     });
   });
+
+  group('isolate 오프로딩 (S9.6 #70)', () {
+    // isolateThresholdBytes: 0 → 작은 픽스처도 강제로 isolate 경로를 타게 해
+    // 오프로딩 전후 결과 동등성을 검증한다(기본값에서는 대용량만 오프로딩).
+    final offloaded = EpubRepositoryImpl(isolateThresholdBytes: 0);
+
+    test('오프로딩(isolate) 후 재구성된 리소스 reader가 spine 본문을 읽는다', () async {
+      // 파싱(ZIP 디코드+XML)은 별도 isolate에서, Archive/리소스 reader는 호출
+      // isolate에서 재구성된다. 재구성된 reader가 본문을 정상 반환해야 한다.
+      final loaded = await offloaded.load(EpubSource.bytes(validEpub3()));
+      final ch1 = loaded.resources.readString('ch1.xhtml');
+      expect(ch1, isNotNull);
+      expect(ch1, contains('1장'));
+      // 존재하지 않는 리소스는 null.
+      expect(loaded.resources.readString('nope.xhtml'), isNull);
+    });
+
+    test('오프로딩 결과가 동기 파싱과 동일한 book/navigation/capabilities를 만든다',
+        () async {
+      final viaIsolate = await offloaded.load(EpubSource.bytes(validEpub3()));
+      final viaSync = await repo.load(EpubSource.bytes(validEpub3()));
+      expect(viaIsolate.book.metadata.title, viaSync.book.metadata.title);
+      expect(viaIsolate.book.spine.map((s) => s.href),
+          viaSync.book.spine.map((s) => s.href));
+      expect(viaIsolate.book.outline.items.map((i) => i.title),
+          viaSync.book.outline.items.map((i) => i.title));
+      expect(viaIsolate.patches.map((p) => p.patchId),
+          viaSync.patches.map((p) => p.patchId));
+    });
+
+    test('오프로딩 경로도 실패를 동일하게 전파한다', () {
+      final junk = EpubSource.bytes(Uint8List.fromList([9, 9, 9, 9]));
+      expect(offloaded.load(junk), throwsA(isA<EpubCorrupted>()));
+    });
+  });
 }
