@@ -4,6 +4,7 @@
 
 import 'package:test/test.dart';
 import 'package:open_epub_engine/src/data/parser/opf_parser.dart';
+import 'package:open_epub_engine/src/domain/entity/epub_capabilities.dart';
 import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
 
 void main() {
@@ -289,6 +290,105 @@ void main() {
       final r = parser.parse(opf);
       expect(r.spine[0].properties, contains('page-spread-left'));
       expect(r.spine[1].properties, contains('page-spread-right'));
+    });
+  });
+
+  group('OpfParser.parseBundle — 단일 파싱 통합 (S9.5 #69)', () {
+    // nav(EPUB3) + rendition:layout + rtl spine + SMIL(media-overlay) 을 모두
+    // 포함해 parseBundle의 5개 필드를 개별 메서드와 교차검증한다.
+    const richOpf = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Bundle Book</dc:title>
+    <dc:language>ko</dc:language>
+    <dc:identifier id="bookid">urn:uuid:bundle</dc:identifier>
+    <meta property="rendition:layout">galaxy</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="c1" href="c1.xhtml" media-type="application/xhtml+xml" media-overlay="mo1"/>
+    <item id="c2" href="c2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="mo1" href="c1.smil" media-type="application/smil+xml"/>
+  </manifest>
+  <spine toc="ncx" page-progression-direction="rtl">
+    <itemref idref="c1"/>
+    <itemref idref="c2"/>
+  </spine>
+</package>''';
+
+    test('parseBundle 결과가 개별 메서드 결과와 동일하다', () {
+      final bundle = parser.parseBundle(richOpf);
+      final parsed = parser.parse(richOpf);
+      final tocRefs = parser.tocRefs(richOpf);
+      final rawLayout = parser.rawRenditionLayout(richOpf);
+      final caps = parser.parseCapabilities(richOpf);
+
+      expect(bundle.metadata.title, parsed.metadata.title);
+      expect(bundle.metadata.identifier, parsed.metadata.identifier);
+      expect(bundle.metadata.epubVersion, parsed.metadata.epubVersion);
+      // 비표준 rendition:layout은 parse에서 reflowable fallback, raw는 원문 보존.
+      expect(bundle.metadata.layout, parsed.metadata.layout);
+      expect(bundle.rawRenditionLayout, rawLayout);
+      expect(bundle.rawRenditionLayout, 'galaxy');
+
+      expect(bundle.spine.map((s) => s.idref), parsed.spine.map((s) => s.idref));
+      expect(bundle.spine.map((s) => s.href), parsed.spine.map((s) => s.href));
+
+      expect(bundle.tocRefs.navHref, tocRefs.navHref);
+      expect(bundle.tocRefs.ncxHref, tocRefs.ncxHref);
+      expect(bundle.tocRefs.navHref, 'nav.xhtml');
+      expect(bundle.tocRefs.ncxHref, 'toc.ncx');
+
+      expect(
+        bundle.capabilities.pageProgressionDirection,
+        caps.pageProgressionDirection,
+      );
+      expect(bundle.capabilities.hasMediaOverlay, caps.hasMediaOverlay);
+      expect(bundle.capabilities.pageProgressionDirection, EpubPageProgression.rtl);
+      expect(bundle.capabilities.hasMediaOverlay, isTrue);
+    });
+
+    test('대형 manifest에서도 spine/toc가 개별 파싱과 일치한다', () {
+      final items = StringBuffer();
+      final itemrefs = StringBuffer();
+      for (var i = 0; i < 500; i++) {
+        items.writeln(
+          '<item id="p$i" href="p$i.xhtml" media-type="application/xhtml+xml"/>',
+        );
+        itemrefs.writeln('<itemref idref="p$i"/>');
+      }
+      final bigOpf = '''
+<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Big</dc:title>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    $items
+  </manifest>
+  <spine>
+    $itemrefs
+  </spine>
+</package>''';
+      final bundle = parser.parseBundle(bigOpf);
+      final parsed = parser.parse(bigOpf);
+      expect(bundle.spine, hasLength(500));
+      expect(bundle.spine.map((s) => s.idref), parsed.spine.map((s) => s.idref));
+      expect(bundle.tocRefs.navHref, 'nav.xhtml');
+    });
+
+    test('parseBundle도 잘못된 OPF에서 OpfParseException을 던진다', () {
+      expect(
+        () => parser.parseBundle('not <xml>'),
+        throwsA(isA<OpfParseException>()),
+      );
+      expect(
+        () => parser.parseBundle('<?xml version="1.0"?><root/>'),
+        throwsA(isA<OpfParseException>()),
+      );
     });
   });
 }

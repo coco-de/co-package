@@ -91,11 +91,14 @@ class EpubRepositoryImpl implements EpubRepository {
     if (opfXml == null) {
       throw EpubInvalidFile('missing OPF package at "$opfPath"');
     }
-    final parsed = _opfParser.parse(opfXml);
-    final tocRefs = _opfParser.tocRefs(opfXml);
+    // OPF XML은 한 번만 파싱한다 — parse/tocRefs/rawRenditionLayout/
+    // parseCapabilities를 개별 호출하면 대형 manifest에서 파싱이 4중으로
+    // 반복된다. (S9.5 #69)
+    final bundle = _opfParser.parseBundle(opfXml);
+    final tocRefs = bundle.tocRefs;
 
     // raw-레벨 보정 2: 비표준 rendition:layout (OPF raw — 파싱 후 소실됨).
-    final rawLayout = _opfParser.rawRenditionLayout(opfXml);
+    final rawLayout = bundle.rawRenditionLayout;
     if (rawLayout != null &&
         rawLayout != 'pre-paginated' &&
         rawLayout != 'reflowable') {
@@ -113,20 +116,20 @@ class EpubRepositoryImpl implements EpubRepository {
     final opfDir = _dirOf(opfPath);
     final outline = _parseOutline(archive, opfDir, tocRefs, patches);
     final navigation = _parseNavigation(archive, opfDir, tocRefs);
-    final capabilities = _opfParser.parseCapabilities(opfXml);
+    final capabilities = bundle.capabilities;
 
     // encryption.xml — IDPF/Adobe 폰트 난독화는 투명 해제 맵으로, 콘텐츠(spine)에
     // 걸린 미지원 암호화(상업 DRM)는 EpubEncryptedUnsupported로. (S13.5, gap #8)
     final obfuscated = _parseEncryption(
       archive,
       opfDir,
-      parsed.spine.map((s) => s.href),
+      bundle.spine.map((s) => s.href),
     );
 
     return RawEpubLoad(
       book: PatchedEpubBook(
-        metadata: parsed.metadata,
-        spine: parsed.spine,
+        metadata: bundle.metadata,
+        spine: bundle.spine,
         outline: outline,
       ),
       patches: patches,
@@ -134,7 +137,7 @@ class EpubRepositoryImpl implements EpubRepository {
         archive,
         opfDir,
         obfuscatedResources: obfuscated,
-        identifier: parsed.metadata.identifier,
+        identifier: bundle.metadata.identifier,
       ),
       navigation: navigation,
       capabilities: capabilities,

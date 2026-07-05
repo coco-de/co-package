@@ -1,6 +1,7 @@
 // Data Parser — open_epub 1.0
 // Story: S1.1 (#7) — OPF 파서 (initial)
 // Story: S1.4 (#10) — rendition:layout / rendition:spread 메타 추출
+// Story: S9.5 (#69) — OPF XML 3중 재파싱을 단일 파싱으로 통합(parseBundle)
 // BDD: F1.1 (책 열기), F3 (Fixed Layout 감지)
 
 import 'package:xml/xml.dart';
@@ -26,7 +27,12 @@ class OpfParser {
   /// 반환값의 spine은 manifest와 join된 결과로, 각 항목은 spine itemref의
   /// 순서를 유지하며 `href` / `mediaType`이 채워져 있다. manifest에 매칭되지
   /// 않는 itemref는 결과에서 제외된다 (broken-spine-href 보정은 S1.17 영역).
-  ({EpubMetadata metadata, List<EpubSpineItem> spine}) parse(String opfXml) {
+  ({EpubMetadata metadata, List<EpubSpineItem> spine}) parse(String opfXml) =>
+      _parseFromRoot(_parseRoot(opfXml));
+
+  /// OPF XML을 한 번 파싱하고 `<package>` 루트를 검증해 반환한다. [parse]와
+  /// [parseBundle]이 공유하는 단일 파싱 진입점이다.
+  XmlElement _parseRoot(String opfXml) {
     final XmlDocument doc;
     try {
       doc = XmlDocument.parse(opfXml);
@@ -41,12 +47,37 @@ class OpfParser {
         '(found <${root.qualifiedName}> in ${root.namespaceUri ?? "no namespace"})',
       );
     }
+    return root;
+  }
 
+  ({EpubMetadata metadata, List<EpubSpineItem> spine}) _parseFromRoot(
+    XmlElement root,
+  ) {
     final epubVersion = root.getAttribute('version') ?? '2.0';
-
     return (
       metadata: _parseMetadata(root, epubVersion),
       spine: _parseSpine(root),
+    );
+  }
+
+  /// [EpubRepositoryImpl.load] 경로 전용 — 동일 OPF XML을 **한 번만**
+  /// [XmlDocument.parse]하여 metadata/spine/tocRefs/rawRenditionLayout/
+  /// capabilities를 함께 도출한다.
+  ///
+  /// 개별 public 메서드([parse]·[tocRefs]·[rawRenditionLayout]·
+  /// [parseCapabilities])는 각자 XML을 재파싱하므로, 이들을 순차 호출하면
+  /// 매니페스트 항목이 수천 개인 대형 EPUB(고정 레이아웃 만화 등)에서 파싱 비용이
+  /// 불필요하게 배가된다. 본 메서드는 파싱된 루트를 공유해 그 비용을 1회로
+  /// 통합한다(개별 메서드 결과와 동일한 값을 반환). (S9.5 #69)
+  OpfBundle parseBundle(String opfXml) {
+    final root = _parseRoot(opfXml);
+    final parsed = _parseFromRoot(root);
+    return OpfBundle(
+      metadata: parsed.metadata,
+      spine: parsed.spine,
+      tocRefs: _tocRefsFromRoot(root),
+      rawRenditionLayout: _rawRenditionLayoutFromRoot(root),
+      capabilities: _capabilitiesFromRoot(root),
     );
   }
 
@@ -57,8 +88,10 @@ class OpfParser {
   ///   `application/x-dtbncx+xml`인 item → [ncxHref]
   ///
   /// 둘 다 없으면 각각 null. (호출 전 [parse]로 OPF 유효성이 검증된 상태를 가정)
-  ({String? ncxHref, String? navHref}) tocRefs(String opfXml) {
-    final root = XmlDocument.parse(opfXml).rootElement;
+  ({String? ncxHref, String? navHref}) tocRefs(String opfXml) =>
+      _tocRefsFromRoot(XmlDocument.parse(opfXml).rootElement);
+
+  ({String? ncxHref, String? navHref}) _tocRefsFromRoot(XmlElement root) {
     final manifestEl = root
         .findElements('manifest', namespace: _opfNs)
         .firstOrNull;
@@ -101,7 +134,7 @@ class OpfParser {
   EpubVersionDetection detectVersion(String opfXml) {
     final root = XmlDocument.parse(opfXml).rootElement;
     final declared = EpubVersion.parse(root.getAttribute('version'));
-    final toc = tocRefs(opfXml);
+    final toc = _tocRefsFromRoot(root);
     return EpubVersionDetection.resolve(
       declared: declared,
       hasNav: toc.navHref != null,
@@ -113,8 +146,10 @@ class OpfParser {
   ///
   /// [parse]는 비표준 값을 [EpubLayout.reflowable]로 fallback하므로 원래 값이
   /// 소실된다. invalid-rendition-layout 보정 진단(S1.18)을 위해 raw 값을 노출한다.
-  String? rawRenditionLayout(String opfXml) {
-    final root = XmlDocument.parse(opfXml).rootElement;
+  String? rawRenditionLayout(String opfXml) =>
+      _rawRenditionLayoutFromRoot(XmlDocument.parse(opfXml).rootElement);
+
+  String? _rawRenditionLayoutFromRoot(XmlElement root) {
     final metadataEl =
         root.findElements('metadata', namespace: _opfNs).firstOrNull;
     if (metadataEl == null) return null;
@@ -130,8 +165,10 @@ class OpfParser {
   /// spine `page-progression-direction` + 미디어 오버레이 존재를 읽어 책의
   /// 읽기전용 [BookCapabilities]를 도출한다. writingMode는 OPF에 없어 기본값
   /// (세로쓰기 감지는 Phase 5). (S13.3, gap #3)
-  BookCapabilities parseCapabilities(String opfXml) {
-    final root = XmlDocument.parse(opfXml).rootElement;
+  BookCapabilities parseCapabilities(String opfXml) =>
+      _capabilitiesFromRoot(XmlDocument.parse(opfXml).rootElement);
+
+  BookCapabilities _capabilitiesFromRoot(XmlElement root) {
     final spineEl = root.findElements('spine', namespace: _opfNs).firstOrNull;
     final ppd = _parsePageProgression(
       spineEl?.getAttribute('page-progression-direction'),
@@ -324,6 +361,26 @@ class OpfParser {
     if (raw == null || raw.trim().isEmpty) return const [];
     return raw.trim().split(RegExp(r'\s+'));
   }
+}
+
+/// [OpfParser.parseBundle]의 산출물 — 단일 XML 파싱에서 얻은 OPF 정보 묶음.
+/// 개별 메서드([OpfParser.parse]·[OpfParser.tocRefs]·
+/// [OpfParser.rawRenditionLayout]·[OpfParser.parseCapabilities])를 순차 호출한
+/// 결과와 동일한 값을 담는다. (S9.5 #69)
+class OpfBundle {
+  const OpfBundle({
+    required this.metadata,
+    required this.spine,
+    required this.tocRefs,
+    required this.rawRenditionLayout,
+    required this.capabilities,
+  });
+
+  final EpubMetadata metadata;
+  final List<EpubSpineItem> spine;
+  final ({String? ncxHref, String? navHref}) tocRefs;
+  final String? rawRenditionLayout;
+  final BookCapabilities capabilities;
 }
 
 class _ManifestItem {
