@@ -2,7 +2,7 @@
 // Copyright (c) 2017 Colin Nelson; Copyright (c) 2025 Walter Tay Ann Lee.
 // Adapted for open_epub_engine (S12.1, #94, ADR-010): CFI 프리미티브(파싱·직렬화·DOM
 // 탐색)만 이식. epub_pro 자체 모델(ref_entities) 결합 계층은 이식하지 않음.
-// 전체 라이선스 전문: THIRD_PARTY_LICENSES (repo root).
+// 전체 라이선스 전문: THIRD_PARTY_LICENSES (open_epub_engine 패키지 루트).
 
 import 'cfi.dart';
 
