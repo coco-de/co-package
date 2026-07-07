@@ -1,52 +1,72 @@
-## Unreleased — 1.0 core (E1)
+## 1.0.0
 
-새 1.0 코어 엔진을 별도 entry `package:open_epub/open_epub_v1.dart`로 도입.
-기존 `package:open_epub/open_epub.dart`(0.1.x API)는 그대로 유지된다. 정식
-1.0 릴리스(버전 bump + MIGRATION.md)는 E6에서 진행.
+open_epub 1.0 — **ADR-002 breaking 재설계**. 리더 패키지를 Flutter 렌더/위젯/컨트롤러
+계층으로 좁히고, 순수-Dart EPUB 2/3 파서·객체 모델·CFI 로케이터를 **별도 패키지
+[`open_epub_engine`](https://pub.dev/packages/open_epub_engine)** 로 분리했다
+(ADR-002-a: pub.dev 독립 발행 + lockstep 버저닝, 모노레포 pub workspace). 0.x에서
+올라오는 사용자는 [`MIGRATION.md`](MIGRATION.md)의 0.x → 1.0 API 매핑을 참고.
 
-### New (1.0 core, `open_epub_v1.dart`)
-- 스크롤모드 controller 강제 override 수정 + 페이지모드 화면 단위 윈도잉 (#221)
-  - `EpubReader.controller`를 지정해도 더 이상 `paged`가 무조건 켜지지 않음 —
-    `ReflowableEngine`(스크롤모드)이 `EpubViewController`의 prev/next/goToSpine을
-    직접 지원한다. 이전에는 controller 지정 시 조용히 paged 모드로 바뀌어,
-    "스크롤로 끝까지 읽기"를 의도해도 chapter 경계에서 좌우 페이지 전환이 발생했음
-  - `ReflowablePageView`(paged 모드) — spine(chapter)을 한 번만 렌더링해 실제
-    높이를 측정하고, `OverflowBox`+`Transform.translate`로 화면 크기만큼의
-    "윈도우"만 보여준다. 화면 하나가 좌우 스와이프 1회에 대응하며, chapter의
-    첫/마지막 윈도우에서 계속 스와이프하면 다음/이전 spine으로 자연스럽게
-    이어진다. 텍스트를 재분할하지 않으므로 이미지·표·링크는 그대로 유지되고,
-    문단은 윈도우 경계에서 시각적으로 잘릴 수 있음(스크롤이 아닌 절단)
-- 하이라이트 선택 해석·재렌더 수정 (#62, kobic#7590)
-  - `SpineTextExtractor.resolveSelection` — 정확 일치 실패 시 **정규화 매칭
-    폴백**: HTML 공백 접기 + 엔티티(named/numeric) 디코드를 반영한 정규화
-    공간에서 매칭하고 원본 offset으로 역매핑. SelectionArea의 렌더된 선택
-    평문이 소스 개행·들여쓰기·`&amp;`를 걸쳐도 해석된다. offset 계약
-    (`injectHighlights` 원본 공간)은 그대로 유지
-  - `ReflowableEngine`/`ReflowablePageView`에 `contentRevision` 파라미터 —
-    identity가 바뀌면 spine XHTML 캐시를 버리고 재로드. `EpubReader`가
-    `highlights`를 전달해 하이라이트 저장/삭제·늦게 도착한 복원이 본문에
-    즉시 반영된다. 재로드 동안 직전 콘텐츠를 유지해 스크롤 점프/스피너
-    flash 없음. `ReflowablePageView`의 매 rebuild loader 재호출(FutureBuilder
-    안티패턴)도 함께 해소
-- fixed-layout 양면/단면 토글 + 페이지 내비게이션 (kobic#7576)
-  - `EpubReader.fixedLayoutSpreadOverride` — 호스트가 `EpubSpread`를 강제해
-    양면(landscape)/단면(none) 사용자 토글을 구동. null이면 기존처럼
-    `rendition:spread` 메타데이터를 따른다
-  - fixed-layout에도 reflowable paged와 동일한 내비게이션 계약 배선 —
-    `EpubViewController.goToSpine`(목차 점프), `onPageChanged` /
-    `onPositionChanged`(진행률·위치 영속화) 동작
-  - 수평 스와이프 페이지 넘김 — `InteractiveViewer.onInteractionEnd` 속도
-    기반이라 팬/줌 제스처와 아레나 경합 없음. 줌 1.0x에서만 동작, spread
-    렌더 중에는 row 단위 이동
-- `EpubBookSession.open()` — EPUB ZIP 해제 → OPF/NCX/nav 파싱 → 호환성 보정 →
-  `EpubBook` 조립 end-to-end. 위치 복원(BookPosition v1 토큰, 실패 시 첫 페이지
-  fallback + `position-restore-failed` 진단), hot-swap(`swapSource`), 분석 스트림
-  (lifecycle/progress/toolUse, progress throttle), 보안 가드(크기 제한, script/iframe
-  sanitize) 포함
-- `EpubReader` 위젯 — layout(reflowable/pre-paginated)에 따라 `ReflowableEngine` /
-  `FixedLayoutEngine` 자동 분기, 복원 실패 안내 배너, 진도 인디케이터
-- `EpubResourceReader` — 컨테이너 내부 리소스(본문/이미지) 접근, `..` 경로 정규화
-- BDD widget 테스트 11 feature 활성화 (skip 해제), patrol E2E 스텁은 E4 범위로 명시
+진입점은 `package:open_epub/open_epub.dart` 하나로 통일된다. 엔진에서 이동한
+타입(`EpubBook`·`EpubSource`·`EpubPosition`·`EpubMetadata` 등)은 이 배럴에서
+재-export 하므로 대부분의 소비자는 import 한 줄만 유지하면 된다.
+
+### Breaking Changes
+- 공개 API 전면 재설계 — 세션 기반 모델(`EpubBookSession`) + `EpubReader` 위젯 +
+  `EpubViewController`로 대체. 0.x 위젯 API(`EpubReaderWidget`·`EpubReaderController`·
+  `ReaderSettings`·`EpubReaderLocalization`)는 제거됐다. (E1, E11)
+- 파서·모델·코덱·도메인 계층을 별도 패키지 `open_epub_engine`으로 이관. 순수-Dart
+  소비자는 리더(Flutter) 의존 없이 엔진만 직접 의존할 수 있다. (E10, ADR-002-a)
+- 소스 추상화 `EpubSource`(`bytes`/`file`/`url` factory) 도입 — 0.x `EpubSourceAsset`
+  등 구체 클래스 대체. 에셋은 `rootBundle`로 바이트를 읽어 `EpubSource.bytes(...)`로 연다.
+- 위치 복원을 **BookPosition v1 토큰**(`EpubPosition.toToken()` / `fromToken()`)으로
+  통일 — 0.x page-index / progress 기반 API 제거.
+- 렌더 파라미터(`fontSize`·`lineHeight` 등)를 위젯 인자로 직접 주입. 0.x의 설정
+  자동 영속화(SharedPreferences)는 제거됐고, 영속화는 호스트 책임이다.
+
+### Added
+- **엔진 분리** — `open_epub_engine`: Flutter 무의존 순수-Dart EPUB 2/3 파서·객체 모델·
+  CFI 로케이터. `epubx`/`epub_view`를 대체한다. (E10)
+- **Reflowable 엔진** — spine XHTML 렌더, 글자 크기·줄간격 페이지네이션, 스크롤/페이지
+  모드, 페이지 모드 화면 단위 윈도잉. (E1; #221, #223, #230, #234)
+- **Fixed-layout 엔진** — SVG/XHTML viewport fit, 핀치 줌(`InteractiveViewer`), 양면/단면
+  spread 자동 분기 + 강제 토글(`fixedLayoutSpreadOverride`). (E1, kobic#7576)
+- **선택·하이라이트** — `SelectionArea` 기반 선택, 정확 일치 실패 시 정규화 매칭 폴백
+  (`SpineTextExtractor.resolveSelection`), 콘텐츠 hot-swap 재렌더. (E1, #62)
+- **CFI 보충 매퍼** — epub_pro CFI 프리미티브 이식, charOffset ↔ 문서-내 CFI, 콘텐츠
+  교체 시 하이라이트/북마크 재앵커, 외부 표준 전체-책 CFI export/import
+  (`EpubCfiMapper`). (E12, ADR-010)
+- **EPUB3 파싱 확장** — landmarks/page-list, `rendition:viewport`/`orientation`,
+  page-progression-direction + `BookCapabilities`, multiple renditions + 확장 메타데이터,
+  `encryption.xml` + IDPF/Adobe 폰트 난독화 해제, SMIL(Media Overlay) 파서. (E13)
+- **EPUB3 렌더 확장** — RTL page-progression 페이지 넘김 방향(`readingDirection`),
+  MathML → TeX 자체 폴백 렌더(`flutter_math_fork`). (E14)
+- **Media Overlays 낭독** — manifest → SMIL → spine 배선, `just_audio` 재생 컨트롤러
+  (`MediaOverlayController`), 낭독 하이라이트 동기화. (E15)
+- **세로쓰기(vertical-rl)** 실용 조판(`verticalWriting`, `VerticalTextBlock`). (E15)
+- **인라인 SVG** 렌더(`fwfh_svg`) + never-empty 렌더 계약. (E11, ADR-009)
+- 분석 이벤트 스트림(lifecycle / progress / toolUse), 보정 진단
+  (`BookSessionDiagnostics`), 보안 설정(`EpubSecurityConfig` — 파일 크기 제한,
+  script/iframe sanitize, zip-slip 경로 정규화).
+
+### Changed
+- 본문 렌더러 교체: `flutter_html` → `flutter_widget_from_html_core`(+`fwfh_svg`).
+  유지보수성·즉시 SVG 지원, WebView/스크립트 스택 미유입으로 보안 모델과 정합.
+  (E11, ADR-009)
+- 모노레포 pub workspace 전환(`resolution: workspace`) + CI 두 잡 병렬
+  (engine `dart test` / reader `flutter test`). (E10)
+- 성능 — EPUB open 시 ZIP/XML 파싱 isolate 오프로딩, `ArchiveResourceReader` LRU
+  eviction, OPF 다중 재파싱 → 단일 파싱 통합, 검색 인덱스 소문자 변환 build 캐싱,
+  진행률 `ValueListenable` 분리. (E9)
+- 하위 폴더 본문의 이미지 상대경로 해석. (#115)
+
+### Removed
+- 0.x 레거시 위젯/컨트롤러/모델/로컬라이제이션(`EpubReaderWidget`·`EpubReaderController`·
+  `ReaderSettings`·`EpubReaderLocalization`)과 레거시 배럴. (E11)
+- 레거시 의존성 — `epubx`·`epub_view`·`flutter_html`(레거시 파서·렌더),
+  `google_fonts`·`shared_preferences`·`http`(레거시 위젯·설정). `xml`·`archive`는
+  엔진 패키지로 이동했다. (E11)
+- **JavaScript 런타임 미포함** — EPUB3 Scripted Content(`<script>`·`<iframe>`·inline
+  event handler·`javascript:`)는 보안상 의도적 미지원. 정적 폴백을 렌더한다. (E14)
 
 ## 0.1.3
 
