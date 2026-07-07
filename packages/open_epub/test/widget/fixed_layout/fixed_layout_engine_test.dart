@@ -14,7 +14,8 @@ import 'package:open_epub/src/presentation/engine/fixed_layout/fixed_layout_page
 
 void main() {
   group('FixedLayoutPage — viewport fit (BDD F3.1)', () {
-    testWidgets('logical 1024×768 → viewport 400×300 contain fit', (tester) async {
+    testWidgets('logical 1024×768 → viewport 400×300 contain fit',
+        (tester) async {
       const contentKey = Key('content');
       await tester.pumpWidget(
         _wrap(
@@ -229,9 +230,50 @@ void main() {
     });
   });
 
+  // open-epub#221 후속 — EpubViewController.nextPage()/previousPage()가
+  // FixedLayoutEngine에서도 spine 전체가 아니라 "표시 단위"(nextPage/
+  // previousPage와 동일 — spread 렌더 중이면 row 단위)로 이동하는지 검증한다.
+  group('FixedLayoutEngine — onPageStepReady (open-epub#221 후속)', () {
+    testWidgets('step(+1)/step(-1)이 nextPage()/previousPage()와 동일하게 이동한다',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml', 'c.xhtml']);
+      Future<void> Function(int direction)? step;
+      await tester.pumpWidget(
+        _wrap(
+          width: 400,
+          height: 600,
+          child: FixedLayoutEngine(
+            book: book,
+            pageBuilder: (item) async => FixedLayoutPageData(
+              logicalSize: const Size(800, 600),
+              content: Text(item.href),
+            ),
+            onPageStepReady: (s) => step = s,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(step, isNotNull);
+
+      final state = tester.state<FixedLayoutEngineState>(
+        find.byType(FixedLayoutEngine),
+      );
+      expect(state.spineIndex, 0);
+
+      await step!(1);
+      await tester.pumpAndSettle();
+      expect(state.spineIndex, 1);
+      expect(find.text('b.xhtml'), findsOneWidget);
+
+      await step!(-1);
+      await tester.pumpAndSettle();
+      expect(state.spineIndex, 0);
+      expect(find.text('a.xhtml'), findsOneWidget);
+    });
+  });
+
   group('FixedLayoutEngine — breakpoint 재마운트 방지 (S9.2 #66)', () {
-    testWidgets(
-        'single↔spread 리사이즈 시 로드된 페이지의 pageBuilder 재호출/줌 초기화 없음',
+    testWidgets('single↔spread 리사이즈 시 로드된 페이지의 pageBuilder 재호출/줌 초기화 없음',
         (tester) async {
       // breakpoint(1024px)를 실제로 넘나들려면 SizedBox가 아니라 뷰 크기 자체를
       // 바꿔야 한다(SizedBox는 화면 폭에 클램프됨).
@@ -321,7 +363,8 @@ Widget _wrap({
 
 EpubBook _fakeBook(List<String> hrefs) => _FakeEpubBook(
       spine: hrefs
-          .map((h) => EpubSpineItem(idref: h, href: h, mediaType: 'application/xhtml+xml'))
+          .map((h) => EpubSpineItem(
+              idref: h, href: h, mediaType: 'application/xhtml+xml'))
           .toList(growable: false),
     );
 

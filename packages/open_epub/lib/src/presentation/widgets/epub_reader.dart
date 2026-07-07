@@ -392,6 +392,7 @@ class _SessionViewState extends State<_SessionView> {
         onSpineChanged: _handlePageChanged,
         onNavigatorReady: (navigate) =>
             widget.controller?.attachNavigator(navigate),
+        onPageStepReady: (step) => widget.controller?.attachPageStepper(step),
       );
     } else if (widget.paged) {
       engine = ReflowablePageView(
@@ -409,6 +410,17 @@ class _SessionViewState extends State<_SessionView> {
         forceVertical: widget.verticalWriting,
         onNavigatorReady: (navigate) =>
             widget.controller?.attachNavigator(navigate),
+        onPageStepReady: (step) => widget.controller?.attachPageStepper(step),
+        // 윈도우(화면) 이동/측정마다 controller에 반영 — hasNext/hasPrevious가
+        // 화면 단위 윈도잉을 정확히 반영하도록 한다. (open-epub#228)
+        onWindowChanged: (spineIndex, windowIndex, windowCount) {
+          widget.controller?.syncState(
+            currentSpineIndex: spineIndex,
+            spineCount: _session.book.spine.length,
+            windowIndex: windowIndex,
+            windowCount: windowCount,
+          );
+        },
         // 하이라이트 목록/낭독 활성 par가 바뀌면 spine XHTML을 다시 로드해 본문에
         // 즉시 반영한다. (open-epub#62, S15.3)
         contentRevision: _contentRevision,
@@ -434,6 +446,7 @@ class _SessionViewState extends State<_SessionView> {
         // (open-epub#221)
         onNavigatorReady: (navigate) =>
             widget.controller?.attachNavigator(navigate),
+        onPageStepReady: (step) => widget.controller?.attachPageStepper(step),
       );
     }
 

@@ -25,7 +25,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('안녕 EPUB', findRichText: true), findsOneWidget);
+      expect(
+          find.textContaining('안녕 EPUB', findRichText: true), findsOneWidget);
     });
 
     testWidgets('로딩 중 CircularProgressIndicator 표시', (tester) async {
@@ -172,7 +173,8 @@ void main() {
       // 연속 스크롤(kobic#7572): 첫 spine부터 로드하되, 뷰포트에 다음 spine이
       // 걸리면 함께 lazy load될 수 있다.
       expect(loaded.first, 'ch01.xhtml');
-      expect(find.textContaining('ch01.xhtml', findRichText: true), findsOneWidget);
+      expect(find.textContaining('ch01.xhtml', findRichText: true),
+          findsOneWidget);
       final state = tester.state<ReflowableEngineState>(
         find.byType(ReflowableEngine),
       );
@@ -191,7 +193,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('ch02.xhtml', findRichText: true), findsOneWidget);
+      expect(find.textContaining('ch02.xhtml', findRichText: true),
+          findsOneWidget);
     });
 
     testWidgets('nextSpine() / previousSpine() 으로 항목 이동', (tester) async {
@@ -217,7 +220,8 @@ void main() {
       expect(state.nextSpine(), isTrue);
       await tester.pumpAndSettle();
       expect(state.spineIndex, 1);
-      expect(find.textContaining('ch02.xhtml', findRichText: true), findsOneWidget);
+      expect(find.textContaining('ch02.xhtml', findRichText: true),
+          findsOneWidget);
 
       expect(state.nextSpine(), isTrue);
       await tester.pumpAndSettle();
@@ -266,7 +270,8 @@ void main() {
 
       final state = tester.state<ReflowableEngineState>(list);
       expect(state.spineIndex, 1);
-      expect(find.textContaining('ch02.xhtml', findRichText: true), findsOneWidget);
+      expect(find.textContaining('ch02.xhtml', findRichText: true),
+          findsOneWidget);
     });
 
     testWidgets('spine 콘텐츠가 뷰포트보다 짧아도 스크롤로 다음 spine 도달 (dead-end 회귀 방지)',
@@ -285,9 +290,12 @@ void main() {
 
       // 짧은 spine 3개가 한 뷰포트 안에 연속으로 함께 렌더된다 —
       // 이전 구현(현재 spine만 렌더 + 이동 수단 없음)에서는 불가능했다.
-      expect(find.textContaining('ch01.xhtml', findRichText: true), findsOneWidget);
-      expect(find.textContaining('ch02.xhtml', findRichText: true), findsOneWidget);
-      expect(find.textContaining('ch03.xhtml', findRichText: true), findsOneWidget);
+      expect(find.textContaining('ch01.xhtml', findRichText: true),
+          findsOneWidget);
+      expect(find.textContaining('ch02.xhtml', findRichText: true),
+          findsOneWidget);
+      expect(find.textContaining('ch03.xhtml', findRichText: true),
+          findsOneWidget);
     });
 
     testWidgets('initialSpineIndex가 범위 초과 시 clamp', (tester) async {
@@ -308,6 +316,45 @@ void main() {
         find.byType(ReflowableEngine),
       );
       expect(state.spineIndex, 1); // last valid
+    });
+  });
+
+  // open-epub#221 후속 — EpubViewController.nextPage()/previousPage()가
+  // 스크롤모드에서도 동작하도록, onPageStepReady로 노출한 step 함수가
+  // spine 단위 이동(nextSpine/previousSpine과 동일)을 수행하는지 검증한다.
+  // (paged 모드의 ReflowablePageView와 달리 스크롤모드엔 윈도우 개념이 없다.)
+  group('ReflowableEngine — onPageStepReady (open-epub#221 후속)', () {
+    testWidgets('step(+1)/step(-1)이 spine 단위로 이동한다', (tester) async {
+      final book = _fakeBook(['ch01.xhtml', 'ch02.xhtml', 'ch03.xhtml']);
+      Future<void> Function(int direction)? step;
+      await tester.pumpWidget(
+        _wrap(
+          ReflowableEngine(
+            book: book,
+            xhtmlLoader: (href) async => _wrapXhtml(_tallBody(href)),
+            onPageStepReady: (s) => step = s,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(step, isNotNull);
+
+      final state = tester.state<ReflowableEngineState>(
+        find.byType(ReflowableEngine),
+      );
+      expect(state.spineIndex, 0);
+
+      await step!(1);
+      await tester.pumpAndSettle();
+      expect(state.spineIndex, 1);
+
+      await step!(1);
+      await tester.pumpAndSettle();
+      expect(state.spineIndex, 2);
+
+      await step!(-1);
+      await tester.pumpAndSettle();
+      expect(state.spineIndex, 1);
     });
   });
 
@@ -333,20 +380,23 @@ void main() {
       final rev0 = <String>['r0'];
       await tester.pumpWidget(build(rev0));
       await tester.pumpAndSettle();
-      expect(find.textContaining('revision v0', findRichText: true), findsOneWidget);
+      expect(find.textContaining('revision v0', findRichText: true),
+          findsOneWidget);
       final loadsAfterFirst = loadCount;
 
       // 같은 identity → 캐시 유지, 재로드 없음.
       version = 1;
       await tester.pumpWidget(build(rev0));
       await tester.pumpAndSettle();
-      expect(find.textContaining('revision v0', findRichText: true), findsOneWidget);
+      expect(find.textContaining('revision v0', findRichText: true),
+          findsOneWidget);
       expect(loadCount, loadsAfterFirst);
 
       // identity 변경 → 캐시 무효화, 새 콘텐츠 렌더.
       await tester.pumpWidget(build(<String>['r1']));
       await tester.pumpAndSettle();
-      expect(find.textContaining('revision v1', findRichText: true), findsOneWidget);
+      expect(find.textContaining('revision v1', findRichText: true),
+          findsOneWidget);
       expect(loadCount, greaterThan(loadsAfterFirst));
     });
 
@@ -369,18 +419,21 @@ void main() {
 
       await tester.pumpWidget(build(const ['r0']));
       await tester.pumpAndSettle();
-      expect(find.textContaining('before reload', findRichText: true), findsOneWidget);
+      expect(find.textContaining('before reload', findRichText: true),
+          findsOneWidget);
 
       delayed = true;
       await tester.pumpWidget(build(const ['r1']));
       await tester.pump();
       // 새 로드가 끝나기 전 — 직전 콘텐츠 유지, 스피너 없음.
-      expect(find.textContaining('before reload', findRichText: true), findsOneWidget);
+      expect(find.textContaining('before reload', findRichText: true),
+          findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
 
       gate.complete();
       await tester.pumpAndSettle();
-      expect(find.textContaining('after reload', findRichText: true), findsOneWidget);
+      expect(find.textContaining('after reload', findRichText: true),
+          findsOneWidget);
     });
   });
 }

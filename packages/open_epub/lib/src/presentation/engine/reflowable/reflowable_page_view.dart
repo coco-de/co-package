@@ -39,6 +39,8 @@ class ReflowablePageView extends StatefulWidget {
     this.onPageChanged,
     this.onLinkTap,
     this.onNavigatorReady,
+    this.onPageStepReady,
+    this.onWindowChanged,
     this.contentRevision,
     this.reverse = false,
     this.forceVertical = false,
@@ -73,6 +75,24 @@ class ReflowablePageView extends StatefulWidget {
   final void Function(Future<void> Function(int index) goToPage)?
       onNavigatorReady;
 
+  /// 마운트 시 "한 페이지(윈도우) 이동" 함수([_advance])를 부모에게 넘긴다 —
+  /// [onNavigatorReady](spine 단위 goToPage)와 별개로, EpubViewController의
+  /// nextPage()/previousPage()가 spine 전체가 아닌 화면 단위 윈도우로 이동하게
+  /// 한다. 인자는 +1(다음)/-1(이전). (open-epub#221 후속 — 페이지 버튼이
+  /// 챕터 단위로 건너뛰던 문제)
+  final void Function(Future<void> Function(int direction) step)?
+      onPageStepReady;
+
+  /// (spine 인덱스, 윈도우 인덱스, 현재 spine의 윈도우 수)가 바뀔 때마다
+  /// 호출된다 — 부모(EpubReader)가 EpubViewController.syncState에 윈도우
+  /// 정보를 함께 반영해 hasNext/hasPrevious/windowIndex/windowCount가 화면
+  /// 단위 윈도잉을 정확히 반영하도록 한다. 마운트 시 초기값(측정 전)으로도
+  /// 한 번 호출되고, 측정 완료·윈도우 이동·spine 전환마다 다시 호출된다.
+  /// (open-epub#228 — 이전엔 창 이동이 controller에 전혀 반영되지 않아
+  /// hasNext 등이 stale했다)
+  final void Function(int spineIndex, int windowIndex, int windowCount)?
+      onWindowChanged;
+
   /// [xhtmlLoader] 결과에 영향을 주는 외부 상태의 revision(예: 하이라이트
   /// 목록). identity가 바뀌면 캐시된 spine XHTML을 버리고 다시 로드한다.
   /// (open-epub#62)
@@ -98,6 +118,12 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
   /// 인덱스를 한 번만 소비하기 위한 슬롯. 프로그램적 이동(controller 등)은
   /// 항상 0으로 착지한다.
   int? _pendingLandingWindow;
+
+  /// spine 경계를 넘는(비동기) 이동이 진행 중인지 — 진행 중에 또 다른 이동
+  /// 요청(중복 탭/스와이프)이 오면 무시해, 애니메이션 도중 재진입해 동일
+  /// 목표로 두 번째 이동이 겹쳐 걸리는 것을 막는다. 같은 spine 내 윈도우
+  /// 이동(동기)은 이 가드가 필요 없다. (open-epub#228)
+  bool _crossingSpine = false;
 
   static const double _swipeVelocityThreshold = 250;
 
@@ -125,6 +151,18 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     );
     _controller = PageController(initialPage: _pageIndex);
     widget.onNavigatorReady?.call(goToPage);
+    widget.onPageStepReady?.call(_advance);
+    // 측정 전 초기값(윈도우 0/1개)으로 우선 보고 — 측정이 끝나면
+    // _handleWindowMeasured가 정확한 windowCount로 다시 보고한다.
+    _reportWindowState();
+  }
+
+  /// 현재 (spine, 윈도우 인덱스, 윈도우 수)를 부모에 보고한다 — 측정 완료·
+  /// 윈도우 이동·spine 전환마다 호출해 EpubViewController의
+  /// hasNext/hasPrevious/windowIndex/windowCount를 최신 상태로 유지한다.
+  /// (open-epub#228)
+  void _reportWindowState() {
+    widget.onWindowChanged?.call(_pageIndex, _windowIndex, windowCount);
   }
 
   @override
@@ -142,6 +180,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
       );
       _controller.dispose();
       _controller = PageController(initialPage: _pageIndex);
+      _reportWindowState();
       return;
     }
     if (!identical(oldWidget.contentRevision, widget.contentRevision)) {
@@ -156,6 +195,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
       // 재측정한다 — 이전 윈도우 경계는 새 크기에서 더 이상 유효하지 않다.
       _windowCounts.clear();
       _windowIndex = 0;
+      _reportWindowState();
     }
   }
 
@@ -191,9 +231,11 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
   void _handleWindowMeasured(int spineIndex, int measuredCount) {
     if (!mounted || _windowCounts[spineIndex] == measuredCount) return;
     _windowCounts[spineIndex] = measuredCount;
-    if (spineIndex == _pageIndex && _windowIndex >= measuredCount) {
+    if (spineIndex != _pageIndex) return;
+    if (_windowIndex >= measuredCount) {
       setState(() => _windowIndex = measuredCount - 1);
     }
+    _reportWindowState();
   }
 
   /// 좌우 스와이프 종료 시 윈도우/spine 이동을 함께 판단한다. 같은 축으로
@@ -217,13 +259,23 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     final next = _windowIndex + direction;
     if (next >= 0 && next < count) {
       setState(() => _windowIndex = next);
+      _reportWindowState();
       return;
     }
+    // 이미 진행 중인 spine 전환(애니메이션)이 있으면 중복 요청은 무시한다 —
+    // 없으면 빠른 연속 탭/스와이프가 같은 목표로 두 번 걸려 하나를 삼킨다.
+    // (open-epub#228)
+    if (_crossingSpine) return;
     final targetSpine = _pageIndex + direction;
     if (targetSpine < 0 || targetSpine >= pageCount) return;
+    _crossingSpine = true;
     _pendingLandingWindow =
         direction > 0 ? 0 : (_windowCounts[targetSpine] ?? 1) - 1;
-    await goToPage(targetSpine);
+    try {
+      await goToPage(targetSpine);
+    } finally {
+      _crossingSpine = false;
+    }
   }
 
   @override
@@ -251,6 +303,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
                 _pendingLandingWindow = null;
               });
               widget.onPageChanged?.call(i);
+              _reportWindowState();
             },
             itemBuilder: (context, index) => _SpinePageView(
               // 같은 href가 spine에 중복 등장할 수 있어 index로 구분.

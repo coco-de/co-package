@@ -1,5 +1,7 @@
 // Story: S8.1 (E8 follow-up) — EpubViewController 페이지 내비게이션
 
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/api/epub_reader_controller.dart';
@@ -76,6 +78,63 @@ void main() {
     expect(controller.currentSpineIndex, 0);
   });
 
+  // open-epub#221 후속 — 페이지 버튼(nextPage/previousPage)이 spine 전체를
+  // 건너뛰지 않고, 엔진이 attachPageStepper로 등록한 세분화된(윈도우 등)
+  // 이동을 우선 사용해야 한다.
+  group('attachPageStepper — 페이지 단위 이동 우선순위', () {
+    test('attachPageStepper가 있으면 goToSpine 대신 stepper를 쓴다', () async {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      controller.syncState(currentSpineIndex: 0, spineCount: 3);
+
+      final steps = <int>[];
+      controller.attachPageStepper((direction) async {
+        steps.add(direction);
+      });
+      // attachNavigator(goToSpine)는 등록하지 않음 — stepper가 있으면
+      // goToSpine 없이도 nextPage/previousPage가 동작해야 한다.
+
+      await controller.nextPage();
+      await controller.previousPage();
+
+      expect(steps, [1, -1]);
+      // stepper만으로는 currentSpineIndex가 안 바뀐다(엔진이 syncState로
+      // 직접 갱신하는 책임) — goToSpine 경로를 타지 않았다는 방증.
+      expect(controller.currentSpineIndex, 0);
+    });
+
+    test('attachPageStepper가 없으면 goToSpine으로 폴백한다(회귀)', () async {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      controller.syncState(currentSpineIndex: 0, spineCount: 3);
+
+      final jumps = <int>[];
+      controller.attachNavigator((index) async {
+        jumps.add(index);
+        controller.syncState(currentSpineIndex: index, spineCount: 3);
+      });
+
+      await controller.nextPage();
+      expect(jumps, [1]);
+      expect(controller.currentSpineIndex, 1);
+    });
+
+    test('detachNavigator는 stepper도 함께 해제한다', () async {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      controller.syncState(currentSpineIndex: 0, spineCount: 3);
+
+      var stepperCalls = 0;
+      controller.attachPageStepper((direction) async => stepperCalls++);
+      controller.detachNavigator();
+
+      // stepper 해제됨 → goToSpine 폴백. navigate도 해제됐으니 무시(크래시 없음).
+      await controller.nextPage();
+      expect(stepperCalls, 0);
+      expect(controller.currentSpineIndex, 0);
+    });
+  });
+
   // open-epub#221 — controller가 있어도 paged:false(스크롤모드)가 무시되고
   // 강제로 paged 모드로 바뀌던 버그의 회귀 테스트. 이제 스크롤모드에서도
   // ReflowableEngine이 controller 내비게이션을 지원한다.
@@ -113,4 +172,197 @@ void main() {
     await toLast;
     expect(controller.currentSpineIndex, 2);
   });
+
+  // open-epub#228 — 코드 리뷰에서 확인된 갭: 윈도우 단위 이동(stepper)만으로는
+  // currentSpineIndex/hasNext/hasPrevious가 갱신되지 않아, 마지막 spine이
+  // 여러 윈도우로 나뉜 경우 hasNext가 false로 고정돼 "다음" 버튼을 잘못
+  // 비활성화할 수 있었다. syncState에 windowIndex/windowCount를 추가해 해결.
+  group('syncState — 윈도우 정보 (open-epub#228)', () {
+    test('windowIndex/windowCount를 반영하고 변경 시에만 통지한다', () {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      var notifications = 0;
+      controller.addListener(() => notifications++);
+
+      controller.syncState(
+        currentSpineIndex: 0,
+        spineCount: 1,
+        windowIndex: 0,
+        windowCount: 3,
+      );
+      expect(notifications, 1);
+      expect(controller.windowIndex, 0);
+      expect(controller.windowCount, 3);
+
+      // 같은 값 → 통지 없음
+      controller.syncState(
+        currentSpineIndex: 0,
+        spineCount: 1,
+        windowIndex: 0,
+        windowCount: 3,
+      );
+      expect(notifications, 1);
+
+      // 윈도우 인덱스만 변경 → 통지
+      controller.syncState(
+        currentSpineIndex: 0,
+        spineCount: 1,
+        windowIndex: 1,
+        windowCount: 3,
+      );
+      expect(notifications, 2);
+      expect(controller.windowIndex, 1);
+    });
+
+    test('windowIndex/windowCount 생략 시 기본값(0/1) — 기존 spine 전용 동작과 동일 (회귀)', () {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      controller.syncState(currentSpineIndex: 1, spineCount: 3);
+      expect(controller.windowIndex, 0);
+      expect(controller.windowCount, 1);
+    });
+
+    test('hasNext — 마지막 spine이어도 남은 윈도우가 있으면 true', () {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      // 마지막 spine(2/3)이지만 3개 윈도우 중 첫 번째 — spine 관점으론
+      // "마지막"이지만 아직 윈도우 2개가 남아있다.
+      controller.syncState(
+        currentSpineIndex: 2,
+        spineCount: 3,
+        windowIndex: 0,
+        windowCount: 3,
+      );
+      expect(controller.hasNext, isTrue);
+
+      controller.syncState(
+        currentSpineIndex: 2,
+        spineCount: 3,
+        windowIndex: 2,
+        windowCount: 3,
+      );
+      expect(controller.hasNext, isFalse); // 진짜 마지막 윈도우
+    });
+
+    test('hasPrevious — 첫 spine이어도 윈도우가 0보다 크면 true(대칭)', () {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      controller.syncState(
+        currentSpineIndex: 0,
+        spineCount: 3,
+        windowIndex: 1,
+        windowCount: 3,
+      );
+      expect(controller.hasPrevious, isTrue);
+
+      controller.syncState(
+        currentSpineIndex: 0,
+        spineCount: 3,
+        windowIndex: 0,
+        windowCount: 3,
+      );
+      expect(controller.hasPrevious, isFalse);
+    });
+  });
+
+  // open-epub#228 — 코드 리뷰에서 확인된 갭: paged:true + 실제 EpubReader +
+  // 실제 EpubViewController 조합으로 controller.nextPage()를 눌렀을 때 화면
+  // 단위로만 이동하는지(챕터 전체를 건너뛰지 않는지)를 검증하는 end-to-end
+  // 테스트가 없었다 — 이 테스트가 그 실제 신고 재현 경로를 검증한다.
+  group(
+      'EpubReader(paged:true) + controller — end-to-end 윈도우 이동 (open-epub#228)',
+      () {
+    testWidgets('nextPage()가 긴 챕터를 건너뛰지 않고 화면 단위로 이동한다', (tester) async {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 400,
+              height: 600,
+              child: EpubReader(
+                source: EpubSource.bytes(_longChapterEpub()),
+                controller: controller,
+                paged: true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 2번째 spine(긴 챕터)으로 이동.
+      final toChapter2 = controller.goToSpine(1);
+      await tester.pumpAndSettle();
+      await toChapter2;
+      expect(controller.currentSpineIndex, 1);
+      expect(controller.windowCount, greaterThan(1)); // 화면보다 긴 챕터
+      final chapterWindowCount = controller.windowCount;
+
+      // nextPage() — 같은 spine 안에서 윈도우만 이동해야 한다(챕터 전체를
+      // 건너뛰지 않음). 이게 바로 실기기 QA에서 신고된 버그의 재현 경로다.
+      final next = controller.nextPage();
+      await tester.pumpAndSettle();
+      await next;
+      expect(controller.currentSpineIndex, 1); // 같은 spine 유지
+      expect(controller.windowIndex, 1); // 다음 윈도우로
+      expect(controller.windowCount, chapterWindowCount);
+      expect(controller.hasNext, isTrue); // 아직 윈도우가 더 남아있음
+    });
+  });
 }
+
+Uint8List _longChapterEpub() => zipEpub({
+      'mimetype': 'application/epub+zip',
+      'META-INF/container.xml': '''
+<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>
+''',
+      'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>긴 챕터 테스트북</dc:title>
+    <dc:language>ko</dc:language>
+    <dc:identifier id="bookid">urn:uuid:test-longchapter</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="c2" href="ch2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="c3" href="ch3.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="c1"/>
+    <itemref idref="c2"/>
+    <itemref idref="c3"/>
+  </spine>
+</package>
+''',
+      'OEBPS/nav.xhtml': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        <li><a href="ch1.xhtml">1장</a></li>
+        <li><a href="ch2.xhtml">2장</a></li>
+        <li><a href="ch3.xhtml">3장</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>
+''',
+      'OEBPS/ch1.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>짧은 1장</p></body></html>',
+      'OEBPS/ch2.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body>${List.generate(60, (i) => '<p>2장 문단 $i — 화면 크기 윈도잉 테스트용 채움 텍스트</p>').join()}</body></html>',
+      'OEBPS/ch3.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>짧은 3장</p></body></html>',
+    });

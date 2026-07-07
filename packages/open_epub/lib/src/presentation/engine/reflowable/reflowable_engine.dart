@@ -95,6 +95,7 @@ class ReflowableEngine extends StatefulWidget {
     this.contentRevision,
     this.forceVertical = false,
     this.onNavigatorReady,
+    this.onPageStepReady,
   });
 
   final EpubBook book;
@@ -130,6 +131,14 @@ class ReflowableEngine extends StatefulWidget {
   /// 스크롤모드에서도 [EpubViewController] 내비게이션을 지원한다. (open-epub#221)
   final void Function(Future<void> Function(int index) goToSpine)?
       onNavigatorReady;
+
+  /// 마운트 시 "한 페이지 이동" 함수를 부모에게 넘긴다 — 스크롤모드는 윈도우
+  /// 개념이 없으므로 spine 단위 이동([ReflowableEngineState.nextSpine]/
+  /// [ReflowableEngineState.previousSpine])과 동일하다. [onNavigatorReady]와
+  /// 별개로 EpubViewController.nextPage()/previousPage()가 쓴다. 인자는
+  /// +1(다음)/-1(이전). (open-epub#221 후속)
+  final void Function(Future<void> Function(int direction) step)?
+      onPageStepReady;
 
   @override
   State<ReflowableEngine> createState() => ReflowableEngineState();
@@ -168,6 +177,13 @@ class ReflowableEngineState extends State<ReflowableEngine> {
     widget.onNavigatorReady?.call((index) async {
       if (index < 0 || index >= spineCount) return;
       _jumpToSpine(index);
+    });
+    widget.onPageStepReady?.call((direction) async {
+      if (direction > 0) {
+        nextSpine();
+      } else {
+        previousSpine();
+      }
     });
   }
 

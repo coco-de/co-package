@@ -468,6 +468,39 @@ void main() {
       expect(state.windowIndex, 0);
     });
 
+    // open-epub#221 후속 — EpubViewController.nextPage()/previousPage()가
+    // paged 모드에서 spine 전체를 건너뛰지 않고 화면 단위 윈도우로 이동하도록,
+    // onPageStepReady로 노출한 step 함수가 실제로 윈도우 단위 이동(_advance와
+    // 동일 동작)을 수행하는지 검증한다 — EpubViewController를 거치지 않고
+    // ReflowablePageView 자체의 배선만 확인.
+    testWidgets('onPageStepReady로 노출된 step 함수는 윈도우 단위로 이동한다', (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml']);
+      Future<void> Function(int direction)? step;
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => href == 'a.xhtml'
+                ? _tallXhtml(href)
+                : _wrapXhtml('<p>짧은 본문</p>'),
+            onPageStepReady: (s) => step = s,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
+      expect(step, isNotNull);
+
+      // step(+1) — 같은 spine 안에서 다음 윈도우로 (spine 점프 아님).
+      await step!(1);
+      await tester.pumpAndSettle();
+      expect(state.pageIndex, 0);
+      expect(state.windowIndex, 1);
+    });
+
     testWidgets('짧은 spine은 윈도우가 1개다(회귀)', (tester) async {
       final book = _fakeBook(['a.xhtml']);
       await tester.pumpWidget(
@@ -649,6 +682,113 @@ void main() {
         find.byType(ReflowablePageView),
       );
       expect(state.windowCount, greaterThan(1));
+    });
+
+    // open-epub#228 — 코드 리뷰에서 확인된 갭: 윈도우 이동/측정이 부모(그리고
+    // 결국 EpubViewController)에 전혀 보고되지 않아 hasNext/hasPrevious 등이
+    // stale해지는 문제. onWindowChanged로 (spine, 윈도우 인덱스, 윈도우 수)를
+    // 보고하도록 수정.
+    testWidgets('onWindowChanged — 측정 완료와 같은 spine 내 윈도우 이동을 보고한다',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      final reports = <List<int>>[];
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+            onWindowChanged: (spineIndex, windowIndex, windowCount) =>
+                reports.add([spineIndex, windowIndex, windowCount]),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
+      // 측정 완료 후 마지막 보고는 (spine 0, window 0, 측정된 windowCount).
+      expect(reports.last, [0, 0, state.windowCount]);
+
+      await tester.fling(
+        find.byType(ReflowablePageView),
+        const Offset(-500, 0),
+        1500,
+      );
+      await tester.pumpAndSettle();
+
+      // 같은 spine 안에서 윈도우만 이동 — spine은 그대로, windowCount도 그대로.
+      expect(reports.last, [0, 1, state.windowCount]);
+    });
+
+    testWidgets(
+        'onWindowChanged — spine 경계를 넘으면 (새 spine, 0, 새 windowCount)로 보고한다',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml']);
+      final reports = <List<int>>[];
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => href == 'a.xhtml'
+                ? _wrapXhtml('<p>짧은 본문</p>')
+                : _tallXhtml(href),
+            onWindowChanged: (spineIndex, windowIndex, windowCount) =>
+                reports.add([spineIndex, windowIndex, windowCount]),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(reports.last[0], 0);
+
+      await tester.fling(
+        find.byType(ReflowablePageView),
+        const Offset(-500, 0),
+        1500,
+      );
+      await tester.pumpAndSettle();
+
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.pageIndex, 1);
+      expect(reports.last[0], 1); // 새 spine
+      expect(reports.last[1], 0); // 첫 윈도우
+      expect(reports.last[2], state.windowCount); // 새 spine의 측정된 windowCount
+    });
+
+    // open-epub#228 — 코드 리뷰에서 확인된 갭: spine 경계를 넘는 애니메이션
+    // (150ms) 도중 두 번째 이동 요청이 오면, 둘 다 같은(stale) 상태를 읽어
+    // 같은 목표로 중복 이동을 시도할 수 있었다. _crossingSpine 가드로 두
+    // 번째 요청을 무시해 안전하게 수렴하도록 수정.
+    testWidgets('spine 경계를 넘는 이동 중 중복 요청이 와도 안전하게 수렴한다(경합 방지)', (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml', 'c.xhtml']);
+      Future<void> Function(int direction)? step;
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _wrapXhtml('<p>$href</p>'),
+            onPageStepReady: (s) => step = s,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(step, isNotNull);
+
+      // 애니메이션(150ms) 완료 전에 연속 호출 — 두 번째 호출은 무시되어야
+      // 한다.
+      final first = step!(1);
+      final second = step!(1);
+      await tester.pumpAndSettle();
+      await first;
+      await second;
+
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.pageIndex, 1); // 정확히 한 칸만 이동, 범위 밖으로 안 나감
     });
   });
 }

@@ -62,6 +62,7 @@ class FixedLayoutEngine extends StatefulWidget {
     this.enableZoom = true,
     this.onSpineChanged,
     this.onNavigatorReady,
+    this.onPageStepReady,
     this.rightToLeft = false,
   });
 
@@ -83,6 +84,14 @@ class FixedLayoutEngine extends StatefulWidget {
   /// onNavigatorReady와 동일 패턴(`EpubViewController.attachNavigator` 시그니처).
   final void Function(Future<void> Function(int index) navigate)?
       onNavigatorReady;
+
+  /// 마운트 시 "한 페이지 이동" 함수를 호스트에 넘겨준다 — [nextPage]/
+  /// [previousPage]에 연결해, spread 렌더 중에는 row 단위(한 스와이프에 두
+  /// 페이지)로, 아니면 spine 단위로 이동한다. [onNavigatorReady](spine 점프)와
+  /// 별개로 EpubViewController.nextPage()/previousPage()가 쓴다. 인자는
+  /// +1(다음)/-1(이전). (open-epub#221 후속 — reflowable paged와 동일 계약)
+  final void Function(Future<void> Function(int direction) step)?
+      onPageStepReady;
 
   /// null이면 [EpubBook.metadata.spread]를 사용. 테스트 / 사용자 설정으로
   /// 강제 변경하려면 [EpubSpread]를 명시 (예: [EpubSpread.none]).
@@ -142,6 +151,13 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
     );
     _rowIndex = _findRowIndexForSpine(_spineIndex);
     widget.onNavigatorReady?.call((index) async => jumpToSpine(index));
+    widget.onPageStepReady?.call((direction) async {
+      if (direction > 0) {
+        nextPage();
+      } else {
+        previousPage();
+      }
+    });
   }
 
   @override
