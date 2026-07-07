@@ -1,3 +1,6 @@
+// 시간 경과에 따른 상태 전이 검증이라 async.elapse() 후 매번 다른 상태를
+// 읽으므로 변수 추출·중복 단언 경고는 오탐이다 (uniform_pen_test.dart 와 동일 사유).
+// ignore_for_file: prefer-moving-to-variable, avoid-duplicate-test-assertions
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/module/state/viewer_gesture_bus.dart';
@@ -89,6 +92,34 @@ void main() {
         });
       },
     );
+
+    // 리팩터 회귀 가드: cancel() 이 `if (value != dragging)` 가드 안으로
+    // 잘못 옮겨지면(값이 이미 true 라 가드를 못 타는 경우), 근접 간격의 재호출이
+    // 기존 타이머를 취소하지 못해 "최초 호출 기준 만료 시각"에 여전히 해제되는
+    // 회귀가 생길 수 있다 — 이 테스트는 그 회귀를 감지한다.
+    test('should_extend_deadline_from_latest_call_even_with_near_zero_gap', () {
+      fakeAsync((async) {
+        // t=0: 최초 호출 → A 만료 시각 = maxStaleDuration.
+        const gap = Duration(milliseconds: 100);
+        final bus = ViewerGestureBus()..setPanelDragging(dragging: true);
+
+        // t=gap: 짧은 간격으로 재신호 → B 만료 시각 = gap + maxStaleDuration.
+        async.elapse(gap);
+        bus.setPanelDragging(dragging: true);
+
+        // t = B 만료 1ms 전(= A 만료는 이미 지남) — 재신호가 A 의 타이머를
+        // 제대로 취소했다면(취소 못했다면 A 만료 시점에 이미 false 였을 것)
+        // 여전히 dragging 상태여야 한다.
+        async.elapse(
+          ViewerGestureBus.maxStaleDuration - const Duration(milliseconds: 1),
+        );
+        expect(bus.isPanelDragging.value, isTrue);
+
+        // t 가 B 만료를 넘기면 정상적으로 해제된다.
+        async.elapse(const Duration(milliseconds: 2));
+        expect(bus.isPanelDragging.value, isFalse);
+      });
+    });
 
     test('should_cancel_watchdog_on_explicit_release', () {
       fakeAsync((async) {

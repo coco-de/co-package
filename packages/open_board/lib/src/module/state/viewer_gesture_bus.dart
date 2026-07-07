@@ -17,16 +17,6 @@ import 'package:flutter/foundation.dart';
 /// dispose → false 로 신호만 보낸다(엔진 내부 미접근). 캔버스 차단·복구는
 /// 엔진이 책임진다.
 class ViewerGestureBus {
-  static final ViewerGestureBus _instance = ViewerGestureBus._internal();
-
-  /// 도구바 핸들 드래그 중 여부 — true 면 캔버스 입력이 게이트된다.
-  final ValueNotifier<bool> isPanelDragging = ValueNotifier(false);
-
-  /// 싱글톤 인스턴스 반환 (`DrawingState()` 와 동일 패턴).
-  factory ViewerGestureBus() => _instance;
-
-  ViewerGestureBus._internal();
-
   /// 유실된 release 신호로 [isPanelDragging] 이 영구 고착되는 것을 막는
   /// 안전망 최대 시간 (kobic UB-213).
   ///
@@ -35,10 +25,28 @@ class ViewerGestureBus {
   /// 만료되지 않는다. OS 제스처 충돌(엣지 도킹 위치의 시스템 스와이프 등)이나
   /// 위젯 dispose 타이밍 문제로 `onPointerUp`/`onPointerCancel`/dispose 리셋이
   /// 유실된 경우에만 이 시간 이후 자동 해제된다.
+  ///
+  /// ⚠️ 트레이드오프(의도됨): 이 최대 시간은 손가락/펜을 뗀 상태를 직접 감지하지
+  /// 않고 "마지막 활동(down/move) 이후 경과 시간"만 본다. 따라서 핸들을 누른 채
+  /// **한 치의 움직임도 없이**(터치스크린은 보통 미세한 지터로 move 이벤트가
+  /// 발생하므로 실사용에서는 드묾) 이 시간을 초과해 정지하면, 그 포인터가 아직
+  /// 눌려 있는 상태에서도 게이트가 조기 해제될 수 있다 — "영구 고착"이라는
+  /// 치명적 실패를 "드문 경우의 짧은 무방비 창"으로 바꾸는 의도된 절충이다.
+  /// 멀티터치(핸들 위 여러 손가락) 추적은 이 값과 무관한 별개의 기존 한계다.
   @visibleForTesting
   static const Duration maxStaleDuration = Duration(seconds: 2);
 
+  static final ViewerGestureBus _instance = ViewerGestureBus._internal();
+
+  /// 도구바 핸들 드래그 중 여부 — true 면 캔버스 입력이 게이트된다.
+  final ValueNotifier<bool> isPanelDragging = ValueNotifier(false);
+
   Timer? _staleWatchdog;
+
+  /// 싱글톤 인스턴스 반환 (`DrawingState()` 와 동일 패턴).
+  factory ViewerGestureBus() => _instance;
+
+  ViewerGestureBus._internal();
 
   /// 드래그 시작/유지/종료 신호. 동일 값이면 notify 는 생략하되, `dragging`이
   /// true 인 모든 호출(down 뿐 아니라 move 포함)은 매번 watchdog 을 재무장한다.
