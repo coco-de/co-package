@@ -470,10 +470,19 @@ Widget buildReflowableHtml({
         case 'math':
           // MathML → TeX 변환 후 flutter_math_fork로 렌더(S14.2, gap #5).
           // 변환 불가(null)면 placeholder, TeX 파싱 실패는 위젯이 폴백.
+          //
+          // InlineCustomWidget으로 감싸지 않으면 fwfh가 이 위젯을
+          // WidgetBit.block으로 취급해(core_build_tree._addBitsFromNode)
+          // 문단 중간의 인라인 수식마다 강제 줄바꿈이 생긴다 — 문장이
+          // 토큰 단위로 쪼개져 렌더되는 버그의 원인이었다.
           final tex = mathmlToTex(element);
           final alt = element.attributes['alttext'];
-          if (tex == null) return _FormulaPlaceholder(alt: alt);
-          return _MathFormula(tex: tex, fontSize: fontSize, alt: alt);
+          if (tex == null) {
+            return InlineCustomWidget(child: _FormulaPlaceholder(alt: alt));
+          }
+          return InlineCustomWidget(
+            child: _MathFormula(tex: tex, fontSize: fontSize, alt: alt),
+          );
         default:
           return null;
       }

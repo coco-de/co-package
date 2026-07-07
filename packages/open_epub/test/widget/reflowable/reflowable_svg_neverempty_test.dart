@@ -106,8 +106,7 @@ void main() {
       expect(find.byType(Math), findsOneWidget);
     });
 
-    testWidgets('본문 텍스트와 수식이 함께 렌더(수식이 본문을 밀어내지 않음)',
-        (tester) async {
+    testWidgets('본문 텍스트와 수식이 함께 렌더(수식이 본문을 밀어내지 않음)', (tester) async {
       await tester.pumpWidget(
         _host('<body><p>공식:</p><math><msup><mi>e</mi>'
             '<mi>x</mi></msup></math></body>'),
@@ -125,6 +124,29 @@ void main() {
       expect(find.byType(Math), findsNothing);
       expect(find.byIcon(Icons.functions), findsOneWidget);
       expect(find.text('수식'), findsOneWidget);
+    });
+
+    // 회귀 방지: <math>가 InlineCustomWidget으로 감싸지지 않으면 fwfh가
+    // WidgetBit.block으로 취급해(core_build_tree._addBitsFromNode) 문단 중간의
+    // 인라인 수식마다 강제 줄바꿈이 생긴다 — 문장이 앞/뒤로 쪼개져 별도
+    // RichText가 된다. "…예제에서 컨텐츠를 불러오지 못하는 오류"로 보고된
+    // MathML 문단 붕괴의 원인.
+    testWidgets('한 문단 안의 인라인 수식이 앞뒤 텍스트를 분리하지 않는다', (tester) async {
+      await tester.pumpWidget(
+        _host('<body><p>before <math><mi>x</mi></math> after</p></body>'),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      final merged = tester
+          .widgetList<RichText>(find.byType(RichText))
+          .map((rt) => rt.text.toPlainText())
+          .any((text) => text.contains('before') && text.contains('after'));
+      expect(
+        merged,
+        isTrue,
+        reason: '수식이 블록으로 렌더되어 문단이 "before"/"after"로 쪼개짐(인라인 회귀)',
+      );
     });
   });
 }
