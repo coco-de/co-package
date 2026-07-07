@@ -644,6 +644,45 @@ void main() {
       expect(state.windowCount, greaterThanOrEqualTo(smallCount));
     });
 
+    // open-epub#228 후속 — 화면 높이가 본문 줄 높이(fontSize*lineHeight)의
+    // 정확한 배수가 아니면, 남는 자투리만큼 페이지 아래쪽에 여백을 두어
+    // 어떤 텍스트 줄도 위아래로 잘리지 않아야 한다(다음 윈도우로 넘어감).
+    testWidgets('화면 높이가 줄 높이의 배수가 아니면 자투리는 여백으로 남고 줄 단위로 정렬된다', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      // fontSize 16 * lineHeight 1.5 = 24px 줄 높이.
+      // 화면 610px → floor(610/24)*24 = 600px(10px는 잘리지 않도록 남긴 여백).
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 400,
+              height: 610,
+              child: ReflowablePageView(
+                book: book,
+                xhtmlLoader: (href) async => _tallXhtml(href),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 화면(뷰포트) 크기 자체는 610 그대로 유지되고,
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is SizedBox && w.height == 610 && w.width == 400,
+        ),
+        findsWidgets,
+      );
+      // 실제 콘텐츠를 자르는 창 높이는 줄 높이 배수로 내림한 600이어야 한다.
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is SizedBox && w.height == 600 && w.width == 400,
+        ),
+        findsWidgets,
+      );
+    });
+
     // 이미지가 비동기로 로드되는 동안엔 작은 placeholder(32x32)만 측정되고,
     // 로드가 끝나 실제(또는 실패) 크기로 바뀌어도 _SpinePageView 자체는
     // rebuild되지 않는다(하위 _RemoteImage만 rebuild) — SizeChangedLayoutNotifier

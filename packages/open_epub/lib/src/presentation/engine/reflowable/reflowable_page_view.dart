@@ -8,7 +8,11 @@
 // 텍스트를 실제로 재분할하지 않으므로 이미지·표·링크가 그대로 유지된다.
 // 화면 하나(윈도우)가 좌우 스와이프 1회에 대응하고, spine의 첫/마지막
 // 윈도우에서 계속 스와이프하면 다음/이전 spine으로 자연스럽게 넘어간다.
-// 문단이 윈도우 경계에서 그대로 잘릴 수 있음(스크롤이 아닌 절단).
+// 윈도우 높이는 화면 높이가 아니라 본문 줄 높이(fontSize*lineHeight)의
+// 정수 배로 내림한 값이라, 본문 텍스트 줄은 페이지 경계에서 잘리지 않고
+// 다음 윈도우로 넘어간다(남는 자투리는 페이지 아래쪽 여백, open-epub#228
+// 후속). 제목·이미지·표처럼 본문 줄 높이와 다른 요소는 여전히 경계에서
+// 잘릴 수 있다.
 //
 // spine 간 이동은 여전히 [PageView]가 담당하지만, 사용자 스와이프는 윈도우
 // 이동과 spine 이동을 함께 판단해야 하므로 PageView 자체의 드래그
@@ -330,8 +334,12 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
 /// 단일 spine 페이지 뷰 — spine 콘텐츠를 한 번 렌더링해 실제 높이를 측정하고,
 /// [OverflowBox]+[Transform.translate]로 화면 크기([viewportSize]) 만큼의
 /// "윈도우"만 잘라 보여준다(open-epub#221). 텍스트를 재분할하지 않으므로
-/// 이미지·표·링크는 그대로 유지되며, 문단은 윈도우 경계에서 시각적으로 잘릴
-/// 수 있다(스크롤이 아닌 절단 — 다음 윈도우로 스와이프해야 이어서 보인다).
+/// 이미지·표·링크는 그대로 유지된다. 윈도우 높이는 화면 높이가 아니라 본문
+/// 줄 높이의 정수 배로 내림한 값([_SpinePageViewState._pageHeight]) — 남는
+/// 자투리는 페이지 아래쪽 여백으로 두어, 본문 텍스트 줄이 페이지 경계에서
+/// 위아래로 잘리지 않는다(open-epub#228 후속). 제목·이미지·표처럼 본문 줄
+/// 높이와 다른 요소는 이 격자에 완전히 맞지 않아 여전히 경계에서 잘릴 수
+/// 있다.
 ///
 /// 콘텐츠 revision 변경으로 [load]가 교체되면 새 로드가 끝날 때까지 직전
 /// 콘텐츠를 유지한다(스피너 flash 방지). (open-epub#62)
@@ -429,6 +437,7 @@ class _SpinePageViewState extends State<_SpinePageView> {
 
         final viewportWidth = widget.viewportSize.width;
         final viewportHeight = widget.viewportSize.height;
+        final pageHeight = _pageHeight(viewportHeight);
         return NotificationListener<SizeChangedLayoutNotification>(
           onNotification: (notification) {
             WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
@@ -438,15 +447,25 @@ class _SpinePageViewState extends State<_SpinePageView> {
             child: SizedBox(
               width: viewportWidth,
               height: viewportHeight,
-              child: OverflowBox(
-                minWidth: viewportWidth,
-                maxWidth: viewportWidth,
-                minHeight: 0,
-                maxHeight: double.infinity,
+              // 화면 높이가 줄 높이의 정확한 배수가 아니면 남는 자투리는
+              // 아래쪽 여백으로 남긴다(콘텐츠는 위쪽에 정렬) — 그래야 글자
+              // 줄이 페이지 경계에서 위아래로 잘리지 않는다. (open-epub#228 후속)
+              child: Align(
                 alignment: Alignment.topLeft,
-                child: Transform.translate(
-                  offset: Offset(0, -widget.windowIndex * viewportHeight),
-                  child: content,
+                child: SizedBox(
+                  width: viewportWidth,
+                  height: pageHeight,
+                  child: OverflowBox(
+                    minWidth: viewportWidth,
+                    maxWidth: viewportWidth,
+                    minHeight: 0,
+                    maxHeight: double.infinity,
+                    alignment: Alignment.topLeft,
+                    child: Transform.translate(
+                      offset: Offset(0, -widget.windowIndex * pageHeight),
+                      child: content,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -454,6 +473,19 @@ class _SpinePageViewState extends State<_SpinePageView> {
         );
       },
     );
+  }
+
+  /// 실제 페이지(윈도우) 높이 — 화면 높이를 본문 줄 높이(`fontSize *
+  /// lineHeight`)의 정수 배로 내림한 값. 화면이 줄 하나보다 작거나 줄
+  /// 높이를 계산할 수 없으면(0 이하) 화면 높이를 그대로 쓴다(폴백). 표·
+  /// 이미지·제목처럼 본문 줄 높이와 다른 요소는 이 격자에 완전히 맞지
+  /// 않아 여전히 경계에서 잘릴 수 있다 — 본문 텍스트 줄이 잘리는 흔한
+  /// 경우를 우선 해결한다. (open-epub#228 후속)
+  double _pageHeight(double viewportHeight) {
+    final lineHeightPx = widget.fontSize * widget.lineHeight;
+    if (lineHeightPx <= 0 || viewportHeight <= 0) return viewportHeight;
+    final lines = (viewportHeight / lineHeightPx).floor();
+    return lines >= 1 ? lines * lineHeightPx : viewportHeight;
   }
 
   /// 콘텐츠(패딩 포함) 렌더 높이를 읽어 윈도우 수를 계산해 보고한다. 초기
@@ -468,10 +500,10 @@ class _SpinePageViewState extends State<_SpinePageView> {
     final height = renderObject.size.height;
     if (height == _measuredHeight) return;
     _measuredHeight = height;
-    final viewportHeight = widget.viewportSize.height;
-    final windowCount = viewportHeight <= 0
+    final pageHeight = _pageHeight(widget.viewportSize.height);
+    final windowCount = pageHeight <= 0
         ? 1
-        : (height / viewportHeight).ceil().clamp(1, 1 << 20).toInt();
+        : (height / pageHeight).ceil().clamp(1, 1 << 20).toInt();
     widget.onWindowCountMeasured(windowCount);
   }
 }
