@@ -6,6 +6,7 @@ import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
+import 'package:open_board/src/module/image/image_drawable_extensions.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/transform_handler.dart';
@@ -92,6 +93,15 @@ class LassoSelectionManager {
     PointerDownEvent event,
     BuildContext context,
   ) {
+    // 🖼️ 기존 이미지를 직접 터치하면 올가미 로직은 관여하지 않고 이벤트만
+    // 소비한다(true 반환) — 상태를 건드리지 않아야 ImageDrawableLayer 자체
+    // GestureDetector(선택/이동/크기조절/회전/삭제)가 정상 동작하고, 동시에
+    // 올가미 자유선 그리기(handleNormalDrawingMode)가 겹쳐 시작되는 것을
+    // 막는다 (kobic #7888: 올가미 도구에서 이미지 선택 불가 버그).
+    if (_isPointerOverExistingImage(event.localPosition)) {
+      return true;
+    }
+
     // 오버레이 컨트롤 영역 체크를 가장 먼저 수행
     if (_showLassoOverlay && _selectedStrokeIds.isNotEmpty) {
       final boundingBox = _calculateBoundingBox(_selectedStrokeIds);
@@ -1030,6 +1040,18 @@ class LassoSelectionManager {
     }
 
     return null; // 컨트롤 영역이 아님
+  }
+
+  /// [position]이 기존 이미지 드로어블(회전 포함) 위에 있는지 확인
+  bool _isPointerOverExistingImage(Offset position) {
+    final images = scribbleNotifier.getCurrentImageDrawables();
+    if (images.isEmpty) return false;
+    for (final image in images) {
+      if (!image.hidden && image.containsPoint(position)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /// 포인트가 폴리곤 내에 있는지 확인하는 메서드 (Ray Casting 알고리즘)

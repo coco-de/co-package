@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 
@@ -15,6 +17,25 @@ extension ImageDrawableExtensions on ImageDrawable {
 
   /// Geometric centre of the bounding box.
   Offset get center => Offset(x + width / 2, y + height / 2);
+
+  /// Whether [point] (canvas/local coordinates) falls within this
+  /// drawable's rotated bounding box.
+  ///
+  /// [ImageDrawableLayer] renders the image via `Transform.rotate` around
+  /// [center], so a straight `Rect.contains` check on the axis-aligned box
+  /// is wrong once [rotation] != 0. Other tools (e.g. the lasso tool) use
+  /// this to detect "the touch lands on an existing image" before falling
+  /// back to their own gesture handling.
+  bool containsPoint(Offset point) {
+    final centerPoint = center;
+    final dx = point.dx - centerPoint.dx;
+    final dy = point.dy - centerPoint.dy;
+    final cosA = math.cos(-rotation);
+    final sinA = math.sin(-rotation);
+    final localX = dx * cosA - dy * sinA;
+    final localY = dx * sinA + dy * cosA;
+    return localX.abs() <= width / 2 && localY.abs() <= height / 2;
+  }
 
   /// Returns the natural aspect ratio (`naturalWidth / naturalHeight`), or
   /// `null` when either natural dimension is missing.

@@ -113,20 +113,25 @@ class ScribbleRenderLayers {
 
   /// 🖼️ 이미지 임베드 레이어 빌드
   ///
-  /// 이미지 모드(`InkModes.image`)일 때만 상호작용(선택/이동/크기조절/회전/삭제)을
-  /// 허용하고, 그 외 모드에서는 [IgnorePointer] 로 감싸 이미지만 정적 렌더링하여
-  /// 스트로크/텍스트 포인터 파이프라인을 방해하지 않는다.
+  /// 이미지 모드(`InkModes.image`) 및 올가미 모드(`InkModes.lasso`, kobic
+  /// #7888)일 때 상호작용(선택/이동/크기조절/회전/삭제)을 허용하고, 그 외
+  /// 모드에서는 [IgnorePointer] 로 감싸 이미지만 정적 렌더링하여 스트로크/
+  /// 텍스트 포인터 파이프라인을 방해하지 않는다. 올가미 모드에서 기존
+  /// 이미지를 직접 터치했을 때 올가미 자유선 그리기가 함께 시작되지 않도록
+  /// 하는 가드는 `LassoSelectionManager.handleLassoModePointerDown` 참조.
   Widget buildImageLayer() {
     return ValueListenableBuilder<ScribbleModeState>(
       valueListenable: modeNotifier,
       builder: (context, modeState, _) {
-        final imageMode = modeState.inkGroupInfo.selectedInk == InkModes.image;
+        final selectedInk = modeState.inkGroupInfo.selectedInk;
+        final imageInteractive =
+            selectedInk == InkModes.image || selectedInk == InkModes.lasso;
         return IgnorePointer(
-          ignoring: !imageMode,
+          ignoring: !imageInteractive,
           child: ImageDrawableLayer(
             notifier: scribbleNotifier,
             widgetState: widgetState,
-            interactive: imageMode,
+            interactive: imageInteractive,
           ),
         );
       },

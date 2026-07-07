@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
@@ -7,12 +9,12 @@ import 'package:open_board/src/module/image/image_drawable_factory.dart';
 import 'package:open_board/src/module/image/image_drawable_manager.dart';
 
 Scribble _emptyScribble() => Scribble(
-      width: 1000,
-      height: 1000,
-      version: '1',
-      createdAt: DateTime.now().toIso8601String(),
-      updatedAt: DateTime.now().toIso8601String(),
-    );
+  width: 1000,
+  height: 1000,
+  version: '1',
+  createdAt: DateTime.now().toIso8601String(),
+  updatedAt: DateTime.now().toIso8601String(),
+);
 
 void main() {
   group('ImageDrawableFactory.fromPickedImage', () {
@@ -161,6 +163,41 @@ void main() {
       );
       expect(d.copyWithOpacity(-0.5).opacity, 0);
       expect(d.copyWithOpacity(1.5).opacity, 1);
+    });
+
+    group('containsPoint', () {
+      test('회전이 없으면 축 정렬 박스 내부/외부를 정확히 판정한다', () {
+        // 좌상단 (100,100), 크기 40x20 → center (120, 110)
+        final d = ImageDrawableFactory.create(
+          id: 'a',
+          source: 's',
+          position: const Offset(100, 100),
+          size: const Size(40, 20),
+        );
+
+        expect(d.containsPoint(const Offset(120, 110)), isTrue); // 중심
+        expect(d.containsPoint(const Offset(100, 100)), isTrue); // 좌상단 경계
+        expect(d.containsPoint(const Offset(140, 120)), isTrue); // 우하단 경계
+        expect(d.containsPoint(const Offset(99, 110)), isFalse); // 좌측 밖
+        expect(d.containsPoint(const Offset(120, 121)), isFalse); // 하단 밖
+      });
+
+      test('90도 회전 시 회전된 사각형 기준으로 판정한다', () {
+        // center (0, 0), 크기 40(width) x 20(height), 90도 회전
+        // → 회전 후 실제로는 세로 40 x 가로 20 형태가 된다.
+        final d = ImageDrawableFactory.create(
+          id: 'a',
+          source: 's',
+          position: const Offset(-20, -10),
+          size: const Size(40, 20),
+          rotation: math.pi / 2,
+        );
+
+        // 회전 전 기준 "가로로 먼(양옆)" 지점은 회전 후 범위 밖(세로만 김).
+        expect(d.containsPoint(const Offset(15, 0)), isFalse);
+        // 회전 후 "세로로 먼" 지점은 범위 안(원래 width=40이 세로축이 됨).
+        expect(d.containsPoint(const Offset(0, 15)), isTrue);
+      });
     });
   });
 
