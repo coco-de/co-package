@@ -95,9 +95,9 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
       return;
     }
 
-    final controller = _moController ??=
-        MediaOverlayController(player: JustAudioMediaPlayer())
-          ..addListener(_onMoChanged);
+    final controller = _moController ??= MediaOverlayController(
+      player: JustAudioMediaPlayer(),
+    )..addListener(_onMoChanged);
     if (mounted) setState(() {}); // EpubReader에 controller 주입 → 하이라이트 배선
 
     try {
@@ -149,7 +149,22 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
               key: const ValueKey('reader-error'),
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('asset 로드 실패: ${snapshot.error}'),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.folder_off_outlined, size: 40),
+                    const SizedBox(height: 12),
+                    Text(
+                      '이 샘플(${widget.book.asset})은 저장소에 포함되지 않은 '
+                      '로컬 전용 테스트 픽스처입니다(대용량/라이선스 사유로 '
+                      'gitignore 처리됨).\n'
+                      '로컬 개발 환경에서 해당 EPUB 파일을 '
+                      'packages/open_epub/example/assets/ 에 배치한 뒤 '
+                      '다시 실행해 주세요.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -172,8 +187,9 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
                   controller: _controller,
                   paged: true,
                   fontSize: _fontSize,
-                  readingDirection:
-                      _rtl ? EpubPageProgression.rtl : EpubPageProgression.ltr,
+                  readingDirection: _rtl
+                      ? EpubPageProgression.rtl
+                      : EpubPageProgression.ltr,
                   verticalWriting: _vertical,
                   mediaOverlayController: _moController,
                   onSessionReady: _onSessionReady,

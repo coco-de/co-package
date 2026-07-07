@@ -16,8 +16,9 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:open_epub/open_epub.dart';
+
+import 'demo_epub.dart' show buildDemoEpub;
 
 class V1DemoPage extends StatefulWidget {
   const V1DemoPage({super.key});
@@ -42,10 +43,7 @@ class _V1DemoPageState extends State<V1DemoPage> {
     _bytesFuture = _loadBytes();
   }
 
-  Future<Uint8List> _loadBytes() async {
-    final data = await rootBundle.load('assets/example.epub');
-    return data.buffer.asUint8List();
-  }
+  Future<Uint8List> _loadBytes() async => buildDemoEpub();
 
   void _onSessionReady(EpubBookSession session) {
     _session = session;

@@ -24,13 +24,13 @@ dependencies:
   shared_preferences: ^2.5.5
   marionette_flutter: 0.5.0
 
+  # 데모 EPUB 합성 생성 (#235) — lib/demo_epub.dart
+  archive: ^3.6.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-
-  # 테스트용 최소 EPUB ZIP 생성 (#43)
-  archive: ^3.6.1
 
 flutter:
   uses-material-design: true

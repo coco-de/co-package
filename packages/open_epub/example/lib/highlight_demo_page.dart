@@ -32,9 +32,11 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show BrowserContextMenu, rootBundle;
+import 'package:flutter/services.dart' show BrowserContextMenu;
 import 'package:open_epub/open_epub.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'demo_epub.dart' show buildDemoEpub;
 
 /// 하이라이트 색상 팔레트 (BDD F5 — 4색).
 const Map<String, Color> highlightPalette = {
@@ -122,7 +124,7 @@ class HighlightStore {
 class HighlightDemoPage extends StatefulWidget {
   const HighlightDemoPage({super.key, this.bytesOverride});
 
-  /// 테스트 주입용 EPUB 바이트. null이면 assets/example.epub 사용.
+  /// 테스트 주입용 EPUB 바이트. null이면 합성 데모 EPUB(buildDemoEpub) 사용.
   final Uint8List? bytesOverride;
 
   @override
@@ -183,7 +185,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
   }
 
   Future<EpubBookSession> _open() async {
-    final bytes = widget.bytesOverride ?? await _loadAssetBytes();
+    final bytes = widget.bytesOverride ?? buildDemoEpub();
     final session = await EpubBookSession.open(EpubSource.bytes(bytes));
     final saved = await _store.load();
     final seq =
@@ -205,11 +207,6 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
       _idSeq = seq;
     }
     return session;
-  }
-
-  Future<Uint8List> _loadAssetBytes() async {
-    final data = await rootBundle.load('assets/example.epub');
-    return data.buffer.asUint8List();
   }
 
   @override
