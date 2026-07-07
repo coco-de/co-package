@@ -92,4 +92,81 @@ void main() {
       expect(handler.isMultiTouch(), isFalse);
     });
   });
+
+  group('팜 리젝션 (kobic UB-219)', () {
+    test('팜으로 마킹된 포인터는 isPalmIgnored가 true', () {
+      handler.markPalmIgnored(1);
+
+      expect(handler.isPalmIgnored(1), isTrue);
+      expect(handler.isPalmIgnored(2), isFalse);
+    });
+
+    test('손모드 필기 중 도착한 팜 접촉은 isEffectiveMultiTouch에서 제외된다', () {
+      // 첫 손가락(필기 중) down
+      handler.incrementTouch();
+      // 팜/보조손가락 down — 손모드 필기 중이므로 팜으로 마킹
+      handler.incrementTouch();
+      handler.markPalmIgnored(2);
+
+      // 하드웨어 터치 총합은 2(멀티터치)지만, 팜을 뺀 유효 터치는 1이므로
+      // 진행 중인 스트로크의 move/스크롤 차단 판정에는 영향을 주지 않는다.
+      expect(handler.isMultiTouch(), isTrue);
+      expect(handler.isEffectiveMultiTouch, isFalse);
+    });
+
+    test('필기 시작 전 진짜 두 손가락 동시 접촉은 회귀 없이 멀티터치로 인정된다', () {
+      // 팜으로 마킹되지 않은 두 손가락 — 기존 핀치줌/팬 동작 그대로 유지.
+      handler.incrementTouch();
+      handler.incrementTouch();
+
+      expect(handler.isMultiTouch(), isTrue);
+      expect(handler.isEffectiveMultiTouch, isTrue);
+    });
+
+    test('팜 마킹된 포인터 위에 실제 두 번째 손가락이 더해지면 유효 멀티터치', () {
+      // 필기 중(1) + 팜(2, 무시) + 진짜 두 번째 손가락(3)
+      handler
+        ..incrementTouch()
+        ..incrementTouch();
+      handler.markPalmIgnored(2);
+      handler.incrementTouch();
+
+      expect(handler.isEffectiveMultiTouch, isTrue);
+    });
+
+    test('clearPalmIgnored 후 다시 유효 터치로 카운트된다', () {
+      handler
+        ..incrementTouch()
+        ..incrementTouch();
+      handler.markPalmIgnored(2);
+      expect(handler.isEffectiveMultiTouch, isFalse);
+
+      handler.clearPalmIgnored(2);
+      expect(handler.isEffectiveMultiTouch, isTrue);
+    });
+
+    test('resetTouch 호출 시 팜 마킹도 함께 초기화된다', () {
+      handler
+        ..incrementTouch()
+        ..incrementTouch();
+      handler.markPalmIgnored(2);
+
+      handler.resetTouch();
+
+      expect(handler.isMultiTouch(), isFalse);
+      expect(handler.isPalmIgnored(2), isFalse);
+    });
+
+    test('dispose 호출 시 팜 마킹도 함께 초기화된다', () {
+      handler
+        ..incrementTouch()
+        ..incrementTouch();
+      handler.markPalmIgnored(2);
+
+      handler.dispose();
+
+      expect(handler.isPalmIgnored(2), isFalse);
+      expect(handler.isEffectiveMultiTouch, isFalse);
+    });
+  });
 }

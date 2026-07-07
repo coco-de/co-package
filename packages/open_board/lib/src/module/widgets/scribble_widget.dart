@@ -1304,7 +1304,9 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       //   ScaleGestureRecognizer 는 scale/pan 비활성이어도 제스처를 캡처(소비)
       //   하므로 외곽 IV·pdfrx 가 핀치를 받지 못해 하이라이트 줌이 전혀 동작하지
       //   않았다. 두 손가락이면 내부 IV 가 직접 pan 을 처리한다(펜 도구와 동일).
-      if (pointerHandler.isMultiTouch()) {
+      //   🖐️ 팜 제외 "유효" 멀티터치로 판정한다 (kobic UB-219) — 손모드 필기
+      //   중 팜이 닿아도 여기서 true 가 되어 스크롤이 열리는 것을 막는다.
+      if (pointerHandler.isEffectiveMultiTouch) {
         return true; // ✅ 두 손가락 터치 시 pan 허용
       }
 
@@ -1355,7 +1357,9 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       //   는 scale 비활성이어도 핀치 제스처를 캡처(소비)하므로, highlighter 를
       //   먼저 false 처리하면 제스처만 소비되고 줌이 적용되지 않아 "하이라이트
       //   줌 안 됨" 버그가 됐다. 두 손가락이면 내부 IV 가 직접 scale 을 적용한다.
-      if (pointerHandler.isMultiTouch()) {
+      //   🖐️ 팜 제외 "유효" 멀티터치로 판정한다 (kobic UB-219) — 손모드 필기
+      //   중 팜이 닿아도 여기서 true 가 되어 확대/축소가 열리는 것을 막는다.
+      if (pointerHandler.isEffectiveMultiTouch) {
         return true; // ✅ 두 손가락 터치 시 핀치 줌 허용
       }
 
@@ -1551,12 +1555,19 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         pointerHandler.incrementTouch();
         _pendingTouchDowns.add(event.pointer);
 
+        // 🖐️ 팜 리젝션 (kobic UB-219): 손모드 필기가 이미 진행 중일 때
+        // 도착하는 추가 터치는 의도적 두 손가락 핀치줌이 아니라 필기 중
+        // 팜/보조손가락의 우연한 접촉으로 간주해 무시한다. 진행 중인
+        // 스트로크의 move 처리·스크롤 차단(_isHandModeDrawingActive)을 그대로
+        // 유지한다. 필기가 시작되기 전(스트로크 미시작) 상태에서 동시에 닿은
+        // 두 번째 터치만 아래 분기에서 기존처럼 핀치줌/팬으로 인정된다.
+        if (_isHandModeDrawingActive) {
+          pointerHandler.markPalmIgnored(event.pointer);
+          return;
+        }
+
         // 🖊️ 멀티터치 감지 시 InteractiveViewer 상태 갱신 (핀치 줌/드래그 허용)
         if (pointerHandler.isMultiTouch()) {
-          // 손모드 그리기 중이면 그리기 상태 해제
-          if (_isHandModeDrawingActive) {
-            _endHandModeDrawing();
-          }
           setState(
             () {},
           ); // InteractiveViewer 상태 갱신 (panEnabled/scaleEnabled 업데이트)
@@ -1829,7 +1840,11 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
 
     void _handlePointerMove(PointerMoveEvent event) {
       if (!widget.isScribbleEnable) return;
-      if (pointerHandler.isMultiTouch()) return;
+      // 🖐️ 팜으로 무시된 포인터 자신의 move는 처리하지 않는다 (kobic UB-219).
+      if (pointerHandler.isPalmIgnored(event.pointer)) return;
+      // 팜을 제외한 "유효" 멀티터치 기준으로 판정해, 손모드 필기 중 팜이
+      // 함께 눌려 있어도 실제 그리기 포인터의 move는 계속 처리한다.
+      if (pointerHandler.isEffectiveMultiTouch) return;
 
       // 선택 영역 우선 처리 (모드에 관계없이)
       bool handled = false;
@@ -1906,6 +1921,20 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       if (event.kind == ui.PointerDeviceKind.touch) {
         pointerHandler.decrementTouch();
         _pendingTouchDowns.remove(event.pointer);
+      }
+
+      // 🖐️ 팜으로 무시된 포인터의 up (kobic UB-219): 실제 필기에 관여하지
+      // 않았으므로(_processPointerDown 을 거친 적 없음) 스트로크/손모드
+      // 상태에 영향을 주지 않고 카운트 정리 후 종료한다. onScribbleFinished
+      // 등 그리기 종료 콜백을 유발하지 않아 진행 중이던 다른 손가락의
+      // 스트로크가 이 up 으로 조기 종료되지 않는다.
+      if (event.kind == ui.PointerDeviceKind.touch &&
+          pointerHandler.isPalmIgnored(event.pointer)) {
+        pointerHandler.clearPalmIgnored(event.pointer);
+        if (wasMultiTouch && !pointerHandler.isMultiTouch()) {
+          setState(() {});
+        }
+        return;
       }
 
       // 🖐️ 멀티터치에서 싱글터치로 전환 시 InteractiveViewer 상태 갱신
@@ -1990,6 +2019,18 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       if (event.kind == ui.PointerDeviceKind.touch) {
         pointerHandler.decrementTouch();
         _pendingTouchDowns.remove(event.pointer);
+      }
+
+      // 🖐️ 팜으로 무시된 포인터의 cancel (kobic UB-219): 실제 필기에 관여하지
+      // 않았으므로 스트로크/손모드 상태에 영향을 주지 않고 카운트 정리 후
+      // 종료한다 (up 처리와 동일한 근거).
+      if (event.kind == ui.PointerDeviceKind.touch &&
+          pointerHandler.isPalmIgnored(event.pointer)) {
+        pointerHandler.clearPalmIgnored(event.pointer);
+        if (wasMultiTouch && !pointerHandler.isMultiTouch()) {
+          setState(() {});
+        }
+        return;
       }
 
       // 🖐️ 멀티터치에서 싱글터치로 전환 시 InteractiveViewer 상태 갱신

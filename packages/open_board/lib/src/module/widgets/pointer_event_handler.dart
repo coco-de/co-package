@@ -20,6 +20,12 @@ class PointerEventHandler {
 
   ui.PointerDeviceKind? _currentPointerKind;
 
+  /// 🖐️ 팜 리젝션(kobic UB-219): 손모드 필기가 이미 진행 중일 때 도착한 추가
+  /// 터치 포인터 id 집합. 의도적 두 손가락 핀치줌과 구분하기 위해, 필기 중
+  /// 우연히 닿은 팜/보조손가락으로 판정된 포인터를 여기 등록하고
+  /// [isEffectiveMultiTouch] 판정에서 제외한다.
+  final Set<int> _palmIgnoredPointers = <int>{};
+
   PointerEventHandler({
     required this.scribbleNotifier,
     required this.modeNotifier,
@@ -120,15 +126,41 @@ class PointerEventHandler {
   /// 멀티터치 확인
   bool isMultiTouch() => _activeTouchCount >= 2;
 
+  /// 팜으로 무시된 포인터로 등록한다 (kobic UB-219).
+  void markPalmIgnored(int pointerId) => _palmIgnoredPointers.add(pointerId);
+
+  /// 팜 무시 등록을 해제한다 (up/cancel 시 카운트 정리용).
+  void clearPalmIgnored(int pointerId) =>
+      _palmIgnoredPointers.remove(pointerId);
+
+  /// 주어진 포인터가 팜으로 무시된 상태인지 확인한다.
+  bool isPalmIgnored(int pointerId) => _palmIgnoredPointers.contains(pointerId);
+
+  /// 팜으로 무시된 포인터를 제외한 실질 동시 터치 수 기준 멀티터치 판정
+  /// (kobic UB-219).
+  ///
+  /// [isMultiTouch] 는 하드웨어 터치 포인터 총합만 세므로, 손모드로 필기
+  /// 중 팜/보조손가락이 우연히 닿아도 즉시 true 가 되어 진행 중이던
+  /// 스트로크의 갱신(move)과 스크롤 차단이 끊긴다. 이 getter 는
+  /// [_palmIgnoredPointers] 를 뺀 "유효" 터치 수로 판정해, 필기 시작 전
+  /// 동시에 닿은 진짜 두 손가락 핀치줌은 그대로 인정하면서 필기 중 팜
+  /// 접촉만 배제한다.
+  bool get isEffectiveMultiTouch =>
+      (_activeTouchCount - _palmIgnoredPointers.length) >= 2;
+
   /// 터치 카운트 초기화
   ///
   /// isScribbleEnable 토글 등으로 up/cancel 핸들러가 끊겨
   /// 카운트가 고착되는 것을 복구할 때 사용한다.
-  void resetTouch() => _activeTouchCount = 0;
+  void resetTouch() {
+    _activeTouchCount = 0;
+    _palmIgnoredPointers.clear();
+  }
 
   void dispose() {
     _activeTouchCount = 0;
     _isDragging = false;
     _currentPointerKind = null;
+    _palmIgnoredPointers.clear();
   }
 }
