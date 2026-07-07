@@ -1,0 +1,54 @@
+# pub.dev 자동 발행 — 태그 트리거 (S6.7 #243, ADR-002-a 옵션 A: lockstep 별도 발행)
+#
+# 토폴로지: open_epub_engine(순수 Dart)을 pub.dev에 별도 발행하고, open_epub(리더)은
+# `open_epub_engine: ">=1.0.0 <1.1.0"`로 의존한다. 발행 순서는 **엔진 → 리더**.
+#
+# ── 발행 순서가 강제되는 방식 ────────────────────────────────────────────────
+# 리더는 pub.dev의 엔진에 의존하므로, 엔진 1.x가 아직 pub.dev에 없으면 리더의
+# `dart pub publish` 검증이 의존성 해석에 실패한다. 즉 "엔진 먼저"는 관례가 아니라
+# pub.dev가 강제하는 불변식이다(별도 tag 트리거라 워크플로 `needs`로 묶을 수 없어도
+# 안전). 릴리스는 반드시 엔진 태그를 먼저 밀고, pub.dev 반영을 확인한 뒤 리더 태그를 민다.
+#
+# ── 릴리스 런북 ─────────────────────────────────────────────────────────────
+#   1) 엔진 발행:  git tag open_epub_engine-v1.0.0-beta.1 && git push origin open_epub_engine-v1.0.0-beta.1
+#   2) pub.dev 반영 확인 (https://pub.dev/packages/open_epub_engine)
+#   3) 리더 발행:  git tag open_epub-v1.0.0-beta.1        && git push origin open_epub-v1.0.0-beta.1
+#   (final 1.0.0은 모든 Epic 완료 후 동일 절차로, beta suffix 없이)
+#
+# ── pub.dev 사전 설정 (레포 관리자 1회, 최초 발행 전 필수) ───────────────────
+#   - 각 패키지의 pub.dev "Admin > Automated publishing"에서 GitHub Actions 발행을 활성화:
+#       * Repository: <owner>/<repo>
+#       * Tag pattern: open_epub_engine-v{{version}}  (엔진) / open_epub-v{{version}}  (리더)
+#   - 최초 1회는 소유자가 `dart pub publish`로 수동 발행해 패키지를 생성/클레임해야 할 수 있다
+#     (자동 발행은 기존 패키지에 대해 동작). OIDC라 장기 토큰/시크릿은 불필요.
+#
+# 이 워크플로는 dart-lang/setup-dart의 공식 재사용 워크플로를 호출한다(OIDC 토큰 교환 처리).
+
+name: publish
+
+on:
+  push:
+    tags:
+      # 엔진: open_epub_engine-v1.2.3 / -v1.2.3-beta.1 등
+      - "open_epub_engine-v[0-9]+.[0-9]+.[0-9]+*"
+      # 리더: open_epub-v1.2.3 등 ("open_epub-v"는 "open_epub_engine-v"와 겹치지 않음)
+      - "open_epub-v[0-9]+.[0-9]+.[0-9]+*"
+
+jobs:
+  publish-engine:
+    # open_epub_engine-v* 태그에서만 실행.
+    if: ${{ startsWith(github.ref, 'refs/tags/open_epub_engine-v') }}
+    permissions:
+      id-token: write # pub.dev OIDC 토큰 교환에 필요
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      working-directory: packages/open_epub_engine
+
+  publish-reader:
+    # open_epub-v* 태그에서만 실행(엔진 태그에는 매칭되지 않음).
+    if: ${{ startsWith(github.ref, 'refs/tags/open_epub-v') }}
+    permissions:
+      id-token: write
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      working-directory: packages/open_epub
