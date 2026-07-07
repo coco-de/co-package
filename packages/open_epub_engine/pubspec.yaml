@@ -1,10 +1,18 @@
 name: open_epub_engine
 description: >-
   Pure-Dart EPUB 2/3 parser, object model, and CFI locator engine for open_epub.
-  open_epub 1.0 코어의 커스텀 파서를 추출·확장하고, epub_pro(BSD-3/MIT)의 CFI
+  open_epub 1.0 코어의 커스텀 파서를 추출·확장하고, epub_pro(MIT)의 CFI
   서브시스템을 채택했다. epubx/epub_view를 대체한다.
-version: 0.0.1
-publish_to: "none" # 모노레포 내부 패키지 (발행은 GA/E6까지 유예)
+version: 1.0.0
+# pub.dev 별도 발행 (ADR-002-a 옵션 A: 엔진 별도 발행 + lockstep). 발행 순서 엔진→리더.
+homepage: https://github.com/Ohgyuchan/open_epub
+repository: https://github.com/Ohgyuchan/open_epub
+topics:
+  - epub
+  - ebook
+  - epub3
+  - parser
+  - cfi
 
 environment:
   sdk: ">=3.6.0 <4.0.0" # pub workspace 최소 요건
