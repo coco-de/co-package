@@ -104,8 +104,9 @@ class EpubReader extends StatefulWidget {
   /// 본문 viewport 크기 변경 콜백. (S8.2)
   final EpubViewportChangedCallback? onViewportChanged;
 
-  /// 페이지 내비게이션 컨트롤러(prev/next 등). 지정 시 자동으로 paged 모드로
-  /// 표시된다. 레거시 EpubReaderController가 아닌 1.0 전용 타입. (S8.1)
+  /// 페이지 내비게이션 컨트롤러(prev/next 등). [paged] 모드·스크롤 모드
+  /// 어느 쪽에서도 동작한다 — 스크롤 모드에서는 대상 spine으로 점프한다.
+  /// 레거시 EpubReaderController가 아닌 1.0 전용 타입. (S8.1, open-epub#221)
   final EpubViewController? controller;
 
   /// fixed-layout 페이지 콘텐츠를 논리 좌표 공간에서 감싸는 빌더(open-board
@@ -193,8 +194,9 @@ class _EpubReaderState extends State<EpubReader> {
           showProgressIndicator: widget.showProgressIndicator,
           highlights: widget.highlights,
           onLinkTap: widget.onLinkTap,
-          // controller가 있으면 프로그램적 내비게이션을 위해 paged 강제.
-          paged: widget.paged || widget.controller != null,
+          // paged는 호출자 지정값을 그대로 따른다 — 스크롤모드에서도
+          // ReflowableEngine이 controller 내비게이션을 지원한다. (open-epub#221)
+          paged: widget.paged,
           onPageChanged: widget.onPageChanged,
           onPositionChanged: widget.onPositionChanged,
           onViewportChanged: widget.onViewportChanged,
@@ -289,8 +291,8 @@ class _SessionViewState extends State<_SessionView> {
   /// 없으면 책의 `page-progression-direction`(capabilities)을 따른다(auto).
   /// auto/ltr은 false. (S14.1, gap #4)
   bool get _isRtl {
-    final direction =
-        widget.readingDirection ?? _session.capabilities.pageProgressionDirection;
+    final direction = widget.readingDirection ??
+        _session.capabilities.pageProgressionDirection;
     return direction == EpubPageProgression.rtl;
   }
 
@@ -428,6 +430,10 @@ class _SessionViewState extends State<_SessionView> {
         contentRevision: _contentRevision,
         // 세로쓰기 강제(단순 텍스트 spine 세로 조판). (S15.4)
         forceVertical: widget.verticalWriting,
+        // 스크롤모드에서도 controller의 prev/next/goToSpine이 동작하도록 배선.
+        // (open-epub#221)
+        onNavigatorReady: (navigate) =>
+            widget.controller?.attachNavigator(navigate),
       );
     }
 

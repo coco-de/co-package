@@ -1,9 +1,10 @@
 // Public API — open_epub 1.0
 // Story: S8.1 (E8 follow-up) — 1.0 EpubReader 페이지 내비게이션 컨트롤러
 //
-// [EpubReader]의 paged 모드에서 호스트가 페이지를 프로그램적으로 이동(prev/next
-// 버튼 등)하고 현재 spine 인덱스/총 개수를 관찰하기 위한 핸들. open-board 필기
-// 오버레이가 페이지 연동 + 외부 네비게이션 버튼을 다는 데 사용한다.
+// [EpubReader]에서 호스트가 페이지를 프로그램적으로 이동(prev/next 버튼 등)하고
+// 현재 spine 인덱스/총 개수를 관찰하기 위한 핸들. paged 모드·스크롤 모드 어느
+// 쪽에서도 동작한다(open-epub#221) — 스크롤 모드에서는 대상 spine으로 점프한다.
+// open-board 필기 오버레이가 페이지 연동 + 외부 네비게이션 버튼을 다는 데 사용한다.
 //
 // 레거시 0.1.x의 EpubReaderController(`open_epub.dart`)와는 다른 1.0 전용
 // 타입이다(이름 충돌 회피 위해 `View` 접두). 1.0은 `open_epub.dart`로만
@@ -11,7 +12,8 @@
 
 import 'package:flutter/foundation.dart';
 
-/// 1.0 [EpubReader] paged 모드의 페이지 내비게이션 핸들 + 상태 notifier.
+/// 1.0 [EpubReader]의 페이지 내비게이션 핸들 + 상태 notifier(paged·스크롤 모드
+/// 공통).
 class EpubViewController extends ChangeNotifier {
   int _currentSpineIndex = 0;
   int _spineCount = 0;

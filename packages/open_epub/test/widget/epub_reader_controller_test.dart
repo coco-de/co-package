@@ -75,4 +75,42 @@ void main() {
     await controller.nextPage();
     expect(controller.currentSpineIndex, 0);
   });
+
+  // open-epub#221 — controller가 있어도 paged:false(스크롤모드)가 무시되고
+  // 강제로 paged 모드로 바뀌던 버그의 회귀 테스트. 이제 스크롤모드에서도
+  // ReflowableEngine이 controller 내비게이션을 지원한다.
+  testWidgets('스크롤모드(paged:false)에서도 controller가 동작한다(open-epub#221)',
+      (tester) async {
+    final controller = EpubViewController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EpubReader(
+            source: EpubSource.bytes(searchableEpub3()),
+            controller: controller,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 스크롤모드 유지 확인 — PageView(paged 모드 전용)가 아닌
+    // ScrollablePositionedList 기반 ReflowableEngine이어야 한다.
+    expect(find.byType(PageView), findsNothing);
+
+    expect(controller.spineCount, 3);
+    expect(controller.currentSpineIndex, 0);
+
+    final next = controller.nextPage();
+    await tester.pumpAndSettle();
+    await next;
+    expect(controller.currentSpineIndex, 1);
+
+    final toLast = controller.goToSpine(2);
+    await tester.pumpAndSettle();
+    await toLast;
+    expect(controller.currentSpineIndex, 2);
+  });
 }

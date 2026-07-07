@@ -5,6 +5,17 @@
 1.0 릴리스(버전 bump + MIGRATION.md)는 E6에서 진행.
 
 ### New (1.0 core, `open_epub_v1.dart`)
+- 스크롤모드 controller 강제 override 수정 + 페이지모드 화면 단위 윈도잉 (#221)
+  - `EpubReader.controller`를 지정해도 더 이상 `paged`가 무조건 켜지지 않음 —
+    `ReflowableEngine`(스크롤모드)이 `EpubViewController`의 prev/next/goToSpine을
+    직접 지원한다. 이전에는 controller 지정 시 조용히 paged 모드로 바뀌어,
+    "스크롤로 끝까지 읽기"를 의도해도 chapter 경계에서 좌우 페이지 전환이 발생했음
+  - `ReflowablePageView`(paged 모드) — spine(chapter)을 한 번만 렌더링해 실제
+    높이를 측정하고, `OverflowBox`+`Transform.translate`로 화면 크기만큼의
+    "윈도우"만 보여준다. 화면 하나가 좌우 스와이프 1회에 대응하며, chapter의
+    첫/마지막 윈도우에서 계속 스와이프하면 다음/이전 spine으로 자연스럽게
+    이어진다. 텍스트를 재분할하지 않으므로 이미지·표·링크는 그대로 유지되고,
+    문단은 윈도우 경계에서 시각적으로 잘릴 수 있음(스크롤이 아닌 절단)
 - 하이라이트 선택 해석·재렌더 수정 (#62, kobic#7590)
   - `SpineTextExtractor.resolveSelection` — 정확 일치 실패 시 **정규화 매칭
     폴백**: HTML 공백 접기 + 엔티티(named/numeric) 디코드를 반영한 정규화

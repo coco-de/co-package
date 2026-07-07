@@ -94,6 +94,7 @@ class ReflowableEngine extends StatefulWidget {
     this.onSpineChanged,
     this.contentRevision,
     this.forceVertical = false,
+    this.onNavigatorReady,
   });
 
   final EpubBook book;
@@ -123,6 +124,12 @@ class ReflowableEngine extends StatefulWidget {
   /// 하이라이트 저장/삭제·늦게 도착한 복원이 본문에 즉시 반영되도록.
   /// (open-epub#62)
   final Object? contentRevision;
+
+  /// 마운트 시 프로그램적 spine 이동 함수([ReflowableEngineState._jumpToSpine])를
+  /// 부모에게 넘긴다 — [ReflowablePageView]/[FixedLayoutEngine]과 동일 계약으로,
+  /// 스크롤모드에서도 [EpubViewController] 내비게이션을 지원한다. (open-epub#221)
+  final void Function(Future<void> Function(int index) goToSpine)?
+      onNavigatorReady;
 
   @override
   State<ReflowableEngine> createState() => ReflowableEngineState();
@@ -158,6 +165,10 @@ class ReflowableEngineState extends State<ReflowableEngine> {
     );
     _positionsListener.itemPositions.addListener(_onItemPositionsChanged);
     _prefetchAround(_spineIndex);
+    widget.onNavigatorReady?.call((index) async {
+      if (index < 0 || index >= spineCount) return;
+      _jumpToSpine(index);
+    });
   }
 
   @override
@@ -507,7 +518,8 @@ class RemoteImageState extends State<_RemoteImage> {
         }
         final bytes = snap.data;
         if (bytes == null) {
-          return _ImagePlaceholder(reason: 'image load failed', alt: widget.alt);
+          return _ImagePlaceholder(
+              reason: 'image load failed', alt: widget.alt);
         }
         return Image.memory(
           bytes,

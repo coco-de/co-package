@@ -2,6 +2,7 @@
 // BDD: F2.2 (글자 크기), F2.3 (줄간격), F2.4 (페이지 전환)
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
@@ -33,7 +34,8 @@ void main() {
       );
       expect(state.pageIndex, 1);
       expect(state.pageCount, 3);
-      expect(find.textContaining('ch02.xhtml', findRichText: true), findsOneWidget);
+      expect(find.textContaining('ch02.xhtml', findRichText: true),
+          findsOneWidget);
     });
 
     testWidgets('jumpToPage()로 페이지 이동 (animation 없음)', (tester) async {
@@ -160,7 +162,8 @@ void main() {
   });
 
   group('ReflowableEngine + ReflowablePageView — 글자 크기·줄간격 적용', () {
-    testWidgets('fontSize property가 HtmlWidget textStyle에 반영 (ReflowableEngine)',
+    testWidgets(
+        'fontSize property가 HtmlWidget textStyle에 반영 (ReflowableEngine)',
         (tester) async {
       final book = _fakeBook(['ch.xhtml']);
       await tester.pumpWidget(
@@ -300,12 +303,14 @@ void main() {
 
       await tester.pumpWidget(build(<String>['r0']));
       await tester.pumpAndSettle();
-      expect(find.textContaining('revision v0', findRichText: true), findsOneWidget);
+      expect(find.textContaining('revision v0', findRichText: true),
+          findsOneWidget);
 
       version = 1;
       await tester.pumpWidget(build(<String>['r1']));
       await tester.pumpAndSettle();
-      expect(find.textContaining('revision v1', findRichText: true), findsOneWidget);
+      expect(find.textContaining('revision v1', findRichText: true),
+          findsOneWidget);
     });
 
     testWidgets('재로드 동안 직전 콘텐츠 유지(스피너 flash 없음)', (tester) async {
@@ -327,24 +332,26 @@ void main() {
 
       await tester.pumpWidget(build(const ['r0']));
       await tester.pumpAndSettle();
-      expect(find.textContaining('before reload', findRichText: true), findsOneWidget);
+      expect(find.textContaining('before reload', findRichText: true),
+          findsOneWidget);
 
       delayed = true;
       await tester.pumpWidget(build(const ['r1']));
       await tester.pump();
-      expect(find.textContaining('before reload', findRichText: true), findsOneWidget);
+      expect(find.textContaining('before reload', findRichText: true),
+          findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
 
       gate.complete();
       await tester.pumpAndSettle();
-      expect(find.textContaining('after reload', findRichText: true), findsOneWidget);
+      expect(find.textContaining('after reload', findRichText: true),
+          findsOneWidget);
     });
   });
 
   // S14.1 (#105) — RTL page-progression: paged 모드에서 넘김 방향 반전.
   group('ReflowablePageView — RTL 넘김 방향 (S14.1, F2)', () {
-    testWidgets('reverse=true → PageView.reverse 반영(다음=좌향)',
-        (tester) async {
+    testWidgets('reverse=true → PageView.reverse 반영(다음=좌향)', (tester) async {
       final book = _fakeBook(['a.xhtml', 'b.xhtml', 'c.xhtml']);
       await tester.pumpWidget(
         _wrap(
@@ -401,8 +408,7 @@ void main() {
   // 전환 → 새 페이지네이션(새 글자 크기)으로 다음 페이지가 렌더된다. 렌더러
   // fwfh 교체(S11.3) 후 페이지네이션 회귀 방지.
   group('ReflowablePageView — 페이지네이션 회귀 (F2-Edge1, S11.6)', () {
-    testWidgets('글자 크기 변경 직후 페이지 전환 → 새 글자 크기로 다음 페이지 렌더',
-        (tester) async {
+    testWidgets('글자 크기 변경 직후 페이지 전환 → 새 글자 크기로 다음 페이지 렌더', (tester) async {
       final book = _fakeBook(['a.xhtml', 'b.xhtml', 'c.xhtml']);
       Widget at(double fontSize) => _wrap(
             ReflowablePageView(
@@ -436,7 +442,213 @@ void main() {
       final htmls = tester.widgetList<HtmlWidget>(find.byType(HtmlWidget));
       expect(htmls, isNotEmpty);
       expect(htmls.every((h) => h.textStyle?.fontSize == 24), isTrue);
-      expect(find.textContaining('b.xhtml', findRichText: true), findsOneWidget);
+      expect(
+          find.textContaining('b.xhtml', findRichText: true), findsOneWidget);
+    });
+  });
+
+  // 화면 단위 윈도잉(open-epub#221) — spine 콘텐츠를 한 번 렌더링해 실제 높이를
+  // 측정하고, 화면 높이만큼의 창을 좌우 스와이프로 이동한다.
+  group('ReflowablePageView — 화면 단위 윈도잉 (open-epub#221)', () {
+    testWidgets('spine 콘텐츠가 화면보다 길면 여러 윈도우로 측정된다', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
+      expect(state.windowIndex, 0);
+    });
+
+    testWidgets('짧은 spine은 윈도우가 1개다(회귀)', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _wrapXhtml('<p>짧은 본문</p>'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, 1);
+    });
+
+    testWidgets('스와이프로 윈도우 이동 — spine은 유지된다', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      var state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
+
+      await tester.fling(
+        find.byType(ReflowablePageView),
+        const Offset(-500, 0),
+        1500,
+      );
+      await tester.pumpAndSettle();
+      state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.pageIndex, 0); // 같은 spine 유지
+      expect(state.windowIndex, 1); // 다음 윈도우로 이동
+    });
+
+    testWidgets('마지막 윈도우에서 스와이프하면 다음 spine으로 전환된다(windowIndex=0 착지)',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => href == 'a.xhtml'
+                ? _wrapXhtml('<p>짧은 본문</p>')
+                : _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      var state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, 1); // a.xhtml은 화면보다 짧음
+
+      await tester.fling(
+        find.byType(ReflowablePageView),
+        const Offset(-500, 0),
+        1500,
+      );
+      await tester.pumpAndSettle();
+      state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.pageIndex, 1); // 다음 spine으로 전환
+      expect(state.windowIndex, 0);
+    });
+
+    testWidgets('이전 spine으로 스와이프해서 넘어가면 그 spine의 마지막(캐시된) 윈도우에 착지',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml', 'b.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => href == 'a.xhtml'
+                ? _tallXhtml(href)
+                : _wrapXhtml('<p>짧은 본문</p>'),
+          ),
+        ),
+      );
+      // spine 0(a.xhtml, 긴 콘텐츠)이 현재 페이지로 측정됨.
+      await tester.pumpAndSettle();
+      var state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
+
+      state.jumpToPage(1);
+      await tester.pumpAndSettle();
+      state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.pageIndex, 1);
+
+      // 오른쪽으로 스와이프(이전) — spine 0으로 되돌아가며 마지막 윈도우 착지.
+      await tester.fling(
+        find.byType(ReflowablePageView),
+        const Offset(500, 0),
+        1500,
+      );
+      await tester.pumpAndSettle();
+      state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.pageIndex, 0);
+      expect(state.windowIndex, greaterThan(0));
+    });
+
+    testWidgets('글자 크기를 키우면 윈도우 수가 줄어들지 않는다(재측정)', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      Widget build(double fontSize) => _wrap(
+            ReflowablePageView(
+              book: book,
+              fontSize: fontSize,
+              xhtmlLoader: (href) async => _tallXhtml(href, lines: 20),
+            ),
+          );
+      await tester.pumpWidget(build(12));
+      await tester.pumpAndSettle();
+      var state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      final smallCount = state.windowCount;
+
+      await tester.pumpWidget(build(32));
+      await tester.pumpAndSettle();
+      state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThanOrEqualTo(smallCount));
+    });
+
+    // 이미지가 비동기로 로드되는 동안엔 작은 placeholder(32x32)만 측정되고,
+    // 로드가 끝나 실제(또는 실패) 크기로 바뀌어도 _SpinePageView 자체는
+    // rebuild되지 않는다(하위 _RemoteImage만 rebuild) — SizeChangedLayoutNotifier
+    // 없이는 이 높이 변화를 놓쳐 윈도우 수가 과소 측정된다.
+    testWidgets('비동기 이미지 로드로 콘텐츠가 커지면 윈도우 수가 재측정된다', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      final gate = Completer<Uint8List?>();
+      final xhtml =
+          _wrapXhtml(List.generate(6, (_) => '<img src="x.png"/>').join());
+
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (_) async => xhtml,
+            imageLoader: (_) => gate.future,
+          ),
+        ),
+      );
+      // 이미지가 아직 로딩 중이면 CircularProgressIndicator(무한 애니메이션)가
+      // 떠 있어 pumpAndSettle이 수렴하지 않는다 — 명시적으로 몇 프레임만 pump.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+      var state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      // 로딩 중 placeholder(32px)×6 — 화면(600px)보다 훨씬 작다.
+      expect(state.windowCount, 1);
+
+      // 로드 실패 → 각 이미지가 더 큰 placeholder(minHeight 120px)로 전환.
+      gate.complete(null);
+      await tester.pumpAndSettle();
+
+      state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
     });
   });
 }
@@ -452,6 +664,11 @@ String _wrapXhtml(String body) => '''
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"><body>$body</body></html>
 ''';
+
+/// 화면(600px)보다 훨씬 긴 콘텐츠 — 윈도잉 회귀 테스트용.
+String _tallXhtml(String label, {int lines = 60}) => _wrapXhtml(
+      List.generate(lines, (i) => '<p>$label line $i</p>').join(),
+    );
 
 EpubBook _fakeBook(List<String> hrefs) => _FakeEpubBook(
       spine: hrefs
