@@ -4,8 +4,12 @@
 // 우리 리더의 E10~E15 기능별로 밟도록 큐레이션했다. 각 항목은 어떤 기능을
 // 검증하는지(featureTag)와 리더에 적용할 기본 설정(autoRtl 등)을 갖는다.
 //
-// 자산은 `*.epub` gitignore로 커밋되지 않는 로컬 테스트 픽스처다. 부재 시
-// 리더가 에러 상태를 표시한다.
+// 자산 8종 중 라이선스가 명확한 6종(georgia-cfi·linear-algebra·moby-dick-mo·
+// mymedia_lite·regime-anticancer-arabic·wasteland)은 `.gitignore`에서
+// 예외 처리되어 저장소에 실제로 커밋돼 있다(#248, 고지는 THIRD_PARTY_LICENSES
+// 참조). 나머지 2종(nohoechan, accessible_epub_3)은 저작권 사유로 여전히
+// `*.epub` gitignore 규칙을 따르는 로컬 전용 픽스처다 — 부재 시 리더가
+// 안내 메시지를 표시한다(reader_demo_page.dart).
 import 'package:flutter/material.dart';
 
 /// 샘플 EPUB 한 권의 카탈로그 항목.

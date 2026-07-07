@@ -40,3 +40,63 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+--------------------------------------------------------------------------------
+IDPF EPUB 3 Samples — bundled sample EPUBs (packages/open_epub/example/assets/)
+--------------------------------------------------------------------------------
+
+Bundled unmodified (byte-for-byte) from the IDPF/W3C EPUB 3 Community Group's
+public sample corpus, for use as public-demo content in the example app
+(#248). Source repository: https://github.com/IDPF/epub3-samples (release
+20230704). Per that repository's README, samples are licensed CC-BY-SA 3.0
+unless stated otherwise in the sample table or the file's own metadata.
+
+georgia-cfi.epub
+  Title: Georgia (Encyclopaedia Britannica, 11th Edition, Volume 11, Slice 7)
+  Creator: Various — source text: Encyclopaedia Britannica, 11th ed. (1911,
+    public domain), via Project Gutenberg
+  License: CC-BY-SA 3.0 (repository default; no override in file/table)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/georgia-cfi.epub
+
+moby-dick-mo.epub
+  Title: Moby-Dick (with Media Overlays)
+  Creator: Herman Melville (1851, public domain); narration: Stuart Wills
+  License: CC-BY-SA 3.0 (repository default; no override in file/table)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/moby-dick-mo.epub
+
+mymedia_lite.epub
+  Title: ガリ版の話
+  Creator: 津野海太郎; Publisher: 株式会社ボイジャー
+  License: CC-BY-SA 3.0 (repository default; no override in file/table)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/mymedia_lite.epub
+
+regime-anticancer-arabic.epub
+  Title: Le Vrai Régime anti-cancer
+  Creator: Pr David Khayat, Nathalie Hutter-Lardeau, Marina Khalil Fayad
+  License: CC-BY-SA 3.0 (stated in file metadata)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/regime-anticancer-arabic.epub
+
+wasteland.epub
+  Title: The Waste Land
+  Creator: T.S. Eliot
+  License: CC-BY-SA 3.0 (stated in file metadata)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/wasteland.epub
+
+linear-algebra.epub
+  Title: A First Course in Linear Algebra
+  Creator: Robert A. Beezer — canonical version: http://linear.ups.edu
+  Copyright: © 2004 by Robert A. Beezer
+  License: GNU Free Documentation License, Version 1.2 (stated in file
+    metadata and in the sample table)
+    https://www.gnu.org/licenses/old-licenses/fdl-1.2.html
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/linear-algebra.epub
+
+Creative Commons Attribution-ShareAlike 3.0 Unported (CC-BY-SA 3.0):
+https://creativecommons.org/licenses/by-sa/3.0/legalcode
+
+NOT bundled (excluded — see sample_book.dart): accessible_epub_3.epub from the
+same IDPF repository carries its own file-level notice ("Copyright © 2012
+O'Reilly Media, Inc.") that overrides the repository's default license, so it
+is not redistributed here. 노회찬평전(nohoechan.epub) is not part of the IDPF
+corpus and is excluded for the same reason (real-world in-copyright book).

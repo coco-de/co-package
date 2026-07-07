@@ -51,3 +51,12 @@ docs/api/
 CLAUDE.md
 
 *.epub
+# 라이선스 확인 완료 후 커밋된 공개 데모용 EPUB3 샘플 예외 (#248, IDPF epub3-samples
+# CC-BY-SA 3.0 / GFDL 1.2 — THIRD_PARTY_LICENSES 참조). 나머지(대용량/저작권 미확인
+# 로컬 전용 픽스처)는 계속 무시.
+!packages/open_epub/example/assets/georgia-cfi.epub
+!packages/open_epub/example/assets/linear-algebra.epub
+!packages/open_epub/example/assets/moby-dick-mo.epub
+!packages/open_epub/example/assets/mymedia_lite.epub
+!packages/open_epub/example/assets/regime-anticancer-arabic.epub
+!packages/open_epub/example/assets/wasteland.epub

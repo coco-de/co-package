@@ -85,14 +85,12 @@ class EpubRepositoryImpl implements EpubRepository {
     final _ParsedEpub parsed;
     try {
       parsed = bytes.length >= _isolateThresholdBytes
-          ? await Isolate.run(
-              () => _parseEpubDocuments(
-                bytes,
-                containerParser: containerParser,
-                opfParser: opfParser,
-                ncxParser: ncxParser,
-                navParser: navParser,
-              ),
+          ? await _parseInIsolateOrFallback(
+              bytes,
+              containerParser: containerParser,
+              opfParser: opfParser,
+              ncxParser: ncxParser,
+              navParser: navParser,
             )
           : _parseEpubDocuments(
               bytes,
@@ -131,7 +129,43 @@ class EpubRepositoryImpl implements EpubRepository {
   }
 }
 
-/// [EpubRepositoryImpl.load]가 [Isolate.run]으로 실행하는 순수 CPU 파이프라인 —
+/// [Isolate.run]으로 파싱을 오프로딩하되, Flutter Web에서는 폴백한다.
+///
+/// `dart:isolate`의 `RawReceivePort`는 Flutter Web(CanvasKit/Skwasm 모두)에서
+/// 지원되지 않아 `Isolate.run`이 `UnsupportedError`로 즉시 실패한다(발견 경위:
+/// #248 — 1MiB 이상 EPUB을 웹에서 열면 항상 "Unsupported operation: new
+/// RawReceivePort"). 웹은 애초에 단일 스레드라 isolate 오프로딩의 이점이
+/// 없으므로, 실패 시 호출 isolate에서 동기 파싱으로 안전하게 폴백한다.
+Future<_ParsedEpub> _parseInIsolateOrFallback(
+  Uint8List bytes, {
+  required ContainerParser containerParser,
+  required OpfParser opfParser,
+  required NcxParser ncxParser,
+  required NavParser navParser,
+}) async {
+  try {
+    return await Isolate.run(
+      () => _parseEpubDocuments(
+        bytes,
+        containerParser: containerParser,
+        opfParser: opfParser,
+        ncxParser: ncxParser,
+        navParser: navParser,
+      ),
+    );
+  } on UnsupportedError {
+    return _parseEpubDocuments(
+      bytes,
+      containerParser: containerParser,
+      opfParser: opfParser,
+      ncxParser: ncxParser,
+      navParser: navParser,
+    );
+  }
+}
+
+/// [EpubRepositoryImpl.load]가 [_parseInIsolateOrFallback]으로 실행하는 순수
+/// CPU 파이프라인 —
 /// ZIP 디코드 + container/OPF/NCX/nav/encryption 파싱. 인자·반환이 모두 직렬화
 /// 가능해야 isolate 경계를 넘을 수 있다(Archive/리소스 reader는 lazy 읽기·메모리
 /// 상한 유지를 위해 호출 isolate에서 재구성). (S9.6 #70)
@@ -189,8 +223,7 @@ _ParsedEpub _parseEpubDocuments(
     patches.add(
       AppliedPatch(
         patchId: 'invalid-rendition-layout',
-        description:
-            '비표준 rendition:layout "$rawLayout" → reflowable fallback',
+        description: '비표준 rendition:layout "$rawLayout" → reflowable fallback',
         severity: PatchSeverity.medium,
         impact: {'raw': rawLayout},
       ),
