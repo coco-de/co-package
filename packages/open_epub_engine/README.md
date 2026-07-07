@@ -1,41 +1,159 @@
 # open_epub_engine
 
-Pure-Dart **EPUB 2/3 파서·객체 모델·CFI 로케이터 엔진**. `open_epub`(Flutter 리더)의 파싱 계층으로, `epubx`/`epub_view`를 대체한다.
+[![pub package](https://img.shields.io/pub/v/open_epub_engine.svg)](https://pub.dev/packages/open_epub_engine)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/coco-de/open-epub/actions/workflows/ci.yaml/badge.svg)](https://github.com/coco-de/open-epub/actions/workflows/ci.yaml)
 
-- **Flutter 무의존** — 순수 Dart (`archive`, `xml`, `path`).
-- 커스텀 OPF/NCX/nav 파서 기반 + [vers-one/EpubReader](https://github.com/vers-one/EpubReader) 설계 참고 확장.
-- [epub_pro](https://pub.dev/packages/epub_pro)의 CFI를 **보충 매퍼**로 채택 (BookPosition v1 canonical 유지, ADR-010).
+Pure-Dart **EPUB 2 / EPUB 3** engine: OPF / NCX / nav / SMIL parsers, an
+immutable object model, an EPUB **CFI** locator, **Media Overlay (SMIL)**
+parsing, and a **full-text search** index — with **no Flutter dependency**.
 
-## 구조 (모노레포 pub workspace)
+It is the parsing layer behind [`open_epub`](https://pub.dev/packages/open_epub),
+the Flutter reader widget, extracted so it can run headless. It replaces
+`epubx` / `epub_view` and adapts the CFI subsystem from
+[`epub_pro`](https://pub.dev/packages/epub_pro) (BSD-3 / MIT, ADR-010).
 
-S10.3(#80)에서 `open_epub` 1.0의 순수-Dart 레이어(api·domain·data)를 이 패키지로 추출했다.
-클린 아키텍처 레이어 구조를 보존하며, `cfi/`는 E12에서 도입 예정이다.
+## Do you need this package?
+
+> **Most apps should depend on [`open_epub`](https://pub.dev/packages/open_epub)**
+> (the Flutter reader widget) instead — it re-exports this engine and adds
+> rendering, gestures, text selection, and highlights.
+>
+> Depend on `open_epub_engine` **directly** only for **headless** use — CLIs,
+> servers, batch/indexing jobs, tests — where you need EPUB parsing, CFI, SMIL,
+> or search **without** a UI. This package pulls in **no Flutter**.
+
+## Features
+
+- **EPUB 2 & 3** — custom OPF / NCX / nav parsers, with EPUB-version
+  cross-validation and compatibility patching (plus per-book diagnostics).
+- **Immutable object model** — metadata, spine, outline, landmarks / page-list
+  navigation, renditions, capabilities (PPD / writing-mode / MO), resources.
+- **EPUB CFI** — `charOffset ↔ CFI` mapping and standard `epubcfi(...)`
+  import / export for interop.
+- **Media Overlays** — on-demand SMIL parsing (text/audio pars, clip times).
+- **Full-text search** — build an index over the spine and query it for hits
+  (`spineHref`, `charOffset`, snippet).
+- **Compact position tokens** — `BookPosition` v1 codec (JSON ≤ 512 bytes,
+  lossless round-trip) for persisting reading location.
+- **Pure Dart** — runs on the Dart VM, servers, and CLIs. (`EpubSource.file`
+  needs `dart:io`; use `EpubSource.bytes` / `EpubSource.url` on the web.)
+
+## Install
+
+```yaml
+dependencies:
+  open_epub_engine: ^1.0.0
+```
+
+## Quick start (headless)
+
+```dart
+import 'package:open_epub_engine/open_epub_engine.dart';
+
+Future<void> main(List<String> args) async {
+  // Open from a file, raw bytes, or a URL.
+  final session = await EpubBookSession.open(
+    EpubSource.file(args.single), // EpubSource.bytes(...) / EpubSource.url(...)
+  );
+  try {
+    // 1. Metadata
+    final meta = session.book.metadata;
+    print('${meta.title} — ${meta.author ?? 'unknown'} '
+        '(EPUB ${meta.epubVersion})');
+
+    // 2. Table of contents (outline tree)
+    for (final item in session.outline.items) {
+      print('· ${item.title}  ->  ${item.spineHref}');
+    }
+
+    // 3. Full-text search
+    final index = await session.buildSearchIndex();
+    for (final hit in await index.search('whale')) {
+      print('${hit.spineHref}@${hit.charOffset}: ${hit.snippet}');
+
+      // Optional: export a standard interop CFI for the hit's position.
+      final cfi = session.exportPositionCfi(session.positionForHit(hit));
+      if (cfi != null) print('  cfi: $cfi');
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+```
+
+A complete, runnable version lives in [`example/`](example/) — it takes an
+`.epub` path (and an optional search term) on the command line:
+
+```sh
+dart run packages/open_epub_engine/example/open_epub_engine_example.dart book.epub "whale"
+```
+
+## Public API (1.0)
+
+The barrel `package:open_epub_engine/open_epub_engine.dart` **is** the semver
+contract (frozen in S6.1). It exports:
+
+| Group | Highlights |
+| --- | --- |
+| **Session** | `EpubBookSession` (open / jumpTo / paging / hot-swap / analytics), `EpubSource`, `EpubBook`, `EpubPosition` |
+| **Parsers** | `OpfParser`, `NcxParser`, `NavParser`, `ContainerParser`, `SmilParser` |
+| **Domain model** | metadata, spine, outline, navigation, rendition, capabilities, media overlay, highlight, selection, resource, failures |
+| **CFI** | `EpubCfiMapper` (`charOffset ↔ CFI`) + interop |
+| **Search** | `TextIndexBuilder`, `BuildSearchIndexUseCase`, `BookSearchIndex` |
+| **Codec** | `BookPositionCodec` (compact position tokens) |
+| **Security / compat / text** | `HtmlSanitizer`, `EncryptionParser`, `PatchCatalog`, `SpineTextExtractor`, `SearchHighlighter` |
+
+Implementation details are **not** exported: the repository implementation
+(`EpubRepositoryImpl`) and the use cases the session orchestrates internally
+(`open` / `apply-patches` / `resolve-position`) stay private — consumers enter
+through `EpubBookSession.open()` and, when a type is needed, the domain contract
+`EpubRepository`. Test fixtures live in a separate barrel
+`package:open_epub_engine/testing.dart` (not part of the production surface).
+
+## Architecture (monorepo)
+
+`open_epub_engine` is the pure-Dart layer of the `open_epub` monorepo. It keeps
+a Clean Architecture split; Flutter render/widget/controller code stays in
+`open_epub`, and the pure-Dart boundary is enforced by
+`test/architecture/no_flutter_import_test.dart`.
+
 ```
 open_epub_engine/
 ├── lib/
-│   ├── open_epub_engine.dart   # 공개 배럴 (프로덕션 API)
-│   ├── testing.dart            # 테스트 픽스처(EPUB ZIP 빌더) — 테스트 전용 (S10.5)
+│   ├── open_epub_engine.dart   # public barrel (production API — the semver contract)
+│   ├── testing.dart            # EPUB ZIP fixtures — test-only
 │   └── src/
-│       ├── schema/opf/         # EpubVersion + version-branching 교차검증 (S10.6, gap #9)
-│       ├── api/                # EpubBookSession·EpubBook·EpubSource·EpubPosition …
-│       ├── domain/             # entity · repository 계약 · usecase
-│       ├── data/               # parser(OPF/NCX/nav) · compat · codec · search · security · text
-│       └── testing/            # epub_fixtures (testing.dart 로 노출)
-│       # cfi/  — CFI 보충 매퍼 (E12 도입 예정)
-└── test/                       # dart test (schema·parser·codec·compat·domain·usecase·api·… + architecture 가드)
+│       ├── schema/opf/         # EpubVersion + version cross-validation
+│       ├── api/                # EpubBookSession · EpubBook · EpubSource · EpubPosition …
+│       ├── domain/             # entity · repository contract · usecase
+│       ├── data/               # parser (OPF/NCX/nav/SMIL) · compat · codec · search · security · text
+│       └── cfi/                # CFI mapper + ported primitives (epub_pro, internal)
+├── example/                    # pure-Dart runnable CLI (dart run)
+└── test/                       # dart test (schema · parser · codec · compat · domain · usecase · api · architecture)
 ```
 
-## 소비 (open_epub)
+### Test topology
 
-`open_epub`(Flutter 리더)이 이 엔진을 소비한다. presentation/컨트롤러는 공개 배럴
-`package:open_epub_engine/open_epub_engine.dart`를, 1.0 진입점 `open_epub.dart`는 이동
-타입을 엔진 배럴에서 재-export 한다(공개 표면 불변). Flutter 의존은 `open_epub`에만 잔류하며,
-엔진의 pure-Dart 경계는 `test/architecture/no_flutter_import_test.dart` 가드로 강제된다(S10.4).
+- **engine** — `dart test` (pure Dart, fast): parsers, codec, domain, use cases,
+  API units.
+- **open_epub** — `flutter test`: widget, BDD, presentation.
+- CI (`.github/workflows/ci.yaml`) runs both jobs in parallel.
 
-## 테스트 토폴로지 (S10.5)
+## Relationship to open_epub
 
-- **engine** = `dart test` (pure Dart, 빠름) — 파서·코덱·도메인·유즈케이스·api 단위 테스트.
-- **open_epub** = `flutter test` — 위젯·BDD·presentation 테스트.
-- CI(`.github/workflows/ci.yaml`)는 두 잡을 병렬 실행한다.
+| | `open_epub_engine` (this package) | [`open_epub`](https://pub.dev/packages/open_epub) |
+| --- | --- | --- |
+| Runtime | Pure Dart (VM / server / CLI) | Flutter |
+| Responsibility | Parse · model · CFI · SMIL · search | Render · gestures · selection · highlights |
+| Depend on it when | You need headless EPUB processing | You are building a reader UI |
 
-> 개발 중 내부 패키지(`publish_to: none`). 발행 여부는 GA(E6)에서 확정. 자세한 로드맵은 저장소 `docs/epub3-monorepo-roadmap.md` 참조.
+The reader re-exports the moved engine types, so its 1.0 public surface is
+unchanged.
+
+## License & attribution
+
+MIT — see [`LICENSE`](LICENSE). Third-party notices (including the adapted
+`epub_pro` CFI primitives) are in
+[`THIRD_PARTY_LICENSES`](THIRD_PARTY_LICENSES). Design informed by
+[vers-one/EpubReader](https://github.com/vers-one/EpubReader).
