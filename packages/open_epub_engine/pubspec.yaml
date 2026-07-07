@@ -5,8 +5,8 @@ description: >-
   서브시스템을 채택했다. epubx/epub_view를 대체한다.
 version: 1.0.0
 # pub.dev 별도 발행 (ADR-002-a 옵션 A: 엔진 별도 발행 + lockstep). 발행 순서 엔진→리더.
-homepage: https://github.com/Ohgyuchan/open_epub
-repository: https://github.com/Ohgyuchan/open_epub
+homepage: https://github.com/coco-de/open-epub
+repository: https://github.com/coco-de/open-epub
 topics:
   - epub
   - ebook
