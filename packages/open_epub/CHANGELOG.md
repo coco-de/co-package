@@ -1,5 +1,19 @@
 ## Unreleased
 
+### Added
+- `EpubReader`/`ReflowablePageView`에 `fixedPageSize` 옵션 추가(kobic Epic #7964
+  S1) — reflowable(흐름형) EPUB 본문을 논리 고정 크기(예: A4 210:297 근사)로
+  강제 페이지네이션한다. 값이 있으면 화면 단위 윈도잉(open-epub#221)이 이
+  고정 크기를 기준으로 이루어지고, 결과가 실제 화면에 contain-fit
+  스케일된다(fixed-layout 엔진과 동일한 좌표 안정성). `fixedLayoutContentBuilder`가
+  각 가상 페이지(윈도우)마다 `{href}#p{windowIndex}` 형태의 합성 `EpubSpineItem`으로
+  호출되어, 호스트가 페이지별 독립 필기 캔버스를 마운트할 수 있다(진짜
+  fixed-layout 페이지와 동일 계약 재사용). `EpubViewController`의 위치 복원도
+  `EpubReflowablePosition.pageIndex` 힌트로 확장해 재진입 시 같은 가상
+  페이지로 복원한다. 이 모드는 핀치 줌을 제공하지 않는다(스와이프 페이지
+  넘김 제스처와의 경합 회피). `fixedPageSize`가 null(기본값)이면 기존 동작이
+  완전히 그대로 유지된다.
+
 ### Fixed
 - 목차(TOC) 항목을 탭해도 실제 화면이 이동하지 않던 문제 수정 — `EpubViewController`에
   `goToHref(String href)`를 추가해 `EpubOutlineItem.spineHref`를 그대로 넘겨 해당

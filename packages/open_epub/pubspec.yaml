@@ -1,6 +1,6 @@
 name: open_epub
 description: A customizable EPUB reader widget for Flutter. Supports iOS, Android, and Web platforms with features like pagination, scrolling, bookmarks, and customizable themes.
-version: 1.0.0
+version: 1.1.0
 homepage: https://github.com/coco-de/open-epub
 repository: https://github.com/coco-de/open-epub
 

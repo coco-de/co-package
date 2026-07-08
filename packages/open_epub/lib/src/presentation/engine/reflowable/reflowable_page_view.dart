@@ -27,6 +27,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';
+import '../fixed_layout/fixed_layout_engine.dart'
+    show FixedLayoutContentBuilder;
+import '../fixed_layout/viewport_fitter.dart';
 import 'pagination_strategy.dart';
 import 'reflowable_engine.dart';
 
@@ -37,6 +40,7 @@ class ReflowablePageView extends StatefulWidget {
     required this.xhtmlLoader,
     this.imageLoader,
     this.initialSpineIndex = 0,
+    this.initialWindowIndex = 0,
     this.fontSize = 16.0,
     this.lineHeight = 1.5,
     this.paginationStrategy = const SinglePagePerSpineStrategy(),
@@ -48,12 +52,20 @@ class ReflowablePageView extends StatefulWidget {
     this.contentRevision,
     this.reverse = false,
     this.forceVertical = false,
+    this.fixedPageSize,
+    this.contentBuilder,
   });
 
   final EpubBook book;
   final XhtmlLoader xhtmlLoader;
   final ImageLoader? imageLoader;
   final int initialSpineIndex;
+
+  /// 복원된 위치의 윈도우(가상 페이지) 인덱스 힌트. 해당 spine 측정 완료
+  /// 전에는 그대로 유지되다가, 측정 후 범위를 벗어나면 clamp된다.
+  /// [fixedPageSize] 모드에서만 의미가 있다 — 그 외 모드는 항상 0에서
+  /// 시작한다(기존 동작 불변).
+  final int initialWindowIndex;
   final double fontSize;
   final double lineHeight;
 
@@ -102,6 +114,28 @@ class ReflowablePageView extends StatefulWidget {
   /// (open-epub#62)
   final Object? contentRevision;
 
+  /// 논리 고정 크기(예: A4 210:297 근사, 595×842)로 윈도잉을 강제한다
+  /// (kobic Epic #7964 S1). null(기본값)이면 기존처럼 실제 화면 크기로
+  /// 윈도잉한다(화면 회전·글자 크기에 따라 윈도우 수가 달라짐). 값이 있으면
+  /// 본문 리플로우·윈도우 분할이 이 고정 크기 기준으로 이루어지고, 결과
+  /// 페이지가 실제 화면에 [ViewportFitter]로 contain-fit 스케일된다(진짜
+  /// fixed-layout 페이지와 동일한 좌표 안정성 — 필기가 이 고정 논리 좌표에
+  /// 앵커링될 수 있다). 이 모드에서는 핀치 줌을 제공하지 않는다(스와이프
+  /// 페이지 넘김과의 제스처 경합 회피 — fixed-layout 엔진의
+  /// FixedLayoutPage가 InteractiveViewer 자체 fling 감지로 이를 해결하는
+  /// 것과 달리, 본 위젯은 외부 GestureDetector 기반 스와이프를 그대로
+  /// 유지한다).
+  final Size? fixedPageSize;
+
+  /// [fixedPageSize] 모드에서 각 윈도우(가상 페이지) 콘텐츠를 논리 좌표
+  /// 공간에서 감싸는 빌더 — fixed-layout 엔진의 [FixedLayoutContentBuilder]와
+  /// 동일 계약을 재사용한다(open-board 절대좌표 필기 캔버스 등, S8.6 참조).
+  /// 전달되는 [EpubSpineItem]은 원본 spine 항목에 윈도우 인덱스를 반영한
+  /// 합성 href(`baseHref#p{windowIndex}`)를 가진 값으로, 호출자가 윈도우별
+  /// 고유 앵커/캐시 키를 얻을 수 있게 한다. [fixedPageSize]가 null이면
+  /// 무시된다.
+  final FixedLayoutContentBuilder? contentBuilder;
+
   @override
   State<ReflowablePageView> createState() => ReflowablePageViewState();
 }
@@ -113,7 +147,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
 
   /// 현재 spine 내 윈도우(화면 단위 페이지) 인덱스. spine 콘텐츠가 화면보다
   /// 길면 0..[windowCount)-1 사이를 좌우 스와이프로 이동한다. (open-epub#221)
-  int _windowIndex = 0;
+  late int _windowIndex;
 
   /// spine별 측정된 윈도우 수 캐시. 아직 측정 전이면 1(창 없음)로 취급.
   final Map<int, int> _windowCounts = {};
@@ -153,6 +187,10 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
       0,
       widget.book.spine.isEmpty ? 0 : widget.book.spine.length - 1,
     );
+    // initialWindowIndex는 fixedPageSize 모드의 위치 복원 힌트 — 그 외
+    // 모드는 항상 기본값 0으로 기존 동작과 동일하다.
+    _windowIndex =
+        widget.initialWindowIndex < 0 ? 0 : widget.initialWindowIndex;
     _controller = PageController(initialPage: _pageIndex);
     widget.onNavigatorReady?.call(goToPage);
     widget.onPageStepReady?.call(_advance);
@@ -194,9 +232,11 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
       _windowCounts.clear();
     }
     if (oldWidget.fontSize != widget.fontSize ||
-        oldWidget.lineHeight != widget.lineHeight) {
-      // 글자 크기·줄간격이 바뀌면 렌더 높이가 달라지므로 윈도우 수를
-      // 재측정한다 — 이전 윈도우 경계는 새 크기에서 더 이상 유효하지 않다.
+        oldWidget.lineHeight != widget.lineHeight ||
+        oldWidget.fixedPageSize != widget.fixedPageSize) {
+      // 글자 크기·줄간격·고정 페이지 크기가 바뀌면 렌더 높이가 달라지므로
+      // 윈도우 수를 재측정한다 — 이전 윈도우 경계는 새 크기에서 더 이상
+      // 유효하지 않다.
       _windowCounts.clear();
       _windowIndex = 0;
       _reportWindowState();
@@ -314,12 +354,15 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
               key: ValueKey('reflowable-page-$index'),
               load: _loadSpine(widget.book.spine[index].href),
               baseHref: widget.book.spine[index].href,
+              spineItem: widget.book.spine[index],
               fontSize: widget.fontSize,
               lineHeight: widget.lineHeight,
               imageLoader: widget.imageLoader,
               onLinkTap: widget.onLinkTap,
               forceVertical: widget.forceVertical,
               viewportSize: viewportSize,
+              fixedPageSize: widget.fixedPageSize,
+              contentBuilder: widget.contentBuilder,
               windowIndex: index == _pageIndex ? _windowIndex : 0,
               onWindowCountMeasured: (count) =>
                   _handleWindowMeasured(index, count),
@@ -356,6 +399,9 @@ class _SpinePageView extends StatefulWidget {
     required this.viewportSize,
     required this.windowIndex,
     required this.onWindowCountMeasured,
+    this.spineItem,
+    this.fixedPageSize,
+    this.contentBuilder,
   });
 
   final Future<String> load;
@@ -368,15 +414,31 @@ class _SpinePageView extends StatefulWidget {
   final EpubLinkTapCallback? onLinkTap;
   final bool forceVertical;
 
-  /// 화면(페이지) 크기 — 이 크기만큼씩 콘텐츠를 잘라 보여준다.
+  /// 실제 화면(페이지) 크기. [fixedPageSize]가 없으면 이 크기만큼씩
+  /// 콘텐츠를 잘라 보여준다(기존 동작). 있으면 고정 크기 결과물을 이
+  /// 실제 화면에 맞추는 contain-fit의 대상 viewport로 쓰인다.
   final Size viewportSize;
 
   /// 지금 보여줄 윈도우 인덱스(0-based).
   final int windowIndex;
 
   /// 콘텐츠 전체 높이 측정이 끝나면(또는 갱신되면) 호출 — 윈도우 수 =
-  /// `ceil(측정높이 / viewportSize.height)`.
+  /// `ceil(측정높이 / 리플로우 기준 높이)`.
   final ValueChanged<int> onWindowCountMeasured;
+
+  /// 원본 spine 항목 — [contentBuilder]에 전달할 합성 [EpubSpineItem] 구성용
+  /// (kobic Epic #7964 S1). null이면 `baseHref`만으로 최소 정보를 구성한다.
+  final EpubSpineItem? spineItem;
+
+  /// 논리 고정 페이지 크기(A4 등, kobic Epic #7964 S1). 값이 있으면
+  /// 리플로우·윈도잉이 이 고정 크기 기준으로 이루어지고, 결과가
+  /// [viewportSize]에 contain-fit 스케일된다. null이면 기존처럼 실제 화면
+  /// 크기 기준으로 윈도잉한다.
+  final Size? fixedPageSize;
+
+  /// [fixedPageSize] 모드 전용 콘텐츠 래핑 훅(필기 캔버스 등, S8.6과 동일
+  /// 계약). [fixedPageSize]가 null이면 무시된다.
+  final FixedLayoutContentBuilder? contentBuilder;
 
   @override
   State<_SpinePageView> createState() => _SpinePageViewState();
@@ -389,6 +451,16 @@ class _SpinePageViewState extends State<_SpinePageView> {
   /// 콘텐츠 실제 렌더 높이 측정용 키. 패딩을 포함한 전체 콘텐츠에 부착한다.
   final GlobalKey _measureKey = GlobalKey();
   double? _measuredHeight;
+
+  /// 마지막으로 윈도우 수를 계산한 리플로우 기준 크기([_reflowSize]).
+  /// [fixedPageSize] 전환처럼 콘텐츠 높이는 그대로인데 페이지 높이 기준만
+  /// 바뀌는 경우, 측정 높이만으로는 재계산 필요 여부를 판단할 수 없다 —
+  /// 이 값도 함께 비교해야 한다(kobic Epic #7964 S1, 회귀 방지).
+  Size? _lastMeasuredReflowSize;
+
+  /// 리플로우·윈도잉 기준 크기 — [_SpinePageView.fixedPageSize]가 있으면
+  /// 그 고정 크기, 없으면 실제 화면 크기(기존 동작과 동일).
+  Size get _reflowSize => widget.fixedPageSize ?? widget.viewportSize;
 
   @override
   Widget build(BuildContext context) {
@@ -435,29 +507,30 @@ class _SpinePageViewState extends State<_SpinePageView> {
         );
         WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
 
-        final viewportWidth = widget.viewportSize.width;
-        final viewportHeight = widget.viewportSize.height;
-        final pageHeight = _pageHeight(viewportHeight);
-        return NotificationListener<SizeChangedLayoutNotification>(
+        final reflowSize = _reflowSize;
+        final pageWidth = reflowSize.width;
+        final pageHeight = _pageHeight(reflowSize.height);
+        final windowed = NotificationListener<SizeChangedLayoutNotification>(
           onNotification: (notification) {
             WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
             return false;
           },
           child: ClipRect(
             child: SizedBox(
-              width: viewportWidth,
-              height: viewportHeight,
-              // 화면 높이가 줄 높이의 정확한 배수가 아니면 남는 자투리는
-              // 아래쪽 여백으로 남긴다(콘텐츠는 위쪽에 정렬) — 그래야 글자
-              // 줄이 페이지 경계에서 위아래로 잘리지 않는다. (open-epub#228 후속)
+              width: pageWidth,
+              height: pageHeight,
+              // 화면(또는 고정 페이지) 높이가 줄 높이의 정확한 배수가
+              // 아니면 남는 자투리는 아래쪽 여백으로 남긴다(콘텐츠는 위쪽에
+              // 정렬) — 그래야 글자 줄이 페이지 경계에서 위아래로 잘리지
+              // 않는다. (open-epub#228 후속)
               child: Align(
                 alignment: Alignment.topLeft,
                 child: SizedBox(
-                  width: viewportWidth,
+                  width: pageWidth,
                   height: pageHeight,
                   child: OverflowBox(
-                    minWidth: viewportWidth,
-                    maxWidth: viewportWidth,
+                    minWidth: pageWidth,
+                    maxWidth: pageWidth,
                     minHeight: 0,
                     maxHeight: double.infinity,
                     alignment: Alignment.topLeft,
@@ -471,21 +544,56 @@ class _SpinePageViewState extends State<_SpinePageView> {
             ),
           ),
         );
+
+        final fixedPageSize = widget.fixedPageSize;
+        if (fixedPageSize == null) return windowed;
+        // 고정 크기 모드 — 실제 화면에 contain-fit 스케일하고, 있으면
+        // 필기 등 콘텐츠 래핑 훅을 논리 좌표 공간(스케일 전)에서 적용한다.
+        // (kobic Epic #7964 S1)
+        return _FixedSizeFit(
+          logicalSize: fixedPageSize,
+          viewportSize: widget.viewportSize,
+          content: windowed,
+          contentBuilder: widget.contentBuilder == null
+              ? null
+              : (ctx, logicalSize, wrappedContent) => widget.contentBuilder!(
+                    ctx,
+                    _windowSpineItem(),
+                    logicalSize,
+                    wrappedContent,
+                  ),
+        );
       },
     );
   }
 
-  /// 실제 페이지(윈도우) 높이 — 화면 높이를 본문 줄 높이(`fontSize *
-  /// lineHeight`)의 정수 배로 내림한 값. 화면이 줄 하나보다 작거나 줄
-  /// 높이를 계산할 수 없으면(0 이하) 화면 높이를 그대로 쓴다(폴백). 표·
-  /// 이미지·제목처럼 본문 줄 높이와 다른 요소는 이 격자에 완전히 맞지
-  /// 않아 여전히 경계에서 잘릴 수 있다 — 본문 텍스트 줄이 잘리는 흔한
-  /// 경우를 우선 해결한다. (open-epub#228 후속)
-  double _pageHeight(double viewportHeight) {
+  /// 원본 spine 항목에 윈도우 인덱스를 합성한 [EpubSpineItem]. href/idref에
+  /// `#p{windowIndex}` 접미를 붙여 소비자(kobic)가 윈도우별 고유 앵커/캐시
+  /// 키를 얻을 수 있게 한다. (kobic Epic #7964 S1)
+  EpubSpineItem _windowSpineItem() {
+    final base = widget.spineItem;
+    final suffix = '#p${widget.windowIndex}';
+    return EpubSpineItem(
+      idref: '${base?.idref ?? widget.baseHref}$suffix',
+      href: '${widget.baseHref}$suffix',
+      mediaType: base?.mediaType ?? 'application/xhtml+xml',
+      linear: base?.linear ?? true,
+      properties: base?.properties ?? const [],
+      mediaOverlayHref: base?.mediaOverlayHref,
+    );
+  }
+
+  /// 실제 페이지(윈도우) 높이 — 리플로우 기준 높이([_reflowSize])를 본문 줄
+  /// 높이(`fontSize * lineHeight`)의 정수 배로 내림한 값. 기준 높이가 줄
+  /// 하나보다 작거나 줄 높이를 계산할 수 없으면(0 이하) 기준 높이를 그대로
+  /// 쓴다(폴백). 표·이미지·제목처럼 본문 줄 높이와 다른 요소는 이 격자에
+  /// 완전히 맞지 않아 여전히 경계에서 잘릴 수 있다 — 본문 텍스트 줄이
+  /// 잘리는 흔한 경우를 우선 해결한다. (open-epub#228 후속)
+  double _pageHeight(double baseHeight) {
     final lineHeightPx = widget.fontSize * widget.lineHeight;
-    if (lineHeightPx <= 0 || viewportHeight <= 0) return viewportHeight;
-    final lines = (viewportHeight / lineHeightPx).floor();
-    return lines >= 1 ? lines * lineHeightPx : viewportHeight;
+    if (lineHeightPx <= 0 || baseHeight <= 0) return baseHeight;
+    final lines = (baseHeight / lineHeightPx).floor();
+    return lines >= 1 ? lines * lineHeightPx : baseHeight;
   }
 
   /// 콘텐츠(패딩 포함) 렌더 높이를 읽어 윈도우 수를 계산해 보고한다. 초기
@@ -498,12 +606,73 @@ class _SpinePageViewState extends State<_SpinePageView> {
     final renderObject = _measureKey.currentContext?.findRenderObject();
     if (renderObject is! RenderBox || !renderObject.hasSize) return;
     final height = renderObject.size.height;
-    if (height == _measuredHeight) return;
+    final reflowSize = _reflowSize;
+    // 측정 높이와 리플로우 기준 크기가 둘 다 이전과 같으면 재계산 불필요.
+    // 콘텐츠는 그대로인데 fixedPageSize만 바뀌는 경우 높이만으로는 이
+    // 판단이 불가능하다 — reflowSize도 함께 비교해야 한다. (kobic Epic
+    // #7964 S1)
+    if (height == _measuredHeight && reflowSize == _lastMeasuredReflowSize) {
+      return;
+    }
     _measuredHeight = height;
-    final pageHeight = _pageHeight(widget.viewportSize.height);
+    _lastMeasuredReflowSize = reflowSize;
+    final pageHeight = _pageHeight(reflowSize.height);
     final windowCount = pageHeight <= 0
         ? 1
         : (height / pageHeight).ceil().clamp(1, 1 << 20).toInt();
     widget.onWindowCountMeasured(windowCount);
+  }
+}
+
+/// [_SpinePageView.fixedPageSize] 모드 전용 — 고정 논리 크기 콘텐츠를 실제
+/// [viewportSize]에 contain-fit 스케일한다([ViewportFitter], fixed-layout
+/// 엔진(`FixedLayoutPage`)과 동일 원칙 — 필기가 이 고정 논리 좌표에
+/// 앵커링될 수 있도록 스케일 전 좌표 공간을 [contentBuilder]에 노출한다).
+/// (kobic Epic #7964 S1)
+class _FixedSizeFit extends StatelessWidget {
+  const _FixedSizeFit({
+    required this.logicalSize,
+    required this.viewportSize,
+    required this.content,
+    this.contentBuilder,
+  });
+
+  final Size logicalSize;
+  final Size viewportSize;
+  final Widget content;
+
+  /// (context, logicalSize, content) → 스케일 전 논리 좌표 공간에서 감싼
+  /// 위젯. null이면 [content]를 그대로 스케일한다.
+  final Widget Function(BuildContext, Size, Widget)? contentBuilder;
+
+  static const _fitter = ViewportFitter();
+
+  @override
+  Widget build(BuildContext context) {
+    final wrap = contentBuilder;
+    final logicalChild =
+        wrap == null ? content : wrap(context, logicalSize, content);
+    final scale = _fitter.computeScale(
+      pageWidth: logicalSize.width,
+      pageHeight: logicalSize.height,
+      viewportWidth: viewportSize.width,
+      viewportHeight: viewportSize.height,
+    );
+    final fittedW = logicalSize.width * scale;
+    final fittedH = logicalSize.height * scale;
+    return Align(
+      child: SizedBox(
+        width: fittedW,
+        height: fittedH,
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: logicalSize.width,
+            height: logicalSize.height,
+            child: logicalChild,
+          ),
+        ),
+      ),
+    );
   }
 }

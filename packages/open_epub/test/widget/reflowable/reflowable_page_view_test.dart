@@ -830,6 +830,114 @@ void main() {
       expect(state.pageIndex, 1); // 정확히 한 칸만 이동, 범위 밖으로 안 나감
     });
   });
+
+  // 논리 고정 페이지 크기(A4 등)로 윈도잉을 강제하는 모드 — kobic Epic #7964
+  // S1. 실제 화면 크기가 아니라 [ReflowablePageView.fixedPageSize] 기준으로
+  // 리플로우·윈도잉이 이루어지고, contentBuilder가 fixed-layout과 동일 계약
+  // (합성 EpubSpineItem)으로 호출된다.
+  group('ReflowablePageView — 고정 페이지 크기 (fixedPageSize, kobic Epic #7964 S1)',
+      () {
+    testWidgets('fixedPageSize가 있으면 실제 화면이 아닌 고정 크기로 윈도잉된다', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      Widget build(Size? fixedPageSize) => _wrap(
+            ReflowablePageView(
+              book: book,
+              xhtmlLoader: (href) async => _tallXhtml(href),
+              fixedPageSize: fixedPageSize,
+            ),
+          );
+
+      // 기준: 실제 화면(400x600, _wrap) 기준 윈도우 수.
+      await tester.pumpWidget(build(null));
+      await tester.pumpAndSettle();
+      final baselineCount = tester
+          .state<ReflowablePageViewState>(find.byType(ReflowablePageView))
+          .windowCount;
+
+      // 고정 페이지 높이를 훨씬 작게(100) 주면 같은 콘텐츠가 더 많은 윈도우로
+      // 나뉘어야 한다 — 실제 화면(600) 크기가 무시되고 고정 크기가 쓰인다는
+      // 증거.
+      await tester.pumpWidget(build(const Size(400, 100)));
+      await tester.pumpAndSettle();
+      final fixedCount = tester
+          .state<ReflowablePageViewState>(find.byType(ReflowablePageView))
+          .windowCount;
+
+      expect(fixedCount, greaterThan(baselineCount));
+    });
+
+    testWidgets('contentBuilder가 윈도우별 고유 href를 가진 합성 EpubSpineItem으로 호출된다',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      final seenHrefs = <String>[];
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+            fixedPageSize: const Size(400, 100),
+            contentBuilder: (context, item, logicalSize, content) {
+              seenHrefs.add(item.href);
+              expect(logicalSize, const Size(400, 100));
+              return content;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(seenHrefs, contains('a.xhtml#p0'));
+
+      await tester.fling(
+        find.byType(ReflowablePageView),
+        const Offset(-500, 0),
+        1500,
+      );
+      await tester.pumpAndSettle();
+
+      expect(seenHrefs, contains('a.xhtml#p1'));
+    });
+
+    testWidgets('initialWindowIndex 힌트로 복원된 윈도우에서 시작한다', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+            fixedPageSize: const Size(400, 100),
+            initialWindowIndex: 2,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(2));
+      expect(state.windowIndex, 2);
+    });
+
+    testWidgets('fixedPageSize가 null이면 contentBuilder는 무시된다(기존 동작 불변)',
+        (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      var called = false;
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _wrapXhtml('<p>본문</p>'),
+            contentBuilder: (context, item, logicalSize, content) {
+              called = true;
+              return content;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(called, isFalse);
+    });
+  });
 }
 
 // -------- helpers --------

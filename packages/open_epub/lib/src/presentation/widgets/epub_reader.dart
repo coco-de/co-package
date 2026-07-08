@@ -64,6 +64,7 @@ class EpubReader extends StatefulWidget {
     this.readingDirection,
     this.mediaOverlayController,
     this.verticalWriting = false,
+    this.fixedPageSize,
   });
 
   final EpubSource source;
@@ -145,6 +146,18 @@ class EpubReader extends StatefulWidget {
   /// reflowable 본문에만 적용. (S15.4, gap #4 조판분, 실용 구현)
   final bool verticalWriting;
 
+  /// 논리 고정 페이지 크기(예: A4 210:297 근사, 595×842). reflowable 본문에
+  /// 값이 있으면 [paged] 여부와 무관하게 항상 이 고정 크기 기준으로
+  /// 페이지네이션하고([ReflowablePageView]의 화면 단위 윈도잉을 고정 크기로
+  /// 강제), 결과가 실제 화면에 contain-fit 스케일된다. 이 모드에서는
+  /// [fixedLayoutContentBuilder]가 각 가상 페이지(윈도우)마다 고유 href를
+  /// 가진 합성 spine 항목으로 호출된다(호스트가 페이지별 독립 필기 캔버스를
+  /// 마운트할 수 있게 한다). true fixed-layout 소스 EPUB(그림책 등)에는
+  /// 영향 없다(항상 [FixedLayoutEngine] 사용). 이 모드는 핀치 줌을 제공하지
+  /// 않는다. null(기본값)이면 기존 동작(실제 화면 크기 기준 윈도잉, paged
+  /// 여부만으로 엔진 분기). (kobic Epic #7964 S1)
+  final Size? fixedPageSize;
+
   @override
   State<EpubReader> createState() => _EpubReaderState();
 }
@@ -207,6 +220,7 @@ class _EpubReaderState extends State<EpubReader> {
           readingDirection: widget.readingDirection,
           mediaOverlayController: widget.mediaOverlayController,
           verticalWriting: widget.verticalWriting,
+          fixedPageSize: widget.fixedPageSize,
         );
       },
     );
@@ -232,6 +246,7 @@ class _SessionView extends StatefulWidget {
     required this.readingDirection,
     required this.mediaOverlayController,
     required this.verticalWriting,
+    required this.fixedPageSize,
   });
 
   final EpubBookSession session;
@@ -251,6 +266,7 @@ class _SessionView extends StatefulWidget {
   final EpubPageProgression? readingDirection;
   final MediaOverlayController? mediaOverlayController;
   final bool verticalWriting;
+  final Size? fixedPageSize;
 
   @override
   State<_SessionView> createState() => _SessionViewState();
@@ -278,6 +294,15 @@ class _SessionViewState extends State<_SessionView> {
     final spine = _session.book.spine;
     final i = spine.indexWhere((s) => s.href == _session.position.spineHref);
     return i < 0 ? 0 : i;
+  }
+
+  /// 복원된 위치의 윈도우(가상 페이지) 인덱스 힌트 — [fixedPageSize] 모드
+  /// 전용(kobic Epic #7964 S1). [EpubReflowablePosition.pageIndex]가
+  /// 있으면 그 값을, 없으면 0을 반환한다. 해당 spine 측정 완료 후 범위를
+  /// 벗어나면 [ReflowablePageView]가 자동으로 clamp한다.
+  int get _initialWindowIndex {
+    final pos = _session.position;
+    return pos is EpubReflowablePosition ? (pos.pageIndex ?? 0) : 0;
   }
 
   String? get _restoreFailedMessage {
@@ -377,6 +402,33 @@ class _SessionViewState extends State<_SessionView> {
     widget.onPageChanged?.call(index, _session.book.spine.length);
   }
 
+  /// [fixedPageSize] 모드 전용 — spine 전환뿐 아니라 같은 spine 내 윈도우
+  /// (가상 페이지) 이동에도 위치를 갱신한다. 일반 화면 단위 윈도잉 모드는
+  /// 기존처럼 spine 전환에서만 위치가 갱신된다(회귀 없음, kobic Epic #7964
+  /// S1). [EpubReflowablePosition.pageIndex]에 윈도우 인덱스를 실어
+  /// 복원 시([_initialWindowIndex]) 다시 읽는다.
+  void _handleWindowChanged(int spineIndex, int windowIndex, int windowCount) {
+    widget.controller?.syncState(
+      currentSpineIndex: spineIndex,
+      spineCount: _session.book.spine.length,
+      windowIndex: windowIndex,
+      windowCount: windowCount,
+    );
+    if (widget.fixedPageSize == null) return;
+    final href = _session.book.spine[spineIndex].href;
+    final denom =
+        _session.book.spine.length <= 1 ? 1 : _session.book.spine.length - 1;
+    final pos = EpubReflowablePosition(
+      spineHref: href,
+      progress: spineIndex / denom,
+      charOffset: 0,
+      pageIndex: windowIndex,
+    );
+    _progress.value = pos.progress;
+    unawaited(_session.jumpTo(pos));
+    widget.onPositionChanged?.call(pos);
+  }
+
   @override
   Widget build(BuildContext context) {
     _syncContentRevision();
@@ -399,10 +451,13 @@ class _SessionViewState extends State<_SessionView> {
             widget.controller?.attachNavigator(navigate),
         onPageStepReady: (step) => widget.controller?.attachPageStepper(step),
       );
-    } else if (widget.paged) {
+    } else if (widget.paged || widget.fixedPageSize != null) {
       engine = ReflowablePageView(
         book: book,
         initialSpineIndex: _initialSpineIndex,
+        // fixedPageSize 모드에서만 의미 있는 복원 힌트(그 외는 항상 0).
+        initialWindowIndex:
+            widget.fixedPageSize == null ? 0 : _initialWindowIndex,
         xhtmlLoader: _loadXhtml,
         imageLoader: _loadImage,
         fontSize: widget.fontSize,
@@ -416,16 +471,17 @@ class _SessionViewState extends State<_SessionView> {
         onNavigatorReady: (navigate) =>
             widget.controller?.attachNavigator(navigate),
         onPageStepReady: (step) => widget.controller?.attachPageStepper(step),
-        // 윈도우(화면) 이동/측정마다 controller에 반영 — hasNext/hasPrevious가
-        // 화면 단위 윈도잉을 정확히 반영하도록 한다. (open-epub#228)
-        onWindowChanged: (spineIndex, windowIndex, windowCount) {
-          widget.controller?.syncState(
-            currentSpineIndex: spineIndex,
-            spineCount: _session.book.spine.length,
-            windowIndex: windowIndex,
-            windowCount: windowCount,
-          );
-        },
+        // 윈도우(화면 또는 고정 A4 페이지) 이동/측정마다 controller에 반영
+        // — hasNext/hasPrevious가 윈도잉을 정확히 반영하도록 한다. fixedPageSize
+        // 모드에서는 위치(세션)도 함께 갱신한다. (open-epub#228, kobic Epic
+        // #7964 S1)
+        onWindowChanged: _handleWindowChanged,
+        // 논리 고정 페이지 크기(A4 등) — reflowable 본문을 실측 기반으로
+        // 이 크기로 페이지네이션한다. null이면 기존처럼 실제 화면 크기 기준.
+        // (kobic Epic #7964 S1)
+        fixedPageSize: widget.fixedPageSize,
+        // fixed-layout과 동일 계약 재사용 — 가상 페이지별 필기 캔버스 등.
+        contentBuilder: widget.fixedLayoutContentBuilder,
         // 하이라이트 목록/낭독 활성 par가 바뀌면 spine XHTML을 다시 로드해 본문에
         // 즉시 반영한다. (open-epub#62, S15.3)
         contentRevision: _contentRevision,
