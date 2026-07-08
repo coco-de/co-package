@@ -61,6 +61,7 @@ class VerticalTextBlock extends StatelessWidget {
     this.fontSize = 16.0,
     this.lineHeight = 1.6,
     this.leftToRight = false,
+    this.fontFamily,
   });
 
   final String text;
@@ -70,14 +71,19 @@ class VerticalTextBlock extends StatelessWidget {
   /// vertical-lr이면 true(컬럼 좌→우), 기본 false(vertical-rl, 우→좌).
   final bool leftToRight;
 
+  /// 고정 서체(예: kobic 가로 페이지 넘김 A4 고정 페이지네이션). null이면
+  /// 플랫폼 기본 서체.
+  final String? fontFamily;
+
   @override
   Widget build(BuildContext context) {
     final charBox = fontSize * lineHeight;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final h = constraints.maxHeight.isFinite && constraints.maxHeight > charBox
-            ? constraints.maxHeight
-            : charBox * 20;
+        final h =
+            constraints.maxHeight.isFinite && constraints.maxHeight > charBox
+                ? constraints.maxHeight
+                : charBox * 20;
         final perColumn = (h / charBox).floor().clamp(1, 4096);
         final columns = verticalColumns(
           text,
@@ -96,6 +102,7 @@ class VerticalTextBlock extends StatelessWidget {
                   text: col,
                   fontSize: fontSize,
                   charBox: charBox,
+                  fontFamily: fontFamily,
                 ),
             ],
           ),
@@ -110,11 +117,13 @@ class _VerticalColumn extends StatelessWidget {
     required this.text,
     required this.fontSize,
     required this.charBox,
+    this.fontFamily,
   });
 
   final String text;
   final double fontSize;
   final double charBox;
+  final String? fontFamily;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +138,7 @@ class _VerticalColumn extends StatelessWidget {
               child: Center(
                 child: Text(
                   String.fromCharCode(rune),
-                  style: TextStyle(fontSize: fontSize),
+                  style: TextStyle(fontSize: fontSize, fontFamily: fontFamily),
                 ),
               ),
             ),

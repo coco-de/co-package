@@ -182,6 +182,59 @@ void main() {
       expect(html.textStyle?.height, 2.0);
     });
 
+    // kobic Epic #7964 S3 — 가로 페이지 넘김 A4 고정 페이지네이션에서 고정
+    // 서체가 적용되는지 회귀 방지.
+    testWidgets(
+        'fontFamily property가 HtmlWidget textStyle에 반영 (ReflowableEngine)',
+        (tester) async {
+      final book = _fakeBook(['ch.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowableEngine(
+            book: book,
+            xhtmlLoader: (_) async => _wrapXhtml('<p>안녕</p>'),
+            fontFamily: 'Pretendard',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final html = tester.widget<HtmlWidget>(find.byType(HtmlWidget));
+      expect(html.textStyle?.fontFamily, 'Pretendard');
+    });
+
+    testWidgets(
+        'fontFamily property가 HtmlWidget textStyle에 반영 (ReflowablePageView)',
+        (tester) async {
+      final book = _fakeBook(['ch.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (_) async => _wrapXhtml('<p>안녕</p>'),
+            fontFamily: 'Pretendard',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final html = tester.widget<HtmlWidget>(find.byType(HtmlWidget));
+      expect(html.textStyle?.fontFamily, 'Pretendard');
+    });
+
+    testWidgets('fontFamily 미지정(null) 시 기본 서체 유지(회귀 방지)', (tester) async {
+      final book = _fakeBook(['ch.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (_) async => _wrapXhtml('<p>안녕</p>'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final html = tester.widget<HtmlWidget>(find.byType(HtmlWidget));
+      expect(html.textStyle?.fontFamily, isNull);
+    });
+
     testWidgets('fontSize 변경 시 spineIndex 보존 (BDD F2.2)', (tester) async {
       final book = _fakeBook(['a.xhtml', 'b.xhtml', 'c.xhtml']);
       // initialSpineIndex=1로 시작

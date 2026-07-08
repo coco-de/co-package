@@ -43,6 +43,7 @@ class ReflowablePageView extends StatefulWidget {
     this.initialWindowIndex = 0,
     this.fontSize = 16.0,
     this.lineHeight = 1.5,
+    this.fontFamily,
     this.paginationStrategy = const SinglePagePerSpineStrategy(),
     this.onPageChanged,
     this.onLinkTap,
@@ -68,6 +69,11 @@ class ReflowablePageView extends StatefulWidget {
   final int initialWindowIndex;
   final double fontSize;
   final double lineHeight;
+
+  /// 본문 강제 서체(kobic 가로 페이지 넘김 A4 고정 페이지네이션, Epic #7964 S3
+  /// — fontSize/lineHeight와 함께 필기 앵커 좌표가 서체 변경으로 흔들리지
+  /// 않도록 고정). null(기본값)이면 원본 XHTML/기본 서체를 그대로 따른다.
+  final String? fontFamily;
 
   /// 미사용 — 화면 단위 윈도잉(open-epub#221)은 [PaginationStrategy] 없이
   /// 렌더 높이 측정으로 직접 처리한다. 향후 정밀 페이지네이션(문단 단위 재분할)
@@ -233,8 +239,9 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     }
     if (oldWidget.fontSize != widget.fontSize ||
         oldWidget.lineHeight != widget.lineHeight ||
+        oldWidget.fontFamily != widget.fontFamily ||
         oldWidget.fixedPageSize != widget.fixedPageSize) {
-      // 글자 크기·줄간격·고정 페이지 크기가 바뀌면 렌더 높이가 달라지므로
+      // 글자 크기·줄간격·서체·고정 페이지 크기가 바뀌면 렌더 높이가 달라지므로
       // 윈도우 수를 재측정한다 — 이전 윈도우 경계는 새 크기에서 더 이상
       // 유효하지 않다.
       _windowCounts.clear();
@@ -357,6 +364,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
               spineItem: widget.book.spine[index],
               fontSize: widget.fontSize,
               lineHeight: widget.lineHeight,
+              fontFamily: widget.fontFamily,
               imageLoader: widget.imageLoader,
               onLinkTap: widget.onLinkTap,
               forceVertical: widget.forceVertical,
@@ -402,6 +410,7 @@ class _SpinePageView extends StatefulWidget {
     this.spineItem,
     this.fixedPageSize,
     this.contentBuilder,
+    this.fontFamily,
   });
 
   final Future<String> load;
@@ -410,6 +419,9 @@ class _SpinePageView extends StatefulWidget {
   final String baseHref;
   final double fontSize;
   final double lineHeight;
+
+  /// 본문 강제 서체(kobic Epic #7964 S3). null이면 기본 서체.
+  final String? fontFamily;
   final ImageLoader? imageLoader;
   final EpubLinkTapCallback? onLinkTap;
   final bool forceVertical;
@@ -499,6 +511,7 @@ class _SpinePageViewState extends State<_SpinePageView> {
               baseHref: widget.baseHref,
               fontSize: widget.fontSize,
               lineHeight: widget.lineHeight,
+              fontFamily: widget.fontFamily,
               imageLoader: widget.imageLoader,
               onLinkTap: widget.onLinkTap,
               forceVertical: widget.forceVertical,

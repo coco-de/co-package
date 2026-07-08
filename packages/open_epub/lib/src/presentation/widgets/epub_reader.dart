@@ -50,6 +50,7 @@ class EpubReader extends StatefulWidget {
     this.onSessionReady,
     this.fontSize = 16.0,
     this.lineHeight = 1.5,
+    this.fontFamily,
     this.showProgressIndicator = true,
     this.highlights = const [],
     this.onLinkTap,
@@ -80,6 +81,12 @@ class EpubReader extends StatefulWidget {
 
   /// Reflowable 본문 줄간격 (배수).
   final double lineHeight;
+
+  /// Reflowable 본문 강제 서체(kobic 가로 페이지 넘김 A4 고정 페이지네이션,
+  /// Epic #7964 S3). null(기본값)이면 원본 XHTML/기본 서체를 그대로 따른다.
+  /// [ReflowablePageView]·[ReflowableEngine]·fixed-layout의 reflowable 폴백
+  /// 렌더([_buildFixedPage]) 모두에 적용된다.
+  final String? fontFamily;
 
   /// 하단 진도 인디케이터("45%") 표시 여부.
   final bool showProgressIndicator;
@@ -204,6 +211,7 @@ class _EpubReaderState extends State<EpubReader> {
           session: snapshot.data!,
           fontSize: widget.fontSize,
           lineHeight: widget.lineHeight,
+          fontFamily: widget.fontFamily,
           showProgressIndicator: widget.showProgressIndicator,
           highlights: widget.highlights,
           onLinkTap: widget.onLinkTap,
@@ -233,6 +241,7 @@ class _SessionView extends StatefulWidget {
     required this.fontSize,
     required this.lineHeight,
     required this.showProgressIndicator,
+    this.fontFamily,
     required this.highlights,
     required this.onLinkTap,
     required this.paged,
@@ -252,6 +261,7 @@ class _SessionView extends StatefulWidget {
   final EpubBookSession session;
   final double fontSize;
   final double lineHeight;
+  final String? fontFamily;
   final bool showProgressIndicator;
   final List<EpubHighlight> highlights;
   final EpubLinkTapCallback? onLinkTap;
@@ -462,6 +472,7 @@ class _SessionViewState extends State<_SessionView> {
         imageLoader: _loadImage,
         fontSize: widget.fontSize,
         lineHeight: widget.lineHeight,
+        fontFamily: widget.fontFamily,
         onLinkTap: widget.onLinkTap,
         onPageChanged: _handlePageChanged,
         // RTL이면 PageView 스크롤 방향 반전(다음=좌향). (S14.1)
@@ -494,6 +505,7 @@ class _SessionViewState extends State<_SessionView> {
         imageLoader: _loadImage,
         fontSize: widget.fontSize,
         lineHeight: widget.lineHeight,
+        fontFamily: widget.fontFamily,
         onLinkTap: widget.onLinkTap,
         // 스크롤로 spine이 넘어가면 paged와 동일하게 세션 위치·컨트롤러를
         // 동기화하고 호스트에 보고한다 (kobic#7572 — 진행률·챕터명 갱신).
@@ -636,6 +648,7 @@ class _SessionViewState extends State<_SessionView> {
         baseHref: item.href,
         fontSize: widget.fontSize,
         lineHeight: widget.lineHeight,
+        fontFamily: widget.fontFamily,
         imageLoader: _loadImage,
       ),
     );

@@ -90,6 +90,7 @@ class ReflowableEngine extends StatefulWidget {
     this.initialSpineIndex = 0,
     this.fontSize = 16.0,
     this.lineHeight = 1.5,
+    this.fontFamily,
     this.onLinkTap,
     this.onSpineChanged,
     this.contentRevision,
@@ -112,6 +113,9 @@ class ReflowableEngine extends StatefulWidget {
 
   /// 본문 줄간격 (배수). BDD F2.3 — 변경 시 본문 재배치.
   final double lineHeight;
+
+  /// 본문 강제 서체. null(기본값)이면 원본 XHTML/기본 서체를 그대로 따른다.
+  final String? fontFamily;
 
   /// 본문 링크/하이라이트 탭 콜백. (S7.3/S7.5)
   final EpubLinkTapCallback? onLinkTap;
@@ -314,6 +318,7 @@ class ReflowableEngineState extends State<ReflowableEngine> {
             baseHref: spine[index].href,
             fontSize: widget.fontSize,
             lineHeight: widget.lineHeight,
+            fontFamily: widget.fontFamily,
             imageLoader: widget.imageLoader,
             onLinkTap: widget.onLinkTap,
             forceVertical: widget.forceVertical,
@@ -339,6 +344,7 @@ class _SpineItemView extends StatefulWidget {
     required this.imageLoader,
     required this.onLinkTap,
     required this.forceVertical,
+    this.fontFamily,
   });
 
   final Future<String> load;
@@ -350,6 +356,7 @@ class _SpineItemView extends StatefulWidget {
   final ImageLoader? imageLoader;
   final EpubLinkTapCallback? onLinkTap;
   final bool forceVertical;
+  final String? fontFamily;
 
   @override
   State<_SpineItemView> createState() => _SpineItemViewState();
@@ -382,6 +389,7 @@ class _SpineItemViewState extends State<_SpineItemView> {
             baseHref: widget.baseHref,
             fontSize: widget.fontSize,
             lineHeight: widget.lineHeight,
+            fontFamily: widget.fontFamily,
             imageLoader: widget.imageLoader,
             onLinkTap: widget.onLinkTap,
             forceVertical: widget.forceVertical,
@@ -419,6 +427,12 @@ class _EpubWidgetFactory extends WidgetFactory with SvgFactory {}
 /// S15.4(#111): [forceVertical]이거나 본문이 `writing-mode: vertical-*`를 인라인
 /// 선언하면, 단순 텍스트 콘텐츠(이미지·SVG·수식·표 없음)에 한해 [VerticalTextBlock]
 /// 세로 조판으로 렌더한다(gap #4 조판분). 복잡 콘텐츠는 가로 렌더로 폴백.
+///
+/// [fontFamily]가 있으면 본문 전체(가로·세로 조판 모두)에 강제 적용된다(예:
+/// kobic 가로 페이지 넘김 A4 고정 페이지네이션 — fontSize/lineHeight와 함께
+/// 고정 서체를 적용해 페이지 경계가 안정적으로 유지되도록 한다). null(기본값)이면
+/// 원본 XHTML의 인라인/스타일시트 폰트 지정이나 위젯 트리 상위 기본 서체를 그대로
+/// 따른다(기존 동작 불변).
 Widget buildReflowableHtml({
   required String data,
   required double fontSize,
@@ -427,6 +441,7 @@ Widget buildReflowableHtml({
   EpubLinkTapCallback? onLinkTap,
   bool forceVertical = false,
   String? baseHref,
+  String? fontFamily,
 }) {
   // never-empty: 렌더 가능한 콘텐츠(텍스트·이미지·svg·math)가 없으면 공백 금지.
   if (_isBlankContent(data)) {
@@ -443,12 +458,17 @@ Widget buildReflowableHtml({
       fontSize: fontSize,
       lineHeight: lineHeight,
       leftToRight: isVerticalLr(data),
+      fontFamily: fontFamily,
     );
   }
   return HtmlWidget(
     data,
     buildAsync: false,
-    textStyle: TextStyle(fontSize: fontSize, height: lineHeight),
+    textStyle: TextStyle(
+      fontSize: fontSize,
+      height: lineHeight,
+      fontFamily: fontFamily,
+    ),
     factoryBuilder: () => _EpubWidgetFactory(),
     onTapUrl: (url) {
       if (url.isNotEmpty) onLinkTap?.call(url);
