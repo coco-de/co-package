@@ -265,6 +265,55 @@ void main() {
     });
   });
 
+  // 목차(TOC) 항목 탭 → 페이지 이동 안 되는 문제 수정 — EpubOutlineItem의
+  // spineHref를 controller.goToHref로 넘기면 실제 화면이 해당 spine으로
+  // 이동해야 한다(기존에는 매칭 API가 없어 host가 연결할 방법이 없었다).
+  group('goToHref — 목차(TOC) 탭 시 spineHref로 이동', () {
+    testWidgets('등록된 spine href로 해당 spine으로 이동한다', (tester) async {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: EpubReader(
+              source: EpubSource.bytes(searchableEpub3()),
+              controller: controller,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(controller.currentSpineIndex, 0);
+
+      final jump = controller.goToHref('ch3.xhtml');
+      await tester.pumpAndSettle();
+      await jump;
+      expect(controller.currentSpineIndex, 2);
+    });
+
+    test('매칭되는 href가 없으면 무시된다(크래시 없음)', () async {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      controller.syncState(currentSpineIndex: 0, spineCount: 3);
+      await controller.goToHref('does-not-exist.xhtml');
+      expect(controller.currentSpineIndex, 0);
+    });
+
+    test('detachNavigator 이후에는 href 목록도 초기화된다', () async {
+      final controller = EpubViewController();
+      addTearDown(controller.dispose);
+      controller.attachSpineHrefs(['ch1.xhtml', 'ch2.xhtml']);
+      controller.attachNavigator((index) async {});
+      controller.syncState(currentSpineIndex: 0, spineCount: 2);
+      controller.detachNavigator();
+
+      await controller.goToHref('ch2.xhtml');
+      expect(controller.currentSpineIndex, 0);
+    });
+  });
+
   // open-epub#228 — 코드 리뷰에서 확인된 갭: paged:true + 실제 EpubReader +
   // 실제 EpubViewController 조합으로 controller.nextPage()를 눌렀을 때 화면
   // 단위로만 이동하는지(챕터 전체를 건너뛰지 않는지)를 검증하는 end-to-end

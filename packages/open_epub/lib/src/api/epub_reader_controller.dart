@@ -52,12 +52,23 @@ class EpubViewController extends ChangeNotifier {
 
   Future<void> Function(int index)? _navigate;
   Future<void> Function(int direction)? _step;
+  List<String> _spineHrefs = const [];
 
   /// [index] spine으로 이동한다(animation). 범위 밖이거나 미부착이면 무시.
   Future<void> goToSpine(int index) async {
     final navigate = _navigate;
     if (navigate == null || index < 0 || index >= _spineCount) return;
     await navigate(index);
+  }
+
+  /// [href]가 가리키는 spine으로 이동한다. 목차(TOC, [EpubOutline]) 항목의
+  /// `EpubOutlineItem.spineHref`를 그대로 넘기면 매칭되는 spine 인덱스로
+  /// [goToSpine]을 호출한다 — 목차 탭 핸들러를 여기 연결하면 된다. 매칭되는
+  /// spine이 없거나 미부착이면 무시(크래시 없음).
+  Future<void> goToHref(String href) async {
+    final index = _spineHrefs.indexOf(href);
+    if (index < 0) return;
+    await goToSpine(index);
   }
 
   /// 다음/이전 "페이지"로 이동한다. 엔진이 [attachPageStepper]로 세분화된
@@ -87,10 +98,15 @@ class EpubViewController extends ChangeNotifier {
   void attachPageStepper(Future<void> Function(int direction) step) =>
       _step = step;
 
+  /// EpubReader가 spine href 목록을 등록한다 — [goToHref]가 href→index 매핑에
+  /// 사용한다. 책이 열릴 때 한 번만 호출되며 세션 동안 값이 바뀌지 않는다.
+  void attachSpineHrefs(List<String> hrefs) => _spineHrefs = hrefs;
+
   /// EpubReader dispose 시 바인딩 해제.
   void detachNavigator() {
     _navigate = null;
     _step = null;
+    _spineHrefs = const [];
   }
 
   /// EpubReader가 현재 페이지 상태를 밀어넣는다(변경 시 listener 통지).

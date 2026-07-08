@@ -306,6 +306,11 @@ class _SessionViewState extends State<_SessionView> {
       currentSpineIndex: _initialSpineIndex,
       spineCount: count,
     );
+    // 목차(TOC) 탭 → controller.goToHref(item.spineHref) 이동에 쓰일 href
+    // 목록 등록. (open-epub — 목차 탭해도 페이지 이동 안 되는 문제 수정)
+    widget.controller?.attachSpineHrefs(
+      _session.book.spine.map((s) => s.href).toList(growable: false),
+    );
     if (widget.onPositionChanged != null || widget.onPageChanged != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;

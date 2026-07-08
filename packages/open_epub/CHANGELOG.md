@@ -1,3 +1,12 @@
+## Unreleased
+
+### Fixed
+- 목차(TOC) 항목을 탭해도 실제 화면이 이동하지 않던 문제 수정 — `EpubViewController`에
+  `goToHref(String href)`를 추가해 `EpubOutlineItem.spineHref`를 그대로 넘겨 해당
+  spine으로 이동할 수 있게 했다. 기존에는 화면을 실제로 이동시키는 유일한 API인
+  `EpubViewController.goToSpine`이 정수 spine 인덱스만 받아, 목차 데이터(href)와
+  연결할 방법이 없었다.
+
 ## 1.0.0
 
 open_epub 1.0 — **ADR-002 breaking 재설계**. 리더 패키지를 Flutter 렌더/위젯/컨트롤러
