@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:open_epub/open_epub.dart';
 
 import 'package:open_epub_example/reader_demo_page.dart';
 import 'package:open_epub_example/sample_book.dart';
@@ -33,6 +34,19 @@ void main() {
 
     expect(find.byKey(const ValueKey('reader-error')), findsOneWidget);
     expect(find.textContaining('로컬 전용 테스트 픽스처'), findsOneWidget);
+  });
+
+  testWidgets('Fixed Layout A4 샘플(bytesLoader)은 asset 없이도 정상적으로 열린다', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(home: ReaderDemoPage(book: _book('fixed-a4'))),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('reader-error')), findsNothing);
+    expect(find.byKey(const ValueKey('epub-reader-fixed-a4')), findsOneWidget);
+    expect(find.byType(FixedLayoutEngine), findsOneWidget);
   });
 
   testWidgets('세로 스크롤 토글은 스와이프(paged) ↔ 스크롤 모드를 전환한다', (tester) async {

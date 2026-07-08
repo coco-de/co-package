@@ -45,7 +45,9 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
   }
 
   Future<Uint8List> _loadBytes() async {
-    final data = await rootBundle.load(widget.book.asset);
+    final loader = widget.book.bytesLoader;
+    if (loader != null) return loader();
+    final data = await rootBundle.load(widget.book.asset!);
     return data.buffer.asUint8List();
   }
 
@@ -157,7 +159,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
                     const Icon(Icons.folder_off_outlined, size: 40),
                     const SizedBox(height: 12),
                     Text(
-                      '이 샘플(${widget.book.asset})은 저장소에 포함되지 않은 '
+                      '이 샘플(${widget.book.asset ?? widget.book.id})은 저장소에 포함되지 않은 '
                       '로컬 전용 테스트 픽스처입니다(대용량/라이선스 사유로 '
                       'gitignore 처리됨).\n'
                       '로컬 개발 환경에서 해당 EPUB 파일을 '

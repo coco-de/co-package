@@ -77,3 +77,85 @@ Uint8List buildDemoEpub() => _zipEpub({
       '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
       '<p>사자는 초원의 왕이다.</p></body></html>',
 });
+
+/// A4 페이지 논리 크기(96dpi 기준, 210×297mm → px). Fixed Layout 데모/테스트가
+/// 공유하는 상수 — [EpubReader]는 spine XHTML의 `<meta name="viewport">`에서
+/// 이 값을 읽어 페이지 논리 좌표 공간을 결정한다.
+const double kA4PageWidth = 794;
+const double kA4PageHeight = 1123;
+
+/// A4 크기 Fixed Layout(pre-paginated) 데모 책 — 3페이지, 페이지마다 실제 렌더
+/// 크기를 본문에 표시해 A4 비율/줌이 올바른지 눈으로 확인할 수 있다.
+/// `buildDemoEpub()`와 마찬가지로 외부 asset 없이 순수 Dart로 생성한다(#235와
+/// 동일한 이유 — 클린 체크아웃/웹 배포에서도 항상 로드 가능).
+Uint8List buildFixedLayoutA4DemoEpub() {
+  String page(int index, String body) =>
+      '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="viewport"
+        content="width=${kA4PageWidth.toInt()}, height=${kA4PageHeight.toInt()}"/>
+  </head>
+  <body>
+    <p>$index / 3쪽 — A4 (${kA4PageWidth.toInt()}×${kA4PageHeight.toInt()})</p>
+    <p>$body</p>
+  </body>
+</html>
+''';
+  return _zipEpub({
+    'mimetype': 'application/epub+zip',
+    'META-INF/container.xml': '''
+<?xml version="1.0"?>
+<container version="1.0"
+    xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf"
+        media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>
+''',
+    'OEBPS/content.opf': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0"
+    unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Fixed Layout A4 데모 책</dc:title>
+    <dc:identifier id="bookid">urn:uuid:open-epub-demo-fixed-a4-0001</dc:identifier>
+    <meta property="rendition:layout">pre-paginated</meta>
+    <meta property="rendition:spread">none</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"
+        properties="nav"/>
+    <item id="p1" href="p1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="p2" href="p2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="p3" href="p3.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="p1"/>
+    <itemref idref="p2"/>
+    <itemref idref="p3"/>
+  </spine>
+</package>
+''',
+    'OEBPS/nav.xhtml': '''
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        <li><a href="p1.xhtml">1쪽</a></li>
+        <li><a href="p2.xhtml">2쪽</a></li>
+        <li><a href="p3.xhtml">3쪽</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>
+''',
+    'OEBPS/p1.xhtml': page(1, '표지 — 이 책은 페이지마다 A4 크기로 고정되어 있다.'),
+    'OEBPS/p2.xhtml': page(2, '두 번째 페이지도 같은 논리 크기를 유지한다.'),
+    'OEBPS/p3.xhtml': page(3, '마지막 페이지. 핀치 줌으로 확대/축소해 볼 수 있다.'),
+  });
+}

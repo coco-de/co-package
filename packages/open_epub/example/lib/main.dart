@@ -4,6 +4,7 @@ import 'package:marionette_flutter/marionette_flutter.dart';
 
 // open_epub 1.0 데모 진입점. S11.1(#88)에서 레거시 EpubReaderWidget 데모를
 // 제거하고, 1.0 코어(EpubBookSession + EpubReader) 데모만 노출한다.
+import 'fixed_layout_demo_page.dart' show FixedLayoutDemoPage;
 import 'highlight_demo_page.dart' show HighlightDemoPage;
 import 'sample_library_page.dart' show SampleLibraryPage;
 import 'v1_demo_page.dart' show V1DemoPage;
@@ -95,6 +96,21 @@ class HomePage extends StatelessWidget {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const HighlightDemoPage()),
+              ),
+            ),
+          ),
+
+          // --- Fixed Layout A4 데모 ---
+          Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              key: const ValueKey('demo-fixed-layout-a4'),
+              leading: const Icon(Icons.insert_drive_file_outlined),
+              title: const Text('Fixed Layout A4 데모'),
+              subtitle: const Text('pre-paginated 본문을 A4(794×1123) 크기로 렌더'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FixedLayoutDemoPage()),
               ),
             ),
           ),

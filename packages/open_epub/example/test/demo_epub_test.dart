@@ -8,7 +8,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub.dart';
-import 'package:open_epub_example/demo_epub.dart';
+import 'package:open_epub_example/demo_epub.dart'
+    show buildDemoEpub, buildFixedLayoutA4DemoEpub, kA4PageHeight, kA4PageWidth;
 import 'package:open_epub_example/highlight_demo_page.dart';
 import 'package:open_epub_example/v1_demo_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,6 +28,22 @@ void main() {
       addTearDown(session.dispose);
       expect(session.book.spine, hasLength(2));
       expect(session.book.metadata.title, 'open_epub 데모 책');
+    },
+  );
+
+  test(
+    'buildFixedLayoutA4DemoEpub()는 pre-paginated·A4 3페이지 EPUB을 생성한다',
+    () async {
+      final session = await EpubBookSession.open(
+        EpubSource.bytes(buildFixedLayoutA4DemoEpub()),
+      );
+      addTearDown(session.dispose);
+      expect(session.book.layout, EpubLayout.fixedLayout);
+      expect(session.book.spine, hasLength(3));
+      expect(session.book.metadata.title, 'Fixed Layout A4 데모 책');
+      final p1 = session.readSpineXhtml(session.book.spine.first.href);
+      expect(p1, contains('width=${kA4PageWidth.toInt()}'));
+      expect(p1, contains('height=${kA4PageHeight.toInt()}'));
     },
   );
 

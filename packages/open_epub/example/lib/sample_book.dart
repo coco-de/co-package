@@ -10,13 +10,18 @@
 // 참조). 나머지 2종(nohoechan, accessible_epub_3)은 저작권 사유로 여전히
 // `*.epub` gitignore 규칙을 따르는 로컬 전용 픽스처다 — 부재 시 리더가
 // 안내 메시지를 표시한다(reader_demo_page.dart).
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+
+import 'demo_epub.dart' show buildFixedLayoutA4DemoEpub;
 
 /// 샘플 EPUB 한 권의 카탈로그 항목.
 class SampleBook {
   const SampleBook({
     required this.id,
-    required this.asset,
+    this.asset,
+    this.bytesLoader,
     required this.title,
     required this.subtitle,
     required this.featureTag,
@@ -24,13 +29,23 @@ class SampleBook {
     this.autoRtl = false,
     this.autoVertical = false,
     this.hasMediaOverlay = false,
-  });
+  }) : assert(
+         asset != null || bytesLoader != null,
+         'asset 또는 bytesLoader 중 하나는 있어야 한다',
+       );
 
   /// marionette ValueKey/화면 식별용 짧은 슬러그.
   final String id;
 
-  /// `assets/…epub` 경로.
-  final String asset;
+  /// `assets/…epub` 경로. [bytesLoader]가 있으면 무시된다.
+  final String? asset;
+
+  /// asset 없이 합성 EPUB을 바로 만들어 여는 로더(#235와 동일한 이유 —
+  /// 대용량/라이선스 사유로 커밋되지 않는 asset 대신, 순수 Dart로 생성해
+  /// 클린 체크아웃/웹 배포에서도 항상 열리는 샘플용). 있으면 [asset]보다 우선한다.
+  /// `kSampleBooks`가 const 리스트이므로 top-level 함수 tear-off만 대입 가능
+  /// (클로저 불가) — 동기 반환이면 충분해 `Future`로 감싸지 않는다.
+  final Uint8List Function()? bytesLoader;
 
   final String title;
   final String subtitle;
@@ -119,5 +134,13 @@ const List<SampleBook> kSampleBooks = [
     subtitle: 'EPUB CFI · page-list 7',
     featureTag: 'CFI (E12)',
     icon: Icons.my_location,
+  ),
+  SampleBook(
+    id: 'fixed-a4',
+    bytesLoader: buildFixedLayoutA4DemoEpub,
+    title: 'Fixed Layout A4 데모',
+    subtitle: 'pre-paginated 고정 레이아웃 · A4(794×1123) 3쪽',
+    featureTag: 'Fixed Layout (F3)',
+    icon: Icons.insert_drive_file_outlined,
   ),
 ];
