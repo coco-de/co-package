@@ -27,6 +27,8 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
   double _fontSize = 18;
   late bool _rtl = widget.book.autoRtl;
   late bool _vertical = widget.book.autoVertical;
+  // true=스와이프(PageView), false=연속 세로 스크롤(ReflowableEngine).
+  bool _paged = true;
 
   EpubBookSession? _session;
   BookCapabilities? _caps;
@@ -185,7 +187,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
                   key: ValueKey('epub-reader-${widget.book.id}'),
                   source: EpubSource.bytes(snapshot.data!),
                   controller: _controller,
-                  paged: true,
+                  paged: _paged,
                   fontSize: _fontSize,
                   readingDirection: _rtl
                       ? EpubPageProgression.rtl
@@ -206,6 +208,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
   Widget _buildStatusBar(ThemeData theme) {
     final caps = _caps;
     final parts = <String>[
+      '모드:${_paged ? "스와이프" : "스크롤"}',
       'RTL:${_rtl ? "on" : "off"}',
       '세로:${_vertical ? "on" : "off"}',
       if (caps != null) 'PPD:${caps.pageProgressionDirection.name}',
@@ -257,6 +260,14 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
               icon: const Icon(Icons.text_increase),
               onPressed: () =>
                   setState(() => _fontSize = (_fontSize + 2).clamp(12, 32)),
+            ),
+            IconButton(
+              key: const ValueKey('reader-scroll-toggle'),
+              tooltip: '세로 스크롤',
+              isSelected: !_paged,
+              icon: const Icon(Icons.view_carousel_outlined),
+              selectedIcon: const Icon(Icons.view_agenda_outlined),
+              onPressed: () => setState(() => _paged = !_paged),
             ),
             IconButton(
               key: const ValueKey('reader-rtl-toggle'),

@@ -34,4 +34,27 @@ void main() {
     expect(find.byKey(const ValueKey('reader-error')), findsOneWidget);
     expect(find.textContaining('로컬 전용 테스트 픽스처'), findsOneWidget);
   });
+
+  testWidgets('세로 스크롤 토글은 스와이프(paged) ↔ 스크롤 모드를 전환한다', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: ReaderDemoPage(book: _book('cfi'))),
+    );
+    await tester.pumpAndSettle();
+
+    // 기본값 — 스와이프(paged) 모드.
+    Text status = tester.widget(find.byKey(const ValueKey('reader-status')));
+    expect(status.data, contains('모드:스와이프'));
+
+    await tester.tap(find.byKey(const ValueKey('reader-scroll-toggle')));
+    await tester.pumpAndSettle();
+
+    status = tester.widget(find.byKey(const ValueKey('reader-status')));
+    expect(status.data, contains('모드:스크롤'));
+
+    await tester.tap(find.byKey(const ValueKey('reader-scroll-toggle')));
+    await tester.pumpAndSettle();
+
+    status = tester.widget(find.byKey(const ValueKey('reader-status')));
+    expect(status.data, contains('모드:스와이프'));
+  });
 }
