@@ -106,6 +106,45 @@ void main() {
     expect(find.byIcon(Icons.open_in_full), findsNothing);
   });
 
+  testWidgets(
+    '선택된 이미지를 드래그하는 동안 widgetState.isImageTransforming 이 true 로 유지되고 '
+    '종료 시 해제된다 (페이지 뷰어 pan 전달 차단 신호, kobic #8101)',
+    (tester) async {
+      final notifier = ScribbleNotifier();
+      addTearDown(notifier.dispose);
+      notifier.addImageDrawable(
+        ImageDrawableFactory.create(
+          id: 'img-1',
+          source: 'file:///tmp/a.png',
+          position: const Offset(100, 100),
+          size: const Size(120, 120),
+        ),
+      );
+      final widgetState = ScribbleWidgetState();
+
+      await tester.pumpWidget(
+        host(notifier: notifier, widgetState: widgetState, interactive: true),
+      );
+
+      // 이미지 중심(160, 160)을 탭해 선택.
+      await tester.tapAt(const Offset(160, 160));
+      await tester.pump();
+      expect(widgetState.selectedImageId, 'img-1');
+      expect(widgetState.isImageTransforming, isFalse);
+
+      // 선택된 이미지를 드래그 — 페이지 뷰어(InteractiveViewer)의 pan 전달을
+      // 차단하는 신호(`isImageTransforming`)가 드래그 도중 켜져 있어야 한다.
+      final gesture = await tester.startGesture(const Offset(160, 160));
+      await gesture.moveBy(const Offset(30, 10));
+      await tester.pump();
+      expect(widgetState.isImageTransforming, isTrue);
+
+      await gesture.up();
+      await tester.pump();
+      expect(widgetState.isImageTransforming, isFalse);
+    },
+  );
+
   testWidgets('삭제 핸들 탭 시 이미지가 제거된다', (tester) async {
     final notifier = ScribbleNotifier();
     addTearDown(notifier.dispose);

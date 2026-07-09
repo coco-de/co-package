@@ -1399,8 +1399,18 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
           valueListenable: DrawingState().selectedTool,
           builder: (context, tool, child) {
             // 하이라이터는 stylus 가 pdfrx 텍스트 선택을 해야 하므로 제외한다.
+            // 🖼️ 이미지 모드(kobic #8101)도 제외: 이미지 선택/이동/변형/삭제는
+            // 스트로크를 그리지 않는 위젯 레이어 제스처(ImageDrawableLayer의
+            // Tap/Pan GestureDetector)이므로 "필기 중 pan 선점 방지"용 Eager
+            // recognizer 가 필요 없다. 오히려 이 오버레이가 활성 상태였다면
+            // EagerGestureRecognizer 가 gesture arena 를 즉시 선점해 이미지
+            // 레이어의 Tap/Pan recognizer 가 항상 거부되어, 스타일러스로는
+            // 이미지를 선택할 수 없었다(터치/마우스는 supportedDevices 밖이라
+            // 영향받지 않아 정상 동작했음).
             final enabled =
-                widget.isScribbleEnable && tool != DrawingTool.highlighter;
+                widget.isScribbleEnable &&
+                tool != DrawingTool.highlighter &&
+                tool != DrawingTool.image;
             if (!enabled) {
               return const SizedBox.shrink();
             }
@@ -1619,6 +1629,17 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       } else if (currentMode == InkModes.lasso) {
         // 올가미 모드 처리
         _handleLassoModePointerDown(event, context);
+      } else if (currentMode == InkModes.image) {
+        // 🖼️ 이미지 모드: 그리기 파이프라인 진입을 완전히 차단한다.
+        // 선택/이동/크기조절/회전은 ImageDrawableLayer 자체 GestureDetector가
+        // 담당하므로 여기서는 아무 것도 하지 않고 포인터 이벤트를 그대로
+        // 통과시킨다. `_canStartDrawing()`은 현재 선택된 도구가 아니라
+        // DrawingPointerMode(펜전용/손전용) 정책만 판단하므로, 이 분기가
+        // 없으면 이미지 모드에서도(특히 penOnly 정책의 스타일러스 탭이)
+        // 스트로크로 오인식되어 `_hideAllOverlays()` + `handleNormalDrawingMode()`
+        // 가 호출되고, 이미지 탭이 이미지 선택 대신 빈 스트로크 그리기로
+        // 소비되어 이미지 선택이 동작하지 않는다.
+        return;
       } else {
         // 다른 모드(펜, 지우개 등)에서는 포인터 종류에 따라 텍스트 상호작용 제한
         bool textHandled = false;

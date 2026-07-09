@@ -111,6 +111,18 @@ class _ImageDrawableLayerState extends State<ImageDrawableLayer> {
 
   // ── 이동 ──
 
+  void _onImageMoveStart() {
+    // 페이지 뷰어(InteractiveViewer)의 pan 전달을 차단하기 위한 신호.
+    // `ScribbleWidgetState.isTransforming`(→ `_shouldEnableInteractiveGestures`
+    // → `_isCurrentlyDrawing`)이 lasso/text 드래그와 동일하게 이 플래그를
+    // 참조하므로, 이미지 이동 중에도 호스트의 페이지 넘김 제스처 전달이
+    // 차단된다. 기존에는 리사이즈/회전 핸들(`isImageResizing`)만 이 신호를
+    // 보내고 단순 이동(pan)에는 아무 플래그도 세팅하지 않아, 이미지를
+    // 선택해 이동하는 동안 하위 페이지 뷰어가 함께 드래그되는 문제가 있었다.
+    widget.widgetState.isImageTransforming = true;
+    _refresh();
+  }
+
   void _onImageMoveUpdate(ImageDrawable image, DragUpdateDetails details) {
     // 제스처는 회전된 프레임 안에서 발생하므로 delta 를 레이어 프레임으로 되돌린다.
     final layerDelta = _rotateVector(details.delta, image.rotation);
@@ -127,10 +139,14 @@ class _ImageDrawableLayerState extends State<ImageDrawableLayer> {
   }
 
   void _onImageMoveEnd(ImageDrawable image) {
+    widget.widgetState.isImageTransforming = false;
     final current = _selectedDrawable(
       widget.notifier.getCurrentImageDrawables(),
     );
-    if (current == null) return;
+    if (current == null) {
+      _refresh();
+      return;
+    }
     // 최종 위치를 히스토리에 1회 커밋.
     widget.notifier.updateImageDrawable(image.id, current);
     _refresh();
@@ -266,7 +282,7 @@ class _ImageDrawableLayerState extends State<ImageDrawableLayer> {
           ? GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => _select(image.id),
-              onPanStart: isSelected ? (_) {} : null,
+              onPanStart: isSelected ? (_) => _onImageMoveStart() : null,
               onPanUpdate: isSelected
                   ? (details) => _onImageMoveUpdate(image, details)
                   : null,
