@@ -311,6 +311,7 @@ class _EpubBookSessionImpl implements EpubBookSession {
       progress: position.progress,
       charOffset: newOffset,
       pageIndex: position.pageIndex,
+      scrollAlignment: position.scrollAlignment,
     );
   }
 

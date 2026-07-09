@@ -57,6 +57,42 @@ void main() {
       expect(json['p'], 0.5);
       expect(json['c'], 100);
       expect(json.containsKey('x'), isFalse); // pageIndex 미설정 시 키 제외
+      expect(json.containsKey('a'), isFalse); // scrollAlignment 미설정 시 키 제외
+    });
+
+    test('charOffset + scrollAlignment hint (음수 포함)', () {
+      const original = EpubReflowablePosition(
+        spineHref: 'ch03.xhtml',
+        progress: 0.3,
+        charOffset: 0,
+        scrollAlignment: -1.35,
+      );
+      final json = jsonDecode(original.toToken()) as Map<String, dynamic>;
+      expect(json['a'], -1.35);
+      final decoded = EpubPosition.fromToken(original.toToken())
+          as EpubReflowablePosition;
+      expect(decoded, original);
+      expect(decoded.scrollAlignment, -1.35);
+    });
+
+    test('pageIndex + scrollAlignment 동시 보존', () {
+      const original = EpubReflowablePosition(
+        spineHref: 'ch03.xhtml',
+        progress: 0.3,
+        charOffset: 0,
+        pageIndex: 2,
+        scrollAlignment: 0.0,
+      );
+      final decoded = EpubPosition.fromToken(original.toToken())
+          as EpubReflowablePosition;
+      expect(decoded, original);
+    });
+
+    test('scrollAlignment 없는 기존 v1 토큰도 하위 호환 디코드된다', () {
+      const token = '{"v":1,"t":"r","s":"a.xhtml","p":0.1,"c":50}';
+      final decoded =
+          EpubPosition.fromToken(token) as EpubReflowablePosition;
+      expect(decoded.scrollAlignment, isNull);
     });
   });
 
@@ -176,6 +212,14 @@ void main() {
       );
     });
 
+    test('Reflowable: scrollAlignment(a)가 숫자가 아니면 에러', () {
+      const token = '{"v":1,"t":"r","s":"a","p":0,"c":0,"a":"oops"}';
+      expect(
+        () => EpubPosition.fromToken(token),
+        throwsA(isA<EpubPositionDecodeException>()),
+      );
+    });
+
     test('Fixed: pageIndex 누락', () {
       const token = '{"v":1,"t":"f","s":"a","p":0}';
       expect(
@@ -212,6 +256,22 @@ void main() {
     test('Reflowable vs Fixed는 다른 타입이라 not ==', () {
       const a = EpubReflowablePosition(spineHref: 'x', progress: 0.0, charOffset: 0);
       const b = EpubFixedPosition(spineHref: 'x', progress: 0.0, pageIndex: 0);
+      expect(a == b, isFalse);
+    });
+
+    test('scrollAlignment만 다르면 not ==', () {
+      const a = EpubReflowablePosition(
+        spineHref: 'x',
+        progress: 0.1,
+        charOffset: 1,
+        scrollAlignment: -0.5,
+      );
+      const b = EpubReflowablePosition(
+        spineHref: 'x',
+        progress: 0.1,
+        charOffset: 1,
+        scrollAlignment: -0.6,
+      );
       expect(a == b, isFalse);
     });
   });

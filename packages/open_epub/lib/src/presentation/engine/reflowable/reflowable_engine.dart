@@ -75,6 +75,15 @@ typedef EpubLinkTapCallback = void Function(String href);
 /// 화면 상단에 보이는 spine 인덱스가 바뀔 때 호출된다. (kobic#7572)
 typedef SpineChangedCallback = void Function(int spineIndex);
 
+/// 스크롤이 정착(사용자 드래그 종료)할 때마다 호출된다 — spine이 바뀌지 않고
+/// 같은 챕터 안에서만 스크롤해도 호출된다. [alignment]는 `scrollable_positioned_list`의
+/// `ItemPosition.itemLeadingEdge`와 동일 좌표계(뷰포트 높이 단위, 0=챕터 상단이
+/// 뷰포트 상단, 음수=그만큼 스크롤해 들어간 상태)다. (open-epub 위치 복원 정확도 개선)
+typedef ScrollOffsetChangedCallback = void Function(
+  int spineIndex,
+  double alignment,
+);
+
 /// Reflowable EPUB 책의 본문을 표시하는 최상위 엔진 widget (스크롤 모드).
 ///
 /// 전체 spine을 [ScrollablePositionedList]로 연속 표시한다. 페이지 내 분할
@@ -88,11 +97,13 @@ class ReflowableEngine extends StatefulWidget {
     required this.xhtmlLoader,
     this.imageLoader,
     this.initialSpineIndex = 0,
+    this.initialAlignment = 0,
     this.fontSize = 16.0,
     this.lineHeight = 1.5,
     this.fontFamily,
     this.onLinkTap,
     this.onSpineChanged,
+    this.onScrollOffsetChanged,
     this.contentRevision,
     this.forceVertical = false,
     this.onNavigatorReady,
@@ -103,6 +114,11 @@ class ReflowableEngine extends StatefulWidget {
   final XhtmlLoader xhtmlLoader;
   final ImageLoader? imageLoader;
   final int initialSpineIndex;
+
+  /// 복원된 위치의 챕터 내부 스크롤 정렬 hint —
+  /// [EpubReflowablePosition.scrollAlignment]. [ScrollablePositionedList]의
+  /// `initialAlignment`와 동일 좌표계. (open-epub 위치 복원 정확도 개선)
+  final double initialAlignment;
 
   /// 세로쓰기 강제(스타일시트로만 vertical-* 선언한 책용). 단순 텍스트 spine에만
   /// 적용된다. (S15.4, gap #4 조판분)
@@ -123,6 +139,10 @@ class ReflowableEngine extends StatefulWidget {
   /// 스크롤로 화면 상단 spine이 바뀔 때 알림 (위치 동기화·진행률, kobic#7572).
   /// 초기 spine에 대해서는 호출하지 않는다.
   final SpineChangedCallback? onSpineChanged;
+
+  /// 스크롤이 정착할 때마다 알림(spine 전환 여부 무관) — 같은 챕터 내부
+  /// 스크롤 위치를 호스트가 저장할 수 있게 한다. (open-epub 위치 복원 정확도 개선)
+  final ScrollOffsetChangedCallback? onScrollOffsetChanged;
 
   /// [xhtmlLoader] 결과에 영향을 주는 외부 상태의 revision(예: 하이라이트
   /// 목록). identity가 바뀌면 캐시된 spine XHTML을 버리고 다시 로드한다 —
@@ -165,6 +185,12 @@ class ReflowableEngineState extends State<ReflowableEngine> {
 
   int get spineIndex => _spineIndex;
   int get spineCount => widget.book.spine.length;
+
+  /// 현재 화면 최상단에 걸쳐 있는 item의 leadingEdge(뷰포트 높이 단위) —
+  /// 테스트 전용. 아직 레이아웃이 없으면(측정 전) 0. (open-epub 위치 복원
+  /// 정확도 개선)
+  @visibleForTesting
+  double get currentAlignment => _topItemPosition()?.itemLeadingEdge ?? 0;
 
   /// 현재 spine 기준 앞뒤로 선제 로드할 spine 수 (부드러운 스크롤, kobic#7572).
   static const int _prefetchRadius = 2;
@@ -232,14 +258,12 @@ class ReflowableEngineState extends State<ReflowableEngine> {
     }
   }
 
-  /// 화면에 보이는 item 중 가장 위(최소 leading edge)의 spine을 현재로 판정.
-  void _onItemPositionsChanged() {
-    if (!_userScrolling) return;
+  /// 화면에 실제로 걸쳐 있는 item 중 가장 위(최소 leading edge)의 것.
+  /// (trailing이 0 이하면 위로 지나감, leading이 1 이상이면 아직 뷰포트 밖)
+  ItemPosition? _topItemPosition() {
     final positions = _positionsListener.itemPositions.value;
-    if (positions.isEmpty) return;
     ItemPosition? top;
     for (final position in positions) {
-      // 뷰포트에 실제로 걸쳐 있는 item만 (trailing이 0 이하면 위로 지나감).
       if (position.itemTrailingEdge <= 0 || position.itemLeadingEdge >= 1) {
         continue;
       }
@@ -247,6 +271,13 @@ class ReflowableEngineState extends State<ReflowableEngine> {
         top = position;
       }
     }
+    return top;
+  }
+
+  /// 화면에 보이는 item 중 가장 위의 spine을 현재로 판정.
+  void _onItemPositionsChanged() {
+    if (!_userScrolling) return;
+    final top = _topItemPosition();
     if (top == null || top.index == _spineIndex) return;
     _spineIndex = top.index;
     _prefetchAround(top.index);
@@ -259,9 +290,25 @@ class ReflowableEngineState extends State<ReflowableEngine> {
     if (notification is ScrollStartNotification) {
       _userScrolling = notification.dragDetails != null;
     } else if (notification is ScrollEndNotification) {
+      final wasUserScrolling = _userScrolling;
       // 마지막 위치 보고는 postFrame으로 늦게 도착하므로 여기서 한 번 더 판정.
       _onItemPositionsChanged();
       _userScrolling = false;
+      // 사용자 스크롤이 정착한 시점에만, spine 전환 여부와 무관하게 챕터
+      // 내부 위치를 알린다 — 같은 챕터 안에서만 스크롤해도 호스트가 위치를
+      // 저장할 수 있게 한다. 프로그램적 jump/레이아웃 재배치는 위 spine
+      // 판정과 동일하게 제외한다(stale 보고 방지). itemPositions 값은
+      // postFrame으로 늦게 도착하므로(위 주석과 동일 이유) 한 프레임
+      // 뒤로 미뤄 최종 정착 위치를 읽는다. (open-epub 위치 복원 정확도 개선)
+      if (wasUserScrolling) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final top = _topItemPosition();
+          if (top != null) {
+            widget.onScrollOffsetChanged?.call(top.index, top.itemLeadingEdge);
+          }
+        });
+      }
     }
     return false;
   }
@@ -306,6 +353,7 @@ class ReflowableEngineState extends State<ReflowableEngine> {
         builder: (context, constraints) => ScrollablePositionedList.builder(
           itemCount: spine.length,
           initialScrollIndex: _spineIndex,
+          initialAlignment: widget.initialAlignment,
           itemScrollController: _scrollController,
           itemPositionsListener: _positionsListener,
           // 뷰포트 밖 2화면 분량을 미리 빌드해 스크롤 중 로딩 끊김을 줄인다

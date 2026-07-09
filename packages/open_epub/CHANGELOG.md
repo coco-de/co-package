@@ -20,6 +20,22 @@
   spine으로 이동할 수 있게 했다. 기존에는 화면을 실제로 이동시키는 유일한 API인
   `EpubViewController.goToSpine`이 정수 spine 인덱스만 받아, 목차 데이터(href)와
   연결할 방법이 없었다.
+- 뷰어 재진입 시 위치 복원이 챕터(spine) 단위로만 동작하던 문제 수정 —
+  `EpubReader.onPositionChanged`가 실제로는 항상 챕터 시작(`charOffset: 0`)만
+  보고했고, 그마저도 (1) 스크롤 모드는 화면 최상단 spine이 바뀔 때만, (2) paged
+  (스와이프) 모드는 `fixedPageSize`를 지정하지 않는 한 같은 챕터 내 윈도우
+  이동에서 전혀 보고되지 않아, 재진입 시 항상 마지막 챕터의 시작으로만
+  복원됐다.
+  - paged 모드: 이미 `fixedPageSize` 전용으로 구현돼 있던 윈도우(가상 페이지)
+    단위 위치 저장/복원(`EpubReflowablePosition.pageIndex`)을 `fixedPageSize`
+    유무와 무관하게 모든 paged 모드로 확장.
+  - 스크롤 모드(기본값): `scrollable_positioned_list`의
+    `ItemPosition.itemLeadingEdge`/`initialAlignment`를 이용해 챕터 내부
+    스크롤 위치를 캡처·복원하는 신규 `EpubReflowablePosition.scrollAlignment`
+    hint 추가. 스크롤이 정착(사용자 드래그 종료)할 때마다 spine 전환 여부와
+    무관하게 위치를 보고한다.
+  - 저장 시점과 크게 다른 뷰포트·폰트 크기로 복원하면 여전히 근사치다(같은
+    기기·세션 재진입을 전제).
 
 ## 1.0.0
 

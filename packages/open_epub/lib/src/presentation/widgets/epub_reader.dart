@@ -306,13 +306,23 @@ class _SessionViewState extends State<_SessionView> {
     return i < 0 ? 0 : i;
   }
 
-  /// 복원된 위치의 윈도우(가상 페이지) 인덱스 힌트 — [fixedPageSize] 모드
-  /// 전용(kobic Epic #7964 S1). [EpubReflowablePosition.pageIndex]가
+  /// 복원된 위치의 윈도우(가상 페이지) 인덱스 힌트 — paged 모드 전체(화면
+  /// 단위 윈도잉·[fixedPageSize] 모두)에 적용된다. [EpubReflowablePosition.pageIndex]가
   /// 있으면 그 값을, 없으면 0을 반환한다. 해당 spine 측정 완료 후 범위를
-  /// 벗어나면 [ReflowablePageView]가 자동으로 clamp한다.
+  /// 벗어나면 [ReflowablePageView]가 자동으로 clamp한다. (open-epub 위치
+  /// 복원 정확도 개선 — 이전엔 fixedPageSize 모드에서만 적용됐다)
   int get _initialWindowIndex {
     final pos = _session.position;
     return pos is EpubReflowablePosition ? (pos.pageIndex ?? 0) : 0;
+  }
+
+  /// 복원된 위치의 스크롤(비-paged) 모드 챕터 내부 정렬 힌트 —
+  /// [EpubReflowablePosition.scrollAlignment]. [ReflowableEngine.initialAlignment]로
+  /// 전달돼 같은 챕터 안에서도 재진입 시 원래 스크롤 위치 근처로 복원한다.
+  /// (open-epub 위치 복원 정확도 개선)
+  double get _initialScrollAlignment {
+    final pos = _session.position;
+    return pos is EpubReflowablePosition ? (pos.scrollAlignment ?? 0) : 0;
   }
 
   String? get _restoreFailedMessage {
@@ -412,11 +422,12 @@ class _SessionViewState extends State<_SessionView> {
     widget.onPageChanged?.call(index, _session.book.spine.length);
   }
 
-  /// [fixedPageSize] 모드 전용 — spine 전환뿐 아니라 같은 spine 내 윈도우
-  /// (가상 페이지) 이동에도 위치를 갱신한다. 일반 화면 단위 윈도잉 모드는
-  /// 기존처럼 spine 전환에서만 위치가 갱신된다(회귀 없음, kobic Epic #7964
-  /// S1). [EpubReflowablePosition.pageIndex]에 윈도우 인덱스를 실어
-  /// 복원 시([_initialWindowIndex]) 다시 읽는다.
+  /// paged 모드(화면 단위 윈도잉·[fixedPageSize] 모두) 전용 — spine
+  /// 전환뿐 아니라 같은 spine 내 윈도우(가상 페이지) 이동에도 위치를
+  /// 갱신한다. [EpubReflowablePosition.pageIndex]에 윈도우 인덱스를 실어
+  /// 복원 시([_initialWindowIndex]) 다시 읽는다. (open-epub 위치 복원
+  /// 정확도 개선 — 이전엔 fixedPageSize 모드에서만 위치가 갱신돼, 일반
+  /// paged 모드는 스와이프해도 챕터 전환 전까지 위치가 저장되지 않았다)
   void _handleWindowChanged(int spineIndex, int windowIndex, int windowCount) {
     widget.controller?.syncState(
       currentSpineIndex: spineIndex,
@@ -424,7 +435,6 @@ class _SessionViewState extends State<_SessionView> {
       windowIndex: windowIndex,
       windowCount: windowCount,
     );
-    if (widget.fixedPageSize == null) return;
     final href = _session.book.spine[spineIndex].href;
     final denom =
         _session.book.spine.length <= 1 ? 1 : _session.book.spine.length - 1;
@@ -436,6 +446,30 @@ class _SessionViewState extends State<_SessionView> {
     );
     _progress.value = pos.progress;
     unawaited(_session.jumpTo(pos));
+    widget.onPositionChanged?.call(pos);
+  }
+
+  /// 스크롤(비-paged) 모드 전용 — 스크롤이 정착할 때마다(spine 전환 여부
+  /// 무관) 챕터 내부 위치를 [EpubReflowablePosition.scrollAlignment]에 실어
+  /// 갱신한다. 복원 시([_initialScrollAlignment]) 다시 읽는다. (open-epub
+  /// 위치 복원 정확도 개선 — 이전엔 spine이 바뀔 때만, 그마저도 챕터
+  /// 시작(charOffset 0)으로만 위치가 저장됐다)
+  void _handleScrollOffsetChanged(int spineIndex, double alignment) {
+    final href = _session.book.spine[spineIndex].href;
+    final denom =
+        _session.book.spine.length <= 1 ? 1 : _session.book.spine.length - 1;
+    final pos = EpubReflowablePosition(
+      spineHref: href,
+      progress: spineIndex / denom,
+      charOffset: 0,
+      scrollAlignment: alignment,
+    );
+    _progress.value = pos.progress;
+    unawaited(_session.jumpTo(pos));
+    widget.controller?.syncState(
+      currentSpineIndex: spineIndex,
+      spineCount: _session.book.spine.length,
+    );
     widget.onPositionChanged?.call(pos);
   }
 
@@ -465,9 +499,8 @@ class _SessionViewState extends State<_SessionView> {
       engine = ReflowablePageView(
         book: book,
         initialSpineIndex: _initialSpineIndex,
-        // fixedPageSize 모드에서만 의미 있는 복원 힌트(그 외는 항상 0).
-        initialWindowIndex:
-            widget.fixedPageSize == null ? 0 : _initialWindowIndex,
+        // paged 모드 전체(화면 단위 윈도잉·fixedPageSize 모두)의 복원 힌트.
+        initialWindowIndex: _initialWindowIndex,
         xhtmlLoader: _loadXhtml,
         imageLoader: _loadImage,
         fontSize: widget.fontSize,
@@ -501,6 +534,9 @@ class _SessionViewState extends State<_SessionView> {
       engine = ReflowableEngine(
         book: book,
         initialSpineIndex: _initialSpineIndex,
+        // 복원된 위치의 챕터 내부 스크롤 위치 힌트. (open-epub 위치 복원
+        // 정확도 개선)
+        initialAlignment: _initialScrollAlignment,
         xhtmlLoader: _loadXhtml,
         imageLoader: _loadImage,
         fontSize: widget.fontSize,
@@ -510,6 +546,9 @@ class _SessionViewState extends State<_SessionView> {
         // 스크롤로 spine이 넘어가면 paged와 동일하게 세션 위치·컨트롤러를
         // 동기화하고 호스트에 보고한다 (kobic#7572 — 진행률·챕터명 갱신).
         onSpineChanged: _handlePageChanged,
+        // 스크롤이 정착할 때마다(spine 전환 여부 무관) 챕터 내부 위치를
+        // 갱신한다. (open-epub 위치 복원 정확도 개선)
+        onScrollOffsetChanged: _handleScrollOffsetChanged,
         // 하이라이트 목록/낭독 활성 par가 바뀌면 spine XHTML을 다시 로드해 본문에
         // 즉시 반영한다. (open-epub#62, S15.3)
         contentRevision: _contentRevision,

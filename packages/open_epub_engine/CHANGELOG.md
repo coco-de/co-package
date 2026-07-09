@@ -1,3 +1,11 @@
+## Unreleased
+
+### Added
+- `EpubReflowablePosition`에 `scrollAlignment`(double, optional) 필드 추가 —
+  스크롤(비-paged) 모드의 챕터 내부 위치 hint. BookPosition v1 토큰에 `a` 키로
+  additive 확장(기존 v1 토큰은 하위 호환 디코드된다). (open-epub 위치 복원
+  정확도 개선 — 재진입 시 위치 복원이 챕터 단위로만 동작하던 문제)
+
 ## 1.0.0
 
 open_epub_engine 1.0 — **순수-Dart EPUB 2/3 엔진의 첫 안정 릴리스**. 리더
