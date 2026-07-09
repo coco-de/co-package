@@ -430,17 +430,22 @@ class _SpineItemViewState extends State<_SpineItemView> {
             child: Center(child: CircularProgressIndicator()),
           );
         }
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: buildReflowableHtml(
-            data: data,
-            baseHref: widget.baseHref,
-            fontSize: widget.fontSize,
-            lineHeight: widget.lineHeight,
-            fontFamily: widget.fontFamily,
-            imageLoader: widget.imageLoader,
-            onLinkTap: widget.onLinkTap,
-            forceVertical: widget.forceVertical,
+        // RepaintBoundary: 챕터별 레이어를 분리해 한 spine의 리페인트가 이웃
+        // spine 컴포지팅을 오염시키지 않도록 격리한다 — 연속 세로 스크롤 중
+        // 재합성 비용을 각 챕터로 가둔다(#264 C대응).
+        return RepaintBoundary(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: buildReflowableHtml(
+              data: data,
+              baseHref: widget.baseHref,
+              fontSize: widget.fontSize,
+              lineHeight: widget.lineHeight,
+              fontFamily: widget.fontFamily,
+              imageLoader: widget.imageLoader,
+              onLinkTap: widget.onLinkTap,
+              forceVertical: widget.forceVertical,
+            ),
           ),
         );
       },
@@ -614,10 +619,27 @@ class RemoteImageState extends State<_RemoteImage> {
           return _ImagePlaceholder(
               reason: 'image load failed', alt: widget.alt);
         }
-        return Image.memory(
-          bytes,
-          errorBuilder: (_, __, ___) =>
-              _ImagePlaceholder(reason: 'image decode failed', alt: widget.alt),
+        // cacheWidth: 표시 폭(px) 기준으로 디코드해 원본 해상도 디코드로 인한
+        // 전면 이미지 진입 프레임 스파이크·메모리 스파이크를 없앤다(#264 B대응).
+        // `Image.memory`의 cacheWidth는 내부적으로 ResizeImage(allowUpscaling
+        // 기본 false)라, 표시 폭이 원본보다 커도 업스케일하지 않는다 — 작은
+        // 인라인 이미지는 원본 그대로, 큰 전면 이미지만 다운스케일된다.
+        // 레이아웃 폭이 무한/0(미확정)이면 cacheWidth 없이 기존 동작으로 폴백.
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final maxWidth = constraints.maxWidth;
+            final cacheWidth = (maxWidth.isFinite && maxWidth > 0)
+                ? (maxWidth * MediaQuery.devicePixelRatioOf(context)).round()
+                : null;
+            return Image.memory(
+              bytes,
+              cacheWidth: cacheWidth,
+              errorBuilder: (_, __, ___) => _ImagePlaceholder(
+                reason: 'image decode failed',
+                alt: widget.alt,
+              ),
+            );
+          },
         );
       },
     );
