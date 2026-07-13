@@ -350,6 +350,28 @@ class ScribbleController extends ChangeNotifier {
       final currentScribble = _scribbleNotifier.value.scribble;
       onScribbleChanged?.call(currentScribble);
       notifyListeners();
+
+      // 🐛 페이지 최초 필기 undo 활성화 (#5818):
+      // stroke 커밋(onPointerUp)은 이 notifier 의 state 만 바꾸고
+      // DrawingState 파사드의 canUndoNotifier 는 갱신하지 않는다.
+      // updateUndoRedoState() 는 pointer-DOWN(획 커밋 전, canUndo=false)과
+      // undo/redo/도구변경에서만 호출되어, 한 페이지의 첫 획이 커밋돼도
+      // pill 이 참조하는 canUndoNotifier 가 false 로 남아 undo 버튼이
+      // 비활성이었다(둘째 획의 pointer-down 에서야 뒤늦게 true 로 반영).
+      // 획이 실제로 커밋돼 canUndo/canRedo 가 바뀌는 이 시점에 파사드를
+      // 갱신해 최초 획도 즉시 undo 가능하게 한다.
+      //
+      // - 활성 레이어에 한정: 재방문/양면 등 비활성 레이어의 잡음 갱신 억제.
+      // - 값이 실제로 달라질 때만: 이 리스너는 pointer-move(temporaryValue)
+      //   에서도 매번 발화하므로, canUndo/canRedo 가 그대로면 불필요한
+      //   post-frame 예약을 건너뛴다.
+      final drawingState = DrawingState();
+      if (drawingState.lastActiveScribbleNotifier == _scribbleNotifier &&
+          (drawingState.canUndoNotifier.value != _scribbleNotifier.canUndo ||
+              drawingState.canRedoNotifier.value !=
+                  _scribbleNotifier.canRedo)) {
+        drawingState.updateUndoRedoState();
+      }
     };
     _scribbleNotifier.addListener(_scribbleListener!);
 
