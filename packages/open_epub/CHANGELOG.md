@@ -1,6 +1,18 @@
 ## Unreleased
 
 ### Added
+- `EpubReader`/`ReflowablePageView`에 `spread`(`EpubSpread?`) 옵션 추가(kobic#8203)
+  — reflowable(흐름형) EPUB **페이지(paged) 모드에서 단면/양면(2-up spread)** 을
+  지원한다. 그동안 `fixedLayoutSpreadOverride`는 fixed-layout 엔진에만 전달되어
+  reflowable paged 는 spread 설정이 무시됐다(open-epub#221 이후 미구현). fixed-layout
+  처럼 spine 을 쌍짓는 게 아니라, 같은 spine 내 **연속 두 윈도우(왼쪽=W, 오른쪽=W+1)**
+  를 좌우 컬럼으로 배치한다. `ViewportFitter.shouldUseTwoPageSpread`(뷰포트+spread)로
+  활성 여부를 판정하고, 각 컬럼은 반폭 뷰포트로 렌더된다(non-fixed 는 반폭 리플로우,
+  `fixedPageSize` A4 는 반폭 컬럼에 contain-fit). 페이지 넘김(`_advance`)은 spread 시
+  두 윈도우씩 이동하고 윈도우 상태 보고는 스프레드(pair) 단위로 환산되며, RTL 은 좌우
+  컬럼이 반전된다. 각 컬럼이 기존 `_SpinePageView` 를 재사용하므로 윈도우별 필기
+  캔버스 seam(`{href}#p{windowIndex}`)이 컬럼별로 그대로 유지된다. `spread` 가
+  null(기본값)이면 기존 단면 동작이 완전히 그대로 유지된다.
 - `EpubReader`/`ReflowablePageView`에 `fixedPageSize` 옵션 추가(kobic Epic #7964
   S1) — reflowable(흐름형) EPUB 본문을 논리 고정 크기(예: A4 210:297 근사)로
   강제 페이지네이션한다. 값이 있으면 화면 단위 윈도잉(open-epub#221)이 이

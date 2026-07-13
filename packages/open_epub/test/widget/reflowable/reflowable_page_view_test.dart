@@ -991,12 +991,159 @@ void main() {
       expect(called, isFalse);
     });
   });
+
+  // reflowable paged 2-up spread — 같은 spine 내 연속 두 윈도우(왼쪽=W,
+  // 오른쪽=W+1)를 Row로 좌우 배치한다. HtmlWidget 개수로 렌더된 컬럼 수를
+  // 관찰한다(각 컬럼이 buildReflowableHtml로 HtmlWidget 하나를 그린다).
+  group('ReflowablePageView — 2-up spread (reflowable)', () {
+    testWidgets('spread=both + 충분한 폭 → 한 화면에 두 컬럼(좌우) 렌더', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrapSized(
+          const Size(1000, 600),
+          ReflowablePageView(
+            book: book,
+            spread: EpubSpread.both,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      // 긴 콘텐츠라 rawWindowCount >= 2 → 오른쪽 컬럼도 실제 윈도우로 렌더.
+      expect(find.byType(HtmlWidget), findsNWidgets(2));
+    });
+
+    testWidgets('spread=null → 단면(한 컬럼만 렌더)', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrapSized(
+          const Size(1000, 600),
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(HtmlWidget), findsOneWidget);
+    });
+
+    testWidgets('spread=landscape + 세로 뷰포트 → 단면', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrapSized(
+          const Size(600, 1000), // 세로(portrait)
+          ReflowablePageView(
+            book: book,
+            spread: EpubSpread.landscape,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(HtmlWidget), findsOneWidget);
+    });
+
+    testWidgets('spread=landscape + 가로 뷰포트 → 양면', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrapSized(
+          const Size(1000, 600), // 가로(landscape)
+          ReflowablePageView(
+            book: book,
+            spread: EpubSpread.landscape,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(HtmlWidget), findsNWidgets(2));
+    });
+
+    testWidgets('spread 활성 시 _advance(1)는 윈도우를 2 증가시킨다', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      Future<void> Function(int direction)? step;
+      await tester.pumpWidget(
+        _wrapSized(
+          const Size(1000, 600),
+          ReflowablePageView(
+            book: book,
+            spread: EpubSpread.both,
+            // 윈도우가 넉넉히 나오도록 아주 긴 콘텐츠.
+            xhtmlLoader: (href) async => _tallXhtml(href, lines: 120),
+            onPageStepReady: (s) => step = s,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      // 초기: pair 단위 인덱스 0.
+      expect(state.windowIndex, 0);
+      expect(step, isNotNull);
+
+      await step!(1);
+      await tester.pumpAndSettle();
+      // pair 단위로는 1(= raw 윈도우 2).
+      expect(state.windowIndex, 1);
+    });
+
+    testWidgets('홀수 마지막 윈도우에서는 오른쪽 컬럼이 빈 페이지(HtmlWidget 1개)',
+        (tester) async {
+      // 한 spine 안에서 spread를 여러 번 넘겨 마지막 pair까지 이동한다. 마지막
+      // pair가 홀수(왼쪽만 존재)라면 오른쪽 컬럼은 SizedBox.expand()로 비어
+      // HtmlWidget이 1개만 남는다. (콘텐츠에 따라 raw 윈도우 수가 홀/짝이므로
+      // 홀수 케이스일 때만 검증한다.)
+      final book = _fakeBook(['a.xhtml']);
+      Future<void> Function(int direction)? step;
+      await tester.pumpWidget(
+        _wrapSized(
+          const Size(1000, 600),
+          ReflowablePageView(
+            book: book,
+            spread: EpubSpread.both,
+            fixedPageSize: const Size(200, 24),
+            xhtmlLoader: (href) async => _tallXhtml(href, lines: 3),
+            onPageStepReady: (s) => step = s,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.spreadActive, isTrue);
+      final rawCount = state.rawWindowCount;
+      // 이 케이스는 raw 윈도우 수가 홀수일 때만 의미가 있다. (짝수면 마지막
+      // pair도 좌우 다 차므로 이 경계가 성립하지 않는다.)
+      if (!rawCount.isOdd || rawCount < 2) {
+        markTestSkipped('raw window count($rawCount)가 홀수가 아니라 경계 케이스 없음');
+        return;
+      }
+      // pair 단위 windowCount - 1 만큼 앞으로 넘겨 마지막 pair에 도달.
+      final pairCount = state.windowCount;
+      for (var i = 0; i < pairCount - 1; i++) {
+        await step!(1);
+        await tester.pumpAndSettle();
+      }
+      // 마지막 pair: 오른쪽 윈도우가 없으므로(홀수) 왼쪽 컬럼만 콘텐츠 렌더 →
+      // HtmlWidget 정확히 1개.
+      expect(find.byType(HtmlWidget), findsOneWidget);
+    });
+  });
 }
 
 // -------- helpers --------
 
 Widget _wrap(Widget child) => MaterialApp(
       home: Scaffold(body: SizedBox(width: 400, height: 600, child: child)),
+    );
+
+Widget _wrapSized(Size size, Widget child) => MaterialApp(
+      home: Scaffold(
+        body: SizedBox(width: size.width, height: size.height, child: child),
+      ),
     );
 
 String _wrapXhtml(String body) => '''

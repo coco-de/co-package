@@ -55,6 +55,7 @@ class ReflowablePageView extends StatefulWidget {
     this.forceVertical = false,
     this.fixedPageSize,
     this.contentBuilder,
+    this.spread,
   });
 
   final EpubBook book;
@@ -142,6 +143,14 @@ class ReflowablePageView extends StatefulWidget {
   /// 무시된다.
   final FixedLayoutContentBuilder? contentBuilder;
 
+  /// EPUB 메타의 spread 모드(`rendition:spread`). null(기본값)이면 항상 단면
+  /// (기존 동작 불변). 값이 있으면 [ViewportFitter.shouldUseTwoPageSpread]로
+  /// 뷰포트 크기와 함께 유효 spread 여부를 판정해, 활성 시 한 화면에 **연속
+  /// 두 윈도우(왼쪽=W, 오른쪽=W+1)를** 좌우로 배치한다(reflowable 2-up).
+  /// fixed-layout처럼 spine을 쌍짓는 게 아니라 같은 spine 내 연속 윈도우를
+  /// 좌우 컬럼으로 나란히 둔다. (kobic Epic #7964 후속 — 2-up spread)
+  final EpubSpread? spread;
+
   @override
   State<ReflowablePageView> createState() => ReflowablePageViewState();
 }
@@ -169,6 +178,12 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
   /// 이동(동기)은 이 가드가 필요 없다. (open-epub#228)
   bool _crossingSpine = false;
 
+  /// 현재 뷰포트 기준으로 2-up spread가 활성인지. build의 [LayoutBuilder]
+  /// 안에서만 뷰포트 크기를 알 수 있으므로, 판정 결과를 여기에 캐시해
+  /// [_advance]/리포팅이 참조한다. build에서 값이 바뀌면 post-frame에
+  /// [_reportWindowState]를 다시 호출해 부모 상태를 갱신한다.
+  bool _spreadActive = false;
+
   static const double _swipeVelocityThreshold = 250;
 
   /// spine href별 XHTML 로드 future 캐시 — 매 rebuild마다 loader를 재호출해
@@ -178,13 +193,28 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
   int get pageIndex => _pageIndex;
   int get pageCount => widget.book.spine.length;
 
-  /// 현재 spine 내 윈도우 인덱스(0-based). 테스트 전용 노출.
+  /// 현재 보이는 페이지(윈도우/스프레드) 인덱스(0-based). 테스트 전용 노출.
+  /// 2-up spread가 활성이면 pair 단위(윈도우 인덱스 / 2)로 환산한다 — 부모
+  /// (kobic 페이지 인디케이터)가 보이는 페이지 단위로 인식하도록.
   @visibleForTesting
-  int get windowIndex => _windowIndex;
+  int get windowIndex => _spreadActive ? _windowIndex ~/ 2 : _windowIndex;
 
-  /// 현재 spine의 측정된 윈도우 수(아직 미측정이면 1). 테스트 전용 노출.
+  /// 현재 spine의 보이는 페이지 수(아직 미측정이면 1). 테스트 전용 노출.
+  /// 2-up spread가 활성이면 pair 단위(ceil(윈도우 수 / 2))로 환산한다.
   @visibleForTesting
-  int get windowCount => _windowCounts[_pageIndex] ?? 1;
+  int get windowCount {
+    final raw = _windowCounts[_pageIndex] ?? 1;
+    return _spreadActive ? (raw + 1) ~/ 2 : raw;
+  }
+
+  /// 현재 spine의 raw(스프레드 미환산) 윈도우 수. 테스트 전용 노출 —
+  /// spread 검증에서 홀/짝 윈도우 경계 케이스를 판정하는 데 쓴다.
+  @visibleForTesting
+  int get rawWindowCount => _windowCounts[_pageIndex] ?? 1;
+
+  /// 현재 2-up spread 활성 여부. 테스트 전용 노출.
+  @visibleForTesting
+  bool get spreadActive => _spreadActive;
 
   @override
   void initState() {
@@ -210,7 +240,10 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
   /// hasNext/hasPrevious/windowIndex/windowCount를 최신 상태로 유지한다.
   /// (open-epub#228)
   void _reportWindowState() {
-    widget.onWindowChanged?.call(_pageIndex, _windowIndex, windowCount);
+    // spread 활성 시 보이는 페이지(스프레드) 단위로 환산해 보고한다 — kobic
+    // 페이지 인디케이터/hasNext가 스프레드 단위로 동작하도록. 미활성이면 raw
+    // 윈도우 그대로(기존 동작 불변).
+    widget.onWindowChanged?.call(_pageIndex, windowIndex, windowCount);
   }
 
   @override
@@ -284,7 +317,17 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     _windowCounts[spineIndex] = measuredCount;
     if (spineIndex != _pageIndex) return;
     if (_windowIndex >= measuredCount) {
-      setState(() => _windowIndex = measuredCount - 1);
+      // 범위 밖이면 마지막 윈도우로 clamp. spread 활성 시엔 pair 시작(짝수)로
+      // 내림해 왼쪽 컬럼이 항상 짝수 윈도우가 되게 한다.
+      var clamped = measuredCount - 1;
+      if (_spreadActive) clamped -= clamped % 2;
+      setState(() => _windowIndex = clamped);
+    } else if (_spreadActive) {
+      // spread 모드에서는 오른쪽 컬럼 존재 여부(rightW < rawCount)가 측정된
+      // 윈도우 수에 좌우된다 — 미측정(1개)일 땐 오른쪽이 비어 있다가 측정 후
+      // 채워져야 하므로, 윈도우 수가 바뀌면 부모를 리빌드한다. (단면 경로는
+      // 윈도잉이 내부 Transform으로만 처리돼 리빌드가 불필요.)
+      setState(() {});
     }
     _reportWindowState();
   }
@@ -307,7 +350,10 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
   /// 방향) 또는 마지막(이전 방향, 캐시된 경우) 윈도우에 착지한다.
   Future<void> _advance(int direction) async {
     final count = _windowCounts[_pageIndex] ?? 1;
-    final next = _windowIndex + direction;
+    // spread 활성 시 한 번에 두 윈도우(스프레드 하나)씩 이동한다.
+    final step = _spreadActive ? 2 : 1;
+    var next = _windowIndex + direction * step;
+    if (_spreadActive && next > 0) next -= next % 2; // pair 시작(짝수)로 정렬
     if (next >= 0 && next < count) {
       setState(() => _windowIndex = next);
       _reportWindowState();
@@ -321,12 +367,21 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     if (targetSpine < 0 || targetSpine >= pageCount) return;
     _crossingSpine = true;
     _pendingLandingWindow =
-        direction > 0 ? 0 : (_windowCounts[targetSpine] ?? 1) - 1;
+        direction > 0 ? 0 : _lastPairStartWindow(targetSpine);
     try {
       await goToPage(targetSpine);
     } finally {
       _crossingSpine = false;
     }
+  }
+
+  /// 이전 방향으로 spine 경계를 넘을 때 착지할 윈도우 — 대상 spine의 마지막
+  /// 페이지. spread 활성이면 마지막 pair 시작 윈도우(`((C-1)~/2)*2`), 아니면
+  /// 마지막 윈도우(`C-1`).
+  int _lastPairStartWindow(int spineIndex) {
+    final count = _windowCounts[spineIndex] ?? 1;
+    if (_spreadActive) return ((count - 1) ~/ 2) * 2;
+    return count - 1;
   }
 
   @override
@@ -338,6 +393,8 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportSize = constraints.biggest;
+        final useSpread = _resolveSpread(viewportSize);
+        _syncSpreadActive(useSpread);
         return GestureDetector(
           onHorizontalDragEnd: _onHorizontalDragEnd,
           child: PageView.builder(
@@ -356,28 +413,128 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
               widget.onPageChanged?.call(i);
               _reportWindowState();
             },
-            itemBuilder: (context, index) => _SpinePageView(
-              // 같은 href가 spine에 중복 등장할 수 있어 index로 구분.
-              key: ValueKey('reflowable-page-$index'),
-              load: _loadSpine(widget.book.spine[index].href),
-              baseHref: widget.book.spine[index].href,
-              spineItem: widget.book.spine[index],
-              fontSize: widget.fontSize,
-              lineHeight: widget.lineHeight,
-              fontFamily: widget.fontFamily,
-              imageLoader: widget.imageLoader,
-              onLinkTap: widget.onLinkTap,
-              forceVertical: widget.forceVertical,
-              viewportSize: viewportSize,
-              fixedPageSize: widget.fixedPageSize,
-              contentBuilder: widget.contentBuilder,
-              windowIndex: index == _pageIndex ? _windowIndex : 0,
-              onWindowCountMeasured: (count) =>
-                  _handleWindowMeasured(index, count),
-            ),
+            itemBuilder: (context, index) =>
+                _buildSpineItem(index, viewportSize, useSpread),
           ),
         );
       },
+    );
+  }
+
+  /// 뷰포트 크기 기준으로 2-up spread 활성 여부를 판정한다. [widget.spread]가
+  /// null이면 항상 false(단면, 기존 동작 불변).
+  bool _resolveSpread(Size viewportSize) {
+    final spread = widget.spread;
+    if (spread == null) return false;
+    return const ViewportFitter().shouldUseTwoPageSpread(
+      screenWidth: viewportSize.width,
+      screenHeight: viewportSize.height,
+      spread: spread,
+    );
+  }
+
+  /// build 도중 계산된 spread 활성 여부를 [_spreadActive]에 반영한다. build 중
+  /// setState는 금지이므로, 값이 바뀌면 post-frame에 리포팅을 갱신한다. 또한
+  /// spread가 켜지는 순간 왼쪽 컬럼이 짝수 윈도우가 되도록 [_windowIndex]를
+  /// pair 시작으로 내림한다.
+  void _syncSpreadActive(bool useSpread) {
+    if (_spreadActive == useSpread) return;
+    _spreadActive = useSpread;
+    if (useSpread && _windowIndex.isOdd) _windowIndex -= 1;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _reportWindowState();
+    });
+  }
+
+  /// PageView 아이템 하나(한 spine)를 빌드한다. spread 활성 시 연속 두 윈도우
+  /// (왼쪽=leftW, 오른쪽=leftW+1)를 좌우 컬럼으로 배치하고, 미활성 시 단일
+  /// 윈도우를 그대로 렌더한다.
+  Widget _buildSpineItem(int index, Size viewportSize, bool useSpread) {
+    final isActive = index == _pageIndex;
+    if (!useSpread) {
+      // 단면 경로는 윈도우 인덱스가 바뀌어도 같은 위젯을 유지해야 측정/로드
+      // 상태가 보존된다(윈도우 이동은 Transform.translate로만 처리) — 안정된
+      // key를 쓴다(기존 동작 불변).
+      return _spinePageView(
+        index: index,
+        keySuffix: '',
+        viewportSize: viewportSize,
+        windowIndex: isActive ? _windowIndex : 0,
+      );
+    }
+
+    // 왼쪽 컬럼 = pair 시작 윈도우(짝수). 활성 spine은 현재 _windowIndex를
+    // 짝수로 정렬해서, 비활성 spine은 0에서 시작한다.
+    final leftW = isActive ? _windowIndex - (_windowIndex % 2) : 0;
+    final rightW = leftW + 1;
+    final rawCount = _windowCounts[index] ?? 1;
+    // 각 컬럼은 절반 폭 뷰포트로 렌더한다 — non-fixed는 반폭 리플로우,
+    // fixedPageSize(A4)는 반폭 컬럼에 contain-fit된다.
+    final columnSize = Size(viewportSize.width / 2, viewportSize.height);
+
+    // 좌우 컬럼은 슬롯 고정 key(L/R)를 써서, 윈도우를 넘겨도 같은 위젯을
+    // 유지한다(windowIndex만 바뀌어 측정/로드 상태 보존).
+    final leftColumn = _spinePageView(
+      index: index,
+      keySuffix: 'L',
+      viewportSize: columnSize,
+      windowIndex: leftW,
+    );
+    // 오른쪽 윈도우가 실제로 존재할 때만 렌더한다(홀수 마지막 페이지의 없는
+    // verso는 빈칸). 측정 전(rawCount==1)에는 오른쪽이 비어 있다가 측정 후
+    // 채워지는 것이 정상.
+    final Widget rightColumn = rightW < rawCount
+        ? _spinePageView(
+            index: index,
+            keySuffix: 'R',
+            viewportSize: columnSize,
+            windowIndex: rightW,
+          )
+        : const SizedBox.expand();
+
+    // RTL(reverse)이면 왼쪽 슬롯에 오른쪽 페이지를 두어 물리적 배치를 반전한다
+    // (fixed_layout_spread의 RTL 원칙과 동일). 읽기 순서(다음=+1)는 불변.
+    final columns = widget.reverse
+        ? <Widget>[
+            Expanded(child: rightColumn),
+            Expanded(child: leftColumn),
+          ]
+        : <Widget>[
+            Expanded(child: leftColumn),
+            Expanded(child: rightColumn),
+          ];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: columns,
+    );
+  }
+
+  /// 한 컬럼(또는 단면)의 [_SpinePageView]를 생성하는 공용 헬퍼. 두 컬럼이
+  /// 각각 측정을 보고해도 부모 캐시 비교로 idempotent하다.
+  Widget _spinePageView({
+    required int index,
+    required String keySuffix,
+    required Size viewportSize,
+    required int windowIndex,
+  }) {
+    return _SpinePageView(
+      // 같은 href가 spine에 중복 등장할 수 있어 index로 구분. spread 컬럼은
+      // 슬롯(L/R) 접미로 구분해 좌우 상태가 섞이지 않게 한다.
+      key: ValueKey('reflowable-page-$index$keySuffix'),
+      load: _loadSpine(widget.book.spine[index].href),
+      baseHref: widget.book.spine[index].href,
+      spineItem: widget.book.spine[index],
+      fontSize: widget.fontSize,
+      lineHeight: widget.lineHeight,
+      fontFamily: widget.fontFamily,
+      imageLoader: widget.imageLoader,
+      onLinkTap: widget.onLinkTap,
+      forceVertical: widget.forceVertical,
+      viewportSize: viewportSize,
+      fixedPageSize: widget.fixedPageSize,
+      contentBuilder: widget.contentBuilder,
+      windowIndex: windowIndex,
+      onWindowCountMeasured: (count) => _handleWindowMeasured(index, count),
     );
   }
 }

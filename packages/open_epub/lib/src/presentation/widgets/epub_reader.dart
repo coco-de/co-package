@@ -526,6 +526,9 @@ class _SessionViewState extends State<_SessionView> {
         fixedPageSize: widget.fixedPageSize,
         // fixed-layout과 동일 계약 재사용 — 가상 페이지별 필기 캔버스 등.
         contentBuilder: widget.fixedLayoutContentBuilder,
+        // reflowable paged 2-up spread — FixedLayoutEngine과 동일 파라미터
+        // 재사용. null이면 단면(기존 동작).
+        spread: widget.fixedLayoutSpreadOverride,
         // 하이라이트 목록/낭독 활성 par가 바뀌면 spine XHTML을 다시 로드해 본문에
         // 즉시 반영한다. (open-epub#62, S15.3)
         contentRevision: _contentRevision,
