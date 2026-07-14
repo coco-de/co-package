@@ -19,10 +19,25 @@
 // (physics)는 끄고 최상위 [GestureDetector] 하나가 두 이동을 모두 구동한다
 // (같은 축의 중첩 PageView 제스처 경합을 피하기 위함).
 //
+// 페이지 넘김은 **드래그-투-턴**(drag-to-turn)이다 (kobic#8240): 손가락 이동량
+// 만큼 현재 페이지가 실시간으로 따라 밀리고, 반대편에서 다음/이전 페이지가
+// 함께 슬라이드해 들어온다(현재 PageView를 [Transform.translate]로 밀고 이웃
+// 페이지를 오버레이). 손가락을 놓으면 이동 비율이 절반 이상이거나 fling 속도가
+// 임계([_swipeVelocityThreshold])를 넘으면 전진/후퇴를 확정하고, 아니면 원위치로
+// 복귀한다 — 두 경우 모두 ease-out ≤150ms 스냅(F2.4 준수)으로 마무리한다. 확정
+// 시 실제 이동은 애니메이션 없이(instant) 적용되고, 시각적 슬라이드는 오버레이가
+// 담당하므로 이중 애니메이션이 없다. 문서 끝/시작에서 더 넘길 이웃이 없으면 따라
+// 오지 않는다(하드 스톱). RTL(reverse)·단면/양면(spread) 모두 동일한 제스처로
+// 동작하며, 넘김 단위만 각각(방향 반전 / pair 2윈도우)에 맞춰진다.
+//
+// 프로그램적 이동(페이지 버튼·목차·[EpubViewController])은 드래그와 무관하게
+// 기존처럼 [_advance]/[goToPage](150ms) 경로를 그대로 쓴다.
+//
 // 글자 크기·줄간격 변경 시 현재 spineIndex가 보존된다 (PageController.page
 // 유지 + Html style만 갱신, 윈도우 수는 새 크기로 재측정).
 
 import 'dart:async';
+import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
@@ -156,7 +171,8 @@ class ReflowablePageView extends StatefulWidget {
 }
 
 @visibleForTesting
-class ReflowablePageViewState extends State<ReflowablePageView> {
+class ReflowablePageViewState extends State<ReflowablePageView>
+    with SingleTickerProviderStateMixin {
   late PageController _controller;
   late int _pageIndex;
 
@@ -185,6 +201,46 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
   bool _spreadActive = false;
 
   static const double _swipeVelocityThreshold = 250;
+
+  /// 손가락을 놓았을 때 이동 비율이 이 값 이상이면(속도가 낮아도) 전진/후퇴를
+  /// 확정한다. 미만이면 원위치로 복귀. (kobic#8240)
+  static const double _commitFractionThreshold = 0.5;
+
+  /// 드래그 확정/복귀 스냅 애니메이션 상한(F2.4: 페이지 전환 ≤ 150ms). 남은
+  /// 이동 거리에 비례해 축소하되 이 값을 넘지 않는다. (kobic#8240)
+  static const int _snapMaxMillis = 150;
+
+  // --- 드래그-투-턴 상태 (kobic#8240) ---
+
+  /// 스냅(확정/복귀) 애니메이션 구동 컨트롤러. 0→1 진행값을 [_turnStartDx]→
+  /// [_turnEndDx] 구간에 ease-out으로 매핑해 [_dragDx]를 갱신한다.
+  late final AnimationController _turnController;
+
+  /// 현재 페이지의 수평 오프셋(px, 부호=손가락 진행 방향). 0이면 넘김 중이 아님.
+  double _dragDx = 0;
+
+  /// 확정된 논리 이동 방향(+1=다음/-1=이전). 0이면 아직 방향 미확정(넘김 없음).
+  /// 드래그 시작 후 첫 유효 이동에서 래치되고, 손가락이 반대로 넘어가도 유지된다
+  /// (한 넘김 안에서 이웃 페이지가 바뀌지 않도록).
+  int _turnDir = 0;
+
+  /// 손가락이 페이지를 드러내는 방향의 부호(-1=왼쪽 드래그→오른쪽 이웃 노출,
+  /// +1=오른쪽 드래그→왼쪽 이웃 노출). 넘김 중 부호가 뒤집히지 않게 래치한다.
+  int _revealSign = 0;
+
+  /// 사용자가 손가락으로 드래그 중인지(스냅 애니메이션 진행 중과 구분).
+  bool _dragging = false;
+
+  /// 스냅 애니메이션 보간 구간.
+  double _turnStartDx = 0;
+  double _turnEndDx = 0;
+
+  /// 스냅 애니메이션 완료 시 확정할 이동 방향(0=복귀, 확정 아님).
+  int _pendingCommitDir = 0;
+
+  /// build의 [LayoutBuilder]에서 캐시한 최신 뷰포트 크기 — 제스처 핸들러가
+  /// 페이지 폭/높이를 알기 위해 참조한다.
+  Size _lastViewport = Size.zero;
 
   /// spine href별 XHTML 로드 future 캐시 — 매 rebuild마다 loader를 재호출해
   /// FutureBuilder가 스피너로 리셋되던 안티패턴 해소. (open-epub#62)
@@ -228,6 +284,9 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     _windowIndex =
         widget.initialWindowIndex < 0 ? 0 : widget.initialWindowIndex;
     _controller = PageController(initialPage: _pageIndex);
+    _turnController = AnimationController(vsync: this)
+      ..addListener(_onTurnTick)
+      ..addStatusListener(_onTurnStatus);
     widget.onNavigatorReady?.call(goToPage);
     widget.onPageStepReady?.call(_advance);
     // 측정 전 초기값(윈도우 0/1개)으로 우선 보고 — 측정이 끝나면
@@ -252,6 +311,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     // fontSize/lineHeight만 바뀐 경우 PageController/page는 그대로 유지.
     // book이 바뀌면 controller 재생성.
     if (oldWidget.book != widget.book) {
+      _cancelTurnImmediately();
       _loads.clear();
       _windowCounts.clear();
       _windowIndex = 0;
@@ -285,6 +345,7 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
 
   @override
   void dispose() {
+    _turnController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -332,30 +393,150 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     _reportWindowState();
   }
 
-  /// 좌우 스와이프 종료 시 윈도우/spine 이동을 함께 판단한다. 같은 축으로
-  /// 중첩된 PageView 제스처 경합을 피하기 위해 [PageView] 자체 드래그는
-  /// 꺼두고(physics) 이 한 곳에서만 이동을 구동한다. (open-epub#221)
-  void _onHorizontalDragEnd(DragEndDetails details) {
-    final velocity = details.primaryVelocity ?? 0.0;
-    if (velocity.abs() < _swipeVelocityThreshold) return;
-    final swipedLeft = velocity < 0;
-    // reverse(RTL)면 스와이프 방향의 의미가 반전된다(다음=좌향 진행이 아닌
-    // 우향 진행). fixed_layout_page의 rightToLeft 처리와 동일 원칙. (S14.1)
+  // ---- 드래그-투-턴 제스처 (kobic#8240) ----
+
+  /// 손가락 진행 방향([revealSign]: -1=왼쪽 드래그, +1=오른쪽 드래그)을 논리
+  /// 이동 방향(+1=다음/-1=이전)으로 매핑한다. reverse(RTL)면 의미가 반전된다
+  /// (다음=우향 진행). fixed_layout_page의 rightToLeft 처리와 동일 원칙(S14.1),
+  /// 기존 fling 판정과 동일한 규칙.
+  int _directionFor(int revealSign) {
+    final swipedLeft = revealSign < 0;
     final forward = widget.reverse ? !swipedLeft : swipedLeft;
-    unawaited(_advance(forward ? 1 : -1));
+    return forward ? 1 : -1;
   }
 
-  /// [direction] = +1(다음)/-1(이전)로 한 윈도우 이동한다. 현재 spine의
-  /// 윈도우 범위를 벗어나면 다음/이전 spine으로 넘어가 그 spine의 첫(다음
-  /// 방향) 또는 마지막(이전 방향, 캐시된 경우) 윈도우에 착지한다.
-  Future<void> _advance(int direction) async {
-    final count = _windowCounts[_pageIndex] ?? 1;
-    // spread 활성 시 한 번에 두 윈도우(스프레드 하나)씩 이동한다.
-    final step = _spreadActive ? 2 : 1;
-    var next = _windowIndex + direction * step;
-    if (_spreadActive && next > 0) next -= next % 2; // pair 시작(짝수)로 정렬
-    if (next >= 0 && next < count) {
-      setState(() => _windowIndex = next);
+  void _onHorizontalDragStart(DragStartDetails details) {
+    // 스냅 애니메이션 진행 중이거나 spine 전환 중이면 새 드래그를 시작하지
+    // 않는다(핸드오프 도중 재진입 방지).
+    if (_crossingSpine || _turnController.isAnimating) return;
+    _dragging = true;
+    _dragDx = 0;
+    _turnDir = 0;
+    _revealSign = 0;
+  }
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (!_dragging) return;
+    final width = _lastViewport.width;
+    if (width <= 0) return;
+    final delta = details.primaryDelta ?? 0.0;
+    if (delta == 0) return;
+
+    if (_turnDir == 0) {
+      // 첫 유효 이동에서 노출 방향과 논리 이동 방향을 래치한다.
+      _revealSign = delta < 0 ? -1 : 1;
+      _turnDir = _directionFor(_revealSign);
+    }
+
+    // 넘김 중 부호가 뒤집히지 않도록, 래치된 노출 방향 쪽으로만 [0, width]
+    // 범위에서 따라오게 한다(반대로 넘기면 0에서 멈춤 = 원위치).
+    var next = _dragDx + delta;
+    next = _revealSign < 0 ? next.clamp(-width, 0.0) : next.clamp(0.0, width);
+
+    // 더 넘길 이웃이 없으면(문서 끝/시작) 따라오지 않는다 — 하드 스톱.
+    if (_turnTarget(_turnDir) == null) next = 0;
+
+    if (next != _dragDx) setState(() => _dragDx = next);
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (!_dragging) return;
+    _dragging = false;
+    final width = _lastViewport.width;
+    // 이동이 없었거나(탭 수준) 이웃이 없으면 원위치로 복귀.
+    if (_turnDir == 0 || _dragDx == 0 || width <= 0) {
+      _cancelTurnImmediately();
+      return;
+    }
+    final velocity = details.primaryVelocity ?? 0.0;
+    final fraction = _dragDx.abs() / width;
+    final flungTowardReveal = velocity.abs() >= _swipeVelocityThreshold &&
+        velocity.sign == _revealSign;
+    final canCommit = _turnTarget(_turnDir) != null;
+    final commit = canCommit &&
+        (fraction >= _commitFractionThreshold || flungTowardReveal);
+
+    if (commit) {
+      _animateTurnTo(_revealSign * width, commitDir: _turnDir);
+    } else {
+      _animateTurnTo(0, commitDir: 0);
+    }
+  }
+
+  /// [_dragDx]를 [endDx]까지 ease-out으로 스냅한다. 남은 거리에 비례해 지속
+  /// 시간을 정하되 [_snapMaxMillis](F2.4 ≤150ms)를 넘지 않는다. 완료 시
+  /// [_onTurnStatus]가 [commitDir]≠0이면 실제 이동을 즉시 적용한다.
+  void _animateTurnTo(double endDx, {required int commitDir}) {
+    final width = _lastViewport.width;
+    _turnStartDx = _dragDx;
+    _turnEndDx = endDx;
+    _pendingCommitDir = commitDir;
+    final distance = (endDx - _turnStartDx).abs();
+    final ms = width <= 0
+        ? _snapMaxMillis
+        : (_snapMaxMillis * (distance / width))
+            .round()
+            .clamp(1, _snapMaxMillis);
+    _turnController
+      ..duration = Duration(milliseconds: ms)
+      ..forward(from: 0);
+  }
+
+  void _onTurnTick() {
+    final t = Curves.easeOut.transform(_turnController.value);
+    final dx = lerpDouble(_turnStartDx, _turnEndDx, t) ?? _turnEndDx;
+    if (dx != _dragDx) setState(() => _dragDx = dx);
+  }
+
+  void _onTurnStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    final dir = _pendingCommitDir;
+    // 실제 이동은 애니메이션 없이 즉시 적용한다 — 시각적 슬라이드는 오버레이가
+    // 이미 담당했으므로 이중 애니메이션이 없다. 적용 후 오버레이를 걷는다.
+    if (dir != 0) unawaited(_step(dir, animated: false));
+    _resetTurnState();
+  }
+
+  /// 진행 중인 넘김(드래그/스냅)을 즉시 취소하고 원위치로 되돌린다 — book 교체
+  /// 등 외부 요인으로 트리를 리셋해야 할 때.
+  void _cancelTurnImmediately() {
+    if (_turnController.isAnimating) _turnController.stop();
+    _resetTurnState();
+  }
+
+  void _resetTurnState() {
+    if (!mounted) {
+      _dragDx = 0;
+      _turnDir = 0;
+      _revealSign = 0;
+      _pendingCommitDir = 0;
+      _dragging = false;
+      return;
+    }
+    setState(() {
+      _dragDx = 0;
+      _turnDir = 0;
+      _revealSign = 0;
+      _pendingCommitDir = 0;
+      _dragging = false;
+    });
+  }
+
+  /// [direction] = +1(다음)/-1(이전)로 한 윈도우(spread 시 한 pair) 이동한다 —
+  /// 프로그램적 경로(페이지 버튼·목차·[EpubViewController], [onPageStepReady])
+  /// 전용으로 spine 경계 이동 시 150ms 애니메이션을 쓴다. 드래그-투-턴 확정은
+  /// [_step]을 animated:false로 호출해 오버레이 슬라이드와 이중 애니메이션을
+  /// 피한다.
+  Future<void> _advance(int direction) => _step(direction, animated: true);
+
+  /// 실제 한 스텝 이동을 적용한다. [_turnTarget]으로 착지점을 계산해, 같은
+  /// spine이면 동기 setState로, spine 경계를 넘으면 [animated]에 따라
+  /// [goToPage](150ms)/[jumpToPage](즉시)로 이동한다.
+  Future<void> _step(int direction, {required bool animated}) async {
+    final target = _turnTarget(direction);
+    if (target == null) return; // 문서 끝/시작 — 이동 없음.
+    if (target.spine == _pageIndex) {
+      setState(() => _windowIndex = target.window);
       _reportWindowState();
       return;
     }
@@ -363,16 +544,37 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     // 없으면 빠른 연속 탭/스와이프가 같은 목표로 두 번 걸려 하나를 삼킨다.
     // (open-epub#228)
     if (_crossingSpine) return;
-    final targetSpine = _pageIndex + direction;
-    if (targetSpine < 0 || targetSpine >= pageCount) return;
     _crossingSpine = true;
-    _pendingLandingWindow =
-        direction > 0 ? 0 : _lastPairStartWindow(targetSpine);
+    _pendingLandingWindow = target.window;
     try {
-      await goToPage(targetSpine);
+      if (animated) {
+        await goToPage(target.spine);
+      } else {
+        jumpToPage(target.spine);
+      }
     } finally {
       _crossingSpine = false;
     }
+  }
+
+  /// [direction](+1/-1)으로 한 스텝 이동했을 때 착지할 (spine, 윈도우). 현재
+  /// spine의 윈도우 범위 안이면 같은 spine의 다음/이전 윈도우(spread 시 pair),
+  /// 벗어나면 다음/이전 spine의 첫(다음) 또는 마지막 pair(이전) 윈도우. 문서
+  /// 끝/시작이라 더 넘길 곳이 없으면 null. [_step]과 드래그 오버레이가 같은
+  /// 계산을 공유해 미리보기와 실제 착지가 일치하도록 한다. (kobic#8240)
+  ({int spine, int window})? _turnTarget(int direction) {
+    final count = _windowCounts[_pageIndex] ?? 1;
+    // spread 활성 시 한 번에 두 윈도우(스프레드 하나)씩 이동한다.
+    final step = _spreadActive ? 2 : 1;
+    var next = _windowIndex + direction * step;
+    if (_spreadActive && next > 0) next -= next % 2; // pair 시작(짝수)로 정렬
+    if (next >= 0 && next < count) return (spine: _pageIndex, window: next);
+    final targetSpine = _pageIndex + direction;
+    if (targetSpine < 0 || targetSpine >= pageCount) return null;
+    return (
+      spine: targetSpine,
+      window: direction > 0 ? 0 : _lastPairStartWindow(targetSpine),
+    );
   }
 
   /// 이전 방향으로 spine 경계를 넘을 때 착지할 윈도우 — 대상 spine의 마지막
@@ -393,31 +595,75 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportSize = constraints.biggest;
+        // 제스처 핸들러가 페이지 폭/높이를 알 수 있도록 최신 뷰포트를 캐시.
+        _lastViewport = viewportSize;
         final useSpread = _resolveSpread(viewportSize);
         _syncSpreadActive(useSpread);
+
+        // 스와이프는 GestureDetector가 전담(윈도우/spine 이동 통합 판단) —
+        // PageView 자체 드래그는 꺼서 같은 축 제스처 경합을 막는다.
+        final base = PageView.builder(
+          controller: _controller,
+          reverse: widget.reverse,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: pageCount,
+          onPageChanged: (i) {
+            setState(() {
+              _pageIndex = i;
+              _windowIndex = _pendingLandingWindow ?? 0;
+              _pendingLandingWindow = null;
+            });
+            widget.onPageChanged?.call(i);
+            _reportWindowState();
+          },
+          itemBuilder: (context, index) =>
+              _buildSpineItem(index, viewportSize, useSpread),
+        );
+
         return GestureDetector(
+          onHorizontalDragStart: _onHorizontalDragStart,
+          onHorizontalDragUpdate: _onHorizontalDragUpdate,
           onHorizontalDragEnd: _onHorizontalDragEnd,
-          child: PageView.builder(
-            controller: _controller,
-            reverse: widget.reverse,
-            // 스와이프는 위 GestureDetector가 전담(윈도우/spine 이동 통합
-            // 판단) — PageView 자체 드래그는 꺼서 같은 축 제스처 경합을 막는다.
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: pageCount,
-            onPageChanged: (i) {
-              setState(() {
-                _pageIndex = i;
-                _windowIndex = _pendingLandingWindow ?? 0;
-                _pendingLandingWindow = null;
-              });
-              widget.onPageChanged?.call(i);
-              _reportWindowState();
-            },
-            itemBuilder: (context, index) =>
-                _buildSpineItem(index, viewportSize, useSpread),
-          ),
+          child: _buildTurnStack(base, viewportSize, useSpread),
         );
       },
+    );
+  }
+
+  /// 현재 페이지([base])와 넘김 중 이웃 페이지를 오버레이한다. 넘김 중이 아닐
+  /// 때도(idempotent) 동일한 Stack 구조를 유지해 [base](PageView)의 Element가
+  /// 보존되도록 한다 — 구조가 바뀌면 넘김 시작/종료마다 현재 페이지가 재빌드·
+  /// 재측정돼 깜빡인다. 유휴 시 [_dragDx]=0(항등 이동) + 이웃 없음이라 기존
+  /// 단면/양면 렌더와 시각적으로 동일하다. (kobic#8240)
+  Widget _buildTurnStack(Widget base, Size viewportSize, bool useSpread) {
+    final width = viewportSize.width;
+    final target = _turnDir == 0 ? null : _turnTarget(_turnDir);
+    final Widget? neighbor = target == null
+        ? null
+        : SizedBox.fromSize(
+            size: viewportSize,
+            child: _composePage(
+              spineIndex: target.spine,
+              leftWindow: target.window,
+              viewportSize: viewportSize,
+              useSpread: useSpread,
+              keyNamespace: 'turn',
+            ),
+          );
+    return ClipRect(
+      child: Stack(
+        children: [
+          Transform.translate(offset: Offset(_dragDx, 0), child: base),
+          if (neighbor != null)
+            Transform.translate(
+              // 노출 방향 반대편에서 손가락과 함께 들어온다: revealSign<0(왼쪽
+              // 드래그)이면 이웃은 오른쪽(+width)에서, revealSign>0이면 왼쪽
+              // (-width)에서 시작해 _dragDx가 ±width에 도달하면 0(완전 노출).
+              offset: Offset(_dragDx - _revealSign * width, 0),
+              child: neighbor,
+            ),
+        ],
+      ),
     );
   }
 
@@ -446,28 +692,47 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     });
   }
 
-  /// PageView 아이템 하나(한 spine)를 빌드한다. spread 활성 시 연속 두 윈도우
-  /// (왼쪽=leftW, 오른쪽=leftW+1)를 좌우 컬럼으로 배치하고, 미활성 시 단일
-  /// 윈도우를 그대로 렌더한다.
+  /// PageView 아이템 하나(한 spine)를 빌드한다 — 활성 spine은 현재
+  /// [_windowIndex], 비활성 spine은 0에서 시작한다. 기본 key 네임스페이스('')로
+  /// [_composePage]에 위임한다(기존 동작 불변).
   Widget _buildSpineItem(int index, Size viewportSize, bool useSpread) {
-    final isActive = index == _pageIndex;
+    return _composePage(
+      spineIndex: index,
+      leftWindow: index == _pageIndex ? _windowIndex : 0,
+      viewportSize: viewportSize,
+      useSpread: useSpread,
+      keyNamespace: '',
+    );
+  }
+
+  /// 한 페이지([spineIndex]의 [leftWindow] 윈도우)를 구성한다. spread 활성 시
+  /// 연속 두 윈도우(왼쪽=pair 시작, 오른쪽=+1)를 좌우 컬럼으로 배치하고,
+  /// 미활성 시 단일 윈도우를 렌더한다. [keyNamespace]로 base(PageView) 페이지와
+  /// 넘김 오버레이('turn') 페이지의 key/측정 상태를 분리한다 — 같은 spine을
+  /// base와 오버레이가 동시에 그려도 서로 상태가 섞이지 않는다. (kobic#8240)
+  Widget _composePage({
+    required int spineIndex,
+    required int leftWindow,
+    required Size viewportSize,
+    required bool useSpread,
+    required String keyNamespace,
+  }) {
     if (!useSpread) {
       // 단면 경로는 윈도우 인덱스가 바뀌어도 같은 위젯을 유지해야 측정/로드
       // 상태가 보존된다(윈도우 이동은 Transform.translate로만 처리) — 안정된
-      // key를 쓴다(기존 동작 불변).
+      // key를 쓴다.
       return _spinePageView(
-        index: index,
-        keySuffix: '',
+        index: spineIndex,
+        keySuffix: keyNamespace,
         viewportSize: viewportSize,
-        windowIndex: isActive ? _windowIndex : 0,
+        windowIndex: leftWindow,
       );
     }
 
-    // 왼쪽 컬럼 = pair 시작 윈도우(짝수). 활성 spine은 현재 _windowIndex를
-    // 짝수로 정렬해서, 비활성 spine은 0에서 시작한다.
-    final leftW = isActive ? _windowIndex - (_windowIndex % 2) : 0;
+    // 왼쪽 컬럼 = pair 시작 윈도우(짝수)로 정렬.
+    final leftW = leftWindow - (leftWindow % 2);
     final rightW = leftW + 1;
-    final rawCount = _windowCounts[index] ?? 1;
+    final rawCount = _windowCounts[spineIndex] ?? 1;
     // 각 컬럼은 절반 폭 뷰포트로 렌더한다 — non-fixed는 반폭 리플로우,
     // fixedPageSize(A4)는 반폭 컬럼에 contain-fit된다.
     final columnSize = Size(viewportSize.width / 2, viewportSize.height);
@@ -475,8 +740,8 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     // 좌우 컬럼은 슬롯 고정 key(L/R)를 써서, 윈도우를 넘겨도 같은 위젯을
     // 유지한다(windowIndex만 바뀌어 측정/로드 상태 보존).
     final leftColumn = _spinePageView(
-      index: index,
-      keySuffix: 'L',
+      index: spineIndex,
+      keySuffix: '${keyNamespace}L',
       viewportSize: columnSize,
       windowIndex: leftW,
     );
@@ -485,8 +750,8 @@ class ReflowablePageViewState extends State<ReflowablePageView> {
     // 채워지는 것이 정상.
     final Widget rightColumn = rightW < rawCount
         ? _spinePageView(
-            index: index,
-            keySuffix: 'R',
+            index: spineIndex,
+            keySuffix: '${keyNamespace}R',
             viewportSize: columnSize,
             windowIndex: rightW,
           )

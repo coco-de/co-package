@@ -1,5 +1,22 @@
 ## Unreleased
 
+### Changed
+- `ReflowablePageView` 페이지(paged) 모드 넘김을 **드래그-투-턴**(drag-to-turn)으로
+  개선(kobic#8240). 기존에는 최상위 `GestureDetector`가 fling 속도 임계(250)만 보고
+  즉시 전환(윈도우 이동은 애니메이션 없이 점프, spine 경계만 150ms 슬라이드)했다.
+  이제 손가락 이동량만큼 현재 페이지가 실시간으로 따라 밀리고 반대편에서 다음/이전
+  페이지가 함께 슬라이드해 들어온다(현재 `PageView`를 `Transform.translate`로 밀고
+  이웃 페이지를 오버레이). 손가락을 놓으면 **이동 비율 ≥ 50% 이거나 fling 속도 ≥ 250**
+  이면 전진/후퇴를 확정하고, 아니면 원위치로 복귀한다 — 두 경우 모두 ease-out
+  **≤150ms**(F2.4) 스냅으로 마무리한다. 확정 시 실제 이동은 애니메이션 없이 즉시
+  적용되고 시각적 슬라이드는 오버레이가 담당하므로 이중 애니메이션이 없다. 문서
+  끝/시작에서 더 넘길 이웃이 없으면 따라오지 않는다(하드 스톱). RTL(`reverse`)·단면/
+  양면(`spread`) 모두 동일한 제스처로 동작하며 넘김 단위만 각각(방향 반전 / pair
+  2윈도우)에 맞춰진다. 페이지 인덱스/윈도우 계약, 프로그램적 이동(`nextPage`/
+  `previousPage`/`goToPage`/`onPageStepReady`), `onWindowChanged`/`onPageChanged`
+  보고, `fixedPageSize`/`contentBuilder`(필기 앵커) 계약은 모두 불변이다. 기존 fling
+  스와이프도 속도 임계 경로로 그대로 동작한다(회귀 없음).
+
 ### Added
 - `EpubReader`/`ReflowablePageView`에 `spread`(`EpubSpread?`) 옵션 추가(kobic#8203)
   — reflowable(흐름형) EPUB **페이지(paged) 모드에서 단면/양면(2-up spread)** 을

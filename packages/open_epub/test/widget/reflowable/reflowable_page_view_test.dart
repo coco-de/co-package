@@ -1089,8 +1089,7 @@ void main() {
       expect(state.windowIndex, 1);
     });
 
-    testWidgets('홀수 마지막 윈도우에서는 오른쪽 컬럼이 빈 페이지(HtmlWidget 1개)',
-        (tester) async {
+    testWidgets('홀수 마지막 윈도우에서는 오른쪽 컬럼이 빈 페이지(HtmlWidget 1개)', (tester) async {
       // 한 spine 안에서 spread를 여러 번 넘겨 마지막 pair까지 이동한다. 마지막
       // pair가 홀수(왼쪽만 존재)라면 오른쪽 컬럼은 SizedBox.expand()로 비어
       // HtmlWidget이 1개만 남는다. (콘텐츠에 따라 raw 윈도우 수가 홀/짝이므로
@@ -1130,6 +1129,178 @@ void main() {
       // 마지막 pair: 오른쪽 윈도우가 없으므로(홀수) 왼쪽 컬럼만 콘텐츠 렌더 →
       // HtmlWidget 정확히 1개.
       expect(find.byType(HtmlWidget), findsOneWidget);
+    });
+  });
+  // 드래그-투-턴 (kobic#8240) — 손가락 이동량만큼 페이지가 실시간으로 따라오고
+  // (이웃 오버레이), 놓으면 이동 비율 ≥ 50% 이거나 fling 속도 ≥ 250이면 전진/
+  // 후퇴를 확정, 아니면 원위치로 복귀한다. 확정/복귀 스냅은 ease-out ≤150ms.
+  group('ReflowablePageView — 드래그-투-턴 (kobic#8240)', () {
+    // 손가락을 놓기 전 400ms 정지시켜 속도를 0에 수렴시킨다 — fling 속도 임계로
+    // 확정되는 경로를 배제하고 "이동 비율"만으로 판정되게 한다.
+    Future<void> slowDrag(WidgetTester tester, Offset moveBy) async {
+      final center = tester.getCenter(find.byType(ReflowablePageView));
+      final gesture = await tester.startGesture(center);
+      await gesture.moveBy(moveBy);
+      await tester.pump(const Duration(milliseconds: 400)); // 속도 감쇠
+      await gesture.up();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('이동 비율 < 50% + 저속 → 원위치 복귀(확정 안 함)', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
+
+      // 폭 400 → 40px(10%)만 끌고 저속으로 놓음 → 복귀.
+      await slowDrag(tester, const Offset(-40, 0));
+      expect(state.windowIndex, 0);
+      expect(state.pageIndex, 0);
+    });
+
+    testWidgets('이동 비율 ≥ 50% → 저속이어도 다음 윈도우로 확정', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
+
+      // 폭 400 → 250px(62.5% ≥ 50%)을 끌고 저속으로 놓음 → 확정.
+      await slowDrag(tester, const Offset(-250, 0));
+      expect(state.pageIndex, 0); // 같은 spine
+      expect(state.windowIndex, 1); // 다음 윈도우로 확정
+    });
+
+    testWidgets('드래그 중 이웃 페이지가 오버레이로 함께 렌더된다(실시간 추종)', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      // 넘김 중이 아니면 단면 → HtmlWidget 1개.
+      expect(find.byType(HtmlWidget), findsOneWidget);
+
+      final center = tester.getCenter(find.byType(ReflowablePageView));
+      final gesture = await tester.startGesture(center);
+      await gesture.moveBy(const Offset(-100, 0));
+      // 손가락을 잡은 채로 settle — 이웃 오버레이의 FutureBuilder가 캐시된
+      // 콘텐츠를 전달받도록 한 프레임 더 진행(넘김 애니메이션은 아직 없음).
+      await tester.pumpAndSettle();
+      // 드래그 중: 현재 + 이웃(다음 윈도우) 오버레이 → HtmlWidget 2개.
+      expect(find.byType(HtmlWidget), findsNWidgets(2));
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+      // 정착 후 오버레이 제거 → 다시 단면 1개.
+      expect(find.byType(HtmlWidget), findsOneWidget);
+    });
+
+    testWidgets('문서 시작에서 이전 방향 드래그는 따라오지 않는다(하드 스톱)', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+
+      final center = tester.getCenter(find.byType(ReflowablePageView));
+      final gesture = await tester.startGesture(center);
+      // 오른쪽(이전 방향)으로 크게 끌어도 첫 윈도우/첫 spine이라 이웃이 없다.
+      await gesture.moveBy(const Offset(300, 0));
+      await tester.pump();
+      // 이웃 오버레이가 생기지 않아 HtmlWidget은 여전히 1개.
+      expect(find.byType(HtmlWidget), findsOneWidget);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(state.pageIndex, 0);
+      expect(state.windowIndex, 0);
+    });
+
+    testWidgets('확정 스냅은 150ms 이내에 완료된다(F2.4)', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrap(
+          ReflowablePageView(
+            book: book,
+            xhtmlLoader: (href) async => _tallXhtml(href),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.windowCount, greaterThan(1));
+
+      final center = tester.getCenter(find.byType(ReflowablePageView));
+      final gesture = await tester.startGesture(center);
+      await gesture.moveBy(const Offset(-250, 0)); // 62.5% → 확정 예정
+      await tester.pump(const Duration(milliseconds: 400)); // 속도 감쇠
+      await gesture.up();
+      await tester.pump(); // 스냅 애니메이션 시작
+      await tester.pump(const Duration(milliseconds: 150)); // 상한만큼 진행
+      await tester.pump(); // 완료 콜백(_step) 반영
+      expect(state.windowIndex, 1);
+    });
+
+    testWidgets('spread 활성 시 드래그 확정은 pair(2윈도우) 단위로 이동한다', (tester) async {
+      final book = _fakeBook(['a.xhtml']);
+      await tester.pumpWidget(
+        _wrapSized(
+          const Size(1000, 600),
+          ReflowablePageView(
+            book: book,
+            spread: EpubSpread.both,
+            xhtmlLoader: (href) async => _tallXhtml(href, lines: 120),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<ReflowablePageViewState>(
+        find.byType(ReflowablePageView),
+      );
+      expect(state.spreadActive, isTrue);
+      expect(state.windowIndex, 0); // pair 단위 0
+
+      // 폭 1000 → 600px(60% ≥ 50%) 저속 드래그 → pair 단위 1(raw 윈도우 2)로 확정.
+      final center = tester.getCenter(find.byType(ReflowablePageView));
+      final gesture = await tester.startGesture(center);
+      await gesture.moveBy(const Offset(-600, 0));
+      await tester.pump(const Duration(milliseconds: 400));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(state.windowIndex, 1); // pair 단위 1
     });
   });
 }
