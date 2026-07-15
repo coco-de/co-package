@@ -13,3 +13,6 @@ _work/
 # 에디터
 .idea/
 .vscode/
+
+# Dart
+.dart_tool/

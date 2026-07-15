@@ -7,6 +7,7 @@
 | 영역 | 내용 | 위치 |
 |---|---|---|
 | 러너 등록 | 로컬 머신(macOS)을 self-hosted 러너로 등록/해제하는 스크립트 | [`scripts/`](scripts/) |
+| 러너 TUI | 러너 상태 조회·등록·해제·서비스 제어를 한 화면에서 (Dart) | [`tui/`](tui/) |
 | ARC | Kubernetes 기반 러너 오토스케일링 (Actions Runner Controller) | [`arc/`](arc/) |
 | 재사용 워크플로우 | 서비스 레포들이 `workflow_call`로 가져다 쓰는 공용 CI | [`.github/workflows/`](.github/workflows/) |
 | 문서 | 러너 세팅 런북 | [`docs/`](docs/) |
