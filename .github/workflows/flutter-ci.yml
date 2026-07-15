@@ -1,0 +1,65 @@
+# 재사용 워크플로우 — 단일 Flutter 앱 CI (+ 선택 빌드)
+#
+# 서비스 레포에서:
+#   jobs:
+#     app:
+#       uses: coco-de/co-arc/.github/workflows/flutter-ci.yml@main
+#       with:
+#         runs-on: '["self-hosted", "macos", "flutter"]'
+#         build-targets: 'apk,ios'
+#
+# 전제: 러너에 Flutter SDK (+ ios 빌드는 Xcode/CocoaPods) 설치.
+
+name: Flutter CI
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: 'runs-on 값 (JSON)'
+        type: string
+        default: '["self-hosted", "macos", "flutter"]'
+      working-directory:
+        description: 'Flutter 앱 경로'
+        type: string
+        default: '.'
+      build-targets:
+        description: '빌드 타깃 CSV: apk, appbundle, ios, macos, web / 빈 값이면 빌드 생략'
+        type: string
+        default: ''
+
+jobs:
+  flutter:
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 툴체인 버전
+        run: flutter --version
+
+      - name: pub get
+        run: flutter pub get
+
+      - name: analyze
+        run: dart analyze --fatal-infos
+
+      - name: test
+        run: |
+          if [ -d test ]; then flutter test; else echo "test 디렉토리 없음 — 건너뜀"; fi
+
+      - name: build
+        if: inputs.build-targets != ''
+        run: |
+          IFS=',' read -ra TARGETS <<< "${{ inputs.build-targets }}"
+          for t in "${TARGETS[@]}"; do
+            t="$(echo "$t" | xargs)"
+            echo "::group::flutter build $t"
+            case "$t" in
+              ios)   flutter build ios --no-codesign ;;
+              *)     flutter build "$t" ;;
+            esac
+            echo "::endgroup::"
+          done

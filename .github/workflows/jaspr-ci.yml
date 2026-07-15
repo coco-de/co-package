@@ -1,0 +1,65 @@
+# 재사용 워크플로우 — Jaspr 웹 빌드/테스트
+#
+# 서비스 레포에서:
+#   jobs:
+#     web:
+#       uses: coco-de/co-arc/.github/workflows/jaspr-ci.yml@main
+#       with:
+#         runs-on: '"arc-dart"'
+#         project-directory: 'apps/web'
+
+name: Jaspr CI
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: 'runs-on 값 (JSON)'
+        type: string
+        default: '"arc-dart"'
+      project-directory:
+        description: 'Jaspr 프로젝트 경로'
+        type: string
+        default: '.'
+      dart-version:
+        description: 'Dart SDK 버전 (컨테이너 이미지 태그)'
+        type: string
+        default: 'stable'
+      upload-artifact:
+        description: '빌드 결과물(build/jaspr)을 아티팩트로 업로드할지'
+        type: boolean
+        default: false
+
+jobs:
+  jaspr:
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    container:
+      image: dart:${{ inputs.dart-version }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.project-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pub get
+        run: dart pub get
+
+      - name: analyze
+        run: dart analyze --fatal-infos
+
+      - name: test
+        run: |
+          if [ -d test ]; then dart test; else echo "test 디렉토리 없음 — 건너뜀"; fi
+
+      - name: jaspr build
+        run: |
+          dart pub global activate jaspr_cli
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          jaspr build
+
+      - name: upload build
+        if: inputs.upload-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaspr-build
+          path: ${{ inputs.project-directory }}/build/jaspr

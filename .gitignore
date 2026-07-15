@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# 러너 로컬 산출물 (레포 안에서 실험할 경우 대비)
+actions-runner/
+_work/
+
+# 시크릿 — 절대 커밋 금지
+*.pem
+.env
+.env.*
+
+# 에디터
+.idea/
+.vscode/
