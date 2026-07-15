@@ -9,7 +9,7 @@ GitHub Actions 잡을 내 컴퓨터에서 직접 돌리기 위한 등록 가이�
 ```
 √ Connected to GitHub
 2026-07-15 Runner cody-macbook-local registered
-Labels: self-hosted, macos, flutter
+Labels: self-hosted, macOS, ARM64, flutter
 
 ● Listening for Jobs
 ```
@@ -42,6 +42,12 @@ tar xzf actions-runner.tar.gz
 
 최신 버전은 [actions/runner releases](https://github.com/actions/runner/releases)에서 확인하세요.
 
+> ⚠️ **아키텍처 확인** — Apple Silicon 맥이라도 터미널 앱이 Rosetta로 떠 있으면
+> `uname -m`이 `x86_64`를 반환해서 자기도 모르게 x64 러너를 받게 됩니다.
+> 다운로드 후 `lipo -archs ./bin/Runner.Listener`로 실제 바이너리 아키텍처를
+> 확인하세요. x64로 잘못 등록되면 실제로 동작은 하지만 (Rosetta 에뮬레이션)
+> Dart/Flutter 컴파일 같은 CPU 위주 작업이 눈에 띄게 느려집니다.
+
 ### 02 — 등록 토큰 발급
 
 `gh`로 등록 토큰용 REST API를 바로 호출합니다. 이 토큰은 **1시간 동안만** 유효합니다.
@@ -67,7 +73,7 @@ TOKEN=$(gh api -X POST repos/coco-de/{repo}/actions/runners/registration-token -
   --url https://github.com/coco-de/{repo} \
   --token "$TOKEN" \
   --name "$(hostname)-local" \
-  --labels self-hosted,macos,flutter \
+  --labels self-hosted,macOS,flutter \
   --unattended
 ```
 
@@ -95,7 +101,7 @@ TOKEN=$(gh api -X POST repos/coco-de/{repo}/actions/runners/registration-token -
 # .github/workflows/ci.yml
 jobs:
   build:
-    runs-on: [self-hosted, macos, flutter]
+    runs-on: [self-hosted, macOS, flutter]
     steps:
       - uses: actions/checkout@v4
       - run: melos bootstrap
@@ -108,6 +114,50 @@ jobs:
 - **디스크** — `_work` 폴더가 계속 쌓입니다. 체크아웃·빌드 산출물이 누적되니 주기적으로 정리하거나 잡 종료 시 클린업 스텝을 넣으세요. (→ [`../scripts/cleanup-work.sh`](../scripts/cleanup-work.sh))
 - **가용성** — 켜져 있을 때만 잡을 받습니다. 노트북은 절전/종료 시 잡이 대기에 걸립니다. 상시 구동할 맥미니 같은 전용기가 있으면 훨씬 안정적입니다.
 - **환경** — 빌드 도구는 각자 로컬에 설치돼 있어야 합니다. 팀원마다 Flutter·Xcode 버전이 다르면 결과가 달라질 수 있으니, 라벨로 환경을 구분하는 걸 권장합니다.
+
+## 여러 인스턴스 운영 (멀티 러너 플릿)
+
+Mac 1대에서 러너 여러 개를 동시에 띄우려면 인스턴스별로 디렉토리와 이름을 분리해 `register-runner.sh`를 반복 실행하세요.
+
+```bash
+for i in 01 02 03 04; do
+  ./register-runner.sh --org coco-de \
+    --dir "$HOME/actions-runner-${i}" \
+    --name "action-${i}" \
+    --tool-cache "$HOME/actions-runner-shared/_tool" \
+    --service
+done
+```
+
+각 인스턴스는 `svc.sh`가 `actions.runner.<org>.<name>` 형식의 고유한 launchd 서비스로 등록하므로 서로 충돌하지 않습니다.
+
+### 수동(`./run.sh`) 실행 중인 러너를 서비스로 전환
+
+이미 등록은 돼 있고 터미널에서 `./run.sh`로 포그라운드 실행 중인 러너가 있다면, 같은 `--dir`/`--name`/`--org`(또는 `--repo`) 값으로 `--service`를 붙여 다시 실행하면 됩니다.
+
+```bash
+./register-runner.sh --org coco-de \
+  --dir "$HOME/actions-runner-01" \
+  --name action-01 \
+  --service
+```
+
+`register-runner.sh`는 `$RUNNER_DIR/.runner` 파일이 이미 있으면 재등록(토큰 발급·`config.sh`)을 건너뛰고, 같은 디렉토리에서 실행 중인 `Runner.Listener` 프로세스를 먼저 종료한 뒤 `svc.sh install && svc.sh start`만 수행합니다. 즉 재등록 없이 "포그라운드 → launchd 서비스" 전환만 안전하게 적용됩니다.
+
+> 러너 그룹을 조직 기본 그룹이 아닌 곳으로 새로 등록하려면 `--runner-group <name>`을 추가하세요. 이미 등록된 러너를 서비스로 전환하는 경우에는 재등록을 건너뛰므로 이 옵션은 무시됩니다 — 그룹은 최초 등록 시점에만 결정됩니다.
+
+## 공유 tool-cache (`RUNNER_TOOL_CACHE`)
+
+한 머신에 러너를 여러 개 띄우면 각 인스턴스가 `_work/_tool`에 Flutter SDK·JDK 등을 **따로따로** 캐싱합니다. 러너 8개가 같은 Flutter 버전을 각자 내려받으면 그만큼 디스크가 배로 나갑니다 — 실제로 러너 8개짜리 플릿에서 이 문제로 200GB 넘게 중복 캐싱된 적이 있습니다.
+
+`@actions/tool-cache`(액션들이 SDK를 캐싱할 때 쓰는 표준 라이브러리, `subosito/flutter-action` 등이 사용)는 `RUNNER_TOOL_CACHE` 환경변수를 지원해서 캐시 위치를 지정할 수 있습니다. `register-runner.sh --tool-cache <경로>`를 쓰면 해당 러너의 `.env`에 이 값이 자동으로 기록됩니다 — 모든 인스턴스에 **같은 경로**를 주면 SDK를 한 번만 캐싱하고 전부 공유합니다.
+
+```bash
+# 이미 등록된 러너에 나중에 추가할 때도 .env에 한 줄만 넣으면 됩니다
+echo "RUNNER_TOOL_CACHE=$HOME/actions-runner-shared/_tool" >> ~/actions-runner-01/.env
+```
+
+`.env`는 러너 프로세스 시작 시 읽히므로, 기존에 떠 있던 러너라면 **재시작**해야 적용됩니다. `_work/_tool`에 이미 쌓여있던 캐시를 옮기려면 같은 볼륨 안에서 `mv`(rename, 추가 디스크 공간 불필요)로 병합하고, 버전/아키텍처가 같은 항목이 이미 있으면 삭제하세요. `_work/<repo>` 체크아웃 디렉토리는 절대 공유하면 안 됩니다 — git 작업 트리를 여러 프로세스가 동시에 건드리면 깨집니다.
 
 ## 러너 해제
 

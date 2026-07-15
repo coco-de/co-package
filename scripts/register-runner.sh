@@ -7,27 +7,49 @@
 #   ./register-runner.sh --org coco-de           # org 레벨 러너 (admin:org 필요)
 #
 # 옵션:
-#   --labels <csv>   러너 라벨 (기본: self-hosted,macos,flutter)
-#   --name <name>    러너 이름 (기본: $(hostname)-local)
-#   --dir <path>     러너 설치 경로 (기본: ~/actions-runner)
-#   --service        구성 후 launchd 서비스로 바로 등록/시작
+#   --labels <csv>        러너 라벨 (기본: self-hosted,macOS,flutter). macOS는
+#                          GitHub가 실제 실행 바이너리 아키텍처를 보고 자동으로
+#                          ARM64/X64 라벨도 붙여주지만, 터미널이 Rosetta로 떠
+#                          있으면 arm64 맥인데도 x64로 등록될 수 있으니 실행 후
+#                          반드시 아래 "아키텍처 확인" 출력을 확인하세요.
+#   --name <name>          러너 이름 (기본: $(hostname)-local)
+#   --dir <path>           러너 설치 경로 (기본: ~/actions-runner)
+#   --runner-group <name>  러너 그룹 (기본: 조직 기본 그룹)
+#   --tool-cache <path>    여러 인스턴스가 Flutter/JDK 등 tool-cache를 공유하도록
+#                          .env에 RUNNER_TOOL_CACHE=<path>를 설정. 한 머신에
+#                          여러 러너를 띄울 때 매 인스턴스가 SDK를 중복 캐싱하는
+#                          걸 막아줍니다 (자세한 배경은 docs/self-hosted-runner.md
+#                          "공유 tool-cache" 절 참고).
+#   --service              구성 후 launchd 서비스로 바로 등록/시작
+#
+# 여러 인스턴스를 한 머신에 띄우려면 --dir/--name을 인스턴스별로 다르게 지정해
+# 반복 실행하세요 (예: --dir ~/actions-runner-01 --name action-01).
+#
+# Idempotent: $RUNNER_DIR/.runner가 이미 있으면(=이미 등록됨) 재등록을 건너뛰고
+# --service 지정 시 서비스 설치/시작만 수행합니다. 그 디렉토리에서 수동으로
+# ./run.sh를 포그라운드 실행 중이던 러너도 이 방식으로 안전하게 launchd
+# 서비스로 전환할 수 있습니다 (전환 전 기존 run.sh 프로세스를 종료합니다).
 #
 set -euo pipefail
 
 SCOPE_TYPE="" SCOPE=""
-LABELS="self-hosted,macos,flutter"
+LABELS="self-hosted,macOS,flutter"
 RUNNER_NAME="$(hostname)-local"
 RUNNER_DIR="${HOME}/actions-runner"
+RUNNER_GROUP=""
+TOOL_CACHE=""
 AS_SERVICE=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --repo)    SCOPE_TYPE="repo"; SCOPE="$2"; shift 2 ;;
-    --org)     SCOPE_TYPE="org";  SCOPE="$2"; shift 2 ;;
-    --labels)  LABELS="$2"; shift 2 ;;
-    --name)    RUNNER_NAME="$2"; shift 2 ;;
-    --dir)     RUNNER_DIR="$2"; shift 2 ;;
-    --service) AS_SERVICE=true; shift ;;
+    --repo)          SCOPE_TYPE="repo"; SCOPE="$2"; shift 2 ;;
+    --org)           SCOPE_TYPE="org";  SCOPE="$2"; shift 2 ;;
+    --labels)        LABELS="$2"; shift 2 ;;
+    --name)          RUNNER_NAME="$2"; shift 2 ;;
+    --dir)           RUNNER_DIR="$2"; shift 2 ;;
+    --runner-group)  RUNNER_GROUP="$2"; shift 2 ;;
+    --tool-cache)    TOOL_CACHE="$2"; shift 2 ;;
+    --service)       AS_SERVICE=true; shift ;;
     *) echo "unknown option: $1" >&2; exit 1 ;;
   esac
 done
@@ -59,29 +81,57 @@ else
   echo "==> 기존 러너 에이전트 사용 ($RUNNER_DIR)"
 fi
 
-# ---- 2. 등록 토큰 발급 (1시간 유효) ------------------------------------------
-if [[ "$SCOPE_TYPE" == "repo" ]]; then
-  API_PATH="repos/${SCOPE}/actions/runners/registration-token"
-  URL="https://github.com/${SCOPE}"
-else
-  API_PATH="orgs/${SCOPE}/actions/runners/registration-token"
-  URL="https://github.com/${SCOPE}"
+# 아키텍처 확인 — uname -m은 Rosetta로 뜬 터미널에서 x86_64를 반환할 수 있어
+# 실제 다운로드된 바이너리를 직접 확인한다 (arm64 맥인데 x64 러너가 등록되는
+# 사고를 예방).
+if command -v lipo >/dev/null; then
+  ACTUAL_ARCH="$(lipo -archs ./bin/Runner.Listener 2>/dev/null || echo unknown)"
+  echo "==> 다운로드된 바이너리 아키텍처: ${ACTUAL_ARCH} (요청: ${ARCH})"
 fi
 
-echo "==> 등록 토큰 발급 (${SCOPE_TYPE}: ${SCOPE})"
-TOKEN="$(gh api -X POST "$API_PATH" --jq .token)"
+# ---- 2~3. 등록 토큰 발급 및 러너 구성 (이미 등록된 러너면 건너뜀) -----------
+if [[ -f "${RUNNER_DIR}/.runner" ]]; then
+  echo "==> 이미 등록된 러너입니다 (${RUNNER_DIR}/.runner 존재) — 재등록 없이 다음 단계로 진행"
+else
+  if [[ "$SCOPE_TYPE" == "repo" ]]; then
+    API_PATH="repos/${SCOPE}/actions/runners/registration-token"
+    URL="https://github.com/${SCOPE}"
+  else
+    API_PATH="orgs/${SCOPE}/actions/runners/registration-token"
+    URL="https://github.com/${SCOPE}"
+  fi
 
-# ---- 3. 러너 구성 ------------------------------------------------------------
-echo "==> 러너 구성: name=${RUNNER_NAME} labels=${LABELS}"
-./config.sh \
-  --url "$URL" \
-  --token "$TOKEN" \
-  --name "$RUNNER_NAME" \
-  --labels "$LABELS" \
-  --unattended
+  echo "==> 등록 토큰 발급 (${SCOPE_TYPE}: ${SCOPE})"
+  TOKEN="$(gh api -X POST "$API_PATH" --jq .token)"
+
+  echo "==> 러너 구성: name=${RUNNER_NAME} labels=${LABELS}${RUNNER_GROUP:+ group=$RUNNER_GROUP}"
+  CONFIG_ARGS=(--url "$URL" --token "$TOKEN" --name "$RUNNER_NAME" --labels "$LABELS" --unattended)
+  [[ -n "$RUNNER_GROUP" ]] && CONFIG_ARGS+=(--runnergroup "$RUNNER_GROUP")
+  ./config.sh "${CONFIG_ARGS[@]}"
+fi
+
+# 공유 tool-cache 설정 (.env에 RUNNER_TOOL_CACHE 기록)
+if [[ -n "$TOOL_CACHE" ]]; then
+  mkdir -p "$TOOL_CACHE"
+  if grep -q "^RUNNER_TOOL_CACHE=" .env 2>/dev/null; then
+    echo "==> .env에 RUNNER_TOOL_CACHE 이미 설정됨, 건너뜀"
+  else
+    echo "RUNNER_TOOL_CACHE=${TOOL_CACHE}" >> .env
+    echo "==> .env에 RUNNER_TOOL_CACHE=${TOOL_CACHE} 추가"
+  fi
+fi
 
 # ---- 4. 실행 -----------------------------------------------------------------
 if $AS_SERVICE; then
+  # 같은 디렉토리에서 ./run.sh로 이미 수동(포그라운드) 실행 중이면 서비스와
+  # 충돌하므로 먼저 정리한다 (수동 러너 → launchd 서비스 전환 경로).
+  mapfile -t RUNNING_PIDS < <(pgrep -f "${RUNNER_DIR}/bin/Runner.Listener" || true)
+  if [[ ${#RUNNING_PIDS[@]} -gt 0 ]]; then
+    echo "==> 기존 수동 실행(run.sh) 프로세스 종료: pid=${RUNNING_PIDS[*]}"
+    kill "${RUNNING_PIDS[@]}"
+    sleep 2
+  fi
+
   echo "==> launchd 서비스 등록/시작"
   ./svc.sh install
   ./svc.sh start

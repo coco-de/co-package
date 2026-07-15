@@ -45,7 +45,7 @@ jobs:
   ci:
     uses: coco-de/co-arc/.github/workflows/melos-ci.yml@main
     with:
-      runs-on: '["self-hosted", "macos", "flutter"]'
+      runs-on: '["self-hosted", "macOS", "flutter"]'
 ```
 
 전체 예시는 [`templates/caller-example.yml`](templates/caller-example.yml) 참고.
@@ -69,7 +69,7 @@ jobs:
 ┌─────────────────────────────────────────────────────┐
 │  macOS self-hosted (scripts/)                       │
 │  · iOS/macOS 빌드는 반드시 여기 (Xcode 필요)          │
-│  · 라벨: [self-hosted, macos, flutter]              │
+│  · 라벨: [self-hosted, macOS, flutter]              │
 ├─────────────────────────────────────────────────────┤
 │  ARC on Kubernetes (arc/)                           │
 │  · Linux 컨테이너 러너 오토스케일링                    │
