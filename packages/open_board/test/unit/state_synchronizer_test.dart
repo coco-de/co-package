@@ -7,6 +7,8 @@ import 'package:open_board/src/module/state/notifier_registry.dart';
 import 'package:open_board/src/module/state/state_synchronizer.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
 
+import '../helpers/protobuf_factories.dart';
+
 void main() {
   late NotifierRegistry registry;
   late StateSynchronizer synchronizer;
@@ -201,10 +203,7 @@ void main() {
           selectedThickness: selectedThickness,
         );
 
-        expect(
-          modeNotifier.state.allowedPointersMode,
-          ScribblePointerMode.all,
-        );
+        expect(modeNotifier.state.allowedPointersMode, ScribblePointerMode.all);
       });
 
       test('penOnly 포인터 모드 시 penOnly가 설정된다', () {
@@ -225,6 +224,65 @@ void main() {
           modeNotifier.state.allowedPointersMode,
           ScribblePointerMode.penOnly,
         );
+      });
+
+      // UB-108: 지우개가 활성(ink=erase)인 채로 손(팬)모드로 전환하면, 포인터
+      // exit 이벤트가 없어 지우개 커서(pointerPosition)가 잔상으로 남는다.
+      // mouseOnly 적용 시 대응 ScribbleNotifier 의 커서를 명시적으로 지운다.
+      test('mouseOnly(손/팬) 모드 전환 시 지우개 커서(pointerPosition)를 제거한다 (UB-108)', () {
+        final modeNotifier = ScribbleModeNotifier();
+        final scribbleNotifier = ScribbleNotifier();
+        registry.registerModeNotifier(modeNotifier);
+        registry.registerScribbleNotifier(scribbleNotifier);
+
+        // 이미 지우개 ink 인 상태로 만들어(전환-진입 경로의 setEraser 재설정을
+        // 피해) mouseOnly 커서 제거 경로만 검증한다.
+        modeNotifier.setEraser();
+        scribbleNotifier.state = Erasing(
+          scribble: createScribble(),
+          pointerPosition: createPoint(x: 42, y: 24),
+        );
+
+        selectedTool.value = .erase;
+        pointerMode.value = .mouseOnly;
+
+        synchronizer.applyToModeNotifier(
+          modeNotifier,
+          pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
+          selectedTool: selectedTool,
+          selectedColor: selectedColor,
+          selectedThickness: selectedThickness,
+        );
+
+        expect(scribbleNotifier.state.pointerPosition, isNull);
+      });
+
+      test('penOnly(펜) 모드 적용 시에는 지우개 커서를 유지한다 (과다 제거 방지)', () {
+        final modeNotifier = ScribbleModeNotifier();
+        final scribbleNotifier = ScribbleNotifier();
+        registry.registerModeNotifier(modeNotifier);
+        registry.registerScribbleNotifier(scribbleNotifier);
+
+        modeNotifier.setEraser();
+        scribbleNotifier.state = Erasing(
+          scribble: createScribble(),
+          pointerPosition: createPoint(x: 42, y: 24),
+        );
+
+        selectedTool.value = .erase;
+        pointerMode.value = .penOnly;
+
+        synchronizer.applyToModeNotifier(
+          modeNotifier,
+          pointerMode: pointerMode,
+          selectedShapeType: selectedShapeType,
+          selectedTool: selectedTool,
+          selectedColor: selectedColor,
+          selectedThickness: selectedThickness,
+        );
+
+        expect(scribbleNotifier.state.pointerPosition, isNotNull);
       });
     });
 

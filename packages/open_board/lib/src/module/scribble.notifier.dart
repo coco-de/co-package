@@ -291,6 +291,21 @@ class ScribbleNotifier extends ScribbleNotifierBase
     };
   }
 
+  /// 포인터 이벤트 없이(손/팬 모드 전환 등) 호출해 커서 잔상을 제거한다.
+  ///
+  /// `onPointerExit` 와 동일하게 `pointerPosition` 만 null 로 지워 지우개 커서
+  /// (회색 원)를 숨긴다. 손(팬)모드 전환처럼 포인터가 캔버스를 떠나지 않아 exit
+  /// 이벤트가 발생하지 않는 경우, 마지막 지우개 위치에 커서가 잔상으로 남는 문제를
+  /// 방지한다(kobic UB-108). 이미 커서가 없으면 no-op. 커서 표시는 히스토리
+  /// 대상이 아니므로 `temporaryValue` 로만 갱신한다.
+  void clearCursor() {
+    if (state.pointerPosition == null) return;
+    temporaryValue = switch (state) {
+      final Drawing s => s.copyWith(pointerPosition: null),
+      final Erasing s => s.copyWith(pointerPosition: null),
+    };
+  }
+
   /// Sets the current mode of allowed pointers to the given [ScribblePointerMode]
   // void setAllowedPointersMode(ScribblePointerMode allowedPointersMode) {
   //   temporaryValue = state.copyWith(

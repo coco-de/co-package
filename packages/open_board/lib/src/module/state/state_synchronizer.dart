@@ -37,8 +37,8 @@ class StateSynchronizer {
       ScribbleNotifier? correspondingScribbleNotifier;
 
       if (isEraserToOtherTool) {
-        correspondingScribbleNotifier =
-            _registry.findScribbleNotifierForModeNotifier(modeNotifier);
+        correspondingScribbleNotifier = _registry
+            .findScribbleNotifierForModeNotifier(modeNotifier);
         if (correspondingScribbleNotifier != null) {
           correspondingScribbleNotifier.setStrokeInk();
         }
@@ -47,6 +47,12 @@ class StateSynchronizer {
       // 포인터 모드 설정
       if (pointerMode.value == DrawingPointerMode.mouseOnly) {
         modeNotifier.setAllowedPointersMode(ScribblePointerMode.all);
+        // 손(팬)모드로 전환하면 포인터 exit 이벤트 없이 모드만 바뀌어 지우개
+        // 커서(pointerPosition)가 마지막 위치에 잔상으로 남는다(kobic UB-108).
+        // 포인터 이벤트 경로(onPointerExit)와 동일하게 커서를 명시적으로 지운다.
+        (correspondingScribbleNotifier ??= _registry
+                .findScribbleNotifierForModeNotifier(modeNotifier))
+            ?.clearCursor();
       } else {
         modeNotifier.setAllowedPointersMode(ScribblePointerMode.penOnly);
       }
@@ -94,8 +100,8 @@ class StateSynchronizer {
           modeNotifier.setStrokeWidth(currentThickness);
 
           if (beforeState.inkGroupInfo.selectedInk != 'erase') {
-            correspondingScribbleNotifier =
-                _registry.findScribbleNotifierForModeNotifier(modeNotifier);
+            correspondingScribbleNotifier = _registry
+                .findScribbleNotifierForModeNotifier(modeNotifier);
             if (correspondingScribbleNotifier != null) {
               correspondingScribbleNotifier.setEraser();
             }

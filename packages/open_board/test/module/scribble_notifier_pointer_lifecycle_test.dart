@@ -350,4 +350,32 @@ void main() {
       expect(notifier.currentScribble.strokes, isEmpty);
     });
   });
+
+  // 5. 손(팬)모드 전환처럼 포인터 exit 이벤트 없이 커서를 숨겨야 하는 경우,
+  //    clearCursor 로 pointerPosition 잔상을 제거한다 (kobic UB-108).
+  group('clearCursor (UB-108 손/팬 모드 커서 잔상)', () {
+    test('Erasing 상태의 pointerPosition을 제거한다', () {
+      final notifier = ScribbleNotifier();
+      notifier.state = Erasing(
+        scribble: createScribble(),
+        pointerPosition: createPoint(x: 10, y: 20),
+      );
+
+      notifier.clearCursor();
+
+      expect(notifier.state.pointerPosition, isNull);
+      expect(notifier.state, isA<Erasing>());
+    });
+
+    test('pointerPosition이 이미 없으면 상태를 바꾸지 않는다 (no-op)', () {
+      final notifier = ScribbleNotifier();
+      notifier.state = Erasing(scribble: createScribble());
+      final before = notifier.state;
+
+      notifier.clearCursor();
+
+      expect(notifier.state.pointerPosition, isNull);
+      expect(identical(notifier.state, before), isTrue);
+    });
+  });
 }
