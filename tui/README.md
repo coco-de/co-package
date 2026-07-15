@@ -20,19 +20,39 @@ GitHub 조회는 `gh` CLI, 등록/정리는 이 레포의 [`scripts/`](../script
  ↑↓ 이동 · r 새로고침 · a 등록 · d 해제 · s 서비스 시작/중지 · c 정리(dry) · C 정리 · g 스코프 · ? 도움말 · q 종료
 ```
 
+## 설치
+
+레포를 clone하지 않고 git 소스에서 바로 전역 설치하는 게 가장 빠릅니다:
+
+```bash
+dart pub global activate --source git https://github.com/coco-de/co-arc.git --git-path tui
+coarc
+```
+
+`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령이 바로 실행됩니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다.
+
+이미 레포를 clone해뒀다면 로컬 경로로 설치해도 됩니다:
+
+```bash
+cd tui
+dart pub global activate --source path .
+coarc
+```
+
 ## 실행
+
+```bash
+coarc                        # 마지막 스코프 기억 (기본: org coco-de)
+coarc --repo coco-de/<repo>  # repo 스코프
+coarc list                   # TUI 없이 목록만 출력
+```
+
+레포 안에서 설치 없이 바로 실행하려면(개발 중 등):
 
 ```bash
 cd tui
 dart pub get
-
-dart run coarc_tui:coarc                        # 마지막 스코프 기억 (기본: org coco-de)
-dart run coarc_tui:coarc --repo coco-de/<repo>  # repo 스코프
-dart run coarc_tui:coarc list                   # TUI 없이 목록만 출력
-
-# 전역 설치
-dart pub global activate --source path .
-coarc
+dart run coarc_tui:coarc
 ```
 
 ## 사전 준비

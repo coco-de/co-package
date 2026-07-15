@@ -26,11 +26,23 @@
 
 사전 준비물과 상세 절차는 [docs/self-hosted-runner.md](docs/self-hosted-runner.md) 런북을 따르세요.
 
-### 2. 러너 연결 확인
+### 2. (선택) TUI로 관리하기
+
+레포를 clone하지 않고 바로 전역 설치할 수 있습니다:
+
+```bash
+dart pub global activate --source git https://github.com/coco-de/co-arc.git --git-path tui
+coarc                     # org coco-de 스코프로 실행 (러너 목록·등록·해제·서비스 제어)
+coarc list --org coco-de  # TUI 없이 목록만 스냅샷 출력
+```
+
+`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령을 바로 쓸 수 있습니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다. 자세한 키/옵션은 [`tui/README.md`](tui/README.md) 참고.
+
+### 3. 러너 연결 확인
 
 레포의 **Actions → Runner Smoke Test → Run workflow** 를 실행하면 러너에 잡이 배정되고 Dart 스택 버전이 출력됩니다.
 
-### 3. 서비스 레포에서 공용 CI 사용
+### 4. 서비스 레포에서 공용 CI 사용
 
 서비스 레포의 `.github/workflows/ci.yml`:
 
