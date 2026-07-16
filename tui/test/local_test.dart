@@ -45,4 +45,56 @@ void main() {
       );
     });
   });
+
+  group('LocalRunner.listenerRunningIn', () {
+    const svc = '99170 /Users/me/actions/action-01/bin/Runner.Listener run '
+        '--startuptype service';
+    const foreground = '92948 /Users/me/actions/action-02/bin/Runner.Listener '
+        'run';
+
+    test('이 러너의 listener가 떠 있으면 true (launchd)', () {
+      expect(
+        LocalRunner.listenerRunningIn('/Users/me/actions/action-01', svc),
+        isTrue,
+      );
+    });
+
+    test('이 러너의 listener가 떠 있으면 true (포그라운드 ./run.sh)', () {
+      expect(
+        LocalRunner.listenerRunningIn('/Users/me/actions/action-02',
+            '$svc\n$foreground'),
+        isTrue,
+      );
+    });
+
+    test('다른 러너의 listener만 떠 있으면 false — 이게 s 키가 stop을 '
+        '잘못 실행하던 원인', () {
+      expect(
+        LocalRunner.listenerRunningIn('/Users/me/actions/action-99', svc),
+        isFalse,
+      );
+    });
+
+    test('이름이 접두사로 겹치는 러너의 listener를 제 것으로 세지 않는다', () {
+      const listener10 = '1 /Users/me/actions/action-10/bin/Runner.Listener run';
+      expect(
+        LocalRunner.listenerRunningIn('/Users/me/actions/action-1', listener10),
+        isFalse,
+      );
+    });
+
+    test('아무 listener도 없으면 false', () {
+      expect(
+        LocalRunner.listenerRunningIn('/Users/me/actions/action-01', ''),
+        isFalse,
+      );
+    });
+
+    test('끝 슬래시가 붙은 설치 경로도 매칭된다', () {
+      expect(
+        LocalRunner.listenerRunningIn('/Users/me/actions/action-01/', svc),
+        isTrue,
+      );
+    });
+  });
 }

@@ -20,7 +20,8 @@ final class LocalStatus {
   final String? agentName;
   final String? gitHubUrl;
 
-  /// Runner.Listener 프로세스가 떠 있는지.
+  /// 이 러너([dir])의 Runner.Listener 프로세스가 떠 있는지 (다른 러너의
+  /// listener는 세지 않는다 — [LocalRunner.listenerRunningIn] 참고).
   final bool listenerRunning;
 
   /// launchd 서비스(plist)가 설치돼 있는지.
@@ -78,8 +79,11 @@ final class LocalRunner {
       } catch (_) {}
     }
 
-    final pgrep = await Process.run('pgrep', ['-f', 'Runner.Listener']);
-    final listenerRunning = pgrep.exitCode == 0;
+    // 머신 전역이 아니라 이 러너([dir])의 listener만 본다 — 이유는
+    // [listenerRunningIn] 참고.
+    final pgrep = await Process.run('pgrep', ['-lf', 'Runner.Listener']);
+    final listenerRunning =
+        pgrep.exitCode == 0 && listenerRunningIn(dir, pgrep.stdout as String);
 
     // 이 러너(agentName)의 plist만 확인한다 — 파일명 접두사(actions.runner.)만
     // 보면 한 머신에 여러 러너를 띄운 멀티 인스턴스 구성(docs/self-hosted-runner.md
@@ -118,11 +122,40 @@ final class LocalRunner {
     );
   }
 
+  /// `pgrep -lf Runner.Listener` 출력([pgrepOutput])에 [dir]에 설치된 러너의
+  /// listener가 있는지.
+  ///
+  /// 머신 전체에서 `Runner.Listener` 프로세스의 존재만 보면, 한 머신에 여러
+  /// 러너를 띄운 구성(docs/self-hosted-runner.md "여러 인스턴스 운영")에서 다른
+  /// 러너의 listener를 이 러너의 것으로 착각한다. 그러면 [svcSubcommands]가 아직
+  /// 떠 있지도 않은 러너에 `stop`을 실행해(`not installed` / `Unload failed`)
+  /// 정작 필요한 `install`+`start`로 넘어가지 못한다.
+  ///
+  /// `run.sh`(run-helper.sh)와 launchd 서비스 모두 listener를
+  /// `<설치경로>/bin/Runner.Listener` 절대경로로 실행하므로 이 경로로 매칭한다.
+  /// `/bin/Runner.Listener`까지 붙여야 `action-1`이 `action-10`의 listener에
+  /// 걸리지 않는다.
+  static bool listenerRunningIn(String dir, String pgrepOutput) {
+    final needle = '${_canonical(dir)}/bin/Runner.Listener';
+    return pgrepOutput.split('\n').any((line) => line.contains(needle));
+  }
+
+  /// pgrep 출력의 절대경로와 비교할 수 있도록 [dir]을 정규화한다 (심볼릭 링크
+  /// 해석 → 실패 시 절대경로 + 끝 슬래시 제거).
+  static String _canonical(String dir) {
+    try {
+      return Directory(dir).resolveSymbolicLinksSync();
+    } catch (_) {
+      final abs = Directory(dir).absolute.path;
+      return abs.length > 1 ? abs.replaceAll(RegExp(r'/+$'), '') : abs;
+    }
+  }
+
   /// `s` 키를 눌렀을 때 실행할 `svc.sh` 서브커맨드 시퀀스를 결정한다.
   ///
   /// [LocalStatus.listenerRunning]을 최우선으로 확인한다 — launchd 서비스든
-  /// `./run.sh` 포그라운드든 이미 Runner.Listener가 떠 있다면 무조건 `stop`
-  /// 한다. 여기서 `svcInstalled`가 false라고 해서 바로 `install`+`start`를
+  /// `./run.sh` 포그라운드든 이 러너의 Runner.Listener가 이미 떠 있다면 무조건
+  /// `stop`한다. 여기서 `svcInstalled`가 false라고 해서 바로 `install`+`start`를
   /// 실행하면, 포그라운드로 띄워둔 러너가 아직 살아있는 상태에서 launchd가
   /// 두 번째 Runner.Listener를 띄워 같은 러너 등록/`_work` 디렉토리를 두
   /// 프로세스가 동시에 건드리게 된다.
