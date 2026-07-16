@@ -231,6 +231,13 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
     // 🖊️ 손모드 그리기 상태 추적 (스크롤 제어용)
     bool _isHandModeDrawingActive = false;
 
+    /// 🖐️ 팜-먼저 스왑 최소 스트로크 나이 (kobic UB-219 2차).
+    ///
+    /// 진행 중 스트로크가 이 시간 이상 "정지"해 있어야 팜 추정으로 스왑한다.
+    /// 필기를 막 시작한(100ms 미만) 진짜 획에 팜이 뒤늦게 닿는 케이스는
+    /// 기존 #232 팜 마킹으로 처리해 오스왑을 방지한다.
+    static const Duration kPalmSwapMinStrokeAge = Duration(milliseconds: 100);
+
     // 🆕 사용자 상호작용 감지 및 초기 피팅 스냅 제어 플래그
     bool _hasUserInteracted = false;
     Size? _lastAppliedBaseContentSize;
@@ -1242,6 +1249,9 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
             InkModes.pencil,
             InkModes.marker,
             InkModes.fixedPen,
+            // 🖐️ kobic UB-219 2차: uniformPen 누락 시 균일펜으로 그리는
+            // 동안에도 IV 제스처가 열려 획 시작부가 pan/scale 에 뺏겼다.
+            InkModes.uniformPen,
             InkModes.erase,
             InkModes.shape,
             InkModes.lasso,
@@ -1260,6 +1270,10 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         InkModes.pen,
         InkModes.pencil,
         InkModes.marker,
+        // 🖐️ kobic UB-219 2차: fixedPen/uniformPen 누락으로 스타일러스로
+        // 두 도구를 그리는 동안 IV 제스처가 열려 있던 동일 계열 결함 수정.
+        InkModes.fixedPen,
+        InkModes.uniformPen,
         InkModes.erase,
         InkModes.shape,
         InkModes.lasso,
@@ -1467,6 +1481,58 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       }
     }
 
+    /// 🖐️ 팜-먼저 스왑 판정·수행 (kobic UB-219 2차).
+    ///
+    /// 손모드 필기 플래그가 켜진 상태에서 새 터치가 도착했을 때, 진행 중인
+    /// 스트로크가 "사실상 정지한 잠정 획"(팜 추정)이면:
+    ///   1. 기존 소유 포인터를 팜으로 강등(markPalmIgnored)하고
+    ///   2. 잠정 라인을 커밋 없이 폐기(discardActiveLine)한 뒤
+    ///   3. 이 새 터치를 필기 포인터로 즉시 승격(_processPointerDown)한다.
+    ///
+    /// 판정 조건 (모두 만족해야 스왑):
+    ///   - Drawing 상태 + 단일 소유 포인터 + activeLine 존재
+    ///     (지우개(Erasing)는 지운 내용을 복구할 수 없어 제외)
+    ///   - 스트로크 시작 후 [kPalmSwapMinStrokeAge] 이상 경과 — 필기를 막
+    ///     시작한 직후 팜이 뒤늦게 닿는 반대 케이스(필기-먼저)는 기존
+    ///     팜 마킹 동작(#232)으로 보존하기 위한 최소 나이 가드.
+    ///   - 첫 점 대비 모든 점의 이탈이 [kTouchSlop] 이내 — 실제로 그리는
+    ///     중인 획(이동 중)은 절대 스왑하지 않는다. activeLine 좌표는 콘텐츠
+    ///     좌표계라 줌 배율에 따라 화면상 슬롭과 오차가 있지만, 판정 목적
+    ///     (정지 vs 이동 구분)에는 근사로 충분하다.
+    ///
+    /// kTouchDelay(30ms) 지연 없이 즉시 시작하는 이유: 이 분기는 팜+필기
+    /// 의도가 이미 확정된 상황이라 두 번째 손가락(핀치줌) 대기가 무의미하다.
+    bool _trySwapProvisionalPalmStroke(PointerDownEvent event) {
+      final state = widget.notifier.currentState;
+      if (state is! Drawing) return false;
+      final owners = state.activePointerIds;
+      if (owners.length != 1) return false;
+      final activeLine = state.activeLine;
+      if (activeLine == null || activeLine.points.isEmpty) return false;
+
+      final createdAt = DateTime.tryParse(activeLine.createdAt);
+      if (createdAt == null) return false;
+      if (DateTime.now().difference(createdAt) < kPalmSwapMinStrokeAge) {
+        return false;
+      }
+
+      final first = activeLine.points.first;
+      for (final point in activeLine.points) {
+        final dx = point.x - first.x;
+        final dy = point.y - first.y;
+        if (dx * dx + dy * dy > kTouchSlop * kTouchSlop) {
+          return false;
+        }
+      }
+
+      final palmPointerId = owners.first;
+      pointerHandler.markPalmIgnored(palmPointerId);
+      widget.notifier.discardActiveLine(palmPointerId);
+      _endHandModeDrawing();
+      _processPointerDown(event);
+      return true;
+    }
+
     /// 🚫 현재 필기 중인지 종합 확인 (페이지 넘김 제스처 차단용)
     /// 🚫 현재 필기 중인지 종합 확인 (페이지 넘김 제스처 차단용)
     bool _isCurrentlyDrawing() {
@@ -1508,6 +1574,10 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         InkModes.pencil,
         InkModes.marker,
         InkModes.fixedPen,
+        // 🖐️ kobic UB-219 2차: uniformPen 누락으로 손모드+균일펜 필기 시
+        // _startHandModeDrawing() 이 호출되지 않아 팜 리젝션이 발동하지 않고
+        // 필기 중 팜 접촉에서 획이 끊기던 결함 수정.
+        InkModes.uniformPen,
         InkModes.erase, // 지우개도 포함
         InkModes.shape, // 도형 그리기도 포함
         InkModes.lasso, // 올가미도 포함
@@ -1543,7 +1613,10 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
             }
 
             // 멀티터치 시 그리기 차단 (스크롤 우선)
-            if (pointerHandler.isMultiTouch()) {
+            // 🖐️ 팜 제외 "유효" 멀티터치로 판정 (kobic UB-219 2차) — 팜이
+            // 마킹된 채 화면에 남아 있어도 실제 필기 손가락 1개면 그리기를
+            // 허용한다. 팜 마킹이 없으면 isMultiTouch() 와 동치(회귀 없음).
+            if (pointerHandler.isEffectiveMultiTouch) {
               return false;
             }
 
@@ -1562,6 +1635,39 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       if (!widget.isScribbleEnable) return;
 
       if (event.kind == ui.PointerDeviceKind.touch) {
+        // 🩹 고착 자가치유 (kobic UB-219 2차): up/cancel 유실로 잔존한 상태를
+        // 새 down 시점에 정리한다. 정리하지 않으면 아래 팜 마킹·지연 시작
+        // 게이트가 stale 상태를 근거로 이후 모든 손가락 필기를 영구 차단한다.
+        //
+        // (a) notifier 소유권 고착: 화면에 다른 터치가 없는 첫 down 인데
+        //     activePointerIds 가 남아 있으면(멀티터치 중 up 스킵,
+        //     isScribbleEnable 토글 등) 소유권을 정리한다. 스타일러스/마우스가
+        //     실제로 그리는 중일 수 있는 경우(비터치 포인터 + 드래그 중)는
+        //     진행 중 획을 보호하기 위해 발동하지 않는다 — isDragging 단독
+        //     가드는 쓸 수 없다: up 유실 시 isDragging 자체도 stale true 로
+        //     남아 자가치유를 영구히 막기 때문이다.
+        final nonTouchMayBeDrawing =
+            pointerHandler.isDragging &&
+            pointerHandler.currentPointerKind != null &&
+            pointerHandler.currentPointerKind != ui.PointerDeviceKind.touch;
+        if (pointerHandler.activeTouchCount == 0 &&
+            !nonTouchMayBeDrawing &&
+            widget.notifier.currentState.activePointerIds.isNotEmpty) {
+          widget.notifier.releaseStalePointers();
+          // stale 드래그 플래그도 함께 정리 — 남겨두면 _isPenDrawing 판정이
+          // 그리기 중으로 오인해 IV 제스처가 계속 차단된다.
+          pointerHandler.isDragging = false;
+        }
+        // (b) 손모드 플래그 고착: 스트로크 소유 포인터가 없는데 플래그만 남아
+        //     있으면 up/cancel 유실 잔재 — 남겨두면 이 down 부터 모든 손가락이
+        //     팜으로 오인·무시되어 손모드 필기가 완전히 죽는다. 스타일러스가
+        //     그리는 중이면 (a)가 소유권을 비우지 않으므로 여기도 발동하지
+        //     않는다 (플래그는 touch/mouse 필기에서만 세팅된다).
+        if (_isHandModeDrawingActive &&
+            widget.notifier.currentState.activePointerIds.isEmpty) {
+          _endHandModeDrawing();
+        }
+
         pointerHandler.incrementTouch();
         _pendingTouchDowns.add(event.pointer);
 
@@ -1572,12 +1678,24 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         // 유지한다. 필기가 시작되기 전(스트로크 미시작) 상태에서 동시에 닿은
         // 두 번째 터치만 아래 분기에서 기존처럼 핀치줌/팬으로 인정된다.
         if (_isHandModeDrawingActive) {
+          // 🖐️ 팜-먼저 스왑 (kobic UB-219 2차): 팜이 필기 손가락보다 먼저
+          // 닿으면 30ms 지연 후 팜이 잠정 스트로크를 시작해버려, 뒤따라 닿은
+          // 진짜 필기 손가락이 팜으로 오인·무시됐다. 진행 중 스트로크가
+          // "사실상 정지한 잠정 획"(시작 후 100ms+ 경과·터치 슬롭 이내)이면
+          // 그 포인터를 팜으로 강등하고 이 새 터치를 필기 포인터로 승격한다.
+          if (_trySwapProvisionalPalmStroke(event)) {
+            return;
+          }
           pointerHandler.markPalmIgnored(event.pointer);
           return;
         }
 
         // 🖊️ 멀티터치 감지 시 InteractiveViewer 상태 갱신 (핀치 줌/드래그 허용)
-        if (pointerHandler.isMultiTouch()) {
+        // 🖐️ 팜 제외 "유효" 멀티터치로 판정 (kobic UB-219 2차): 팜을 얹은 채
+        // 획을 뗐다 다시 시작하면(연속 획 필기) 팜이 하드웨어 카운트에 남아
+        // isMultiTouch() 기준으로는 두 번째 획부터 전부 핀치줌 대기로 소비돼
+        // 그려지지 않았다. 팜 마킹이 없으면 isMultiTouch() 와 동치(회귀 없음).
+        if (pointerHandler.isEffectiveMultiTouch) {
           setState(
             () {},
           ); // InteractiveViewer 상태 갱신 (panEnabled/scaleEnabled 업데이트)
@@ -1591,7 +1709,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
           if (mounted &&
               _pendingTouchDowns.contains(event.pointer) &&
               widget.notifier.currentState.activePointerIds.isEmpty &&
-              !pointerHandler.isMultiTouch()) {
+              !pointerHandler.isEffectiveMultiTouch) {
             _processPointerDown(event);
           }
         });

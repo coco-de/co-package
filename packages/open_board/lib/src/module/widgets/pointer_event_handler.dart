@@ -42,6 +42,13 @@ class PointerEventHandler {
   }
 
   ui.PointerDeviceKind? get currentPointerKind => _currentPointerKind;
+
+  /// 현재 화면에 닿아 있는 하드웨어 터치 포인터 수 (kobic UB-219 2차).
+  ///
+  /// 새 down 이벤트 처리 전에 "이 down 이전에 다른 터치가 없었는가"를
+  /// 판정해 up/cancel 유실로 잔존한 상태(고착)를 자가치유하는 데 쓴다.
+  int get activeTouchCount => _activeTouchCount;
+
   void incrementTouch() => _activeTouchCount++;
 
   void decrementTouch() =>

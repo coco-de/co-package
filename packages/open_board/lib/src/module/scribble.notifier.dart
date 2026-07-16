@@ -825,6 +825,51 @@ class ScribbleNotifier extends ScribbleNotifierBase
     }
   }
 
+  /// 진행 중인 활성 라인을 커밋 없이 폐기하고 [pointerId]의 소유권을 해제한다
+  /// (kobic UB-219 2차, 팜-먼저 리젝션).
+  ///
+  /// 손모드에서 팜이 필기 손가락보다 먼저 닿으면 팜이 잠정 스트로크를
+  /// 시작해버린다. 실제 필기 포인터로 교체(스왑)할 때 팜이 만든 라인이
+  /// 콘텐츠/히스토리에 남지 않도록 temporaryValue 로만 정리한다.
+  /// [onPointerCancel] 은 라인을 완성(커밋)하므로 이 용도에 쓸 수 없다.
+  void discardActiveLine(int pointerId) {
+    final s = state;
+    if (s is! Drawing) return;
+    _cancelStraighten();
+    // copyWith 는 activeLine: null 전달을 기존 값 유지로 병합하므로
+    // 생성자를 직접 사용해 activeLine 을 폐기한다.
+    temporaryValue = Drawing(
+      scribble: s.scribble,
+      activePointerIds: s.activePointerIds
+          .where((id) => id != pointerId)
+          .toList(),
+      selectedStrokeIds: s.selectedStrokeIds,
+    );
+  }
+
+  /// up/cancel 유실로 잔존한 포인터 소유권을 전부 정리한다
+  /// (kobic UB-219 2차, 고착 자가치유).
+  ///
+  /// 멀티터치 중 up 스킵·isScribbleEnable 토글 등으로 up/cancel 이 notifier
+  /// 까지 전달되지 않으면 activePointerIds 가 영구 잔류하여 이후 터치 필기가
+  /// 완전히 차단된다. 진행 중이던 활성 라인이 있으면 폐기하지 않고
+  /// 완성(커밋 대신 temporaryValue 보존)하여 이미 그려진 내용을 유지한다.
+  void releaseStalePointers() {
+    if (state.activePointerIds.isEmpty) return;
+    _cancelStraighten();
+    final finished = finishLineForState(state);
+    temporaryValue = switch (finished) {
+      final Drawing s => s.copyWith(
+        activePointerIds: const [],
+        pointerPosition: null,
+      ),
+      final Erasing s => s.copyWith(
+        activePointerIds: const [],
+        pointerPosition: null,
+      ),
+    };
+  }
+
   /// 지우개 제스처 종료 시 결과를 커밋한다.
   ///
   /// 제스처 동안 실제로 스트로크가 지워졌을 때만 히스토리에 push하여
