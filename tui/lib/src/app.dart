@@ -32,7 +32,12 @@ final class _RunnersFailedMsg extends Msg {
 }
 
 final class _LocalStatusMsg extends Msg {
-  _LocalStatusMsg(this.status);
+  _LocalStatusMsg(this.runnerName, this.status);
+
+  /// 조회 대상이었던 러너 이름(=조회를 낸 시점의 커서 러너). 목록이 비어
+  /// 대상이 없었으면 null. 응답이 도착했을 때 커서가 이미 다른 러너로
+  /// 옮겨갔는지 판별하는 데 쓴다.
+  final String? runnerName;
   final LocalStatus status;
 }
 
@@ -42,6 +47,11 @@ final class _LogMsg extends Msg {
 }
 
 final class _RefreshTickMsg extends Msg {}
+
+/// `s`로 시작한 svc.sh 시퀀스가 끝났음 — [AppModel.svcBusy]를 푸는 유일한
+/// 신호다. 상태 조회([_LocalStatusMsg])로 풀면 커서 이동이나 15초 자동 갱신이
+/// 실행 도중에 플래그를 풀어, 재진입 방지가 무력화된다.
+final class _SvcDoneMsg extends Msg {}
 
 final class _ScriptExitMsg extends Msg {
   _ScriptExitMsg(this.label, this.exitCode);
@@ -71,6 +81,7 @@ final class AppModel extends TeaModel {
     this.loading = true,
     this.error,
     LocalStatus? localStatus,
+    this.localStatusFor,
     this.log = const [],
     this.mode = _Mode.normal,
     this.input = '',
@@ -91,7 +102,14 @@ final class AppModel extends TeaModel {
   final SpinnerModel spinner;
   final bool loading;
   final String? error;
+
+  /// 커서가 가리키는 러너의 로컬 상태 — 이 머신에 설치돼 있지 않으면 빈 상태.
   final LocalStatus localStatus;
+
+  /// [localStatus]가 설명하는 러너 이름. 커서를 옮긴 직후처럼 이 값이 커서
+  /// 러너와 어긋나 있으면 [_localLine]이 이전 러너의 상태를 새 러너 이름 옆에
+  /// 붙여 보여주지 않는다 — 그 착시가 이 화면의 오해를 만든다.
+  final String? localStatusFor;
   final List<String> log;
   final _Mode mode;
   final String input;
@@ -105,7 +123,7 @@ final class AppModel extends TeaModel {
 
   /// `s` 키로 시작한 svc.sh 시퀀스가 아직 끝나지 않았는지. 끝나기 전에
   /// 'install'을 두 번 겹쳐 실행하는 걸 막는 재진입 방지 플래그 —
-  /// [_LocalStatusMsg]를 받으면(시퀀스 마지막 단계) 다시 false로 풀린다.
+  /// 시퀀스 마지막의 [_SvcDoneMsg]로만 풀린다.
   final bool svcBusy;
 
   AppModel copyWith({
@@ -118,6 +136,8 @@ final class AppModel extends TeaModel {
     String? error,
     bool clearError = false,
     LocalStatus? localStatus,
+    String? localStatusFor,
+    bool clearLocalStatusFor = false,
     List<String>? log,
     _Mode? mode,
     String? input,
@@ -138,6 +158,9 @@ final class AppModel extends TeaModel {
         loading: loading ?? this.loading,
         error: clearError ? null : (error ?? this.error),
         localStatus: localStatus ?? this.localStatus,
+        localStatusFor: clearLocalStatusFor
+            ? null
+            : (localStatusFor ?? this.localStatusFor),
         log: log ?? this.log,
         mode: mode ?? this.mode,
         input: input ?? this.input,
@@ -152,6 +175,15 @@ final class AppModel extends TeaModel {
   RunnerInfo? get selected => runners.isEmpty || table.cursor >= runners.length
       ? null
       : runners[table.cursor];
+
+  /// 커서 러너가 이 머신에 설치돼 있으면 그 설치 경로, 아니면 null.
+  ///
+  /// 로컬 전용 조작(`s`·`c`/`C`·`d`)이 공유하는 관문이다. 목록에는 다른
+  /// 머신의 러너도 함께 뜨므로, 여기서 null이면 아무 명령도 실행하지 않는다.
+  String? get selectedLocalDir {
+    final name = selected?.name;
+    return name == null ? null : local.findDirFor(name);
+  }
 
   // ─── 테이블 구성 ──────────────────────────────────────────────────────────
 
@@ -215,7 +247,25 @@ final class AppModel extends TeaModel {
 
   Cmd _fetchRunners() => _fetchRunnersFor(scope);
 
-  Cmd _fetchLocal() => () async => _LocalStatusMsg(await local.status());
+  /// 커서 러너의 로컬 상태를 조회한다 (하단 '로컬:' 줄). 이 머신에 설치돼
+  /// 있지 않으면 조회 없이 빈 상태를 돌려준다 — [_localLine]이 '이 머신에
+  /// 설치되지 않음'으로 표시한다.
+  ///
+  /// 대상은 이 커맨드를 만드는 시점의 커서 러너로 고정된다. 응답이 늦게
+  /// 도착했을 때 커서가 어디로 옮겨갔는지는 [_LocalStatusMsg.runnerName]으로
+  /// 판별한다.
+  Cmd _fetchLocal() {
+    final name = selected?.name;
+    if (name == null) {
+      return () async => _LocalStatusMsg(null, LocalStatus.empty(local.dir));
+    }
+    final dir = local.findDirFor(name);
+    if (dir == null) {
+      return () async =>
+          _LocalStatusMsg(name, LocalStatus.empty(local.dirFor(name)));
+    }
+    return () async => _LocalStatusMsg(name, await local.withDir(dir).status());
+  }
 
   Cmd _refreshTimer() =>
       tick(const Duration(seconds: 15), (_) => _RefreshTickMsg());
@@ -239,17 +289,26 @@ final class AppModel extends TeaModel {
         }
       };
 
-  /// `svc.sh` 서브커맨드를 순서대로 실행하되, 한 단계가 실패하면 이후 단계는
-  /// 건너뛴다. (단순히 각 서브커맨드를 개별 `_runLogged`로 순차 실행하면
-  /// `install`이 실패해도 `start`가 그대로 이어져 실패해, 로그에 관련 없어
-  /// 보이는 두 번째 에러가 쌓여 실제 원인이 묻힌다.)
-  Cmd _runSvcSequence(List<String> subcommands) => () async {
+  /// [dir]에 설치된 러너의 서비스를 토글한다 (`s`).
+  ///
+  /// 실행할 서브커맨드는 화면의 [localStatus]가 아니라 이 커맨드 안에서 상태를
+  /// 새로 조회해 정한다. [localStatus]는 15초 주기 폴링 결과라, 커서를 막
+  /// 옮겼거나 그 사이 러너가 죽었으면 stop/start를 거꾸로 실행하게 된다.
+  ///
+  /// 한 단계가 실패하면 이후 단계는 건너뛴다. (단순히 각 서브커맨드를 개별
+  /// `_runLogged`로 순차 실행하면 `install`이 실패해도 `start`가 그대로 이어져
+  /// 실패해, 로그에 관련 없어 보이는 두 번째 에러가 쌓여 실제 원인이 묻힌다.)
+  Cmd _toggleSvcIn(String dir) => () async {
+        final status = await local.withDir(dir).status();
+        final subcommands = LocalRunner.svcSubcommands(status);
         final lines = <String>[];
         for (final sub in subcommands) {
-          lines.add('\$ svc.sh $sub');
+          // 어느 러너에 실행했는지 로그에 남긴다 — 여러 러너가 뜬 목록에서
+          // 명령만 찍히면 대상을 되짚을 수 없다.
+          lines.add('\$ svc.sh $sub  (${status.agentName ?? dir})');
           try {
             final r = await Process.run('./svc.sh', [sub],
-                workingDirectory: local.dir, runInShell: false);
+                workingDirectory: dir, runInShell: false);
             lines
               ..addAll((r.stdout as String).trim().split('\n'))
               ..addAll((r.stderr as String).trim().split('\n'))
@@ -281,16 +340,12 @@ final class AppModel extends TeaModel {
         }
       };
 
-  /// 해제 대상이 이 머신에 구성된 로컬 러너인지 — `.runner`의 agentName과
-  /// GitHub 러너 이름이 일치하면 같은 러너로 본다.
-  bool _isLocalRunner(RunnerInfo r) =>
-      localStatus.configured && localStatus.agentName == r.name;
-
-  /// 로컬 러너 해제를 준비한다. GitHub API만으로 지우면(=`_deleteRunner`)
-  /// 로컬 `.runner`/`.credentials`가 남아, 이후 register-runner.sh가 이미
-  /// 등록된 러너로 오인해 재등록을 건너뛴다. 로컬 러너는 remove-runner.sh로
-  /// 서비스 중지 + GitHub 해제 + 로컬 구성 정리까지 한 번에 처리한다.
-  (List<String> logLines, Cmd? cmd) _removeLocalScript() {
+  /// [dir]에 설치된 로컬 러너의 해제를 준비한다. GitHub API만으로 지우면
+  /// (=`_deleteRunner`) 로컬 `.runner`/`.credentials`가 남아, 이후
+  /// register-runner.sh가 이미 등록된 러너로 오인해 재등록을 건너뛴다. 로컬
+  /// 러너는 remove-runner.sh로 서비스 중지 + GitHub 해제 + 로컬 구성 정리까지
+  /// 한 번에 처리한다.
+  (List<String> logLines, Cmd? cmd) _removeLocalScript(String dir) {
     final script = LocalRunner.findScript('remove-runner.sh');
     if (script == null) {
       return (
@@ -298,7 +353,7 @@ final class AppModel extends TeaModel {
         null,
       );
     }
-    final args = removeArgs(scope, local.dir);
+    final args = removeArgs(scope, dir);
     return (
       ['\$ remove-runner.sh ${args.join(' ')}'],
       execProcess(
@@ -456,23 +511,42 @@ final class AppModel extends TeaModel {
       case _RunnersLoadedMsg(:final scope, :final runners):
         // 스코프 전환 직전에 나간 요청의 늦은 응답은 무시
         if (scope.apiBase != this.scope.apiBase) return (this, null);
+        final next = copyWith(
+          runners: runners,
+          table: _buildTable(runners, width, height, cursor: table.cursor),
+          loading: false,
+          clearError: true,
+          lastUpdated: DateTime.now(),
+        );
+        // 첫 로드(목록이 비어 커서 러너가 없던 시점)나 목록 변동으로 커서
+        // 러너가 바뀌었으면 그 러너의 로컬 상태를 조회한다.
         return (
-          copyWith(
-            runners: runners,
-            table: _buildTable(runners, width, height, cursor: table.cursor),
-            loading: false,
-            clearError: true,
-            lastUpdated: DateTime.now(),
-          ),
-          null,
+          next,
+          next.selected?.name != localStatusFor ? next._fetchLocal() : null,
         );
 
       case _RunnersFailedMsg(:final scope, :final error):
         if (scope.apiBase != this.scope.apiBase) return (this, null);
         return (copyWith(loading: false, error: error), null);
 
-      case _LocalStatusMsg(:final status):
-        return (copyWith(localStatus: status, svcBusy: false), null);
+      case _LocalStatusMsg(:final runnerName, :final status):
+        // 커서가 이미 다른 러너로 옮겨간 뒤 도착한 늦은 응답은 버린다 — 그
+        // 러너의 조회는 커서 이동 시점에 따로 나가 있다.
+        if (runnerName != selected?.name) return (this, null);
+        return (
+          copyWith(
+            localStatus: status,
+            localStatusFor: runnerName,
+            // 대상 러너가 없었으면(목록이 빈 스코프) 이전 러너 이름을 남기지
+            // 않는다. 남겨두면 그 러너로 돌아왔을 때 재조회 없이 빈 상태를
+            // 그 이름에 붙여 '설치되지 않음'으로 오표시한다.
+            clearLocalStatusFor: runnerName == null,
+          ),
+          null,
+        );
+
+      case _SvcDoneMsg():
+        return (copyWith(svcBusy: false), null);
 
       case _LogMsg(:final lines):
         final next = [...log, ...lines];
@@ -526,8 +600,11 @@ final class AppModel extends TeaModel {
         if (key == 'y' && target != null) {
           // 이 머신의 로컬 러너면 API 삭제 대신 remove-runner.sh로 로컬 구성까지
           // 정리한다 (GitHub만 지우면 stale .runner가 남아 재등록이 막힌다).
-          if (_isLocalRunner(target)) {
-            final (lines, cmd) = _removeLocalScript();
+          // 추적 중인 러너인지가 아니라 커서 러너의 설치 여부로 판단한다 —
+          // 이 머신의 러너라도 추적 대상이 아니면 로컬 정리를 건너뛰게 된다.
+          final localDir = selectedLocalDir;
+          if (localDir != null) {
+            final (lines, cmd) = _removeLocalScript(localDir);
             return (
               copyWith(
                 mode: _Mode.normal,
@@ -716,31 +793,37 @@ final class AppModel extends TeaModel {
         );
 
       case 's':
-        if (!localStatus.configured) {
+        if (selected == null) return (this, null);
+        if (svcBusy) {
           return (
-            copyWith(log: [...log, '로컬 러너가 구성돼 있지 않습니다: ${local.dir} (a로 등록)']),
+            copyWith(log: [...log, '이전 svc.sh 실행이 끝나기를 기다리는 중입니다']),
             null,
           );
         }
-        if (svcBusy) return (this, null);
-        final subcommands = LocalRunner.svcSubcommands(localStatus);
+        final svcDir = selectedLocalDir;
+        if (svcDir == null) return (copyWith(log: _notLocalLog()), null);
         return (
           copyWith(svcBusy: true),
           sequence([
-            _runSvcSequence(subcommands),
+            _toggleSvcIn(svcDir),
             _fetchLocal(),
+            // 반드시 시퀀스 마지막 — svcBusy는 이 신호로만 풀린다.
+            () async => _SvcDoneMsg(),
           ]),
         );
 
       case 'c':
       case 'C':
+        if (selected == null) return (this, null);
+        final cleanupDir = selectedLocalDir;
+        if (cleanupDir == null) return (copyWith(log: _notLocalLog()), null);
         final script = LocalRunner.findScript('cleanup-work.sh');
         if (script == null) {
           return (copyWith(log: [...log, 'cleanup-work.sh를 찾지 못했습니다']), null);
         }
         final args = [
           '--dir',
-          local.dir,
+          cleanupDir,
           if (key == 'c') '--dry-run',
         ];
         return (
@@ -753,8 +836,28 @@ final class AppModel extends TeaModel {
 
       default:
         final (next, cmd) = table.update(msg);
-        return (copyWith(table: next as TableModel), cmd);
+        final nextTable = next as TableModel;
+        final moved = nextTable.cursor != table.cursor;
+        final nextModel = copyWith(table: nextTable);
+        // 커서가 다른 러너로 옮겨갔으면 하단 '로컬:' 줄을 그 러너 기준으로
+        // 다시 조회한다 (조회는 새 커서 위치를 반영한 모델에서 만들어야 한다).
+        return (
+          nextModel,
+          moved ? batch([cmd, nextModel._fetchLocal()]) : cmd,
+        );
     }
+  }
+
+  /// 커서 러너가 이 머신 소속이 아닐 때 남길 로그. 기대한 설치 경로를 함께
+  /// 보여줘 왜 로컬이 아닌지 바로 확인할 수 있게 한다.
+  List<String> _notLocalLog() {
+    final r = selected;
+    if (r == null) return log;
+    return [
+      ...log,
+      '${r.name}은(는) 이 머신에 설치된 러너가 아닙니다 '
+          '(${local.dirFor(r.name)} 없음) — 해당 머신에서 실행하세요',
+    ];
   }
 
   // ─── 뷰 ──────────────────────────────────────────────────────────────────
@@ -803,13 +906,24 @@ final class AppModel extends TeaModel {
     return '$title$spin   $info';
   }
 
+  /// 커서 러너의 로컬 상태 줄. `s`·`c`/`C`·`d`가 대상으로 삼는 러너가 바로
+  /// 여기 표시된 러너다.
   String _localLine() {
+    final r = selected;
+    if (r == null) return ' 로컬: ${_fg(_gray).render('(러너 없음)')}';
+
+    final name = const Style().bold().render(r.name);
+    // 아직 이 러너의 상태를 조회하지 못했다면(커서 이동 직후) 이전 러너의
+    // 상태를 이 이름 옆에 붙이지 않는다.
+    if (localStatusFor != r.name) {
+      return ' 로컬: $name · ${_fg(_gray).render('확인 중…')}';
+    }
+
     final s = localStatus;
-    final parts = <String>[];
+    final parts = <String>[name];
     if (!s.configured) {
-      parts.add(_fg(_gray).render('구성 안 됨 (${s.dir})'));
+      parts.add(_fg(_gray).render('이 머신에 설치되지 않음'));
     } else {
-      parts.add(const Style().bold().render(s.agentName ?? '(이름 미상)'));
       parts.add(s.listenerRunning
           ? _fg(_green).render('listener 실행 중')
           : _fg(_red).render('listener 중지'));
@@ -832,7 +946,9 @@ final class AppModel extends TeaModel {
     switch (mode) {
       case _Mode.confirmDelete:
         final r = selected;
-        final howto = r != null && _isLocalRunner(r)
+        // 확인 문구와 실제 동작이 갈리지 않도록 실행부(_onKey의 confirmDelete)와
+        // 같은 기준으로 판단한다.
+        final howto = selectedLocalDir != null
             ? '이 머신에서 해제(서비스 중지 + 로컬 구성 정리)할까요?'
             : 'GitHub에서 해제할까요?';
         return _fg(_yellow)
@@ -899,11 +1015,16 @@ final class AppModel extends TeaModel {
       ('d', '선택한 러너를 GitHub에서 해제 (오프라인 러너만 가능)'),
       (
         's',
-        '로컬 러너 서비스 시작/중지 (svc.sh). 실행 중(launchd·포그라운드 무관)이면 '
-            'stop, 안 떠 있고 서비스 미설치(재부팅 등으로 사라졌거나 등록한 적 '
-            '없음)면 install 후 자동으로 start, 설치돼 있으면 start'
+        '선택 러너의 서비스 시작/중지 (svc.sh) — 이 머신에 설치된 러너만. '
+            '실행 중(launchd·포그라운드 무관)이면 stop, 안 떠 있고 서비스 '
+            '미설치(재부팅 등으로 사라졌거나 등록한 적 없음)면 install 후 '
+            '자동으로 start, 설치돼 있으면 start'
       ),
-      ('c / C', '_work 정리 — c는 dry-run, C는 실제 삭제 (scripts/cleanup-work.sh)'),
+      (
+        'c / C',
+        '선택 러너의 _work 정리 — c는 dry-run, C는 실제 삭제 '
+            '(scripts/cleanup-work.sh, 이 머신에 설치된 러너만)'
+      ),
       ('g', '스코프 전환 — org 이름(coco-de) 또는 owner/repo 입력'),
       ('q, ctrl+c', '종료'),
     ];

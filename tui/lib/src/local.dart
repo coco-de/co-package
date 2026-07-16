@@ -62,22 +62,47 @@ final class LocalRunner {
   /// [dir]만 새 경로로 바꾼 복제본 ([root]는 유지).
   LocalRunner withDir(String newDir) => LocalRunner(dir: newDir, root: root);
 
-  Future<LocalStatus> status() async {
-    String? agentName;
-    String? gitHubUrl;
-    var configured = false;
-
-    final runnerFile = File('$dir/.runner');
-    if (runnerFile.existsSync()) {
-      configured = true;
-      try {
-        var raw = runnerFile.readAsStringSync();
-        if (raw.startsWith('\uFEFF')) raw = raw.substring(1);
-        final json = jsonDecode(raw) as Map<String, dynamic>;
-        agentName = json['agentName'] as String?;
-        gitHubUrl = json['gitHubUrl'] as String?;
-      } catch (_) {}
+  /// [dir]\uC5D0 \uAD6C\uC131\uB41C \uB7EC\uB108\uC758 `.runner`(config.sh\uAC00 \uB0A8\uAE30\uB294 \uAD6C\uC131 \uD30C\uC77C)\uB97C \uC77D\uB294\uB2E4.
+  /// \uD30C\uC77C\uC774 \uC5C6\uC73C\uBA74(=\uBBF8\uAD6C\uC131) null, \uC788\uC9C0\uB9CC \uB0B4\uC6A9\uC774 \uAE68\uC84C\uC73C\uBA74 \uD544\uB4DC\uAC00 \uC804\uBD80 null\uC778
+  /// \uB808\uCF54\uB4DC \u2014 "\uAD6C\uC131\uB428 + \uC774\uB984 \uBBF8\uC0C1"\uACFC "\uBBF8\uAD6C\uC131"\uC744 \uAD6C\uBD84\uD55C\uB2E4.
+  static ({String? agentName, String? gitHubUrl})? readConfig(String dir) {
+    final file = File('$dir/.runner');
+    if (!file.existsSync()) return null;
+    try {
+      var raw = file.readAsStringSync();
+      if (raw.startsWith('\uFEFF')) raw = raw.substring(1);
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      return (
+        agentName: json['agentName'] as String?,
+        gitHubUrl: json['gitHubUrl'] as String?,
+      );
+    } catch (_) {
+      return (agentName: null, gitHubUrl: null);
     }
+  }
+
+  /// GitHub \uBAA9\uB85D\uC5D0 \uB72C [name] \uB7EC\uB108\uAC00 \uC774 \uBA38\uC2E0 \uC5B4\uB514\uC5D0 \uC124\uCE58\uB3FC \uC788\uB294\uC9C0 \uCC3E\uB294\uB2E4. \uC774
+  /// \uBA38\uC2E0\uC758 \uB7EC\uB108\uAC00 \uC544\uB2C8\uBA74 null.
+  ///
+  /// \uC774\uB984\uBCC4 \uB514\uB809\uD1A0\uB9AC(`<root>/<name>`)\uB97C \uBA3C\uC800 \uBCF4\uACE0, \uC5C6\uC73C\uBA74 \uD604\uC7AC \uCD94\uC801 \uC911\uC778
+  /// [dir]\uB3C4 \uD655\uC778\uD55C\uB2E4 \u2014 \uC774\uB984\uBCC4 \uC124\uCE58 \uADDC\uCE59\uC774 \uC0DD\uAE30\uAE30 \uC804\uC5D0 \uB4F1\uB85D\uB410\uAC70\uB098 `--dir`\uB85C
+  /// \uB2E4\uB978 \uACBD\uB85C\uB97C \uC9C0\uC815\uD55C \uB7EC\uB108\uB294 \uC774\uB984\uACFC \uACBD\uB85C\uAC00 \uB300\uC751\uD558\uC9C0 \uC54A\uAE30 \uB54C\uBB38\uC774\uB2E4.
+  ///
+  /// \uB514\uB809\uD1A0\uB9AC \uC874\uC7AC\uB9CC \uBCF4\uC9C0 \uC54A\uACE0 `.runner`\uC758 agentName\uC774 [name]\uACFC \uC77C\uCE58\uD558\uB294\uC9C0\uAE4C\uC9C0
+  /// \uD655\uC778\uD55C\uB2E4. \uAC19\uC740 \uACBD\uB85C\uC5D0 \uC774\uB984\uC774 \uB2E4\uB978 \uB7EC\uB108\uAC00 \uAD6C\uC131\uB3FC \uC788\uC744 \uC218 \uC788\uACE0, \uADF8 \uC0C1\uD0DC\uB85C
+  /// svc.sh\uB97C \uC2E4\uD589\uD558\uBA74 \uC5C9\uB6B1\uD55C \uB7EC\uB108\uB97C \uBA48\uCD94\uAC8C \uB41C\uB2E4.
+  String? findDirFor(String name) {
+    for (final candidate in <String>{dirFor(name), dir}) {
+      if (readConfig(candidate)?.agentName == name) return candidate;
+    }
+    return null;
+  }
+
+  Future<LocalStatus> status() async {
+    final config = readConfig(dir);
+    final configured = config != null;
+    final agentName = config?.agentName;
+    final gitHubUrl = config?.gitHubUrl;
 
     // 머신 전역이 아니라 이 러너([dir])의 listener만 본다 — 이유는
     // [listenerRunningIn] 참고.
@@ -96,9 +121,11 @@ final class LocalRunner {
       if (agents.existsSync()) {
         final names = agents.listSync().map((e) => e.path.split('/').last);
         svcInstalled = agentName != null
-            ? names.any((n) =>
-                n.startsWith('actions.runner.') &&
-                n.endsWith('.$agentName.plist'))
+            ? names.any(
+                (n) =>
+                    n.startsWith('actions.runner.') &&
+                    n.endsWith('.$agentName.plist'),
+              )
             : names.any((n) => n.startsWith('actions.runner.'));
       }
     }
