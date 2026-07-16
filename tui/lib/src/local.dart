@@ -37,11 +37,29 @@ final class LocalStatus {
       );
 }
 
-/// 로컬 러너 디렉토리(~/actions-runner) 및 co-arc scripts/ 접근.
+/// 로컬 러너 디렉토리 및 co-arc scripts/ 접근.
+///
+/// [root]는 모든 러너가 이름별 하위 디렉토리로 설치되는 루트(`~/actions`)이고,
+/// [dir]은 현재 추적 중인(마지막으로 등록·조작한) 러너의 설치 경로다.
 final class LocalRunner {
-  LocalRunner({required this.dir});
+  LocalRunner({required this.dir, String? root}) : root = root ?? defaultRoot;
 
   final String dir;
+
+  /// 러너 설치 루트. 새 러너는 `<root>/<러너이름>`에 설치된다.
+  final String root;
+
+  /// `~/actions` — 루트 미지정 시 기본값.
+  static String get defaultRoot {
+    final home = Platform.environment['HOME'] ?? '.';
+    return '$home/actions';
+  }
+
+  /// 러너 이름으로 설치 디렉토리 경로를 만든다 (`<root>/<name>`).
+  String dirFor(String name) => '$root/$name';
+
+  /// [dir]만 새 경로로 바꾼 복제본 ([root]는 유지).
+  LocalRunner withDir(String newDir) => LocalRunner(dir: newDir, root: root);
 
   Future<LocalStatus> status() async {
     String? agentName;

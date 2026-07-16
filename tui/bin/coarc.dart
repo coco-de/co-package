@@ -10,8 +10,12 @@ coarc — co-arc self-hosted 러너 관리 TUI
   coarc                        TUI 실행 (마지막 스코프 기억)
   coarc --org coco-de          org 스코프로 실행
   coarc --repo coco-de/<repo>  repo 스코프로 실행
-  coarc --dir <path>           러너 디렉토리 지정 (기본: ~/actions-runner)
+  coarc --root <path>          러너 설치 루트 지정 (기본: ~/actions)
+  coarc --dir <path>           추적할 러너 디렉토리 지정 (기본: <root>)
   coarc list                   TUI 없이 러너 목록만 출력
+
+새 러너는 <root>/<러너이름>에 설치됩니다. 이름 미지정 등록(a)은
+{컴퓨터이름}-{랜덤공룡} 조합으로 유일한 이름을 만듭니다.
 ''';
 
 Future<void> main(List<String> args) async {
@@ -26,6 +30,8 @@ Future<void> main(List<String> args) async {
         config.scope = Scope.org(args[++i]);
       case '--repo' when i + 1 < args.length:
         config.scope = Scope.repo(args[++i]);
+      case '--root' when i + 1 < args.length:
+        config.runnersRoot = args[++i];
       case '--dir' when i + 1 < args.length:
         config.runnerDir = args[++i];
       case '-h' || '--help':
@@ -58,7 +64,7 @@ Future<void> main(List<String> args) async {
     ),
   ).run(AppModel(
     scope: config.scope,
-    local: LocalRunner(dir: config.runnerDir),
+    local: LocalRunner(dir: config.runnerDir, root: config.runnersRoot),
   ));
   // 자동 새로고침 타이머의 Future.delayed가 isolate를 붙잡아
   // 종료가 최대 15초 늦어지는 것을 방지.

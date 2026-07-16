@@ -45,7 +45,8 @@ coarc
 coarc                        # 마지막 스코프 기억 (기본: org coco-de)
 coarc --org coco-de          # org 스코프
 coarc --repo coco-de/<repo>  # repo 스코프
-coarc --dir <path>           # 러너 디렉토리 지정 (기본: ~/actions-runner)
+coarc --root <path>          # 러너 설치 루트 지정 (기본: ~/actions)
+coarc --dir <path>           # 추적할 러너 디렉토리 지정 (기본: <root>)
 coarc list                   # TUI 없이 목록만 출력
 ```
 
@@ -69,7 +70,7 @@ dart run coarc_tui:coarc
 |---|---|
 | `↑`/`↓`, `j`/`k` | 러너 선택 |
 | `r` | 새로고침 (15초마다 자동) |
-| `a` | 이 머신을 러너로 등록 — `scripts/register-runner.sh` 실행 (TUI 일시 중단 후 복귀) |
+| `a` | 이 머신을 러너로 등록 — `scripts/register-runner.sh` 실행 (TUI 일시 중단 후 복귀). 이름 미지정이므로 `{컴퓨터이름}-{랜덤 공룡}`(예: `cocode-m2-ultra-raptor`)으로 기존 러너와 겹치지 않는 이름을 자동 생성 |
 | `A` | 이름/라벨을 직접 입력해 등록 — `이름 라벨1,라벨2,...` 형식 (빈 입력은 `a`와 동일). 같은 스코프에 이름이 이미 있으면 `-2`, `-3` ...으로 자동 회피 |
 | `l` | 선택 러너의 커스텀 라벨 편집 — CSV로 전체 교체, `+a,b` 추가, `-a,b` 삭제, 빈 입력은 커스텀 라벨 전체 삭제. `self-hosted` 등 read-only 라벨은 편집 불가(자동으로 건너뜀) |
 | `d` | 선택 러너를 GitHub에서 해제 (오프라인만 가능, `y` 확인) |
@@ -81,8 +82,10 @@ dart run coarc_tui:coarc
 
 ## 설정
 
-마지막 스코프와 러너 디렉토리는 `~/.config/co-arc/tui.json`에 저장됩니다.
-러너 디렉토리 기본값은 `~/actions-runner`이며 `--dir`로 바꿀 수 있습니다.
+마지막 스코프·러너 설치 루트·추적 중인 러너 디렉토리는 `~/.config/co-arc/tui.json`에
+저장됩니다. 설치 루트 기본값은 `~/actions`이며(`--root`로 변경), 새 러너는
+`~/actions/{러너이름}`처럼 이름별 하위 디렉토리에 독립 설치됩니다. 등록 직후 로컬
+패널·서비스(`s`)·해제(`d`)는 방금 만든 러너를 대상으로 전환됩니다.
 
 ## 개발
 

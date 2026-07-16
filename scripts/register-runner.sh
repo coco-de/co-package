@@ -12,11 +12,13 @@
 #                          ARM64/X64 라벨도 붙여주지만, 터미널이 Rosetta로 떠
 #                          있으면 arm64 맥인데도 x64로 등록될 수 있으니 실행 후
 #                          반드시 아래 "아키텍처 확인" 출력을 확인하세요.
-#   --name <name>          러너 이름 (기본: $(hostname)-local). 같은 스코프에
-#                          동일 이름이 이미 등록돼 있으면(config.sh --unattended는
-#                          이름 충돌 시 프롬프트 없이 실패) -2, -3 ... 접미사를
-#                          자동으로 붙여 고유한 이름으로 등록합니다.
-#   --dir <path>           러너 설치 경로 (기본: ~/actions-runner)
+#   --name <name>          러너 이름 (기본: {컴퓨터이름}-{랜덤 공룡}, 예:
+#                          cocode-m2-ultra-raptor). 같은 스코프에 동일 이름이
+#                          이미 등록돼 있으면(config.sh --unattended는 이름 충돌
+#                          시 프롬프트 없이 실패) -2, -3 ... 접미사를 자동으로
+#                          붙여 고유한 이름으로 등록합니다.
+#   --dir <path>           러너 설치 경로 (기본: ~/actions/{러너이름}). 러너마다
+#                          이름별 하위 디렉토리에 독립 설치됩니다.
 #   --runner-group <name>  러너 그룹 (기본: 조직 기본 그룹)
 #   --tool-cache <path>    여러 인스턴스가 Flutter/JDK 등 tool-cache를 공유하도록
 #                          .env에 RUNNER_TOOL_CACHE=<path>를 설정. 한 머신에
@@ -37,11 +39,27 @@ set -euo pipefail
 
 SCOPE_TYPE="" SCOPE=""
 LABELS="self-hosted,macOS,flutter"
-RUNNER_NAME="$(hostname)-local"
-RUNNER_DIR="${HOME}/actions-runner"
+# 이름/설치 경로는 미지정 시 아래에서 파생한다 (빈 문자열 = 미지정).
+RUNNER_NAME=""
+RUNNER_DIR=""
 RUNNER_GROUP=""
 TOOL_CACHE=""
 AS_SERVICE=false
+
+# 이름 미지정 등록 시 붙일 영어 공룡 이름 풀 (tui/lib/src/naming.dart와 동일).
+DINOS=(raptor trex stego triceratops brachio ankylo velociraptor diplodocus \
+  allosaurus spinosaurus pterodactyl brontosaurus compsognathus gallimimus \
+  iguanodon megalosaurus ornithomimus parasaurolophus protoceratops utahraptor \
+  carnotaurus dilophosaurus giganotosaurus maiasaura pachycephalosaurus \
+  plateosaurus therizinosaurus troodon archaeopteryx baryonyx coelophysis \
+  deinonychus edmontosaurus kentrosaurus ceratosaurus oviraptor styracosaurus \
+  apatosaurus nodosaurus gorgosaurus)
+
+# 컴퓨터 이름을 러너/디렉토리 이름에 쓸 수 있게 정규화 (소문자·.local 제거·영숫자만).
+host_slug() {
+  hostname | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/\.local$//; s/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -64,6 +82,17 @@ fi
 
 command -v gh >/dev/null || { echo "error: gh CLI가 필요합니다 (brew install gh && gh auth login)" >&2; exit 1; }
 gh auth status >/dev/null 2>&1 || { echo "error: gh auth login 먼저 실행하세요" >&2; exit 1; }
+
+# 이름 미지정이면 {컴퓨터이름}-{랜덤 공룡}으로 만든다. 설치 경로 미지정이면
+# 러너 이름별 하위 디렉토리(~/actions/{러너이름})에 설치한다 — 한 머신에 여러
+# 러너를 겹치지 않게 두기 위함. (이름은 아래 등록 단계에서 GitHub 러너 목록과
+# 충돌 시 -2, -3 접미사로 최종 유일화된다.)
+if [[ -z "$RUNNER_NAME" ]]; then
+  RUNNER_NAME="$(host_slug)-${DINOS[$((RANDOM % ${#DINOS[@]}))]}"
+fi
+if [[ -z "$RUNNER_DIR" ]]; then
+  RUNNER_DIR="${HOME}/actions/${RUNNER_NAME}"
+fi
 
 # ---- 1. 러너 에이전트 다운로드 (최신 버전, arch 자동 감지) -------------------
 OS="osx"; [[ "$(uname -s)" == "Linux" ]] && OS="linux"

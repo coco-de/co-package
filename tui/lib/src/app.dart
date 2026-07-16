@@ -5,6 +5,7 @@ import 'package:dart_tui/dart_tui.dart';
 import 'gh.dart';
 import 'labels.dart';
 import 'local.dart';
+import 'naming.dart';
 import 'register.dart';
 import 'scope.dart';
 
@@ -109,6 +110,7 @@ final class AppModel extends TeaModel {
 
   AppModel copyWith({
     Scope? scope,
+    LocalRunner? local,
     List<RunnerInfo>? runners,
     TableModel? table,
     SpinnerModel? spinner,
@@ -128,7 +130,7 @@ final class AppModel extends TeaModel {
   }) =>
       AppModel(
         scope: scope ?? this.scope,
-        local: local,
+        local: local ?? this.local,
         gh: gh,
         runners: runners ?? this.runners,
         table: table ?? this.table,
@@ -279,6 +281,35 @@ final class AppModel extends TeaModel {
         }
       };
 
+  /// 해제 대상이 이 머신에 구성된 로컬 러너인지 — `.runner`의 agentName과
+  /// GitHub 러너 이름이 일치하면 같은 러너로 본다.
+  bool _isLocalRunner(RunnerInfo r) =>
+      localStatus.configured && localStatus.agentName == r.name;
+
+  /// 로컬 러너 해제를 준비한다. GitHub API만으로 지우면(=`_deleteRunner`)
+  /// 로컬 `.runner`/`.credentials`가 남아, 이후 register-runner.sh가 이미
+  /// 등록된 러너로 오인해 재등록을 건너뛴다. 로컬 러너는 remove-runner.sh로
+  /// 서비스 중지 + GitHub 해제 + 로컬 구성 정리까지 한 번에 처리한다.
+  (List<String> logLines, Cmd? cmd) _removeLocalScript() {
+    final script = LocalRunner.findScript('remove-runner.sh');
+    if (script == null) {
+      return (
+        const ['remove-runner.sh를 찾지 못했습니다 (co-arc 레포 안에서 실행하세요)'],
+        null,
+      );
+    }
+    final args = removeArgs(scope, local.dir);
+    return (
+      ['\$ remove-runner.sh ${args.join(' ')}'],
+      execProcess(
+        script,
+        args,
+        inheritStdio: true,
+        onExit: (code) => _ScriptExitMsg('remove-runner.sh', code),
+      ),
+    );
+  }
+
   /// 라벨 변경을 실행하고 결과를 로그로 보낸다.
   Cmd _mutateLabels(String desc, RunnerInfo r, Future<void> Function() run) =>
       () async {
@@ -358,10 +389,13 @@ final class AppModel extends TeaModel {
     }
   }
 
-  /// register-runner.sh 실행을 준비한다. [name]/[labels]가 없으면 스크립트
-  /// 기본값(호스트명 이름 · 기본 라벨)을 쓰되, 현재 구성된 [local.dir]은 항상
-  /// `--dir`로 명시해 넘긴다.
-  (List<String> logLines, Cmd? cmd) _registerScript({
+  /// register-runner.sh 실행을 준비한다.
+  ///
+  /// 러너는 이름별 하위 디렉토리 `<root>/<이름>`에 설치한다. [name]이 없으면
+  /// (이름 미지정 등록) `{컴퓨터이름}-{랜덤 공룡}` 조합으로 기존 러너와 겹치지
+  /// 않는 이름을 만들어 쓴다. 반환하는 [newLocal]은 방금 만든 러너를 가리키도록
+  /// [local.dir]을 갱신한 것으로, 이후 상태 조회·서비스·해제가 이 러너를 향한다.
+  (List<String> logLines, Cmd? cmd, LocalRunner? newLocal) _registerScript({
     String? name,
     String? labels,
   }) {
@@ -370,9 +404,19 @@ final class AppModel extends TeaModel {
       return (
         const ['register-runner.sh를 찾지 못했습니다 (co-arc 레포 안에서 실행하세요)'],
         null,
+        null,
       );
     }
-    final args = registerArgs(scope, local.dir, name: name, labels: labels);
+    final runnerName = (name != null && name.isNotEmpty)
+        ? name
+        : generateRunnerName(hostSlug(), {for (final r in runners) r.name});
+    final dir = local.dirFor(runnerName);
+    final args = registerArgs(scope, dir, name: runnerName, labels: labels);
+
+    // 방금 만든 러너를 로컬 추적 대상으로 삼고 설정에 저장한다.
+    final newLocal = local.withDir(dir);
+    TuiConfig(scope: scope, runnerDir: dir, runnersRoot: local.root).save();
+
     return (
       ['\$ register-runner.sh ${args.join(' ')}'],
       execProcess(
@@ -381,6 +425,7 @@ final class AppModel extends TeaModel {
         inheritStdio: true,
         onExit: (code) => _ScriptExitMsg('register-runner.sh', code),
       ),
+      newLocal,
     );
   }
 
@@ -479,6 +524,19 @@ final class AppModel extends TeaModel {
       case _Mode.confirmDelete:
         final target = selected;
         if (key == 'y' && target != null) {
+          // 이 머신의 로컬 러너면 API 삭제 대신 remove-runner.sh로 로컬 구성까지
+          // 정리한다 (GitHub만 지우면 stale .runner가 남아 재등록이 막힌다).
+          if (_isLocalRunner(target)) {
+            final (lines, cmd) = _removeLocalScript();
+            return (
+              copyWith(
+                mode: _Mode.normal,
+                loading: cmd != null,
+                log: [...log, ...lines],
+              ),
+              cmd,
+            );
+          }
           return (
             copyWith(mode: _Mode.normal, loading: true),
             sequence([_deleteRunner(target), _fetchRunners()]),
@@ -510,7 +568,8 @@ final class AppModel extends TeaModel {
           return (copyWith(mode: _Mode.normal, input: ''), null);
         }
         final next = Scope.parse(trimmed);
-        TuiConfig(scope: next, runnerDir: local.dir).save();
+        TuiConfig(scope: next, runnerDir: local.dir, runnersRoot: local.root)
+            .save();
         return (
           copyWith(
             scope: next,
@@ -547,9 +606,15 @@ final class AppModel extends TeaModel {
         return (copyWith(mode: _Mode.normal, input: ''), null);
       case 'enter':
         final (name, labels) = parseRegisterInput(input);
-        final (lines, cmd) = _registerScript(name: name, labels: labels);
+        final (lines, cmd, newLocal) =
+            _registerScript(name: name, labels: labels);
         return (
-          copyWith(mode: _Mode.normal, input: '', log: [...log, ...lines]),
+          copyWith(
+            mode: _Mode.normal,
+            input: '',
+            log: [...log, ...lines],
+            local: newLocal,
+          ),
           cmd,
         );
       case 'backspace':
@@ -632,8 +697,8 @@ final class AppModel extends TeaModel {
         return (copyWith(mode: _Mode.confirmDelete), null);
 
       case 'a':
-        final (lines, cmd) = _registerScript();
-        return (copyWith(log: [...log, ...lines]), cmd);
+        final (lines, cmd, newLocal) = _registerScript();
+        return (copyWith(log: [...log, ...lines], local: newLocal), cmd);
 
       case 'A':
         return (copyWith(mode: _Mode.registerInput, input: ''), null);
@@ -767,8 +832,11 @@ final class AppModel extends TeaModel {
     switch (mode) {
       case _Mode.confirmDelete:
         final r = selected;
+        final howto = r != null && _isLocalRunner(r)
+            ? '이 머신에서 해제(서비스 중지 + 로컬 구성 정리)할까요?'
+            : 'GitHub에서 해제할까요?';
         return _fg(_yellow)
-            .render(" '${r?.name}' (id ${r?.id}) 러너를 GitHub에서 해제할까요? [y/N]");
+            .render(" '${r?.name}' (id ${r?.id}) 러너를 $howto [y/N]");
       case _Mode.scopeInput:
         return ' ${_fg(_cyan).render('scope>')} $input█'
             '${_fg(_gray).render('   (org 이름 또는 owner/repo · Enter 확정 · Esc 취소)')}';

@@ -19,6 +19,12 @@ List<String> registerArgs(
       if (labels != null && labels.isNotEmpty) ...['--labels', labels],
     ];
 
+/// remove-runner.sh에 넘길 인자를 조립한다. 로컬 러너 해제는 스크립트가
+/// 서비스 중지 + GitHub 해제 + 로컬 `.runner`/`.credentials` 정리까지 하므로
+/// register와 동일하게 스코프와 설치 경로([dir])만 넘긴다.
+List<String> removeArgs(Scope scope, String dir) =>
+    [...scope.scriptArgs, '--dir', dir];
+
 /// 이름/라벨 직접 입력 프롬프트(`A` 키)의 텍스트를 `(name, labels)`로 분리한다.
 ///
 /// 형식: `이름[ 라벨1,라벨2,...]` — 첫 공백 앞은 이름, 뒤는 라벨 CSV.
