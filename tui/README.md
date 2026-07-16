@@ -17,7 +17,7 @@ GitHub 조회는 `gh` CLI, 등록/정리는 이 레포의 [`scripts/`](../script
  ────────────────────────────────────────────────────────────────────────
  (로그 없음)
 
- ↑↓ 이동 · r 새로고침 · a 등록 · A 이름지정등록 · d 해제 · s 서비스 시작/중지 · c 정리(dry) · C 정리 · g 스코프 · ? 도움말 · q 종료
+ ↑↓ 이동 · r 갱신 · a 등록 · A 이름지정등록 · l 라벨 · d 해제 · s 서비스 · c/C 정리 · g 스코프 · ? 도움말 · q 종료
 ```
 
 ## 설치
@@ -43,7 +43,9 @@ coarc
 
 ```bash
 coarc                        # 마지막 스코프 기억 (기본: org coco-de)
+coarc --org coco-de          # org 스코프
 coarc --repo coco-de/<repo>  # repo 스코프
+coarc --dir <path>           # 러너 디렉토리 지정 (기본: ~/actions-runner)
 coarc list                   # TUI 없이 목록만 출력
 ```
 
@@ -69,6 +71,7 @@ dart run coarc_tui:coarc
 | `r` | 새로고침 (15초마다 자동) |
 | `a` | 이 머신을 러너로 등록 — `scripts/register-runner.sh` 실행 (TUI 일시 중단 후 복귀) |
 | `A` | 이름/라벨을 직접 입력해 등록 — `이름 라벨1,라벨2,...` 형식 (빈 입력은 `a`와 동일). 같은 스코프에 이름이 이미 있으면 `-2`, `-3` ...으로 자동 회피 |
+| `l` | 선택 러너의 커스텀 라벨 편집 — CSV로 전체 교체, `+a,b` 추가, `-a,b` 삭제, 빈 입력은 커스텀 라벨 전체 삭제. `self-hosted` 등 read-only 라벨은 편집 불가(자동으로 건너뜀) |
 | `d` | 선택 러너를 GitHub에서 해제 (오프라인만 가능, `y` 확인) |
 | `s` | 로컬 러너 서비스 시작/중지 (`svc.sh`). 실행 중이면(launchd·포그라운드 무관) `stop`, 안 떠 있고 서비스 미설치(재부팅 등으로 launchd 등록이 사라졌거나 애초에 등록한 적 없음)면 `install` 후 자동으로 `start`까지 이어서 실행, 이미 설치돼 있으면 `start` |
 | `c` / `C` | `_work` 정리 — `c` dry-run, `C` 실제 삭제 (`scripts/cleanup-work.sh`) |
@@ -89,6 +92,8 @@ dart test
 ```
 
 - `lib/src/app.dart` — TUI 모델 (Model–Update–View)
-- `lib/src/gh.dart` — `gh api` 래퍼 (러너 목록/해제)
+- `lib/src/gh.dart` — `gh api` 래퍼 (러너 목록/해제/라벨 변경)
+- `lib/src/labels.dart` — 라벨 편집 입력 파싱 (`+`/`-`/교체) + read-only 라벨 필터
 - `lib/src/local.dart` — 로컬 에이전트 상태 (`.runner`, listener 프로세스, launchd, `_work` 용량)
+- `lib/src/register.dart` — 등록 입력 파싱 + `register-runner.sh` 인자 구성
 - `lib/src/scope.dart` — org/repo 스코프 + 설정 저장
