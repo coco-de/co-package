@@ -541,6 +541,24 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     editorWidth = math.min(editorWidth, screenSize.width - 40);
     editorHeight = math.min(editorHeight, screenSize.height * 0.4);
 
+    // 소프트 키보드 높이 — MediaQuery 의존이라 키보드 높이가 변하면
+    // (등장 애니메이션, 예측 입력 바 노출 등) 자동으로 rebuild 되어 따라간다.
+    final keyboardInset = mediaQuery.viewInsets.bottom;
+
+    // 키보드 위 도킹 시 에디터 하단과 키보드 상단 사이 여백 (#241)
+    const keyboardGap = 8.0;
+    const minTop = 50.0;
+
+    if (keyboardInset > 0) {
+      // 키보드가 떠 있으면 상단 경계~키보드 사이 공간에 맞게 높이 재제한
+      final availableHeight =
+          screenSize.height - keyboardInset - keyboardGap - minTop;
+      editorHeight = math.max(
+        minHeight,
+        math.min(editorHeight, availableHeight),
+      );
+    }
+
     // 터치 포인트를 중심으로 에디터 배치 (alignment와 무관하게 항상 중심)
     var left = widget.position.dx - editorWidth / 2;
     var top = widget.position.dy - editorHeight / 2;
@@ -552,11 +570,22 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     if (left < 20) {
       left = 20;
     }
-    if (top + editorHeight > screenSize.height - 100) {
-      top = screenSize.height - editorHeight - 100;
-    }
-    if (top < 50) {
-      top = 50;
+    if (keyboardInset > 0) {
+      // 키보드가 떠 있는 동안에는 터치 지점 대신 키보드 상단에 도킹해
+      // 입력 중인 텍스트가 키보드에 가려지지 않게 한다 (#241).
+      // 텍스트가 여러 줄로 늘어나면 하단(키보드 쪽)은 고정된 채 위로 자란다.
+      top = screenSize.height - keyboardInset - keyboardGap - editorHeight;
+      if (top < minTop) {
+        // 키보드가 극단적으로 큰 경우 완전 회피보다 상단 경계 유지를 우선한다.
+        top = minTop;
+      }
+    } else {
+      if (top + editorHeight > screenSize.height - 100) {
+        top = screenSize.height - editorHeight - 100;
+      }
+      if (top < 50) {
+        top = 50;
+      }
     }
 
     return Material(
@@ -580,6 +609,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
             child: GestureDetector(
               onTap: () {}, // 텍스트 필드 영역 터치 시 이벤트 차단
               child: Container(
+                key: const ValueKey('inline_text_editor_container'),
                 padding: EdgeInsets.zero,
                 width: editorWidth,
                 height: editorHeight,
