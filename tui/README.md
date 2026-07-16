@@ -70,7 +70,7 @@ dart run coarc_tui:coarc
 | `a` | 이 머신을 러너로 등록 — `scripts/register-runner.sh` 실행 (TUI 일시 중단 후 복귀) |
 | `A` | 이름/라벨을 직접 입력해 등록 — `이름 라벨1,라벨2,...` 형식 (빈 입력은 `a`와 동일). 같은 스코프에 이름이 이미 있으면 `-2`, `-3` ...으로 자동 회피 |
 | `d` | 선택 러너를 GitHub에서 해제 (오프라인만 가능, `y` 확인) |
-| `s` | 로컬 launchd 서비스 시작/중지 (`svc.sh`) |
+| `s` | 로컬 러너 서비스 시작/중지 (`svc.sh`). 실행 중이면(launchd·포그라운드 무관) `stop`, 안 떠 있고 서비스 미설치(재부팅 등으로 launchd 등록이 사라졌거나 애초에 등록한 적 없음)면 `install` 후 자동으로 `start`까지 이어서 실행, 이미 설치돼 있으면 `start` |
 | `c` / `C` | `_work` 정리 — `c` dry-run, `C` 실제 삭제 (`scripts/cleanup-work.sh`) |
 | `g` | 스코프 전환 — `coco-de`(org) 또는 `owner/repo` 입력 |
 | `?` | 도움말 |

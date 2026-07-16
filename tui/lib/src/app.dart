@@ -77,6 +77,7 @@ final class AppModel extends TeaModel {
     this.lastUpdated,
     this.width = 100,
     this.height = 30,
+    this.svcBusy = false,
   })  : localStatus = localStatus ?? LocalStatus.empty(local.dir),
         spinner = spinner ?? SpinnerModel(),
         table = table ?? _buildTable(const [], 100, 30, cursor: 0);
@@ -101,6 +102,11 @@ final class AppModel extends TeaModel {
   final int width;
   final int height;
 
+  /// `s` 키로 시작한 svc.sh 시퀀스가 아직 끝나지 않았는지. 끝나기 전에
+  /// 'install'을 두 번 겹쳐 실행하는 걸 막는 재진입 방지 플래그 —
+  /// [_LocalStatusMsg]를 받으면(시퀀스 마지막 단계) 다시 false로 풀린다.
+  final bool svcBusy;
+
   AppModel copyWith({
     Scope? scope,
     List<RunnerInfo>? runners,
@@ -118,6 +124,7 @@ final class AppModel extends TeaModel {
     DateTime? lastUpdated,
     int? width,
     int? height,
+    bool? svcBusy,
   }) =>
       AppModel(
         scope: scope ?? this.scope,
@@ -137,6 +144,7 @@ final class AppModel extends TeaModel {
         lastUpdated: lastUpdated ?? this.lastUpdated,
         width: width ?? this.width,
         height: height ?? this.height,
+        svcBusy: svcBusy ?? this.svcBusy,
       );
 
   RunnerInfo? get selected => runners.isEmpty || table.cursor >= runners.length
@@ -227,6 +235,36 @@ final class AppModel extends TeaModel {
         } catch (e) {
           return _LogMsg(['\$ $label', 'error: $e']);
         }
+      };
+
+  /// `svc.sh` 서브커맨드를 순서대로 실행하되, 한 단계가 실패하면 이후 단계는
+  /// 건너뛴다. (단순히 각 서브커맨드를 개별 `_runLogged`로 순차 실행하면
+  /// `install`이 실패해도 `start`가 그대로 이어져 실패해, 로그에 관련 없어
+  /// 보이는 두 번째 에러가 쌓여 실제 원인이 묻힌다.)
+  Cmd _runSvcSequence(List<String> subcommands) => () async {
+        final lines = <String>[];
+        for (final sub in subcommands) {
+          lines.add('\$ svc.sh $sub');
+          try {
+            final r = await Process.run('./svc.sh', [sub],
+                workingDirectory: local.dir, runInShell: false);
+            lines
+              ..addAll((r.stdout as String).trim().split('\n'))
+              ..addAll((r.stderr as String).trim().split('\n'))
+              ..removeWhere((l) => l.isEmpty);
+            if (r.exitCode != 0) {
+              lines.add('(exit ${r.exitCode})');
+              if (sub != subcommands.last) {
+                lines.add('→ 이전 단계 실패로 다음 단계를 건너뜁니다');
+              }
+              break;
+            }
+          } catch (e) {
+            lines.add('error: $e');
+            break;
+          }
+        }
+        return _LogMsg(lines);
       };
 
   Cmd _deleteRunner(RunnerInfo r) => () async {
@@ -389,7 +427,7 @@ final class AppModel extends TeaModel {
         return (copyWith(loading: false, error: error), null);
 
       case _LocalStatusMsg(:final status):
-        return (copyWith(localStatus: status), null);
+        return (copyWith(localStatus: status, svcBusy: false), null);
 
       case _LogMsg(:final lines):
         final next = [...log, ...lines];
@@ -619,12 +657,12 @@ final class AppModel extends TeaModel {
             null,
           );
         }
-        final action = localStatus.listenerRunning ? 'stop' : 'start';
+        if (svcBusy) return (this, null);
+        final subcommands = LocalRunner.svcSubcommands(localStatus);
         return (
-          this,
+          copyWith(svcBusy: true),
           sequence([
-            _runLogged('svc.sh $action', './svc.sh', [action],
-                workingDir: local.dir),
+            _runSvcSequence(subcommands),
             _fetchLocal(),
           ]),
         );
@@ -791,7 +829,12 @@ final class AppModel extends TeaModel {
             '빈 입력은 커스텀 라벨 전체 삭제 (self-hosted 등 read-only 라벨은 편집 불가)'
       ),
       ('d', '선택한 러너를 GitHub에서 해제 (오프라인 러너만 가능)'),
-      ('s', '로컬 launchd 서비스 시작/중지 (svc.sh)'),
+      (
+        's',
+        '로컬 러너 서비스 시작/중지 (svc.sh). 실행 중(launchd·포그라운드 무관)이면 '
+            'stop, 안 떠 있고 서비스 미설치(재부팅 등으로 사라졌거나 등록한 적 '
+            '없음)면 install 후 자동으로 start, 설치돼 있으면 start'
+      ),
       ('c / C', '_work 정리 — c는 dry-run, C는 실제 삭제 (scripts/cleanup-work.sh)'),
       ('g', '스코프 전환 — org 이름(coco-de) 또는 owner/repo 입력'),
       ('q, ctrl+c', '종료'),
