@@ -22,7 +22,8 @@ final class Scope {
   /// scripts/register-runner.sh · remove-runner.sh 에 넘길 인자.
   List<String> get scriptArgs => [isOrg ? '--org' : '--repo', name];
 
-  Map<String, dynamic> toJson() => {'type': isOrg ? 'org' : 'repo', 'name': name};
+  Map<String, dynamic> toJson() =>
+      {'type': isOrg ? 'org' : 'repo', 'name': name};
 
   static Scope? fromJson(Object? json) {
     if (json is! Map) return null;

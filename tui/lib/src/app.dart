@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_tui/dart_tui.dart';
 
 import 'gh.dart';
+import 'labels.dart';
 import 'local.dart';
 import 'register.dart';
 import 'scope.dart';
@@ -48,7 +49,14 @@ final class _ScriptExitMsg extends Msg {
 }
 
 // ─── 모드 ───────────────────────────────────────────────────────────────────
-enum _Mode { normal, confirmDelete, scopeInput, registerInput, help }
+enum _Mode {
+  normal,
+  confirmDelete,
+  scopeInput,
+  registerInput,
+  labelInput,
+  help
+}
 
 /// co-arc self-hosted 러너 관리 TUI의 루트 모델.
 final class AppModel extends TeaModel {
@@ -65,6 +73,7 @@ final class AppModel extends TeaModel {
     this.log = const [],
     this.mode = _Mode.normal,
     this.input = '',
+    this.labelTarget,
     this.lastUpdated,
     this.width = 100,
     this.height = 30,
@@ -84,6 +93,10 @@ final class AppModel extends TeaModel {
   final List<String> log;
   final _Mode mode;
   final String input;
+
+  /// 라벨 편집(`l`) 진입 시점의 대상 러너 — 편집 중 목록이 갱신돼
+  /// 커서가 다른 러너를 가리키게 되더라도 원래 대상에 적용하기 위해 고정한다.
+  final RunnerInfo? labelTarget;
   final DateTime? lastUpdated;
   final int width;
   final int height;
@@ -100,6 +113,8 @@ final class AppModel extends TeaModel {
     List<String>? log,
     _Mode? mode,
     String? input,
+    RunnerInfo? labelTarget,
+    bool clearLabelTarget = false,
     DateTime? lastUpdated,
     int? width,
     int? height,
@@ -117,15 +132,16 @@ final class AppModel extends TeaModel {
         log: log ?? this.log,
         mode: mode ?? this.mode,
         input: input ?? this.input,
+        labelTarget:
+            clearLabelTarget ? null : (labelTarget ?? this.labelTarget),
         lastUpdated: lastUpdated ?? this.lastUpdated,
         width: width ?? this.width,
         height: height ?? this.height,
       );
 
-  RunnerInfo? get selected =>
-      runners.isEmpty || table.cursor >= runners.length
-          ? null
-          : runners[table.cursor];
+  RunnerInfo? get selected => runners.isEmpty || table.cursor >= runners.length
+      ? null
+      : runners[table.cursor];
 
   // ─── 테이블 구성 ──────────────────────────────────────────────────────────
 
@@ -225,6 +241,85 @@ final class AppModel extends TeaModel {
         }
       };
 
+  /// 라벨 변경을 실행하고 결과를 로그로 보낸다.
+  Cmd _mutateLabels(String desc, RunnerInfo r, Future<void> Function() run) =>
+      () async {
+        try {
+          await run();
+          return _LogMsg(['$desc 완료 (${r.name})']);
+        } catch (e) {
+          return _LogMsg(['$desc 실패 (${r.name}) — $e']);
+        }
+      };
+
+  /// 라벨 편집 입력을 (안내 로그, 실행 커맨드)로 변환한다.
+  ///
+  /// read-only 라벨은 GitHub 라벨 API가 거부하므로 호출 전에 걸러내고
+  /// 건너뛴 사유를 로그로 남긴다. 실행할 변경이 없으면 커맨드는 null.
+  (List<String> logLines, Cmd? cmd) _labelEditPlan(
+      RunnerInfo r, LabelEdit edit) {
+    final (editable, skipped) =
+        splitEditableLabels(edit.labels, r.readOnlyLabels);
+    final lines = <String>[
+      if (skipped.isNotEmpty) 'read-only 라벨은 편집 불가, 건너뜀: ${skipped.join(', ')}',
+    ];
+
+    switch (edit) {
+      case LabelAdd():
+        if (editable.isEmpty) return ([...lines, '추가할 라벨이 없습니다'], null);
+        final desc = '라벨 추가: ${editable.join(', ')}';
+        return (
+          lines,
+          _mutateLabels(
+              desc, r, () => gh.addRunnerLabels(scope, r.id, editable)),
+        );
+
+      case LabelRemove():
+        final removable = [
+          for (final l in editable)
+            if (r.customLabels.contains(l)) l
+        ];
+        final missing = [
+          for (final l in editable)
+            if (!r.customLabels.contains(l)) l
+        ];
+        if (missing.isNotEmpty) lines.add('없는 라벨은 건너뜀: ${missing.join(', ')}');
+        if (removable.isEmpty) return ([...lines, '삭제할 라벨이 없습니다'], null);
+        final desc = '라벨 삭제: ${removable.join(', ')}';
+        return (
+          lines,
+          _mutateLabels(desc, r, () async {
+            for (final l in removable) {
+              await gh.removeRunnerLabel(scope, r.id, l);
+            }
+          }),
+        );
+
+      case LabelReplace():
+        if (editable.isEmpty) {
+          // 입력한 라벨이 전부 read-only로 걸러진 경우 — 빈 교체(전체 삭제)로
+          // 오인해 커스텀 라벨을 지우면 안 된다. 진짜 빈 입력만 전체 삭제.
+          if (skipped.isNotEmpty) {
+            return ([...lines, '편집 가능한 라벨이 없어 변경하지 않습니다'], null);
+          }
+          if (r.customLabels.isEmpty) {
+            return ([...lines, '삭제할 커스텀 라벨이 없습니다'], null);
+          }
+          return (
+            lines,
+            _mutateLabels('커스텀 라벨 전체 삭제', r,
+                () => gh.setRunnerLabels(scope, r.id, const [])),
+          );
+        }
+        final desc = '라벨 교체: ${editable.join(', ')}';
+        return (
+          lines,
+          _mutateLabels(
+              desc, r, () => gh.setRunnerLabels(scope, r.id, editable)),
+        );
+    }
+  }
+
   /// register-runner.sh 실행을 준비한다. [name]/[labels]가 없으면 스크립트
   /// 기본값(호스트명 이름 · 기본 라벨)을 쓰되, 현재 구성된 [local.dir]은 항상
   /// `--dir`로 명시해 넘긴다.
@@ -300,9 +395,7 @@ final class AppModel extends TeaModel {
         final next = [...log, ...lines];
         return (
           copyWith(
-              log: next.length > 200
-                  ? next.sublist(next.length - 200)
-                  : next),
+              log: next.length > 200 ? next.sublist(next.length - 200) : next),
           null,
         );
 
@@ -310,8 +403,10 @@ final class AppModel extends TeaModel {
         final fetch = (mode == _Mode.normal && !loading)
             ? batch([_fetchRunners(), _fetchLocal()])
             : null;
-        return (loading ? this : copyWith(loading: fetch != null),
-            batch([fetch, _refreshTimer()]));
+        return (
+          loading ? this : copyWith(loading: fetch != null),
+          batch([fetch, _refreshTimer()])
+        );
 
       case _ScriptExitMsg(:final label, :final exitCode):
         return (
@@ -358,6 +453,9 @@ final class AppModel extends TeaModel {
 
       case _Mode.registerInput:
         return _onRegisterInputKey(key, msg);
+
+      case _Mode.labelInput:
+        return _onLabelInputKey(key, msg);
 
       case _Mode.normal:
         return _onNormalKey(key, msg);
@@ -433,6 +531,46 @@ final class AppModel extends TeaModel {
     }
   }
 
+  (Model, Cmd?) _onLabelInputKey(String key, KeyMsg msg) {
+    switch (key) {
+      case 'esc':
+        return (
+          copyWith(mode: _Mode.normal, input: '', clearLabelTarget: true),
+          null,
+        );
+      case 'enter':
+        final target = labelTarget;
+        if (target == null) {
+          return (copyWith(mode: _Mode.normal, input: ''), null);
+        }
+        final (lines, cmd) = _labelEditPlan(target, parseLabelInput(input));
+        return (
+          copyWith(
+            mode: _Mode.normal,
+            input: '',
+            clearLabelTarget: true,
+            log: [...log, ...lines],
+            loading: cmd == null ? null : true,
+          ),
+          cmd == null ? null : sequence([cmd, _fetchRunners()]),
+        );
+      case 'backspace':
+        return (
+          copyWith(
+              input: input.isEmpty ? '' : input.substring(0, input.length - 1)),
+          null,
+        );
+      default:
+        final k = msg.keyEvent;
+        if (k.code == KeyCode.rune &&
+            k.modifiers.isEmpty &&
+            k.text.isNotEmpty) {
+          return (copyWith(input: input + k.text), null);
+        }
+        return (this, null);
+    }
+  }
+
   (Model, Cmd?) _onNormalKey(String key, KeyMsg msg) {
     switch (key) {
       case 'q':
@@ -462,6 +600,18 @@ final class AppModel extends TeaModel {
       case 'A':
         return (copyWith(mode: _Mode.registerInput, input: ''), null);
 
+      case 'l':
+        final target = selected;
+        if (target == null) return (this, null);
+        return (
+          copyWith(
+            mode: _Mode.labelInput,
+            input: target.customLabels.join(','),
+            labelTarget: target,
+          ),
+          null,
+        );
+
       case 's':
         if (!localStatus.configured) {
           return (
@@ -486,7 +636,8 @@ final class AppModel extends TeaModel {
           return (copyWith(log: [...log, 'cleanup-work.sh를 찾지 못했습니다']), null);
         }
         final args = [
-          '--dir', local.dir,
+          '--dir',
+          local.dir,
           if (key == 'c') '--dry-run',
         ];
         return (
@@ -544,8 +695,8 @@ final class AppModel extends TeaModel {
             '${lastUpdated!.minute.toString().padLeft(2, '0')}:'
             '${lastUpdated!.second.toString().padLeft(2, '0')} 갱신';
     final online = runners.where((r) => r.online).length;
-    final info = _fg(_cyan).render(
-        '${scope.label} · ${runners.length}대 (온라인 $online)$updated');
+    final info = _fg(_cyan)
+        .render('${scope.label} · ${runners.length}대 (온라인 $online)$updated');
     return '$title$spin   $info';
   }
 
@@ -578,17 +729,20 @@ final class AppModel extends TeaModel {
     switch (mode) {
       case _Mode.confirmDelete:
         final r = selected;
-        return _fg(_yellow).render(
-            " '${r?.name}' (id ${r?.id}) 러너를 GitHub에서 해제할까요? [y/N]");
+        return _fg(_yellow)
+            .render(" '${r?.name}' (id ${r?.id}) 러너를 GitHub에서 해제할까요? [y/N]");
       case _Mode.scopeInput:
         return ' ${_fg(_cyan).render('scope>')} $input█'
             '${_fg(_gray).render('   (org 이름 또는 owner/repo · Enter 확정 · Esc 취소)')}';
       case _Mode.registerInput:
         return ' ${_fg(_cyan).render('register>')} $input█'
             '${_fg(_gray).render('   (이름 [라벨1,라벨2,...] · 빈 입력=기본값 · Enter 등록 · Esc 취소)')}';
+      case _Mode.labelInput:
+        return ' ${_fg(_cyan).render('labels(${labelTarget?.name ?? '?'})>')} $input█'
+            '${_fg(_gray).render('   (CSV=교체 · +a,b 추가 · -a,b 삭제 · 빈 입력=전체 삭제 · Esc 취소)')}';
       default:
         return _fg(_gray).render(_clip(
-            ' ↑↓ 이동 · r 갱신 · a 등록 · A 이름지정등록 · d 해제 · s 서비스 · c/C 정리 · g 스코프 · ? 도움말 · q 종료'));
+            ' ↑↓ 이동 · r 갱신 · a 등록 · A 이름지정등록 · l 라벨 · d 해제 · s 서비스 · c/C 정리 · g 스코프 · ? 도움말 · q 종료'));
     }
   }
 
@@ -631,6 +785,11 @@ final class AppModel extends TeaModel {
         '이름/라벨을 직접 입력해 등록 — "이름 라벨1,라벨2" (빈 입력은 a와 동일). '
             '이름이 이미 스코프에 있으면 -2, -3 ...으로 자동 회피'
       ),
+      (
+        'l',
+        '선택 러너의 커스텀 라벨 편집 — CSV로 전체 교체 · "+a,b" 추가 · "-a,b" 삭제 · '
+            '빈 입력은 커스텀 라벨 전체 삭제 (self-hosted 등 read-only 라벨은 편집 불가)'
+      ),
       ('d', '선택한 러너를 GitHub에서 해제 (오프라인 러너만 가능)'),
       ('s', '로컬 launchd 서비스 시작/중지 (svc.sh)'),
       ('c / C', '_work 정리 — c는 dry-run, C는 실제 삭제 (scripts/cleanup-work.sh)'),
@@ -644,10 +803,10 @@ final class AppModel extends TeaModel {
       b.writeln('  ${_fg(_cyan).render(k.padRight(12))} $desc');
     }
     b.writeln();
-    b.writeln(_fg(_gray).render(
-        ' 현재 스코프: ${scope.label} · 러너 디렉토리: ${local.dir}'));
-    b.writeln(_fg(_gray).render(
-        ' 온라인 러너 해제는 해당 머신에서 scripts/remove-runner.sh를 사용하세요.'));
+    b.writeln(
+        _fg(_gray).render(' 현재 스코프: ${scope.label} · 러너 디렉토리: ${local.dir}'));
+    b.writeln(_fg(_gray)
+        .render(' 온라인 러너 해제는 해당 머신에서 scripts/remove-runner.sh를 사용하세요.'));
     b.writeln();
     b.write(_fg(_gray).render(' 아무 키나 누르면 돌아갑니다.'));
     return b.toString();
