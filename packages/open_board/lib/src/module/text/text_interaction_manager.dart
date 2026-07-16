@@ -3,6 +3,7 @@ import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
+import 'package:open_board/src/module/state/drawing_state.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
@@ -11,6 +12,7 @@ import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
 import 'package:open_board/src/module/transform_handler.dart';
 import 'dart:math' as math;
+import 'dart:ui' show PointerDeviceKind;
 
 /// 텍스트 상호작용을 관리하는 클래스
 /// ScribbleWidget의 텍스트 관련 기능들을 분리하여 관리
@@ -18,6 +20,11 @@ class TextInteractionManager {
   // 더블탭 감지 상수
   static const double _doubleTapThreshold = 800.0; // 밀리초 (500ms → 800ms로 증가)
   static const double _doubleTapPositionThreshold = 50.0; // 픽셀
+
+  /// 새 텍스트 탭 판정 슬롭 — down~up 이동이 이 거리를 넘으면 페이지
+  /// 스와이프/드래그로 간주해 새 텍스트 생성을 취소한다 (kobic UB-273).
+  /// 기존 텍스트 드래그 시작 임계값(15.0)과 동일한 값을 사용한다.
+  static const double _newTextTapSlop = 15.0;
 
   final ScribbleNotifier scribbleNotifier;
   final ScribbleModeNotifier modeNotifier;
@@ -45,7 +52,16 @@ class TextInteractionManager {
   bool _isEditingText = false;
 
   String? _editingTextId;
-  OverlayEntry? _textEditorOverlay; // 드래그 상태
+  OverlayEntry? _textEditorOverlay;
+
+  /// 빈 영역 pointer down으로 보류된 "새 텍스트 생성 탭" 후보 (kobic UB-273).
+  ///
+  /// down 즉시 인라인 에디터를 열면 페이지 스와이프의 시작점이 매번 텍스트
+  /// 생성 탭으로 오인되어 에디터+키보드가 떴다 사라지는 깜빡임이 발생한다.
+  /// up 시점에 슬롭 이내 이동의 탭으로 확정된 경우에만 생성한다.
+  _PendingNewTextTap? _pendingNewTextTap;
+
+  // 드래그 상태
   int? _draggingTextIndex;
   Offset? _dragStartPosition;
   Offset? _textDragOffset;
@@ -118,6 +134,13 @@ class TextInteractionManager {
       return false;
     }
 
+    // 보류된 새 텍스트 탭이 있는데 다른 포인터의 down이 도착하면
+    // 멀티터치(핀치 등) — 탭이 아니므로 취소한다 (kobic UB-273).
+    if (_pendingNewTextTap != null &&
+        _pendingNewTextTap!.pointerId != event.pointer) {
+      _pendingNewTextTap = null;
+    }
+
     // 오버레이 컨트롤 영역 체크를 가장 먼저 수행 (올가미 매니저와 동일한 방식)
     if (_showTextOverlay &&
         _selectedTextIndex != null &&
@@ -151,9 +174,46 @@ class TextInteractionManager {
       return _handleExistingTextTap(textIndex, adjustedPosition);
     }
 
-    // 텍스트를 찾지 못한 경우 - 새 텍스트 추가
+    // 텍스트를 찾지 못한 경우 — 기존 선택은 down 시점에 즉시 해제한다
+    // (#100 회귀 가드: 외부 터치 = deselect, fall-through 차단).
+    final hadSelection = _selectedTextIndex != null;
+    if (hadSelection) {
+      _selectedTextIndex = null;
+      _showTextOverlay = false;
+      onTextDeselected();
+    }
 
-    return _addNewTextAt(adjustedPosition, event.localPosition);
+    // 새 텍스트 생성은 드로잉 장치 정책(_canStartDrawing과 동일)을 따르는
+    // 포인터만 허용한다 (kobic UB-273). 펜모드(penOnly)의 손가락/마우스는
+    // 페이지 탐색(스와이프·엣지 탭) 담당이라 생성 대상이 아니다 — 기존
+    // 텍스트 선택/이동은 종전대로 모든 장치를 허용한다.
+    if (!_canCreateNewTextWith(event.kind)) {
+      return hadSelection;
+    }
+
+    // down 즉시 에디터를 열지 않고 탭 후보로 보류한다 (kobic UB-273).
+    // 스와이프/드래그(슬롭 초과 이동)는 handlePointerMove에서 취소되고,
+    // 진짜 탭만 handlePointerUp에서 _addNewTextAt으로 확정된다.
+    _pendingNewTextTap = _PendingNewTextTap(
+      pointerId: event.pointer,
+      adjustedPosition: adjustedPosition,
+      localPosition: event.localPosition,
+    );
+    return true;
+  }
+
+  /// 새 텍스트 생성이 허용되는 입력 장치인지 — 드로잉 장치 정책과 동일.
+  ///
+  /// 펜모드(penOnly)에서 손가락/마우스가 캔버스 빈 영역을 터치하는 것은
+  /// 텍스트 생성 의도가 아니라 페이지 탐색(스와이프·엣지 탭)이다. 이를
+  /// 허용하면 페이지 넘김 제스처마다 인라인 에디터+키보드가 떴다 사라지는
+  /// 깜빡임이 발생한다 (kobic UB-273).
+  bool _canCreateNewTextWith(PointerDeviceKind kind) {
+    return switch (DrawingState().pointerMode.value) {
+      DrawingPointerMode.penOnly =>
+        kind == PointerDeviceKind.stylus || kind == PointerDeviceKind.unknown,
+      DrawingPointerMode.mouseOnly => true,
+    };
   }
 
   /// 포인터 이동 이벤트 처리
@@ -161,6 +221,16 @@ class TextInteractionManager {
     // 편집 중이면 무시
     if (_isEditingText) {
       return false;
+    }
+
+    // 보류된 새 텍스트 탭 — 슬롭을 넘는 이동은 페이지 스와이프/드래그로
+    // 간주해 생성을 취소한다 (kobic UB-273).
+    final pendingTap = _pendingNewTextTap;
+    if (pendingTap != null &&
+        pendingTap.pointerId == event.pointer &&
+        (event.localPosition - pendingTap.localPosition).distance >
+            _newTextTapSlop) {
+      _pendingNewTextTap = null;
     }
 
     // 텍스트 변형(스케일/회전)은 selection_overlay의 GestureDetector에서
@@ -212,7 +282,33 @@ class TextInteractionManager {
     if (_isEditingText) {
       return false;
     }
-    return _releasePointer();
+    final released = _releasePointer();
+    return _commitPendingNewTextTap(event) || released;
+  }
+
+  /// 보류된 새 텍스트 탭을 up 시점에 확정한다 (kobic UB-273).
+  ///
+  /// down~up 이동이 슬롭 이내인 진짜 탭일 때만 인라인 에디터를 연다.
+  /// 슬롭 초과 이동(스와이프/드래그)은 handlePointerMove에서 이미
+  /// 취소되지만, move 이벤트가 유실된 경우를 대비해 up 위치로 한 번 더
+  /// 검증한다.
+  bool _commitPendingNewTextTap(PointerUpEvent event) {
+    final pendingTap = _pendingNewTextTap;
+    if (pendingTap == null || pendingTap.pointerId != event.pointer) {
+      return false;
+    }
+    _pendingNewTextTap = null;
+
+    final movedDistance =
+        (event.localPosition - pendingTap.localPosition).distance;
+    if (movedDistance > _newTextTapSlop) {
+      return false;
+    }
+
+    return _addNewTextAt(
+      pendingTap.adjustedPosition,
+      pendingTap.localPosition,
+    );
   }
 
   /// 포인터 취소 이벤트 처리
@@ -222,6 +318,8 @@ class TextInteractionManager {
   /// 정리한다. 정리하지 않으면 isAnyTextInteracting이 true로 고착되어
   /// 손을 뗀 뒤에도 핀치줌과 필기가 계속 차단된다.
   bool handlePointerCancel(PointerCancelEvent event) {
+    // 보류된 새 텍스트 탭도 함께 취소 (kobic UB-273)
+    _pendingNewTextTap = null;
     return _releasePointer();
   }
 
@@ -275,6 +373,7 @@ class TextInteractionManager {
     _textEditorOverlay = null;
     _isEditingText = false;
     _editingTextId = null;
+    _pendingNewTextTap = null;
   }
 
   /// 선택된 텍스트 삭제
@@ -1281,4 +1380,25 @@ class TextInteractionManager {
       textPainter.height,
     );
   }
+}
+
+/// 빈 영역 pointer down으로 보류된 새 텍스트 생성 탭 후보 (kobic UB-273).
+///
+/// up 시점에 슬롭 이내 이동의 탭으로 확정된 경우에만 `_addNewTextAt`이
+/// 실행된다. 생성 위치는 down 시점의 좌표(사용자가 의도한 지점)를 사용한다.
+final class _PendingNewTextTap {
+  const _PendingNewTextTap({
+    required this.pointerId,
+    required this.adjustedPosition,
+    required this.localPosition,
+  });
+
+  /// 탭을 시작한 포인터 ID — 다른 포인터의 move/up과 혼동하지 않기 위함.
+  final int pointerId;
+
+  /// 텍스트 배치용 조정 좌표 (down 시점).
+  final Offset adjustedPosition;
+
+  /// 슬롭 판정 기준이 되는 로컬 좌표 (down 시점).
+  final Offset localPosition;
 }

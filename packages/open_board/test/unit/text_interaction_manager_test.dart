@@ -1,8 +1,11 @@
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
+import 'package:open_board/src/module/state/drawing_state.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_interaction_manager.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
@@ -298,5 +301,178 @@ void main() {
         expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
       },
     );
+
+    group('UB-273 — 새 텍스트 생성 탭 확정/장치 정책 회귀 가드', () {
+      /// DrawingState(전역 싱글턴)의 pointerMode를 변경하고, 변경 리스너가
+      /// 스케줄하는 영속화 디바운스(50ms Future.delayed)를 flush한다.
+      /// flush하지 않으면 테스트 종료 시 pending Timer로 실패한다.
+      Future<void> setPointerMode(
+        WidgetTester tester,
+        DrawingPointerMode mode,
+      ) async {
+        DrawingState().pointerMode.value = mode;
+        await tester.pump(const Duration(milliseconds: 60));
+      }
+
+      /// `localPosition`만 의미가 있는 가상의 PointerMoveEvent.
+      PointerMoveEvent makePointerMove(Offset position) {
+        return PointerMoveEvent(position: position);
+      }
+
+      /// `localPosition`만 의미가 있는 가상의 PointerUpEvent.
+      PointerUpEvent makePointerUp(Offset position) {
+        return PointerUpEvent(position: position);
+      }
+
+      testWidgets(
+        '펜모드의 손가락 down은 새 텍스트를 만들지 않는다 (페이지 탐색 담당 장치)',
+        (tester) async {
+          // Given: 펜모드 (스타일러스만 그리기/생성 가능)
+          await setPointerMode(tester, DrawingPointerMode.penOnly);
+          final manager = await buildManager(
+            tester,
+            onTextSelected: (_) {},
+            onTextDeselected: () {},
+          );
+
+          // When: 손가락(touch)으로 빈 영역 down → up (탭)
+          final handled = manager.handlePointerDown(
+            makePointerDown(const Offset(200, 300)),
+          );
+          manager.handlePointerUp(makePointerUp(const Offset(200, 300)));
+          await tester.pump();
+
+          // Then: 에디터가 열리지 않고 이벤트도 소비되지 않는다
+          //       (kobic 쪽 페이지 스와이프/엣지 탭이 온전히 동작).
+          expect(
+            handled,
+            isFalse,
+            reason: '펜모드의 손가락은 페이지 탐색 담당 — 텍스트 생성 대상 아님',
+          );
+          expect(
+            widgetState.isEditingText,
+            isFalse,
+            reason: '인라인 에디터(키보드)가 열리면 안 된다 (UB-273 깜빡임 원인)',
+          );
+          expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
+        },
+      );
+
+      testWidgets(
+        '손모드의 손가락 탭은 down이 아닌 up 시점에 에디터를 연다',
+        (tester) async {
+          // Given: 손모드 (손가락/마우스로 그리기/생성 가능)
+          await setPointerMode(tester, DrawingPointerMode.mouseOnly);
+          final manager = await buildManager(
+            tester,
+            onTextSelected: (_) {},
+            onTextDeselected: () {},
+          );
+
+          // When: 빈 영역 down
+          final handled = manager.handlePointerDown(
+            makePointerDown(const Offset(200, 300)),
+          );
+
+          // Then: down 시점에는 아직 생성 보류 (스와이프일 수 있음)
+          expect(handled, isTrue, reason: '탭 후보로 이벤트 접수');
+          expect(
+            widgetState.isEditingText,
+            isFalse,
+            reason: 'down 즉시 에디터를 열면 스와이프 시작점마다 키보드가 깜빡인다',
+          );
+
+          // When: 슬롭 이내 이동 후 up (진짜 탭)
+          manager.handlePointerUp(makePointerUp(const Offset(203, 302)));
+          await tester.pump();
+
+          // Then: up 시점에 에디터가 열린다
+          expect(
+            widgetState.isEditingText,
+            isTrue,
+            reason: '슬롭 이내 탭으로 확정되면 인라인 에디터가 열려야 한다',
+          );
+
+          // Cleanup: 에디터 오버레이 정리 + 잔여 타이머(포커스 상실 지연 완료) flush
+          manager.dispose();
+          await tester.pump(const Duration(milliseconds: 200));
+          await setPointerMode(tester, DrawingPointerMode.penOnly); // 기본값 복원
+        },
+      );
+
+      testWidgets(
+        '슬롭을 넘는 이동(페이지 스와이프)은 새 텍스트 생성을 취소한다',
+        (tester) async {
+          // Given: 손모드
+          await setPointerMode(tester, DrawingPointerMode.mouseOnly);
+          final manager = await buildManager(
+            tester,
+            onTextSelected: (_) {},
+            onTextDeselected: () {},
+          );
+
+          // When: down → 수평 120px 이동(스와이프) → up
+          manager.handlePointerDown(makePointerDown(const Offset(200, 300)));
+          manager.handlePointerMove(makePointerMove(const Offset(320, 300)));
+          manager.handlePointerUp(makePointerUp(const Offset(340, 300)));
+          await tester.pump();
+
+          // Then: 에디터가 열리지 않는다 (UB-273 핵심 시나리오)
+          expect(
+            widgetState.isEditingText,
+            isFalse,
+            reason: '스와이프는 텍스트 생성 탭이 아니다 — 키보드 깜빡임 방지',
+          );
+          expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
+
+          await setPointerMode(tester, DrawingPointerMode.penOnly); // 기본값 복원
+        },
+      );
+
+      testWidgets(
+        '펜모드의 스타일러스 탭은 up 시점에 에디터를 연다',
+        (tester) async {
+          // Given: 펜모드
+          await setPointerMode(tester, DrawingPointerMode.penOnly);
+          final manager = await buildManager(
+            tester,
+            onTextSelected: (_) {},
+            onTextDeselected: () {},
+          );
+
+          // When: 스타일러스로 빈 영역 down → up (탭)
+          manager.handlePointerDown(
+            const PointerDownEvent(
+              kind: PointerDeviceKind.stylus,
+              position: Offset(200, 300),
+            ),
+          );
+          expect(
+            widgetState.isEditingText,
+            isFalse,
+            reason: 'down 시점에는 아직 생성 보류',
+          );
+
+          manager.handlePointerUp(
+            const PointerUpEvent(
+              kind: PointerDeviceKind.stylus,
+              position: Offset(200, 300),
+            ),
+          );
+          await tester.pump();
+
+          // Then: 그리기 장치(스타일러스) 탭은 정상적으로 에디터를 연다
+          expect(
+            widgetState.isEditingText,
+            isTrue,
+            reason: '펜모드에서 스타일러스 탭의 텍스트 생성은 유지되어야 한다',
+          );
+
+          // Cleanup: 에디터 오버레이 정리 + 잔여 타이머(포커스 상실 지연 완료) flush
+          manager.dispose();
+          await tester.pump(const Duration(milliseconds: 200));
+        },
+      );
+    });
   });
 }
