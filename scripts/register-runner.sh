@@ -12,7 +12,10 @@
 #                          ARM64/X64 라벨도 붙여주지만, 터미널이 Rosetta로 떠
 #                          있으면 arm64 맥인데도 x64로 등록될 수 있으니 실행 후
 #                          반드시 아래 "아키텍처 확인" 출력을 확인하세요.
-#   --name <name>          러너 이름 (기본: $(hostname)-local)
+#   --name <name>          러너 이름 (기본: $(hostname)-local). 같은 스코프에
+#                          동일 이름이 이미 등록돼 있으면(config.sh --unattended는
+#                          이름 충돌 시 프롬프트 없이 실패) -2, -3 ... 접미사를
+#                          자동으로 붙여 고유한 이름으로 등록합니다.
 #   --dir <path>           러너 설치 경로 (기본: ~/actions-runner)
 #   --runner-group <name>  러너 그룹 (기본: 조직 기본 그룹)
 #   --tool-cache <path>    여러 인스턴스가 Flutter/JDK 등 tool-cache를 공유하도록
@@ -95,10 +98,26 @@ if [[ -f "${RUNNER_DIR}/.runner" ]]; then
 else
   if [[ "$SCOPE_TYPE" == "repo" ]]; then
     API_PATH="repos/${SCOPE}/actions/runners/registration-token"
+    LIST_API="repos/${SCOPE}/actions/runners"
     URL="https://github.com/${SCOPE}"
   else
     API_PATH="orgs/${SCOPE}/actions/runners/registration-token"
+    LIST_API="orgs/${SCOPE}/actions/runners"
     URL="https://github.com/${SCOPE}"
+  fi
+
+  # 이름 충돌 자동 회피: 같은 스코프에 동일 이름의 러너가 이미 있으면
+  # config.sh --unattended가 프롬프트 없이 그냥 실패한다. 기존 이름 목록을
+  # 조회해 충돌하면 -2, -3 ... 접미사를 붙여 고유한 이름을 찾는다.
+  EXISTING_NAMES="$(gh api "${LIST_API}?per_page=100" --jq '.runners[].name' 2>/dev/null || true)"
+  if [[ -n "$EXISTING_NAMES" ]] && grep -qxF "$RUNNER_NAME" <<<"$EXISTING_NAMES"; then
+    BASE_NAME="$RUNNER_NAME"
+    n=2
+    while grep -qxF "${BASE_NAME}-${n}" <<<"$EXISTING_NAMES"; do
+      n=$((n + 1))
+    done
+    RUNNER_NAME="${BASE_NAME}-${n}"
+    echo "==> 이름 충돌 감지 (${SCOPE_TYPE} ${SCOPE}에 '${BASE_NAME}' 이미 존재) → '${RUNNER_NAME}'로 자동 지정"
   fi
 
   echo "==> 등록 토큰 발급 (${SCOPE_TYPE}: ${SCOPE})"

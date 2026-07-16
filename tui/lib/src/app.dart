@@ -4,6 +4,7 @@ import 'package:dart_tui/dart_tui.dart';
 
 import 'gh.dart';
 import 'local.dart';
+import 'register.dart';
 import 'scope.dart';
 
 // ─── 색상 팔레트 (256색) ────────────────────────────────────────────────────
@@ -47,7 +48,7 @@ final class _ScriptExitMsg extends Msg {
 }
 
 // ─── 모드 ───────────────────────────────────────────────────────────────────
-enum _Mode { normal, confirmDelete, scopeInput, help }
+enum _Mode { normal, confirmDelete, scopeInput, registerInput, help }
 
 /// co-arc self-hosted 러너 관리 TUI의 루트 모델.
 final class AppModel extends TeaModel {
@@ -224,6 +225,32 @@ final class AppModel extends TeaModel {
         }
       };
 
+  /// register-runner.sh 실행을 준비한다. [name]/[labels]가 없으면 스크립트
+  /// 기본값(호스트명 이름 · 기본 라벨)을 쓰되, 현재 구성된 [local.dir]은 항상
+  /// `--dir`로 명시해 넘긴다.
+  (List<String> logLines, Cmd? cmd) _registerScript({
+    String? name,
+    String? labels,
+  }) {
+    final script = LocalRunner.findScript('register-runner.sh');
+    if (script == null) {
+      return (
+        const ['register-runner.sh를 찾지 못했습니다 (co-arc 레포 안에서 실행하세요)'],
+        null,
+      );
+    }
+    final args = registerArgs(scope, local.dir, name: name, labels: labels);
+    return (
+      ['\$ register-runner.sh ${args.join(' ')}'],
+      execProcess(
+        script,
+        args,
+        inheritStdio: true,
+        onExit: (code) => _ScriptExitMsg('register-runner.sh', code),
+      ),
+    );
+  }
+
   // ─── 라이프사이클 ────────────────────────────────────────────────────────
 
   @override
@@ -329,6 +356,9 @@ final class AppModel extends TeaModel {
       case _Mode.scopeInput:
         return _onScopeInputKey(key, msg);
 
+      case _Mode.registerInput:
+        return _onRegisterInputKey(key, msg);
+
       case _Mode.normal:
         return _onNormalKey(key, msg);
     }
@@ -375,6 +405,34 @@ final class AppModel extends TeaModel {
     }
   }
 
+  (Model, Cmd?) _onRegisterInputKey(String key, KeyMsg msg) {
+    switch (key) {
+      case 'esc':
+        return (copyWith(mode: _Mode.normal, input: ''), null);
+      case 'enter':
+        final (name, labels) = parseRegisterInput(input);
+        final (lines, cmd) = _registerScript(name: name, labels: labels);
+        return (
+          copyWith(mode: _Mode.normal, input: '', log: [...log, ...lines]),
+          cmd,
+        );
+      case 'backspace':
+        return (
+          copyWith(
+              input: input.isEmpty ? '' : input.substring(0, input.length - 1)),
+          null,
+        );
+      default:
+        final k = msg.keyEvent;
+        if (k.code == KeyCode.rune &&
+            k.modifiers.isEmpty &&
+            k.text.isNotEmpty) {
+          return (copyWith(input: input + k.text), null);
+        }
+        return (this, null);
+    }
+  }
+
   (Model, Cmd?) _onNormalKey(String key, KeyMsg msg) {
     switch (key) {
       case 'q':
@@ -398,22 +456,11 @@ final class AppModel extends TeaModel {
         return (copyWith(mode: _Mode.confirmDelete), null);
 
       case 'a':
-        final script = LocalRunner.findScript('register-runner.sh');
-        if (script == null) {
-          return (
-            copyWith(log: [...log, 'register-runner.sh를 찾지 못했습니다 (co-arc 레포 안에서 실행하세요)']),
-            null,
-          );
-        }
-        return (
-          copyWith(log: [...log, '\$ register-runner.sh ${scope.scriptArgs.join(' ')}']),
-          execProcess(
-            script,
-            scope.scriptArgs,
-            inheritStdio: true,
-            onExit: (code) => _ScriptExitMsg('register-runner.sh', code),
-          ),
-        );
+        final (lines, cmd) = _registerScript();
+        return (copyWith(log: [...log, ...lines]), cmd);
+
+      case 'A':
+        return (copyWith(mode: _Mode.registerInput, input: ''), null);
 
       case 's':
         if (!localStatus.configured) {
@@ -536,9 +583,12 @@ final class AppModel extends TeaModel {
       case _Mode.scopeInput:
         return ' ${_fg(_cyan).render('scope>')} $input█'
             '${_fg(_gray).render('   (org 이름 또는 owner/repo · Enter 확정 · Esc 취소)')}';
+      case _Mode.registerInput:
+        return ' ${_fg(_cyan).render('register>')} $input█'
+            '${_fg(_gray).render('   (이름 [라벨1,라벨2,...] · 빈 입력=기본값 · Enter 등록 · Esc 취소)')}';
       default:
         return _fg(_gray).render(_clip(
-            ' ↑↓ 이동 · r 갱신 · a 등록 · d 해제 · s 서비스 · c/C 정리 · g 스코프 · ? 도움말 · q 종료'));
+            ' ↑↓ 이동 · r 갱신 · a 등록 · A 이름지정등록 · d 해제 · s 서비스 · c/C 정리 · g 스코프 · ? 도움말 · q 종료'));
     }
   }
 
@@ -576,6 +626,11 @@ final class AppModel extends TeaModel {
       ('↑/↓, j/k', '러너 선택 이동'),
       ('r', 'GitHub 러너 목록 + 로컬 상태 새로고침 (15초마다 자동)'),
       ('a', '이 머신을 러너로 등록 — scripts/register-runner.sh 실행 (TUI 일시 중단)'),
+      (
+        'A',
+        '이름/라벨을 직접 입력해 등록 — "이름 라벨1,라벨2" (빈 입력은 a와 동일). '
+            '이름이 이미 스코프에 있으면 -2, -3 ...으로 자동 회피'
+      ),
       ('d', '선택한 러너를 GitHub에서 해제 (오프라인 러너만 가능)'),
       ('s', '로컬 launchd 서비스 시작/중지 (svc.sh)'),
       ('c / C', '_work 정리 — c는 dry-run, C는 실제 삭제 (scripts/cleanup-work.sh)'),
