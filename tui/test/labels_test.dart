@@ -1,6 +1,21 @@
 import 'package:coarc_tui/coarc_tui.dart';
 import 'package:test/test.dart';
 
+RunnerInfo _runner(
+  String name, {
+  List<String> custom = const [],
+  List<String> readOnly = const ['self-hosted', 'macOS', 'ARM64'],
+}) =>
+    RunnerInfo(
+      id: name.hashCode,
+      name: name,
+      os: 'macOS',
+      status: 'online',
+      busy: false,
+      labels: [...readOnly, ...custom],
+      customLabels: custom,
+    );
+
 void main() {
   group('splitLabelsCsv', () {
     test('trim + 빈 항목 제거', () {
@@ -17,40 +32,43 @@ void main() {
     });
   });
 
-  group('parseLabelInput', () {
-    test('+ 접두는 추가', () {
-      final edit = parseLabelInput('+flutter,ios');
-      expect(edit, isA<LabelAdd>());
-      expect(edit.labels, ['flutter', 'ios']);
+  group('pickerLabels', () {
+    test('스코프 전체의 커스텀 라벨 합집합을 이름순으로 모은다', () {
+      final target = _runner('a', custom: ['flutter']);
+      final labels = pickerLabels([
+        target,
+        _runner('b', custom: ['ios', 'flutter']),
+        _runner('c', custom: ['serverpod']),
+      ], target);
+      expect(labels, ['flutter', 'ios', 'serverpod']);
     });
 
-    test('- 접두는 삭제', () {
-      final edit = parseLabelInput('-flutter');
-      expect(edit, isA<LabelRemove>());
-      expect(edit.labels, ['flutter']);
+    test('대상의 라벨은 다른 러너에 없어도 포함된다', () {
+      // 목록에 대상이 빠져 있어도(늦은 갱신 등) 체크 상태를 표시할 항목은 있어야 한다.
+      final target = _runner('a', custom: ['only-mine']);
+      expect(
+        pickerLabels([
+          _runner('b', custom: ['shared'])
+        ], target),
+        ['only-mine', 'shared'],
+      );
     });
 
-    test('접두 없는 CSV는 전체 교체', () {
-      final edit = parseLabelInput('a,b,c');
-      expect(edit, isA<LabelReplace>());
-      expect(edit.labels, ['a', 'b', 'c']);
+    test('대상의 read-only 라벨은 다른 러너에서 커스텀이어도 제외한다', () {
+      // GitHub 라벨 API가 거부하므로 고를 수 있게 두면 안 된다.
+      final target = _runner('a', readOnly: const ['self-hosted', 'macOS']);
+      expect(
+        pickerLabels([
+          target,
+          _runner('b', custom: ['macOS', 'flutter']),
+        ], target),
+        ['flutter'],
+      );
     });
 
-    test('빈 입력은 빈 교체 (커스텀 라벨 전체 삭제)', () {
-      final edit = parseLabelInput('   ');
-      expect(edit, isA<LabelReplace>());
-      expect(edit.labels, isEmpty);
-    });
-
-    test('접두 앞뒤 공백 허용', () {
-      final edit = parseLabelInput('  +a, b ');
-      expect(edit, isA<LabelAdd>());
-      expect(edit.labels, ['a', 'b']);
-    });
-
-    test('접두만 있으면 빈 라벨 리스트', () {
-      expect(parseLabelInput('+').labels, isEmpty);
-      expect(parseLabelInput('-').labels, isEmpty);
+    test('커스텀 라벨이 하나도 없으면 빈 목록', () {
+      final target = _runner('a');
+      expect(pickerLabels([target], target), isEmpty);
     });
   });
 

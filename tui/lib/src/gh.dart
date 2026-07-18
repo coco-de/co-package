@@ -107,18 +107,6 @@ final class GhClient {
     if (r.exitCode != 0) throw GhFailure(_errorOf(r));
   }
 
-  /// 커스텀 라벨 추가 — 기존 라벨은 유지된다.
-  Future<void> addRunnerLabels(Scope scope, int id, List<String> labels) async {
-    final r = await _gh([
-      'api',
-      '-X',
-      'POST',
-      runnerLabelsPath(scope, id),
-      ...labelFieldArgs(labels),
-    ]);
-    if (r.exitCode != 0) throw GhFailure(_errorOf(r));
-  }
-
   /// 커스텀 라벨 전체 교체. 빈 리스트면 커스텀 라벨 전체 삭제.
   /// (read-only 라벨은 GitHub가 항상 유지한다.)
   Future<void> setRunnerLabels(Scope scope, int id, List<String> labels) async {
@@ -133,17 +121,6 @@ final class GhClient {
               ...labelFieldArgs(labels),
             ],
     );
-    if (r.exitCode != 0) throw GhFailure(_errorOf(r));
-  }
-
-  /// 커스텀 라벨 하나 제거.
-  Future<void> removeRunnerLabel(Scope scope, int id, String name) async {
-    final r = await _gh([
-      'api',
-      '-X',
-      'DELETE',
-      '${runnerLabelsPath(scope, id)}/${Uri.encodeComponent(name)}',
-    ]);
     if (r.exitCode != 0) throw GhFailure(_errorOf(r));
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:characters/characters.dart';
 import 'package:dart_tui/dart_tui.dart';
 
 import 'gh.dart';
@@ -65,8 +66,18 @@ enum _Mode {
   confirmDelete,
   scopeInput,
   registerInput,
-  labelInput,
-  help
+
+  /// 라벨 멀티셀렉트 피커 (`l`).
+  labelPicker,
+
+  /// 피커에 없는 새 라벨을 입력하는 중 (`n`) — 피커 위에 겹쳐 뜬다.
+  labelNewInput,
+  help;
+
+  /// 한 줄 텍스트 입력을 받는 모드인지 — [AppModel.input]이 살아 있고
+  /// 붙여넣기([PasteMsg])를 받아야 하는 모드다.
+  bool get isTextInput =>
+      this == scopeInput || this == registerInput || this == labelNewInput;
 }
 
 /// co-arc self-hosted 러너 관리 TUI의 루트 모델.
@@ -84,7 +95,8 @@ final class AppModel extends TeaModel {
     this.localStatusFor,
     this.log = const [],
     this.mode = _Mode.normal,
-    this.input = '',
+    TextInputModel? input,
+    this.picker,
     this.labelTarget,
     this.lastUpdated,
     this.width = 100,
@@ -92,6 +104,7 @@ final class AppModel extends TeaModel {
     this.svcBusy = false,
   })  : localStatus = localStatus ?? LocalStatus.empty(local.dir),
         spinner = spinner ?? SpinnerModel(),
+        input = input ?? TextInputModel(),
         table = table ?? _buildTable(const [], 100, 30, cursor: 0);
 
   final Scope scope;
@@ -112,7 +125,13 @@ final class AppModel extends TeaModel {
   final String? localStatusFor;
   final List<String> log;
   final _Mode mode;
-  final String input;
+
+  /// 한 줄 텍스트 입력(스코프·등록·새 라벨)의 상태. 커서 이동·단어 삭제 등은
+  /// [TextInputModel.update]에 맡기고, 붙여넣기만 [_pasteIntoInput]이 처리한다.
+  final TextInputModel input;
+
+  /// 라벨 피커(`l`)의 체크박스 목록 — 피커 밖에서는 null.
+  final MultiSelectModel? picker;
 
   /// 라벨 편집(`l`) 진입 시점의 대상 러너 — 편집 중 목록이 갱신돼
   /// 커서가 다른 러너를 가리키게 되더라도 원래 대상에 적용하기 위해 고정한다.
@@ -140,7 +159,9 @@ final class AppModel extends TeaModel {
     bool clearLocalStatusFor = false,
     List<String>? log,
     _Mode? mode,
-    String? input,
+    TextInputModel? input,
+    MultiSelectModel? picker,
+    bool clearPicker = false,
     RunnerInfo? labelTarget,
     bool clearLabelTarget = false,
     DateTime? lastUpdated,
@@ -164,6 +185,7 @@ final class AppModel extends TeaModel {
         log: log ?? this.log,
         mode: mode ?? this.mode,
         input: input ?? this.input,
+        picker: clearPicker ? null : (picker ?? this.picker),
         labelTarget:
             clearLabelTarget ? null : (labelTarget ?? this.labelTarget),
         lastUpdated: lastUpdated ?? this.lastUpdated,
@@ -376,72 +398,69 @@ final class AppModel extends TeaModel {
         }
       };
 
-  /// 라벨 편집 입력을 (안내 로그, 실행 커맨드)로 변환한다.
+  /// 피커에서 체크한 [labels]로 [r]의 커스텀 라벨을 교체하는 (안내 로그, 커맨드).
   ///
-  /// read-only 라벨은 GitHub 라벨 API가 거부하므로 호출 전에 걸러내고
-  /// 건너뛴 사유를 로그로 남긴다. 실행할 변경이 없으면 커맨드는 null.
-  (List<String> logLines, Cmd? cmd) _labelEditPlan(
-      RunnerInfo r, LabelEdit edit) {
-    final (editable, skipped) =
-        splitEditableLabels(edit.labels, r.readOnlyLabels);
-    final lines = <String>[
-      if (skipped.isNotEmpty) 'read-only 라벨은 편집 불가, 건너뜀: ${skipped.join(', ')}',
-    ];
-
-    switch (edit) {
-      case LabelAdd():
-        if (editable.isEmpty) return ([...lines, '추가할 라벨이 없습니다'], null);
-        final desc = '라벨 추가: ${editable.join(', ')}';
-        return (
-          lines,
-          _mutateLabels(
-              desc, r, () => gh.addRunnerLabels(scope, r.id, editable)),
-        );
-
-      case LabelRemove():
-        final removable = [
-          for (final l in editable)
-            if (r.customLabels.contains(l)) l
-        ];
-        final missing = [
-          for (final l in editable)
-            if (!r.customLabels.contains(l)) l
-        ];
-        if (missing.isNotEmpty) lines.add('없는 라벨은 건너뜀: ${missing.join(', ')}');
-        if (removable.isEmpty) return ([...lines, '삭제할 라벨이 없습니다'], null);
-        final desc = '라벨 삭제: ${removable.join(', ')}';
-        return (
-          lines,
-          _mutateLabels(desc, r, () async {
-            for (final l in removable) {
-              await gh.removeRunnerLabel(scope, r.id, l);
-            }
-          }),
-        );
-
-      case LabelReplace():
-        if (editable.isEmpty) {
-          // 입력한 라벨이 전부 read-only로 걸러진 경우 — 빈 교체(전체 삭제)로
-          // 오인해 커스텀 라벨을 지우면 안 된다. 진짜 빈 입력만 전체 삭제.
-          if (skipped.isNotEmpty) {
-            return ([...lines, '편집 가능한 라벨이 없어 변경하지 않습니다'], null);
-          }
-          if (r.customLabels.isEmpty) {
-            return ([...lines, '삭제할 커스텀 라벨이 없습니다'], null);
-          }
-          return (
-            lines,
-            _mutateLabels('커스텀 라벨 전체 삭제', r,
-                () => gh.setRunnerLabels(scope, r.id, const [])),
-          );
-        }
-        final desc = '라벨 교체: ${editable.join(', ')}';
-        return (
-          lines,
-          _mutateLabels(
-              desc, r, () => gh.setRunnerLabels(scope, r.id, editable)),
-        );
+  /// 실행할 변경이 없으면 커맨드는 null. 피커 항목은 만들 때부터 편집 가능한
+  /// 라벨만 담으므로([pickerLabels], `n` 입력의 read-only 필터) 여기서 다시
+  /// 거르지 않는다.
+  (List<String> logLines, Cmd? cmd) _labelReplacePlan(
+      RunnerInfo r, List<String> labels) {
+    if (_sameLabels(labels, r.customLabels)) {
+      return (const ['변경된 라벨이 없습니다'], null);
     }
+    if (labels.isEmpty) {
+      return (
+        const [],
+        _mutateLabels(
+            '커스텀 라벨 전체 삭제', r, () => gh.setRunnerLabels(scope, r.id, const [])),
+      );
+    }
+    return (
+      const [],
+      _mutateLabels('라벨 적용: ${labels.join(', ')}', r,
+          () => gh.setRunnerLabels(scope, r.id, labels)),
+    );
+  }
+
+  static bool _sameLabels(Iterable<String> a, Iterable<String> b) {
+    final setA = a.toSet();
+    final setB = b.toSet();
+    return setA.length == setB.length && setA.containsAll(setB);
+  }
+
+  /// [target]의 라벨 피커를 만든다.
+  ///
+  /// 항목은 스코프에 이미 쓰이는 커스텀 라벨의 합집합([pickerLabels])에
+  /// [extra](방금 `n`으로 입력한 새 라벨)를 더한 것이고, [checked]가 체크
+  /// 상태다 (기본값 = [target]의 현재 커스텀 라벨). [cursorOn]이 있으면 그
+  /// 라벨에 커서를 둔다.
+  MultiSelectModel _buildPicker(
+    RunnerInfo target, {
+    Iterable<String>? checked,
+    Iterable<String> extra = const [],
+    String? cursorOn,
+  }) {
+    final checkedSet = {...(checked ?? target.customLabels)};
+    final names = {...pickerLabels(runners, target), ...extra}.toList()..sort();
+    return MultiSelectModel(
+      items: [
+        for (final n in names)
+          MultiSelectItem(label: n, selected: checkedSet.contains(n)),
+      ],
+      cursor:
+          cursorOn == null ? 0 : names.indexOf(cursorOn).clamp(0, names.length),
+      height: _tableHeight(height),
+      // 상태줄은 직접 그린다 — 기본 상태줄은 'n/m selected' 영문이라 나머지
+      // 화면과 어긋난다.
+      showStatusBar: false,
+      styles: MultiSelectStyles(
+        cursor: _fg(_cyan).bold(),
+        selectedItem: _fg(_cyan),
+        checkedBox: _fg(_green).bold(),
+        uncheckedBox: _fg(_gray),
+        statusBar: _fg(_gray),
+      ),
+    );
   }
 
   /// register-runner.sh 실행을 준비한다.
@@ -581,9 +600,32 @@ final class AppModel extends TeaModel {
       case KeyMsg(:final key):
         return _onKey(key, msg);
 
+      // 붙여넣기는 KeyMsg가 아니라 PasteMsg로 온다 (bracketed paste가 기본
+      // 활성). 이걸 처리하지 않아 프롬프트에 붙여넣기가 통째로 무시됐다.
+      case PasteMsg(:final content):
+        return (_pasteIntoInput(content), null);
+
       default:
         return (this, null);
     }
+  }
+
+  /// 붙여넣은 [content]를 입력 커서 자리에 끼워 넣는다.
+  ///
+  /// 한 줄 입력이므로 개행·탭은 공백으로 접는다 — 터미널에서 복사하면 끝에
+  /// 개행이 딸려오기 마련인데, 그대로 넣으면 라벨 이름에 섞여 들어간다.
+  AppModel _pasteIntoInput(String content) {
+    if (!mode.isTextInput) return this;
+    final text = content.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (text.isEmpty) return this;
+    final chars = input.value.characters.toList();
+    final pos = input.cursorPos.clamp(0, chars.length);
+    return copyWith(
+      input: input.copyWith(
+        value: [...chars.take(pos), text, ...chars.skip(pos)].join(),
+        cursorPos: pos + text.characters.length,
+      ),
+    );
   }
 
   // ─── 키 입력 ─────────────────────────────────────────────────────────────
@@ -627,22 +669,35 @@ final class AppModel extends TeaModel {
       case _Mode.registerInput:
         return _onRegisterInputKey(key, msg);
 
-      case _Mode.labelInput:
-        return _onLabelInputKey(key, msg);
+      case _Mode.labelPicker:
+        return _onLabelPickerKey(key, msg);
+
+      case _Mode.labelNewInput:
+        return _onLabelNewInputKey(key, msg);
 
       case _Mode.normal:
         return _onNormalKey(key, msg);
     }
   }
 
+  /// 커서 이동·단어 삭제·글자 입력 등 편집 키를 [TextInputModel]에 넘긴다.
+  /// (esc·enter처럼 모드마다 뜻이 다른 키는 각 핸들러가 먼저 가로챈다.)
+  (Model, Cmd?) _editInput(KeyMsg msg) {
+    final (next, cmd) = input.update(msg);
+    return (copyWith(input: next as TextInputModel), cmd);
+  }
+
+  static TextInputModel _newInput([String value = '']) =>
+      TextInputModel(value: value, cursorPos: value.characters.length);
+
   (Model, Cmd?) _onScopeInputKey(String key, KeyMsg msg) {
     switch (key) {
       case 'esc':
-        return (copyWith(mode: _Mode.normal, input: ''), null);
+        return (copyWith(mode: _Mode.normal, input: _newInput()), null);
       case 'enter':
-        final trimmed = input.trim();
+        final trimmed = input.value.trim();
         if (trimmed.isEmpty) {
-          return (copyWith(mode: _Mode.normal, input: ''), null);
+          return (copyWith(mode: _Mode.normal, input: _newInput()), null);
         }
         final next = Scope.parse(trimmed);
         TuiConfig(scope: next, runnerDir: local.dir, runnersRoot: local.root)
@@ -651,7 +706,7 @@ final class AppModel extends TeaModel {
           copyWith(
             scope: next,
             mode: _Mode.normal,
-            input: '',
+            input: _newInput(),
             loading: true,
             runners: const [],
             table: _buildTable(const [], width, height, cursor: 0),
@@ -659,95 +714,123 @@ final class AppModel extends TeaModel {
           ),
           _fetchRunnersFor(next),
         );
-      case 'backspace':
-        return (
-          copyWith(
-              input: input.isEmpty ? '' : input.substring(0, input.length - 1)),
-          null,
-        );
       default:
-        // 빠른 입력/붙여넣기는 여러 글자가 하나의 rune 키로 들어올 수 있다.
-        final k = msg.keyEvent;
-        if (k.code == KeyCode.rune &&
-            k.modifiers.isEmpty &&
-            k.text.isNotEmpty) {
-          return (copyWith(input: input + k.text), null);
-        }
-        return (this, null);
+        return _editInput(msg);
     }
   }
 
   (Model, Cmd?) _onRegisterInputKey(String key, KeyMsg msg) {
     switch (key) {
       case 'esc':
-        return (copyWith(mode: _Mode.normal, input: ''), null);
+        return (copyWith(mode: _Mode.normal, input: _newInput()), null);
       case 'enter':
-        final (name, labels) = parseRegisterInput(input);
+        final (name, labels) = parseRegisterInput(input.value);
         final (lines, cmd, newLocal) =
             _registerScript(name: name, labels: labels);
         return (
           copyWith(
             mode: _Mode.normal,
-            input: '',
+            input: _newInput(),
             log: [...log, ...lines],
             local: newLocal,
           ),
           cmd,
         );
-      case 'backspace':
-        return (
-          copyWith(
-              input: input.isEmpty ? '' : input.substring(0, input.length - 1)),
-          null,
-        );
       default:
-        final k = msg.keyEvent;
-        if (k.code == KeyCode.rune &&
-            k.modifiers.isEmpty &&
-            k.text.isNotEmpty) {
-          return (copyWith(input: input + k.text), null);
-        }
-        return (this, null);
+        return _editInput(msg);
     }
   }
 
-  (Model, Cmd?) _onLabelInputKey(String key, KeyMsg msg) {
+  /// 라벨 피커(`l`)의 키. 이동·토글은 [MultiSelectModel]에 맡기고 여기서는
+  /// 피커를 여닫는 키(적용/취소/새 라벨)만 다룬다.
+  (Model, Cmd?) _onLabelPickerKey(String key, KeyMsg msg) {
+    final target = labelTarget;
+    final current = picker;
+    if (target == null || current == null) return (_closePicker(), null);
+
     switch (key) {
       case 'esc':
-        return (
-          copyWith(mode: _Mode.normal, input: '', clearLabelTarget: true),
-          null,
-        );
+        return (_closePicker(), null);
+
+      case 'n':
+        return (copyWith(mode: _Mode.labelNewInput, input: _newInput()), null);
+
       case 'enter':
-        final target = labelTarget;
-        if (target == null) {
-          return (copyWith(mode: _Mode.normal, input: ''), null);
-        }
-        final (lines, cmd) = _labelEditPlan(target, parseLabelInput(input));
+        final (lines, cmd) =
+            _labelReplacePlan(target, current.selectedValues.toList()..sort());
         return (
-          copyWith(
-            mode: _Mode.normal,
-            input: '',
-            clearLabelTarget: true,
-            log: [...log, ...lines],
-            loading: cmd == null ? null : true,
-          ),
+          // 적용할 게 없으면 loading은 건드리지 않는다 — false로 덮으면 이미
+          // 떠 있던 다른 조회의 스피너가 꺼진다.
+          _closePicker(
+              log: [...log, ...lines], loading: cmd == null ? null : true),
           cmd == null ? null : sequence([cmd, _fetchRunners()]),
         );
-      case 'backspace':
+
+      default:
+        final (next, cmd) = current.update(msg);
+        return (copyWith(picker: next as MultiSelectModel), cmd);
+    }
+  }
+
+  AppModel _closePicker({List<String>? log, bool? loading}) => copyWith(
+        mode: _Mode.normal,
+        input: _newInput(),
+        clearPicker: true,
+        clearLabelTarget: true,
+        log: log,
+        loading: loading,
+      );
+
+  /// 피커에 없는 새 라벨 입력(`n`)의 키. 확정하면 피커로 돌아간다 —
+  /// GitHub 호출은 피커에서 Enter를 누를 때 한 번에 나간다.
+  (Model, Cmd?) _onLabelNewInputKey(String key, KeyMsg msg) {
+    final target = labelTarget;
+    final current = picker;
+    if (target == null || current == null) return (_closePicker(), null);
+
+    switch (key) {
+      case 'esc':
+        return (copyWith(mode: _Mode.labelPicker, input: _newInput()), null);
+
+      case 'enter':
+        final (editable, skipped) = splitEditableLabels(
+            splitLabelsCsv(input.value), target.readOnlyLabels);
+        final lines = <String>[
+          if (skipped.isNotEmpty)
+            'read-only 라벨은 편집 불가, 건너뜀: ${skipped.join(', ')}',
+        ];
+        if (editable.isEmpty) {
+          return (
+            copyWith(
+              mode: _Mode.labelPicker,
+              input: _newInput(),
+              log: [...log, ...lines],
+            ),
+            null,
+          );
+        }
         return (
           copyWith(
-              input: input.isEmpty ? '' : input.substring(0, input.length - 1)),
+            mode: _Mode.labelPicker,
+            input: _newInput(),
+            picker: _buildPicker(
+              target,
+              checked: {...current.selectedValues, ...editable},
+              // 지금 목록에 있는 항목을 모두 다시 넘긴다 — pickerLabels는 스코프의
+              // 러너들이 쓰는 라벨만 알기 때문에, 앞서 n으로 추가한 라벨은 여기서
+              // 넘기지 않으면 두 번째 n에서 소리 없이 사라진다.
+              extra: [...current.items.map((i) => i.label), ...editable],
+              // 방금 추가한 라벨 위에 커서를 둔다 — 목록이 이름순이라 새 라벨이
+              // 어디로 끼어들었는지 눈으로 찾게 두면 추가한 티가 안 난다.
+              cursorOn: editable.first,
+            ),
+            log: [...log, ...lines],
+          ),
           null,
         );
+
       default:
-        final k = msg.keyEvent;
-        if (k.code == KeyCode.rune &&
-            k.modifiers.isEmpty &&
-            k.text.isNotEmpty) {
-          return (copyWith(input: input + k.text), null);
-        }
-        return (this, null);
+        return _editInput(msg);
     }
   }
 
@@ -767,7 +850,7 @@ final class AppModel extends TeaModel {
         );
 
       case 'g':
-        return (copyWith(mode: _Mode.scopeInput, input: ''), null);
+        return (copyWith(mode: _Mode.scopeInput, input: _newInput()), null);
 
       case 'd':
         if (selected == null) return (this, null);
@@ -778,16 +861,16 @@ final class AppModel extends TeaModel {
         return (copyWith(log: [...log, ...lines], local: newLocal), cmd);
 
       case 'A':
-        return (copyWith(mode: _Mode.registerInput, input: ''), null);
+        return (copyWith(mode: _Mode.registerInput, input: _newInput()), null);
 
       case 'l':
         final target = selected;
         if (target == null) return (this, null);
         return (
           copyWith(
-            mode: _Mode.labelInput,
-            input: target.customLabels.join(','),
+            mode: _Mode.labelPicker,
             labelTarget: target,
+            picker: _buildPicker(target),
           ),
           null,
         );
@@ -865,6 +948,9 @@ final class AppModel extends TeaModel {
   @override
   View view() {
     if (mode == _Mode.help) return newView(_helpView());
+    if (mode == _Mode.labelPicker || mode == _Mode.labelNewInput) {
+      return newView(_labelPickerView());
+    }
 
     final b = StringBuffer();
     b.writeln(_headerLine());
@@ -937,6 +1023,52 @@ final class AppModel extends TeaModel {
     return ' 로컬: ${parts.join(' · ')}';
   }
 
+  /// 라벨 피커 화면 (`l`). 새 라벨 입력(`n`) 중에도 같은 화면 위에서
+  /// 하단 줄만 입력 프롬프트로 바뀐다 — 무엇을 골라뒀는지 보면서 타이핑한다.
+  String _labelPickerView() {
+    final target = labelTarget;
+    final p = picker;
+    if (target == null || p == null) return ' (라벨 편집 대상 없음)';
+
+    final b = StringBuffer();
+    b.writeln(const Style().bold().render(_clip(' 라벨 편집 — ${target.name}')));
+    final readOnly = target.readOnlyLabels;
+    if (readOnly.isNotEmpty) {
+      b.writeln(_fg(_gray)
+          .render(_clip(' read-only(편집 불가): ${readOnly.join(', ')}')));
+    }
+    b.writeln();
+
+    if (p.items.isEmpty) {
+      b.writeln(_fg(_gray).render(' 스코프에 등록된 커스텀 라벨이 없습니다 — n으로 새 라벨을 추가하세요.'));
+    } else {
+      b.writeln(p.view().content);
+      b.writeln();
+      b.writeln(_fg(_gray)
+          .render(' ${p.selectedValues.length}/${p.items.length} 선택됨'));
+    }
+
+    b.writeln();
+    b.writeln(_fg(_gray).render('─' * width.clamp(20, 200)));
+    b.write(mode == _Mode.labelNewInput
+        ? ' ${_fg(_cyan).render('새 라벨>')} ${_renderInput()}'
+            '${_fg(_gray).render('   (CSV로 여러 개 · Enter 추가 · Esc 취소)')}'
+        : _fg(_gray).render(
+            _clip(' ↑↓ 이동 · space 토글 · a 전체 토글 · n 새 라벨 · Enter 적용 · Esc 취소')));
+    return b.toString();
+  }
+
+  /// 한 줄 입력을 렌더한다 — 커서 자리의 글자를 반전시켜 위치를 보여준다.
+  /// (텍스트 끝에는 반전할 글자가 없으므로 공백 블록을 붙인다.)
+  String _renderInput() {
+    final cursor = const Style().reverse();
+    final chars = input.value.characters.toList();
+    final pos = input.cursorPos.clamp(0, chars.length);
+    final before = chars.take(pos).join();
+    if (pos >= chars.length) return '$before${cursor.render(' ')}';
+    return '$before${cursor.render(chars[pos])}${chars.skip(pos + 1).join()}';
+  }
+
   List<String> _logTail(int n) {
     if (log.isEmpty) return const ['(로그 없음)'];
     return log.length <= n ? log : log.sublist(log.length - n);
@@ -954,14 +1086,11 @@ final class AppModel extends TeaModel {
         return _fg(_yellow)
             .render(" '${r?.name}' (id ${r?.id}) 러너를 $howto [y/N]");
       case _Mode.scopeInput:
-        return ' ${_fg(_cyan).render('scope>')} $input█'
+        return ' ${_fg(_cyan).render('scope>')} ${_renderInput()}'
             '${_fg(_gray).render('   (org 이름 또는 owner/repo · Enter 확정 · Esc 취소)')}';
       case _Mode.registerInput:
-        return ' ${_fg(_cyan).render('register>')} $input█'
+        return ' ${_fg(_cyan).render('register>')} ${_renderInput()}'
             '${_fg(_gray).render('   (이름 [라벨1,라벨2,...] · 빈 입력=기본값 · Enter 등록 · Esc 취소)')}';
-      case _Mode.labelInput:
-        return ' ${_fg(_cyan).render('labels(${labelTarget?.name ?? '?'})>')} $input█'
-            '${_fg(_gray).render('   (CSV=교체 · +a,b 추가 · -a,b 삭제 · 빈 입력=전체 삭제 · Esc 취소)')}';
       default:
         return _fg(_gray).render(_clip(
             ' ↑↓ 이동 · r 갱신 · a 등록 · A 이름지정등록 · l 라벨 · d 해제 · s 서비스 · c/C 정리 · g 스코프 · ? 도움말 · q 종료'));
@@ -1009,8 +1138,9 @@ final class AppModel extends TeaModel {
       ),
       (
         'l',
-        '선택 러너의 커스텀 라벨 편집 — CSV로 전체 교체 · "+a,b" 추가 · "-a,b" 삭제 · '
-            '빈 입력은 커스텀 라벨 전체 삭제 (self-hosted 등 read-only 라벨은 편집 불가)'
+        '선택 러너의 커스텀 라벨 편집 — 스코프의 모든 러너가 쓰는 라벨이 체크박스로 뜬다. '
+            'space 토글 · a 전체 토글 · n 새 라벨 입력(CSV) · Enter 적용 · Esc 취소. '
+            '체크한 집합이 그대로 커스텀 라벨이 된다 (self-hosted 등 read-only 라벨은 편집 불가)'
       ),
       ('d', '선택한 러너를 GitHub에서 해제 (오프라인 러너만 가능)'),
       (

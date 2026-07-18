@@ -20,6 +20,23 @@ GitHub 조회는 `gh` CLI, 등록/정리는 이 레포의 [`scripts/`](../script
  ↑↓ 이동 · r 갱신 · a 등록 · A 이름지정등록 · l 라벨 · d 해제 · s 서비스 · c/C 정리 · g 스코프 · ? 도움말 · q 종료
 ```
 
+`l`을 누르면 라벨 피커가 열립니다. 스코프의 러너들이 이미 쓰는 라벨이 모두 올라오므로,
+CSV를 손으로 다시 타이핑하지 않고 체크만 하면 됩니다.
+
+```
+ 라벨 편집 — cody-macbook-local
+ read-only(편집 불가): self-hosted, macos, ARM64
+
+›[x] flutter
+ [x] ios
+ [ ] serverpod
+ [ ] web
+
+ 2/4 선택됨
+ ────────────────────────────────────────────────────────────────────────
+ ↑↓ 이동 · space 토글 · a 전체 토글 · n 새 라벨 · Enter 적용 · Esc 취소
+```
+
 ## 설치
 
 레포를 clone하지 않고 git 소스에서 바로 전역 설치하는 게 가장 빠릅니다:
@@ -72,7 +89,7 @@ dart run coarc_tui:coarc
 | `r` | 새로고침 (15초마다 자동) |
 | `a` | 이 머신을 러너로 등록 — `scripts/register-runner.sh` 실행 (TUI 일시 중단 후 복귀). 이름 미지정이므로 `{컴퓨터이름}-{랜덤 공룡}`(예: `cocode-m2-ultra-raptor`)으로 기존 러너와 겹치지 않는 이름을 자동 생성 |
 | `A` | 이름/라벨을 직접 입력해 등록 — `이름 라벨1,라벨2,...` 형식 (빈 입력은 `a`와 동일). 같은 스코프에 이름이 이미 있으면 `-2`, `-3` ...으로 자동 회피 |
-| `l` | 선택 러너의 커스텀 라벨 편집 — CSV로 전체 교체, `+a,b` 추가, `-a,b` 삭제, 빈 입력은 커스텀 라벨 전체 삭제. `self-hosted` 등 read-only 라벨은 편집 불가(자동으로 건너뜀) |
+| `l` | 선택 러너의 커스텀 라벨 편집 — **라벨 피커**를 연다. 스코프의 러너들이 이미 쓰는 라벨이 체크박스로 뜨고, 대상 러너의 라벨은 체크된 채로 시작한다. `↑↓`/`jk` 이동, `space`/`x` 토글, `a` 전체 토글, `n` 새 라벨 입력(CSV로 여러 개 한 번에), `Enter` 적용, `Esc` 취소. 체크한 집합이 그대로 커스텀 라벨이 된다. `self-hosted` 등 read-only 라벨은 편집 불가라 목록에 뜨지 않는다 |
 | `d` | 선택 러너를 GitHub에서 해제 (오프라인만 가능, `y` 확인) |
 | `s` | **선택 러너**의 서비스 시작/중지 (`svc.sh`) — 이 머신에 설치된 러너만. 실행 중이면(launchd·포그라운드 무관) `stop`, 안 떠 있고 서비스 미설치(재부팅 등으로 launchd 등록이 사라졌거나 애초에 등록한 적 없음)면 `install` 후 자동으로 `start`까지 이어서 실행, 이미 설치돼 있으면 `start`. 다른 머신의 러너를 선택했으면 아무 명령도 실행하지 않고 그 사실만 로그로 남김 |
 | `c` / `C` | **선택 러너**의 `_work` 정리 — `c` dry-run, `C` 실제 삭제 (`scripts/cleanup-work.sh`, 이 머신에 설치된 러너만) |
@@ -101,7 +118,7 @@ dart test
 
 - `lib/src/app.dart` — TUI 모델 (Model–Update–View)
 - `lib/src/gh.dart` — `gh api` 래퍼 (러너 목록/해제/라벨 변경)
-- `lib/src/labels.dart` — 라벨 편집 입력 파싱 (`+`/`-`/교체) + read-only 라벨 필터
+- `lib/src/labels.dart` — 라벨 피커 후보 수집(스코프 전체 커스텀 라벨 합집합) + read-only 라벨 필터
 - `lib/src/local.dart` — 로컬 에이전트 상태 (`.runner`, listener 프로세스, launchd, `_work` 용량)
 - `lib/src/register.dart` — 등록 입력 파싱 + `register-runner.sh` 인자 구성
 - `lib/src/scope.dart` — org/repo 스코프 + 설정 저장

@@ -1,23 +1,4 @@
-/// 러너 라벨 편집(`l` 키) 입력을 해석한 결과.
-sealed class LabelEdit {
-  const LabelEdit(this.labels);
-  final List<String> labels;
-}
-
-/// `+a,b` — 기존 라벨을 유지한 채 [labels]를 추가.
-final class LabelAdd extends LabelEdit {
-  const LabelAdd(super.labels);
-}
-
-/// `-a,b` — [labels]를 커스텀 라벨에서 제거.
-final class LabelRemove extends LabelEdit {
-  const LabelRemove(super.labels);
-}
-
-/// CSV — 커스텀 라벨 전체를 [labels]로 교체. 빈 리스트면 전체 삭제.
-final class LabelReplace extends LabelEdit {
-  const LabelReplace(super.labels);
-}
+import 'gh.dart';
 
 /// CSV를 trim된 · 중복 없는 라벨 리스트로 분리한다.
 List<String> splitLabelsCsv(String csv) {
@@ -30,18 +11,18 @@ List<String> splitLabelsCsv(String csv) {
   return out;
 }
 
-/// 라벨 프롬프트 입력을 편집 명령으로 해석한다.
+/// 라벨 피커(`l` 키)에 올릴 후보 라벨 — 스코프의 러너들이 쓰는 커스텀 라벨의
+/// 합집합을 이름순으로 정렬한 것.
 ///
-/// `+` 접두는 추가, `-` 접두는 삭제, 그 외는 전체 교체(빈 입력 = 전체 삭제).
-LabelEdit parseLabelInput(String raw) {
-  final trimmed = raw.trim();
-  if (trimmed.startsWith('+')) {
-    return LabelAdd(splitLabelsCsv(trimmed.substring(1)));
-  }
-  if (trimmed.startsWith('-')) {
-    return LabelRemove(splitLabelsCsv(trimmed.substring(1)));
-  }
-  return LabelReplace(splitLabelsCsv(trimmed));
+/// 다른 러너가 이미 쓰는 라벨을 그대로 골라 붙일 수 있게 하는 게 목적이다.
+/// [target]의 read-only 라벨은 제외한다 — 다른 러너에서 커스텀이더라도
+/// [target]에서 read-only면 라벨 API가 거부하므로 고를 수 있게 두면 안 된다.
+List<String> pickerLabels(Iterable<RunnerInfo> runners, RunnerInfo target) {
+  final labels = <String>{
+    for (final r in runners) ...r.customLabels,
+    ...target.customLabels,
+  }..removeAll(target.readOnlyLabels);
+  return labels.toList()..sort();
 }
 
 /// [requested]를 (편집 가능 라벨, read-only라 건너뛸 라벨)로 나눈다.
