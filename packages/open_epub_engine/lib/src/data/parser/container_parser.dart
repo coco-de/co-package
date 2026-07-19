@@ -25,8 +25,7 @@ class ContainerParser {
   static const String _containerNs =
       'urn:oasis:names:tc:opendocument:xmlns:container';
   static const String _opfMediaType = 'application/oebps-package+xml';
-  static const String _renditionNs =
-      'http://www.idpf.org/2013/rendition';
+  static const String _renditionNs = 'http://www.idpf.org/2013/rendition';
 
   /// container.xml 문자열에서 OPF 파일의 ZIP 내부 경로를 반환한다.
   ///
@@ -41,7 +40,8 @@ class ContainerParser {
       throw ContainerParseException('container.xml is not valid XML: $e');
     }
 
-    final rootfiles = doc.findAllElements('rootfile', namespace: _containerNs);
+    final rootfiles =
+        doc.findAllElements('rootfile', namespaceUri: _containerNs);
     final rootfile = rootfiles.firstWhere(
       (e) => e.getAttribute('media-type') == _opfMediaType,
       orElse: () => rootfiles.isEmpty
@@ -74,7 +74,7 @@ class ContainerParser {
       return const [];
     }
     final rootfiles =
-        doc.findAllElements('rootfile', namespace: _containerNs).toList();
+        doc.findAllElements('rootfile', namespaceUri: _containerNs).toList();
     if (rootfiles.isEmpty) return const [];
 
     // default = OPF media-type을 가진 첫 안전-경로 rootfile.
@@ -99,7 +99,7 @@ class ContainerParser {
       result.add(EpubRendition(
         fullPath: path,
         mediaType: mediaType,
-        label: rf.getAttribute('label', namespace: _renditionNs)?.trim(),
+        label: rf.getAttribute('label', namespaceUri: _renditionNs)?.trim(),
         isDefault: path == defaultPath,
       ));
     }

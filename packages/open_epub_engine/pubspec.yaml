@@ -22,9 +22,9 @@ resolution: workspace
 
 dependencies:
   # EPUB 컨테이너(ZIP) 해제
-  archive: ^3.6.1
+  archive: ^4.0.9
   # OPF/NCX/nav/SMIL XML 파싱 + CFI DOM 탐색(S12.1, src/cfi)
-  xml: ^6.6.1
+  xml: ^7.0.1
   # 이식한 epub_pro CFI 프리미티브가 사용 (S12.1, #94)
   collection: ^1.19.0
   # IDPF 폰트 난독화 해제(SHA-1) (S13.5, #102)

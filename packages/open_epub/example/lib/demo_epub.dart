@@ -20,7 +20,7 @@ Uint8List _zipEpub(Map<String, String> files) {
     final bytes = utf8.encode(content);
     archive.addFile(ArchiveFile(name, bytes.length, bytes));
   });
-  return Uint8List.fromList(ZipEncoder().encode(archive)!);
+  return Uint8List.fromList(ZipEncoder().encode(archive));
 }
 
 /// 목차 + 2챕터로 구성된 최소 EPUB3 데모 책.

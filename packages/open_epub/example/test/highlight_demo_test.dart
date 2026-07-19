@@ -24,7 +24,7 @@ Uint8List _zipEpub(Map<String, String> files) {
     final bytes = utf8.encode(content);
     archive.addFile(ArchiveFile(name, bytes.length, bytes));
   });
-  return Uint8List.fromList(ZipEncoder().encode(archive)!);
+  return Uint8List.fromList(ZipEncoder().encode(archive));
 }
 
 /// 번들 example.epub처럼 비선형(linear="no") cover가 spine 앞에 있는 책.

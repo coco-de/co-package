@@ -14,7 +14,7 @@ Uint8List zipEpub(Map<String, String> files) {
     archive.addFile(ArchiveFile(name, bytes.length, bytes));
   });
   final encoded = ZipEncoder().encode(archive);
-  return Uint8List.fromList(encoded!);
+  return Uint8List.fromList(encoded);
 }
 
 const String _containerXml = '''
@@ -235,11 +235,12 @@ Uint8List sparseNcxEpub2() => zipEpub({
 Uint8List zipEpubBinary(Map<String, Object> files) {
   final archive = Archive();
   files.forEach((name, content) {
-    final bytes = content is String ? utf8.encode(content) : content as List<int>;
+    final bytes =
+        content is String ? utf8.encode(content) : content as List<int>;
     archive.addFile(ArchiveFile(name, bytes.length, bytes));
   });
   final encoded = ZipEncoder().encode(archive);
-  return Uint8List.fromList(encoded!);
+  return Uint8List.fromList(encoded);
 }
 
 /// 1×1 투명 PNG 바이트 (이미지 렌더 검증용).
@@ -370,8 +371,7 @@ Uint8List epubWithImages() => zipEpubBinary({
   <body><nav epub:type="toc"><ol><li><a href="ch1.xhtml">1장</a></li></ol></nav></body>
 </html>
 ''',
-      'OEBPS/ch1.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch1.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>그림</p><img src="img/pic.png"/></body></html>',
       'OEBPS/img/pic.png': onePixelPng(),
     });
@@ -417,14 +417,11 @@ Uint8List searchableEpub3() => zipEpub({
   </body>
 </html>
 ''',
-      'OEBPS/ch1.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch1.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>고래는 바다에 산다. 바다는 넓다.</p></body></html>',
-      'OEBPS/ch2.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch2.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>사자는 초원의 왕이다. 초원은 바다처럼 넓다.</p></body></html>',
-      'OEBPS/ch3.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch3.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>독수리는 하늘을 난다.</p></body></html>',
     });
 
@@ -511,11 +508,9 @@ Uint8List mediaOverlayEpub3() => zipEpub({
   </body>
 </smil>
 ''',
-      'OEBPS/ch1.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch1.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p id="s1">첫 문장.</p><p id="s2">둘째 문장.</p></body></html>',
-      'OEBPS/ch2.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch2.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>MO 없는 장.</p></body></html>',
       'OEBPS/audio/ch1.mp3': 'FAKE_AUDIO_BYTES',
     });

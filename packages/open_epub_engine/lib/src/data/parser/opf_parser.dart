@@ -92,15 +92,14 @@ class OpfParser {
       _tocRefsFromRoot(XmlDocument.parse(opfXml).rootElement);
 
   ({String? ncxHref, String? navHref}) _tocRefsFromRoot(XmlElement root) {
-    final manifestEl = root
-        .findElements('manifest', namespace: _opfNs)
-        .firstOrNull;
+    final manifestEl =
+        root.findElements('manifest', namespaceUri: _opfNs).firstOrNull;
     if (manifestEl == null) return (ncxHref: null, navHref: null);
 
     String? navHref;
     String? ncxByMediaType;
     final hrefById = <String, String>{};
-    for (final item in manifestEl.findElements('item', namespace: _opfNs)) {
+    for (final item in manifestEl.findElements('item', namespaceUri: _opfNs)) {
       final id = item.getAttribute('id');
       final href = item.getAttribute('href');
       final mediaType = item.getAttribute('media-type') ?? '';
@@ -114,7 +113,7 @@ class OpfParser {
 
     var ncxHref = ncxByMediaType;
     final tocId = root
-        .findElements('spine', namespace: _opfNs)
+        .findElements('spine', namespaceUri: _opfNs)
         .firstOrNull
         ?.getAttribute('toc');
     if (tocId != null && hrefById.containsKey(tocId)) {
@@ -151,9 +150,9 @@ class OpfParser {
 
   String? _rawRenditionLayoutFromRoot(XmlElement root) {
     final metadataEl =
-        root.findElements('metadata', namespace: _opfNs).firstOrNull;
+        root.findElements('metadata', namespaceUri: _opfNs).firstOrNull;
     if (metadataEl == null) return null;
-    for (final m in metadataEl.findElements('meta', namespace: _opfNs)) {
+    for (final m in metadataEl.findElements('meta', namespaceUri: _opfNs)) {
       if (m.getAttribute('property') == 'rendition:layout') {
         final v = m.innerText.trim();
         return v.isEmpty ? null : v;
@@ -169,7 +168,8 @@ class OpfParser {
       _capabilitiesFromRoot(XmlDocument.parse(opfXml).rootElement);
 
   BookCapabilities _capabilitiesFromRoot(XmlElement root) {
-    final spineEl = root.findElements('spine', namespace: _opfNs).firstOrNull;
+    final spineEl =
+        root.findElements('spine', namespaceUri: _opfNs).firstOrNull;
     final ppd = _parsePageProgression(
       spineEl?.getAttribute('page-progression-direction'),
     );
@@ -196,25 +196,26 @@ class OpfParser {
   /// 미디어 오버레이 보유로 본다. (gap #6 신호)
   bool _detectMediaOverlay(XmlElement packageEl) {
     final manifestEl =
-        packageEl.findElements('manifest', namespace: _opfNs).firstOrNull;
+        packageEl.findElements('manifest', namespaceUri: _opfNs).firstOrNull;
     if (manifestEl == null) return false;
-    for (final item in manifestEl.findElements('item', namespace: _opfNs)) {
-      if (item.getAttribute('media-type') == 'application/smil+xml') return true;
+    for (final item in manifestEl.findElements('item', namespaceUri: _opfNs)) {
+      if (item.getAttribute('media-type') == 'application/smil+xml') {
+        return true;
+      }
       if (item.getAttribute('media-overlay') != null) return true;
     }
     return false;
   }
 
   EpubMetadata _parseMetadata(XmlElement packageEl, String epubVersion) {
-    final metadataEl = packageEl
-        .findElements('metadata', namespace: _opfNs)
-        .firstOrNull;
+    final metadataEl =
+        packageEl.findElements('metadata', namespaceUri: _opfNs).firstOrNull;
     if (metadataEl == null) {
       throw OpfParseException('OPF has no <metadata> element');
     }
 
     String? dcText(String name) {
-      final el = metadataEl.findElements(name, namespace: _dcNs).firstOrNull;
+      final el = metadataEl.findElements(name, namespaceUri: _dcNs).firstOrNull;
       return el?.innerText.trim();
     }
 
@@ -225,7 +226,7 @@ class OpfParser {
 
     // EPUB 3 rendition:* property meta. EPUB 2에는 없으므로 default 유지.
     String? prop(String property) {
-      for (final m in metadataEl.findElements('meta', namespace: _opfNs)) {
+      for (final m in metadataEl.findElements('meta', namespaceUri: _opfNs)) {
         if (m.getAttribute('property') == property) {
           return m.innerText.trim();
         }
@@ -274,8 +275,7 @@ class OpfParser {
   }
 
   double? _dimension(String raw, String name) {
-    final match =
-        RegExp('$name\\s*=\\s*(\\d+(?:\\.\\d+)?)').firstMatch(raw);
+    final match = RegExp('$name\\s*=\\s*(\\d+(?:\\.\\d+)?)').firstMatch(raw);
     return match == null ? null : double.tryParse(match.group(1)!);
   }
 
@@ -305,12 +305,10 @@ class OpfParser {
   }
 
   List<EpubSpineItem> _parseSpine(XmlElement packageEl) {
-    final manifestEl = packageEl
-        .findElements('manifest', namespace: _opfNs)
-        .firstOrNull;
-    final spineEl = packageEl
-        .findElements('spine', namespace: _opfNs)
-        .firstOrNull;
+    final manifestEl =
+        packageEl.findElements('manifest', namespaceUri: _opfNs).firstOrNull;
+    final spineEl =
+        packageEl.findElements('spine', namespaceUri: _opfNs).firstOrNull;
     if (manifestEl == null) {
       throw OpfParseException('OPF has no <manifest> element');
     }
@@ -319,7 +317,7 @@ class OpfParser {
     }
 
     final manifest = <String, _ManifestItem>{};
-    for (final item in manifestEl.findElements('item', namespace: _opfNs)) {
+    for (final item in manifestEl.findElements('item', namespaceUri: _opfNs)) {
       final id = item.getAttribute('id');
       final href = item.getAttribute('href');
       final mediaType = item.getAttribute('media-type');
@@ -332,7 +330,7 @@ class OpfParser {
     }
 
     final spine = <EpubSpineItem>[];
-    for (final ref in spineEl.findElements('itemref', namespace: _opfNs)) {
+    for (final ref in spineEl.findElements('itemref', namespaceUri: _opfNs)) {
       final idref = ref.getAttribute('idref');
       if (idref == null) continue;
       final item = manifest[idref];

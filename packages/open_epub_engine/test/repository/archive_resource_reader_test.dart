@@ -15,7 +15,7 @@ Archive _archiveWithFiles(Map<String, Uint8List> files) {
   files.forEach((name, bytes) {
     archive.addFile(ArchiveFile(name, bytes.length, bytes));
   });
-  final zipped = ZipEncoder().encode(archive)!;
+  final zipped = ZipEncoder().encode(archive);
   return ZipDecoder().decodeBytes(Uint8List.fromList(zipped));
 }
 

@@ -317,7 +317,7 @@ class XMLDOMDocument extends DOMDocument {
 
   @override
   DOMElement createElement(String tagName) {
-    final element = XmlElement(XmlName(tagName));
+    final element = XmlElement(XmlName.parts(tagName));
     return XMLDOMElement._(element);
   }
 
@@ -400,16 +400,10 @@ class XMLDOMNode extends DOMNode {
   @override
   List<DOMNode> get childNodes {
     if (_xmlNode is XmlElement) {
-      return (_xmlNode)
-          .children
-          .map((child) => XMLDOMNode._(child))
-          .toList();
+      return (_xmlNode).children.map((child) => XMLDOMNode._(child)).toList();
     }
     if (_xmlNode is XmlDocument) {
-      return (_xmlNode)
-          .children
-          .map((child) => XMLDOMNode._(child))
-          .toList();
+      return (_xmlNode).children.map((child) => XMLDOMNode._(child)).toList();
     }
     return [];
   }

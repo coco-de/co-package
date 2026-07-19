@@ -42,11 +42,12 @@ class NcxParser {
       );
     }
 
-    final navMap = root.findElements('navMap', namespace: _ncxNs).firstOrNull;
+    final navMap =
+        root.findElements('navMap', namespaceUri: _ncxNs).firstOrNull;
     if (navMap == null) return EpubOutline.empty;
 
     final items = navMap
-        .findElements('navPoint', namespace: _ncxNs)
+        .findElements('navPoint', namespaceUri: _ncxNs)
         .map(_parseNavPoint)
         .whereType<EpubOutlineItem>()
         .toList(growable: false);
@@ -57,14 +58,14 @@ class NcxParser {
   /// 단일 `<navPoint>`를 [EpubOutlineItem]으로 변환. 변환 불가능하면 null.
   EpubOutlineItem? _parseNavPoint(XmlElement navPoint) {
     final title = navPoint
-        .findElements('navLabel', namespace: _ncxNs)
+        .findElements('navLabel', namespaceUri: _ncxNs)
         .firstOrNull
-        ?.findElements('text', namespace: _ncxNs)
+        ?.findElements('text', namespaceUri: _ncxNs)
         .firstOrNull
         ?.innerText
         .trim();
     final contentSrc = navPoint
-        .findElements('content', namespace: _ncxNs)
+        .findElements('content', namespaceUri: _ncxNs)
         .firstOrNull
         ?.getAttribute('src');
 
@@ -73,7 +74,7 @@ class NcxParser {
     }
 
     final children = navPoint
-        .findElements('navPoint', namespace: _ncxNs)
+        .findElements('navPoint', namespaceUri: _ncxNs)
         .map(_parseNavPoint)
         .whereType<EpubOutlineItem>()
         .toList(growable: false);

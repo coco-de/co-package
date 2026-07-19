@@ -40,16 +40,19 @@ class EncryptionParser {
       return const [];
     }
     final result = <EpubEncryptionEntry>[];
-    for (final data in doc.findAllElements('EncryptedData', namespace: _encNs)) {
-      final method =
-          data.findElements('EncryptionMethod', namespace: _encNs).firstOrNull;
+    for (final data
+        in doc.findAllElements('EncryptedData', namespaceUri: _encNs)) {
+      final method = data
+          .findElements('EncryptionMethod', namespaceUri: _encNs)
+          .firstOrNull;
       final algorithm = method?.getAttribute('Algorithm');
       final cipherRef = data
-          .findAllElements('CipherReference', namespace: _encNs)
+          .findAllElements('CipherReference', namespaceUri: _encNs)
           .firstOrNull;
       final uri = cipherRef?.getAttribute('URI');
       if (algorithm == null || uri == null || uri.isEmpty) continue;
-      result.add(EpubEncryptionEntry(uri: _decodeUri(uri), algorithm: algorithm));
+      result
+          .add(EpubEncryptionEntry(uri: _decodeUri(uri), algorithm: algorithm));
     }
     return result;
   }

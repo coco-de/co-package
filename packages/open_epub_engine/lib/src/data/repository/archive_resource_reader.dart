@@ -20,13 +20,14 @@ const int _defaultMaxCachedBytes = 32 * 1024 * 1024;
 /// IDPF/Adobe 폰트 난독화가 걸린 리소스는 읽는 시점에 투명 해제한다
 /// ([obfuscatedResources] = ZIP 루트 경로 → 난독화 알고리즘). (S13.5, gap #8)
 ///
-/// `package:archive`의 `ArchiveFile.content`는 압축 해제 결과를 내부에
-/// 영구 캐시하므로, 아무 조치가 없으면 세션 동안 읽은 모든 리소스의 압축
-/// 해제 바이트가 무제한으로 누적된다(대형 이미지 중심 EPUB에서 OOM 위험).
-/// 이를 막기 위해 접근 순서를 LRU로 추적하고, [maxCachedBytes]를 넘으면
-/// 가장 오래전에 접근한 항목부터 `ArchiveFile.clear()`로 압축 해제 캐시를
-/// 해제한다 — 이후 다시 읽으면 원본 압축 바이트에서 재압축해제되므로
-/// 정확성에는 영향이 없다. (S9.1, #65)
+/// 압축 해제 바이트는 reader가 자체 LRU 캐시로 보관하고, [maxCachedBytes]를
+/// 넘으면 가장 오래전에 접근한 항목부터 해제한다(대형 이미지 중심 EPUB의
+/// OOM 방지, S9.1 #65). archive 4부터 `ArchiveFile.clear()`가 압축 해제
+/// 캐시뿐 아니라 원본 압축 바이트까지 해제해 재읽기가 불가능해졌으므로,
+/// `ArchiveFile.content`의 내부 영구 캐시에 의존하는 대신
+/// `ArchiveFile.decompress(output)`으로 내부 캐시를 우회해 읽는다 —
+/// evict된 항목을 다시 읽으면 원본 압축 바이트에서 재압축해제되므로
+/// 정확성에는 영향이 없다.
 class ArchiveResourceReader implements EpubResourceReader {
   ArchiveResourceReader(
     this._archive,
@@ -49,9 +50,10 @@ class ArchiveResourceReader implements EpubResourceReader {
 
   final int _maxCachedBytes;
 
-  /// 정규화된 href → 압축 해제된 바이트 크기. 삽입 순서 = LRU 순서
+  /// 정규화된 href → 압축 해제된 바이트. 삽입 순서 = LRU 순서
   /// (가장 최근 접근이 마지막).
-  final LinkedHashMap<String, int> _lruSizes = LinkedHashMap<String, int>();
+  final LinkedHashMap<String, Uint8List> _cache =
+      LinkedHashMap<String, Uint8List>();
   int _cachedBytes = 0;
 
   /// 현재 캐시에 남아있는(압축 해제된 채인) 바이트 총합. 테스트 전용.
@@ -60,16 +62,26 @@ class ArchiveResourceReader implements EpubResourceReader {
 
   /// 현재 캐시에 남아있는 리소스 개수. 테스트 전용.
   @visibleForTesting
-  int get debugCachedEntryCount => _lruSizes.length;
+  int get debugCachedEntryCount => _cache.length;
 
   @override
   Uint8List? readBytes(String href) {
     final path = resolveHref(_baseDir, href);
-    final file = _archive.findFile(path);
-    if (file == null) return null;
-    final bytes = Uint8List.fromList(file.content as List<int>);
-    _touch(path, bytes.length);
-    _evictIfNeeded();
+    var cached = _cache.remove(path);
+    if (cached != null) {
+      _cache[path] = cached; // LRU touch: 재삽입으로 접근 순서만 갱신.
+    } else {
+      final file = _archive.findFile(path);
+      if (file == null) return null;
+      // ArchiveFile 내부 영구 캐시(_content)를 우회해 직접 압축 해제한다.
+      final out = OutputMemoryStream(size: file.size);
+      file.decompress(out);
+      cached = Uint8List.fromList(out.getBytes());
+      _cache[path] = cached;
+      _cachedBytes += cached.length;
+      _evictIfNeeded();
+    }
+    final bytes = Uint8List.fromList(cached);
     final algorithm = _obfuscated[path];
     if (algorithm != null && _identifier != null) {
       return FontObfuscation.deobfuscate(
@@ -81,19 +93,11 @@ class ArchiveResourceReader implements EpubResourceReader {
     return bytes;
   }
 
-  void _touch(String key, int size) {
-    final previous = _lruSizes.remove(key);
-    if (previous != null) _cachedBytes -= previous;
-    _lruSizes[key] = size;
-    _cachedBytes += size;
-  }
-
   void _evictIfNeeded() {
-    while (_cachedBytes > _maxCachedBytes && _lruSizes.length > 1) {
-      final oldestKey = _lruSizes.keys.first;
-      final size = _lruSizes.remove(oldestKey);
-      if (size != null) _cachedBytes -= size;
-      _archive.findFile(oldestKey)?.clear();
+    while (_cachedBytes > _maxCachedBytes && _cache.length > 1) {
+      final oldestKey = _cache.keys.first;
+      final evicted = _cache.remove(oldestKey);
+      if (evicted != null) _cachedBytes -= evicted.length;
     }
   }
 

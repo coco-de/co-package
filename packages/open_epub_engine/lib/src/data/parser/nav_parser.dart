@@ -65,12 +65,14 @@ class NavParser {
       return NavParseResult(EpubOutline.empty, defects);
     }
 
-    final firstOl = tocNav.findElements('ol', namespace: _xhtmlNs).firstOrNull;
+    final firstOl =
+        tocNav.findElements('ol', namespaceUri: _xhtmlNs).firstOrNull;
     if (firstOl == null) {
       return NavParseResult(EpubOutline.empty, defects);
     }
 
-    return NavParseResult(EpubOutline(items: _parseOl(firstOl, defects)), defects);
+    return NavParseResult(
+        EpubOutline(items: _parseOl(firstOl, defects)), defects);
   }
 
   /// nav.xhtml에서 보조 내비게이션(landmarks / page-list)을 추출한다. (S13.1)
@@ -89,10 +91,10 @@ class NavParser {
     if (root.localName != 'html' || root.namespaceUri != _xhtmlNs) {
       return EpubNavigation.empty;
     }
-    final body = root.findElements('body', namespace: _xhtmlNs).firstOrNull;
+    final body = root.findElements('body', namespaceUri: _xhtmlNs).firstOrNull;
     if (body == null) return EpubNavigation.empty;
 
-    final navs = body.findAllElements('nav', namespace: _xhtmlNs).toList();
+    final navs = body.findAllElements('nav', namespaceUri: _xhtmlNs).toList();
     final landmarksNav = _navByType(navs, 'landmarks');
     final pageListNav = _navByType(navs, 'page-list');
 
@@ -105,21 +107,22 @@ class NavParser {
 
   XmlElement? _navByType(List<XmlElement> navs, String type) {
     for (final n in navs) {
-      if (n.getAttribute('type', namespace: _epubOpsNs) == type) return n;
+      if (n.getAttribute('type', namespaceUri: _epubOpsNs) == type) return n;
     }
     return null;
   }
 
   List<EpubLandmark> _parseLandmarks(XmlElement nav) {
-    final ol = nav.findElements('ol', namespace: _xhtmlNs).firstOrNull;
+    final ol = nav.findElements('ol', namespaceUri: _xhtmlNs).firstOrNull;
     if (ol == null) return const [];
     final result = <EpubLandmark>[];
-    for (final li in ol.findElements('li', namespace: _xhtmlNs)) {
-      final anchor = li.findElements('a', namespace: _xhtmlNs).firstOrNull;
+    for (final li in ol.findElements('li', namespaceUri: _xhtmlNs)) {
+      final anchor = li.findElements('a', namespaceUri: _xhtmlNs).firstOrNull;
       final href = anchor?.getAttribute('href');
       final title = anchor?.innerText.trim();
       // landmark의 epub:type은 <a>에 붙는다 (예: epub:type="bodymatter").
-      final type = anchor?.getAttribute('type', namespace: _epubOpsNs)?.trim();
+      final type =
+          anchor?.getAttribute('type', namespaceUri: _epubOpsNs)?.trim();
       if (href == null || href.isEmpty || title == null || title.isEmpty) {
         continue;
       }
@@ -129,11 +132,11 @@ class NavParser {
   }
 
   List<EpubPageTarget> _parsePageList(XmlElement nav) {
-    final ol = nav.findElements('ol', namespace: _xhtmlNs).firstOrNull;
+    final ol = nav.findElements('ol', namespaceUri: _xhtmlNs).firstOrNull;
     if (ol == null) return const [];
     final result = <EpubPageTarget>[];
-    for (final li in ol.findElements('li', namespace: _xhtmlNs)) {
-      final anchor = li.findElements('a', namespace: _xhtmlNs).firstOrNull;
+    for (final li in ol.findElements('li', namespaceUri: _xhtmlNs)) {
+      final anchor = li.findElements('a', namespaceUri: _xhtmlNs).firstOrNull;
       final href = anchor?.getAttribute('href');
       final label = anchor?.innerText.trim();
       if (href == null || href.isEmpty || label == null || label.isEmpty) {
@@ -147,16 +150,15 @@ class NavParser {
   /// epub:type="toc"인 nav를 우선 검색, 없으면 첫 nav. body 하위로 한정.
   /// 정확한 `epub:type="toc"`가 없어 fallback했으면 [defects]에 기록. (S13.7)
   XmlElement? _findTocNav(XmlElement htmlRoot, Set<String> defects) {
-    final body = htmlRoot
-        .findElements('body', namespace: _xhtmlNs)
-        .firstOrNull;
+    final body =
+        htmlRoot.findElements('body', namespaceUri: _xhtmlNs).firstOrNull;
     if (body == null) return null;
 
-    final navs = body.findAllElements('nav', namespace: _xhtmlNs).toList();
+    final navs = body.findAllElements('nav', namespaceUri: _xhtmlNs).toList();
     if (navs.isEmpty) return null;
 
     for (final n in navs) {
-      if (n.getAttribute('type', namespace: _epubOpsNs) == 'toc') return n;
+      if (n.getAttribute('type', namespaceUri: _epubOpsNs) == 'toc') return n;
     }
     // 정확한 toc 타입이 없음 → 첫 nav로 복원하되 결함 기록. (gap #10a)
     defects.add(NavParseResult.nonstandardTocType);
@@ -165,19 +167,20 @@ class NavParser {
 
   List<EpubOutlineItem> _parseOl(XmlElement ol, Set<String> defects) {
     return ol
-        .findElements('li', namespace: _xhtmlNs)
+        .findElements('li', namespaceUri: _xhtmlNs)
         .map((li) => _parseLi(li, defects))
         .whereType<EpubOutlineItem>()
         .toList(growable: false);
   }
 
   EpubOutlineItem? _parseLi(XmlElement li, Set<String> defects) {
-    final anchor = li.findElements('a', namespace: _xhtmlNs).firstOrNull;
+    final anchor = li.findElements('a', namespaceUri: _xhtmlNs).firstOrNull;
     final href = anchor?.getAttribute('href');
     final title = anchor?.innerText.trim();
-    final nestedOl = li.findElements('ol', namespace: _xhtmlNs).firstOrNull;
-    final children =
-        nestedOl == null ? const <EpubOutlineItem>[] : _parseOl(nestedOl, defects);
+    final nestedOl = li.findElements('ol', namespaceUri: _xhtmlNs).firstOrNull;
+    final children = nestedOl == null
+        ? const <EpubOutlineItem>[]
+        : _parseOl(nestedOl, defects);
 
     // 정상: 유효한 <a href>.
     if (title != null && title.isNotEmpty && href != null && href.isNotEmpty) {
@@ -190,7 +193,7 @@ class NavParser {
 
     // 링크 없는 <span> 헤더 + 하위 목차 = 유효 EPUB3 섹션 그룹(현재 미지원 →
     // 복원). 제목은 span, spineHref는 첫 자식으로 대체(그룹 자체는 링크 없음).
-    final span = li.findElements('span', namespace: _xhtmlNs).firstOrNull;
+    final span = li.findElements('span', namespaceUri: _xhtmlNs).firstOrNull;
     final spanTitle = span?.innerText.trim();
     if (spanTitle != null && spanTitle.isNotEmpty && children.isNotEmpty) {
       defects.add(NavParseResult.spanHeading);

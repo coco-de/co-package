@@ -182,6 +182,11 @@ _ParsedEpub _parseEpubDocuments(
   } on Object catch (e) {
     throw EpubCorrupted('not a valid ZIP/EPUB container: $e');
   }
+  // archive 4부터 decodeBytes는 ZIP 구조(EOCD)를 찾지 못해도 throw하지 않고
+  // 빈 Archive를 반환한다 — 3.x와 동일하게 corrupted로 분류한다.
+  if (archive.isEmpty) {
+    throw EpubCorrupted('not a valid ZIP/EPUB container: no entries');
+  }
 
   final patches = <AppliedPatch>[];
 

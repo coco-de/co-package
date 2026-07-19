@@ -22,10 +22,10 @@ dependencies:
 
   # 하이라이트 데모 영속 (#43)
   shared_preferences: ^2.5.5
-  marionette_flutter: 0.5.0
+  marionette_flutter: ^0.6.0
 
   # 데모 EPUB 합성 생성 (#235) — lib/demo_epub.dart
-  archive: ^3.6.1
+  archive: ^4.0.9
 
 dev_dependencies:
   flutter_test:
