@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
+import 'package:open_board/src/module/text/link_aware_text_editing_controller.dart';
 import 'package:open_board/src/module/text/link_span_offsets.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
@@ -49,7 +50,7 @@ final class InlineTextEditor extends StatefulWidget {
 
 final class _InlineTextEditorState extends State<InlineTextEditor>
     with WidgetsBindingObserver {
-  late TextEditingController textEditingController;
+  late LinkAwareTextEditingController textEditingController;
   late FocusNode textFieldNode;
   double bottomViewInsets = 0;
   bool disposed = false;
@@ -77,11 +78,15 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     textFieldNode = FocusNode();
     textFieldNode.addListener(focusListener);
 
-    // 텍스트 컨트롤러 초기화
-    textEditingController = TextEditingController();
-
     // 링크 span 초기화 (기존 텍스트 재편집 시 복원)
+    // 컨트롤러의 linkSpansProvider 가 참조하므로 컨트롤러 생성보다 먼저 초기화.
     _linkSpans = widget.drawable.linkSpans.map(_cloneSpan).toList();
+
+    // 텍스트 컨트롤러 초기화 — 편집 중에도 링크 구간을 파랑+밑줄로 표시
+    // (커밋 후 렌더링과 동일한 시각 규약, kobic #8481)
+    textEditingController = LinkAwareTextEditingController(
+      linkSpansProvider: () => _linkSpans,
+    );
     _previousText = widget.drawable.text;
 
     // 텍스트 설정 (리스너 부착 전에 설정해 초기 spurious 콜백 방지)
@@ -153,27 +158,54 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     return null;
   }
 
-  /// 선택 영역에 링크를 추가하거나 기존 링크를 편집한다.
-  Future<void> _onAddOrEditLink(TextSelection selection) async {
-    if (!selection.isValid || selection.isCollapsed) return;
-    final existingTarget = _selectionLinkUrl(selection);
-    final target = await _showLinkDialog(initialTarget: existingTarget);
-    if (target == null || !mounted || disposed) return; // 취소/언마운트
-    _applyLink(selection, target);
+  /// 커서 위치 [offset] 이 놓인 링크 span (없으면 null).
+  ///
+  /// 굿노트처럼 링크 문자 사이뿐 아니라 양 끝 경계에 커서가 있어도 해당
+  /// 링크를 편집 대상으로 삼는다 (경계가 인접 span 과 겹치면 앞선 span 우선).
+  TextLinkSpan? _linkSpanAtCursor(int offset) {
+    for (final span in _linkSpans) {
+      if (offset >= span.start && offset <= span.end) {
+        return span;
+      }
+    }
+    return null;
   }
 
-  /// 선택 영역과 겹치는 링크들을 제거한다.
+  /// 링크 추가/편집/삭제의 대상 범위를 해석한다. (kobic #8481)
+  ///
+  /// - 드래그 선택이 있으면 그 범위 그대로
+  /// - 커서(collapsed)가 링크 위에 있으면 해당 링크 span 전체 범위
+  /// - 그 외에는 null (링크 작업 불가)
+  TextSelection? _linkTargetSelection(TextSelection selection) {
+    if (!selection.isValid) return null;
+    if (!selection.isCollapsed) return selection;
+    final span = _linkSpanAtCursor(selection.baseOffset);
+    if (span == null) return null;
+    return TextSelection(baseOffset: span.start, extentOffset: span.end);
+  }
+
+  /// 선택 영역(또는 커서가 놓인 링크)에 링크를 추가하거나 기존 링크를 편집한다.
+  Future<void> _onAddOrEditLink(TextSelection selection) async {
+    final target = _linkTargetSelection(selection);
+    if (target == null) return;
+    final existingTarget = _selectionLinkUrl(target);
+    final result = await _showLinkDialog(initialTarget: existingTarget);
+    if (result == null || !mounted || disposed) return; // 취소/언마운트
+    _applyLink(target, result);
+  }
+
+  /// 선택 영역(또는 커서가 놓인 링크)과 겹치는 링크들을 제거한다.
   void _removeLink(TextSelection selection) {
-    if (!selection.isValid) return;
+    final target = _linkTargetSelection(selection);
+    if (target == null) return;
     setState(() {
       _linkSpans = _linkSpans
           .where(
-            (span) =>
-                !(selection.start < span.end && span.start < selection.end),
+            (span) => !(target.start < span.end && span.start < target.end),
           )
           .toList();
     });
-    _restoreFocus(selection);
+    _restoreFocus(target);
   }
 
   /// 선택 영역 [selection] 에 [url] 링크를 적용한다 (겹치는 기존 링크 대체).
@@ -212,103 +244,14 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
   /// 내부 모드로, 그 외엔 외부 모드로 시작한다.
   Future<String?> _showLinkDialog({String? initialTarget}) async {
     _suppressComplete = true;
-    final initialPage = parsePageLinkTarget(initialTarget);
-    final startsInternal = initialPage != null;
-    final urlController = TextEditingController(
-      text: startsInternal ? '' : (initialTarget ?? ''),
-    );
-    final pageController = TextEditingController(
-      text: initialPage?.toString() ?? '',
-    );
     try {
-      final result = await showDialog<String>(
+      return await showDialog<String>(
         context: context,
-        builder: (_) {
-          var isInternal = startsInternal;
-          return StatefulBuilder(
-            builder: (context, setDialogState) {
-              String? buildResult() => isInternal
-                  ? formatPageLinkTarget(pageController.text)
-                  : _normalizeUrl(urlController.text);
-
-              return AlertDialog(
-                title: const Text('링크 입력'),
-                content: Column(
-                  mainAxisSize: .min,
-                  crossAxisAlignment: .stretch,
-                  children: [
-                    SegmentedButton<bool>(
-                      segments: const [
-                        ButtonSegment(value: false, label: Text('외부 URL')),
-                        ButtonSegment(value: true, label: Text('내부 페이지')),
-                      ],
-                      selected: {isInternal},
-                      onSelectionChanged: (selection) => setDialogState(
-                        () => isInternal = selection.contains(true),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (isInternal)
-                      TextField(
-                        controller: pageController,
-                        autofocus: true,
-                        keyboardType: .number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        decoration: const InputDecoration(
-                          hintText: '1',
-                          labelText: '페이지 번호',
-                        ),
-                        onSubmitted: (_) =>
-                            Navigator.of(context).pop(buildResult()),
-                      )
-                    else
-                      TextField(
-                        controller: urlController,
-                        autofocus: true,
-                        keyboardType: .url,
-                        decoration: const InputDecoration(
-                          hintText: 'https://example.com',
-                          labelText: 'URL',
-                        ),
-                        onSubmitted: (_) =>
-                            Navigator.of(context).pop(buildResult()),
-                      ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('취소'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(buildResult()),
-                    child: const Text('확인'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
+        builder: (_) => _LinkInputDialog(initialTarget: initialTarget),
       );
-      return result;
     } finally {
-      urlController.dispose();
-      pageController.dispose();
       _suppressComplete = false;
     }
-  }
-
-  /// 입력 URL 정규화. 빈 값이면 null, scheme 없으면 https 를 붙인다.
-  String? _normalizeUrl(String raw) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) return null;
-    final hasScheme =
-        trimmed.contains('://') ||
-        trimmed.startsWith('mailto:') ||
-        trimmed.startsWith('tel:');
-    return hasScheme ? trimmed : 'https://$trimmed';
   }
 
   void _completeEditing() {
@@ -409,6 +352,12 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     unawaited(_onAddOrEditLink(selection));
   }
 
+  /// 에디터 상시 노출 링크 버튼 탭 — 선택 영역(또는 커서가 놓인 링크)을
+  /// 대상으로 링크 다이얼로그 진입. 대상이 없으면 무시 (버튼 비활성 표시).
+  void _onLinkButtonTap() {
+    unawaited(_onAddOrEditLink(textEditingController.selection));
+  }
+
   /// 컨텍스트 메뉴 "링크 삭제" 탭 — 툴바를 닫고 선택 영역 링크 제거.
   void _onLinkRemoveTap(TextSelection selection) {
     ContextMenuController.removeAny();
@@ -421,8 +370,11 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
   ) {
     final buttonItems = editableTextState.contextMenuButtonItems;
     final selection = textEditingController.selection;
-    if (selection.isValid && !selection.isCollapsed) {
-      final hasLink = _selectionLinkUrl(selection) != null;
+    // 드래그 선택뿐 아니라 커서가 링크 위에 있을 때(collapsed)도 링크
+    // 편집/삭제를 노출한다 — 굿노트 동작 정합 (kobic #8481).
+    final target = _linkTargetSelection(selection);
+    if (target != null) {
+      final hasLink = _selectionLinkUrl(target) != null;
       buttonItems.insert(
         0,
         ContextMenuButtonItem(
@@ -501,10 +453,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
             color: textColor,
             letterSpacing: 0,
           )
-        : drawableStyle.copyWith(
-            fontSize: actualFontSize,
-            letterSpacing: 0,
-          );
+        : drawableStyle.copyWith(fontSize: actualFontSize, letterSpacing: 0);
 
     // TextPainter로 텍스트 크기 측정 (TextDrawablePainter와 동일한 방식)
     final textSpan = TextSpan(
@@ -523,18 +472,19 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     // 화면 너비에서 여백을 뺀 크기로 레이아웃
     textPainter.layout(maxWidth: screenSize.width - 60);
 
-    // 에디터 크기 계산 (텍스트 크기 + 패딩 + 날짜 버튼 공간) - 텍스트 크기에 맞게 조정
+    // 에디터 크기 계산 (텍스트 크기 + 패딩 + 링크/날짜 버튼 공간)
     const minWidth = 40.0;
     const minHeight = 30.0;
     const dateButtonWidth = 32.0; // 날짜 버튼 너비
+    const linkButtonWidth = 32.0; // 링크 버튼 너비 (kobic #8481)
 
     final textWidth = textPainter.width;
     final textHeight = textPainter.height;
 
     double editorWidth = math.max(
       minWidth,
-      textWidth * 1.05 + 8 + dateButtonWidth + 8,
-    ); // 날짜 버튼 공간 추가
+      textWidth * 1.05 + 8 + linkButtonWidth + dateButtonWidth + 8,
+    ); // 링크/날짜 버튼 공간 추가
     double editorHeight = math.max(minHeight, textHeight * 1.05);
 
     // 화면 경계 제한
@@ -588,6 +538,12 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       }
     }
 
+    // 링크 버튼 활성 상태 — 드래그 선택이 있거나 커서가 링크 위에 있을 때.
+    // 컨트롤러 리스너(_onControllerChanged)가 선택 변경마다 rebuild 하므로
+    // 상태가 실시간으로 갱신된다.
+    final hasLinkTarget =
+        _linkTargetSelection(textEditingController.selection) != null;
+
     return Material(
       type: .transparency,
       child: Stack(
@@ -628,9 +584,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                         style: textStyle,
                         textAlign: widget.textSettings.textAlignment.textAlign,
                         decoration: InputDecoration(
-                          contentPadding: const .symmetric(
-                            horizontal: 4,
-                          ),
+                          contentPadding: const .symmetric(horizontal: 4),
                           border: .none,
                           enabledBorder: .none,
                           focusedBorder: .none,
@@ -650,14 +604,36 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                       ),
                     ),
 
+                    // 링크 버튼 — 선택 영역/커서가 놓인 링크가 있을 때 활성
+                    // (굿노트처럼 링크 적용·수정 진입점을 상시 노출, kobic #8481)
+                    Container(
+                      width: linkButtonWidth,
+                      height: editorHeight,
+                      decoration: const BoxDecoration(
+                        border: Border(left: BorderSide(color: Colors.blue)),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          key: const ValueKey('inline_text_editor_link_button'),
+                          onTap: _onLinkButtonTap,
+                          child: Icon(
+                            Icons.link,
+                            size: math.min(20, editorHeight * 0.6),
+                            color: hasLinkTarget
+                                ? Colors.blue
+                                : Colors.blue.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ),
+                    ),
+
                     // 날짜 버튼
                     Container(
                       width: dateButtonWidth,
                       height: editorHeight,
                       decoration: const BoxDecoration(
-                        border: Border(
-                          left: BorderSide(color: Colors.blue),
-                        ),
+                        border: Border(left: BorderSide(color: Colors.blue)),
                       ),
                       child: Material(
                         color: Colors.transparent,
@@ -694,5 +670,117 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
         _completeEditingIfActive,
       );
     }
+  }
+}
+
+/// 링크 입력 다이얼로그 본체 — 외부 URL / 내부 페이지 선택 (#7222).
+///
+/// 입력 컨트롤러 수명을 다이얼로그가 스스로 관리한다. 호출 측이 showDialog
+/// Future 해소 직후 dispose 하면 퇴장 애니메이션 중인 TextField 가 폐기된
+/// 컨트롤러를 참조해 예외가 발생하므로(kobic #8481 실측), 라우트 언마운트
+/// 시점(dispose)에 함께 정리되도록 StatefulWidget 으로 분리했다.
+final class _LinkInputDialog extends StatefulWidget {
+  const _LinkInputDialog({required this.initialTarget});
+
+  /// 기존 링크 타깃 (`https://...` 또는 `page:N`, 새 링크면 null).
+  final String? initialTarget;
+
+  @override
+  State<_LinkInputDialog> createState() => _LinkInputDialogState();
+}
+
+final class _LinkInputDialogState extends State<_LinkInputDialog> {
+  late final TextEditingController _urlController;
+  late final TextEditingController _pageController;
+  bool _isInternal = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialPage = parsePageLinkTarget(widget.initialTarget);
+    _isInternal = initialPage != null;
+    _urlController = TextEditingController(
+      text: _isInternal ? '' : (widget.initialTarget ?? ''),
+    );
+    _pageController = TextEditingController(
+      text: initialPage?.toString() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  /// 현재 모드 기준 정규화된 링크 타깃 (유효하지 않으면 null).
+  String? _buildResult() => _isInternal
+      ? formatPageLinkTarget(_pageController.text)
+      : _normalizeUrl(_urlController.text);
+
+  /// 입력 URL 정규화. 빈 값이면 null, scheme 없으면 https 를 붙인다.
+  String? _normalizeUrl(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+    final hasScheme =
+        trimmed.contains('://') ||
+        trimmed.startsWith('mailto:') ||
+        trimmed.startsWith('tel:');
+    return hasScheme ? trimmed : 'https://$trimmed';
+  }
+
+  void _submit() => Navigator.of(context).pop(_buildResult());
+
+  void _cancel() => Navigator.of(context).pop();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('링크 입력'),
+      content: Column(
+        mainAxisSize: .min,
+        crossAxisAlignment: .stretch,
+        children: [
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('외부 URL')),
+              ButtonSegment(value: true, label: Text('내부 페이지')),
+            ],
+            selected: {_isInternal},
+            onSelectionChanged: (selection) =>
+                setState(() => _isInternal = selection.contains(true)),
+          ),
+          const SizedBox(height: 12),
+          if (_isInternal)
+            TextField(
+              controller: _pageController,
+              autofocus: true,
+              keyboardType: .number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                hintText: '1',
+                labelText: '페이지 번호',
+              ),
+              onSubmitted: (_) => _submit(),
+            )
+          else
+            TextField(
+              controller: _urlController,
+              autofocus: true,
+              keyboardType: .url,
+              decoration: const InputDecoration(
+                hintText: 'https://example.com',
+                labelText: 'URL',
+              ),
+              onSubmitted: (_) => _submit(),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: _cancel, child: const Text('취소')),
+        TextButton(onPressed: _submit, child: const Text('확인')),
+      ],
+    );
   }
 }
