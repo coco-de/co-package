@@ -8,3 +8,4 @@ export 'src/local.dart';
 export 'src/naming.dart';
 export 'src/register.dart';
 export 'src/scope.dart';
+export 'src/terminal.dart';

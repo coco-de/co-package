@@ -9,6 +9,7 @@ import 'local.dart';
 import 'naming.dart';
 import 'register.dart';
 import 'scope.dart';
+import 'terminal.dart';
 
 // ─── 색상 팔레트 (256색) ────────────────────────────────────────────────────
 const _green = 42;
@@ -291,6 +292,13 @@ final class AppModel extends TeaModel {
 
   Cmd _refreshTimer() =>
       tick(const Duration(seconds: 15), (_) => _RefreshTickMsg());
+
+  /// 자식 스크립트가 남긴 application cursor key 모드를 되돌린다
+  /// (이유는 [resetCursorKeyMode] 참고). 순수 update를 지키려고 커맨드로 낸다.
+  Cmd _resetCursorKeys() => () {
+        resetCursorKeyMode();
+        return null;
+      };
 
   /// 외부 명령을 백그라운드로 실행하고 출력을 로그 패널로 보낸다.
   Cmd _runLogged(String label, String exe, List<String> args,
@@ -590,7 +598,10 @@ final class AppModel extends TeaModel {
             log: [...log, '\$ $label → exit $exitCode'],
             loading: true,
           ),
-          batch([_fetchRunners(), _fetchLocal()]),
+          // 자식이 끝난 이 시점에 커서키 모드를 되돌린다 — DECCKM이 켜진 채로
+          // 남으면 방향키가 SS3로 바뀌어 러너 선택 이동이 죽는다. 조회와는
+          // 무관한 작업이라 batch 안 순서에는 의미가 없다.
+          batch([_resetCursorKeys(), _fetchRunners(), _fetchLocal()]),
         );
 
       case TickMsg():
