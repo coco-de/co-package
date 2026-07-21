@@ -49,3 +49,8 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          # 액션은 target-branch 를 지정하지 않으면 저장소 **기본 브랜치**(main)를
+          # 대상으로 삼는다 — 워크플로우를 띄운 브랜치가 아니다. 명시하지 않으면
+          # development 에서 실행돼도 main 히스토리(머지 커밋)를 스캔해 릴리즈
+          # 대상을 못 찾는다 (실측: kobic#8662).
+          target-branch: development
