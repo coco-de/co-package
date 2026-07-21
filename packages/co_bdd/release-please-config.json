@@ -5,8 +5,8 @@
   "//": "단일 패키지 레포 — 태그에 컴포넌트명을 붙이지 않아 v<version> 형태가 된다.",
   "include-component-in-tag": false,
 
-  "//bootstrap": "release-please 도입 시점의 main HEAD. 이 이전 히스토리는 첫 릴리즈 노트에 포함하지 않는다.",
-  "bootstrap-sha": "589cdd8d620e1f777000081fa24e0391d3546bb6",
+  "//bootstrap": "kobic 이 마지막으로 참조해 온 커밋. 이 이후 쌓인 미릴리즈 변경이 첫 릴리즈 노트에 담긴다.",
+  "bootstrap-sha": "4312d2a9ab98e518344d62e2d76fc0dc3e475d04",
 
   "changelog-sections": [
     { "type": "feat",     "section": "기능" },
