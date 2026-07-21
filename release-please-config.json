@@ -6,8 +6,8 @@
   "separate-pull-requests": false,
   "include-component-in-tag": true,
 
-  "//bootstrap": "release-please 도입 시점의 main HEAD. 이 이전 히스토리는 첫 릴리즈 노트에 포함하지 않는다.",
-  "bootstrap-sha": "f16514f51b4a21eb028f7383921834319950d84d",
+  "//bootstrap": "kobic 이 마지막으로 참조해 온 커밋. 이 이후 쌓인 미릴리즈 변경이 첫 릴리즈 노트에 담긴다.",
+  "bootstrap-sha": "839bfcae3c337707f861107acf220def558dd4e7",
 
   "changelog-sections": [
     { "type": "feat",     "section": "기능" },
