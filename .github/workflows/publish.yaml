@@ -6,14 +6,20 @@
 # ── 발행 순서가 강제되는 방식 ────────────────────────────────────────────────
 # 리더는 pub.dev의 엔진에 의존하므로, 엔진 1.x가 아직 pub.dev에 없으면 리더의
 # `dart pub publish` 검증이 의존성 해석에 실패한다. 즉 "엔진 먼저"는 관례가 아니라
-# pub.dev가 강제하는 불변식이다(별도 tag 트리거라 워크플로 `needs`로 묶을 수 없어도
-# 안전). 릴리스는 반드시 엔진 태그를 먼저 밀고, pub.dev 반영을 확인한 뒤 리더 태그를 민다.
+# pub.dev가 강제하는 불변식이다.
 #
-# ── 릴리스 런북 ─────────────────────────────────────────────────────────────
-#   1) 엔진 발행:  git tag open_epub_engine-v1.0.0-beta.1 && git push origin open_epub_engine-v1.0.0-beta.1
-#   2) pub.dev 반영 확인 (https://pub.dev/packages/open_epub_engine)
-#   3) 리더 발행:  git tag open_epub-v1.0.0-beta.1        && git push origin open_epub-v1.0.0-beta.1
-#   (final 1.0.0은 모든 Epic 완료 후 동일 절차로, beta suffix 없이)
+# ⚠️ 이 순서는 과거 "사람이 엔진 태그를 먼저 밀고 pub.dev 반영을 확인한 뒤 리더
+#    태그를 민다"는 수동 절차로 지켜졌다. release-please 도입(kobic Epic #8662) 후에는
+#    Release PR 머지 한 번에 엔진·리더 태그가 **같은 커밋에 함께 push** 되고, GitHub은
+#    태그마다 별도 워크플로 run을 띄우므로 두 발행이 병렬로 돈다. 그래서 아래
+#    `wait-for-engine` 게이트 잡이 순서를 복원한다 — 상세는 해당 잡의 주석 참조.
+#
+# ── 릴리스 절차 (release-please 자동) ───────────────────────────────────────
+#   1) main에 feat/fix 머지 → Release PR이 자동 생성·갱신됨
+#   2) Release PR 머지 → 버전 확정 + 엔진/리더 태그 + GitHub Release 발행
+#   3) 태그 push가 이 워크플로를 트리거 → 엔진 발행 → (게이트) → 리더 발행
+#
+#   수동 발행이 필요하면 태그를 직접 밀어도 동작한다(게이트가 알아서 통과/대기).
 #
 # ── pub.dev 사전 설정 (레포 관리자 1회, 최초 발행 전 필수) ───────────────────
 #   - 각 패키지의 pub.dev "Admin > Automated publishing"에서 GitHub Actions 발행을 활성화:
@@ -44,8 +50,55 @@ jobs:
     with:
       working-directory: packages/open_epub_engine
 
+  # ── 발행 순서 강제 게이트 ────────────────────────────────────────────────────
+  # 리더는 pub.dev 의 엔진에 의존한다(open_epub_engine: ">=1.0.0 <1.1.0"). 엔진이
+  # pub.dev 에 반영되기 전에 리더를 발행하면 의존성 해석 단계에서 실패한다.
+  #
+  # 과거에는 사람이 "엔진 태그 push → pub.dev 확인 → 리더 태그 push" 순서를 지키는
+  # 것을 전제로 했으나, release-please 도입 후에는 Release PR 머지 한 번에 엔진·리더
+  # 태그가 같은 커밋에 함께 push 된다. GitHub 은 태그마다 별도 워크플로 run 을 띄우므로
+  # 두 발행 잡이 병렬로 돌아 그 전제가 깨진다.
+  #
+  # 이 잡은 "현재 커밋에 엔진 태그가 함께 달려 있으면 그 버전이 pub.dev 에 나타날
+  # 때까지" 리더 발행을 붙잡아 순서를 복원한다. 엔진이 이번에 함께 발행되지 않는
+  # 경우(리더만 릴리즈)에는 즉시 통과한다.
+  wait-for-engine:
+    name: Wait for engine on pub.dev
+    if: ${{ startsWith(github.ref, 'refs/tags/open_epub-v') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git tag --points-at 을 쓰려면 태그가 필요
+
+      - name: Gate on engine availability
+        run: |
+          ENGINE_TAG=$(git tag --points-at HEAD | grep '^open_epub_engine-v' | head -1 || true)
+          if [ -z "$ENGINE_TAG" ]; then
+            echo "같은 커밋에 엔진 태그 없음 — 엔진 동시 발행 아님. 대기 불필요."
+            exit 0
+          fi
+
+          VERSION="${ENGINE_TAG#open_epub_engine-v}"
+          echo "엔진 $VERSION 이 pub.dev 에 반영될 때까지 대기 (최대 20분)"
+
+          for i in $(seq 1 60); do
+            if curl -sf "https://pub.dev/api/packages/open_epub_engine" \
+                 | jq -e --arg v "$VERSION" '.versions[] | select(.version == $v)' >/dev/null 2>&1; then
+              echo "✅ open_epub_engine $VERSION 확인 — 리더 발행 진행"
+              exit 0
+            fi
+            echo "  ... 대기 중 ($i/60)"
+            sleep 20
+          done
+
+          echo "::error::open_epub_engine $VERSION 이 20분 내에 pub.dev 에 나타나지 않았다."
+          echo "엔진 발행 잡(publish-engine)이 실패했는지 확인할 것."
+          exit 1
+
   publish-reader:
     # open_epub-v* 태그에서만 실행(엔진 태그에는 매칭되지 않음).
+    needs: wait-for-engine
     if: ${{ startsWith(github.ref, 'refs/tags/open_epub-v') }}
     permissions:
       id-token: write
