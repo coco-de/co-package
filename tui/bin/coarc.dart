@@ -62,6 +62,10 @@ Future<void> main(List<String> args) async {
       altScreen: true,
       tickInterval: Duration(milliseconds: 100),
     ),
+    // application cursor key 모드(DECCKM)에서 방향키가 보내는 SS3(ESC O A~D)를
+    // dart_tui가 이해하는 CSI(ESC [ A~D)로 재매핑한다 — 터미널·멀티플렉서가
+    // 처음부터 그 모드로 떠 있어도 러너 선택 이동이 죽지 않게.
+    programOptions: [withInput(remapSs3ArrowKeys(stdin))],
   ).run(AppModel(
     scope: config.scope,
     local: LocalRunner(dir: config.runnerDir, root: config.runnersRoot),
