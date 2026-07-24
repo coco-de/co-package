@@ -17,23 +17,42 @@ import 'package:open_board/src/module/state/scribble_mode.state.dart';
 class EraserProcessor {
   const EraserProcessor();
 
+  /// 지우개 현(preLocalPosition → 현재 위치)의 판정 최대 길이(논리 픽셀).
+  ///
+  /// 프레임 드롭 등으로 move 이벤트 간 간격이 벌어지면 현이 비정상적으로
+  /// 길어져, 실제로 지나가지 않은 다른 스트로크까지 관통(tunneling)해 함께
+  /// 지워질 수 있다 (#9006). 정상 스와이프의 프레임당 이동 거리보다 넉넉히
+  /// 큰 값으로 설정해, 통상적인 빠른 스와이프는 그대로 전체 판정하되
+  /// 비정상적으로 큰 점프만 현재 위치 기준으로 잘라낸다.
+  static const double _maxEraseChordLength = 96;
+
   /// 이벤트 위치에서 스트로크를 지웁니다.
   ///
   /// [event]의 현재 위치와 [preLocalPosition] 사이의 직선을 기준으로,
   /// 스트로크의 포인트 또는 점 사이 선분이 해당 직선에 충분히 가까운 경우
-  /// 해당 스트로크를 제거합니다.
+  /// 해당 스트로크를 제거합니다. 두 위치 사이 거리가 [_maxEraseChordLength]
+  /// 를 넘으면, 현재 위치에서 그만큼 떨어진 지점으로 시작점을 당겨와
+  /// 판정합니다 (#9006 — 큰 점프로 인한 무관한 스트로크 관통 방지).
   ScribbleState eraseAtPoint(
     PointerEvent event,
     ScribbleModeState modeState,
     ScribbleState state,
     Offset preLocalPosition,
   ) {
+    final clampedPreLocalPosition = _clampChordStart(
+      preLocalPosition,
+      event.localPosition,
+    );
     final newScribble = state.scribble.copyWithContents(
       touchUpdatedAt: false,
       strokes: state.scribble.strokes
           .where(
-            (stroke) =>
-                !_isStrokeHit(stroke, event, modeState, preLocalPosition),
+            (stroke) => !_isStrokeHit(
+              stroke,
+              event,
+              modeState,
+              clampedPreLocalPosition,
+            ),
           )
           .toList(),
     );
@@ -41,6 +60,20 @@ class EraserProcessor {
       final Drawing s => s.copyWith(scribble: newScribble),
       final Erasing s => s.copyWith(scribble: newScribble),
     };
+  }
+
+  /// [current] 기준 [_maxEraseChordLength] 를 넘는 [previous] 를, 그 방향으로
+  /// 딱 그 거리만큼 떨어진 지점으로 당겨옵니다. 거리가 이미 그 이하면
+  /// [previous] 를 그대로 반환합니다.
+  Offset _clampChordStart(Offset previous, Offset current) {
+    final dx = previous.dx - current.dx;
+    final dy = previous.dy - current.dy;
+    final distanceSquared = dx * dx + dy * dy;
+    const maxLengthSquared = _maxEraseChordLength * _maxEraseChordLength;
+    if (distanceSquared <= maxLengthSquared) return previous;
+
+    final scale = _maxEraseChordLength / math.sqrt(distanceSquared);
+    return Offset(current.dx + dx * scale, current.dy + dy * scale);
   }
 
   /// 점과 선 사이의 교점을 구합니다.

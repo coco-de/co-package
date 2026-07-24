@@ -246,6 +246,40 @@ void main() {
         expect(result.scribble.strokes.length, 1);
         expect(result.scribble.strokes.first.points.first.x, 500.0);
       });
+
+      test('프레임 드롭으로 현이 비정상적으로 길어져도 무관한 스트로크는 유지한다 (#9006)', () {
+        // 사용자가 실제로 지우려는 스트로크는 지우개의 "현재" 위치 바로
+        // 위에 있고, 관계없는 스트로크는 (프레임 드롭 전) "이전" 위치
+        // 근처에 있다. 두 위치를 잇는 원본 현은 두 스트로크를 모두
+        // 관통하지만, 무관한 스트로크는 지워지면 안 된다.
+        final unrelatedStroke = createStroke(
+          points: [createPoint(x: 50, y: 50)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final intendedStroke = createStroke(
+          points: [createPoint(x: 340, y: 50)],
+          options: createStrokeOptions(size: 2.0, thinning: 0.0),
+        );
+        final scribble = createScribble(
+          strokes: [unrelatedStroke, intendedStroke],
+        );
+        final state = Erasing(scribble: scribble, activePointerIds: const [1]);
+
+        // 프레임 드롭으로 이전 위치(10,50)와 현재 위치(340,50) 사이의
+        // 간격이 330px 로 크게 벌어진 상황을 시뮬레이션한다.
+        const event = PointerMoveEvent(position: Offset(340, 50));
+        const preLocalPosition = Offset(10, 50);
+
+        final result = processor.eraseAtPoint(
+          event,
+          modeState,
+          state,
+          preLocalPosition,
+        );
+
+        expect(result.scribble.strokes.length, 1);
+        expect(result.scribble.strokes.first.points.first.x, 50.0);
+      });
     });
   });
 }
