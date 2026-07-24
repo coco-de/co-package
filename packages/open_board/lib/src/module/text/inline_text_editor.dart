@@ -521,21 +521,25 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       left = 20;
     }
     if (keyboardInset > 0) {
-      // 키보드가 떠 있는 동안에는 터치 지점 대신 키보드 상단에 도킹해
-      // 입력 중인 텍스트가 키보드에 가려지지 않게 한다 (#241).
-      // 텍스트가 여러 줄로 늘어나면 하단(키보드 쪽)은 고정된 채 위로 자란다.
-      top = screenSize.height - keyboardInset - keyboardGap - editorHeight;
-      if (top < minTop) {
-        // 키보드가 극단적으로 큰 경우 완전 회피보다 상단 경계 유지를 우선한다.
-        top = minTop;
+      // 터치 지점 그대로 뒀을 때 에디터 하단이 키보드 상단을 넘어 가려지는
+      // 경우에만 키보드 위로 도킹한다 — 이미 안전한 위치라면 터치 지점을
+      // 그대로 유지한다 (#241 의도 보존 + #251, kobic#9001: 도킹이 무조건
+      // 발동해 "선택한 위치가 아닌 키보드 위로 이동"하는 문제 수정).
+      final keyboardSafeBottom = screenSize.height - keyboardInset - keyboardGap;
+      if (top + editorHeight > keyboardSafeBottom) {
+        // 텍스트가 여러 줄로 늘어나면 하단(키보드 쪽)은 고정된 채 위로 자란다.
+        top = keyboardSafeBottom - editorHeight;
+        if (top < minTop) {
+          // 키보드가 극단적으로 큰 경우 완전 회피보다 상단 경계 유지를 우선한다.
+          top = minTop;
+        }
       }
-    } else {
-      if (top + editorHeight > screenSize.height - 100) {
-        top = screenSize.height - editorHeight - 100;
-      }
-      if (top < 50) {
-        top = 50;
-      }
+    }
+    if (top + editorHeight > screenSize.height - 100) {
+      top = screenSize.height - editorHeight - 100;
+    }
+    if (top < 50) {
+      top = 50;
     }
 
     // 링크 버튼 활성 상태 — 드래그 선택이 있거나 커서가 링크 위에 있을 때.

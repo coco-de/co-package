@@ -5,14 +5,15 @@ import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
 import 'package:open_board/src/module/text/text_drawable_factory.dart';
 
-/// 이슈 #241 회귀 방지 위젯 테스트.
+/// 이슈 #241 회귀 방지 + #251(kobic#9001) 절충 수정 위젯 테스트.
 ///
 /// 검증 대상:
-///  1. 소프트 키보드가 떠 있는 동안 인라인 에디터가 키보드 상단에 도킹되어
-///     입력 중인 텍스트가 가려지지 않음 (터치 지점과 무관)
-///  2. 키보드 높이 변화 시 도킹 위치가 실시간으로 따라감
-///  3. 키보드가 없을 때는 기존 터치 지점 중심 배치/경계 클램프 유지
-///  4. 키보드 해제 시 자동 편집 완료 동작 무변경 (기존 didChangeMetrics 경로)
+///  1. 소프트 키보드가 떠 있을 때, 터치 지점에 그대로 두면 에디터가 키보드에
+///     **가려지는 경우에만** 키보드 상단에 도킹됨 (#251 — 무조건 도킹하지 않음)
+///  2. 가려지지 않는 터치 지점은 도킹하지 않고 터치 지점을 그대로 유지 (#251)
+///  3. 키보드 높이 변화 시 도킹 위치가 실시간으로 따라감
+///  4. 키보드가 없을 때는 기존 터치 지점 중심 배치/경계 클램프 유지
+///  5. 키보드 해제 시 자동 편집 완료 동작 무변경 (기존 didChangeMetrics 경로)
 void main() {
   /// 키보드 도킹 여백 — inline_text_editor.dart 의 keyboardGap 과 동일 값.
   const keyboardGap = 8.0;
@@ -100,19 +101,36 @@ void main() {
       );
     });
 
-    testWidgets('터치 지점이 위쪽이어도 키보드가 떠 있는 동안은 키보드 위에 도킹된다', (tester) async {
+    testWidgets('터치 지점이 키보드에 가려지지 않으면 도킹하지 않고 그대로 유지된다', (
+      tester,
+    ) async {
+      const keyboardHeight = 250.0;
+      setKeyboardInset(tester, keyboardHeight);
+      addTearDown(tester.view.reset);
+
+      // 화면 상단부 터치 — 키보드(하단 250)에 전혀 가려지지 않는 위치.
+      const position = Offset(400, 100);
+      await pumpEditor(tester, position: position);
+
+      // #251(kobic#9001): 가려지지 않는 터치 지점은 도킹하지 않고 그대로
+      // 유지한다 — "선택한 위치가 아닌 키보드 위로 이동"하던 버그 수정.
+      final rect = editorRect(tester);
+      expect(rect.center.dy, moreOrLessEquals(position.dy));
+    });
+
+    testWidgets('터치 지점을 그대로 두면 키보드에 가려지는 경우에는 도킹된다', (tester) async {
       const keyboardHeight = 250.0;
       setKeyboardInset(tester, keyboardHeight);
       addTearDown(tester.view.reset);
 
       final screen = logicalScreenSize(tester);
-      await pumpEditor(tester, position: const Offset(400, 100));
+      final keyboardSafeBottom = screen.height - keyboardHeight - keyboardGap;
+      // 터치 지점을 중심으로 그대로 두면 에디터 하단이 키보드 안전 영역을
+      // 살짝 넘어서는 위치 — #241 의도대로 여전히 도킹돼야 한다.
+      await pumpEditor(tester, position: Offset(400, keyboardSafeBottom - 5));
 
       final rect = editorRect(tester);
-      expect(
-        rect.bottom,
-        moreOrLessEquals(screen.height - keyboardHeight - keyboardGap),
-      );
+      expect(rect.bottom, moreOrLessEquals(keyboardSafeBottom));
     });
 
     testWidgets('키보드 높이가 변하면 도킹 위치가 따라간다', (tester) async {
