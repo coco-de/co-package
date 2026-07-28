@@ -34,7 +34,12 @@ class FeatureFile {
 /// 시나리오.
 class Scenario {
   /// [Scenario]를 생성합니다.
-  const Scenario({required this.name, required this.tags, required this.steps});
+  const Scenario({
+    required this.name,
+    required this.tags,
+    required this.steps,
+    this.defaultTarget = TestTarget.both,
+  });
 
   /// 시나리오 이름.
   final String name;
@@ -45,11 +50,17 @@ class Scenario {
   /// 단계 목록.
   final List<Step> steps;
 
+  /// 태그가 대상을 지정하지 않았을 때 적용할 기본 대상.
+  ///
+  /// 빌더 옵션 `defaultTarget` 에서 내려온다. 태그는 **항상 이것을 덮어쓴다** —
+  /// 프로젝트 기본값을 정해두고 예외만 태그로 표시하는 사용법을 위한 것이다.
+  final TestTarget defaultTarget;
+
   /// 이 시나리오의 실행 대상을 결정합니다.
   TestTarget get target {
     if (tags.contains('widget-only')) return TestTarget.widgetOnly;
     if (tags.contains('patrol-only')) return TestTarget.patrolOnly;
-    return TestTarget.both;
+    return defaultTarget;
   }
 }
 
@@ -113,7 +124,10 @@ enum TestTarget {
 }
 
 /// .feature 파일 내용을 파싱합니다.
-FeatureFile parseFeature(String content) {
+FeatureFile parseFeature(
+  String content, {
+  TestTarget defaultTarget = TestTarget.both,
+}) {
   final lines = content.split('\n');
   final featureTags = <String>[];
   var featureName = '';
@@ -176,6 +190,7 @@ FeatureFile parseFeature(String content) {
         currentScenarioName,
         currentSteps,
         currentScenarioTags,
+        defaultTarget,
       );
 
       final prefix = line.startsWith('Scenario Outline:')
@@ -209,6 +224,7 @@ FeatureFile parseFeature(String content) {
     currentScenarioName,
     currentSteps,
     currentScenarioTags,
+    defaultTarget,
   );
 
   return FeatureFile(
@@ -225,10 +241,16 @@ void _saveScenario(
   String name,
   List<Step> steps,
   List<String> tags,
+  TestTarget defaultTarget,
 ) {
   if (name.isEmpty) return;
   scenarios.add(
-    Scenario(name: name, tags: List.of(tags), steps: List.of(steps)),
+    Scenario(
+      name: name,
+      tags: List.of(tags),
+      steps: List.of(steps),
+      defaultTarget: defaultTarget,
+    ),
   );
 }
 

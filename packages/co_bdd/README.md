@@ -33,6 +33,49 @@ targets:
           stepFolder: step
 ```
 
+#### Builder options
+
+| Option | Default | Description |
+|---|---|---|
+| `stepFolder` | `step` | Directory holding local step files, relative to the `.feature`. |
+| `sharedSteps` | `false` | Resolve known step names from a shared package instead of local files. |
+| `sharedStepsImport` | `package:co_test_gen/shared_steps.dart` | Import URI for the shared step library. |
+| `sharedStepNames` | built-in list | Step file names to resolve from the shared package. |
+| `defaultTarget` | `both` | Execution target for scenarios that carry **no** target tag. One of `both` / `widget-only` / `patrol-only`. |
+
+##### `defaultTarget` — don't generate what you can't run
+
+By default every `.feature` produces **both** `*.widget_test.dart` and
+`*.patrol_test.dart`. That is wrong for packages that can only run one of them.
+
+Patrol needs a buildable app (`test_directory` plus a package name / bundle id).
+A pure **library** package has no `main.dart`, so its generated
+`*.patrol_test.dart` can never execute — it is dead weight that still gets
+generated, formatted, committed, and reviewed. Measured in one consumer: **68
+files / 6,875 lines** in that state, plus a `if (driver is PatrolTestDriver)
+return;` guard in 384 step files written solely to keep those dead outputs
+compiling.
+
+Set the default per package and tag only the exceptions:
+
+```yaml
+options:
+  defaultTarget: widget-only   # library package — Patrol cannot run here
+```
+
+```gherkin
+Scenario: inherits the package default (widget-only)
+  Then something happens
+
+@patrol-only
+Scenario: an explicit tag always wins over the default
+  Then something happens
+```
+
+An unrecognised value throws rather than falling back silently — a typo in this
+option would otherwise remove half your generated tests while the build still
+reports success.
+
 ### 3. Write a `.feature` file
 
 ```gherkin
