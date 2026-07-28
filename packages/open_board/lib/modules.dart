@@ -76,6 +76,17 @@ export 'src/module/text/text_drawable_manager.dart'; // ♻️ 텍스트 CRUD �
 // findLinkAtCanvasPoint: 캔버스 좌표 → 링크 span hit-test (컨트롤러 없는 순수 경로).
 export 'src/module/text/text_painter.dart' show TextDrawablePainter;
 export 'src/module/text/link_hit_test.dart' show findLinkAtCanvasPoint;
+// 링크 타깃 입력 UI 를 호스트 앱 디자인 시스템으로 대체하기 위한 seam
+// (kobic #9838 — open_board 는 특정 디자인 시스템에 의존하지 않는다).
+// 타깃 문법(`page:N` · https 정규화)은 open_board 가 소유하고 해석까지 하므로,
+// 주입 UI 가 재구현하지 않고 같은 헬퍼를 쓰도록 함께 노출한다.
+export 'src/module/text/inline_text_editor.dart' show LinkTargetResolver;
+export 'src/module/text/text_span_builder.dart'
+    show
+        formatPageLinkTarget,
+        kPageLinkScheme,
+        normalizeExternalLinkTarget,
+        parsePageLinkTarget;
 
 // 🖼️ 이미지 임베드 (Story #172 / Epic #171)
 export 'src/module/adapters/image_picker_adapter.dart';

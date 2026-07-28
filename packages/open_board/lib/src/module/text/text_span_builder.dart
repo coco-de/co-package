@@ -30,10 +30,7 @@ TextSpan buildLinkAwareTextSpan(
     return TextSpan(text: text, style: base);
   }
 
-  final linkStyle = base.copyWith(
-    color: linkColor,
-    decoration: .underline,
-  );
+  final linkStyle = base.copyWith(color: linkColor, decoration: .underline);
 
   final children = <TextSpan>[];
   var cursor = 0;
@@ -122,4 +119,22 @@ int? parsePageLinkTarget(String? target) {
 String? formatPageLinkTarget(String raw) {
   final page = int.tryParse(raw.trim());
   return (page != null && page >= 1) ? '$kPageLinkScheme$page' : null;
+}
+
+/// Normalizes a raw external link input into a link target, or `null` when
+/// [raw] is blank.
+///
+/// A missing scheme defaults to `https://`; `mailto:` / `tel:` inputs are kept
+/// as typed. Exposed so a host application that supplies its own link input UI
+/// (see `LinkTargetResolver`) produces targets identical to the built-in
+/// dialog's — the target grammar must have a single owner, otherwise the two
+/// paths drift and links stop resolving (kobic #9838).
+String? normalizeExternalLinkTarget(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return null;
+  final hasScheme =
+      trimmed.contains('://') ||
+      trimmed.startsWith('mailto:') ||
+      trimmed.startsWith('tel:');
+  return hasScheme ? trimmed : 'https://$trimmed';
 }

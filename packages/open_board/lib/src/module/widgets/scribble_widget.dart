@@ -16,6 +16,8 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
   import 'package:open_board/src/module/state/drawing_state.dart';
   import 'package:open_board/src/module/state/scribble.state.dart';
   import 'package:open_board/src/module/state/viewer_gesture_bus.dart';
+  import 'package:open_board/src/module/text/inline_text_editor.dart'
+      show LinkTargetResolver;
   import 'package:open_board/src/module/text/text_interaction_manager.dart';
   import 'package:open_board/src/module/text/text_painter.dart';
   // 새로 생성한 클래스들 import
@@ -118,7 +120,13 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       this.repaintBoundaryKey, // ✨ 외부에서 제공 가능한 GlobalKey
       this.contentLogicalSize,
       this.transformationController, // 🆕 외부 주입 가능한 변환 컨트롤러 (PR #99)
+      this.linkTargetResolver,
     });
+
+    /// 텍스트 주석 링크 타깃 입력 UI 제공자 — [TextInteractionManager] 를 거쳐
+    /// 인라인 텍스트 에디터로 전달된다. 미주입 시 내장 Material 다이얼로그로
+    /// 폴백한다 (kobic #9838).
+    final LinkTargetResolver? linkTargetResolver;
 
     /// ✨ 이미지 캡처를 위한 GlobalKey - 외부에서 접근 가능
     final GlobalKey? repaintBoundaryKey;
@@ -371,6 +379,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         transformationController: transformationController,
         repaintBoundaryKey: widget.repaintBoundaryKey,
         widgetState: widgetState,
+        linkTargetResolver: widget.linkTargetResolver,
         onTextSelected: (textDrawable) {
           lassoManager.resetLassoState();
         },

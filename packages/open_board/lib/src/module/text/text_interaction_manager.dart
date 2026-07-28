@@ -41,6 +41,10 @@ class TextInteractionManager {
   /// (현재 본 패키지 내부에서는 호출하지 않으나 main의 API 호환을 위해 유지)
   final void Function(TextDrawable textDrawable)? onTextEdit;
 
+  /// 링크 타깃 입력 UI 제공자 — 인라인 텍스트 에디터로 그대로 전달한다.
+  /// 미주입 시 에디터가 내장 Material 다이얼로그로 폴백한다 (kobic #9838).
+  final LinkTargetResolver? linkTargetResolver;
+
   final void Function(TextDrawable textDrawable) onTextUpdated;
 
   final void Function() onTextDeselected; // ScribbleWidgetState 참조 추가
@@ -102,6 +106,7 @@ class TextInteractionManager {
     required this.onTextDeselected,
     required this.widgetState,
     this.onTextEdit,
+    this.linkTargetResolver,
   }) {
     _transformHandler = TransformHandler();
     _initializeFromScribble();
@@ -797,6 +802,7 @@ class TextInteractionManager {
         isNew: true,
         scale: 1.0,
         selectedColor: modeNotifier.state.inkGroupInfo.selectedColor,
+        linkTargetResolver: linkTargetResolver,
         onComplete: (updatedDrawable) {
           _hideTextEditor();
 
@@ -853,6 +859,7 @@ class TextInteractionManager {
         isNew: false,
         scale: 1.0, // 이미 화면에 스케일 적용되어 있으므로 확대 X
         selectedColor: modeNotifier.state.inkGroupInfo.selectedColor,
+        linkTargetResolver: linkTargetResolver,
         onComplete: (updatedDrawable) {
           _hideTextEditor();
 

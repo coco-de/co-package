@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble_controller.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
+import 'package:open_board/src/module/text/inline_text_editor.dart'
+    show LinkTargetResolver;
 import 'package:open_board/src/module/widgets/scribble_widget.dart';
 
 /// ✨ 간편한 사용을 위한 SimpleScribbleWidget
@@ -53,7 +55,14 @@ final class SimpleScribbleWidget extends StatefulWidget {
         PanDirection.horizontal, // 🎯 기본값: 가로 pan 허용 (PageView 스와이프)
     this.allowedPointersMode = ScribblePointerMode.penOnly, // 🆕 최소 캔버스 크기
     this.contentLogicalSize,
+    this.linkTargetResolver,
   });
+
+  /// 텍스트 주석 링크 타깃 입력 UI 제공자 (kobic #9838).
+  ///
+  /// 호스트 앱이 자신의 디자인 시스템으로 다이얼로그를 그리도록 위임한다.
+  /// 미주입 시 내장 Material 다이얼로그로 폴백하므로 단독 사용도 동작한다.
+  final LinkTargetResolver? linkTargetResolver;
 
   /// 필기 컨트롤러 (선택적 - 없으면 자동 생성)
   final ScribbleController? controller;
@@ -211,6 +220,7 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
           _controller.repaintBoundaryKey, // ✨ controller의 key 전달
       transformationController: widget.transformationController,
       contentLogicalSize: widget.contentLogicalSize,
+      linkTargetResolver: widget.linkTargetResolver,
       // onScribbleChanged는 _initializeController에서 컨트롤러 리스너로
       // 이미 연결되어 모든 변경을 전달한다. 여기서 onScribble로도 감싸
       // 전달하면 같은 변경에 대해 사용자 콜백이 두 번 호출된다.

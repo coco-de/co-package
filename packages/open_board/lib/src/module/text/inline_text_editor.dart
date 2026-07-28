@@ -10,6 +10,18 @@ import 'package:open_board/src/module/text/link_span_offsets.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 
+/// 링크 타깃 입력 UI 를 호스트 앱이 제공하기 위한 콜백.
+///
+/// 확인 시 정규화된 링크 타깃(외부: `https://...`, 내부: `page:N`)을, 취소하면
+/// null 을 반환한다. [initialTarget] 은 기존 링크를 편집할 때의 현재 타깃이며
+/// 새 링크면 null 이다.
+///
+/// open_board 는 특정 디자인 시스템에 의존하지 않으므로 다이얼로그의 생김새를
+/// 규정하지 않는다. 미주입 시에는 패키지 내장 Material 다이얼로그로 폴백해
+/// 단독 사용에서도 링크 입력이 동작한다.
+typedef LinkTargetResolver =
+    Future<String?> Function(BuildContext context, {String? initialTarget});
+
 /// 터치한 위치에 나타나는 인라인 텍스트 에디터
 final class InlineTextEditor extends StatefulWidget {
   const InlineTextEditor({
@@ -20,6 +32,7 @@ final class InlineTextEditor extends StatefulWidget {
     required this.isNew,
     required this.scale,
     required this.selectedColor,
+    this.linkTargetResolver,
     super.key,
   });
 
@@ -43,6 +56,9 @@ final class InlineTextEditor extends StatefulWidget {
 
   /// 선택된 텍스트 컬러
   final Color selectedColor;
+
+  /// 링크 타깃 입력 UI 제공자 (미주입 시 내장 Material 다이얼로그로 폴백).
+  final LinkTargetResolver? linkTargetResolver;
 
   @override
   State<InlineTextEditor> createState() => _InlineTextEditorState();
@@ -184,14 +200,51 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     return TextSelection(baseOffset: span.start, extentOffset: span.end);
   }
 
-  /// 선택 영역(또는 커서가 놓인 링크)에 링크를 추가하거나 기존 링크를 편집한다.
+  /// 링크를 추가하거나 기존 링크를 편집한다.
+  ///
+  /// - 드래그 선택 있음 → 그 텍스트에 링크 적용
+  /// - 커서가 기존 링크 위 → 그 링크 편집
+  /// - 그 외(선택 없음) → 링크 타깃을 커서 위치에 **삽입**하고 그 범위에 링크를
+  ///   적용한다. 선택을 먼저 만들지 않으면 링크를 걸 방법이 아예 없던 사각을
+  ///   없앤다 (kobic #9838 — 굿노트·노션 동작 정합).
   Future<void> _onAddOrEditLink(TextSelection selection) async {
     final target = _linkTargetSelection(selection);
-    if (target == null) return;
-    final existingTarget = _selectionLinkUrl(target);
+    final existingTarget = target == null ? null : _selectionLinkUrl(target);
     final result = await _showLinkDialog(initialTarget: existingTarget);
     if (result == null || !mounted || disposed) return; // 취소/언마운트
-    _applyLink(target, result);
+
+    if (target != null) {
+      _applyLink(target, result);
+      return;
+    }
+    _insertLinkAtCursor(selection, result);
+  }
+
+  /// 커서 위치에 링크 타깃 [url] 을 텍스트로 삽입하고 그 범위에 링크를 건다.
+  ///
+  /// 삽입 문자열은 타깃 그대로다 — 로케일에 의존하는 라벨을 패키지가 정하지
+  /// 않기 위함이며, 사용자는 이어서 원하는 문구로 고칠 수 있다(편집 시 링크
+  /// span 은 [shiftLinkSpans] 가 따라 이동시킨다).
+  void _insertLinkAtCursor(TextSelection selection, String url) {
+    final text = textEditingController.text;
+    final start = selection.isValid
+        ? math.min(selection.start, text.length)
+        : text.length;
+    final end = selection.isValid
+        ? math.min(selection.end, text.length)
+        : text.length;
+
+    textEditingController.text = text.replaceRange(start, end, url);
+    _applyLink(
+      TextSelection(baseOffset: start, extentOffset: start + url.length),
+      url,
+    );
+    if (!mounted || disposed) return;
+    // 삽입 텍스트를 선택 상태로 두면 이어지는 입력이 링크 span 째 날려버리므로,
+    // 날짜 삽입과 동일하게 커서를 삽입분 뒤로 보낸다.
+    textEditingController.selection = TextSelection.collapsed(
+      offset: start + url.length,
+    );
   }
 
   /// 선택 영역(또는 커서가 놓인 링크)과 겹치는 링크들을 제거한다.
@@ -242,9 +295,19 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
   /// 확인 시 정규화된 링크 타깃(외부: `https://...`, 내부: `page:N`)을, 취소/
   /// 빈값/비정수 페이지면 null 을 반환한다. [initialTarget] 이 `page:N` 이면
   /// 내부 모드로, 그 외엔 외부 모드로 시작한다.
+  ///
+  /// 호스트 앱이 [InlineTextEditor.linkTargetResolver] 를 주입했으면 그쪽에
+  /// 위임해 앱의 디자인 시스템으로 렌더링하고, 없으면 내장 Material
+  /// 다이얼로그로 폴백한다.
   Future<String?> _showLinkDialog({String? initialTarget}) async {
+    // 다이얼로그가 포커스를 가져가는 동안 focusListener 가 편집을 조기 완료하지
+    // 않도록 억제한다 — 주입 경로에서도 동일하게 필요하다.
     _suppressComplete = true;
     try {
+      final resolver = widget.linkTargetResolver;
+      if (resolver != null) {
+        return await resolver(context, initialTarget: initialTarget);
+      }
       return await showDialog<String>(
         context: context,
         builder: (_) => _LinkInputDialog(initialTarget: initialTarget),
@@ -352,12 +415,6 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     unawaited(_onAddOrEditLink(selection));
   }
 
-  /// 에디터 상시 노출 링크 버튼 탭 — 선택 영역(또는 커서가 놓인 링크)을
-  /// 대상으로 링크 다이얼로그 진입. 대상이 없으면 무시 (버튼 비활성 표시).
-  void _onLinkButtonTap() {
-    unawaited(_onAddOrEditLink(textEditingController.selection));
-  }
-
   /// 컨텍스트 메뉴 "링크 삭제" 탭 — 툴바를 닫고 선택 영역 링크 제거.
   void _onLinkRemoveTap(TextSelection selection) {
     ContextMenuController.removeAny();
@@ -373,24 +430,25 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     // 드래그 선택뿐 아니라 커서가 링크 위에 있을 때(collapsed)도 링크
     // 편집/삭제를 노출한다 — 굿노트 동작 정합 (kobic #8481).
     final target = _linkTargetSelection(selection);
-    if (target != null) {
-      final hasLink = _selectionLinkUrl(target) != null;
+    final hasLink = target != null && _selectionLinkUrl(target) != null;
+    // 대상이 없어도(선택 없음) "링크 추가"를 노출한다 — 그 경우 링크 타깃이
+    // 커서 위치에 삽입된다. 이 진입점이 없으면 선택을 만들지 못한 사용자에게
+    // 링크 기능이 도달 불가가 된다 (kobic #9838).
+    buttonItems.insert(
+      0,
+      ContextMenuButtonItem(
+        label: hasLink ? '링크 편집' : '링크 추가',
+        onPressed: () => _onLinkMenuTap(selection),
+      ),
+    );
+    if (hasLink) {
       buttonItems.insert(
-        0,
+        1,
         ContextMenuButtonItem(
-          label: hasLink ? '링크 편집' : '링크 추가',
-          onPressed: () => _onLinkMenuTap(selection),
+          label: '링크 삭제',
+          onPressed: () => _onLinkRemoveTap(selection),
         ),
       );
-      if (hasLink) {
-        buttonItems.insert(
-          1,
-          ContextMenuButtonItem(
-            label: '링크 삭제',
-            onPressed: () => _onLinkRemoveTap(selection),
-          ),
-        );
-      }
     }
     return AdaptiveTextSelectionToolbar.buttonItems(
       anchors: editableTextState.contextMenuAnchors,
@@ -472,19 +530,18 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     // 화면 너비에서 여백을 뺀 크기로 레이아웃
     textPainter.layout(maxWidth: screenSize.width - 60);
 
-    // 에디터 크기 계산 (텍스트 크기 + 패딩 + 링크/날짜 버튼 공간)
+    // 에디터 크기 계산 (텍스트 크기 + 패딩 + 날짜 버튼 공간)
     const minWidth = 40.0;
     const minHeight = 30.0;
     const dateButtonWidth = 32.0; // 날짜 버튼 너비
-    const linkButtonWidth = 32.0; // 링크 버튼 너비 (kobic #8481)
 
     final textWidth = textPainter.width;
     final textHeight = textPainter.height;
 
     double editorWidth = math.max(
       minWidth,
-      textWidth * 1.05 + 8 + linkButtonWidth + dateButtonWidth + 8,
-    ); // 링크/날짜 버튼 공간 추가
+      textWidth * 1.05 + 8 + dateButtonWidth + 8,
+    ); // 날짜 버튼 공간 추가
     double editorHeight = math.max(minHeight, textHeight * 1.05);
 
     // 화면 경계 제한
@@ -525,7 +582,8 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       // 경우에만 키보드 위로 도킹한다 — 이미 안전한 위치라면 터치 지점을
       // 그대로 유지한다 (#241 의도 보존 + #251, kobic#9001: 도킹이 무조건
       // 발동해 "선택한 위치가 아닌 키보드 위로 이동"하는 문제 수정).
-      final keyboardSafeBottom = screenSize.height - keyboardInset - keyboardGap;
+      final keyboardSafeBottom =
+          screenSize.height - keyboardInset - keyboardGap;
       if (top + editorHeight > keyboardSafeBottom) {
         // 텍스트가 여러 줄로 늘어나면 하단(키보드 쪽)은 고정된 채 위로 자란다.
         top = keyboardSafeBottom - editorHeight;
@@ -541,12 +599,6 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     if (top < 50) {
       top = 50;
     }
-
-    // 링크 버튼 활성 상태 — 드래그 선택이 있거나 커서가 링크 위에 있을 때.
-    // 컨트롤러 리스너(_onControllerChanged)가 선택 변경마다 rebuild 하므로
-    // 상태가 실시간으로 갱신된다.
-    final hasLinkTarget =
-        _linkTargetSelection(textEditingController.selection) != null;
 
     return Material(
       type: .transparency,
@@ -605,30 +657,6 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                         keyboardType: .multiline,
                         textInputAction: .newline, // 🔥 엔터키를 줄바꿈으로 변경
                         // 🔥 onSubmitted 제거 - 엔터키로 편집 완료하지 않음
-                      ),
-                    ),
-
-                    // 링크 버튼 — 선택 영역/커서가 놓인 링크가 있을 때 활성
-                    // (굿노트처럼 링크 적용·수정 진입점을 상시 노출, kobic #8481)
-                    Container(
-                      width: linkButtonWidth,
-                      height: editorHeight,
-                      decoration: const BoxDecoration(
-                        border: Border(left: BorderSide(color: Colors.blue)),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          key: const ValueKey('inline_text_editor_link_button'),
-                          onTap: _onLinkButtonTap,
-                          child: Icon(
-                            Icons.link,
-                            size: math.min(20, editorHeight * 0.6),
-                            color: hasLinkTarget
-                                ? Colors.blue
-                                : Colors.blue.withValues(alpha: 0.3),
-                          ),
-                        ),
                       ),
                     ),
 
@@ -719,20 +747,13 @@ final class _LinkInputDialogState extends State<_LinkInputDialog> {
   }
 
   /// 현재 모드 기준 정규화된 링크 타깃 (유효하지 않으면 null).
+  ///
+  /// 정규화 규약은 [normalizeExternalLinkTarget] / [formatPageLinkTarget] 이
+  /// 소유한다 — 호스트 앱이 주입하는 입력 UI 도 같은 함수를 쓰므로 두 경로가
+  /// 동일한 타깃을 만든다 (kobic #9838).
   String? _buildResult() => _isInternal
       ? formatPageLinkTarget(_pageController.text)
-      : _normalizeUrl(_urlController.text);
-
-  /// 입력 URL 정규화. 빈 값이면 null, scheme 없으면 https 를 붙인다.
-  String? _normalizeUrl(String raw) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) return null;
-    final hasScheme =
-        trimmed.contains('://') ||
-        trimmed.startsWith('mailto:') ||
-        trimmed.startsWith('tel:');
-    return hasScheme ? trimmed : 'https://$trimmed';
-  }
+      : normalizeExternalLinkTarget(_urlController.text);
 
   void _submit() => Navigator.of(context).pop(_buildResult());
 

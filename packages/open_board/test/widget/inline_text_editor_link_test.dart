@@ -11,15 +11,17 @@ import 'package:open_board/src/module/text/link_aware_text_editing_controller.da
 import 'package:open_board/src/module/text/text_drawable_factory.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 
-/// kobic #8481 회귀 방지 테스트 — 인라인 텍스트 에디터 링크 편집 UX.
+/// 인라인 텍스트 에디터 링크 편집 UX 회귀 방지 테스트.
 ///
 /// 검증 대상:
-///  1. 편집 중 링크 구간이 커밋 후 렌더링과 동일한 스타일(파랑+밑줄)로 표시
-///  2. 커서가 링크 위(collapsed)에 있어도 링크 편집/삭제 가능 (굿노트 동작)
-///  3. 상시 노출 링크 버튼 — 대상 있으면 다이얼로그 진입, 없으면 무시
+///  1. 편집 중 링크 구간이 커밋 후 렌더링과 동일한 스타일(파랑+밑줄)로 표시 (#8481)
+///  2. 커서가 링크 위(collapsed)에 있어도 링크 편집/삭제 가능 — 굿노트 동작 (#8481)
+///  3. 상시 노출 링크 버튼 **부재** — 대상 없을 때 조용히 무동작이라 죽은 버튼으로
+///     체감됐고, 컨텍스트 메뉴와 중복 진입점이었다 (kobic #9838)
+///  4. 선택이 없어도 링크 추가 가능 — 링크 타깃을 커서 위치에 삽입 (kobic #9838)
+///  5. 링크 입력 UI 를 호스트 앱이 주입 가능 ([LinkTargetResolver]), 미주입 시
+///     내장 Material 다이얼로그로 폴백 (kobic #9838)
 void main() {
-  const linkButtonKey = ValueKey('inline_text_editor_link_button');
-
   TextLinkSpan span(int start, int end, [String url = 'https://example.com']) =>
       TextLinkSpan()
         ..start = start
@@ -27,10 +29,13 @@ void main() {
         ..url = url;
 
   /// [text] 와 [linkSpans] 를 가진 기존 텍스트용 인라인 에디터를 띄운다.
+  ///
+  /// [linkTargetResolver] 를 주면 내장 다이얼로그 대신 그 콜백이 쓰인다.
   Future<List<TextDrawable?>> pumpEditor(
     WidgetTester tester, {
     String text = 'hello world',
     List<TextLinkSpan> linkSpans = const [],
+    LinkTargetResolver? linkTargetResolver,
   }) async {
     final completions = <TextDrawable?>[];
     final drawable = TextDrawableFactory.create(
@@ -51,6 +56,7 @@ void main() {
           isNew: false,
           scale: 1.0,
           selectedColor: Colors.black,
+          linkTargetResolver: linkTargetResolver,
           onComplete: completions.add,
         ),
       ),
@@ -70,11 +76,32 @@ void main() {
     matching: find.byType(TextField),
   );
 
+  /// 선택 툴바를 띄운다 (모바일에서 커서/선택 핸들 탭에 해당).
+  Future<void> showToolbar(WidgetTester tester) async {
+    tester.state<EditableTextState>(find.byType(EditableText)).showToolbar();
+    await tester.pumpAndSettle();
+  }
+
+  /// 컨텍스트 메뉴에서 [label] 항목을 탭한다.
+  Future<void> tapMenuItem(WidgetTester tester, String label) async {
+    await tester.tap(find.text(label));
+    await tester.pumpAndSettle();
+  }
+
   /// 배경 탭으로 편집을 커밋한다.
   Future<void> commitByBackgroundTap(WidgetTester tester) async {
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
   }
+
+  /// 항상 [target] 을 반환하는 resolver (호출 인자를 [captured] 에 기록).
+  LinkTargetResolver stubResolver(
+    String? target, {
+    List<String?>? captured,
+  }) => (context, {String? initialTarget}) async {
+    captured?.add(initialTarget);
+    return target;
+  };
 
   group('LinkAwareTextEditingController — 편집 중 링크 스타일 (kobic #8481)', () {
     testWidgets('링크 구간은 파랑+밑줄, 나머지는 기본 스타일로 분할된다', (tester) async {
@@ -145,32 +172,218 @@ void main() {
     });
   });
 
-  group('링크 버튼 (kobic #8481)', () {
-    testWidgets('커서가 링크 위(collapsed)면 기존 URL 이 채워진 다이얼로그가 열린다', (tester) async {
-      await pumpEditor(tester, linkSpans: [span(0, 5, 'https://old.com')]);
-      controllerOf(tester).selection = const TextSelection.collapsed(offset: 2);
-      await tester.pump();
+  group('상시 노출 링크 버튼 제거 (kobic #9838)', () {
+    testWidgets('링크 버튼이 렌더링되지 않는다', (tester) async {
+      await pumpEditor(tester, linkSpans: [span(0, 5)]);
 
-      await tester.tap(find.byKey(linkButtonKey));
-      await tester.pumpAndSettle();
-
-      expect(find.text('링크 입력'), findsOneWidget);
-      final urlField = tester.widget<TextField>(dialogUrlField());
-      expect(urlField.controller?.text, 'https://old.com');
+      expect(
+        find.byKey(const ValueKey('inline_text_editor_link_button')),
+        findsNothing,
+      );
+      expect(find.byIcon(Icons.link), findsNothing);
     });
 
-    testWidgets('커서가 링크 밖이고 선택도 없으면 다이얼로그가 열리지 않는다', (tester) async {
+    testWidgets('날짜 버튼은 그대로 유지된다 — 정상 동작하므로 제거 대상이 아니다', (tester) async {
+      await pumpEditor(tester);
+
+      expect(find.byIcon(Icons.calendar_today), findsOneWidget);
+    });
+  });
+
+  group('컨텍스트 메뉴 진입점 (kobic #9838)', () {
+    testWidgets('드래그 선택 시 링크 추가가 노출된다', (tester) async {
+      await pumpEditor(tester);
+      controllerOf(tester).selection = const TextSelection(
+        baseOffset: 6,
+        extentOffset: 11,
+      );
+      await tester.pump();
+
+      await showToolbar(tester);
+
+      expect(find.text('링크 추가'), findsOneWidget);
+      expect(find.text('링크 삭제'), findsNothing);
+    });
+
+    testWidgets('선택이 없어도 링크 추가가 노출된다 — 유일한 진입점이므로 도달 가능해야 한다', (
+      tester,
+    ) async {
       await pumpEditor(tester, linkSpans: [span(0, 5)]);
       controllerOf(tester).selection = const TextSelection.collapsed(offset: 8);
       await tester.pump();
 
-      await tester.tap(find.byKey(linkButtonKey));
-      await tester.pumpAndSettle();
+      await showToolbar(tester);
 
+      expect(find.text('링크 추가'), findsOneWidget);
+      expect(find.text('링크 편집'), findsNothing);
+      expect(find.text('링크 삭제'), findsNothing);
+    });
+
+    testWidgets('커서가 링크 위면 링크 편집/삭제가 노출된다', (tester) async {
+      await pumpEditor(tester, linkSpans: [span(0, 5)]);
+      controllerOf(tester).selection = const TextSelection.collapsed(offset: 2);
+      await tester.pump();
+
+      await showToolbar(tester);
+
+      expect(find.text('링크 편집'), findsOneWidget);
+      expect(find.text('링크 삭제'), findsOneWidget);
+      expect(find.text('링크 추가'), findsNothing);
+    });
+  });
+
+  group('선택 없이 링크 추가 — 커서 위치 삽입 (kobic #9838)', () {
+    testWidgets('링크 타깃이 커서 위치에 삽입되고 그 범위에 링크가 걸린다', (tester) async {
+      final completions = await pumpEditor(
+        tester,
+        linkTargetResolver: stubResolver('https://a.com'),
+      );
+      controllerOf(tester).selection = const TextSelection.collapsed(offset: 5);
+      await tester.pump();
+
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 추가');
+      await commitByBackgroundTap(tester);
+
+      final committed = completions.single!;
+      expect(committed.text, 'hellohttps://a.com world');
+      final result = committed.linkSpans.single;
+      expect(result.start, 5);
+      expect(result.end, 5 + 'https://a.com'.length);
+      expect(result.url, 'https://a.com');
+    });
+
+    testWidgets('삽입 후 커서는 삽입분 뒤에 놓인다 — 이어지는 입력이 링크를 지우지 않는다', (
+      tester,
+    ) async {
+      await pumpEditor(
+        tester,
+        text: '',
+        linkTargetResolver: stubResolver('https://a.com'),
+      );
+
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 추가');
+
+      final selection = controllerOf(tester).selection;
+      expect(selection.isCollapsed, isTrue);
+      expect(selection.baseOffset, 'https://a.com'.length);
+    });
+
+    testWidgets('드래그 선택이 있으면 삽입하지 않고 선택 텍스트에 링크를 건다', (tester) async {
+      final completions = await pumpEditor(
+        tester,
+        linkTargetResolver: stubResolver('https://a.com'),
+      );
+      controllerOf(tester).selection = const TextSelection(
+        baseOffset: 6,
+        extentOffset: 11,
+      );
+      await tester.pump();
+
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 추가');
+      await commitByBackgroundTap(tester);
+
+      final committed = completions.single!;
+      expect(committed.text, 'hello world'); // 텍스트 불변
+      final result = committed.linkSpans.single;
+      expect(result.start, 6);
+      expect(result.end, 11);
+    });
+
+    testWidgets('취소하면 텍스트도 링크도 변하지 않는다', (tester) async {
+      final completions = await pumpEditor(
+        tester,
+        linkTargetResolver: stubResolver(null), // 취소
+      );
+      controllerOf(tester).selection = const TextSelection.collapsed(offset: 5);
+      await tester.pump();
+
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 추가');
+      await commitByBackgroundTap(tester);
+
+      final committed = completions.single!;
+      expect(committed.text, 'hello world');
+      expect(committed.linkSpans, isEmpty);
+    });
+  });
+
+  group('링크 입력 UI 주입 (kobic #9838)', () {
+    testWidgets('resolver 를 주입하면 내장 다이얼로그가 열리지 않는다', (tester) async {
+      await pumpEditor(
+        tester,
+        linkTargetResolver: stubResolver('https://a.com'),
+      );
+      controllerOf(tester).selection = const TextSelection(
+        baseOffset: 6,
+        extentOffset: 11,
+      );
+      await tester.pump();
+
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 추가');
+
+      expect(find.byType(AlertDialog), findsNothing);
       expect(find.text('링크 입력'), findsNothing);
     });
 
-    testWidgets('드래그 선택 후 링크 버튼으로 새 링크를 적용할 수 있다', (tester) async {
+    testWidgets('기존 링크 편집 시 resolver 에 현재 타깃이 전달된다', (tester) async {
+      final captured = <String?>[];
+      await pumpEditor(
+        tester,
+        linkSpans: [span(0, 5, 'https://old.com')],
+        linkTargetResolver: stubResolver(
+          'https://new.com',
+          captured: captured,
+        ),
+      );
+      controllerOf(tester).selection = const TextSelection.collapsed(offset: 2);
+      await tester.pump();
+
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 편집');
+
+      expect(captured, ['https://old.com']);
+    });
+
+    testWidgets('새 링크 추가 시 resolver 에 전달되는 타깃은 null 이다', (tester) async {
+      final captured = <String?>[];
+      await pumpEditor(
+        tester,
+        linkTargetResolver: stubResolver('https://a.com', captured: captured),
+      );
+      controllerOf(tester).selection = const TextSelection(
+        baseOffset: 6,
+        extentOffset: 11,
+      );
+      await tester.pump();
+
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 추가');
+
+      expect(captured, [null]);
+    });
+
+    testWidgets('resolver 미주입 시 내장 Material 다이얼로그로 폴백한다', (tester) async {
+      await pumpEditor(tester);
+      controllerOf(tester).selection = const TextSelection(
+        baseOffset: 6,
+        extentOffset: 11,
+      );
+      await tester.pump();
+
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 추가');
+
+      expect(find.text('링크 입력'), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+  });
+
+  group('링크 적용/편집/삭제 (kobic #8481 회귀)', () {
+    testWidgets('드래그 선택 후 내장 다이얼로그로 새 링크를 적용할 수 있다', (tester) async {
       final completions = await pumpEditor(tester);
       controllerOf(tester).selection = const TextSelection(
         baseOffset: 6,
@@ -178,16 +391,14 @@ void main() {
       );
       await tester.pump();
 
-      await tester.tap(find.byKey(linkButtonKey));
-      await tester.pumpAndSettle();
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 추가');
       await tester.enterText(dialogUrlField(), 'example.org');
-      await tester.tap(find.text('확인'));
-      await tester.pumpAndSettle();
+      await tapMenuItem(tester, '확인');
 
       await commitByBackgroundTap(tester);
 
-      final committed = completions.single!;
-      final result = committed.linkSpans.single;
+      final result = completions.single!.linkSpans.single;
       expect(result.start, 6);
       expect(result.end, 11);
       // scheme 없는 입력은 https 로 정규화된다
@@ -202,11 +413,10 @@ void main() {
       controllerOf(tester).selection = const TextSelection.collapsed(offset: 3);
       await tester.pump();
 
-      await tester.tap(find.byKey(linkButtonKey));
-      await tester.pumpAndSettle();
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 편집');
       await tester.enterText(dialogUrlField(), 'https://new.com');
-      await tester.tap(find.text('확인'));
-      await tester.pumpAndSettle();
+      await tapMenuItem(tester, '확인');
 
       await commitByBackgroundTap(tester);
 
@@ -215,43 +425,14 @@ void main() {
       expect(result.end, 5);
       expect(result.url, 'https://new.com');
     });
-  });
-
-  group('커서 기반 컨텍스트 메뉴 (kobic #8481)', () {
-    testWidgets('커서가 링크 위면 툴바에 링크 편집/삭제가 노출된다', (tester) async {
-      await pumpEditor(tester, linkSpans: [span(0, 5)]);
-      controllerOf(tester).selection = const TextSelection.collapsed(offset: 2);
-      await tester.pump();
-
-      tester.state<EditableTextState>(find.byType(EditableText)).showToolbar();
-      await tester.pumpAndSettle();
-
-      expect(find.text('링크 편집'), findsOneWidget);
-      expect(find.text('링크 삭제'), findsOneWidget);
-    });
-
-    testWidgets('커서가 링크 밖이면 링크 항목이 노출되지 않는다', (tester) async {
-      await pumpEditor(tester, linkSpans: [span(0, 5)]);
-      controllerOf(tester).selection = const TextSelection.collapsed(offset: 8);
-      await tester.pump();
-
-      tester.state<EditableTextState>(find.byType(EditableText)).showToolbar();
-      await tester.pumpAndSettle();
-
-      expect(find.text('링크 편집'), findsNothing);
-      expect(find.text('링크 추가'), findsNothing);
-      expect(find.text('링크 삭제'), findsNothing);
-    });
 
     testWidgets('커서 위치에서 링크 삭제 시 커밋 결과에 링크가 없다', (tester) async {
       final completions = await pumpEditor(tester, linkSpans: [span(0, 5)]);
       controllerOf(tester).selection = const TextSelection.collapsed(offset: 2);
       await tester.pump();
 
-      tester.state<EditableTextState>(find.byType(EditableText)).showToolbar();
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('링크 삭제'));
-      await tester.pumpAndSettle();
+      await showToolbar(tester);
+      await tapMenuItem(tester, '링크 삭제');
 
       await commitByBackgroundTap(tester);
 
