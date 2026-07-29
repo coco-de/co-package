@@ -22,9 +22,18 @@
 
 # org 레벨 러너 (coco-de 전체 레포 공용, admin:org 스코프 필요)
 ./scripts/register-runner.sh --org coco-de
+
+# 상시 백그라운드로 (launchd 서비스 + 크래시 자동 복구 + 재부팅 복귀 점검)
+./scripts/register-runner.sh --org coco-de --service
 ```
 
 사전 준비물과 상세 절차는 [docs/self-hosted-runner.md](docs/self-hosted-runner.md) 런북을 따르세요.
+
+> `--service`는 launchd 등록에 더해 plist에 `KeepAlive`를 심어 **러너가 죽어도 되살아나게** 합니다.
+> 다만 launchd의 LaunchAgent는 "부팅 시"가 아니라 **"로그인 시"** 로드되므로, 재부팅 후 무인
+> 복귀에는 자동 로그인(또는 FileVault 사용 시 `fdesetup authrestart`) 설정이 함께 필요합니다 —
+> 서비스를 켤 때 무엇이 빠졌는지 점검 결과가 출력됩니다. 자세한 내용은
+> [재부팅 후에도 백그라운드로 유지하기](docs/self-hosted-runner.md#재부팅-후에도-백그라운드로-유지하기).
 
 ### 2. (선택) TUI로 관리하기
 

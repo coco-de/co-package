@@ -10,6 +10,7 @@ final class LocalStatus {
     this.gitHubUrl,
     required this.listenerRunning,
     required this.svcInstalled,
+    this.svcPlistPath,
     this.workUsage,
   });
 
@@ -26,6 +27,11 @@ final class LocalStatus {
 
   /// launchd 서비스(plist)가 설치돼 있는지.
   final bool svcInstalled;
+
+  /// 이 러너의 launchd plist 경로 ([LocalRunner.plistPathIn]). 경로를 특정하지
+  /// 못했으면 null — [svcInstalled]가 true여도(이름 미상 러너의 plist를 이름
+  /// 없이 찾아낸 경우) null일 수 있다.
+  final String? svcPlistPath;
 
   /// `_work` 디렉토리 사용량 (`du -sh`).
   final String? workUsage;
@@ -145,7 +151,183 @@ final class LocalRunner {
       gitHubUrl: gitHubUrl,
       listenerRunning: listenerRunning,
       svcInstalled: svcInstalled,
+      svcPlistPath: plistPathIn(dir, agentName),
       workUsage: workUsage,
+    );
+  }
+
+  /// [dir]에 설치된 러너의 launchd plist 경로. 찾지 못하면 null.
+  ///
+  /// `svc.sh install`이 설치 시점의 정확한 경로를 `<dir>/.service`에 남기므로
+  /// 그 기록을 우선 쓴다 — 이름/스코프로 plist 파일명을 다시 조립하는 것보다
+  /// 정확하다(스코프가 org인지 owner/repo인지에 따라 중간 마디가 달라진다).
+  /// 기록이 없거나 가리키는 파일이 사라졌으면 `~/Library/LaunchAgents`에서
+  /// 이 러너 이름으로 끝나는 plist를 찾는다.
+  static String? plistPathIn(String dir, String? agentName) {
+    final service = File('$dir/.service');
+    if (service.existsSync()) {
+      final recorded = service.readAsStringSync().trim();
+      if (recorded.isNotEmpty && File(recorded).existsSync()) return recorded;
+    }
+    if (agentName == null) return null;
+    final home = Platform.environment['HOME'];
+    if (home == null) return null;
+    final agents = Directory('$home/Library/LaunchAgents');
+    if (!agents.existsSync()) return null;
+    for (final entry in agents.listSync()) {
+      final name = entry.path.split('/').last;
+      if (name.startsWith('actions.runner.') &&
+          name.endsWith('.$agentName.plist')) {
+        return entry.path;
+      }
+    }
+    return null;
+  }
+
+  static const plistBuddy = '/usr/libexec/PlistBuddy';
+
+  /// launchd plist에 크래시 자동 복구(KeepAlive)를 심는 PlistBuddy 인자.
+  ///
+  /// 평범한 `KeepAlive: true`가 아니라 `{SuccessfulExit: false}`인 이유: 러너의
+  /// `bin/RunnerService.js`는 listener 종료코드를 직접 해석해서 2(retryable)·
+  /// 3·4(자체 업데이트)는 스스로 5초 뒤 재기동하고, 0(정상)·1(terminated)·
+  /// 5(세션 충돌)는 `stopping = true`로 서비스를 내리며 exit 0으로 끝낸다.
+  /// `true`로 걸면 러너가 "멈춰야 한다"고 판단한 상황 — 특히 같은 등록을 두
+  /// 프로세스가 잡은 세션 충돌 — 에서 launchd가 무한 재기동시켜 정면 충돌한다.
+  /// `SuccessfulExit: false`는 비정상 종료(크래시·OOM·강제 kill)만 되살린다.
+  static List<String> keepAliveAddArgs(String plist) => [
+        '-c',
+        'Add :KeepAlive dict',
+        '-c',
+        'Add :KeepAlive:SuccessfulExit bool false',
+        plist,
+      ];
+
+  /// [keepAliveAddArgs] 앞에 실행하는 삭제 인자. `Add`는 키가 이미 있으면
+  /// 실패하므로, 먼저 지워야 재적용이 멱등해진다 (키가 없을 때의 Delete
+  /// 실패는 정상 경로라 무시한다).
+  static List<String> keepAliveDeleteArgs(String plist) =>
+      ['-c', 'Delete :KeepAlive', plist];
+
+  static List<String> keepAliveReadArgs(String plist) =>
+      ['-c', 'Print :KeepAlive:SuccessfulExit', plist];
+
+  /// [plist]에 이미 하드닝이 적용돼 있는지 ([keepAliveReadArgs]의 stdout 판정).
+  static bool keepAliveHardened(String plistBuddyOutput) =>
+      plistBuddyOutput.trim() == 'false';
+
+  /// [plist]에 KeepAlive 하드닝을 적용하고 로그 줄을 돌려준다 (멱등 — 이미
+  /// 적용돼 있으면 파일을 건드리지 않는다).
+  ///
+  /// 반드시 `svc.sh start`(=`launchctl load`) **전에** 실행해야 한다. launchd는
+  /// 로드 시점에 plist를 읽으므로, 이미 로드된 뒤에 파일만 고치면 다음
+  /// 로드까지 적용되지 않는다.
+  static Future<List<String>> hardenPlist(String? plist) async {
+    if (plist == null) {
+      return const ['launchd plist를 찾지 못해 KeepAlive 설정을 건너뜁니다'];
+    }
+    if (!File(plistBuddy).existsSync()) {
+      return const ['PlistBuddy가 없어 KeepAlive 설정을 건너뜁니다'];
+    }
+    try {
+      final read = await Process.run(plistBuddy, keepAliveReadArgs(plist));
+      if (read.exitCode == 0 && keepAliveHardened(read.stdout as String)) {
+        return const [];
+      }
+      await Process.run(plistBuddy, keepAliveDeleteArgs(plist));
+      final add = await Process.run(plistBuddy, keepAliveAddArgs(plist));
+      if (add.exitCode != 0) {
+        return ['KeepAlive 설정 실패 — 크래시 자동 복구 없이 진행합니다 '
+            '(${(add.stderr as String).trim()})'];
+      }
+      return const ['KeepAlive(SuccessfulExit=false) 적용 — 비정상 종료 시 launchd가 러너를 되살립니다'];
+    } catch (e) {
+      return ['KeepAlive 설정 실패: $e'];
+    }
+  }
+
+  /// `pmset -g custom` 출력에서 AC 전원 구간의 [key] 값을 읽는다.
+  ///
+  /// 배터리 구간에도 같은 키가 있어서 구간을 구분해야 한다 — 러너는 전원이
+  /// 연결된 상태를 전제하므로 AC 값만 본다. 기종이 지원하지 않는 키(예:
+  /// 노트북의 `autorestart`)는 출력에 아예 없으므로 null.
+  static String? pmsetAcValue(String output, String key) {
+    var inAc = false;
+    for (final line in output.split('\n')) {
+      // 구간 머리글(`AC Power:`)만 열 0에서 시작하고 설정 줄은 들여쓰기돼 있다.
+      if (!line.startsWith(' ')) {
+        inAc = line.startsWith('AC Power');
+        continue;
+      }
+      if (!inAc) continue;
+      // 설정 줄은 `키 값` 두 토큰이다. `Sleep On Power Button 1`처럼 이름에
+      // 공백이 들어간 줄을 값으로 잘못 읽지 않도록 토큰 수까지 본다.
+      final parts = line.trim().split(RegExp(r'\s+'));
+      if (parts.length == 2 && parts.first == key) return parts[1];
+    }
+    return null;
+  }
+
+  /// 서비스는 켰지만 "재부팅하면 알아서 돌아온다"를 막는 머신 레벨 조건을
+  /// 사람이 읽을 경고 줄로 만든다. 문제가 없으면 빈 목록.
+  ///
+  /// 여기서 자동으로 고치지 않는 이유: 전부 sudo가 필요하고, FileVault 해제는
+  /// 디스크 전체 복호화라는 비가역 작업이다. 러너 하나 서비스로 켜는
+  /// 부수효과로 머신 정책을 바꿀 일이 아니라서, 무엇이 막고 있는지와 명령만
+  /// 알려준다. (같은 판정을 scripts/register-runner.sh의
+  /// `boot_readiness_report`가 등록 경로에서 수행한다.)
+  static List<String> bootWarnings({
+    required String? autoLoginUser,
+    required String fileVaultStatus,
+    required String pmsetCustom,
+  }) {
+    final warnings = <String>[];
+
+    // LaunchAgent는 '부팅 시'가 아니라 'GUI 로그인 시' 로드된다 — 로그인
+    // 세션이 자동으로 생기지 않으면 재부팅 후 러너는 계속 오프라인이다.
+    if (autoLoginUser == null || autoLoginUser.trim().isEmpty) {
+      warnings.add(fileVaultStatus.contains('FileVault is On')
+          ? '⚠️ 자동 로그인 꺼짐 + FileVault On — 재부팅 후 잠금해제(=로그인) 전까지 러너가 뜨지 않습니다 '
+              '(무인 재부팅: sudo fdesetup authrestart)'
+          : '⚠️ 자동 로그인 꺼짐 — 재부팅 후 로그인해야 러너가 뜹니다 '
+              '(시스템 설정 > 사용자 및 그룹 > 자동 로그인)');
+    }
+
+    final sleep = pmsetAcValue(pmsetCustom, 'sleep');
+    if (sleep != null && sleep != '0') {
+      warnings.add('⚠️ 전원 연결 시 $sleep분 뒤 잠듭니다 — 잠들면 잡이 대기합니다 '
+          '(sudo pmset -c sleep 0 disksleep 0)');
+    }
+
+    final autorestart = pmsetAcValue(pmsetCustom, 'autorestart');
+    if (autorestart != null && autorestart != '1') {
+      warnings.add('⚠️ 정전 후 자동 부팅 꺼짐 (sudo pmset -c autorestart 1)');
+    }
+
+    return warnings;
+  }
+
+  /// 머신 설정을 조회해 [bootWarnings]를 만든다. 조회 자체가 실패한 항목은
+  /// 빈 값으로 넘겨 "모름"이 경고를 만들지 않게 한다.
+  static Future<List<String>> bootReadiness() async {
+    Future<String> run(String exe, List<String> args) async {
+      try {
+        final r = await Process.run(exe, args);
+        return r.exitCode == 0 ? (r.stdout as String) : '';
+      } catch (_) {
+        return '';
+      }
+    }
+
+    final autoLogin = await run('defaults', [
+      'read',
+      '/Library/Preferences/com.apple.loginwindow',
+      'autoLoginUser',
+    ]);
+    return bootWarnings(
+      autoLoginUser: autoLogin,
+      fileVaultStatus: await run('fdesetup', ['status']),
+      pmsetCustom: await run('pmset', ['-g', 'custom']),
     );
   }
 

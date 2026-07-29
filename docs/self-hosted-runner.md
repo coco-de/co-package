@@ -87,11 +87,15 @@ TOKEN=$(gh api -X POST repos/coco-de/{repo}/actions/runners/registration-token -
 ```
 
 ```bash
-# 실사용 — launchd 서비스 (재부팅 후 자동 실행)
-./svc.sh install
-./svc.sh start
+# 실사용 — launchd 서비스
+./register-runner.sh --org coco-de --dir ~/actions/{러너이름} --service
 ./svc.sh status   # 중지는 ./svc.sh stop
 ```
+
+> 상시 서비스는 `svc.sh install`을 직접 부르지 말고 `register-runner.sh --service`를
+> 쓰세요. `svc.sh`만 실행하면 **크래시 자동 복구(`KeepAlive`)가 빠지고**, 재부팅 자동
+> 복귀 점검도 건너뜁니다 — 아래 [재부팅 후에도 백그라운드로 유지하기](#재부팅-후에도-백그라운드로-유지하기) 참고.
+> TUI를 쓴다면 `s` 키가 같은 처리를 해줍니다.
 
 ### 05 — 워크플로우에서 사용
 
@@ -108,11 +112,126 @@ jobs:
       - run: melos run test
 ```
 
+## 재부팅 후에도 백그라운드로 유지하기
+
+"서비스로 켜뒀는데 왜 러너가 오프라인이지?"는 대부분 아래 넷 중 하나입니다. **①②는
+`register-runner.sh --service`(TUI는 `s` 키)가 자동으로 처리하고, ③④는 sudo와 머신
+정책이 걸린 일이라 자동으로 바꾸지 않고 서비스를 켤 때 점검 결과만 알려줍니다.**
+
+| | 조건 | 자동? | 안 되면 생기는 일 |
+|---|---|---|---|
+| ① | launchd 서비스로 등록돼 있다 | ✅ 자동 | 터미널을 닫으면 러너도 죽는다 |
+| ② | 프로세스가 죽어도 되살아난다 (`KeepAlive`) | ✅ 자동 | 크래시 한 번에 다음 로그인까지 오프라인 |
+| ③ | 재부팅 후 **로그인 세션**이 생긴다 | ⚠️ 안내만 | 아무도 로그인 안 하면 러너가 안 뜬다 |
+| ④ | 머신이 잠들지 않는다 | ⚠️ 안내만 | 잠든 동안 잡이 배정되지 않고 대기 |
+
+### ① launchd 서비스 = "부팅 시"가 아니라 "로그인 시" 자동 실행
+
+`svc.sh install`은 `~/Library/LaunchAgents/actions.runner.<스코프>.<러너이름>.plist`를
+만듭니다. 이건 **LaunchAgent**이고, launchd는 이걸 부팅 시점이 아니라 **GUI 로그인
+시점**에 로드합니다. plist에 `RunAtLoad=true`가 있으니 로드되면 바로 뜨지만, 그
+"로드"가 로그인에 묶여 있다는 게 핵심입니다 → ③으로 이어집니다.
+
+설치 시점의 plist 경로는 `<러너디렉토리>/.service`에 기록돼 있습니다.
+
+### ② 크래시 자동 복구 — `KeepAlive`
+
+GitHub이 만드는 기본 plist에는 `KeepAlive`가 **없습니다**. 러너 프로세스가 비정상
+종료되면 그대로 죽어 있습니다. `register-runner.sh --service`와 TUI `s` 키는 서비스를
+켤 때(정확히는 `launchctl load` 직전) 이 키를 자동으로 심습니다.
+
+```xml
+<key>KeepAlive</key>
+<dict>
+  <key>SuccessfulExit</key>
+  <false/>
+</dict>
+```
+
+**왜 그냥 `<true/>`가 아닌가** — 러너의 `bin/RunnerService.js`는 listener 종료코드를
+직접 해석해서 재시작 여부를 스스로 정합니다.
+
+| 종료코드 | 러너의 판단 |
+|---|---|
+| 2 (retryable), 3·4 (자체 업데이트) | **자기가** 5초 뒤 재기동 |
+| 0 (정상), 1 (terminated), 5 (Session Conflict) | 서비스를 내리고 **exit 0** |
+
+`KeepAlive: true`를 걸면 러너가 "멈춰야 한다"고 판단한 상황 — 특히 같은 등록을 두
+프로세스가 동시에 잡은 **세션 충돌** — 에서 launchd가 무한 재기동시켜 정면 충돌합니다.
+`SuccessfulExit: false`는 **비정상 종료(크래시·OOM·강제 kill)만** 되살리고 러너의 자체
+판단은 존중합니다.
+
+이미 등록해둔 러너에도 적용하려면 서비스를 한 번 껐다 켜면 됩니다 (launchd는 **로드
+시점에** plist를 읽으므로, 떠 있는 채로 파일만 고치면 다음 로드까지 반영되지 않습니다).
+
+```bash
+# 방법 1 — 등록 스크립트 재실행 (재등록 없이 재적용 + 재시작, 멱등)
+./scripts/register-runner.sh --org coco-de --dir ~/actions/{러너이름} --service
+
+# 방법 2 — TUI에서 s 두 번 (stop → start)
+```
+
+적용됐는지 확인:
+
+```bash
+/usr/libexec/PlistBuddy -c 'Print :KeepAlive' \
+  ~/Library/LaunchAgents/actions.runner.coco-de.{러너이름}.plist
+```
+
+### ③ 재부팅 후 로그인 세션 확보 — 자동 로그인 / FileVault
+
+LaunchAgent가 로그인에 묶여 있으므로, **재부팅 후 아무도 로그인하지 않으면 러너는
+계속 오프라인**입니다. 상황별로 필요한 조치가 다릅니다.
+
+| FileVault | 재부팅하면 | 무인 운영하려면 |
+|---|---|---|
+| **Off** | 자동 로그인을 켜두면 부팅 → 로그인 → 러너 기동까지 무인 | 시스템 설정 > 사용자 및 그룹 > **자동 로그인**에 계정 지정 |
+| **On** | 잠금해제 화면에서 멈춘다. 비밀번호를 넣으면 그대로 로그인까지 이어져 러너가 뜬다 | `sudo fdesetup authrestart` 로 재부팅 (이번 부팅 1회만 잠금해제를 건너뛰고 바로 로그인까지 진행) |
+
+FileVault가 켜져 있으면 자동 로그인을 설정할 수 없습니다. **원격으로 재부팅해야 하는
+전용 빌드 머신**이라면 FileVault를 끄고 자동 로그인을 켜는 게 유일한 완전 무인 조합이고,
+개인 노트북을 겸용하는 머신이라면 FileVault를 유지하고 `fdesetup authrestart`로 계획된
+재부팅만 무인화하는 쪽이 현실적입니다.
+
+### ④ 잠들지 않게 — `pmset`
+
+잠든 머신은 잡을 받지 않고 큐에 쌓입니다. 전용기라면:
+
+```bash
+sudo pmset -c sleep 0 disksleep 0   # 전원 연결 시 시스템/디스크 슬립 해제
+sudo pmset -c autorestart 1         # 정전 후 자동 부팅 (지원 기종만)
+sudo pmset -c womp 1                # 네트워크 접근 시 깨우기
+```
+
+`-c`는 "전원 연결 상태"에만 적용합니다. 노트북은 **뚜껑을 닫으면** 이 설정과 무관하게
+잠듭니다 — 클램셸로 상시 운영하려면 외부 전원 + 외부 디스플레이가 필요합니다.
+
+### 점검
+
+`register-runner.sh --service`(TUI는 `s` 키)를 실행하면 마지막에 위 조건을 점검한
+결과가 출력됩니다. 손으로 확인하려면:
+
+```bash
+launchctl list | grep actions.runner      # 로드돼 있는지 (PID가 있으면 실행 중)
+defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser  # 자동 로그인 계정
+fdesetup status                           # FileVault
+pmset -g custom                           # AC Power 구간의 sleep 값
+tail -f ~/Library/Logs/actions.runner.*/stdout.log   # 러너 로그
+```
+
+### 왜 LaunchDaemon을 쓰지 않는가
+
+`/Library/LaunchDaemons`에 두면 로그인 없이 **부팅 시** 뜹니다. 그런데 GUI 세션과
+로그인 키체인이 없어서, 이 레포가 러너에 맡기는 작업 중 상당수가 깨집니다 — iOS
+코드사인(키체인 접근), 시뮬레이터, Xcode 툴체인 일부. macOS 러너를 유지하는 이유가
+바로 그 iOS 빌드이므로 LaunchDaemon 전환은 이득보다 손해가 큽니다. Linux 잡을
+로그인과 무관하게 돌리고 싶다면 그건 ARC(`arc/`)가 담당하는 영역입니다.
+
 ## 공유 전에 알아둘 것
 
 - **보안** — 퍼블릭 레포에는 붙이지 마세요. 외부 기여자의 PR이 러너에서 임의 코드를 실행할 수 있습니다. coco-de의 private 레포에서만 사용하세요.
 - **디스크** — `_work` 폴더가 계속 쌓입니다. 체크아웃·빌드 산출물이 누적되니 주기적으로 정리하거나 잡 종료 시 클린업 스텝을 넣으세요. (→ [`../scripts/cleanup-work.sh`](../scripts/cleanup-work.sh))
-- **가용성** — 켜져 있을 때만 잡을 받습니다. 노트북은 절전/종료 시 잡이 대기에 걸립니다. 상시 구동할 맥미니 같은 전용기가 있으면 훨씬 안정적입니다.
+- **가용성** — 켜져 있을 때만 잡을 받습니다. 노트북은 절전/종료 시 잡이 대기에 걸립니다. 상시 구동할 맥미니 같은 전용기가 있으면 훨씬 안정적입니다. (→ [재부팅 후에도 백그라운드로 유지하기](#재부팅-후에도-백그라운드로-유지하기))
 - **환경** — 빌드 도구는 각자 로컬에 설치돼 있어야 합니다. 팀원마다 Flutter·Xcode 버전이 다르면 결과가 달라질 수 있으니, 라벨로 환경을 구분하는 걸 권장합니다.
 
 ## 여러 인스턴스 운영 (멀티 러너 플릿)

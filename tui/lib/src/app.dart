@@ -328,11 +328,24 @@ final class AppModel extends TeaModel {
   /// 한 단계가 실패하면 이후 단계는 건너뛴다. (단순히 각 서브커맨드를 개별
   /// `_runLogged`로 순차 실행하면 `install`이 실패해도 `start`가 그대로 이어져
   /// 실패해, 로그에 관련 없어 보이는 두 번째 에러가 쌓여 실제 원인이 묻힌다.)
+  ///
+  /// 서비스를 켜는 경로에서는 plist에 KeepAlive를 심고(크래시 자동 복구) 재부팅
+  /// 자동 복귀를 막는 머신 설정을 점검한다 — 자세한 배경은
+  /// [LocalRunner.keepAliveAddArgs]·[LocalRunner.bootWarnings] 참고.
   Cmd _toggleSvcIn(String dir) => () async {
         final status = await local.withDir(dir).status();
         final subcommands = LocalRunner.svcSubcommands(status);
         final lines = <String>[];
+        var started = false;
         for (final sub in subcommands) {
+          // launchd는 load 시점에 plist를 읽으므로 start 직전이 하드닝을 심을
+          // 유일한 자리다. install 바로 다음이기도 해서 새로 등록한 러너와 이
+          // 변경 이전에 등록해둔 기존 러너가 같은 경로로 KeepAlive를 얻는다.
+          if (sub == 'start') {
+            lines.addAll(await LocalRunner.hardenPlist(
+              LocalRunner.plistPathIn(dir, status.agentName),
+            ));
+          }
           // 어느 러너에 실행했는지 로그에 남긴다 — 여러 러너가 뜬 목록에서
           // 명령만 찍히면 대상을 되짚을 수 없다.
           lines.add('\$ svc.sh $sub  (${status.agentName ?? dir})');
@@ -350,11 +363,15 @@ final class AppModel extends TeaModel {
               }
               break;
             }
+            started = started || sub == 'start';
           } catch (e) {
             lines.add('error: $e');
             break;
           }
         }
+        // 경고는 마지막에 붙인다 — 로그 패널은 꼬리 6줄만 보여주므로 여기 있어야
+        // svc.sh 출력에 밀려나지 않는다.
+        if (started) lines.addAll(await LocalRunner.bootReadiness());
         return _LogMsg(lines);
       };
 
@@ -1159,7 +1176,9 @@ final class AppModel extends TeaModel {
         '선택 러너의 서비스 시작/중지 (svc.sh) — 이 머신에 설치된 러너만. '
             '실행 중(launchd·포그라운드 무관)이면 stop, 안 떠 있고 서비스 '
             '미설치(재부팅 등으로 사라졌거나 등록한 적 없음)면 install 후 '
-            '자동으로 start, 설치돼 있으면 start'
+            '자동으로 start, 설치돼 있으면 start. 켤 때 plist에 KeepAlive를 심어 '
+            '러너가 죽어도 되살아나게 하고, 재부팅 자동 복귀를 막는 머신 '
+            '설정(자동 로그인·FileVault·절전)을 점검해 로그에 남긴다'
       ),
       (
         'c / C',
