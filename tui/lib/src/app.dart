@@ -5,6 +5,7 @@ import 'package:dart_tui/dart_tui.dart';
 
 import 'gh.dart';
 import 'labels.dart';
+import 'layout.dart';
 import 'local.dart';
 import 'naming.dart';
 import 'register.dart';
@@ -106,7 +107,8 @@ final class AppModel extends TeaModel {
   })  : localStatus = localStatus ?? LocalStatus.empty(local.dir),
         spinner = spinner ?? SpinnerModel(),
         input = input ?? TextInputModel(),
-        table = table ?? _buildTable(const [], 100, 30, cursor: 0);
+        table = table ??
+            _buildTable(const [], Layout.forTerminal(width, height), cursor: 0);
 
   final Scope scope;
   final LocalRunner local;
@@ -210,15 +212,15 @@ final class AppModel extends TeaModel {
 
   // ─── 테이블 구성 ──────────────────────────────────────────────────────────
 
-  static int _tableHeight(int termHeight) => (termHeight - 14).clamp(3, 40);
+  /// 현재 터미널 크기의 레이아웃 예산. 폭·높이가 바뀌면 이 값도 따라 바뀌므로
+  /// 뷰는 항상 여기서 몫을 받아 그린다.
+  Layout get layout => Layout.forTerminal(width, height);
 
   static TableModel _buildTable(
     List<RunnerInfo> runners,
-    int width,
-    int termHeight, {
+    Layout layout, {
     required int cursor,
   }) {
-    final labelWidth = (width - 4 - 8 - 26 - 6 - 9 - 12).clamp(20, 120);
     final rows = [
       for (final r in runners)
         [
@@ -232,13 +234,13 @@ final class AppModel extends TeaModel {
     return TableModel(
       columns: [
         const TableColumn(title: 'ST', width: 5),
-        const TableColumn(title: 'NAME', width: 26),
+        TableColumn(title: 'NAME', width: layout.nameColumnWidth),
         const TableColumn(title: 'JOB', width: 5),
         const TableColumn(title: 'OS', width: 6),
-        TableColumn(title: 'LABELS', width: labelWidth),
+        TableColumn(title: 'LABELS', width: layout.labelColumnWidth),
       ],
       rows: rows,
-      height: _tableHeight(termHeight),
+      height: layout.tableRows,
       cursor: runners.isEmpty ? 0 : cursor.clamp(0, runners.length - 1),
       styles: TableStyles(
         header: const Style().bold(),
@@ -474,7 +476,7 @@ final class AppModel extends TeaModel {
       ],
       cursor:
           cursorOn == null ? 0 : names.indexOf(cursorOn).clamp(0, names.length),
-      height: _tableHeight(height),
+      height: layout.pickerRows,
       // 상태줄은 직접 그린다 — 기본 상태줄은 'n/m selected' 영문이라 나머지
       // 화면과 어긋난다.
       showStatusBar: false,
@@ -487,6 +489,19 @@ final class AppModel extends TeaModel {
       ),
     );
   }
+
+  /// 열려 있는 피커를 [rows] 높이로 다시 만든다 (체크·커서 상태는 유지).
+  /// [MultiSelectModel]에는 공개 copyWith가 없어 필드를 옮겨 담는다.
+  static MultiSelectModel _resizePicker(MultiSelectModel p, int rows) =>
+      MultiSelectModel(
+        items: p.items,
+        cursor: p.cursor,
+        title: p.title,
+        height: rows,
+        showStatusBar: p.showStatusBar,
+        wrap: p.wrap,
+        styles: p.styles,
+      );
 
   /// register-runner.sh 실행을 준비한다.
   ///
@@ -543,13 +558,22 @@ final class AppModel extends TeaModel {
   (Model, Cmd?) update(Msg msg) {
     switch (msg) {
       case WindowSizeMsg(:final width, :final height):
+        final next = Layout.forTerminal(width, height);
+        final p = picker;
         return (
           copyWith(
             width: width,
             height: height,
-            table: _buildTable(runners, width, height, cursor: table.cursor),
+            table: _buildTable(runners, next, cursor: table.cursor),
+            // 열려 있는 피커도 새 높이로 다시 만든다. 생성 시점 높이를 그대로
+            // 두면 창을 줄였을 때 항목이 화면 밖으로 넘쳐 프레임이 밀린다.
+            picker: p == null ? null : _resizePicker(p, next.pickerRows),
           ),
-          null,
+          // diff 렌더러는 리사이즈를 모른다 — 터미널이 스스로 버퍼를 리플로우해도
+          // `_lastLines` 캐시는 그대로라, "이전 프레임과 같다"고 판단한 행을
+          // 건너뛰어 옛 레이아웃 조각이 화면에 남는다. 캐시를 버리게 해서 다음
+          // 프레임을 전면 재도색시킨다.
+          () => clearScreen(),
         );
 
       case _RunnersLoadedMsg(:final scope, :final runners):
@@ -557,7 +581,7 @@ final class AppModel extends TeaModel {
         if (scope.apiBase != this.scope.apiBase) return (this, null);
         final next = copyWith(
           runners: runners,
-          table: _buildTable(runners, width, height, cursor: table.cursor),
+          table: _buildTable(runners, layout, cursor: table.cursor),
           loading: false,
           clearError: true,
           lastUpdated: DateTime.now(),
@@ -737,7 +761,7 @@ final class AppModel extends TeaModel {
             input: _newInput(),
             loading: true,
             runners: const [],
-            table: _buildTable(const [], width, height, cursor: 0),
+            table: _buildTable(const [], layout, cursor: 0),
             log: [...log, '스코프 변경: ${next.label}'],
           ),
           _fetchRunnersFor(next),
@@ -973,40 +997,51 @@ final class AppModel extends TeaModel {
 
   // ─── 뷰 ──────────────────────────────────────────────────────────────────
 
+  /// 프레임은 반드시 [fitFrame]을 거쳐 나간다 — 어떤 화면이든 터미널보다
+  /// 크면 렌더러의 절대 좌표 쓰기가 어긋나 레이아웃이 영구히 밀린다.
   @override
   View view() {
-    if (mode == _Mode.help) return newView(_helpView());
+    final l = layout;
+    if (mode == _Mode.help) return newView(fitFrame(_helpView(l), l));
     if (mode == _Mode.labelPicker || mode == _Mode.labelNewInput) {
-      return newView(_labelPickerView());
+      return newView(fitFrame(_labelPickerView(l), l));
     }
 
     final b = StringBuffer();
-    b.writeln(_headerLine());
-    b.writeln();
+    b.writeln(_headerLine(l));
+    if (l.showSpacers) b.writeln();
 
     if (error != null) {
-      for (final line in error!.split('\n')) {
-        b.writeln(_fg(_red).render(_clip(' gh 오류: $line')));
+      // gh 오류 본문은 길이를 알 수 없다. 표가 쓰던 몫(헤더·구분선 2줄 +
+      // 데이터 행) 안으로 묶어, 긴 오류가 아래 패널과 푸터를 밀어내지 않게 한다.
+      final lines = error!.split('\n');
+      final budget = l.tableRows + 1;
+      for (final line in lines.take(budget)) {
+        b.writeln(_fg(_red).render(l.clip(' gh 오류: $line')));
       }
-      b.writeln(_fg(_gray).render(' gh auth status를 확인하세요. r로 재시도.'));
+      final hidden = lines.length - budget;
+      b.writeln(_fg(_gray).render(l.clip(hidden > 0
+          ? ' …외 $hidden줄 · gh auth status를 확인하세요. r로 재시도.'
+          : ' gh auth status를 확인하세요. r로 재시도.')));
     } else if (runners.isEmpty && !loading) {
-      b.writeln(_fg(_gray).render(' 등록된 러너가 없습니다. a를 눌러 이 머신을 등록하세요.'));
+      b.writeln(_fg(_gray)
+          .render(l.clip(' 등록된 러너가 없습니다. a를 눌러 이 머신을 등록하세요.')));
     } else {
       b.writeln(table.view().content);
     }
 
-    b.writeln();
-    b.writeln(_localLine());
-    b.writeln(_fg(_gray).render('─' * width.clamp(20, 200)));
-    for (final line in _logTail(6)) {
-      b.writeln(_fg(_gray).render(_clip(' $line')));
+    if (l.showSpacers) b.writeln();
+    b.writeln(_localLine(l));
+    b.writeln(_fg(_gray).render('─' * l.contentWidth));
+    for (final line in _logTail(l.logLines)) {
+      b.writeln(_fg(_gray).render(l.clip(' $line')));
     }
-    b.writeln();
-    b.write(_footerLine());
-    return newView(b.toString());
+    if (l.showSpacers) b.writeln();
+    b.write(_footerLine(l));
+    return newView(fitFrame(b.toString(), l));
   }
 
-  String _headerLine() {
+  String _headerLine(Layout l) {
     final title = const Style().bold().render(' co-arc runners');
     final spin = loading ? ' ${spinner.view().content}' : '';
     final updated = lastUpdated == null
@@ -1017,20 +1052,20 @@ final class AppModel extends TeaModel {
     final online = runners.where((r) => r.online).length;
     final info = _fg(_cyan)
         .render('${scope.label} · ${runners.length}대 (온라인 $online)$updated');
-    return '$title$spin   $info';
+    return l.clip('$title$spin   $info');
   }
 
   /// 커서 러너의 로컬 상태 줄. `s`·`c`/`C`·`d`가 대상으로 삼는 러너가 바로
   /// 여기 표시된 러너다.
-  String _localLine() {
+  String _localLine(Layout l) {
     final r = selected;
-    if (r == null) return ' 로컬: ${_fg(_gray).render('(러너 없음)')}';
+    if (r == null) return l.clip(' 로컬: ${_fg(_gray).render('(러너 없음)')}');
 
     final name = const Style().bold().render(r.name);
     // 아직 이 러너의 상태를 조회하지 못했다면(커서 이동 직후) 이전 러너의
     // 상태를 이 이름 옆에 붙이지 않는다.
     if (localStatusFor != r.name) {
-      return ' 로컬: $name · ${_fg(_gray).render('확인 중…')}';
+      return l.clip(' 로컬: $name · ${_fg(_gray).render('확인 중…')}');
     }
 
     final s = localStatus;
@@ -1048,41 +1083,45 @@ final class AppModel extends TeaModel {
         parts.add(_fg(_gray).render('_work ${s.workUsage}'));
       }
     }
-    return ' 로컬: ${parts.join(' · ')}';
+    return l.clip(' 로컬: ${parts.join(' · ')}');
   }
 
   /// 라벨 피커 화면 (`l`). 새 라벨 입력(`n`) 중에도 같은 화면 위에서
   /// 하단 줄만 입력 프롬프트로 바뀐다 — 무엇을 골라뒀는지 보면서 타이핑한다.
-  String _labelPickerView() {
+  String _labelPickerView(Layout l) {
     final target = labelTarget;
     final p = picker;
     if (target == null || p == null) return ' (라벨 편집 대상 없음)';
 
     final b = StringBuffer();
-    b.writeln(const Style().bold().render(_clip(' 라벨 편집 — ${target.name}')));
+    b.writeln(const Style().bold().render(l.clip(' 라벨 편집 — ${target.name}')));
     final readOnly = target.readOnlyLabels;
     if (readOnly.isNotEmpty) {
       b.writeln(_fg(_gray)
-          .render(_clip(' read-only(편집 불가): ${readOnly.join(', ')}')));
+          .render(l.clip(' read-only(편집 불가): ${readOnly.join(', ')}')));
     }
-    b.writeln();
+    if (l.showSpacers) b.writeln();
 
     if (p.items.isEmpty) {
-      b.writeln(_fg(_gray).render(' 스코프에 등록된 커스텀 라벨이 없습니다 — n으로 새 라벨을 추가하세요.'));
-    } else {
-      b.writeln(p.view().content);
-      b.writeln();
       b.writeln(_fg(_gray)
-          .render(' ${p.selectedValues.length}/${p.items.length} 선택됨'));
+          .render(l.clip(' 스코프에 등록된 커스텀 라벨이 없습니다 — n으로 새 라벨을 추가하세요.')));
+    } else {
+      // 항목 줄은 이미 스타일이 입혀져 나오므로 줄 단위로 잘라 넣는다.
+      for (final line in p.view().content.split('\n')) {
+        b.writeln(l.clip(line));
+      }
+      if (l.showSpacers) b.writeln();
+      b.writeln(_fg(_gray)
+          .render(l.clip(' ${p.selectedValues.length}/${p.items.length} 선택됨')));
     }
 
-    b.writeln();
-    b.writeln(_fg(_gray).render('─' * width.clamp(20, 200)));
+    if (l.showSpacers) b.writeln();
+    b.writeln(_fg(_gray).render('─' * l.contentWidth));
     b.write(mode == _Mode.labelNewInput
-        ? ' ${_fg(_cyan).render('새 라벨>')} ${_renderInput()}'
-            '${_fg(_gray).render('   (CSV로 여러 개 · Enter 추가 · Esc 취소)')}'
-        : _fg(_gray).render(
-            _clip(' ↑↓ 이동 · space 토글 · a 전체 토글 · n 새 라벨 · Enter 적용 · Esc 취소')));
+        ? l.clip(' ${_fg(_cyan).render('새 라벨>')} ${_renderInput()}'
+            '${_fg(_gray).render('   (CSV로 여러 개 · Enter 추가 · Esc 취소)')}')
+        : _fg(_gray).render(l.clip(
+            ' ↑↓ 이동 · space 토글 · a 전체 토글 · n 새 라벨 · Enter 적용 · Esc 취소')));
     return b.toString();
   }
 
@@ -1097,12 +1136,15 @@ final class AppModel extends TeaModel {
     return '$before${cursor.render(chars[pos])}${chars.skip(pos + 1).join()}';
   }
 
+  /// 로그 패널에 그릴 마지막 [n]줄. [n]이 0이면 (세로가 좁아 로그를 포기한
+  /// 경우) 아무 줄도 내주지 않는다 — '(로그 없음)' 안내조차 자리를 뺏는다.
   List<String> _logTail(int n) {
+    if (n <= 0) return const [];
     if (log.isEmpty) return const ['(로그 없음)'];
     return log.length <= n ? log : log.sublist(log.length - n);
   }
 
-  String _footerLine() {
+  String _footerLine(Layout l) {
     switch (mode) {
       case _Mode.confirmDelete:
         final r = selected;
@@ -1112,49 +1154,20 @@ final class AppModel extends TeaModel {
             ? '이 머신에서 해제(서비스 중지 + 로컬 구성 정리)할까요?'
             : 'GitHub에서 해제할까요?';
         return _fg(_yellow)
-            .render(" '${r?.name}' (id ${r?.id}) 러너를 $howto [y/N]");
+            .render(l.clip(" '${r?.name}' (id ${r?.id}) 러너를 $howto [y/N]"));
       case _Mode.scopeInput:
-        return ' ${_fg(_cyan).render('scope>')} ${_renderInput()}'
-            '${_fg(_gray).render('   (org 이름 또는 owner/repo · Enter 확정 · Esc 취소)')}';
+        return l.clip(' ${_fg(_cyan).render('scope>')} ${_renderInput()}'
+            '${_fg(_gray).render('   (org 이름 또는 owner/repo · Enter 확정 · Esc 취소)')}');
       case _Mode.registerInput:
-        return ' ${_fg(_cyan).render('register>')} ${_renderInput()}'
-            '${_fg(_gray).render('   (이름 [라벨1,라벨2,...] · 빈 입력=기본값 · Enter 등록 · Esc 취소)')}';
+        return l.clip(' ${_fg(_cyan).render('register>')} ${_renderInput()}'
+            '${_fg(_gray).render('   (이름 [라벨1,라벨2,...] · 빈 입력=기본값 · Enter 등록 · Esc 취소)')}');
       default:
-        return _fg(_gray).render(_clip(
+        return _fg(_gray).render(l.clip(
             ' ↑↓ 이동 · r 갱신 · a 등록 · A 이름지정등록 · l 라벨 · d 해제 · s 서비스 · c/C 정리 · g 스코프 · ? 도움말 · q 종료'));
     }
   }
 
-  /// 터미널 폭을 넘는 줄이 래핑돼 잔상을 남기지 않도록 자른다.
-  /// (한글 등 전각 문자는 폭 2로 계산)
-  String _clip(String s) {
-    final max = width - 1;
-    var w = 0;
-    final b = StringBuffer();
-    for (final rune in s.runes) {
-      final cw = _runeWidth(rune);
-      if (w + cw > max) break;
-      b.writeCharCode(rune);
-      w += cw;
-    }
-    return b.toString();
-  }
-
-  static int _runeWidth(int code) {
-    if (code >= 0x1100 &&
-        (code <= 0x11ff ||
-            (code >= 0x2e80 && code <= 0x9fff) ||
-            (code >= 0xac00 && code <= 0xd7af) ||
-            (code >= 0xf900 && code <= 0xfaff) ||
-            (code >= 0xfe30 && code <= 0xfe4f) ||
-            (code >= 0xff00 && code <= 0xff60) ||
-            (code >= 0x1f300 && code <= 0x1f9ff))) {
-      return 2;
-    }
-    return 1;
-  }
-
-  String _helpView() {
+  String _helpView(Layout l) {
     const rows = <(String, String)>[
       ('↑/↓, j/k', '러너 선택 이동'),
       ('r', 'GitHub 러너 목록 + 로컬 상태 새로고침 (15초마다 자동)'),
@@ -1188,19 +1201,48 @@ final class AppModel extends TeaModel {
       ('g', '스코프 전환 — org 이름(coco-de) 또는 owner/repo 입력'),
       ('q, ctrl+c', '종료'),
     ];
-    final b = StringBuffer();
-    b.writeln(const Style().bold().render(' co-arc runner TUI — 도움말'));
-    b.writeln();
-    for (final (k, desc) in rows) {
-      b.writeln('  ${_fg(_cyan).render(k.padRight(12))} $desc');
+
+    final keys = [
+      for (final (k, desc) in rows)
+        l.clip('  ${_fg(_cyan).render(k.padRight(12))} $desc'),
+    ];
+    final info = [
+      _fg(_gray)
+          .render(l.clip(' 현재 스코프: ${scope.label} · 러너 디렉토리: ${local.dir}')),
+      _fg(_gray).render(
+          l.clip(' 온라인 러너 해제는 해당 머신에서 scripts/remove-runner.sh를 사용하세요.')),
+    ];
+
+    // 우선순위: 제목 > 키 목록 > 돌아가기 안내 > 부가 정보 > 여백.
+    // 창이 작으면 뒤 순위부터 버리되, 키 목록을 잘라냈으면 몇 개를 못 보여줬는지
+    // 안내 문구로 밝힌다 — 조용히 잘라내면 그게 전부인 줄 알게 된다.
+    final lines = <String>[
+      const Style().bold().render(l.clip(' co-arc runner TUI — 도움말')),
+    ];
+    var remaining = l.height - 2; // 제목 1줄 + 마지막 안내 1줄을 뺀 나머지
+    if (l.showSpacers && remaining > 0) {
+      lines.add('');
+      remaining--;
     }
-    b.writeln();
-    b.writeln(
-        _fg(_gray).render(' 현재 스코프: ${scope.label} · 러너 디렉토리: ${local.dir}'));
-    b.writeln(_fg(_gray)
-        .render(' 온라인 러너 해제는 해당 머신에서 scripts/remove-runner.sh를 사용하세요.'));
-    b.writeln();
-    b.write(_fg(_gray).render(' 아무 키나 누르면 돌아갑니다.'));
-    return b.toString();
+
+    final shown = remaining < keys.length
+        ? keys.take(remaining < 0 ? 0 : remaining).toList()
+        : keys;
+    lines.addAll(shown);
+    remaining -= shown.length;
+    final dropped = keys.length - shown.length;
+
+    final infoNeed = info.length + (l.showSpacers ? 1 : 0);
+    if (remaining >= infoNeed) {
+      if (l.showSpacers) lines.add('');
+      lines.addAll(info);
+      remaining -= infoNeed;
+    }
+
+    if (l.showSpacers && remaining > 0) lines.add('');
+    lines.add(_fg(_gray).render(l.clip(dropped > 0
+        ? ' 아무 키나 누르면 돌아갑니다. (창을 키우면 나머지 키 $dropped개도 보입니다)'
+        : ' 아무 키나 누르면 돌아갑니다.')));
+    return lines.join('\n');
   }
 }
