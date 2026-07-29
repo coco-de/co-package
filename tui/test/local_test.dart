@@ -300,6 +300,192 @@ void main() {
     });
   });
 
+  group('LocalRunner.configuredDirs', () {
+    late Directory tmp;
+
+    String install(String root, String dirName, {String? agentName}) {
+      final dir = Directory('$root/$dirName')..createSync(recursive: true);
+      if (agentName != null) {
+        File('${dir.path}/.runner')
+            .writeAsStringSync(jsonEncode({'agentName': agentName}));
+      }
+      return dir.path;
+    }
+
+    setUp(() => tmp = Directory.systemTemp.createTempSync('coarc_dirs'));
+    tearDown(() => tmp.deleteSync(recursive: true));
+
+    test('root 아래 구성된 러너를 전부 모은다', () {
+      final a = install(tmp.path, 'raptor', agentName: 'raptor');
+      final b = install(tmp.path, 'stego', agentName: 'stego');
+      final local = LocalRunner(dir: a, root: tmp.path);
+
+      expect(local.configuredDirs(), [a, b]..sort());
+    });
+
+    test('.runner가 없는 디렉토리(미구성)는 빼낸다', () {
+      install(tmp.path, 'raptor', agentName: 'raptor');
+      install(tmp.path, '내려받다-만-디렉토리');
+      final local = LocalRunner(dir: '${tmp.path}/raptor', root: tmp.path);
+
+      expect(local.configuredDirs(), ['${tmp.path}/raptor']);
+    });
+
+    test('root 밖의 추적 중인 러너(--dir·구규칙)도 포함한다', () {
+      final legacy = Directory('${tmp.path}-legacy')..createSync();
+      addTearDown(() => legacy.deleteSync(recursive: true));
+      File('${legacy.path}/.runner')
+          .writeAsStringSync(jsonEncode({'agentName': 'oviraptor'}));
+      final local = LocalRunner(dir: legacy.path, root: tmp.path);
+
+      expect(local.configuredDirs(), contains(legacy.path));
+    });
+
+    test('추적 중인 러너가 root 아래에도 있으면 한 번만 센다', () {
+      final a = install(tmp.path, 'raptor', agentName: 'raptor');
+      final local = LocalRunner(dir: a, root: tmp.path);
+
+      expect(local.configuredDirs(), [a]);
+    });
+
+    test('root가 아예 없어도 터지지 않는다', () {
+      final local =
+          LocalRunner(dir: '${tmp.path}/없음', root: '${tmp.path}/없는루트');
+
+      expect(local.configuredDirs(), isEmpty);
+    });
+  });
+
+  group('LocalRunner.hardenAllInstalled', () {
+    late Directory tmp;
+    final hasPlistBuddy = File(LocalRunner.plistBuddy).existsSync();
+
+    // 러너 이름은 실제 등록과 절대 겹치지 않는 값이어야 한다. `.service`가 없는
+    // 러너는 plistPathIn이 실제 ~/Library/LaunchAgents를 이름으로 뒤지는 폴백을
+    // 타므로(local_test.dart 위쪽 plistPathIn 그룹의 같은 이유), 이름이 겹치면
+    // 테스트가 임시 디렉토리를 벗어나 이 머신의 진짜 launchd 설정을 고친다.
+    // 'raptor' 같은 공룡 이름은 --name/A 키로 실제 등록 가능한 값이라 위험하다.
+    const alpha = 'coarc-test-알파';
+    const beta = 'coarc-test-베타';
+
+    /// `<root>/<name>`에 러너를 설치하고, [withService]면 svc.sh install이
+    /// 남기는 형태로 plist(KeepAlive 없음) + `.service` 기록까지 만든다.
+    String install(String root, String name, {bool withService = true}) {
+      final dir = Directory('$root/$name')..createSync(recursive: true);
+      File('${dir.path}/.runner')
+          .writeAsStringSync(jsonEncode({'agentName': name}));
+      if (withService) {
+        final plist = File('${dir.path}/actions.runner.coco-de.$name.plist')
+          ..writeAsStringSync('''
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>actions.runner.coco-de.$name</string>
+    <key>RunAtLoad</key>
+    <true/>
+  </dict>
+</plist>
+''');
+        File('${dir.path}/.service').writeAsStringSync(plist.path);
+      }
+      return dir.path;
+    }
+
+    Future<String?> keepAlive(String dir, String name) async {
+      final r = await Process.run(
+        LocalRunner.plistBuddy,
+        LocalRunner.keepAliveReadArgs(
+            '$dir/actions.runner.coco-de.$name.plist'),
+      );
+      return r.exitCode == 0 ? (r.stdout as String).trim() : null;
+    }
+
+    setUp(() => tmp = Directory.systemTemp.createTempSync('coarc_sweep'));
+    tearDown(() => tmp.deleteSync(recursive: true));
+
+    test('서비스로 등록된 러너 전부에 KeepAlive를 심는다 — 커서 러너만이 아니다', () async {
+      final a = install(tmp.path, alpha);
+      final b = install(tmp.path, beta);
+      final local = LocalRunner(dir: a, root: tmp.path);
+
+      final lines = await local.hardenAllInstalled();
+
+      expect(lines.single, allOf(contains(alpha), contains(beta)));
+      expect(await keepAlive(a, alpha), 'false');
+      expect(await keepAlive(b, beta), 'false');
+    }, skip: hasPlistBuddy ? null : 'PlistBuddy 없음 (macOS 전용)');
+
+    test('실행 중이든 아니든 plist만 고친다 — 서비스를 내렸다 올리지 않는다', () async {
+      // 서비스 제어는 svc.sh를 통해서만 일어난다(Dart 코드가 launchctl을 직접
+      // 부르는 곳은 없다). 이 스윕이 서비스를 건드리지 않는다는 건 러너
+      // 디렉토리에 svc.sh가 아예 없어도 — 즉 내렸다 올릴 수단이 없어도 —
+      // 정상 동작한다는 것으로 확인한다. 스윕에 bounce를 넣으면 이 테스트는
+      // ProcessException(No such file or directory)으로 죽는다.
+      final a = install(tmp.path, alpha);
+      final local = LocalRunner(dir: a, root: tmp.path);
+
+      expect(File('$a/svc.sh').existsSync(), isFalse);
+      expect(await local.hardenAllInstalled(), hasLength(1));
+      expect(await keepAlive(a, alpha), 'false');
+    }, skip: hasPlistBuddy ? null : 'PlistBuddy 없음 (macOS 전용)');
+
+    test('이미 적용된 러너만 있으면 로그를 남기지 않는다 (멱등)', () async {
+      final a = install(tmp.path, alpha);
+      final local = LocalRunner(dir: a, root: tmp.path);
+
+      await local.hardenAllInstalled();
+
+      // 두 번째 스윕은 조용해야 한다 — TUI를 켤 때마다 같은 줄이 쌓이면
+      // 로그 패널 6줄이 그것만으로 찬다.
+      expect(await local.hardenAllInstalled(), isEmpty);
+    }, skip: hasPlistBuddy ? null : 'PlistBuddy 없음 (macOS 전용)');
+
+    test('서비스로 등록되지 않은 러너는 건너뛴다 — 켤 때 심으면 된다', () async {
+      final a = install(tmp.path, alpha, withService: false);
+      final local = LocalRunner(dir: a, root: tmp.path);
+
+      // 폴백이 이 머신의 실제 plist를 물어오지 않았는지 먼저 못박는다. 이게
+      // 없으면 "건너뛴다"가 아니라 "내 홈에 마침 같은 이름이 없다"를 검증하는
+      // 테스트가 되고, 머신에 따라 조용히 의미가 달라진다.
+      expect(LocalRunner.plistPathIn(a, alpha), isNull);
+      expect(await local.hardenAllInstalled(), isEmpty);
+    }, skip: hasPlistBuddy ? null : 'PlistBuddy 없음 (macOS 전용)');
+
+    test('일부가 실패해도 나머지는 적용하고 실패한 러너를 따로 알린다', () async {
+      final ok = install(tmp.path, alpha);
+      final broken = install(tmp.path, beta);
+      // plist를 XML이 아닌 내용으로 덮어 PlistBuddy가 실패하게 만든다.
+      File('$broken/actions.runner.coco-de.$beta.plist')
+          .writeAsStringSync('plist가 아님');
+      final local = LocalRunner(dir: ok, root: tmp.path);
+
+      final lines = await local.hardenAllInstalled();
+
+      expect(lines, hasLength(2));
+      expect(lines.first, contains(alpha));
+      expect(lines.last, allOf(contains('실패'), contains(beta)));
+      expect(await keepAlive(ok, alpha), 'false');
+    }, skip: hasPlistBuddy ? null : 'PlistBuddy 없음 (macOS 전용)');
+
+    test('쓰기 불가 plist를 "적용 완료"로 보고하지 않는다', () async {
+      // PlistBuddy는 저장에 실패해도 exit 0으로 끝나고 사유는 stderr에만
+      // 남긴다. 종료코드만 믿으면 아무것도 안 바뀐 러너를 적용됐다고 보고하고,
+      // 사용자는 재부팅한 뒤에야 크래시 복구가 없다는 걸 알게 된다.
+      final a = install(tmp.path, alpha);
+      final plist = File('$a/actions.runner.coco-de.$alpha.plist');
+      await Process.run('chmod', ['444', plist.path]);
+      addTearDown(() => Process.run('chmod', ['644', plist.path]));
+      final local = LocalRunner(dir: a, root: tmp.path);
+
+      final lines = await local.hardenAllInstalled();
+
+      expect(lines.single, allOf(contains('실패'), contains(alpha)));
+      expect(await keepAlive(a, alpha), isNull);
+    }, skip: hasPlistBuddy ? null : 'PlistBuddy 없음 (macOS 전용)');
+  });
+
   group('LocalRunner.pmsetAcValue', () {
     // `pmset -g custom`은 배터리 구간을 먼저 찍는다 — 구간을 구분하지 않으면
     // 노트북에서 배터리 값을 AC 값으로 읽는다.

@@ -295,6 +295,15 @@ final class AppModel extends TeaModel {
   Cmd _refreshTimer() =>
       tick(const Duration(seconds: 15), (_) => _RefreshTickMsg());
 
+  /// 이 머신 러너들의 plist에 KeepAlive를 심는다 — 이미 실행 중인 러너도
+  /// 포함해 무중단으로([LocalRunner.hardenAllInstalled] 참고).
+  ///
+  /// 15초 폴링에는 걸지 않는다. 멱등이라 반복해도 해롭진 않지만, 러너 수만큼
+  /// PlistBuddy를 계속 띄우게 되고 하드닝이 실패하는 환경에서는 같은 실패
+  /// 로그가 15초마다 쌓인다. 상태가 바뀔 수 있는 시점(시작·스크립트 종료·
+  /// 서비스 조작)에만 부른다.
+  Cmd _hardenInstalled() => () async => _LogMsg(await local.hardenAllInstalled());
+
   /// 자식 스크립트가 남긴 application cursor key 모드를 되돌린다
   /// (이유는 [resetCursorKeyMode] 참고). 순수 update를 지키려고 커맨드로 낸다.
   Cmd _resetCursorKeys() => () {
@@ -551,6 +560,9 @@ final class AppModel extends TeaModel {
         () => requestWindowSize(),
         _fetchRunners(),
         _fetchLocal(),
+        // 이 변경 이전에 서비스로 등록해둔 러너 — 지금 돌고 있는 것까지 —
+        // 를 TUI를 켜는 것만으로 따라잡는다.
+        _hardenInstalled(),
         _refreshTimer(),
       ]);
 
@@ -642,7 +654,15 @@ final class AppModel extends TeaModel {
           // 자식이 끝난 이 시점에 커서키 모드를 되돌린다 — DECCKM이 켜진 채로
           // 남으면 방향키가 SS3로 바뀌어 러너 선택 이동이 죽는다. 조회와는
           // 무관한 작업이라 batch 안 순서에는 의미가 없다.
-          batch([_resetCursorKeys(), _fetchRunners(), _fetchLocal()]),
+          //
+          // register-runner.sh가 --service로 서비스를 새로 깔았을 수 있어
+          // 하드닝도 함께 돌린다 (이미 적용된 러너는 건너뛴다).
+          batch([
+            _resetCursorKeys(),
+            _fetchRunners(),
+            _fetchLocal(),
+            _hardenInstalled(),
+          ]),
         );
 
       case TickMsg():
@@ -1079,6 +1099,11 @@ final class AppModel extends TeaModel {
       parts.add(s.svcInstalled
           ? _fg(_gray).render('launchd 등록됨')
           : _fg(_gray).render('launchd 미등록'));
+      // 하드닝은 자동으로 걸리므로(_hardenInstalled) 이 경고가 보인다면
+      // 적용에 실패한 것이다 — 조용히 넘어가면 재부팅 뒤에야 알게 된다.
+      if (s.svcHardened == false) {
+        parts.add(_fg(_yellow).render('KeepAlive 없음'));
+      }
       if (s.workUsage != null) {
         parts.add(_fg(_gray).render('_work ${s.workUsage}'));
       }

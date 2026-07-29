@@ -11,6 +11,7 @@ final class LocalStatus {
     required this.listenerRunning,
     required this.svcInstalled,
     this.svcPlistPath,
+    this.svcHardened,
     this.workUsage,
   });
 
@@ -32,6 +33,11 @@ final class LocalStatus {
   /// 못했으면 null — [svcInstalled]가 true여도(이름 미상 러너의 plist를 이름
   /// 없이 찾아낸 경우) null일 수 있다.
   final String? svcPlistPath;
+
+  /// plist에 크래시 자동 복구(KeepAlive)가 적용돼 있는지. plist가 없거나
+  /// 판정하지 못했으면(PlistBuddy 부재 등) null — "적용 안 됨(false)"과
+  /// 구분해야 [LocalRunner.hardenAllInstalled]가 헛돌지 않는다.
+  final bool? svcHardened;
 
   /// `_work` 디렉토리 사용량 (`du -sh`).
   final String? workUsage;
@@ -144,6 +150,8 @@ final class LocalRunner {
       }
     }
 
+    final plistPath = plistPathIn(dir, agentName);
+
     return LocalStatus(
       dir: dir,
       configured: configured,
@@ -151,7 +159,8 @@ final class LocalRunner {
       gitHubUrl: gitHubUrl,
       listenerRunning: listenerRunning,
       svcInstalled: svcInstalled,
-      svcPlistPath: plistPathIn(dir, agentName),
+      svcPlistPath: plistPath,
+      svcHardened: await isHardened(plistPath),
       workUsage: workUsage,
     );
   }
@@ -216,12 +225,43 @@ final class LocalRunner {
   static bool keepAliveHardened(String plistBuddyOutput) =>
       plistBuddyOutput.trim() == 'false';
 
-  /// [plist]에 KeepAlive 하드닝을 적용하고 로그 줄을 돌려준다 (멱등 — 이미
-  /// 적용돼 있으면 파일을 건드리지 않는다).
+  /// [plist]에 KeepAlive가 적용돼 있는지. plist가 없거나 판정하지 못했으면
+  /// null — "적용 안 됨(false)"과 구분해야 판정 실패를 무한 재시도하지 않는다.
+  static Future<bool?> isHardened(String? plist) async {
+    if (plist == null || !File(plistBuddy).existsSync()) return null;
+    try {
+      final read = await Process.run(plistBuddy, keepAliveReadArgs(plist));
+      // 키 자체가 없으면 PlistBuddy가 non-zero로 끝난다 = 적용 안 됨.
+      return read.exitCode == 0 && keepAliveHardened(read.stdout as String);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// [plist]에 KeepAlive를 실제로 써 넣는다. 성공하면 null, 실패하면 사유.
   ///
-  /// 반드시 `svc.sh start`(=`launchctl load`) **전에** 실행해야 한다. launchd는
-  /// 로드 시점에 plist를 읽으므로, 이미 로드된 뒤에 파일만 고치면 다음
-  /// 로드까지 적용되지 않는다.
+  /// 종료코드만 믿지 않고 쓴 값을 되읽어 확인한다 — PlistBuddy는 파일 저장에
+  /// 실패해도(권한 없음 등) **exit 0으로 끝나고** 사유를 stderr에만 남긴다.
+  /// 그대로 두면 아무것도 안 바뀐 러너를 "적용 완료"로 보고하게 되고, 사용자는
+  /// 재부팅한 뒤에야 크래시 복구가 없다는 걸 알게 된다.
+  static Future<String?> _applyKeepAlive(String plist) async {
+    try {
+      await Process.run(plistBuddy, keepAliveDeleteArgs(plist));
+      final add = await Process.run(plistBuddy, keepAliveAddArgs(plist));
+      final stderr = (add.stderr as String).trim();
+      if (add.exitCode != 0) return stderr.isEmpty ? 'exit ${add.exitCode}' : stderr;
+      if (await isHardened(plist) == true) return null;
+      return stderr.isEmpty ? '적용 후 확인 실패' : stderr;
+    } catch (e) {
+      return '$e';
+    }
+  }
+
+  /// [plist]에 KeepAlive 하드닝을 적용하고 로그 줄을 돌려준다 (멱등 — 이미
+  /// 적용돼 있으면 파일을 건드리지 않고 빈 목록).
+  ///
+  /// 서비스를 켜는 경로(`s`)에서 `svc.sh start`(=`launchctl load`) **직전에**
+  /// 부른다. 이미 떠 있는 러너에 적용하는 건 [hardenAllInstalled] 몫이다.
   static Future<List<String>> hardenPlist(String? plist) async {
     if (plist == null) {
       return const ['launchd plist를 찾지 못해 KeepAlive 설정을 건너뜁니다'];
@@ -229,21 +269,74 @@ final class LocalRunner {
     if (!File(plistBuddy).existsSync()) {
       return const ['PlistBuddy가 없어 KeepAlive 설정을 건너뜁니다'];
     }
-    try {
-      final read = await Process.run(plistBuddy, keepAliveReadArgs(plist));
-      if (read.exitCode == 0 && keepAliveHardened(read.stdout as String)) {
-        return const [];
+    if (await isHardened(plist) == true) return const [];
+    final error = await _applyKeepAlive(plist);
+    return [
+      error == null
+          ? 'KeepAlive(SuccessfulExit=false) 적용 — 비정상 종료 시 launchd가 러너를 되살립니다'
+          : 'KeepAlive 설정 실패 — 크래시 자동 복구 없이 진행합니다 ($error)',
+    ];
+  }
+
+  /// 이 머신에 구성된 러너 **전부**의 plist에 KeepAlive를 심는다 (멱등).
+  ///
+  /// 서비스를 껐다 켜지 않고 **파일만** 고친다. launchd는 로드 시점에 plist를
+  /// 읽으므로 이미 떠 있는 러너의 동작은 그대로고, 다음 로드(재부팅·로그인·
+  /// 서비스 재시작)부터 KeepAlive가 붙는다. 이 설정의 목적이 재부팅·크래시
+  /// 이후의 복귀라서, 잡을 돌리는 중일지 모르는 서비스를 지금 내렸다 올릴
+  /// 이유가 없다 — 무중단으로 적용하고 효력은 다음 로드로 넘긴다.
+  ///
+  /// (`svc.sh start`는 `launchctl load -w`만 하고 plist를 다시 만들지 않으며,
+  /// `-w`도 파일이 아니라 launchd의 override DB에 쓴다. 그래서 제자리 수정이
+  /// 다음 로드까지 안전하게 남는다.)
+  ///
+  /// 이미 적용된 러너와 서비스로 등록되지 않은 러너는 건너뛴다. 실제로 바뀐
+  /// 게 없으면 빈 목록 — 로그 패널을 매번 같은 줄로 채우지 않는다.
+  Future<List<String>> hardenAllInstalled() async {
+    if (!File(plistBuddy).existsSync()) return const [];
+
+    final applied = <String>[];
+    final failed = <String>[];
+    for (final runnerDir in configuredDirs()) {
+      final name = readConfig(runnerDir)?.agentName;
+      final plist = plistPathIn(runnerDir, name);
+      if (plist == null) continue; // 서비스 미등록 — 켤 때 심는다
+      // false(=적용 안 됨)일 때만 손댄다. null(판정 실패)은 건너뛰어야
+      // 갱신 때마다 같은 실패를 반복하지 않는다.
+      if (await isHardened(plist) != false) continue;
+
+      final label = name ?? runnerDir.split('/').last;
+      final error = await _applyKeepAlive(plist);
+      if (error == null) {
+        applied.add(label);
+      } else {
+        failed.add('$label($error)');
       }
-      await Process.run(plistBuddy, keepAliveDeleteArgs(plist));
-      final add = await Process.run(plistBuddy, keepAliveAddArgs(plist));
-      if (add.exitCode != 0) {
-        return ['KeepAlive 설정 실패 — 크래시 자동 복구 없이 진행합니다 '
-            '(${(add.stderr as String).trim()})'];
-      }
-      return const ['KeepAlive(SuccessfulExit=false) 적용 — 비정상 종료 시 launchd가 러너를 되살립니다'];
-    } catch (e) {
-      return ['KeepAlive 설정 실패: $e'];
     }
+
+    return [
+      if (applied.isNotEmpty)
+        'KeepAlive 적용: ${applied.join(', ')} — 실행 중인 러너는 다음 서비스 '
+            '로드(재부팅·s 재시작)부터 유효',
+      if (failed.isNotEmpty) 'KeepAlive 적용 실패: ${failed.join(', ')}',
+    ];
+  }
+
+  /// 이 머신에 구성된(=`.runner`가 있는) 러너 설치 경로 전부.
+  ///
+  /// 이름별 디렉토리(`<root>/<이름>`)를 훑고 추적 중인 [dir]도 포함한다 —
+  /// 이름별 설치 규칙이 생기기 전에 등록했거나 `--dir`로 다른 경로를 지정한
+  /// 러너는 root 아래에 없다 ([findDirFor]가 두 곳을 보는 것과 같은 이유).
+  List<String> configuredDirs() {
+    final dirs = <String>{};
+    final rootDir = Directory(root);
+    if (rootDir.existsSync()) {
+      for (final entry in rootDir.listSync().whereType<Directory>()) {
+        if (readConfig(entry.path) != null) dirs.add(entry.path);
+      }
+    }
+    if (readConfig(dir) != null) dirs.add(dir);
+    return dirs.toList()..sort();
   }
 
   /// `pmset -g custom` 출력에서 AC 전원 구간의 [key] 값을 읽는다.
