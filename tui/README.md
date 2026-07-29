@@ -119,6 +119,7 @@ dart test
 - `lib/src/app.dart` — TUI 모델 (Model–Update–View)
 - `lib/src/gh.dart` — `gh api` 래퍼 (러너 목록/해제/라벨 변경)
 - `lib/src/labels.dart` — 라벨 피커 후보 수집(스코프 전체 커스텀 라벨 합집합) + read-only 라벨 필터
+- `lib/src/layout.dart` — 터미널 크기별 세로·가로 예산 + ANSI 인식 클리핑. 프레임이 화면을 넘지 않고(래핑·스크롤 금지), 창을 키웠을 때 내용이 줄지 않도록 보장한다
 - `lib/src/local.dart` — 로컬 에이전트 상태 (`.runner`, listener 프로세스, launchd, `_work` 용량)
 - `lib/src/register.dart` — 등록 입력 파싱 + `register-runner.sh` 인자 구성
 - `lib/src/scope.dart` — org/repo 스코프 + 설정 저장
