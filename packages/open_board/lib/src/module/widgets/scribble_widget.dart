@@ -121,12 +121,37 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       this.contentLogicalSize,
       this.transformationController, // 🆕 외부 주입 가능한 변환 컨트롤러 (PR #99)
       this.linkTargetResolver,
+      this.shouldDeferDrawStart,
     });
 
     /// 텍스트 주석 링크 타깃 입력 UI 제공자 — [TextInteractionManager] 를 거쳐
     /// 인라인 텍스트 에디터로 전달된다. 미주입 시 내장 Material 다이얼로그로
     /// 폴백한다 (kobic #9838).
     final LinkTargetResolver? linkTargetResolver;
+
+    /// 호스트 앱이 "이 지점의 pointer-down 은 지연 시작 대상"이라고 판정하는
+    /// 콜백 (kobic UB-188).
+    ///
+    /// 이 캔버스는 자신의 [TextDrawable] 영역·펜/올가미 모드 등은 이미 자체
+    /// 게이트로 그리기 시작을 막지만, PDF 뷰어처럼 **자신이 모르는 하위
+    /// 레이어의 링크 geometry**(호스트가 별도로 렌더링하는 PDF 하이퍼링크
+    /// 등) 위에서는 판단할 방법이 없다. 이 콜백이 true 를 반환하면 down
+    /// 시점에 activeLine 을 즉시 만들지 않고 보류(defer)한다 — 이동이
+    /// [PointerEventHandler.kDeferStartSlop] 을 넘거나
+    /// [PointerEventHandler.kDeferStartTimeout] 이 경과해야 실제로 그리기
+    /// 시작한다. 그 전에 pointer-up/cancel 이 오면(=짧은 탭) 아무 것도
+    /// 그려진 적 없이 폐기된다.
+    ///
+    /// [canvasPosition] 은 이 캔버스의 로컬(=[TextDrawable] 위치·
+    /// [ScribbleController.linkAtCanvasPoint] 와 동일) 좌표계다 —
+    /// InteractiveViewer 의 현재 확대/이동과 무관하게 콘텐츠 논리 좌표로
+    /// 전달되므로, 호스트는 별도 변환 없이 자신의 링크 bbox 와 직접
+    /// 비교할 수 있다.
+    ///
+    /// 미주입(`null`) 또는 특정 지점에서 false 를 반환하면 기존과 완전히
+    /// 동일하게 즉시 그리기 시작한다 — 기본값은 어떤 기존 소비자의 동작도
+    /// 바꾸지 않는다.
+    final bool Function(Offset canvasPosition)? shouldDeferDrawStart;
 
     /// ✨ 이미지 캡처를 위한 GlobalKey - 외부에서 접근 가능
     final GlobalKey? repaintBoundaryKey;
@@ -1800,11 +1825,25 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
               _startHandModeDrawing();
             }
 
-            _hideAllOverlays();
-            _updateToolsState();
-            pointerHandler.handleNormalDrawingMode(event);
-            (strokeCountNotifier).toggle();
-            setState(() {});
+            // 🔗 kobic UB-188: 호스트가 이 down 지점을 "지연 시작 대상"
+            // (예: PDF 링크 위)으로 판정하면 activeLine 을 즉시 만들지
+            // 않고 보류한다. 실제로는 짧은 탭(클릭)이었던 경우 아무 것도
+            // 그려진 적 없이 폐기되므로, 링크 탭이 필기 잔상으로 남는
+            // 현상이 원리적으로 발생하지 않는다. 콜백 미주입 시(null)
+            // 또는 false 반환 시 기존과 완전히 동일하게 즉시 그린다.
+            if (widget.shouldDeferDrawStart?.call(event.localPosition) ??
+                false) {
+              pointerHandler.beginDeferredStroke(
+                event,
+                onTimeout: () => _promoteDeferredStroke(event.pointer),
+              );
+            } else {
+              _hideAllOverlays();
+              _updateToolsState();
+              pointerHandler.handleNormalDrawingMode(event);
+              (strokeCountNotifier).toggle();
+              setState(() {});
+            }
           } else {
             // 그리기 불가: 터치는 스크롤용으로 사용
 
@@ -1814,6 +1853,28 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
           setState(() {});
         }
       }
+    }
+
+    /// 보류 중이던 지연 시작 스트로크를 실제 그리기로 승격한다
+    /// (kobic UB-188).
+    ///
+    /// [pointerId] 에 대한 보류가 이미 promote/discard 되어 사라졌으면
+    /// (예: move 로 먼저 승격되었거나 pointer-up 으로 폐기된 경우) 아무
+    /// 것도 하지 않는다 — [PointerEventHandler.takePendingDeferredStroke]
+    /// 가 null 을 반환하는 것으로 이를 판별한다.
+    void _promoteDeferredStroke(int pointerId) {
+      if (!mounted) return;
+      final pending = pointerHandler.takePendingDeferredStroke(pointerId);
+      if (pending == null) return;
+
+      _hideAllOverlays();
+      _updateToolsState();
+      pointerHandler.handleNormalDrawingMode(pending.downEvent);
+      for (final bufferedMove in pending.bufferedMoves) {
+        pointerHandler.handlePointerMove(bufferedMove);
+      }
+      (strokeCountNotifier).toggle();
+      setState(() {});
     }
 
     /// 텍스트 모드 포인터 다운 처리
@@ -1994,6 +2055,28 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       // 함께 눌려 있어도 실제 그리기 포인터의 move는 계속 처리한다.
       if (pointerHandler.isEffectiveMultiTouch) return;
 
+      // 🔗 kobic UB-188: 이 포인터의 그리기가 지연 시작 보류 중이면, slop
+      // 초과 여부만 판정한다 — 다른 어떤 처리(텍스트/올가미 우선 처리 등)
+      // 도 거치지 않는다. down 시점에 이미 "일반 그리기" 분기로 판정된
+      // 포인터만 보류 상태를 가지므로 이 분기를 건너뛰어도 안전하다.
+      if (pointerHandler.hasPendingDeferredStroke &&
+          pointerHandler.pendingDeferredPointerId == event.pointer) {
+        final shouldPromote = pointerHandler.bufferOrShouldPromoteDeferredMove(
+          event,
+        );
+        if (shouldPromote) {
+          _promoteDeferredStroke(event.pointer);
+          // 승격 직전까지는 버퍼링만 됐으므로, 승격을 유발한 이번 move
+          // 자체도 정상 경로로 한 번 더 반영해야 이동 지점이 반영된다.
+          final result = pointerHandler.handlePointerMove(event);
+          if (result) {
+            (strokeCountNotifier).toggle();
+          }
+        }
+        // slop 이내면 버퍼링만 되고 화면에는 아무 변화도 없다.
+        return;
+      }
+
       // 선택 영역 우선 처리 (모드에 관계없이)
       bool handled = false;
 
@@ -2093,6 +2176,21 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       if (!widget.isScribbleEnable) return;
       if (pointerHandler.isMultiTouch()) return;
 
+      // 🔗 kobic UB-188: 이 포인터가 지연 시작 보류 중이었다면(=slop/
+      // timeout 도달 전에 손을 뗀 진짜 탭), 실제로는 아무 것도 그려진 적이
+      // 없다. notifier 는 이 포인터의 onPointerDown 을 받은 적이 없으므로
+      // finishStroke 경로(pointerHandler.handlePointerUp/onScribbleFinished)
+      // 를 타지 않고 조용히 폐기한다.
+      if (pointerHandler.takePendingDeferredStroke(event.pointer) != null) {
+        if ((event.kind == ui.PointerDeviceKind.touch ||
+                event.kind == ui.PointerDeviceKind.mouse) &&
+            _isHandModeDrawingActive) {
+          _endHandModeDrawing();
+        }
+        (strokeCountNotifier).toggle();
+        return;
+      }
+
       // 선택 영역 우선 처리 (모드에 관계없이)
       bool handled = false;
 
@@ -2184,6 +2282,22 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       // 🖐️ 멀티터치에서 싱글터치로 전환 시 InteractiveViewer 상태 갱신
       if (wasMultiTouch && !pointerHandler.isMultiTouch()) {
         setState(() {});
+      }
+
+      // 🔗 kobic UB-188: 보류 중이던 지연 시작 스트로크를 아무 것도 그리지
+      // 않은 채 폐기한다. notifier 는 이 포인터의 onPointerDown 을 받은
+      // 적이 없으므로 onPointerCancel 도 호출하지 않는다(대상 없는
+      // activePointerId 정리 시도를 피하기 위함).
+      if (pointerHandler.takePendingDeferredStroke(event.pointer) != null) {
+        if ((event.kind == ui.PointerDeviceKind.touch ||
+                event.kind == ui.PointerDeviceKind.mouse) &&
+            _isHandModeDrawingActive) {
+          _endHandModeDrawing();
+        }
+        if (textManager.handlePointerCancel(event)) {
+          setState(() {});
+        }
+        return;
       }
 
       // 🖊️ 손모드에서 터치/마우스 취소 시 스크롤 허용 (안전장치)

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
@@ -167,6 +168,207 @@ void main() {
 
       expect(handler.isPalmIgnored(2), isFalse);
       expect(handler.isEffectiveMultiTouch, isFalse);
+    });
+  });
+
+  group('지연 시작 (kobic UB-188)', () {
+    PointerDownEvent downEvent({
+      int pointer = 1,
+      Offset position = Offset.zero,
+    }) =>
+        PointerDownEvent(pointer: pointer, position: position);
+
+    PointerMoveEvent moveEvent({int pointer = 1, required Offset position}) =>
+        PointerMoveEvent(pointer: pointer, position: position);
+
+    test('beginDeferredStroke 직후에는 보류 상태만 생기고 notifier 는 그대로다', () {
+      expect(handler.hasPendingDeferredStroke, isFalse);
+
+      handler.beginDeferredStroke(downEvent(), onTimeout: () {});
+
+      expect(handler.hasPendingDeferredStroke, isTrue);
+      expect(handler.pendingDeferredPointerId, 1);
+      // activeLine 이 생성되지 않아 Drawing 상태로도 전이하지 않는다.
+      expect(scribbleNotifier.currentState.activePointerIds, isEmpty);
+    });
+
+    test('slop 이내 이동은 승격되지 않고 버퍼링만 된다', () {
+      handler.beginDeferredStroke(downEvent(), onTimeout: () {});
+
+      final shouldPromote = handler.bufferOrShouldPromoteDeferredMove(
+        moveEvent(position: const Offset(5, 0)), // slop(15) 이내
+      );
+
+      expect(shouldPromote, isFalse);
+      expect(handler.hasPendingDeferredStroke, isTrue);
+    });
+
+    test('slop 초과 이동은 승격 신호를 반환한다', () {
+      handler.beginDeferredStroke(downEvent(), onTimeout: () {});
+
+      final shouldPromote = handler.bufferOrShouldPromoteDeferredMove(
+        moveEvent(position: const Offset(20, 0)), // slop(15) 초과
+      );
+
+      expect(shouldPromote, isTrue);
+      // 승격 여부 판정 자체는 내부 상태를 지우지 않는다 — 실제 승격은
+      // 호출자가 takePendingDeferredStroke 로 명시적으로 수행해야 한다.
+      expect(handler.hasPendingDeferredStroke, isTrue);
+    });
+
+    test('다른 포인터의 move 는 보류에 영향을 주지 않는다', () {
+      handler.beginDeferredStroke(downEvent(pointer: 1), onTimeout: () {});
+
+      final shouldPromote = handler.bufferOrShouldPromoteDeferredMove(
+        moveEvent(pointer: 2, position: const Offset(100, 100)),
+      );
+
+      expect(shouldPromote, isFalse);
+      expect(handler.hasPendingDeferredStroke, isTrue);
+      expect(handler.pendingDeferredPointerId, 1);
+    });
+
+    test('보류가 없는 상태에서 move 는 항상 false 를 반환한다', () {
+      final shouldPromote = handler.bufferOrShouldPromoteDeferredMove(
+        moveEvent(position: const Offset(100, 100)),
+      );
+
+      expect(shouldPromote, isFalse);
+    });
+
+    test('takePendingDeferredStroke 는 버퍼링된 move 를 순서대로 담아 반환한다', () {
+      final down = downEvent();
+      handler.beginDeferredStroke(down, onTimeout: () {});
+
+      final move1 = moveEvent(position: const Offset(3, 0));
+      final move2 = moveEvent(position: const Offset(6, 0));
+      handler.bufferOrShouldPromoteDeferredMove(move1);
+      handler.bufferOrShouldPromoteDeferredMove(move2);
+
+      final pending = handler.takePendingDeferredStroke(1);
+
+      expect(pending, isNotNull);
+      expect(pending!.downEvent, same(down));
+      expect(pending.bufferedMoves, [move1, move2]);
+    });
+
+    test('takePendingDeferredStroke 는 호출 후 내부 상태를 비운다', () {
+      handler.beginDeferredStroke(downEvent(), onTimeout: () {});
+
+      final first = handler.takePendingDeferredStroke(1);
+      final second = handler.takePendingDeferredStroke(1);
+
+      expect(first, isNotNull);
+      expect(second, isNull);
+      expect(handler.hasPendingDeferredStroke, isFalse);
+    });
+
+    test('다른 pointerId 로 takePendingDeferredStroke 하면 null 이고 보류는 유지된다', () {
+      handler.beginDeferredStroke(downEvent(pointer: 1), onTimeout: () {});
+
+      final result = handler.takePendingDeferredStroke(2);
+
+      expect(result, isNull);
+      expect(handler.hasPendingDeferredStroke, isTrue);
+    });
+
+    test('보류가 없을 때 takePendingDeferredStroke 는 null 을 반환한다', () {
+      expect(handler.takePendingDeferredStroke(1), isNull);
+    });
+
+    test(
+      'kDeferStartTimeout 이 지나도 승격/폐기되지 않으면 onTimeout 이 호출된다',
+      () async {
+        var timedOut = false;
+        handler.beginDeferredStroke(
+          downEvent(),
+          onTimeout: () {
+            timedOut = true;
+          },
+        );
+
+        await Future<void>.delayed(
+          PointerEventHandler.kDeferStartTimeout +
+              const Duration(milliseconds: 50),
+        );
+
+        expect(timedOut, isTrue);
+      },
+    );
+
+    test('takePendingDeferredStroke 로 먼저 처리되면 onTimeout 은 호출되지 않는다', () async {
+      var timedOut = false;
+      handler.beginDeferredStroke(
+        downEvent(),
+        onTimeout: () {
+          timedOut = true;
+        },
+      );
+
+      handler.takePendingDeferredStroke(1); // promote/discard 대신 즉시 소비
+
+      await Future<void>.delayed(
+        PointerEventHandler.kDeferStartTimeout +
+            const Duration(milliseconds: 50),
+      );
+
+      expect(timedOut, isFalse);
+    });
+
+    test('dispose 이후에는 예약된 onTimeout 이 호출되지 않는다', () async {
+      var timedOut = false;
+      handler.beginDeferredStroke(
+        downEvent(),
+        onTimeout: () {
+          timedOut = true;
+        },
+      );
+
+      handler.dispose();
+      expect(handler.hasPendingDeferredStroke, isFalse);
+
+      await Future<void>.delayed(
+        PointerEventHandler.kDeferStartTimeout +
+            const Duration(milliseconds: 50),
+      );
+
+      expect(timedOut, isFalse);
+    });
+
+    test('resetTouch 호출 시 보류 중이던 스트로크도 폐기된다', () {
+      handler.beginDeferredStroke(downEvent(), onTimeout: () {});
+
+      handler.resetTouch();
+
+      expect(handler.hasPendingDeferredStroke, isFalse);
+    });
+
+    test('새 보류가 시작되면 이전(미해결) 보류의 onTimeout 은 발화하지 않는다', () async {
+      var firstTimedOut = false;
+      var secondTimedOut = false;
+
+      handler.beginDeferredStroke(
+        downEvent(pointer: 1),
+        onTimeout: () => firstTimedOut = true,
+      );
+      // 첫 보류가 아직 남아있는 채로 새 보류가 시작되면(멀티터치 등) 이전
+      // 타이머가 명시적으로 취소된다.
+      handler.beginDeferredStroke(
+        downEvent(pointer: 2),
+        onTimeout: () => secondTimedOut = true,
+      );
+
+      await Future<void>.delayed(
+        PointerEventHandler.kDeferStartTimeout +
+            const Duration(milliseconds: 50),
+      );
+
+      expect(firstTimedOut, isFalse);
+      expect(secondTimedOut, isTrue);
+      // onTimeout 은 알림일 뿐 스스로 상태를 비우지 않는다 — 실제 승격/폐기는
+      // 호출자가 takePendingDeferredStroke 로 수행해야 하므로, 두 번째
+      // 보류는 여전히 pointer 2 로 남아 있다.
+      expect(handler.pendingDeferredPointerId, 2);
     });
   });
 }

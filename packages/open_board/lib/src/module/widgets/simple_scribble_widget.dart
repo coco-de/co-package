@@ -56,6 +56,7 @@ final class SimpleScribbleWidget extends StatefulWidget {
     this.allowedPointersMode = ScribblePointerMode.penOnly, // 🆕 최소 캔버스 크기
     this.contentLogicalSize,
     this.linkTargetResolver,
+    this.shouldDeferDrawStart,
   });
 
   /// 텍스트 주석 링크 타깃 입력 UI 제공자 (kobic #9838).
@@ -63,6 +64,10 @@ final class SimpleScribbleWidget extends StatefulWidget {
   /// 호스트 앱이 자신의 디자인 시스템으로 다이얼로그를 그리도록 위임한다.
   /// 미주입 시 내장 Material 다이얼로그로 폴백하므로 단독 사용도 동작한다.
   final LinkTargetResolver? linkTargetResolver;
+
+  /// 호스트가 지연 시작(defer) 대상 지점을 판정하는 콜백 (kobic UB-188).
+  /// 상세는 [ScribbleWidget.shouldDeferDrawStart] 참조.
+  final bool Function(Offset canvasPosition)? shouldDeferDrawStart;
 
   /// 필기 컨트롤러 (선택적 - 없으면 자동 생성)
   final ScribbleController? controller;
@@ -221,6 +226,7 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
       transformationController: widget.transformationController,
       contentLogicalSize: widget.contentLogicalSize,
       linkTargetResolver: widget.linkTargetResolver,
+      shouldDeferDrawStart: widget.shouldDeferDrawStart,
       // onScribbleChanged는 _initializeController에서 컨트롤러 리스너로
       // 이미 연결되어 모든 변경을 전달한다. 여기서 onScribble로도 감싸
       // 전달하면 같은 변경에 대해 사용자 콜백이 두 번 호출된다.
