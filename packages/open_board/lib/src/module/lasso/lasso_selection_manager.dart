@@ -37,6 +37,17 @@ class LassoSelectionManager {
 
   final void Function(bool isSelecting, bool isTransforming)? onModeChanged;
 
+  /// 올가미로 선택한 스트로크를 이동/크기조절/회전한 뒤 히스토리에 커밋되는
+  /// 시점(제스처 완료)에 호출된다.
+  ///
+  /// `scribbleNotifier` 의 값 변경 리스너(`onScribbleChanged`)는 드래그 중
+  /// 매 프레임(`temporaryValue` 포함)에도 발화해 "진행 중" 과 "완료" 를
+  /// 구분할 수 없다. 이 콜백은 [onMoveEnd]/[onResizeRotateEnd] 가 실제로
+  /// `setScribble(addToUndoHistory: true)` 를 호출한 직후에만 호출되어,
+  /// `PointerEventHandler.handlePointerUp` → `onScribbleFinished` 와 동일한
+  /// "제스처 완료" 계약을 올가미 변형에도 제공한다 (kobic#10836).
+  final void Function(ScribbleNotifier notifier)? onScribbleFinished;
+
   // 올가미 선택 관련 상태
   painter.LassoSelectionState _lassoSelectionState =
       painter.LassoSelectionState();
@@ -72,6 +83,7 @@ class LassoSelectionManager {
     required this.onStateChanged,
     required this.transformationController,
     required this.onModeChanged,
+    this.onScribbleFinished,
   }) {
     _transformHandler = TransformHandler();
   }
@@ -772,6 +784,7 @@ class LassoSelectionManager {
         scribble: currentScribble,
         addToUndoHistory: true,
       );
+      onScribbleFinished?.call(scribbleNotifier);
 
       // 🔥 변형 완료 후 바운딩 박스 업데이트 (오버레이가 올바른 위치에서 움직이도록)
       final updatedBoundingBox = _calculateBoundingBox(_selectedStrokeIds);
@@ -858,6 +871,7 @@ class LassoSelectionManager {
         scribble: currentScribble,
         addToUndoHistory: true,
       );
+      onScribbleFinished?.call(scribbleNotifier);
     }
 
     // 바운딩 박스 업데이트

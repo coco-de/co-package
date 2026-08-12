@@ -106,6 +106,125 @@ void main() {
     });
   });
 
+  group('올가미 이동 완료 시 onScribbleFinished 발화 (kobic#10836)', () {
+    testWidgets('이동 완료 시 onScribbleFinished 가 한 번만 호출된다', (tester) async {
+      final notifier = ScribbleNotifier();
+      addTearDown(notifier.dispose);
+
+      late BuildContext capturedContext;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              capturedContext = context;
+              return const SizedBox(width: 400, height: 400);
+            },
+          ),
+        ),
+      );
+
+      var finishedCallCount = 0;
+      final manager = LassoSelectionManager(
+        scribbleNotifier: notifier,
+        onStateChanged: () {},
+        transformationController: TransformationController(),
+        onModeChanged: null,
+        onScribbleFinished: (_) => finishedCallCount++,
+      );
+
+      notifier.setScribble(scribble: scribbleWithLassoSelection());
+      manager.selectElementsInLassoIfNeeded();
+      expect(manager.selectedStrokeIds, isNotEmpty);
+
+      manager.onMoveStart(
+        DragStartDetails(globalPosition: const Offset(25, 25)),
+        capturedContext,
+      );
+      expect(finishedCallCount, 0, reason: '이동 시작만으로는 완료 콜백이 울리면 안 된다');
+
+      manager.onMoveUpdate(
+        DragUpdateDetails(globalPosition: const Offset(125, 125)),
+        capturedContext,
+      );
+      expect(
+        finishedCallCount,
+        0,
+        reason:
+            '이동 진행 중(매 프레임)에는 완료 콜백이 울리면 안 된다 — 위반하면 '
+            'onScribbleChanged 처럼 진행 중 프레임과 완료 시점을 구분할 수 없어져 '
+            '호스트 앱의 제스처 손상 방지 로직(kobic#10836)이 무력화된다',
+      );
+
+      manager.onMoveEnd(DragEndDetails());
+      expect(finishedCallCount, 1, reason: '이동이 히스토리에 커밋된 시점에 정확히 한 번 울려야 한다');
+    });
+
+    test('선택된 스트로크가 없으면 onScribbleFinished 를 호출하지 않는다', () {
+      final notifier = ScribbleNotifier();
+      addTearDown(notifier.dispose);
+
+      var finishedCallCount = 0;
+      final manager = LassoSelectionManager(
+        scribbleNotifier: notifier,
+        onStateChanged: () {},
+        transformationController: TransformationController(),
+        onModeChanged: null,
+        onScribbleFinished: (_) => finishedCallCount++,
+      );
+
+      manager.onMoveEnd(DragEndDetails());
+
+      expect(finishedCallCount, 0);
+    });
+  });
+
+  group('올가미 크기조절/회전 완료 시 onScribbleFinished 발화 (kobic#10836)', () {
+    testWidgets('크기조절/회전 완료 시 onScribbleFinished 가 한 번만 호출된다', (tester) async {
+      final notifier = ScribbleNotifier();
+      addTearDown(notifier.dispose);
+
+      late BuildContext capturedContext;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              capturedContext = context;
+              return const SizedBox(width: 400, height: 400);
+            },
+          ),
+        ),
+      );
+
+      var finishedCallCount = 0;
+      final manager = LassoSelectionManager(
+        scribbleNotifier: notifier,
+        onStateChanged: () {},
+        transformationController: TransformationController(),
+        onModeChanged: null,
+        onScribbleFinished: (_) => finishedCallCount++,
+      );
+
+      notifier.setScribble(scribble: scribbleWithLassoSelection());
+      manager.selectElementsInLassoIfNeeded();
+      expect(manager.selectedStrokeIds, isNotEmpty);
+
+      manager.onResizeRotateStart(
+        DragStartDetails(globalPosition: const Offset(20, 30)),
+        capturedContext,
+      );
+      expect(finishedCallCount, 0, reason: '변형 시작만으로는 완료 콜백이 울리면 안 된다');
+
+      manager.onResizeRotateUpdate(
+        DragUpdateDetails(globalPosition: const Offset(10, 40)),
+        capturedContext,
+      );
+      expect(finishedCallCount, 0, reason: '변형 진행 중(매 프레임)에는 완료 콜백이 울리면 안 된다');
+
+      manager.onResizeRotateEnd(DragEndDetails());
+      expect(finishedCallCount, 1, reason: '변형이 히스토리에 커밋된 시점에 정확히 한 번 울려야 한다');
+    });
+  });
+
   group('undo/redo 시 인덱스 기반 선택 무효화', () {
     test('onHistoryApplied 콜백이 undo 시 호출된다', () async {
       final notifier = ScribbleNotifier();

@@ -422,6 +422,17 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         },
         transformationController: transformationController,
         onModeChanged: widget.onModeChanged,
+        onScribbleFinished: (notifier) {
+          // 올가미 이동/크기조절/회전이 히스토리에 커밋된 직후 호출된다.
+          // draw-stroke 완료(PointerEventHandler.handlePointerUp)와 동일하게
+          // Undo/Redo 상태를 갱신하고 위젯 레벨 콜백을 통지한다 —
+          // `onScribbleChanged` 만으로는 드래그 중인 프레임과 완료 시점을
+          // 구분할 수 없는 호스트(kobic#10836: 실시간 분할 패널 동기화 등)를
+          // 위한 계약이다.
+          final drawingState = DrawingState();
+          drawingState.updateUndoRedoState();
+          widget.onScribbleFinished?.call(notifier);
+        },
       );
 
       // 🚨 undo/redo로 스트로크 목록이 바뀌면 인덱스 기반 올가미 선택이
