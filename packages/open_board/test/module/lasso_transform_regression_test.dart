@@ -124,15 +124,16 @@ void main() {
       );
 
       var finishedCallCount = 0;
+      notifier.onScribbleFinished = () => finishedCallCount++;
       final manager = LassoSelectionManager(
         scribbleNotifier: notifier,
         onStateChanged: () {},
         transformationController: TransformationController(),
         onModeChanged: null,
-        onScribbleFinished: (_) => finishedCallCount++,
       );
 
       notifier.setScribble(scribble: scribbleWithLassoSelection());
+      finishedCallCount = 0; // 위 setScribble 호출분은 이 테스트의 관심사가 아니다
       manager.selectElementsInLassoIfNeeded();
       expect(manager.selectedStrokeIds, isNotEmpty);
 
@@ -164,12 +165,12 @@ void main() {
       addTearDown(notifier.dispose);
 
       var finishedCallCount = 0;
+      notifier.onScribbleFinished = () => finishedCallCount++;
       final manager = LassoSelectionManager(
         scribbleNotifier: notifier,
         onStateChanged: () {},
         transformationController: TransformationController(),
         onModeChanged: null,
-        onScribbleFinished: (_) => finishedCallCount++,
       );
 
       manager.onMoveEnd(DragEndDetails());
@@ -196,15 +197,16 @@ void main() {
       );
 
       var finishedCallCount = 0;
+      notifier.onScribbleFinished = () => finishedCallCount++;
       final manager = LassoSelectionManager(
         scribbleNotifier: notifier,
         onStateChanged: () {},
         transformationController: TransformationController(),
         onModeChanged: null,
-        onScribbleFinished: (_) => finishedCallCount++,
       );
 
       notifier.setScribble(scribble: scribbleWithLassoSelection());
+      finishedCallCount = 0; // 위 setScribble 호출분은 이 테스트의 관심사가 아니다
       manager.selectElementsInLassoIfNeeded();
       expect(manager.selectedStrokeIds, isNotEmpty);
 

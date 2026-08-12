@@ -110,6 +110,20 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 무효화되므로, 이 콜백으로 선택 상태를 리셋할 기회를 제공한다.
   VoidCallback? onHistoryApplied;
 
+  /// [setScribble]/[_updateScribbleWithTextDrawables] 가 `addToUndoHistory:
+  /// true` 로 히스토리에 실제로 커밋된 직후 호출되는 콜백.
+  ///
+  /// 펜/지우개 그리기 완료는 `onPointerUp` 이 `state` 를 직접 대입해 이
+  /// 경로를 거치지 않는다(`PointerEventHandler.handlePointerUp` 이 별도로
+  /// `ScribbleWidget.onScribbleFinished` 를 호출한다). 반면 올가미 이동/
+  /// 크기조절/회전, 텍스트 추가/편집/이동/변형/삭제, 이미지 이동/크기조절/
+  /// 삭제는 모두 이 두 메서드를 거치므로, 이 콜백 하나로 그 모든 "제스처
+  /// 완료" 시점을 커버한다. `value`/`temporaryValue` 변경(값 리스너)은 드래그
+  /// 중 매 프레임에도 발화해 진행 중 상태와 완료 시점을 구분할 수 없는
+  /// 반면, 이 콜백은 `addToUndoHistory: false`(드래그 중간 프레임)에는
+  /// 호출되지 않는다 (kobic#10836).
+  VoidCallback? onScribbleFinished;
+
   ScribbleNotifier({
     /// If you pass a scribble here, the notifier will use that scribble as a
     /// starting point.
@@ -198,6 +212,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
     };
     if (addToUndoHistory) {
       state = newState;
+      onScribbleFinished?.call();
     } else {
       temporaryValue = newState;
     }
@@ -1194,6 +1209,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
     };
     if (addToUndoHistory) {
       state = newState;
+      onScribbleFinished?.call();
     } else {
       temporaryValue = newState;
     }

@@ -79,6 +79,32 @@ void main() {
       expect(images.first.id, 'b');
     });
 
+    test('addImageDrawable 은 onScribbleFinished 를 호출한다 (kobic#10836)', () {
+      var callCount = 0;
+      notifier.onScribbleFinished = () => callCount++;
+
+      notifier.addImageDrawable(sample('a'));
+
+      expect(callCount, 1);
+    });
+
+    test('updateImageDrawable(addToUndoHistory: false) 는 onScribbleFinished 를 '
+        '호출하지 않는다 (드래그 중간 프레임, kobic#10836)', () {
+      notifier.addImageDrawable(sample('a'));
+      final original = notifier.getCurrentImageDrawables().first;
+
+      var callCount = 0;
+      notifier.onScribbleFinished = () => callCount++;
+
+      notifier.updateImageDrawable(
+        'a',
+        original.copyWithPosition(const Offset(50, 60)),
+        addToUndoHistory: false,
+      );
+
+      expect(callCount, 0);
+    });
+
     test('이미지 조작이 스트로크/텍스트 컬렉션을 보존한다', () {
       notifier.addTextDrawable(
         TextDrawable(

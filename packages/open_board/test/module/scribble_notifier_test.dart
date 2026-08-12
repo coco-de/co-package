@@ -299,9 +299,7 @@ void main() {
       test('올가미 스트로크를 제거한다', () {
         final lassoStroke = createStroke(ink: 'lasso');
         final normalStroke = createStroke(ink: 'pencil');
-        final scribble = createScribble(
-          strokes: [normalStroke, lassoStroke],
-        );
+        final scribble = createScribble(strokes: [normalStroke, lassoStroke]);
         final n = ScribbleNotifier(scribble: scribble);
         addTearDown(n.dispose);
 
@@ -337,6 +335,101 @@ void main() {
 
         notifier.removeTextDrawable('test-id');
         expect(notifier.getCurrentTextDrawables(), isEmpty);
+      });
+    });
+
+    group('onScribbleFinished 콜백 (kobic#10836)', () {
+      // 펜/지우개 그리기 완료는 PointerEventHandler.handlePointerUp 이
+      // ScribbleWidget.onScribbleFinished 를 직접 호출하는 별도 경로라 이
+      // 테스트 범위 밖이다(포인터 이벤트 시뮬레이션이 필요). 여기서는
+      // setScribble/텍스트/이미지 API 가 addToUndoHistory: true 로 커밋할
+      // 때만 정확히 발화하는지를 검증한다 — 올가미 이동/크기조절/회전,
+      // 텍스트 추가/편집/삭제, 이미지 추가/이동/삭제가 전부 이 경로를
+      // 공유하므로 이 그룹이 그 전체를 대표한다.
+      test('setScribble(addToUndoHistory: true) 는 콜백을 호출한다', () {
+        var callCount = 0;
+        notifier.onScribbleFinished = () => callCount++;
+
+        notifier.setScribble(
+          scribble: createScribbleWithStrokes(strokeCount: 1),
+        );
+
+        expect(callCount, 1);
+      });
+
+      test('setScribble(addToUndoHistory: false) 는 콜백을 호출하지 않는다 '
+          '(드래그 중간 프레임)', () {
+        var callCount = 0;
+        notifier.onScribbleFinished = () => callCount++;
+
+        notifier.setScribble(
+          scribble: createScribbleWithStrokes(strokeCount: 1),
+          addToUndoHistory: false,
+        );
+
+        expect(callCount, 0);
+      });
+
+      test('addTextDrawable 은 콜백을 호출한다', () {
+        var callCount = 0;
+        notifier.onScribbleFinished = () => callCount++;
+
+        notifier.addTextDrawable(createTextDrawable(text: 'Hello'));
+
+        expect(callCount, 1);
+      });
+
+      test('updateTextDrawable(addToUndoHistory: true) 는 콜백을 호출한다', () {
+        final td = createTextDrawable(id: 'test-id', text: 'Hello');
+        notifier.addTextDrawable(td);
+
+        var callCount = 0;
+        notifier.onScribbleFinished = () => callCount++;
+
+        notifier.updateTextDrawable(
+          'test-id',
+          createTextDrawable(id: 'test-id', text: 'Updated'),
+        );
+
+        expect(callCount, 1);
+      });
+
+      test('updateTextDrawable(addToUndoHistory: false) 는 콜백을 호출하지 않는다 '
+          '(드래그 중간 프레임)', () {
+        final td = createTextDrawable(id: 'test-id', text: 'Hello');
+        notifier.addTextDrawable(td);
+
+        var callCount = 0;
+        notifier.onScribbleFinished = () => callCount++;
+
+        notifier.updateTextDrawable(
+          'test-id',
+          createTextDrawable(id: 'test-id', text: 'Dragging'),
+          addToUndoHistory: false,
+        );
+
+        expect(callCount, 0);
+      });
+
+      test('removeTextDrawable 은 콜백을 호출한다', () {
+        final td = createTextDrawable(id: 'test-id', text: 'Hello');
+        notifier.addTextDrawable(td);
+
+        var callCount = 0;
+        notifier.onScribbleFinished = () => callCount++;
+
+        notifier.removeTextDrawable('test-id');
+
+        expect(callCount, 1);
+      });
+
+      test('onScribbleFinished 를 설정하지 않아도 예외 없이 동작한다', () {
+        expect(
+          () => notifier.setScribble(
+            scribble: createScribbleWithStrokes(strokeCount: 1),
+          ),
+          returnsNormally,
+        );
       });
     });
   });

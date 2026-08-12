@@ -422,18 +422,24 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         },
         transformationController: transformationController,
         onModeChanged: widget.onModeChanged,
-        onScribbleFinished: (notifier) {
-          // 올가미 이동/크기조절/회전이 히스토리에 커밋된 직후 호출된다.
-          // draw-stroke 완료(PointerEventHandler.handlePointerUp)와 동일하게
-          // Undo/Redo 상태를 갱신하고 위젯 레벨 콜백을 통지한다 —
-          // `onScribbleChanged` 만으로는 드래그 중인 프레임과 완료 시점을
-          // 구분할 수 없는 호스트(kobic#10836: 실시간 분할 패널 동기화 등)를
-          // 위한 계약이다.
-          final drawingState = DrawingState();
-          drawingState.updateUndoRedoState();
-          widget.onScribbleFinished?.call(notifier);
-        },
       );
+
+      // 🎯 스트로크(펜/지우개) 그리기 완료는 PointerEventHandler.handlePointerUp
+      // 이 onScribbleFinished 를 직접 호출한다. 그 경로를 타지 않는 올가미
+      // 이동/크기조절/회전, 텍스트 추가/편집/이동/변형/삭제, 이미지 이동/
+      // 크기조절/삭제는 전부 ScribbleNotifier.setScribble 또는
+      // _updateScribbleWithTextDrawables(addToUndoHistory: true) 로 히스토리에
+      // 커밋되므로, notifier 레벨에서 한 번만 배선하면 그 모든 완료 시점을
+      // 함께 커버한다 — 개별 매니저마다 완료 콜백을 따로 배선할 필요가 없다
+      // (kobic#10836: 실시간 분할 패널 동기화가 onScribbleFinished 에만
+      // 반응해야 하는데, onScribbleChanged 는 드래그 중 매 프레임에도 발화해
+      // 진행 중인 제스처와 완료 시점을 구분할 수 없다).
+      widget.notifier.onScribbleFinished = () {
+        if (!mounted) return;
+        final drawingState = DrawingState();
+        drawingState.updateUndoRedoState();
+        widget.onScribbleFinished?.call(widget.notifier);
+      };
 
       // 🚨 undo/redo로 스트로크 목록이 바뀌면 인덱스 기반 올가미 선택이
       // 엉뚱한 스트로크를 가리키게 되므로 선택을 리셋한다.
@@ -2955,6 +2961,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       if (widget.notifier != oldWidget.notifier ||
           widget.modeNotifier != oldWidget.modeNotifier) {
         oldWidget.notifier.onHistoryApplied = null;
+        oldWidget.notifier.onScribbleFinished = null;
         textManager.dispose();
         pointerHandler.dispose();
         pointerHandler = _createPointerHandler();
@@ -2999,6 +3006,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
 
       // 히스토리 적용 콜백 해제 (dispose된 State 참조 방지)
       widget.notifier.onHistoryApplied = null;
+      widget.notifier.onScribbleFinished = null;
 
       // 편집 중이던 인라인 에디터 오버레이 제거 (좀비 UI/스테일 커밋 방지)
       textManager.dispose();
