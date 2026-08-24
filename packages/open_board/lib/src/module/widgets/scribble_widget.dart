@@ -228,6 +228,21 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
     State<ScribbleWidget> createState() => _ScribbleWidgetState();
   }
 
+  /// 🤏 kobic #11816(UB-482) 제스처 시작 시점 대비 누적 scale 비율이
+  /// dead-zone 이내인지 판정한다.
+  ///
+  /// 손모드에서 두 손가락으로 페이지를 넘기려는 스와이프 중 손끝 간격이
+  /// 미세하게 흔들려도 Flutter `InteractiveViewer` 의 `ScaleGestureRecognizer`
+  /// 는 dead-zone 없이 그 값을 즉시 확대/축소로 반영한다. [cumulativeScale]
+  /// 은 `ScaleUpdateDetails.scale` — 제스처 시작 시점 대비 누적 비율(프레임별
+  /// 델타가 아니다) — 이며, 그 편차가 [deadZone] 미만이면 핀치 의도가 아닌
+  /// 것으로 간주한다. 순수 함수로 분리해 위젯 마운트 없이 단위 테스트
+  /// 가능하게 한다.
+  bool isWithinPinchScaleDeadZone(
+    double cumulativeScale, {
+    double deadZone = _ScribbleWidgetState.kPinchScaleDeadZone,
+  }) => (cumulativeScale - 1).abs() < deadZone;
+
   /// ScribbleWidget의 State 클래스 - 리팩토링된 버전
   final class _ScribbleWidgetState extends State<ScribbleWidget> {
     // 기본 컨트롤러들
@@ -260,6 +275,21 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
     // 🆕 스케일 변화 감지를 위한 변수들
     double _lastReportedScale = 1.0;
     Matrix4? _lastReportedTransform;
+
+    // 🤏 kobic #11816(UB-482) 두 손가락 스와이프(페이지 넘김 의도) 중 손끝
+    // 간격이 미세하게 흔들려도 확대/축소로 인식되지 않도록 하는 dead-zone.
+    // 누적 scale 비율이 `1 ± kPinchScaleDeadZone` 범위(±3%) 안에서는
+    // 핀치로 간주하지 않는다.
+    static const double kPinchScaleDeadZone = 0.03;
+
+    /// 현재 제스처 시작 시점의 transform. 두 손가락 제스처 중 누적 scale
+    /// 비율이 dead-zone 이내인 동안 이 값으로 되돌려 확대/축소를 억제한다.
+    Matrix4? _gestureBaselineTransform;
+
+    /// 이번 제스처에서 dead-zone 을 이미 넘었는지. 한 번 넘은 뒤에는 손끝
+    /// 간격이 일시적으로 dead-zone 안쪽으로 돌아와도 다시 얼리지 않는다 —
+    /// 그러지 않으면 진행 중이던 확대가 미세한 흔들림에 취소된다.
+    bool _scaleDeadZonePassed = false;
 
     // 🖊️ 손모드 그리기 상태 추적 (스크롤 제어용)
     bool _isHandModeDrawingActive = false;
@@ -757,6 +787,12 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                         try {
                           // 사용자가 제스처를 시작했음을 기록하여 자동 스냅 중단
                           _hasUserInteracted = true;
+                          // 🤏 kobic #11816(UB-482) dead-zone: 제스처 시작
+                          // 시점 transform 을 기록한다.
+                          _gestureBaselineTransform = transformationController
+                              ?.value
+                              .clone();
+                          _scaleDeadZonePassed = false;
                           widget.onInteractionUpdate?.call(
                             true,
                             isReachedTopBoundary,
@@ -771,6 +807,27 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                       },
                 onInteractionUpdate: (ScaleUpdateDetails details) {
                   try {
+                    // 🤏 kobic #11816(UB-482) dead-zone 판정. details.scale 은
+                    // 제스처 시작 시점 대비 누적 비율이다. 편차가
+                    // kPinchScaleDeadZone 이내이면 이번 프레임에서 IV 가 이미
+                    // 적용한 transform 을 제스처 시작 시점 값으로 되돌려
+                    // 확대/축소를 무효화한다. dead-zone 을 벗어나면 그
+                    // 이후로는 개입하지 않아 실제 핀치 줌은 그대로 동작한다.
+                    if (!_scaleDeadZonePassed) {
+                      final baseline = _gestureBaselineTransform;
+                      if (baseline != null) {
+                        if (isWithinPinchScaleDeadZone(details.scale)) {
+                          if (transformationController != null &&
+                              transformationController!.value != baseline) {
+                            transformationController!.value = baseline
+                                .clone();
+                          }
+                          return;
+                        }
+                        _scaleDeadZonePassed = true;
+                      }
+                    }
+
                     // 🎯 핵심: _handleScaleInteraction 호출 추가!
                     _handleScaleInteraction(details, _getPreviousInitScale());
 
@@ -805,6 +862,11 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
                         !_isCurrentlyDrawing())
                     ? (ScaleEndDetails detail) {
                         try {
+                          // 🤏 kobic #11816(UB-482) 제스처 종료 시 dead-zone
+                          // 상태 초기화 (다음 onInteractionStart 에서도
+                          // 다시 초기화되지만, 명시적으로 정리한다).
+                          _gestureBaselineTransform = null;
+                          _scaleDeadZonePassed = false;
                           // 🚫 필기 중이 아닐 때만 페이지 넘김 제스처 처리
                           if (!_isCurrentlyDrawing()) {
                             widget.onInteractionUpdate?.call(
