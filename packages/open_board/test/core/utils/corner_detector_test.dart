@@ -36,6 +36,43 @@ void main() {
         final corners = CornerDetector.detectSignificantCorners(points);
         expect(corners.length, greaterThanOrEqualTo(2));
       });
+
+      test('한 모서리 주변의 여러 점은 minDistanceThreshold 안에서 하나로 뭉친다 (UB-555)', () {
+        // (100,0) 근방에 예각을 만드는 점 3개를 흩뿌려, 손그림의 둥근
+        // 모서리가 여러 점으로 쪼개지는 상황을 재현한다.
+        final points = createPoints([
+          [0, 0],
+          [50, 0],
+          [96, 2],
+          [100, 0],
+          [104, 3],
+          [100, 50],
+          [100, 100],
+        ]);
+        final corners = CornerDetector.detectSignificantCorners(
+          points,
+          minDistanceThreshold: 20,
+        );
+
+        // 시작점 + (100,0) 부근 대표 코너 1개 + 끝점 = 3개.
+        // 예전 구현이라면 (96,2)/(100,0)/(104,3) 이 각각 코너로 잡혀
+        // 4개 이상이 됐을 것이다.
+        expect(corners.length, 3);
+      });
+
+      test('서로 멀리 떨어진 진짜 코너는 여전히 각각 별도로 감지된다', () {
+        // 단순화된 사각형의 세 중간 코너는 서로 40px 이상 떨어져 있어,
+        // minDistanceThreshold(10) 안에서 뭉쳐서는 안 된다.
+        final points = createRectanglePoints(
+          left: 0,
+          top: 0,
+          right: 200,
+          bottom: 140,
+          pointsPerSide: 2,
+        );
+        final corners = CornerDetector.detectSignificantCorners(points);
+        expect(corners.length, 4);
+      });
     });
 
     group('evaluateTriangleShape', () {

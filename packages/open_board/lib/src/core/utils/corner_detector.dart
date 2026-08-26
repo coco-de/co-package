@@ -17,43 +17,87 @@ class CornerDetector {
   const CornerDetector._();
 
   /// 중요한 코너점 감지 - 각도 기반 단순 접근법
-  static List<Point> detectSignificantCorners(List<Point> points) {
+  ///
+  /// 손으로 그린 모서리는 완벽한 꺾임 1점이 아니라 둥글게 말리거나
+  /// 손떨림으로 흔들린 짧은 곡선 구간으로 나타난다. 그 구간 안의 점들은
+  /// 각각 독립적으로 [cornerAngleThreshold] 미만일 수 있어, 예전 구현처럼
+  /// 문턱을 넘는 점을 전부 코너로 세면 물리적으로 하나인 모서리가 여러
+  /// 코너로 쪼개져 사각형이 오각형·육각형으로 오분류됐다(UB-555). 그래서
+  /// 문턱을 넘는 점들을 인접한 "구간(run)"으로 묶고, 각 구간에서 각도가
+  /// 가장 작은(가장 뾰족한) 점 하나만 그 모서리의 대표 코너로 채택한다.
+  ///
+  /// [minDistanceThreshold] 는 "같은 모서리" 로 묶어 대표 코너 하나만 남길
+  /// 거리 기준이다. 도형 크기에 비례해 호출측(ShapeDetector)이 넘겨줄 수
+  /// 있도록 파라미터화했고, 기본값 10px는 기존 동작(고정 픽셀 기준)을
+  /// 그대로 보존한다.
+  static List<Point> detectSignificantCorners(
+    List<Point> points, {
+    double minDistanceThreshold = 10.0,
+  }) {
     if (points.length < 3) return List.of(points);
 
     // 각도 임계값 - 꺾임 각도가 이 값보다 작으면 코너로 인식
     const cornerAngleThreshold = 120.0;
 
-    // 최소 거리 임계값 - 너무 가까운 코너는 제거
-    const minDistanceThreshold = 10.0;
+    // 1) 문턱 미만인 후보 인덱스와 각도를 전부 수집한다.
+    final candidateAngles = <int, double>{};
+    for (int i = 1; i < points.length - 1; i++) {
+      final angle = GeometryUtils.calculateCornerAngle(
+        points[i - 1],
+        points[i],
+        points[i + 1],
+      );
+      if (angle < cornerAngleThreshold) {
+        candidateAngles[i] = angle;
+      }
+    }
+    final candidateIndices = candidateAngles.keys.toList()..sort();
 
     // 코너 후보 목록 (시작점은 항상 포함)
     final corners = [points.first];
 
-    // 중간 점들에서 코너 탐색
-    for (int i = 1; i < points.length - 1; i++) {
-      final prev = points[i - 1];
-      final curr = points[i];
-      final next = points[i + 1];
-
-      // 각도 계산
-      final angle = GeometryUtils.calculateCornerAngle(prev, curr, next);
-
-      // 꺾임이 크면 코너로 간주
-      if (angle < cornerAngleThreshold) {
-        // 이전 코너와의 거리 확인
-        bool isTooClose = false;
-        for (final corner in corners) {
-          if (GeometryUtils.calculateDistance(curr, corner) <
+    // 2) 서로 가까운(= 물리적으로 같은 모서리일 가능성이 높은) 후보를 하나의
+    // 구간으로 묶어, 그 구간에서 가장 뾰족한 점만 대표 코너로 채택한다.
+    // 단순화(Douglas-Peucker) 이후에는 인접 인덱스라도 서로 다른 진짜
+    // 코너를 가리킬 수 있으므로(예: 사각형의 변 하나를 사이에 둔 두 꼭짓점),
+    // 인덱스 인접성이 아니라 **점 사이 거리**로 같은 모서리 여부를 판단한다.
+    int runStart = 0;
+    while (runStart < candidateIndices.length) {
+      int runEnd = runStart;
+      while (runEnd + 1 < candidateIndices.length &&
+          GeometryUtils.calculateDistance(
+                points[candidateIndices[runEnd]],
+                points[candidateIndices[runEnd + 1]],
+              ) <
               minDistanceThreshold) {
-            isTooClose = true;
-            break;
-          }
-        }
+        runEnd++;
+      }
 
-        if (!isTooClose) {
-          corners.add(curr);
+      int sharpestIndex = candidateIndices[runStart];
+      double sharpestAngle = candidateAngles[sharpestIndex]!;
+      for (int k = runStart + 1; k <= runEnd; k++) {
+        final idx = candidateIndices[k];
+        final angle = candidateAngles[idx]!;
+        if (angle < sharpestAngle) {
+          sharpestAngle = angle;
+          sharpestIndex = idx;
         }
       }
+
+      final curr = points[sharpestIndex];
+      bool isTooClose = false;
+      for (final corner in corners) {
+        if (GeometryUtils.calculateDistance(curr, corner) <
+            minDistanceThreshold) {
+          isTooClose = true;
+          break;
+        }
+      }
+      if (!isTooClose) {
+        corners.add(curr);
+      }
+
+      runStart = runEnd + 1;
     }
 
     // 마지막 점 추가 (이전 코너와 충분히 떨어져 있으면)

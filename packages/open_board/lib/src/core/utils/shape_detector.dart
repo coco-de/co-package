@@ -166,6 +166,7 @@ class ShapeDetector {
       transformedStroke,
       isClosed,
       almostClosed,
+      perimeter,
     );
     _stampTimestamps(stroke, result.transformedStroke);
     return result;
@@ -249,9 +250,19 @@ class ShapeDetector {
     Stroke transformedStroke,
     bool isClosed,
     bool almostClosed,
+    double perimeter,
   ) {
+    // 코너 클러스터링 거리는 도형 크기에 비례해야 한다 — 고정 10px는 큰
+    // 도형의 둥근 모서리(예: 둘레 700px에서 반경 20px 라운딩)를 하나로
+    // 묶지 못해 사각형이 오각형·육각형으로 쪼개졌다(UB-555). 반대로 아주
+    // 작게 그린 도형에서 지나치게 커지지 않도록 하한(10px)은 유지한다.
+    final cornerClusterDistance = math.max(10.0, perimeter * 0.03);
+
     // 코너 감지
-    final corners = CornerDetector.detectSignificantCorners(simplifiedPoints);
+    final corners = CornerDetector.detectSignificantCorners(
+      simplifiedPoints,
+      minDistanceThreshold: cornerClusterDistance,
+    );
 
     // 폐곡선이지만 코너가 부족한 경우 코너 생성
     List<Point> finalCorners = corners;
@@ -371,13 +382,21 @@ class ShapeDetector {
     double aspectScore = (adjustedAspectRatio > 0.5)
         ? 1.0
         : adjustedAspectRatio / 0.5;
-    double cornerScore = (sharpCorners < 4) ? 1.0 : 1.0 - (sharpCorners / 12.0);
+    // 예리한 모서리가 실제로는 원/타원과 사각형·삼각형을 가르는 가장 강한
+    // 신호인데, 종전 공식은 3개까지는 무조건 만점(1.0)을 주고 4개에서야
+    // 0.667로 완만히 내려가 사각형(코너 4개)도 원으로 오분류됐다(UB-555).
+    // 코너 1개당 선형으로 깎아 4개째에 이미 0에 수렴하도록 더 가파르게 한다.
+    double cornerScore = math.max(0.0, 1.0 - sharpCorners * 0.25);
 
+    // distanceScore·aspectScore는 사각형처럼 어느 정도 정사각에 가까운
+    // 도형에서도 거의 항상 만점에 가까워 원/사각형을 가르지 못한다(#UB-555
+    // 진단: 완벽한 직사각형도 두 항만으로 0.6점이 보장됨). 실제 판별력을
+    // 가진 hullScore·cornerScore의 가중치를 높이고 나머지는 낮춘다.
     double circleScore =
-        hullScore * 0.3 +
-        distanceScore * 0.4 +
-        aspectScore * 0.2 +
-        cornerScore * 0.1;
+        hullScore * 0.25 +
+        distanceScore * 0.25 +
+        aspectScore * 0.15 +
+        cornerScore * 0.35;
 
     return circleScore > 0.65;
   }
@@ -743,14 +762,25 @@ class ShapeDetector {
   }
 
   /// 직각인지 확인
+  ///
+  /// 손그림 코너는 둥글게 말리거나 손떨림으로 흔들려 대표 코너점이 정확히
+  /// 90도로 잡히지 않는다. ±15도(75~105)는 화면 위 자유 곡선 드로잉에는
+  /// 너무 엄격해 멀쩡한 사각형이 `irregularQuadrilateral` 로 떨어졌다
+  /// (UB-555). 다각형 오각형·삼각형 오분류를 막는 `_hasParallelSides` 와
+  /// 함께 걸리므로 ±22도로 완화해도 무관한 사각형(마름모 등)과의 경계는
+  /// 변 길이 비율 검사가 여전히 지킨다.
   bool _isRightAngled(List<double> angles) {
-    return angles.every((angle) => angle >= 75 && angle <= 105);
+    return angles.every((angle) => angle >= 68 && angle <= 112);
   }
 
   /// 평행한 변이 있는지 확인
+  ///
+  /// 10% 허용치는 손으로 그린 변의 길이 차를 거의 허용하지 않는다.
+  /// 18%로 완화해도 마름모(다이아몬드)는 `sideRatio > 0.9` 검사에서 먼저
+  /// 갈리므로 서로 혼동되지 않는다.
   bool _hasParallelSides(List<double> sides) {
-    return (sides[0] - sides[2]).abs() / math.max(sides[0], sides[2]) < 0.1 &&
-        (sides[1] - sides[3]).abs() / math.max(sides[1], sides[3]) < 0.1;
+    return (sides[0] - sides[2]).abs() / math.max(sides[0], sides[2]) < 0.18 &&
+        (sides[1] - sides[3]).abs() / math.max(sides[1], sides[3]) < 0.18;
   }
 
   /// 삼각형 세부 유형 판별

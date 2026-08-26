@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+export 'hand_drawn_shape_factories.dart';
 export 'protobuf_factories.dart';
 
 /// 테스트에서 ValueNotifier의 값 변경을 추적하는 헬퍼
