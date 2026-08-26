@@ -255,28 +255,198 @@ class ShapeDetector {
       allowFewCornerFallback: false,
     );
 
+    final directTriangle = _tryCornersAsTriangle(
+      earlyCorners,
+      simplifiedPoints,
+      transformedStroke,
+    );
+    if (directTriangle != null) return directTriangle;
+
+    final directQuad = _tryCornersAsQuadrilateral(
+      earlyCorners,
+      simplifiedPoints,
+      transformedStroke,
+    );
+    if (directQuad != null) return directQuad;
+
+    // UB-555 3차 synthesis: 정확히 3·4개인데 엄격한 bow-ratio(0.06)만
+    // 실패한 경우, 완화된 bow-ratio로 재시도한다. 넓은 윈도우 각도 추정과
+    // 결합하면 지터가 큰 손그림도 코너 개수 자체는 정확히 3·4개로 잡히는
+    // 경우가 늘어나는데, 그 개수만 정확하고 개별 변의 흔들림(bow)이 여전히
+    // 엄격한 임계값을 넘는 경우가 다수 관찰되어 이 재시도를 추가한다.
+    //
+    // ⚠️ `requireSignCancellation: true` 가 반드시 필요하다 — 완화된
+    // bow-ratio(0.14)만으로는 지터(부호가 상쇄됨)와 의도적인 한쪽 곡률
+    // (예: 세 변이 바깥으로 8% 볼록한 폐곡선)을 구분하지 못해, 후자가
+    // 삼각형으로 오분류되는 회귀가 실측됐다(`shape_detector_test.dart`의
+    // bulge=10 고정 회귀 테스트). 코너가 원래부터 정확히 3·4개인 이
+    // 직접-매치 경로는(아래 그리디 축소 경로와 달리) 지터가 전혀 없는
+    // "의도적으로 흽게 그린 폐곡선" 입력도 그대로 통과할 수 있어, 이
+    // 경로에서만 부호 상쇄 검증을 추가로 요구한다.
     if (earlyCorners.length == 3) {
-      final triangleScore = CornerDetector.calculateTriangleScoreForCorners(
+      final relaxedTriangle = _tryCornersAsTriangle(
         earlyCorners,
+        simplifiedPoints,
+        transformedStroke,
+        maxEdgeBowRatio: _greedyReductionMaxEdgeBowRatio,
+        requireSignCancellation: true,
       );
-      if (triangleScore > 0.65 &&
-          _hasStraightPolygonEdges(earlyCorners, simplifiedPoints)) {
-        _createPolygonFromCorners(transformedStroke, earlyCorners, true);
-        final triangleType = _determineTriangleType(earlyCorners);
-        return ShapeDetectionResult(triangleType, transformedStroke);
-      }
+      if (relaxedTriangle != null) return relaxedTriangle;
     } else if (earlyCorners.length == 4) {
-      final angles = _calculateCornerAngles(earlyCorners);
-      final sides = _calculateSideLengths(earlyCorners);
-      if (_isRightAngled(angles) &&
-          _hasParallelSides(sides) &&
-          _hasStraightPolygonEdges(earlyCorners, simplifiedPoints)) {
-        _createPolygonFromCorners(transformedStroke, earlyCorners, true);
-        final quadType = _determineQuadrilateralType(earlyCorners);
-        return ShapeDetectionResult(quadType, transformedStroke);
-      }
+      final relaxedQuad = _tryCornersAsQuadrilateral(
+        earlyCorners,
+        simplifiedPoints,
+        transformedStroke,
+        maxEdgeBowRatio: _greedyReductionMaxEdgeBowRatio,
+        requireSignCancellation: true,
+      );
+      if (relaxedQuad != null) return relaxedQuad;
     }
 
+    // 코너가 정확히 3·4개가 아니면(지터가 만든 가짜 코너로 과다 검출됐을
+    // 가능성) 그리디 축소(Visvalingam-Whyatt, UB-555 3차)로 3개·4개 후보를
+    // 만들어 같은 검증(형태 점수 + 직선 변)으로 재시도한다.
+    //
+    // 상한(`_maxCornersForGreedyReduction`)을 두는 이유: 코너가 극단적으로
+    // 많으면(예: 지터가 매우 큰 진짜 원이 순수 각도 문턱만으로 십수 개의
+    // 노이즈 코너를 만든 경우) 그리디 축소가 "그럴듯해 보이는" 3~4점을
+    // 항상 만들어낼 수 있다 — 축소 자체는 넓이 최소화만 볼 뿐 결과가
+    // 실제로 직선 변인지는 모른다. 아래 `_hasStraightPolygonEdges`가 주된
+    // 방어선이지만(원의 현은 실제 궤적에서 크게 벗어나 대개 여기서
+    // 걸러진다), 상한을 함께 둬 애초에 시도 자체를 제한한다 — 실측
+    // 코너 분포(지터 8%까지의 진짜 삼각형·사각형)가 최대 10개 안팎이라
+    // 목표 개선 범위를 덮으면서, 극단적으로 많은 코너는 다각형 궤적보다
+    // 원 궤적을 가리킬 가능성이 높다고 보고 시도하지 않는다.
+    // 축소는 4코너(사각형) 후보를 먼저 시도한다 — 3코너 축소가 항상 더
+    // "쉽게"(적은 개수라 형태 검증 통과가 더 쉬움) 통과하다 보니, 순서를
+    // 반대로 하면 실제로는 사각형인 도형이 그보다 먼저 통과해버린 잘못된
+    // 삼각형 후보에 가로채인다(실측: 3코너 우선일 때 square_jitter 스윕에
+    // rightTriangle/isoscelesTriangle 오분류가 새로 대거 발생했고, 4코너
+    // 우선으로 바꾸자 사라졌다 — 두 성공률은 그대로이거나 더 좋아졌다).
+    if (earlyCorners.length > 4 &&
+        earlyCorners.length <= _maxCornersForGreedyReduction) {
+      final reducedToQuad = CornerDetector.reduceCornersGreedily(
+        earlyCorners,
+        target: 4,
+      );
+      final reducedQuad = _tryCornersAsQuadrilateral(
+        reducedToQuad,
+        simplifiedPoints,
+        transformedStroke,
+        maxEdgeBowRatio: _greedyReductionMaxEdgeBowRatio,
+      );
+      if (reducedQuad != null) return reducedQuad;
+
+      final reducedToTriangle = CornerDetector.reduceCornersGreedily(
+        earlyCorners,
+        target: 3,
+      );
+      final reducedTriangle = _tryCornersAsTriangle(
+        reducedToTriangle,
+        simplifiedPoints,
+        transformedStroke,
+        maxEdgeBowRatio: _greedyReductionMaxEdgeBowRatio,
+      );
+      if (reducedTriangle != null) return reducedTriangle;
+    }
+
+    return null;
+  }
+
+  // 그리디 코너 축소를 시도할 원본 코너 개수의 상한 (UB-555 3차).
+  // 위 `_tryPolygonVetoBeforeCircle`의 상한 사유 주석 참조.
+  static const int _maxCornersForGreedyReduction = 20;
+
+  // 그리디 축소로 만든 3~4코너 후보에 적용하는 직선 변 허용 오차
+  // (UB-555 3차, `_hasStraightPolygonEdges`의 [maxEdgeBowRatio]로 전달됨).
+  //
+  // 원본 코너가 정확히 3·4개일 때 쓰는 `_polygonVetoMaxEdgeBowRatio`(0.06)를
+  // 그대로 재사용하면 안 된다 — 진단 실측(150개 시드 스윕, 코너 축소 후
+  // bow ratio 분포):
+  //
+  //   삼각형 지터  4%: p75=0.050   6%: p75=0.077   8%: p75=0.111 (중앙값 0.092)
+  //   사각형 지터  4%: p75=0.098   6%: p75=0.137   8%: p75=0.171
+  //   진짜 원(축소 시도 자체가 발생한 지터 6~8%만): **최솟값 0.157~0.180**
+  //
+  // 즉 지터 자체가 만드는 "직선인데 흔들린" 편차가 이미 원래 임계값
+  // 0.06을 가볍게 넘는다 — 0.06을 그대로 쓰면 축소가 거의 항상 실패해
+  // (실측: 재시도 141건 중 140건이 이 이유로 실패) 개선 효과가 사라진다.
+  // 반면 진짜 원을 억지로 3~4점으로 욱여넣으면 남는 호(arc)의 bow ratio가
+  // 0.157 밑으로 내려간 사례가 없어(같은 스윕), 0.06과 0.157 사이 어디든
+  // "지터로 흔들린 직선"과 "원의 호"를 갈라낼 여지가 있다. 이 여지의
+  // 대략 중간(사각형 지터 8%의 p75 근방)인 0.14를 택해, 원 오분류
+  // 위험에 매 안전한 마진(≈0.017)을 남기면서 목표 개선폭 대부분을
+  // 확보한다 — 임계값을 원의 실측 최솟값에 바짝 붙이면 시드가 조금만
+  // 바뀌어도(더 많은 트라이얼) 회귀할 수 있다.
+  static const double _greedyReductionMaxEdgeBowRatio = 0.14;
+
+  /// [corners]가 정확히 3개이고 삼각형 형태·직선 변 검증을 모두 통과하면
+  /// 그 자리에서 도형을 구성해 반환한다. 통과하지 못하면 `null`.
+  ///
+  /// [corners]는 `_hasStraightPolygonEdges`가 요구하는 traversal-order(원본
+  /// 발견 순서, 정렬되지 않음) 그대로여야 한다 — `_createPolygonFromCorners`
+  /// 호출은 검증을 통과한 뒤에만 일어나므로, 그 안에서 일어나는 정렬(각도
+  /// 순 재배열)이 이 함수의 직선 변 검사에 영향을 주지 않는다.
+  ///
+  /// [maxEdgeBowRatio]는 직선 변 검증의 허용 오차다 — 원본 코너 개수가
+  /// 이미 3개(축소를 거치지 않음)인 호출은 기존 동작 그대로
+  /// `_polygonVetoMaxEdgeBowRatio`(0.06)를 쓰고, 그리디 축소를 거친
+  /// 호출은 더 느슨한 `_greedyReductionMaxEdgeBowRatio`를 명시적으로
+  /// 넘긴다(위 상수 주석의 실측 근거 참조) — 기존 정확-3-코너 경로의
+  /// 동작을 조금도 바꾸지 않기 위해 기본값을 분리했다.
+  ShapeDetectionResult? _tryCornersAsTriangle(
+    List<Point> corners,
+    List<Point> simplifiedPoints,
+    Stroke transformedStroke, {
+    double maxEdgeBowRatio = _polygonVetoMaxEdgeBowRatio,
+    bool requireSignCancellation = false,
+  }) {
+    if (corners.length != 3) return null;
+
+    final triangleScore = CornerDetector.calculateTriangleScoreForCorners(
+      corners,
+    );
+    if (triangleScore > 0.65 &&
+        _hasStraightPolygonEdges(
+          corners,
+          simplifiedPoints,
+          maxEdgeBowRatio: maxEdgeBowRatio,
+          requireSignCancellation: requireSignCancellation,
+        )) {
+      _createPolygonFromCorners(transformedStroke, corners, true);
+      final triangleType = _determineTriangleType(corners);
+      return ShapeDetectionResult(triangleType, transformedStroke);
+    }
+    return null;
+  }
+
+  /// [corners]가 정확히 4개이고 직각·평행변·직선 변 검증을 모두 통과하면
+  /// 그 자리에서 도형을 구성해 반환한다. 통과하지 못하면 `null`.
+  ///
+  /// 순서 요구 사항·[maxEdgeBowRatio] 의미는 [_tryCornersAsTriangle]과 같다.
+  ShapeDetectionResult? _tryCornersAsQuadrilateral(
+    List<Point> corners,
+    List<Point> simplifiedPoints,
+    Stroke transformedStroke, {
+    double maxEdgeBowRatio = _polygonVetoMaxEdgeBowRatio,
+    bool requireSignCancellation = false,
+  }) {
+    if (corners.length != 4) return null;
+
+    final angles = _calculateCornerAngles(corners);
+    final sides = _calculateSideLengths(corners);
+    if (_isRightAngled(angles) &&
+        _hasParallelSides(sides) &&
+        _hasStraightPolygonEdges(
+          corners,
+          simplifiedPoints,
+          maxEdgeBowRatio: maxEdgeBowRatio,
+          requireSignCancellation: requireSignCancellation,
+        )) {
+      _createPolygonFromCorners(transformedStroke, corners, true);
+      final quadType = _determineQuadrilateralType(corners);
+      return ShapeDetectionResult(quadType, transformedStroke);
+    }
     return null;
   }
 
@@ -416,6 +586,62 @@ class ShapeDetector {
 
       final quadType = _determineQuadrilateralType(corners);
       return ShapeDetectionResult(quadType, transformedStroke);
+    }
+
+    // 코너가 5개 이상 → 펜타곤/헥사곤/폴리곤으로 향하기 전에, 지터가 만든
+    // 가짜 코너로 과다 검출됐을 가능성을 그리디 축소로 먼저 배제한다
+    // (UB-555 3차). `_tryPolygonVetoBeforeCircle`(원 판정 이전 관문)과 같은
+    // 목적의 재시도이지만 이 지점이 별도로 필요한 이유가 있다: 그 관문은
+    // 원 판정 **이전에만** 실행되는데(원 판정 게이트는 `isClosed ||
+    // almostClosed`일 때만 도는 반면, 여기 `_classifyShapeByCorners`는
+    // 폐곡선이 아닌 경우에도 호출된다), 코너 개수가 그 관문의 상한
+    // (`_maxCornersForGreedyReduction`)을 넘거나 축소 결과가 검증(형태
+    // 점수·직선 변)을 통과하지 못해 그 관문이 `null`을 반환한 경우
+    // (원 판정으로 넘어갔다가 원도 아니라고 판정된 경우 포함), 지금까지는
+    // 재시도 없이 곧장 코너 "개수"만으로 pentagon/hexagon/polygon이
+    // 확정됐다. 여기서 같은 코너 집합으로 한 번 더(그리고 원 판정을
+    // 아예 거치지 않는 열린/거의-닫힌 도형에서도) 시도한다.
+    //
+    // ⚠️ 진짜 오각형·육각형을 삼각형·사각형으로 잘못 욱여넣지 않도록
+    // `_tryCornersAsTriangle`/`_tryCornersAsQuadrilateral`이 강제하는
+    // 엄격한 검증(형태 점수 > 0.65, 직각+평행변, 그리고 무엇보다
+    // `_hasStraightPolygonEdges` — 축소로 제거된 코너 사이 실제 궤적이
+    // 직선에서 크게 벗어나면 거부)을 그대로 재사용한다. 진짜 5각·6각
+    // 도형은 코너를 3~4개로 줄이면 남은 변 상당수가 원래 다른 코너를
+    // 지나던 실제 궤적을 직선으로 잘못 근사하게 되므로 이 검증에서
+    // 걸러진다 — 반대로 지터가 흩뿌린 가짜 코너만 제거된 경우에는 실제
+    // 궤적이 원래부터 직선에 가까웠으므로 통과한다.
+    // 축소 순서(4코너 우선)는 `_tryPolygonVetoBeforeCircle`과 같은 이유로
+    // 고정한다 — 위 그 함수의 주석 참조.
+    if (corners.length >= 5 &&
+        corners.length <= _maxCornersForGreedyReduction) {
+      if (isClosed) {
+        final reducedToQuad = CornerDetector.reduceCornersGreedily(
+          corners,
+          target: 4,
+        );
+        final reducedQuad = _tryCornersAsQuadrilateral(
+          reducedToQuad,
+          simplifiedPoints,
+          transformedStroke,
+          maxEdgeBowRatio: _greedyReductionMaxEdgeBowRatio,
+        );
+        if (reducedQuad != null) return reducedQuad;
+      }
+
+      if (isClosed || almostClosed) {
+        final reducedToTriangle = CornerDetector.reduceCornersGreedily(
+          corners,
+          target: 3,
+        );
+        final reducedTriangle = _tryCornersAsTriangle(
+          reducedToTriangle,
+          simplifiedPoints,
+          transformedStroke,
+          maxEdgeBowRatio: _greedyReductionMaxEdgeBowRatio,
+        );
+        if (reducedTriangle != null) return reducedTriangle;
+      }
     }
 
     // 다각형 확인
@@ -566,10 +792,32 @@ class ShapeDetector {
   ///
   /// 마지막 코너에서 첫 코너로 되짚는 "닫힘 변"은 원본 점이 없는 합성
   /// 구간이라 검사하지 않는다 — 실제로 그려진 변들만으로도 충분한 신호다.
+  ///
+  /// [maxEdgeBowRatio]는 기본적으로 [_polygonVetoMaxEdgeBowRatio](0.06)를
+  /// 쓰지만, 그리디 코너 축소(UB-555 3차)를 거친 후보를 검증할 때는 호출측
+  /// (`_tryCornersAsTriangle`/`_tryCornersAsQuadrilateral`)이 더 느슨한
+  /// [_greedyReductionMaxEdgeBowRatio]를 명시적으로 넘긴다 — 그 상수의
+  /// 주석에 실측 근거가 있다.
+  ///
+  /// [requireSignCancellation]이 true면(UB-555 3차 — 원 판정 이전 관문의
+  /// "완화된 bow-ratio 직접 재시도"에서만 켠다), 완화된 임계값만으로는
+  /// 구분하지 못하는 두 경우를 추가로 가른다 — 지터(각 점이 독립적으로
+  /// 좌우 무작위로 흔들림, 변을 따라 부호가 번갈아 상쇄됨)와 의도적인
+  /// 곡률/볼록 변형(한 방향으로만 일관되게 부푼 변, 부호가 상쇄되지 않음).
+  /// 완화 전 엄격한 임계값(0.06)은 어느 쪽도 통과시키지 않아 이 구분이
+  /// 필요 없었지만, 완화된 임계값(0.14)은 순수 곡률로 만든 변(예: 변
+  /// 길이의 8%만큼 한 방향으로 부푼 변)까지 통과시켜 "삼각형이 아닌
+  /// 폐곡선(예: 세 변이 바깥으로 볼록한 폐곡선)이 삼각형으로 오분류"되는
+  /// 회귀를 낳는다(실측: `shape_detector_test.dart`의 bulge=10 고정
+  /// 회귀 테스트). 지터는 `Σ|d| ≈ |Σd|` 가 크게 벌어지는(부호가 상쇄돼
+  /// `|Σd|` 가 `Σ|d|` 보다 훨씬 작은) 반면, 일관된 곡률은 `Σ|d| ≈ |Σd|`
+  /// (거의 상쇄되지 않음)이다 — 이 비율로 둘을 가른다.
   bool _hasStraightPolygonEdges(
     List<Point> traversalOrderCorners,
-    List<Point> simplifiedPoints,
-  ) {
+    List<Point> simplifiedPoints, {
+    double maxEdgeBowRatio = _polygonVetoMaxEdgeBowRatio,
+    bool requireSignCancellation = false,
+  }) {
     final indices = traversalOrderCorners
         .map((corner) => simplifiedPoints.indexOf(corner))
         .toList();
@@ -589,13 +837,34 @@ class ShapeDetector {
       if (chordLength < 1e-6) continue;
 
       double maxDeviation = 0;
+      var sumAbsDeviation = 0.0;
+      var sumSignedDeviation = 0.0;
       for (var k = startIdx + 1; k < endIdx; k++) {
         final deviation = _perpendicularDistance(simplifiedPoints[k], a, b);
         if (deviation > maxDeviation) maxDeviation = deviation;
+        if (requireSignCancellation) {
+          final signed = _signedPerpendicularDistance(
+            simplifiedPoints[k],
+            a,
+            b,
+          );
+          sumAbsDeviation += signed.abs();
+          sumSignedDeviation += signed;
+        }
       }
 
-      if (maxDeviation / chordLength > _polygonVetoMaxEdgeBowRatio) {
+      if (maxDeviation / chordLength > maxEdgeBowRatio) {
         return false;
+      }
+
+      // 부호 상쇄 비율이 낮으면(=한 방향으로 일관되게 부풀었으면) 지터가
+      // 아니라 의도적 곡률로 보고 거부한다. 편차가 거의 없는 변
+      // (sumAbsDeviation ≈ 0)은 애초에 판단할 근거가 없으니 통과시킨다.
+      if (requireSignCancellation && sumAbsDeviation > 1e-6) {
+        final cancellationRatio = sumSignedDeviation.abs() / sumAbsDeviation;
+        if (cancellationRatio > 0.5) {
+          return false;
+        }
       }
     }
 
@@ -617,6 +886,18 @@ class ShapeDetector {
     final ddx = p.x - projX;
     final ddy = p.y - projY;
     return math.sqrt(ddx * ddx + ddy * ddy);
+  }
+
+  /// 점 [p]에서 직선 [a]-[b]까지의 **부호 있는** 수직 거리 —
+  /// [_hasStraightPolygonEdges]의 [requireSignCancellation] 판정 전용.
+  /// 부호는 [a]→[b] 방향 기준 왼쪽(+)/오른쪽(-)을 가리킨다(외적 부호).
+  double _signedPerpendicularDistance(Point p, Point a, Point b) {
+    final dx = b.x - a.x;
+    final dy = b.y - a.y;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (length < 1e-9) return 0.0;
+    final cross = dx * (p.y - a.y) - dy * (p.x - a.x);
+    return cross / length;
   }
 
   /// 타원 생성
