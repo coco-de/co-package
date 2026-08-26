@@ -30,9 +30,29 @@ class CornerDetector {
   /// 거리 기준이다. 도형 크기에 비례해 호출측(ShapeDetector)이 넘겨줄 수
   /// 있도록 파라미터화했고, 기본값 10px는 기존 동작(고정 픽셀 기준)을
   /// 그대로 보존한다.
+  ///
+  /// [allowFewCornerFallback]가 true(기본값, 기존 동작)면 문턱을 넘는 후보가
+  /// 1개 이하로 발견됐을 때 시작/중간/끝 3점으로 채워 넣는 폴백을 적용한다.
+  /// 이 폴백은 원래 "다각형을 못 그려도 뭔가는 그린다"는 최후 수단이지,
+  /// "이 3점이 진짜 다각형 코너다"라는 신호가 아니다. 매끄러운 원이나
+  /// 타원처럼 각진 후보가 전혀 없는 도형에서도 항상 정확히 3점을
+  /// 만들어내므로, 호출측이 "이 코너 수가 원이 아니라 다각형이라는 근거로
+  /// 신뢰할 만한가"를 판단해야 하는 자리(예: 원 판정보다 먼저 도는 관문,
+  /// `ShapeDetector._tryPolygonVetoBeforeCircle`)에서 false로 꺼서 폴백
+  /// 이전의 원본 코너 수(0~1개)를 그대로 받을 수 있다(UB-555 2차).
+  ///
+  /// ⚠️ 시작점은 [allowFewCornerFallback] 과 무관하게 **항상** 코너 후보에
+  /// 포함된다(아래 "코너 후보 목록" 참조) — 순수 각도 기반 순환 판정으로
+  /// 대체하면(예: 이전에 시도한 `cornerClusterPoints`), 손그림이 시작/끝나는
+  /// 지점의 코너가 Douglas-Peucker 단순화로 두 점에 걸쳐 나뉘어 각 점의
+  /// 국소 각도가 개별적으로는 문턱을 넘지 못하는 경우(둘레의 이음매에서만
+  /// 발생) 그 코너 자체를 통째로 놓친다 — 실측: 라운딩 16% 사각형 하나가
+  /// 코너 3개(진짜 4개 중 1개 누락)로 잡혀 rightTriangle 로 오분류됐다.
+  /// 시작점 강제 포함은 이 놓침을 막는 안전장치이지 제거 대상이 아니다.
   static List<Point> detectSignificantCorners(
     List<Point> points, {
     double minDistanceThreshold = 10.0,
+    bool allowFewCornerFallback = true,
   }) {
     if (points.length < 3) return List.of(points);
 
@@ -117,7 +137,7 @@ class CornerDetector {
     }
 
     // 코너가 너무 적거나 없으면 시작, 중간, 끝 점 사용
-    if (corners.length < 2 && points.length >= 3) {
+    if (allowFewCornerFallback && corners.length < 2 && points.length >= 3) {
       corners.clear();
       corners.add(points.first);
 
@@ -130,6 +150,140 @@ class CornerDetector {
     }
 
     return corners;
+  }
+
+  /// [detectSignificantCorners]와 달리 "시작점 항상 코너 포함"과 "후보가
+  /// 2개 미만이면 시작·중간·끝점으로 대체해 최소 3개를 보장한다" 두 편향이
+  /// **없는** 코너 카운터다. 다각형 분류(그리고 [detectAndTransform]의
+  /// 다각형 선-베토)에서는 그 두 편향이 합리적이지만(닫힌 도형은 최소
+  /// 3점이 있어야 다각형을 이루고, 이음매에 걸친 진짜 코너를 놓치면 안
+  /// 된다), 원/타원 판별(`ShapeDetector._isCircleOrEllipse`의
+  /// `cornerScore`)에 그대로 재사용하면 **진짜 원도 항상 코너 1개 이상(강제
+  /// 포함된 시작점) 또는 3개(폴백)로 잡혀** cornerScore가 부당하게
+  /// 오염된다 — 진단 스윕 실측: jitter 0~3% 원 60/60 시행 전부 "코너
+  /// 3개"로 오판됐다.
+  ///
+  /// 이 함수는 그 두 편향을 제거하고 각도 기준만으로 판정한다. 대신
+  /// 궤적을 **순환(닫힌 폐곡선)으로 인덱싱**해, 그리기 시작점이 실제
+  /// 꼭짓점인 경우(사각형을 모서리에서부터 그리기 시작한 경우)의 코너까지
+  /// 놓치지 않는다 — `detectSignificantCorners`가 `i=1..length-2`만 훑어
+  /// prev/next가 없는 경계(양 끝)를 검사하지 못하는 것과 달리, 여기서는
+  /// `(i±1+n)%n`으로 감싸 경계에서도 각도를 정상 계산한다.
+  ///
+  /// ⚠️ 이 순환 인덱싱은 "시작점 강제 포함"이 없어, Douglas-Peucker
+  /// 단순화가 실제 코너 하나를 이음매 앞뒤 두 점으로 쪼개 각 점의 국소
+  /// 각도가 개별적으로는 문턱을 넘지 못하는 경우 그 코너를 놓칠 수 있다
+  /// (다각형 선-베토가 `detectSignificantCorners`를 쓰는 이유 — 위 그
+  /// 함수의 doc 참조). 원/타원 연속 점수용으로는 이 리스크보다 "진짜
+  /// 원의 코너 수를 부풀리지 않는 것"이 더 중요해 이 트레이드오프를
+  /// 택했다.
+  static int countCornerClusters(
+    List<Point> points, {
+    double minDistanceThreshold = 10.0,
+    double cornerAngleThreshold = 120.0,
+  }) {
+    return cornerClusterPoints(
+      points,
+      minDistanceThreshold: minDistanceThreshold,
+      cornerAngleThreshold: cornerAngleThreshold,
+    ).length;
+  }
+
+  /// [countCornerClusters]와 같은 판정 로직으로 대표 코너 "점" 자체를
+  /// 반환한다 — 개수뿐 아니라 실제 형태(직각·평행변 등)까지 확인해야 하는
+  /// 하드 베토 판정에 쓰인다.
+  ///
+  /// [cornerAngleThreshold] 기본값은 [detectSignificantCorners]와 같은
+  /// **120°**다 — 두 경로(원 판정·다각형 판정)가 "무엇을 코너로 보는가"에
+  /// 대해 같은 기준을 쓰도록 맞춘 것이 이 함수의 핵심 목적이라, 각도
+  /// 임계값 자체를 다르게 가져가면 그 일관성이 다시 깨진다.
+  ///
+  /// ⚠️ 이 임계값 때문에 지터가 아주 큰(6~8%) 진짜 원도 드물게 노이즈를
+  /// 코너로 잡을 수 있다 — 더 엄격한 임계값(100°)이나 컨벡스 헐 크기
+  /// 게이트로 이를 추가로 걸러보려 했으나(진단 스윕 실측), 둘 다 지터가
+  /// 큰 진짜 사각형·삼각형까지 함께 걸러 목표 도형(둥글게 그린 사각형·
+  /// 삼각형)의 개선폭을 오히려 깎았다 — 자세한 트레이드오프는
+  /// `ShapeDetector._isCircleOrEllipse`의 하드 베토 주석 참조.
+  static List<Point> cornerClusterPoints(
+    List<Point> points, {
+    double minDistanceThreshold = 10.0,
+    double cornerAngleThreshold = 120.0,
+  }) {
+    final n = points.length;
+    if (n < 3) return const <Point>[];
+
+    final candidateAngles = <int, double>{};
+    for (int i = 0; i < n; i++) {
+      final prev = points[(i - 1 + n) % n];
+      final curr = points[i];
+      final next = points[(i + 1) % n];
+      final angle = GeometryUtils.calculateCornerAngle(prev, curr, next);
+      if (angle < cornerAngleThreshold) {
+        candidateAngles[i] = angle;
+      }
+    }
+    final candidateIndices = candidateAngles.keys.toList()..sort();
+    if (candidateIndices.isEmpty) return const <Point>[];
+
+    // 인접 후보를 구간(run)으로 묶고 구간마다 가장 뾰족한 대표점 하나만
+    // 남긴다 — detectSignificantCorners와 같은 클러스터링 원리.
+    final repIndices = <int>[];
+    int runStart = 0;
+    while (runStart < candidateIndices.length) {
+      int runEnd = runStart;
+      while (runEnd + 1 < candidateIndices.length &&
+          GeometryUtils.calculateDistance(
+                points[candidateIndices[runEnd]],
+                points[candidateIndices[runEnd + 1]],
+              ) <
+              minDistanceThreshold) {
+        runEnd++;
+      }
+
+      int sharpestIndex = candidateIndices[runStart];
+      double sharpestAngle = candidateAngles[sharpestIndex]!;
+      for (int k = runStart + 1; k <= runEnd; k++) {
+        final idx = candidateIndices[k];
+        final angle = candidateAngles[idx]!;
+        if (angle < sharpestAngle) {
+          sharpestAngle = angle;
+          sharpestIndex = idx;
+        }
+      }
+      repIndices.add(sharpestIndex);
+      runStart = runEnd + 1;
+    }
+
+    // 순환 경계 병합 — 정렬된 인덱스 목록의 첫/마지막 구간이 실제로는
+    // n-1 ↔ 0 경계를 사이에 둔 같은 물리적 코너를 가리킬 수 있다.
+    if (repIndices.length >= 2) {
+      final wrapDistance = GeometryUtils.calculateDistance(
+        points[repIndices.first],
+        points[repIndices.last],
+      );
+      if (wrapDistance < minDistanceThreshold) {
+        repIndices.removeLast();
+      }
+    }
+
+    // 대표점끼리도 서로 너무 가까우면 병합한다(비순차 클러스터링 잔여분).
+    final acceptedPoints = <Point>[];
+    for (final idx in repIndices) {
+      final p = points[idx];
+      bool tooClose = false;
+      for (final accepted in acceptedPoints) {
+        if (GeometryUtils.calculateDistance(p, accepted) <
+            minDistanceThreshold) {
+          tooClose = true;
+          break;
+        }
+      }
+      if (!tooClose) {
+        acceptedPoints.add(p);
+      }
+    }
+
+    return acceptedPoints;
   }
 
   /// 폐곡선이지만 코너가 부족할 때 코너 생성
@@ -206,18 +360,24 @@ class CornerDetector {
     // 시계 방향으로 정렬
     final resultCentroid = GeometryUtils.calculateCentroid(result);
     result.sort((a, b) {
-      final angleA = math.atan2(
-        a.y - resultCentroid.y,
-        a.x - resultCentroid.x,
-      );
-      final angleB = math.atan2(
-        b.y - resultCentroid.y,
-        b.x - resultCentroid.x,
-      );
+      final angleA = math.atan2(a.y - resultCentroid.y, a.x - resultCentroid.x);
+      final angleB = math.atan2(b.y - resultCentroid.y, b.x - resultCentroid.x);
       return angleA.compareTo(angleB);
     });
 
     return result;
+  }
+
+  /// 코너 3개의 삼각형 형태 적합도 점수를 계산한다.
+  ///
+  /// [evaluateTriangleShape]는 점 구름 전체에서 컨벡스 헐로 자체 후보를
+  /// 다시 뽑아 평가하므로(둘레가 매끈한 도형은 헐 점이 6개를 넘어 게이트에서
+  /// 0점 처리될 수 있다), 호출측이 이미 확보한 특정 3점 후보를 그대로
+  /// 평가하고 싶을 때는 이 메서드를 쓴다(UB-555 2차: 원 판정 전 다각형
+  /// 코너 신뢰도 검사 — 같은 3점을 두 번, 서로 다른 기준으로 재추출하지
+  /// 않는다).
+  static double calculateTriangleScoreForCorners(List<Point> corners) {
+    return _calculateTriangleScore(corners);
   }
 
   /// 삼각형 점수 계산
