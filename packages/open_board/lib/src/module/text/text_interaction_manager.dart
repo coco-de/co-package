@@ -11,6 +11,7 @@ import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
 import 'package:open_board/src/module/transform_handler.dart';
+import 'package:open_board/src/module/widgets/selection_overlay.dart';
 import 'dart:math' as math;
 import 'dart:ui' show PointerDeviceKind;
 
@@ -310,10 +311,7 @@ class TextInteractionManager {
       return false;
     }
 
-    return _addNewTextAt(
-      pendingTap.adjustedPosition,
-      pendingTap.localPosition,
-    );
+    return _addNewTextAt(pendingTap.adjustedPosition, pendingTap.localPosition);
   }
 
   /// 포인터 취소 이벤트 처리
@@ -517,10 +515,7 @@ class TextInteractionManager {
   }
 
   /// 텍스트 변형 업데이트 (TransformHandler 사용)
-  void onTextTransformUpdate(
-    DragUpdateDetails details,
-    BuildContext context,
-  ) {
+  void onTextTransformUpdate(DragUpdateDetails details, BuildContext context) {
     if (_selectedTextIndex == null ||
         _originalTextCenter == null ||
         _originalFontSize == null ||
@@ -540,9 +535,7 @@ class TextInteractionManager {
         localPosition + (_touchToButtonOffset ?? Offset.zero);
 
     // TransformHandler로 스케일/회전 계산 (화면 좌표 기준)
-    final result = _transformHandler.computeResizeRotate(
-      currentButtonPosition,
-    );
+    final result = _transformHandler.computeResizeRotate(currentButtonPosition);
     final clampedScale = result.scale;
 
     // 새 폰트 크기 계산
@@ -1252,8 +1245,22 @@ class TextInteractionManager {
   }
 
   /// 컨트롤 영역 터치 처리 메서드 (회전된 텍스트 지원)
+  ///
+  /// 이 raw pointer 판정은 [selection_overlay.dart]의 위젯 트리
+  /// `GestureDetector`(`handleSize`)와 **동일한 반경**을 써야 한다. 실제
+  /// 크기조절/회전 드래그는 그 `GestureDetector`의 `onPanStart/Update`가
+  /// 처리하고, 여기서는 오직 "이 터치는 컨트롤 영역이니 텍스트
+  /// 드래그(이동) 준비로 진행하지 말라"는 선점 차단 역할만 한다. 두 반경이
+  /// 어긋나면, 위젯 쪽은 핸들 터치로 인식해 `onPanStart`를 기다리는데 이
+  /// raw 경로는 놓쳐서 그 사이 `handlePointerMove`의 낮은 이동
+  /// 임계값(15px, 게임 아레나 밖에서 즉시 발동)이 위젯의
+  /// `PanGestureRecognizer`(아레나 기반, 기본 slop ~36px)보다 먼저 이겨
+  /// "크기조절 대신 이동"이 발생한다(kobic UB-595). `buttonSize`는 시각
+  /// 버튼(35px)이 아니라 [selection_overlay.dart]의 `handleSize`와
+  /// 일치시킨다 — 시각 버튼보다 넓은 터치 영역은 의도된 UX(가장자리 탭
+  /// 무반응 방지)이고, 그 여유가 두 판정 모두에 동일하게 적용돼야 한다.
   bool? _handleControlAreaTouch(Offset position, TextDrawable textDrawable) {
-    const buttonSize = 35.0; // TextDrawablePainter 시각 버튼과 동일 (70% 축소)
+    const buttonSize = selectionHandleTouchSize;
     const buttonRadius = buttonSize / 2;
 
     final scale = currentScale;

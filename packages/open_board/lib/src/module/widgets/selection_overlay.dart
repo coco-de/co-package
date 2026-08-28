@@ -3,6 +3,17 @@ import 'package:flutter/material.dart';
 /// 선택 오버레이 타입
 enum SelectionOverlayType { text }
 
+/// 삭제/변형(크기조절·회전) 핸들의 터치 영역 크기.
+///
+/// 시각 버튼(35px)보다 작으면 버튼 가장자리 탭이 무반응이 되므로 의도적으로
+/// 더 넓게 잡은 값이다. [TextInteractionManager]의 raw pointer 선점 판정
+/// (`_handleControlAreaTouch`)도 **반드시 이 상수를 참조**해야 한다 — 두
+/// 판정의 반경이 어긋나면, 이 위젯은 핸들 터치로 인식해 `onPanStart`를
+/// 기다리는데 raw pointer 경로는 놓쳐서 텍스트 드래그(이동) 준비로 잘못
+/// 진행하고, 이후 이동 임계값이 이 위젯의 `PanGestureRecognizer`보다 먼저
+/// 이겨 "크기조절 대신 이동"이 발생한다(kobic UB-595).
+const double selectionHandleTouchSize = 49.0;
+
 /// 통합 선택 오버레이를 구성하는 위젯들 (드래그 핸들러만 제공)
 /// 시각적 요소는 각각의 페인터에서 처리됨:
 /// - 올가미: ScribblePainter에서 처리
@@ -24,9 +35,7 @@ List<Widget> buildSelectionOverlay({
   Offset? deleteButtonPosition,
   Offset? transformButtonPosition,
 }) {
-  // 버튼 터치 영역 크기 — 시각 버튼(35px)보다 작으면 버튼 가장자리 탭이
-  // 무반응이 된다. 올가미 쪽 핸들(49px)과 동일하게 여유를 둔다.
-  const handleSize = 49.0;
+  const handleSize = selectionHandleTouchSize;
 
   final finalBoundingBox = boundingBox;
 

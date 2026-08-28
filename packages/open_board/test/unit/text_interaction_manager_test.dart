@@ -29,9 +29,7 @@ void main() {
 
     setUp(() {
       SharedPreferences.setMockInitialValues({});
-      scribbleNotifier = ScribbleNotifier(
-        scribble: createScribble(),
-      );
+      scribbleNotifier = ScribbleNotifier(scribble: createScribble());
       modeNotifier = ScribbleModeNotifier();
       widgetState = ScribbleWidgetState();
     });
@@ -129,67 +127,54 @@ void main() {
       skip: true,
     );
 
-    testWidgets(
-      '오버레이가 표시된 상태에서 외부 영역을 터치하면 deselect만 수행하고 새 텍스트를 만들지 않는다',
-      (tester) async {
-        // Given: 텍스트 1개가 선택된 상태 (showTextOverlay=true)
-        final text = createTextDrawable(
-          id: 't1',
-          text: 'Hello',
-          x: 100,
-          y: 100,
-        );
-        scribbleNotifier.addTextDrawable(text);
+    testWidgets('오버레이가 표시된 상태에서 외부 영역을 터치하면 deselect만 수행하고 새 텍스트를 만들지 않는다', (
+      tester,
+    ) async {
+      // Given: 텍스트 1개가 선택된 상태 (showTextOverlay=true)
+      final text = createTextDrawable(id: 't1', text: 'Hello', x: 100, y: 100);
+      scribbleNotifier.addTextDrawable(text);
 
-        var deselectCalled = false;
-        TextDrawable? selectedTextDrawable;
-        final manager = await buildManager(
-          tester,
-          onTextSelected: (t) => selectedTextDrawable = t,
-          onTextDeselected: () {
-            deselectCalled = true;
-            selectedTextDrawable = null;
-          },
-        );
+      var deselectCalled = false;
+      TextDrawable? selectedTextDrawable;
+      final manager = await buildManager(
+        tester,
+        onTextSelected: (t) => selectedTextDrawable = t,
+        onTextDeselected: () {
+          deselectCalled = true;
+          selectedTextDrawable = null;
+        },
+      );
 
-        // 텍스트 선택을 위해 내부 탭
-        manager.handlePointerDown(makePointerDown(const Offset(100, 100)));
-        expect(manager.showTextOverlay, isTrue);
-        expect(selectedTextDrawable, isNotNull);
+      // 텍스트 선택을 위해 내부 탭
+      manager.handlePointerDown(makePointerDown(const Offset(100, 100)));
+      expect(manager.showTextOverlay, isTrue);
+      expect(selectedTextDrawable, isNotNull);
 
-        // 텍스트 개수 측정 (외부 터치 후에도 동일해야 함)
-        final beforeTextCount = scribbleNotifier
-            .getCurrentTextDrawables()
-            .length;
+      // 텍스트 개수 측정 (외부 터치 후에도 동일해야 함)
+      final beforeTextCount = scribbleNotifier.getCurrentTextDrawables().length;
 
-        // When: 텍스트 바운딩 박스 외부를 탭
-        final handled = manager.handlePointerDown(
-          makePointerDown(const Offset(350, 500)),
-        );
+      // When: 텍스트 바운딩 박스 외부를 탭
+      final handled = manager.handlePointerDown(
+        makePointerDown(const Offset(350, 500)),
+      );
 
-        // Then: deselect가 일어나고, 새 텍스트는 생성되지 않는다.
-        expect(handled, isTrue, reason: '이벤트가 소비되어 fall-through 차단');
-        expect(deselectCalled, isTrue);
-        expect(manager.showTextOverlay, isFalse);
-        expect(selectedTextDrawable, isNull);
-        expect(
-          scribbleNotifier.getCurrentTextDrawables().length,
-          beforeTextCount,
-          reason: '외부 터치만으로는 새 텍스트가 추가되지 않아야 한다',
-        );
-      },
-    );
+      // Then: deselect가 일어나고, 새 텍스트는 생성되지 않는다.
+      expect(handled, isTrue, reason: '이벤트가 소비되어 fall-through 차단');
+      expect(deselectCalled, isTrue);
+      expect(manager.showTextOverlay, isFalse);
+      expect(selectedTextDrawable, isNull);
+      expect(
+        scribbleNotifier.getCurrentTextDrawables().length,
+        beforeTextCount,
+        reason: '외부 터치만으로는 새 텍스트가 추가되지 않아야 한다',
+      );
+    });
 
     testWidgets(
       'onTextMoveStart 후 onTextMoveUpdate는 원본 위치 + delta로 누적 점프 없이 이동한다',
       (tester) async {
         // Given: 텍스트 1개 추가 + 단일탭으로 선택
-        final text = createTextDrawable(
-          id: 't1',
-          text: 'Move',
-          x: 100,
-          y: 100,
-        );
+        final text = createTextDrawable(id: 't1', text: 'Move', x: 100, y: 100);
         scribbleNotifier.addTextDrawable(text);
 
         final manager = await buildManager(
@@ -217,9 +202,9 @@ void main() {
           ),
         );
 
-        var current = scribbleNotifier
-            .getCurrentTextDrawables()
-            .firstWhere((t) => t.id == 't1');
+        var current = scribbleNotifier.getCurrentTextDrawables().firstWhere(
+          (t) => t.id == 't1',
+        );
         expect(
           current.position,
           closeTo2D(110, 105),
@@ -237,9 +222,9 @@ void main() {
         );
 
         final expectedFinalPositionMatcher = closeTo2D(140, 130);
-        current = scribbleNotifier
-            .getCurrentTextDrawables()
-            .firstWhere((t) => t.id == 't1');
+        current = scribbleNotifier.getCurrentTextDrawables().firstWhere(
+          (t) => t.id == 't1',
+        );
         expect(
           current.position,
           expectedFinalPositionMatcher,
@@ -262,9 +247,9 @@ void main() {
         );
 
         // 최종 위치는 마지막 update 결과 유지
-        final finalText = scribbleNotifier
-            .getCurrentTextDrawables()
-            .firstWhere((t) => t.id == 't1');
+        final finalText = scribbleNotifier.getCurrentTextDrawables().firstWhere(
+          (t) => t.id == 't1',
+        );
         expect(finalText.position, expectedFinalPositionMatcher);
       },
       // SKIP — open-board#177: b0f63dd 가 드래그 경로를 onTextMoveStart/Update →
@@ -272,33 +257,125 @@ void main() {
       skip: true,
     );
 
+    testWidgets('onTextMoveUpdate는 _selectedTextIndex가 없으면 안전하게 무시된다', (
+      tester,
+    ) async {
+      // Given: 텍스트 미선택 상태
+      final manager = await buildManager(
+        tester,
+        onTextSelected: (_) {},
+        onTextDeselected: () {},
+      );
+
+      // When: 선택 없이 onTextMoveStart/Update를 호출
+      manager.onTextMoveStart(
+        DragStartDetails(globalPosition: .zero, localPosition: .zero),
+      );
+      manager.onTextMoveUpdate(
+        DragUpdateDetails(
+          globalPosition: const Offset(50, 50),
+          localPosition: const Offset(50, 50),
+        ),
+      );
+
+      // Then: 어떤 텍스트도 변경되지 않고 예외가 발생하지 않는다.
+      expect(manager.isDraggingText, isFalse);
+      expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
+    });
+
     testWidgets(
-      'onTextMoveUpdate는 _selectedTextIndex가 없으면 안전하게 무시된다',
+      'kobic UB-595 — 시각 버튼(35px) 밖이지만 selection_overlay 히트 영역(49px) 안쪽인 '
+      '좌하단 변형 핸들을 드래그해도 텍스트박스가 이동하지 않는다',
       (tester) async {
-        // Given: 텍스트 미선택 상태
+        // Given: 충분히 큰 텍스트 1개를 추가하고 단일탭으로 선택한다
+        //        (오버레이 표시 → _selectedTextIndex 세팅).
+        //        ⚠️ 이 첫 탭 자체가 이미 _prepareDrag를 호출해
+        //        isTextDragPreparing을 true로 만든다(open-board#177,
+        //        #100 정책과 무관한 현재 동작) — 그래서 이 테스트는 그
+        //        내부 플래그가 아니라 "텍스트가 실제로 움직였는가"라는
+        //        관측 가능한 증상을 직접 단언한다.
+        final text = createTextDrawable(
+          id: 't1',
+          text: 'Hello World Testing',
+          x: 200,
+          y: 200,
+          fontSize: 24,
+        );
+        scribbleNotifier.addTextDrawable(text);
+
         final manager = await buildManager(
           tester,
           onTextSelected: (_) {},
           onTextDeselected: () {},
         );
 
-        // When: 선택 없이 onTextMoveStart/Update를 호출
-        manager.onTextMoveStart(
-          DragStartDetails(
-            globalPosition: .zero,
-            localPosition: .zero,
-          ),
-        );
-        manager.onTextMoveUpdate(
-          DragUpdateDetails(
-            globalPosition: const Offset(50, 50),
-            localPosition: const Offset(50, 50),
-          ),
+        manager.handlePointerDown(makePointerDown(const Offset(200, 200)));
+        expect(manager.showTextOverlay, isTrue);
+
+        final originalPosition = scribbleNotifier
+            .getCurrentTextDrawables()
+            .firstWhere((t) => t.id == 't1')
+            .position;
+
+        // 변형 핸들(좌하단) 코너 좌표를 프로덕션 코드와 동일한 공식으로 계산한다
+        // (TextInteractionManager._getRotatedButtonPositions /
+        //  TextDrawablePainter 와 동일: 텍스트 박스 + 4px 패딩의 좌하단).
+        final textPainter = TextPainter(
+          text: TextSpan(text: text.text, style: text.style),
+          textAlign: TextAlign.left,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final center = text.position;
+        final halfWidth = textPainter.width / 2;
+        final halfHeight = textPainter.height / 2;
+        final corner = Offset(
+          center.dx - halfWidth - 4,
+          center.dy + halfHeight + 4,
         );
 
-        // Then: 어떤 텍스트도 변경되지 않고 예외가 발생하지 않는다.
-        expect(manager.isDraggingText, isFalse);
-        expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
+        // 옛 raw 판정 반경(35px 버튼 → 17.5px)보다는 멀지만 새 반경
+        // (selectionHandleTouchSize=49px → 24.5px, selection_overlay의 실제
+        // GestureDetector 히트 영역) 이내인 지점 — 대각선(박스 내부 방향)으로
+        // 22px 이동한 "불일치 링" 위의 터치를 재현한다.
+        const ringDistance = 22.0;
+        const diagonal = ringDistance * 0.70710678; // cos(45°) == sin(45°)
+        final ringTouch = corner + const Offset(diagonal, -diagonal);
+
+        // sanity check: 이 터치가 실제로 "불일치 링" 안에 있는지 확인한다
+        // (텍스트가 너무 작아 링이 박스 밖으로 새면 이 테스트 자체가 무의미해진다).
+        expect(
+          (ringTouch - corner).distance,
+          closeTo(ringDistance, 0.01),
+          reason: '테스트 좌표 계산 자체가 코너로부터 22px 떨어져 있어야 한다',
+        );
+
+        // When: 변형 핸들의 "불일치 링" 위를 터치하고, 텍스트 드래그
+        //       임계값(15px)을 넘겨 이동시키려 한다 — 실제 사용자가
+        //       핸들을 잡고 확대하려는 제스처와 동일.
+        manager.handlePointerDown(makePointerDown(ringTouch));
+        manager.handlePointerMove(
+          PointerMoveEvent(position: ringTouch + const Offset(20, 20)),
+        );
+
+        // Then: 변형 모드로 처리되어 텍스트박스는 절대 이동하지 않아야 한다
+        //       (kobic UB-595 — "확대 대신 이동"이 바로 이 지점의 회귀다).
+        final afterPosition = scribbleNotifier
+            .getCurrentTextDrawables()
+            .firstWhere((t) => t.id == 't1')
+            .position;
+        expect(
+          afterPosition,
+          equals(originalPosition),
+          reason:
+              'kobic UB-595 — 변형 핸들 드래그가 텍스트박스를 이동시키면 안 '
+              '된다 (raw pointer 경로가 이 터치를 컨트롤 영역으로 인식하지 '
+              '못하면 텍스트 드래그로 새어나가 이 위치가 바뀐다)',
+        );
+        expect(
+          manager.isAnyTextInteracting,
+          isTrue,
+          reason: '변형(크기조절/회전) 상태(_isTextResizing)로 진입해야 한다',
+        );
       },
     );
 
@@ -324,155 +401,141 @@ void main() {
         return PointerUpEvent(position: position);
       }
 
-      testWidgets(
-        '펜모드의 손가락 down은 새 텍스트를 만들지 않는다 (페이지 탐색 담당 장치)',
-        (tester) async {
-          // Given: 펜모드 (스타일러스만 그리기/생성 가능)
-          await setPointerMode(tester, DrawingPointerMode.penOnly);
-          final manager = await buildManager(
-            tester,
-            onTextSelected: (_) {},
-            onTextDeselected: () {},
-          );
+      testWidgets('펜모드의 손가락 down은 새 텍스트를 만들지 않는다 (페이지 탐색 담당 장치)', (
+        tester,
+      ) async {
+        // Given: 펜모드 (스타일러스만 그리기/생성 가능)
+        await setPointerMode(tester, DrawingPointerMode.penOnly);
+        final manager = await buildManager(
+          tester,
+          onTextSelected: (_) {},
+          onTextDeselected: () {},
+        );
 
-          // When: 손가락(touch)으로 빈 영역 down → up (탭)
-          final handled = manager.handlePointerDown(
-            makePointerDown(const Offset(200, 300)),
-          );
-          manager.handlePointerUp(makePointerUp(const Offset(200, 300)));
-          await tester.pump();
+        // When: 손가락(touch)으로 빈 영역 down → up (탭)
+        final handled = manager.handlePointerDown(
+          makePointerDown(const Offset(200, 300)),
+        );
+        manager.handlePointerUp(makePointerUp(const Offset(200, 300)));
+        await tester.pump();
 
-          // Then: 에디터가 열리지 않고 이벤트도 소비되지 않는다
-          //       (kobic 쪽 페이지 스와이프/엣지 탭이 온전히 동작).
-          expect(
-            handled,
-            isFalse,
-            reason: '펜모드의 손가락은 페이지 탐색 담당 — 텍스트 생성 대상 아님',
-          );
-          expect(
-            widgetState.isEditingText,
-            isFalse,
-            reason: '인라인 에디터(키보드)가 열리면 안 된다 (UB-273 깜빡임 원인)',
-          );
-          expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
-        },
-      );
+        // Then: 에디터가 열리지 않고 이벤트도 소비되지 않는다
+        //       (kobic 쪽 페이지 스와이프/엣지 탭이 온전히 동작).
+        expect(handled, isFalse, reason: '펜모드의 손가락은 페이지 탐색 담당 — 텍스트 생성 대상 아님');
+        expect(
+          widgetState.isEditingText,
+          isFalse,
+          reason: '인라인 에디터(키보드)가 열리면 안 된다 (UB-273 깜빡임 원인)',
+        );
+        expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
+      });
 
-      testWidgets(
-        '손모드의 손가락 탭은 down이 아닌 up 시점에 에디터를 연다',
-        (tester) async {
-          // Given: 손모드 (손가락/마우스로 그리기/생성 가능)
-          await setPointerMode(tester, DrawingPointerMode.mouseOnly);
-          final manager = await buildManager(
-            tester,
-            onTextSelected: (_) {},
-            onTextDeselected: () {},
-          );
+      testWidgets('손모드의 손가락 탭은 down이 아닌 up 시점에 에디터를 연다', (tester) async {
+        // Given: 손모드 (손가락/마우스로 그리기/생성 가능)
+        await setPointerMode(tester, DrawingPointerMode.mouseOnly);
+        final manager = await buildManager(
+          tester,
+          onTextSelected: (_) {},
+          onTextDeselected: () {},
+        );
 
-          // When: 빈 영역 down
-          final handled = manager.handlePointerDown(
-            makePointerDown(const Offset(200, 300)),
-          );
+        // When: 빈 영역 down
+        final handled = manager.handlePointerDown(
+          makePointerDown(const Offset(200, 300)),
+        );
 
-          // Then: down 시점에는 아직 생성 보류 (스와이프일 수 있음)
-          expect(handled, isTrue, reason: '탭 후보로 이벤트 접수');
-          expect(
-            widgetState.isEditingText,
-            isFalse,
-            reason: 'down 즉시 에디터를 열면 스와이프 시작점마다 키보드가 깜빡인다',
-          );
+        // Then: down 시점에는 아직 생성 보류 (스와이프일 수 있음)
+        expect(handled, isTrue, reason: '탭 후보로 이벤트 접수');
+        expect(
+          widgetState.isEditingText,
+          isFalse,
+          reason: 'down 즉시 에디터를 열면 스와이프 시작점마다 키보드가 깜빡인다',
+        );
 
-          // When: 슬롭 이내 이동 후 up (진짜 탭)
-          manager.handlePointerUp(makePointerUp(const Offset(203, 302)));
-          await tester.pump();
+        // When: 슬롭 이내 이동 후 up (진짜 탭)
+        manager.handlePointerUp(makePointerUp(const Offset(203, 302)));
+        await tester.pump();
 
-          // Then: up 시점에 에디터가 열린다
-          expect(
-            widgetState.isEditingText,
-            isTrue,
-            reason: '슬롭 이내 탭으로 확정되면 인라인 에디터가 열려야 한다',
-          );
+        // Then: up 시점에 에디터가 열린다
+        expect(
+          widgetState.isEditingText,
+          isTrue,
+          reason: '슬롭 이내 탭으로 확정되면 인라인 에디터가 열려야 한다',
+        );
 
-          // Cleanup: 에디터 오버레이 정리 + 잔여 타이머(포커스 상실 지연 완료) flush
-          manager.dispose();
-          await tester.pump(const Duration(milliseconds: 200));
-          await setPointerMode(tester, DrawingPointerMode.penOnly); // 기본값 복원
-        },
-      );
+        // Cleanup: 에디터 오버레이 정리 + 잔여 타이머(포커스 상실 지연 완료) flush
+        manager.dispose();
+        await tester.pump(const Duration(milliseconds: 200));
+        await setPointerMode(tester, DrawingPointerMode.penOnly); // 기본값 복원
+      });
 
-      testWidgets(
-        '슬롭을 넘는 이동(페이지 스와이프)은 새 텍스트 생성을 취소한다',
-        (tester) async {
-          // Given: 손모드
-          await setPointerMode(tester, DrawingPointerMode.mouseOnly);
-          final manager = await buildManager(
-            tester,
-            onTextSelected: (_) {},
-            onTextDeselected: () {},
-          );
+      testWidgets('슬롭을 넘는 이동(페이지 스와이프)은 새 텍스트 생성을 취소한다', (tester) async {
+        // Given: 손모드
+        await setPointerMode(tester, DrawingPointerMode.mouseOnly);
+        final manager = await buildManager(
+          tester,
+          onTextSelected: (_) {},
+          onTextDeselected: () {},
+        );
 
-          // When: down → 수평 120px 이동(스와이프) → up
-          manager.handlePointerDown(makePointerDown(const Offset(200, 300)));
-          manager.handlePointerMove(makePointerMove(const Offset(320, 300)));
-          manager.handlePointerUp(makePointerUp(const Offset(340, 300)));
-          await tester.pump();
+        // When: down → 수평 120px 이동(스와이프) → up
+        manager.handlePointerDown(makePointerDown(const Offset(200, 300)));
+        manager.handlePointerMove(makePointerMove(const Offset(320, 300)));
+        manager.handlePointerUp(makePointerUp(const Offset(340, 300)));
+        await tester.pump();
 
-          // Then: 에디터가 열리지 않는다 (UB-273 핵심 시나리오)
-          expect(
-            widgetState.isEditingText,
-            isFalse,
-            reason: '스와이프는 텍스트 생성 탭이 아니다 — 키보드 깜빡임 방지',
-          );
-          expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
+        // Then: 에디터가 열리지 않는다 (UB-273 핵심 시나리오)
+        expect(
+          widgetState.isEditingText,
+          isFalse,
+          reason: '스와이프는 텍스트 생성 탭이 아니다 — 키보드 깜빡임 방지',
+        );
+        expect(scribbleNotifier.getCurrentTextDrawables(), isEmpty);
 
-          await setPointerMode(tester, DrawingPointerMode.penOnly); // 기본값 복원
-        },
-      );
+        await setPointerMode(tester, DrawingPointerMode.penOnly); // 기본값 복원
+      });
 
-      testWidgets(
-        '펜모드의 스타일러스 탭은 up 시점에 에디터를 연다',
-        (tester) async {
-          // Given: 펜모드
-          await setPointerMode(tester, DrawingPointerMode.penOnly);
-          final manager = await buildManager(
-            tester,
-            onTextSelected: (_) {},
-            onTextDeselected: () {},
-          );
+      testWidgets('펜모드의 스타일러스 탭은 up 시점에 에디터를 연다', (tester) async {
+        // Given: 펜모드
+        await setPointerMode(tester, DrawingPointerMode.penOnly);
+        final manager = await buildManager(
+          tester,
+          onTextSelected: (_) {},
+          onTextDeselected: () {},
+        );
 
-          // When: 스타일러스로 빈 영역 down → up (탭)
-          manager.handlePointerDown(
-            const PointerDownEvent(
-              kind: PointerDeviceKind.stylus,
-              position: Offset(200, 300),
-            ),
-          );
-          expect(
-            widgetState.isEditingText,
-            isFalse,
-            reason: 'down 시점에는 아직 생성 보류',
-          );
+        // When: 스타일러스로 빈 영역 down → up (탭)
+        manager.handlePointerDown(
+          const PointerDownEvent(
+            kind: PointerDeviceKind.stylus,
+            position: Offset(200, 300),
+          ),
+        );
+        expect(
+          widgetState.isEditingText,
+          isFalse,
+          reason: 'down 시점에는 아직 생성 보류',
+        );
 
-          manager.handlePointerUp(
-            const PointerUpEvent(
-              kind: PointerDeviceKind.stylus,
-              position: Offset(200, 300),
-            ),
-          );
-          await tester.pump();
+        manager.handlePointerUp(
+          const PointerUpEvent(
+            kind: PointerDeviceKind.stylus,
+            position: Offset(200, 300),
+          ),
+        );
+        await tester.pump();
 
-          // Then: 그리기 장치(스타일러스) 탭은 정상적으로 에디터를 연다
-          expect(
-            widgetState.isEditingText,
-            isTrue,
-            reason: '펜모드에서 스타일러스 탭의 텍스트 생성은 유지되어야 한다',
-          );
+        // Then: 그리기 장치(스타일러스) 탭은 정상적으로 에디터를 연다
+        expect(
+          widgetState.isEditingText,
+          isTrue,
+          reason: '펜모드에서 스타일러스 탭의 텍스트 생성은 유지되어야 한다',
+        );
 
-          // Cleanup: 에디터 오버레이 정리 + 잔여 타이머(포커스 상실 지연 완료) flush
-          manager.dispose();
-          await tester.pump(const Duration(milliseconds: 200));
-        },
-      );
+        // Cleanup: 에디터 오버레이 정리 + 잔여 타이머(포커스 상실 지연 완료) flush
+        manager.dispose();
+        await tester.pump(const Duration(milliseconds: 200));
+      });
     });
   });
 }
