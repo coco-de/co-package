@@ -1828,6 +1828,16 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
               _pendingTouchDowns.contains(event.pointer) &&
               widget.notifier.currentState.activePointerIds.isEmpty &&
               !pointerHandler.isEffectiveMultiTouch) {
+            // ⏱️ kobic#12374 후속(재드래그 레이스): 이 down 의 실제 처리
+            // (_processPointerDown → _beginResizeRotate/_prepareDrag)가 이제
+            // 막 일어난다는 것을 _handlePointerMove 의 "미처리 시 선택 해제"
+            // 폴백에 알려야 한다 — 그러지 않으면 손가락이 down 직후 30ms
+            // 안에 곧바로 움직이는(빠른 재드래그) 실사용 패턴에서, 그 초기
+            // move 이벤트들이 이 down 처리보다 먼저 도착해 "아무것도 처리된
+            // 것 없음"으로 오판되어 아직 준비도 되지 않은 드래그/변형을
+            // 선택 해제시킨다. 여기서 pending 마킹을 먼저 지워
+            // _handlePointerMove 의 가드가 이 창을 인식하게 한다.
+            _pendingTouchDowns.remove(event.pointer);
             _processPointerDown(event);
           }
         });
@@ -2212,7 +2222,19 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       if (!handled) {
         // 다른 도구로 실제 그리기가 시작될 때 텍스트 오버레이 숨기기
         // 단, 텍스트 드래그 준비 상태에서는 숨기지 않음
-        if (currentMode != InkModes.text && currentMode != InkModes.lasso) {
+        //
+        // ⏱️ kobic#12374 후속(재드래그 레이스): 이 포인터의 down 이 아직
+        // _processPointerDown 을 거치지 않았다면(터치 kTouchDelay 30ms 대기
+        // 중, _pendingTouchDowns 에 남아 있음) "미처리"는 사용자가 다른
+        // 곳을 그리려는 의도가 아니라 단지 down 처리가 아직 도착하지 않은
+        // 것뿐이다. 이미 선택된 텍스트박스를 빠르게(30ms 안에) 다시
+        // 드래그하는 실사용 패턴에서 이 초기 move 들이 먼저 도착해 아직
+        // _prepareDrag/_beginResizeRotate 가 세팅되기 전에 선택을 해제시켜
+        // 왔다 — 손가락 재드래그가 "이동은 되지만 깜빡이며 선택이 풀렸다
+        // 돌아온다"·핸들 재드래그가 "선택이 풀린다"로 보고된 근본 원인.
+        if (currentMode != InkModes.text &&
+            currentMode != InkModes.lasso &&
+            !_pendingTouchDowns.contains(event.pointer)) {
           if ((textManager.showTextOverlay ||
                   widgetState.selectedTextDrawable != null) &&
               !textManager.isDraggingText &&
