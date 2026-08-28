@@ -429,6 +429,11 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
           if (mounted) {
             setState(() {});
           }
+          // 호스트 앱의 손가락 포인터 라우팅 게이트(kobic#12374)가 참조하는
+          // 전역 플래그를 텍스트 매니저 상태와 동기화한다. showTextOverlay
+          // 는 선택/삭제/오버레이 숨김 등 모든 변경 경로에서 onStateChanged
+          // 와 함께 갱신되므로 이 한 지점에서 읽는 것으로 충분하다.
+          DrawingState().hasSelectedTextBox.value = textManager.showTextOverlay;
         },
         context: context,
         transformationController: transformationController,
@@ -3074,6 +3079,15 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       // 히스토리 적용 콜백 해제 (dispose된 State 참조 방지)
       widget.notifier.onHistoryApplied = null;
       widget.notifier.onScribbleFinished = null;
+
+      // 🔓 이 인스턴스가 손가락 라우팅 예외(kobic#12374)를 켜 둔 채라면
+      // 되돌린다 — 그러지 않으면 이 위젯이 사라진 뒤에도 다른 도구에서
+      // 손가락 입력이 계속 필기 레이어로 새어 들어간다. 다른
+      // ScribbleWidget 인스턴스(양면보기)가 동시에 선택을 갖고 있는
+      // 드문 경우에는 그 인스턴스가 나중에 다시 true 로 되돌린다.
+      if (textManager.showTextOverlay) {
+        drawingState.hasSelectedTextBox.value = false;
+      }
 
       // 편집 중이던 인라인 에디터 오버레이 제거 (좀비 UI/스테일 커밋 방지)
       textManager.dispose();

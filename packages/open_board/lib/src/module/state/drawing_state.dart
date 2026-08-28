@@ -49,8 +49,23 @@ class DrawingState {
 
   /// shape 도구의 타겟 도형(ShapeTargets). '' 이면 자유 도형(자동 인식),
   /// 'line'/'ellipse'/'rectangle' 이면 드래그 bounding-box 결정적 드로잉.
-  late ValueNotifier<String>
-  selectedShapeType; // ===== 하위 객체들 (Facade 패턴) =====
+  late ValueNotifier<String> selectedShapeType;
+
+  /// 텍스트박스가 현재 선택된 상태(변형/삭제/이동 오버레이 표시 중)인지.
+  ///
+  /// 호스트 앱의 손가락/마우스 포인터 라우팅 게이트(예:
+  /// `_shouldTrackAsPenPointer`)가 `selectedTool == .text` 조건보다 먼저
+  /// 참조해, 텍스트박스가 선택된 채로 다른 도구로 전환해도 그 컨트롤을
+  /// 손가락으로 계속 조작할 수 있게 한다 — 스타일러스는 도구 종류와
+  /// 무관하게 항상 필기 레이어로 라우팅되므로 이 예외가 없으면 손가락만
+  /// 무반응이 된다.
+  ///
+  /// `ScribbleWidget` 이 텍스트 매니저 상태 변경마다 동기화한다. 여러
+  /// `ScribbleWidget` 인스턴스(양면보기 등)가 동시에 존재할 수 있어 전역
+  /// 단일 boolean 으로는 근본적으로 정밀하지 않다 — 한 인스턴스의 선택
+  /// 해제가 다른 인스턴스의 선택을 가릴 수 있다. 현재 보고된 결함은 단일
+  /// 인스턴스 시나리오이므로 이 단순화를 채택한다.
+  late ValueNotifier<bool> hasSelectedTextBox; // ===== 하위 객체들 (Facade 패턴) =====
   final NotifierRegistry _registry = NotifierRegistry();
   late final StateSynchronizer _synchronizer = StateSynchronizer(_registry);
 
@@ -237,6 +252,7 @@ class DrawingState {
     selectedColor = ValueNotifier(Colors.black);
     selectedThickness = ValueNotifier(2.0);
     selectedShapeType = ValueNotifier('');
+    hasSelectedTextBox = ValueNotifier(false);
 
     // 🖊️ 필기 활동(획 시작) 틱 초기화
     _drawingActivityNotifier = ValueNotifier(0);
