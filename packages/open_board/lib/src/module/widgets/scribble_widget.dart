@@ -2530,7 +2530,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       // 2. 텍스트 오버레이 버튼 클릭 처리
       if (textManager.showTextOverlay &&
           widgetState.selectedTextDrawable != null) {
-        if (_handleTextOverlayButtons(position)) {
+        if (_handleTextOverlayButtons(position, event.position)) {
           return true;
         }
       }
@@ -2599,12 +2599,16 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
     }
 
     /// 텍스트 오버레이 버튼 처리
-    bool _handleTextOverlayButtons(Offset position) {
+    /// [localPosition]은 히트 판정용(getButtonType, 원본/로컬 좌표 그대로).
+    /// [globalPosition]은 PointerDownEvent.position — startTextResizeMode
+    /// (raw pointer 경로)가 onTextTransformStart와 동일한 좌표 변환을
+    /// 하려면 반드시 전역 좌표가 필요하다 (kobic UB-595).
+    bool _handleTextOverlayButtons(Offset localPosition, Offset globalPosition) {
       final selectedText = widgetState.selectedTextDrawable;
       if (selectedText == null) return false;
 
       // 🔥 scribble-tools 방식: 원본 화면 좌표 직접 사용
-      final adjustedPosition = position; // 변환 없이 원본 좌표 사용
+      final adjustedPosition = localPosition; // 변환 없이 원본 좌표 사용
 
       final buttonType = TextDrawablePainter.getButtonType(
         selectedText,
@@ -2616,8 +2620,9 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         setState(() {});
         return true;
       } else if (buttonType == 'transform') {
-        // 변형 버튼 클릭 시 변형 모드 시작 (드래그 준비 상태 설정)
-        textManager.startTextResizeMode(adjustedPosition); // 원본 좌표 직접 사용
+        // 변형 버튼 클릭 시 변형 모드 시작 — 전역 좌표로 전달해야
+        // onTextTransformStart 와 동일한 화면 좌표 변환을 거친다.
+        textManager.startTextResizeMode(globalPosition);
         return true;
       }
 

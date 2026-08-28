@@ -379,6 +379,84 @@ void main() {
       },
     );
 
+    testWidgets(
+      'kobic UB-595 (2차) — 위젯 GestureDetector(onTextTransformStart/Update)를 '
+      '한 번도 거치지 않아도(스타일러스에서 실측된 상황) 변형 핸들 드래그가 실제로 '
+      '확대 계산을 완결한다',
+      (tester) async {
+        // Given: 이 테스트는 raw pointer 경로(handlePointerDown/Move)만
+        //        호출하고 selection_overlay의 onPanStart/Update(위젯
+        //        GestureDetector 경로)는 절대 부르지 않는다 — 스타일러스
+        //        입력에서 위젯 아레나가 그 recognizer에 한 번도 넘어가지
+        //        않는 실측 상황과 동일한 호출 순서다.
+        final text = createTextDrawable(
+          id: 't1',
+          text: 'Hello World Testing',
+          x: 200,
+          y: 200,
+          fontSize: 24,
+        );
+        scribbleNotifier.addTextDrawable(text);
+
+        final manager = await buildManager(
+          tester,
+          onTextSelected: (_) {},
+          onTextDeselected: () {},
+        );
+
+        manager.handlePointerDown(makePointerDown(const Offset(200, 200)));
+        expect(manager.showTextOverlay, isTrue);
+
+        final originalFontSize = scribbleNotifier
+            .getCurrentTextDrawables()
+            .firstWhere((t) => t.id == 't1')
+            .fontSize;
+
+        // 변형 핸들(좌하단) 코너 좌표 — 위 UB-595(1차) 테스트와 동일한
+        // 공식(프로덕션의 _getTransformHandleCanvasPosition과 일치).
+        final textPainter = TextPainter(
+          text: TextSpan(text: text.text, style: text.style),
+          textAlign: TextAlign.left,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final center = text.position;
+        final halfWidth = textPainter.width / 2;
+        final halfHeight = textPainter.height / 2;
+        final corner = Offset(
+          center.dx - halfWidth - 4,
+          center.dy + halfHeight + 4,
+        );
+
+        // When: 변형 핸들을 누르고(raw pointer 경로가 _beginResizeRotate를
+        //       직접 호출), 중심에서 더 멀어지는 방향(코너가 중심에서 뻗은
+        //       방향 그대로 연장)으로 드래그한다. onTextTransformStart/Update
+        //       는 이 테스트 전체에서 한 번도 호출되지 않는다.
+        manager.handlePointerDown(makePointerDown(corner));
+        manager.handlePointerMove(
+          PointerMoveEvent(position: corner + const Offset(-20, 20)),
+        );
+
+        // Then: raw pointer 경로 스스로 확대 계산을 완결해 폰트 크기가
+        //       커져야 한다 — 이 2차 수정 이전에는 handlePointerMove의
+        //       _isTextResizing 분기가 `return true`만 하는 no-op이어서,
+        //       위젯 GestureDetector가 아레나를 이기지 못하면(스타일러스)
+        //       폰트 크기가 전혀 바뀌지 않았다(kobic UB-595 2차 — "핸들을
+        //       눌러도 회전/확대축소가 완전히 무반응").
+        final afterFontSize = scribbleNotifier
+            .getCurrentTextDrawables()
+            .firstWhere((t) => t.id == 't1')
+            .fontSize;
+        expect(
+          afterFontSize,
+          greaterThan(originalFontSize),
+          reason:
+              'kobic UB-595 (2차) — 위젯 GestureDetector의 onPanUpdate 없이 '
+              'raw pointer 경로만으로도 변형 핸들 드래그의 확대 계산이 '
+              '실제로 반영되어야 한다',
+        );
+      },
+    );
+
     group('UB-273 — 새 텍스트 생성 탭 확정/장치 정책 회귀 가드', () {
       /// DrawingState(전역 싱글턴)의 pointerMode를 변경하고, 변경 리스너가
       /// 스케줄하는 영속화 디바운스(50ms Future.delayed)를 flush한다.

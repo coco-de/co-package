@@ -155,6 +155,7 @@ class TextInteractionManager {
 
       final controlAreaResult = _handleControlAreaTouch(
         event.localPosition,
+        event.position,
         selectedText,
       );
       if (controlAreaResult != null) {
@@ -239,12 +240,34 @@ class TextInteractionManager {
       _pendingNewTextTap = null;
     }
 
-    // 텍스트 변형(스케일/회전)은 selection_overlay의 GestureDetector에서
-    // onTextTransformStart/Update가 화면 좌표 기준으로 처리한다.
-    // 여기 raw pointer 경로에서 중복 처리하면 좌표 공간이 어긋나
-    // 재선택 시 텍스트 위치가 틀어지는 부작용이 있어 제거함.
+    // 텍스트 변형(스케일/회전) 진행 중 — raw pointer 경로가 직접 계산을
+    // 완결한다 (kobic UB-595).
+    //
+    // ⚠️ 과거에는 이 raw pointer 경로가 아무 것도 하지 않고 selection_overlay
+    // 의 GestureDetector(onTextTransformStart/Update)에만 의존했다 — 그런데
+    // 그 위젯 아레나 승리는 손가락에서는 대체로 성립했지만(ScribbleWidget이
+    // touch down을 kTouchDelay(30ms) 지연 처리하는 동안 위젯 recognizer가
+    // 먼저 슬롭을 넘겨 이기는 경우가 많았다), **스타일러스는 down이 지연
+    // 없이 동기 처리**되어 raw pointer 경로(getButtonType→
+    // startTextResizeMode)가 먼저 `_isTextResizing=true`를 세팅하는데,
+    // selection_overlay의 PanGestureRecognizer가 그 뒤로 한 번도 아레나를
+    // 이기지 못해 onTextTransformUpdate가 전혀 호출되지 않았다 — 핸들을
+    // 눌러도 회전/확대축소가 완전히 무반응이 되는 실측 재현.
+    //
+    // [_applyResizeRotate]는 onTextTransformUpdate와 동일한 좌표 변환
+    // (this.context 의 RenderBox 기준 globalToLocal)을 거치므로, 위젯
+    // 아레나가 이겼든 raw pointer 경로가 먼저 처리했든 항상 같은 결과를
+    // 낸다 — 둘 중 어느 쪽이 이겨도 안전(idempotent)하다.
     if (_isTextResizing) {
-      return true; // 변형 중에는 다른 처리 차단
+      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox != null &&
+          _originalTextCenter != null &&
+          _originalFontSize != null &&
+          _transformHandler.isResizeRotating) {
+        final localPosition = renderBox.globalToLocal(event.position);
+        _applyResizeRotate(localPosition);
+      }
+      return true; // 변형 중에는 다른 처리(드래그 준비 등) 차단
     }
 
     // 텍스트 드래그 준비 상태에서 임계값 확인
@@ -328,19 +351,13 @@ class TextInteractionManager {
 
   /// 드래그/변형/준비 상태를 종료하고 정리 (up/cancel 공용)
   bool _releasePointer() {
-    // 텍스트 변형 완료 처리 (올가미 매니저와 동일한 방식)
+    // 텍스트 변형 완료 처리 — raw pointer 경로가 계산을 완결했으므로
+    // (kobic UB-595) 종료도 onTextTransformEnd와 동일한 [_finishResizeRotate]
+    // 로 커밋한다. 과거 이 분기는 undo 히스토리 커밋(setScribble
+    // addToUndoHistory: true)을 빠뜨리고 있었다 — raw pointer 경로만으로
+    // 크기조절이 완료돼도 실행취소 스택에 기록되지 않는 결함이었다.
     if (_isTextResizing) {
-      _isTextResizing = false;
-
-      // TransformHandler 크기조절/회전 상태 종료
-      _transformHandler.endResizeRotate();
-
-      // 변형 관련 변수들 초기화
-      _originalTextCenter = null;
-      _originalFontSize = null;
-
-      _syncWithWidgetState();
-      onStateChanged();
+      _finishResizeRotate();
       return true;
     }
 
@@ -403,43 +420,21 @@ class TextInteractionManager {
   }
 
   /// 텍스트 크기조절 모드 시작 (변형 버튼 드래그 시작)
-  void startTextResizeMode(Offset position) {
-    if (_selectedTextIndex == null ||
-        _selectedTextIndex! >= textDrawables.length) {
-      return;
-    }
-
-    final textDrawable = textDrawables[_selectedTextIndex!];
-
-    // 텍스트 중심점 계산 (올가미와 동일한 방식)
-    final bounds = _getTextBounds(textDrawable);
-    _originalTextCenter = bounds.center;
-
-    // 원본 폰트 크기 저장
-    _originalFontSize = textDrawable.style.fontSize ?? 16.0;
-
-    // 기존 회전 각도를 현재 회전으로 설정 (안전한 접근)
-    double currentRotation = 0.0;
-    try {
-      currentRotation = textDrawable.rotation;
-    } on Exception {
-      // rotation 필드가 없거나 접근할 수 없는 경우 기본값 사용
-      currentRotation = 0.0;
-    }
-
-    // TransformHandler로 크기조절/회전 시작
-    _transformHandler.startResizeRotate(
-      position,
-      _originalTextCenter!,
-      initialRotation: currentRotation,
-    );
-
-    _isTextResizing = true;
-
-    // widgetState 동기화
-    _syncWithWidgetState();
-
-    onStateChanged();
+  /// 텍스트 크기조절 모드 시작 — raw pointer 경로(getButtonType 히트 판정
+  /// 직후, ScribbleWidget._handlePointerDown 에서 호출).
+  ///
+  /// [globalPosition]은 [PointerDownEvent.position](전역 화면 좌표)이어야
+  /// 한다. [onTextTransformStart](위젯 GestureDetector 경로)와 동일한
+  /// [_beginResizeRotate] 를 공유해 좌표 공간을 일치시킨다 — 어긋나면
+  /// 재선택 시 텍스트 위치가 틀어지는 부작용이 있다(과거 raw pointer
+  /// 경로가 제거됐던 이유). kobic UB-595: 이 raw pointer 경로가 상태만
+  /// 세팅하고 실제 변형 계산은 selection_overlay 의 GestureDetector에만
+  /// 있던 구조에서, 그 GestureDetector 가 스타일러스 입력에 대해 아레나를
+  /// 이기지 못해 "핸들을 눌러도 아무 반응이 없다" 증상이 발생했다 — raw
+  /// pointer 경로(handlePointerMove/_releasePointer)가 스스로 계산을
+  /// 완결하도록 만들어 위젯 아레나 승패와 무관하게 항상 동작하게 한다.
+  void startTextResizeMode(Offset globalPosition) {
+    _beginResizeRotate(globalPosition);
   }
 
   /// 텍스트 오버레이 숨기기
@@ -463,8 +458,25 @@ class TextInteractionManager {
     onStateChanged();
   }
 
-  /// 텍스트 변형 시작 (올가미와 동일한 방식)
+  /// 텍스트 변형 시작 (위젯 GestureDetector 경로 — selection_overlay 의
+  /// onPanStart). [_beginResizeRotate] 를 그대로 위임한다.
+  ///
+  /// [context] 파라미터는 과거 API 호환용으로 남기지만, 실제로는
+  /// 생성자로 주입된 [this.context] 와 항상 동일한 인스턴스다
+  /// (ScribbleWidget.build 의 같은 클로저 스코프에서 왔다) — 그래서
+  /// [_beginResizeRotate] 는 파라미터를 무시하고 [this.context] 를 쓴다.
   void onTextTransformStart(DragStartDetails details, BuildContext context) {
+    _beginResizeRotate(details.globalPosition);
+  }
+
+  /// 텍스트 크기조절/회전 시작 — 공유 코어.
+  ///
+  /// raw pointer 경로([startTextResizeMode])와 위젯 GestureDetector 경로
+  /// ([onTextTransformStart]) 가 **반드시 동일한 좌표 변환**을 거쳐야 한다.
+  /// 하나라도 어긋나면 재선택 시 텍스트 위치가 틀어지는 부작용이
+  /// 있었다(과거 raw pointer 경로가 제거됐던 이유 — 위 handlePointerMove
+  /// 주석 참조).
+  void _beginResizeRotate(Offset globalPosition) {
     if (_selectedTextIndex == null ||
         _selectedTextIndex! >= textDrawables.length) {
       return;
@@ -483,7 +495,7 @@ class TextInteractionManager {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
-    final localPosition = renderBox.globalToLocal(details.globalPosition);
+    final localPosition = renderBox.globalToLocal(globalPosition);
 
     // 변형 핸들의 캔버스 좌표 (회전된 좌하단 모서리)
     final canvasButtonPosition = _getTransformHandleCanvasPosition(
@@ -514,7 +526,10 @@ class TextInteractionManager {
     onStateChanged();
   }
 
-  /// 텍스트 변형 업데이트 (TransformHandler 사용)
+  /// 텍스트 변형 업데이트 — 위젯 GestureDetector 경로(selection_overlay
+  /// 의 onPanUpdate). [_applyResizeRotate] 를 그대로 위임한다.
+  ///
+  /// [context] 는 [onTextTransformStart] 와 동일한 이유로 무시한다.
   void onTextTransformUpdate(DragUpdateDetails details, BuildContext context) {
     if (_selectedTextIndex == null ||
         _originalTextCenter == null ||
@@ -524,13 +539,18 @@ class TextInteractionManager {
       return;
     }
 
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox = this.context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
+    final localPosition = renderBox.globalToLocal(details.globalPosition);
+    _applyResizeRotate(localPosition);
+  }
+
+  /// 텍스트 크기조절/회전 갱신 — 공유 코어. [localPosition] 은 이미
+  /// [this.context] 의 RenderBox 기준으로 변환된 화면 로컬 좌표여야 한다.
+  void _applyResizeRotate(Offset localPosition) {
     final textDrawable = textDrawables[_selectedTextIndex!];
 
-    // 화면 좌표에서 핸들이 있어야 할 위치
-    final localPosition = renderBox.globalToLocal(details.globalPosition);
     final currentButtonPosition =
         localPosition + (_touchToButtonOffset ?? Offset.zero);
 
@@ -603,6 +623,13 @@ class TextInteractionManager {
 
   /// 텍스트 변형 종료 (TransformHandler 사용)
   void onTextTransformEnd(DragEndDetails details) {
+    _finishResizeRotate();
+  }
+
+  /// 텍스트 크기조절/회전 종료 — 공유 코어. raw pointer 경로
+  /// ([_releasePointer])와 위젯 GestureDetector 경로
+  /// ([onTextTransformEnd]) 가 동일하게 undo 히스토리를 커밋한다.
+  void _finishResizeRotate() {
     // 최종 변환 완료 - 히스토리에 저장
     if (_selectedTextIndex != null &&
         _selectedTextIndex! < textDrawables.length) {
@@ -1247,19 +1274,21 @@ class TextInteractionManager {
   /// 컨트롤 영역 터치 처리 메서드 (회전된 텍스트 지원)
   ///
   /// 이 raw pointer 판정은 [selection_overlay.dart]의 위젯 트리
-  /// `GestureDetector`(`handleSize`)와 **동일한 반경**을 써야 한다. 실제
-  /// 크기조절/회전 드래그는 그 `GestureDetector`의 `onPanStart/Update`가
-  /// 처리하고, 여기서는 오직 "이 터치는 컨트롤 영역이니 텍스트
-  /// 드래그(이동) 준비로 진행하지 말라"는 선점 차단 역할만 한다. 두 반경이
-  /// 어긋나면, 위젯 쪽은 핸들 터치로 인식해 `onPanStart`를 기다리는데 이
-  /// raw 경로는 놓쳐서 그 사이 `handlePointerMove`의 낮은 이동
-  /// 임계값(15px, 게임 아레나 밖에서 즉시 발동)이 위젯의
-  /// `PanGestureRecognizer`(아레나 기반, 기본 slop ~36px)보다 먼저 이겨
-  /// "크기조절 대신 이동"이 발생한다(kobic UB-595). `buttonSize`는 시각
-  /// 버튼(35px)이 아니라 [selection_overlay.dart]의 `handleSize`와
-  /// 일치시킨다 — 시각 버튼보다 넓은 터치 영역은 의도된 UX(가장자리 탭
-  /// 무반응 방지)이고, 그 여유가 두 판정 모두에 동일하게 적용돼야 한다.
-  bool? _handleControlAreaTouch(Offset position, TextDrawable textDrawable) {
+  /// `GestureDetector`(`handleSize`)와 **동일한 반경**을 쓴다. `buttonSize`는
+  /// 시각 버튼(35px)이 아니라 그 `handleSize`와 일치시킨다 — 시각 버튼보다
+  /// 넓은 터치 영역은 의도된 UX(가장자리 탭 무반응 방지)이고, 그 여유가 두
+  /// 판정 모두에 동일하게 적용돼야 한다.
+  ///
+  /// 변형 버튼 히트 시 [_beginResizeRotate] 를 직접 호출해 raw pointer
+  /// 경로 스스로 크기조절/회전을 완결한다(kobic UB-595) — 위젯
+  /// GestureDetector([selection_overlay.dart]의 `onPanStart`)가 아레나를
+  /// 이기지 못해도(특히 스타일러스에서 관측됨) 항상 동작해야 하기 때문이다.
+  /// [globalPosition]은 [PointerDownEvent.position] 이어야 한다.
+  bool? _handleControlAreaTouch(
+    Offset position,
+    Offset globalPosition,
+    TextDrawable textDrawable,
+  ) {
     const buttonSize = selectionHandleTouchSize;
     const buttonRadius = buttonSize / 2;
 
@@ -1282,8 +1311,7 @@ class TextInteractionManager {
     final transformButtonDistance =
         (adjustedPosition - buttonPositions['transform']!).distance;
     if (transformButtonDistance <= scaledButtonRadius) {
-      _isTextResizing = true;
-      onStateChanged();
+      _beginResizeRotate(globalPosition);
       return true; // 이벤트 처리 완료 (텍스트 드래그 방지)
     }
 
@@ -1351,48 +1379,6 @@ class TextInteractionManager {
       'delete': rotatedCorners[1], // 우상단
       'transform': rotatedCorners[3], // 좌하단
     };
-  }
-
-  /// 텍스트 바운딩 박스 계산 (TextDrawablePainter.getTextBounds와 동일)
-  Rect _getTextBounds(TextDrawable textDrawable) {
-    final textSpan = buildLinkAwareTextSpan(textDrawable);
-
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: textDrawable.alignment.textAlign,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-
-    // 텍스트 정렬에 따른 렌더링 위치 계산
-    Offset renderPosition = textDrawable.position;
-    switch (textDrawable.alignment) {
-      case TextAlignment.center:
-        renderPosition = Offset(
-          textDrawable.position.dx - textPainter.width / 2,
-          textDrawable.position.dy - textPainter.height / 2,
-        );
-        break;
-      case TextAlignment.right:
-        renderPosition = Offset(
-          textDrawable.position.dx - textPainter.width,
-          textDrawable.position.dy - textPainter.height / 2,
-        );
-        break;
-      case TextAlignment.left:
-        renderPosition = Offset(
-          textDrawable.position.dx,
-          textDrawable.position.dy - textPainter.height / 2,
-        );
-        break;
-    }
-
-    return Rect.fromLTWH(
-      renderPosition.dx,
-      renderPosition.dy,
-      textPainter.width,
-      textPainter.height,
-    );
   }
 }
 
