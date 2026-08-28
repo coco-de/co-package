@@ -29,6 +29,30 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      # `example/` 이 private git 의존성(open-epub, ref 고정 커밋)을 갖고 있어
+      # `flutter pub get` 이 example 을 함께 resolve 하며 pub 캐시 리포를
+      # fetch 한다. 이 fetch 는 별개 git 프로세스라 checkout 의 로컬 자격증명을
+      # 보지 못하고, self-hosted 러너(launchd 데몬 세션)는 gh 의 Keychain
+      # 토큰에도 접근하지 못해 "could not read Username for
+      # 'https://github.com': Device not configured" 로 죽는다 — 러너의
+      # pub-cache 에 해당 커밋이 이미 있느냐에 따라 복불복으로 통과해 왔다
+      # (kobic#8433 실측과 동일 실패, unibook `git-auth-pub-deps` composite 와
+      # 같은 처방). 러너 fleet 은 한 호스트에 여러 인스턴스가 공유
+      # `$HOME/.gitconfig` 를 가지므로, lock 경합을 피해 인스턴스별
+      # GIT_CONFIG_GLOBAL 에 토큰 insteadOf 를 주입한다.
+      - name: 🔐 Private git 의존성 pub get 인증 주입
+        run: |
+          GIT_CONFIG_PATH="$HOME/.gitconfig-${RUNNER_NAME:-default}"
+          echo "GIT_CONFIG_GLOBAL=$GIT_CONFIG_PATH" >> "$GITHUB_ENV"
+          export GIT_CONFIG_GLOBAL="$GIT_CONFIG_PATH"
+
+          # stale lock 파일 정리 (이전 빌드 비정상 종료 시 잔여)
+          rm -f "${GIT_CONFIG_PATH}.lock" 2>/dev/null || true
+
+          git config --global \
+            url."https://x-access-token:${{ secrets.SUBMODULE_TOKEN }}@github.com/".insteadOf \
+            "https://github.com/"
+
       - name: Install dependencies
         run: |
           # workspace resolution 임시 제거 (standalone 빌드용)
