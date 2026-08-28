@@ -2670,21 +2670,24 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       );
 
       if (isInTextArea) {
-        // 🔥 텍스트 모드일 때는 항상 텍스트 매니저로 이벤트 전달 (더블탭 감지용)
-        final currentMode = widget.modeNotifier.state.inkGroupInfo.selectedInk;
-        if (currentMode == InkModes.text) {
-          final handled = textManager.handlePointerDown(event);
+        // 🔥 텍스트 매니저로 항상 이벤트 전달(더블탭 편집 감지 + 드래그
+        // 준비). kobic#12374: 과거에는 도구가 text 일 때만 전달하고 다른
+        // 도구에서는 "선택 상태만 유지"(no-op)했다 — raw pointer 경로가
+        // _prepareDrag 를 호출하지 않으니 handlePointerMove 는 "처리된
+        // 것 없음"으로 판정해 hideTextOverlayAndDeselect 를 발동시켰고,
+        // 그 사이 위젯 GestureDetector(selection_overlay 의 이동 영역)가
+        // 콘텐츠 팬/페이지 넘김 제스처와 아레나를 다퉈 패배하면 텍스트박스
+        // 이동 대신 페이지가 넘어갔다. 텍스트 모드와 동일하게 raw pointer
+        // 경로가 항상 드래그를 준비하도록 통일해 아레나 승패와 무관하게
+        // 동작하게 한다 — 더블탭 편집은 이미 도구와 무관하게 동작해도
+        // 문제 없는 것으로 확인됨.
+        final handled = textManager.handlePointerDown(event);
 
-          if (handled) {
-            setState(() {});
-          }
-          // 🔥 항상 true 반환 (텍스트 매니저가 처리했든 안했든 이벤트는 소비됨)
-          return true;
-        } else {
-          // 다른 모드에서는 기존 로직 유지 (선택 상태만 유지)
-
-          return true;
+        if (handled) {
+          setState(() {});
         }
+        // 🔥 항상 true 반환 (텍스트 매니저가 처리했든 안했든 이벤트는 소비됨)
+        return true;
       }
       return false;
     }
