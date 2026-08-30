@@ -937,7 +937,7 @@ class LassoSelectionManager {
       text: textSpan,
       textAlign: textDrawable.alignment.textAlign,
       textDirection: TextDirection.ltr,
-    )..layout();
+    )..layout(maxWidth: textDrawable.layoutMaxWidth);
 
     final center = textDrawable.position;
     final halfW = tp.width / 2;

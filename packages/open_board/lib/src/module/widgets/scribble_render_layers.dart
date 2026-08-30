@@ -276,7 +276,7 @@ class ScribbleRenderLayers {
       textAlign: textDrawable.alignment.textAlign,
       textDirection: TextDirection.ltr,
     );
-    textPainter.layout();
+    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
     final center = textDrawable.position;
     final halfWidth = textPainter.width / 2;

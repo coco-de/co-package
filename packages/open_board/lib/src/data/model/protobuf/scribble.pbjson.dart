@@ -186,6 +186,7 @@ const TextDrawable$json = {
       '6': '.TextLinkSpan',
       '10': 'linkSpans'
     },
+    {'1': 'maxWidth', '3': 17, '4': 1, '5': 1, '10': 'maxWidth'},
   ],
 };
 
@@ -198,7 +199,8 @@ final $typed_data.Uint8List textDrawableDescriptor = $convert.base64Decode(
     'cmxpbmVkGAogASgIUgxpc1VuZGVybGluZWQSHAoJdGV4dEFsaWduGAsgASgJUgl0ZXh0QWxpZ2'
     '4SFgoGaGlkZGVuGAwgASgIUgZoaWRkZW4SHAoJY3JlYXRlZEF0GA0gASgJUgljcmVhdGVkQXQS'
     'HAoJdXBkYXRlZEF0GA4gASgJUgl1cGRhdGVkQXQSGgoIcm90YXRpb24YDyABKAFSCHJvdGF0aW'
-    '9uEisKCWxpbmtTcGFucxgQIAMoCzINLlRleHRMaW5rU3BhblIJbGlua1NwYW5z');
+    '9uEisKCWxpbmtTcGFucxgQIAMoCzINLlRleHRMaW5rU3BhblIJbGlua1NwYW5zEhoKCG1heFdp'
+    'ZHRoGBEgASgBUghtYXhXaWR0aA==');
 
 @$core.Deprecated('Use imageDrawableDescriptor instead')
 const ImageDrawable$json = {

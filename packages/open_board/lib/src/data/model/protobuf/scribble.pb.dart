@@ -743,8 +743,11 @@ class TextLinkSpan extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearEnd() => $_clearField(2);
 
-  /// / External web URL (e.g. `https://...`). Interpretation/opening is delegated
-  /// / to the host application (e.g. kobic), consistent with `ImageDrawable.source`.
+  /// / Link target. Interpretation/opening is delegated to the host application
+  /// / (e.g. kobic), consistent with `ImageDrawable.source`:
+  /// /   - External web URL (e.g. `https://...`) — host opens in a browser.
+  /// /   - In-document page link `page:N` (1-based) — host navigates to page N
+  /// /     (`jumpToPage`). (#7222)
   @$pb.TagNumber(3)
   $core.String get url => $_getSZ(2);
   @$pb.TagNumber(3)
@@ -773,6 +776,7 @@ class TextDrawable extends $pb.GeneratedMessage {
     $core.String? updatedAt,
     $core.double? rotation,
     $core.Iterable<TextLinkSpan>? linkSpans,
+    $core.double? maxWidth,
   }) {
     final result = create();
     if (id != null) result.id = id;
@@ -791,6 +795,7 @@ class TextDrawable extends $pb.GeneratedMessage {
     if (updatedAt != null) result.updatedAt = updatedAt;
     if (rotation != null) result.rotation = rotation;
     if (linkSpans != null) result.linkSpans.addAll(linkSpans);
+    if (maxWidth != null) result.maxWidth = maxWidth;
     return result;
   }
 
@@ -823,6 +828,7 @@ class TextDrawable extends $pb.GeneratedMessage {
     ..aD(15, _omitFieldNames ? '' : 'rotation')
     ..pPM<TextLinkSpan>(16, _omitFieldNames ? '' : 'linkSpans',
         protoName: 'linkSpans', subBuilder: TextLinkSpan.create)
+    ..aD(17, _omitFieldNames ? '' : 'maxWidth', protoName: 'maxWidth')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -982,6 +988,21 @@ class TextDrawable extends $pb.GeneratedMessage {
   /// / Inline external hyperlink spans over ranges of [text] (kobic #7162).
   @$pb.TagNumber(16)
   $pb.PbList<TextLinkSpan> get linkSpans => $_getList(15);
+
+  /// / Soft-wrap layout width in canvas units, captured from the inline editor
+  /// / at commit time (kobic unibook#12538/#12548 — UB-627/UB-632). Static
+  /// / rendering lays the text out with this as `maxWidth` so the line breaks
+  /// / visible during editing survive the commit. 0 = unset/legacy — render
+  /// / with unbounded width exactly as before (pre-existing drawables keep
+  /// / their old appearance).
+  @$pb.TagNumber(17)
+  $core.double get maxWidth => $_getN(16);
+  @$pb.TagNumber(17)
+  set maxWidth($core.double value) => $_setDouble(16, value);
+  @$pb.TagNumber(17)
+  $core.bool hasMaxWidth() => $_has(16);
+  @$pb.TagNumber(17)
+  void clearMaxWidth() => $_clearField(17);
 }
 
 /// / Image drawable on the canvas. The actual bytes/decoding are resolved by the

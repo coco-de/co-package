@@ -66,6 +66,22 @@ extension TextDrawableExtensions on TextDrawable {
       ..updatedAt = DateTime.now().toIso8601String();
   }
 
+  /// 정적 렌더링·히트테스트에서 쓸 레이아웃 최대 폭.
+  ///
+  /// 인라인 에디터가 커밋 시점의 실제 줄바꿈 폭을 [maxWidth] 에 기록한다.
+  /// 이 값 없이 무제한 폭으로 재레이아웃하면 편집 중 보이던 소프트 줄바꿈이
+  /// 확정 순간 전부 풀린다 (kobic unibook#12538/#12548 — UB-627/UB-632).
+  /// 0 은 미기록(레거시) 데이터이며 종전과 동일하게 무제한 폭으로 렌더링한다.
+  double get layoutMaxWidth => maxWidth > 0 ? maxWidth : double.infinity;
+
+  /// Create a copy with updated soft-wrap layout width
+  TextDrawable copyWithMaxWidth(double newMaxWidth) {
+    return TextDrawable()
+      ..mergeFromMessage(this)
+      ..maxWidth = newMaxWidth
+      ..updatedAt = DateTime.now().toIso8601String();
+  }
+
   /// Create a copy with updated inline hyperlink spans.
   TextDrawable copyWithLinkSpans(Iterable<TextLinkSpan> newLinkSpans) {
     return TextDrawable()

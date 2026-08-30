@@ -68,6 +68,10 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     with WidgetsBindingObserver {
   late LinkAwareTextEditingController textEditingController;
   late FocusNode textFieldNode;
+
+  /// 커밋 시점에 TextField 의 실제 폭(= 소프트 줄바꿈 폭)을 측정하기 위한 키
+  /// (kobic unibook#12538/#12548).
+  final GlobalKey _textFieldKey = GlobalKey();
   double bottomViewInsets = 0;
   bool disposed = false;
   bool _isCompleting = false; // 편집 완료 중인지 추적 (중복 호출 방지)
@@ -384,12 +388,26 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       );
       final finalSpans = sanitizeLinkSpans(adjustedSpans, text.length);
 
+      // 편집 중 TextField 가 실제로 줄바꿈하던 폭(캔버스 단위)을 함께 기록한다.
+      // 이 값 없이 확정 후 무제한 폭으로 재레이아웃하면 편집 중 보이던 소프트
+      // 줄바꿈이 전부 풀려 텍스트가 화면을 초과한다
+      // (kobic unibook#12538/#12548 — UB-627/UB-632).
+      // 측정 실패 시 0(미기록)으로 남겨 종전 동작(무제한 폭)으로 폴백한다.
+      var wrapWidth = 0.0;
+      final fieldBox =
+          _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+      if (fieldBox != null && fieldBox.hasSize) {
+        // contentPadding(horizontal: 4) 안쪽이 실제 줄바꿈 폭이다.
+        wrapWidth = math.max(0.0, (fieldBox.size.width - 8) / widget.scale);
+      }
+
       final drawable = widget.drawable
           .copyWithText(text)
           .copyWithStyle(style)
           .copyWithAlignment(alignment)
           .copyWithHidden(false)
-          .copyWithLinkSpans(finalSpans);
+          .copyWithLinkSpans(finalSpans)
+          .copyWithMaxWidth(wrapWidth);
 
       widget.onComplete(drawable);
     } on Exception catch (error, stackTrace) {
@@ -634,6 +652,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                     // 텍스트 필드
                     Expanded(
                       child: TextField(
+                        key: _textFieldKey,
                         controller: textEditingController,
                         focusNode: textFieldNode,
                         contextMenuBuilder: _buildContextMenu,

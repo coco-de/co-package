@@ -35,7 +35,7 @@ TextLinkSpan? _linkInDrawable(TextDrawable drawable, Offset canvasPoint) {
     text: buildLinkAwareTextSpan(drawable),
     textAlign: drawable.alignment.textAlign,
     textDirection: TextDirection.ltr,
-  )..layout();
+  )..layout(maxWidth: drawable.layoutMaxWidth);
 
   final width = textPainter.width;
   final height = textPainter.height;

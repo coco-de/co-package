@@ -591,7 +591,7 @@ class TextInteractionManager {
       text: textSpan,
       textAlign: textDrawable.alignment.textAlign,
       textDirection: TextDirection.ltr,
-    )..layout();
+    )..layout(maxWidth: textDrawable.layoutMaxWidth);
 
     final center = textDrawable.position;
     final halfWidth = tp.width / 2;
@@ -1008,7 +1008,7 @@ class TextInteractionManager {
       textAlign: textDrawable.alignment.textAlign,
       textDirection: TextDirection.ltr,
     );
-    textPainter.layout();
+    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
     if (rotation == 0.0) {
       // 회전이 없는 경우 기존 방식
@@ -1328,7 +1328,7 @@ class TextInteractionManager {
       textAlign: textDrawable.alignment.textAlign,
       textDirection: TextDirection.ltr,
     );
-    textPainter.layout();
+    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
     final center = textDrawable.position;
     final halfWidth = textPainter.width / 2;

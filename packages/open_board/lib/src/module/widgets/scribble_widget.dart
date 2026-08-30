@@ -8,6 +8,7 @@
   import 'package:flutter/services.dart';
   import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
+import 'package:open_board/src/module/text/text_drawable_extensions.dart';
   import 'package:open_board/src/core/utils/measure_size.dart';
   import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_board/src/module/lasso/lasso_selection_manager.dart';
@@ -2808,7 +2809,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         textAlign: textAlign,
         textDirection: TextDirection.ltr,
       );
-      textPainter.layout();
+      textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
       // 텍스트 위치 (x, y)
       final position = Offset(textDrawable.x, textDrawable.y);

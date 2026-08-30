@@ -113,6 +113,13 @@ message TextDrawable {
   double rotation = 15 [json_name="rotation"];
   /// Inline external hyperlink spans over ranges of [text] (kobic #7162).
   repeated TextLinkSpan linkSpans = 16 [json_name="linkSpans"];
+  /// Soft-wrap layout width in canvas units, captured from the inline editor
+  /// at commit time (kobic unibook#12538/#12548 — UB-627/UB-632). Static
+  /// rendering lays the text out with this as `maxWidth` so the line breaks
+  /// visible during editing survive the commit. 0 = unset/legacy — render
+  /// with unbounded width exactly as before (pre-existing drawables keep
+  /// their old appearance).
+  double maxWidth = 17 [json_name="maxWidth"];
 }
 
 /// Image drawable on the canvas. The actual bytes/decoding are resolved by the

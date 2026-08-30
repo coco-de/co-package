@@ -59,7 +59,7 @@ class TextDrawablePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
 
-    textPainter.layout();
+    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
     // Calculate position based on alignment
     Offset position = textDrawable.position;
@@ -149,7 +149,7 @@ class TextDrawablePainter extends CustomPainter {
         textAlign: textDrawable.alignment.textAlign,
         textDirection: TextDirection.ltr,
       );
-      textPainter.layout();
+      textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
       final center = textDrawable.position;
       final halfWidth = textPainter.width / 2;
@@ -208,7 +208,7 @@ class TextDrawablePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
 
-    textPainter.layout();
+    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
     // Calculate position based on alignment
     Offset position = textDrawable.position;
@@ -287,7 +287,7 @@ class TextDrawablePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
 
-    textPainter.layout();
+    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
     // 회전이 있는 경우와 없는 경우 모두 중심점 기준으로 처리
     final textCenter = textDrawable.position;
@@ -595,7 +595,7 @@ class TextDrawablePainter extends CustomPainter {
       textAlign: textDrawable.alignment.textAlign,
       textDirection: TextDirection.ltr,
     );
-    textPainter.layout();
+    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
 
     final center = textDrawable.position;
     final halfWidth = textPainter.width / 2;
