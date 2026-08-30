@@ -6,6 +6,7 @@ import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
+import 'package:open_board/src/module/text/inline_text_editor.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_interaction_manager.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
@@ -614,6 +615,157 @@ void main() {
         manager.dispose();
         await tester.pump(const Duration(milliseconds: 200));
       });
+    });
+  });
+
+  group('kobic UB-626 / #12409 — Overlay 조상 스케일 변환 회귀 가드', () {
+    late ScribbleNotifier scribbleNotifier;
+    late ScribbleModeNotifier modeNotifier;
+    late ScribbleWidgetState widgetState;
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      scribbleNotifier = ScribbleNotifier(scribble: createScribble());
+      modeNotifier = ScribbleModeNotifier();
+      widgetState = ScribbleWidgetState();
+      DrawingState().pointerMode.value = DrawingPointerMode.mouseOnly;
+    });
+
+    tearDown(() {
+      scribbleNotifier.dispose();
+      modeNotifier.dispose();
+      widgetState.dispose();
+    });
+
+    /// `ResponsiveScaledBox`(kobic `app/unibook/lib/app/app.dart`)가 태블릿
+    /// 폭 구간 기기에서 실제로 만드는 상황을 최소 재현한다 — Overlay 가
+    /// `Transform.scale` 조상 **안쪽**에 있는 트리. 실기기(SM-X610, 세로)
+    /// 실측 배율은 752.9/800 ≈ 0.9411 이었다.
+    ///
+    /// [Transform.scale] 의 alignment 를 topLeft 로 고정해 RepaintBoundary 의
+    /// origin 이 Overlay 의 origin 과 정확히 일치하게 한다 — 그래야 기대값이
+    /// `localPosition` 그대로인지를 오프셋 계산 없이 바로 단언할 수 있다.
+    const scale = 0.9411;
+
+    Future<TextInteractionManager> buildScaledManager(
+      WidgetTester tester,
+      GlobalKey repaintBoundaryKey,
+    ) async {
+      late TextInteractionManager manager;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Transform.scale(
+            scale: scale,
+            alignment: Alignment.topLeft,
+            child: Overlay(
+              initialEntries: [
+                OverlayEntry(
+                  builder: (context) {
+                    manager = TextInteractionManager(
+                      scribbleNotifier: scribbleNotifier,
+                      modeNotifier: modeNotifier,
+                      onStateChanged: () {},
+                      context: context,
+                      transformationController: null,
+                      repaintBoundaryKey: repaintBoundaryKey,
+                      onTextSelected: (_) {},
+                      onTextEdit: (_) {},
+                      onTextUpdated: (_) {},
+                      onTextDeselected: () {},
+                      widgetState: widgetState,
+                    );
+                    return RepaintBoundary(
+                      key: repaintBoundaryKey,
+                      child: const SizedBox(width: 400, height: 600),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 60));
+
+      return manager;
+    }
+
+    testWidgets('Overlay 가 조상 스케일 변환 안쪽에 있어도 새 텍스트 편집기가 탭 지점에 정확히 나타난다', (
+      tester,
+    ) async {
+      final repaintBoundaryKey = GlobalKey();
+      final manager = await buildScaledManager(tester, repaintBoundaryKey);
+
+      // 탭 지점 — RepaintBoundary 로컬 좌표계(=Overlay 로컬 좌표계, origin 일치) 기준.
+      const tapPosition = Offset(100, 150);
+
+      manager.handlePointerDown(PointerDownEvent(position: tapPosition));
+      manager.handlePointerUp(PointerUpEvent(position: tapPosition));
+      await tester.pump();
+
+      final editor = tester.widget<InlineTextEditor>(
+        find.byType(InlineTextEditor),
+      );
+
+      // ✅ 고쳐진 동작: ancestor 를 Overlay 로 지정했으므로, Overlay 와
+      // RepaintBoundary 가 같은 좌표계를 공유하는 이 트리에서는
+      // editorPosition == tapPosition 이 정확히 성립해야 한다.
+      expect(editor.position, tapPosition);
+
+      // ⛔ 되돌림 감지: ancestor 를 다시 빼면(=루트 기준 절대좌표) 그 값은
+      // tapPosition * scale 이 된다 — 회귀 시 이 값과 우연히 같아지지
+      // 않도록 스케일이 1.0 이 아님을 별도로 확인한다(픽스처 동치 방지).
+      expect(scale, isNot(1.0));
+      expect(editor.position, isNot(tapPosition * scale));
+
+      manager.dispose();
+      await tester.pump(const Duration(milliseconds: 200));
+    });
+
+    testWidgets('Overlay 가 조상 스케일 변환 안쪽에 있어도 기존 텍스트 편집기가 원래 위치에 정확히 나타난다', (
+      tester,
+    ) async {
+      final repaintBoundaryKey = GlobalKey();
+
+      // 기존 텍스트 하나를 미리 배치한다(캔버스 로컬 좌표 기준).
+      const existingTextPosition = Offset(120, 80);
+      scribbleNotifier.addTextDrawable(
+        TextDrawable(
+          id: 'existing',
+          text: '기존 텍스트',
+          x: existingTextPosition.dx,
+          y: existingTextPosition.dy,
+          fontSize: 20,
+          color: 0xFF000000,
+        ),
+      );
+
+      final manager = await buildScaledManager(tester, repaintBoundaryKey);
+
+      // 기존 텍스트는 더블탭으로만 편집기가 열린다(_handleExistingTextTap).
+      // 텍스트의 `.position` 자체는 정렬(.left)과 무관하게 항상 렌더 영역의
+      // 수직 중심이므로(_isPointInTextBounds), 폭/높이 실측 없이도 항상
+      // 히트된다.
+      manager.handlePointerDown(
+        PointerDownEvent(position: existingTextPosition),
+      );
+      manager.handlePointerUp(PointerUpEvent(position: existingTextPosition));
+      manager.handlePointerDown(
+        PointerDownEvent(position: existingTextPosition),
+      );
+      manager.handlePointerUp(PointerUpEvent(position: existingTextPosition));
+      await tester.pump();
+
+      final editor = tester.widget<InlineTextEditor>(
+        find.byType(InlineTextEditor),
+      );
+
+      expect(editor.position, existingTextPosition);
+      expect(editor.position, isNot(existingTextPosition * scale));
+
+      manager.dispose();
+      await tester.pump(const Duration(milliseconds: 200));
     });
   });
 }

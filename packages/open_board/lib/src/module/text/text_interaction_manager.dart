@@ -802,11 +802,23 @@ class TextInteractionManager {
       return; // 이미 편집 중이면 무시
     }
 
-    // 변환 없이 localToGlobal만 적용
+    // kobic UB-626 / #12409: localToGlobal 을 ancestor 지정 없이 부르면 앱
+    // 루트 기준 절대 좌표가 나온다. Overlay.of(context).insert 는 "가장
+    // 가까운 Overlay"(대개 Navigator 소유)에 넣으므로, 그 Overlay 가
+    // ResponsiveScaledBox 같은 조상 스케일 변환 안쪽에 있으면 두 좌표계가
+    // 어긋난다 — 화면을 가상 디자인 폭으로 스케일링하는 배율만큼 텍스트
+    // 박스가 탭 지점에서 벗어난 위치(좌상단 쪽)에 나타난다. Overlay 자신의
+    // RenderObject 를 ancestor 로 지정해 Overlay 가 실제로 해석하는 좌표계
+    // 기준으로 변환한다.
     final RenderBox? renderBox =
         repaintBoundaryKey?.currentContext?.findRenderObject() as RenderBox?;
+    final overlayRenderObject = Overlay.of(context).context.findRenderObject();
     final editorPosition =
-        renderBox?.localToGlobal(localPosition) ?? Offset.zero;
+        renderBox?.localToGlobal(
+          localPosition,
+          ancestor: overlayRenderObject,
+        ) ??
+        Offset.zero;
 
     _isEditingText = true;
     _editingTextId = textDrawable.id;
@@ -859,11 +871,17 @@ class TextInteractionManager {
       return; // 이미 편집 중이면 무시
     }
 
-    // 변환 없이 localToGlobal만 적용
+    // kobic UB-626 / #12409: 위 _showTextEditorAtScreenPosition 과 동일한
+    // 이유로, Overlay 자신의 RenderObject 를 ancestor 로 지정한다.
     final RenderBox? renderBox =
         repaintBoundaryKey?.currentContext?.findRenderObject() as RenderBox?;
+    final overlayRenderObject = Overlay.of(context).context.findRenderObject();
     final editorPosition =
-        renderBox?.localToGlobal(textDrawable.position) ?? Offset.zero;
+        renderBox?.localToGlobal(
+          textDrawable.position,
+          ancestor: overlayRenderObject,
+        ) ??
+        Offset.zero;
 
     _isEditingText = true;
     _editingTextId = textDrawable.id;
