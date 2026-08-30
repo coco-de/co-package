@@ -7,6 +7,7 @@ import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart'
     show LinkTargetResolver;
 import 'package:open_board/src/module/widgets/scribble_widget.dart';
+import 'package:open_board/src/module/models/scribble_selectable.dart';
 
 /// ✨ 간편한 사용을 위한 SimpleScribbleWidget
 ///
@@ -57,6 +58,7 @@ final class SimpleScribbleWidget extends StatefulWidget {
     this.contentLogicalSize,
     this.linkTargetResolver,
     this.shouldDeferDrawStart,
+    this.canSelectItem,
   });
 
   /// 텍스트 주석 링크 타깃 입력 UI 제공자 (kobic #9838).
@@ -68,6 +70,10 @@ final class SimpleScribbleWidget extends StatefulWidget {
   /// 호스트가 지연 시작(defer) 대상 지점을 판정하는 콜백 (kobic UB-188).
   /// 상세는 [ScribbleWidget.shouldDeferDrawStart] 참조.
   final bool Function(Offset canvasPosition)? shouldDeferDrawStart;
+
+  /// 신규 선택 진입 후보를 판정하는 호스트 콜백 (unibook#12445, UB-639).
+  /// 상세는 [ScribbleWidget.canSelectItem] 참조 — 미주입 시 기존 동작과 동일.
+  final CanSelectScribbleItem? canSelectItem;
 
   /// 필기 컨트롤러 (선택적 - 없으면 자동 생성)
   final ScribbleController? controller;
@@ -227,6 +233,7 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
       contentLogicalSize: widget.contentLogicalSize,
       linkTargetResolver: widget.linkTargetResolver,
       shouldDeferDrawStart: widget.shouldDeferDrawStart,
+      canSelectItem: widget.canSelectItem,
       // onScribbleChanged는 _initializeController에서 컨트롤러 리스너로
       // 이미 연결되어 모든 변경을 전달한다. 여기서 onScribble로도 감싸
       // 전달하면 같은 변경에 대해 사용자 콜백이 두 번 호출된다.

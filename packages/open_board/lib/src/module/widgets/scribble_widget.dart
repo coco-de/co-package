@@ -11,6 +11,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
   import 'package:open_board/src/core/utils/measure_size.dart';
   import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_board/src/module/lasso/lasso_selection_manager.dart';
+  import 'package:open_board/src/module/models/scribble_selectable.dart';
   import 'package:open_board/src/module/scribble.notifier.dart';
   import 'package:open_board/src/module/scribble_mode.notifier.dart';
   import 'package:open_board/src/module/state/drawing_state.dart';
@@ -122,6 +123,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       this.transformationController, // 🆕 외부 주입 가능한 변환 컨트롤러 (PR #99)
       this.linkTargetResolver,
       this.shouldDeferDrawStart,
+      this.canSelectItem,
     });
 
     /// 텍스트 주석 링크 타깃 입력 UI 제공자 — [TextInteractionManager] 를 거쳐
@@ -152,6 +154,14 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
     /// 동일하게 즉시 그리기 시작한다 — 기본값은 어떤 기존 소비자의 동작도
     /// 바꾸지 않는다.
     final bool Function(Offset canvasPosition)? shouldDeferDrawStart;
+
+    /// 신규 선택 진입 시 후보를 판정하는 호스트 콜백 (unibook#12445, UB-639).
+    ///
+    /// 올가미 히트테스트의 후보 수집과 "다른 도구 모드에서의 기존 텍스트박스
+    /// 탭 선택" 진입에만 적용된다 — 이미 선택된 객체의 이동/삭제/변형은
+    /// 도구와 무관하게 계속 동작한다 (kobic#12374 보존). 미주입(`null`) 시
+    /// 기존과 완전히 동일하다. 상세는 [CanSelectScribbleItem] 참조.
+    final CanSelectScribbleItem? canSelectItem;
 
     /// ✨ 이미지 캡처를 위한 GlobalKey - 외부에서 접근 가능
     final GlobalKey? repaintBoundaryKey;
@@ -457,6 +467,7 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
         },
         transformationController: transformationController,
         onModeChanged: widget.onModeChanged,
+        canSelectItem: widget.canSelectItem,
       );
 
       // 🎯 스트로크(펜/지우개) 그리기 완료는 PointerEventHandler.handlePointerUp
@@ -2729,6 +2740,11 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
           continue;
         }
 
+        // 호스트 정책이 거부한 텍스트박스는 신규 선택 진입 불가 (unibook#12445).
+        if (!_isTextSelectableByPolicy(textDrawable)) {
+          continue;
+        }
+
         if (_isPointInTextBounds(adjustedPosition, textDrawable)) {
           final handled = textManager.handlePointerDown(event);
           if (handled) {
@@ -2740,6 +2756,15 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
       return false;
     }
 
+    /// 호스트 선택 정책이 이 텍스트박스의 **신규** 선택 진입을 허용하는가.
+    ///
+    /// 미주입 시 항상 허용 — 기존 동작과 동일 (unibook#12445).
+    bool _isTextSelectableByPolicy(TextDrawable textDrawable) =>
+        widget.canSelectItem?.call(
+          ScribbleSelectableText(id: textDrawable.id),
+        ) ??
+        true;
+
     /// 기존 텍스트를 클릭했는지 확인 (다른 모드에서 텍스트 상호작용 허용 여부 판단)
     bool _isClickingExistingText(PointerDownEvent event) {
       // 🔥 scribble-tools 방식: 원본 화면 좌표 직접 사용
@@ -2747,6 +2772,11 @@ import 'package:open_board/src/core/utils/ink_group_info.dart';
 
       final textDrawables = textManager.textDrawables;
       for (final textDrawable in textDrawables) {
+        // 호스트 정책이 거부한 텍스트박스는 탭에 '투명'하다 — 이벤트가
+        // 기존 그리기/제스처 경로로 자연 낙하한다 (unibook#12445).
+        if (!_isTextSelectableByPolicy(textDrawable)) {
+          continue;
+        }
         if (_isPointInTextBounds(adjustedPosition, textDrawable)) {
           return true;
         }

@@ -6,6 +6,7 @@ import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
+import 'package:open_board/src/module/models/scribble_selectable.dart';
 import 'package:open_board/src/module/image/image_drawable_extensions.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
@@ -67,11 +68,19 @@ class LassoSelectionManager {
   // 공통 변형 핸들러
   late TransformHandler _transformHandler;
 
+  /// 신규 선택 진입 시 후보를 판정하는 호스트 콜백 (unibook#12445, UB-639).
+  ///
+  /// `null` 이면 기존과 완전히 동일하게 모든 항목이 후보다. 이미 선택된
+  /// 객체의 이동/삭제/변형에는 적용되지 않는다 — 상세는
+  /// [CanSelectScribbleItem] 참조.
+  final CanSelectScribbleItem? canSelectItem;
+
   LassoSelectionManager({
     required this.scribbleNotifier,
     required this.onStateChanged,
     required this.transformationController,
     required this.onModeChanged,
+    this.canSelectItem,
   }) {
     _transformHandler = TransformHandler();
   }
@@ -1142,6 +1151,16 @@ class LassoSelectionManager {
         continue;
       }
 
+      // 호스트 정책이 거부한 스트로크는 후보에서 제외 (unibook#12445).
+      // 올가미 자신은 위에서 이미 걸렀으므로 콜백에 전달되지 않는다.
+      final strokeCandidate = ScribbleSelectableStroke(
+        ink: stroke.ink,
+        shapeType: stroke.shapeType,
+      );
+      if (!(canSelectItem?.call(strokeCandidate) ?? true)) {
+        continue;
+      }
+
       // 각 스트로크의 포인트 중 일부가 올가미 내에 있는지 확인
       bool hasPointsInside = false;
       int checkedPoints = 0;
@@ -1182,6 +1201,12 @@ class LassoSelectionManager {
     final textDrawables = currentScribble.textDrawables;
     for (int i = 0; i < textDrawables.length; i++) {
       final textDrawable = textDrawables[i];
+
+      // 호스트 정책이 거부한 텍스트박스는 후보에서 제외 (unibook#12445).
+      final textCandidate = ScribbleSelectableText(id: textDrawable.id);
+      if (!(canSelectItem?.call(textCandidate) ?? true)) {
+        continue;
+      }
 
       // 텍스트의 중심점이 올가미 내에 있는지 확인
       final textCenter = Offset(textDrawable.x, textDrawable.y);

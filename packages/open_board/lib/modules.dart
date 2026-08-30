@@ -119,6 +119,12 @@ export 'src/module/keys/keys.dart';
 // 모델 및 유틸리티
 export 'src/core/utils/ink_group_info.dart';
 export 'src/module/models/lasso_selection_state.dart';
+export 'src/module/models/scribble_selectable.dart'
+    show
+        CanSelectScribbleItem,
+        ScribbleSelectable,
+        ScribbleSelectableStroke,
+        ScribbleSelectableText;
 export 'src/module/models/oriented_bounding_box.dart';
 
 // ♻️ PaintDelegate 패턴 (ScribblePainter 분리)
