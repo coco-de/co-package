@@ -125,35 +125,6 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     WidgetsBinding.instance.addObserver(this);
   }
 
-  /// 현재 날짜를 yyyy-mm-dd 형식으로 텍스트 필드에 삽입
-  void _insertTodayDate() {
-    final now = DateTime.now();
-    final month = now.month.toString().padLeft(2, '0');
-    final day = now.day.toString().padLeft(2, '0');
-    final dateString = '${now.year}-$month-$day';
-
-    final currentText = textEditingController.text;
-    final selection = textEditingController.selection;
-
-    // 현재 커서 위치에 날짜 삽입
-    final newText = currentText.replaceRange(
-      selection.start,
-      selection.end,
-      dateString,
-    );
-
-    textEditingController.text = newText;
-
-    // 커서를 삽입된 날짜 뒤로 이동
-    final newCursorPosition = selection.start + dateString.length;
-    textEditingController.selection = TextSelection.collapsed(
-      offset: newCursorPosition,
-    );
-
-    // 포커스를 다시 텍스트 필드로 이동
-    textFieldNode.requestFocus();
-  }
-
   /// 텍스트 변경 시 호출 — 링크 span offset 을 편집에 맞게 재배치한다.
   void _onControllerChanged() {
     if (!mounted || disposed) return;
@@ -548,18 +519,19 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     // 화면 너비에서 여백을 뺀 크기로 레이아웃
     textPainter.layout(maxWidth: screenSize.width - 60);
 
-    // 에디터 크기 계산 (텍스트 크기 + 패딩 + 날짜 버튼 공간)
+    // 에디터 크기 계산 (텍스트 크기 + 패딩 + 완료 버튼 공간)
     const minWidth = 40.0;
     const minHeight = 30.0;
-    const dateButtonWidth = 32.0; // 날짜 버튼 너비
+    // 완료 버튼 너비 — 텍스트 라벨("완료")이 아이콘보다 넓어 기존 32 에서 확장.
+    const doneButtonWidth = 44.0;
 
     final textWidth = textPainter.width;
     final textHeight = textPainter.height;
 
     double editorWidth = math.max(
       minWidth,
-      textWidth * 1.05 + 8 + dateButtonWidth + 8,
-    ); // 날짜 버튼 공간 추가
+      textWidth * 1.05 + 8 + doneButtonWidth + 8,
+    ); // 완료 버튼 공간 추가
     double editorHeight = math.max(minHeight, textHeight * 1.05);
 
     // 화면 경계 제한
@@ -679,9 +651,10 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                       ),
                     ),
 
-                    // 날짜 버튼
+                    // 완료 버튼 — 날짜 삽입 버튼 대체 (kobic UB-631).
                     Container(
-                      width: dateButtonWidth,
+                      key: const ValueKey('inline_text_editor_done_button'),
+                      width: doneButtonWidth,
                       height: editorHeight,
                       decoration: const BoxDecoration(
                         border: Border(left: BorderSide(color: Colors.blue)),
@@ -689,15 +662,20 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: _insertTodayDate,
+                          onTap: _completeEditing,
                           borderRadius: const .only(
                             topRight: .circular(2),
                             bottomRight: .circular(2),
                           ),
-                          child: Icon(
-                            Icons.calendar_today,
-                            size: math.min(20, editorHeight * 0.6),
-                            color: Colors.blue,
+                          child: Center(
+                            child: Text(
+                              '완료',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: math.min(14, editorHeight * 0.4),
+                                fontWeight: .w600,
+                              ),
+                            ),
                           ),
                         ),
                       ),

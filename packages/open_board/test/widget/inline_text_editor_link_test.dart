@@ -95,13 +95,11 @@ void main() {
   }
 
   /// 항상 [target] 을 반환하는 resolver (호출 인자를 [captured] 에 기록).
-  LinkTargetResolver stubResolver(
-    String? target, {
-    List<String?>? captured,
-  }) => (context, {String? initialTarget}) async {
-    captured?.add(initialTarget);
-    return target;
-  };
+  LinkTargetResolver stubResolver(String? target, {List<String?>? captured}) =>
+      (context, {String? initialTarget}) async {
+        captured?.add(initialTarget);
+        return target;
+      };
 
   group('LinkAwareTextEditingController — 편집 중 링크 스타일 (kobic #8481)', () {
     testWidgets('링크 구간은 파랑+밑줄, 나머지는 기본 스타일로 분할된다', (tester) async {
@@ -182,11 +180,32 @@ void main() {
       );
       expect(find.byIcon(Icons.link), findsNothing);
     });
+  });
 
-    testWidgets('날짜 버튼은 그대로 유지된다 — 정상 동작하므로 제거 대상이 아니다', (tester) async {
+  group('날짜 버튼 → 완료 버튼 교체 (kobic UB-631)', () {
+    testWidgets('날짜 삽입 버튼(캘린더 아이콘)이 더 이상 렌더링되지 않는다', (tester) async {
       await pumpEditor(tester);
 
-      expect(find.byIcon(Icons.calendar_today), findsOneWidget);
+      expect(find.byIcon(Icons.calendar_today), findsNothing);
+    });
+
+    testWidgets('완료 버튼이 렌더링되고, 탭하면 편집이 즉시 완료된다', (tester) async {
+      final completions = await pumpEditor(tester);
+
+      final doneButton = find.byKey(
+        const ValueKey('inline_text_editor_done_button'),
+      );
+      expect(doneButton, findsOneWidget);
+      expect(
+        find.descendant(of: doneButton, matching: find.text('완료')),
+        findsOneWidget,
+      );
+
+      await tester.tap(doneButton);
+      await tester.pump();
+
+      expect(completions, hasLength(1));
+      expect(completions.single?.text, 'hello world');
     });
   });
 
@@ -205,9 +224,7 @@ void main() {
       expect(find.text('링크 삭제'), findsNothing);
     });
 
-    testWidgets('선택이 없어도 링크 추가가 노출된다 — 유일한 진입점이므로 도달 가능해야 한다', (
-      tester,
-    ) async {
+    testWidgets('선택이 없어도 링크 추가가 노출된다 — 유일한 진입점이므로 도달 가능해야 한다', (tester) async {
       await pumpEditor(tester, linkSpans: [span(0, 5)]);
       controllerOf(tester).selection = const TextSelection.collapsed(offset: 8);
       await tester.pump();
@@ -253,9 +270,7 @@ void main() {
       expect(result.url, 'https://a.com');
     });
 
-    testWidgets('삽입 후 커서는 삽입분 뒤에 놓인다 — 이어지는 입력이 링크를 지우지 않는다', (
-      tester,
-    ) async {
+    testWidgets('삽입 후 커서는 삽입분 뒤에 놓인다 — 이어지는 입력이 링크를 지우지 않는다', (tester) async {
       await pumpEditor(
         tester,
         text: '',
@@ -334,10 +349,7 @@ void main() {
       await pumpEditor(
         tester,
         linkSpans: [span(0, 5, 'https://old.com')],
-        linkTargetResolver: stubResolver(
-          'https://new.com',
-          captured: captured,
-        ),
+        linkTargetResolver: stubResolver('https://new.com', captured: captured),
       );
       controllerOf(tester).selection = const TextSelection.collapsed(offset: 2);
       await tester.pump();
