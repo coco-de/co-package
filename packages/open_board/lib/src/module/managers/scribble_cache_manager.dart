@@ -1092,26 +1092,19 @@
           final pageBoundaryX = pageWidth / 2;
 
           for (final stroke in rightScribble.strokes) {
-            final adjustedStroke = Stroke()
-              ..ink = stroke.ink
-              ..width = stroke.width
-              ..color = stroke.color;
+            // ⚠️ 필드를 열거해 복사하지 말 것 — 이 결과는 아래에서 그대로
+            // `saveScribble` 로 **저장**된다. 종전에는 ink/width/color 3개만
+            // 복사해 `createdAt`·`options`(두께·taper)·`shapeType`·`segments`·
+            // `confidence` 가 양면 병합을 지날 때마다 영구 유실됐다.
+            final adjustedStroke = stroke.deepCopy();
 
-            // 오른쪽 페이지 좌표를 양면 모드 좌표로 변환
-            for (final point in stroke.points) {
-              adjustedStroke.points.add(
-                Point()
-                  ..x =
-                      point.x +
-                      pageBoundaryX // X 좌표를 오른쪽으로 이동
-                  ..y = point.y
-                  ..p = point.p
-                  ..altitude = point.altitude
-                  ..azimuth = point.azimuth
-                  ..opacity = point.opacity
-                  ..size.addAll(point.size)
-                  ..timestamp = point.timestamp,
-              );
+            // 오른쪽 페이지 좌표를 양면 모드 좌표로 변환 (X 만 이동)
+            for (final point in adjustedStroke.points) {
+              point.x += pageBoundaryX;
+            }
+            for (final segment in adjustedStroke.segments) {
+              segment.start.x += pageBoundaryX;
+              segment.end.x += pageBoundaryX;
             }
 
             mergedScribble.strokes.add(adjustedStroke);

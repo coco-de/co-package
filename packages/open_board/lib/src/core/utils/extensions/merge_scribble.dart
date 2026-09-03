@@ -254,20 +254,24 @@ extension MergeScribble on Scribble {
     Stroke? rightStroke;
 
     // 🎯 유효한 스트로크만 생성 (최소 2개 점 필요)
+    //
+    // ⚠️ 필드를 열거해 복사하지 말 것 — 원본의 전 필드를 승계한 뒤 points 만
+    // 갈아끼운다. 종전 3개 필드 복사는 `createdAt`·`options`·`shapeType`·
+    // `segments`·`confidence` 를 조각마다 떨어뜨렸다.
+    //
+    // ⚠️ 두 조각은 **같은 논리 스트로크의 분할물**이라 `id`(있다면)를 공유한다.
+    //    이 경로는 현재 kobic 에서 호출되지 않는다 — 배선한다면 조각 id 규칙을
+    //    먼저 정할 것(양쪽 같은 id 유지 vs 한쪽만 승계).
     if (leftPoints.length >= 2) {
-      leftStroke = Stroke()
-        ..points.addAll(leftPoints)
-        ..ink = originalStroke.ink
-        ..width = originalStroke.width
-        ..color = originalStroke.color;
+      leftStroke = originalStroke.deepCopy()
+        ..points.clear()
+        ..points.addAll(leftPoints);
     }
 
     if (rightPoints.length >= 2) {
-      rightStroke = Stroke()
-        ..points.addAll(rightPoints)
-        ..ink = originalStroke.ink
-        ..width = originalStroke.width
-        ..color = originalStroke.color;
+      rightStroke = originalStroke.deepCopy()
+        ..points.clear()
+        ..points.addAll(rightPoints);
     }
 
     return StrokeSplitResult(
@@ -341,25 +345,14 @@ extension MergeScribble on Scribble {
 
   /// 🔄 오른쪽 페이지 스트로크를 왼쪽 기준 좌표로 조정
   Stroke _adjustStrokeForRightPage(Stroke stroke, double pageBoundaryX) {
-    final adjustedStroke = Stroke()
-      ..ink = stroke.ink
-      ..width = stroke.width
-      ..color = stroke.color;
-
-    for (final point in stroke.points) {
-      adjustedStroke.points.add(
-        Point()
-          ..x =
-              point.x -
-              pageBoundaryX // X 좌표를 왼쪽 기준으로 조정
-          ..y = point.y
-          ..p = point.p
-          ..altitude = point.altitude
-          ..azimuth = point.azimuth
-          ..opacity = point.opacity
-          ..size.addAll(point.size)
-          ..timestamp = point.timestamp,
-      );
+    // 전 필드를 승계한 사본에서 X 좌표만 옮긴다(필드 열거 복사 금지).
+    final adjustedStroke = stroke.deepCopy();
+    for (final point in adjustedStroke.points) {
+      point.x -= pageBoundaryX;
+    }
+    for (final segment in adjustedStroke.segments) {
+      segment.start.x -= pageBoundaryX;
+      segment.end.x -= pageBoundaryX;
     }
 
     return adjustedStroke;
@@ -367,25 +360,14 @@ extension MergeScribble on Scribble {
 
   /// 🔄 오른쪽 페이지 스트로크를 원래 위치로 복원
   Stroke _restoreStrokeFromRightPage(Stroke stroke, double pageBoundaryX) {
-    final restoredStroke = Stroke()
-      ..ink = stroke.ink
-      ..width = stroke.width
-      ..color = stroke.color;
-
-    for (final point in stroke.points) {
-      restoredStroke.points.add(
-        Point()
-          ..x =
-              point.x +
-              pageBoundaryX // X 좌표를 원래 위치로 복원
-          ..y = point.y
-          ..p = point.p
-          ..altitude = point.altitude
-          ..azimuth = point.azimuth
-          ..opacity = point.opacity
-          ..size.addAll(point.size)
-          ..timestamp = point.timestamp,
-      );
+    // 전 필드를 승계한 사본에서 X 좌표만 되돌린다(필드 열거 복사 금지).
+    final restoredStroke = stroke.deepCopy();
+    for (final point in restoredStroke.points) {
+      point.x += pageBoundaryX;
+    }
+    for (final segment in restoredStroke.segments) {
+      segment.start.x += pageBoundaryX;
+      segment.end.x += pageBoundaryX;
     }
 
     return restoredStroke;
@@ -397,28 +379,16 @@ extension MergeScribble on Scribble {
     Stroke rightStroke,
     double boundaryX,
   ) {
-    final mergedStroke = Stroke()
-      ..ink = leftStroke.ink
-      ..width = leftStroke.width
-      ..color = leftStroke.color;
+    // 왼쪽 조각의 전 필드를 승계한다 — 두 조각은 같은 원본에서 갈렸으므로
+    // 필드 값이 같고, 열거 복사는 새 필드가 늘 때마다 유실을 만든다.
+    final mergedStroke = leftStroke.deepCopy()..points.clear();
 
     // 시간순으로 정렬하여 병합
-    final allPoints = <Point>[];
-    allPoints.addAll(leftStroke.points);
+    final allPoints = <Point>[...leftStroke.points];
 
     // 오른쪽 스트로크의 좌표를 원래 위치로 복원하여 추가
     for (final point in rightStroke.points) {
-      allPoints.add(
-        Point()
-          ..x = point.x + boundaryX
-          ..y = point.y
-          ..p = point.p
-          ..altitude = point.altitude
-          ..azimuth = point.azimuth
-          ..opacity = point.opacity
-          ..size.addAll(point.size)
-          ..timestamp = point.timestamp,
-      );
+      allPoints.add(point.deepCopy()..x += boundaryX);
     }
 
     // 타임스탬프 기준으로 정렬

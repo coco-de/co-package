@@ -133,6 +133,7 @@ const Stroke$json = {
       '10': 'segments'
     },
     {'1': 'confidence', '3': 9, '4': 1, '5': 1, '10': 'confidence'},
+    {'1': 'id', '3': 10, '4': 1, '5': 9, '10': 'id'},
   ],
 };
 
@@ -142,7 +143,8 @@ final $typed_data.Uint8List strokeDescriptor = $convert.base64Decode(
     'IFY29sb3ISEAoDaW5rGAMgASgJUgNpbmsSHAoJY3JlYXRlZEF0GAQgASgJUgljcmVhdGVkQXQS'
     'KAoHb3B0aW9ucxgFIAEoCzIOLlN0cm9rZU9wdGlvbnNSB29wdGlvbnMSHAoJc2hhcGVUeXBlGA'
     'YgASgJUglzaGFwZVR5cGUSFAoFd2lkdGgYByABKAFSBXdpZHRoEiQKCHNlZ21lbnRzGAggAygL'
-    'MgguU2VnbWVudFIIc2VnbWVudHMSHgoKY29uZmlkZW5jZRgJIAEoAVIKY29uZmlkZW5jZQ==');
+    'MgguU2VnbWVudFIIc2VnbWVudHMSHgoKY29uZmlkZW5jZRgJIAEoAVIKY29uZmlkZW5jZRIOCg'
+    'JpZBgKIAEoCVICaWQ=');
 
 @$core.Deprecated('Use textLinkSpanDescriptor instead')
 const TextLinkSpan$json = {

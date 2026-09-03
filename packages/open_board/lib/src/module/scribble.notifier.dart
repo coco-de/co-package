@@ -15,6 +15,7 @@ import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/scribble_mode.state.dart';
 import 'package:open_board/src/core/utils/shape_detector.dart';
+import 'package:open_board/src/core/utils/stroke_id.dart';
 import 'package:open_board/src/module/widgets/scribble_widget.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
@@ -124,11 +125,23 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 호출되지 않는다 (kobic#10836).
   VoidCallback? onScribbleFinished;
 
+  /// 새 스트로크에 부여할 [Stroke.id] 를 만드는 함수.
+  ///
+  /// 기본값은 `Random.secure()` 기반 v4 UUID 다. 호스트가 자체 규칙(예: 서버
+  /// 발급 id, 테스트 결정론)을 쓰려면 생성자로 주입한다 — `LinkTargetResolver`
+  /// 와 같은 주입 선례를 따른다.
+  ///
+  /// ⛔ **시각 기반 값을 넣지 말 것.** 오프라인 다중 기기에서 같은 밀리초에
+  /// 그린 스트로크가 충돌한다. 그것이 이 필드를 도입한 이유의 절반이다.
+  final String Function() strokeIdFactory;
+
   ScribbleNotifier({
     /// If you pass a scribble here, the notifier will use that scribble as a
     /// starting point.
     Scribble? scribble,
-  }) : super(
+    String Function()? strokeIdFactory,
+  }) : strokeIdFactory = strokeIdFactory ?? generateStrokeId,
+       super(
          Drawing(
            scribble:
                scribble ??
@@ -411,6 +424,9 @@ class ScribbleNotifier extends ScribbleNotifierBase
       s = (state as Drawing).copyWith(
         pointerPosition: getPointFromEvent(event),
         activeLine: Stroke(
+          // 스트로크의 유일한 발급 지점 — 여기서 한 번 부여하면 이후 모든
+          // 재구성은 `deepCopy` 로 승계한다. 완료 후 재발급하지 않는다.
+          id: strokeIdFactory(),
           points: [getPointFromEvent(event)],
           color: colorToInt(modeState.inkGroupInfo.selectedColor),
           ink: selectedInk,
@@ -499,15 +515,12 @@ class ScribbleNotifier extends ScribbleNotifierBase
         if (activeLine != null && activeLine.points.isNotEmpty) {
           final startPoint = activeLine.points.first;
           final endPoint = getPointFromEvent(event);
-          final updatedStroke = Stroke(
-            points: [startPoint, endPoint],
-            color: activeLine.color,
-            ink: activeLine.ink,
-            width: activeLine.width,
-            createdAt: activeLine.createdAt,
-            options: activeLine.options,
-            shapeType: shapeTarget,
-          );
+          // 필드 열거 복사 금지 — 미지정 필드가 조용히 유실된다. deepCopy 로
+          // 전 필드를 승계하고 바뀌는 것만 덮어쓴다.
+          final updatedStroke = activeLine.deepCopy()
+            ..points.clear()
+            ..points.addAll([startPoint, endPoint])
+            ..shapeType = shapeTarget;
           temporaryValue = drawing.copyWith(
             activeLine: updatedStroke,
             pointerPosition: endPoint,
@@ -524,15 +537,9 @@ class ScribbleNotifier extends ScribbleNotifierBase
             kStraightenableInks.contains(activeLine.ink) &&
             activeLine.points.length >= 2) {
           final newEndPoint = getPointFromEvent(event);
-          final updatedStroke = Stroke(
-            points: [activeLine.points.first, newEndPoint],
-            color: activeLine.color,
-            ink: activeLine.ink,
-            width: activeLine.width,
-            createdAt: activeLine.createdAt,
-            options: activeLine.options,
-            shapeType: activeLine.shapeType,
-          );
+          final updatedStroke = activeLine.deepCopy()
+            ..points.clear()
+            ..points.addAll([activeLine.points.first, newEndPoint]);
           temporaryValue = drawing.copyWith(
             activeLine: updatedStroke,
             pointerPosition: newEndPoint,
@@ -563,16 +570,8 @@ class ScribbleNotifier extends ScribbleNotifierBase
           newState.activeLine!.shapeType.isEmpty) {
         // 드래그 중에도 쉐이프 타입을 'pending'으로 설정 (변환 예정을 표시)
         final activeLine = newState.activeLine!;
-        // 새 Stroke 객체 생성하여 속성 복사
-        final updatedActiveLine = Stroke(
-          points: activeLine.points,
-          color: activeLine.color,
-          ink: activeLine.ink,
-          width: activeLine.width,
-          createdAt: activeLine.createdAt,
-          options: activeLine.options,
-          shapeType: "pending", // 도형 변환 예정 표시
-        );
+        // 전 필드를 승계한 사본에 도형 변환 예정만 표시한다(열거 복사 금지).
+        final updatedActiveLine = activeLine.deepCopy()..shapeType = "pending";
 
         temporaryValue = newState.copyWith(activeLine: updatedActiveLine);
       } else {
@@ -712,15 +711,10 @@ class ScribbleNotifier extends ScribbleNotifierBase
         if (activeLine != null &&
             startPoint != null &&
             (startPoint.x != endPoint.x || startPoint.y != endPoint.y)) {
-          final finalStroke = Stroke(
-            points: [startPoint, endPoint],
-            color: activeLine.color,
-            ink: activeLine.ink,
-            width: activeLine.width,
-            createdAt: activeLine.createdAt,
-            options: activeLine.options,
-            shapeType: shapeTarget,
-          );
+          final finalStroke = activeLine.deepCopy()
+            ..points.clear()
+            ..points.addAll([startPoint, endPoint])
+            ..shapeType = shapeTarget;
           final finished =
               finishLineForState(drawing.copyWith(activeLine: finalStroke))
                   as Drawing;
@@ -972,15 +966,9 @@ class ScribbleNotifier extends ScribbleNotifierBase
     final firstPoint = activeLine.points.first;
     final lastPoint = activeLine.points.last;
 
-    final straightStroke = Stroke(
-      points: [firstPoint, lastPoint],
-      color: activeLine.color,
-      ink: activeLine.ink,
-      width: activeLine.width,
-      createdAt: activeLine.createdAt,
-      options: activeLine.options,
-      shapeType: activeLine.shapeType,
-    );
+    final straightStroke = activeLine.deepCopy()
+      ..points.clear()
+      ..points.addAll([firstPoint, lastPoint]);
 
     _strokeStraightened = true;
     temporaryValue = s.copyWith(activeLine: straightStroke);

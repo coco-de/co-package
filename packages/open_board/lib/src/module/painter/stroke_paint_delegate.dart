@@ -90,6 +90,10 @@ class StrokePaintDelegate with SketchLinePainter implements PaintDelegate {
   ///      스트로크는 일반 펜처럼 줌과 함께 화면상 비례 스케일됨.
   ///   3) 스트로크 전 구간 균일 두께 (thinning 0 + simulatePressure false).
   void drawFixedPen(ui.Canvas canvas, Stroke stroke) {
+    // ℹ️ 여기의 열거 복사는 **의도적**이다 — 이 스트로크는 path 빌더에만 넘기고
+    // 저장·병합되지 않으므로 필드가 빠져도 유실이 아니다. 반대로 `deepCopy` 로
+    // 바꾸면 매 프레임 모든 스트로크의 points 를 깊은 복사하게 되어 렌더 경로에
+    // 실제 회귀가 된다. 저장 경로의 복사 규약은 `stroke_processor` 주석 참조.
     final adjustedStroke = Stroke(
       points: stroke.points,
       color: stroke.color,
@@ -134,6 +138,7 @@ class StrokePaintDelegate with SketchLinePainter implements PaintDelegate {
       ..strokeCap = .round
       ..strokeJoin = .round
       ..style = .stroke;
+    // ℹ️ 렌더 전용 임시 객체 — 열거 복사가 의도적이다(위 `drawFixedPen` 주석).
     final path = getSimplePathForStroke(
       Stroke(
         points: stroke.points,

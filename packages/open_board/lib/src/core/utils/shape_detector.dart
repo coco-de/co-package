@@ -499,13 +499,12 @@ class ShapeDetector {
   /// 변환 점들과 섞여 타원 재계산(PCA)이 부정확해지고 직선의 시작점이
   /// 어긋나므로, 변환된 기하만 채워 넣는다.
   Stroke _createTransformedStroke(Stroke stroke) {
-    return Stroke(
-      color: stroke.color,
-      ink: "shape",
-      width: stroke.width,
-      createdAt: stroke.createdAt,
-      options: stroke.options,
-    );
+    // 전 필드를 승계한 뒤 points/segments 만 비운다 — 필드를 열거해 복사하면
+    // proto 에 필드가 늘 때마다 조용히 유실된다(`segments`·`confidence` 선례).
+    return stroke.deepCopy()
+      ..points.clear()
+      ..segments.clear()
+      ..ink = "shape";
   }
 
   /// 원/타원 감지 시도

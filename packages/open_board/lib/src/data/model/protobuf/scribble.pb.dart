@@ -541,6 +541,7 @@ class Stroke extends $pb.GeneratedMessage {
     $core.double? width,
     $core.Iterable<Segment>? segments,
     $core.double? confidence,
+    $core.String? id,
   }) {
     final result = create();
     if (points != null) result.points.addAll(points);
@@ -552,6 +553,7 @@ class Stroke extends $pb.GeneratedMessage {
     if (width != null) result.width = width;
     if (segments != null) result.segments.addAll(segments);
     if (confidence != null) result.confidence = confidence;
+    if (id != null) result.id = id;
     return result;
   }
 
@@ -578,6 +580,7 @@ class Stroke extends $pb.GeneratedMessage {
     ..pPM<Segment>(8, _omitFieldNames ? '' : 'segments',
         subBuilder: Segment.create)
     ..aD(9, _omitFieldNames ? '' : 'confidence')
+    ..aOS(10, _omitFieldNames ? '' : 'id')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -668,6 +671,48 @@ class Stroke extends $pb.GeneratedMessage {
   $core.bool hasConfidence() => $_has(8);
   @$pb.TagNumber(9)
   void clearConfidence() => $_clearField(9);
+
+  /// 스트로크의 **논리 식별자** — 기기·세션을 넘어 "같은 스트로크" 를 가리킨다.
+  ///
+  /// `TextDrawable.id` / `ImageDrawable.id` 와 같은 역할을 스트로크에도 준다.
+  /// 종전에는 스트로크에만 식별자가 없어, 오프라인 다중 기기 동기화가 내용
+  /// 해시로만 같음을 판정해야 했다 — 해시는 좌표가 1픽셀만 달라도 갈리므로
+  /// 같은 스트로크가 두 벌로 남는다.
+  ///
+  /// ## 값 규약
+  ///
+  /// - 발급자는 **엔진**(`ScribbleNotifier`)이며 스트로크 생성 시 1회 발급한다.
+  ///   호스트가 규칙을 정해야 하면 `ScribbleNotifier(strokeIdFactory:)` 로
+  ///   주입한다.
+  /// - **시각 기반 값을 쓰지 말 것.** 오프라인 다중 기기에서 같은 밀리초에
+  ///   그린 스트로크가 충돌한다. 기본 발급자는 `Random.secure()` 기반 v4 다.
+  /// - **미발급 판정은 `id.isEmpty`** 로 한다. `hasId()` 는 `Stroke(id: '')`
+  ///   에서도 true 라(protobuf-dart 는 "값이 설정됐는가" 만 본다) 명시적 빈
+  ///   문자열을 "발급됨" 으로 오판한다.
+  /// - 레거시 `.bin` 에는 이 필드가 **없다**(전량 미발급). 로드 시 즉석에서
+  ///   채우지 말 것 — 두 기기가 서로 다른 값을 만들어 오히려 갈라진다.
+  ///
+  /// ## 복제·분할 시
+  ///
+  /// - **1→1 이동**(양면↔단면 좌표 변환 등)은 id 를 그대로 승계한다.
+  /// - **양면 열람의 좌우 복제**는 같은 id 를 양쪽에 둔다. 두 사본은 서로 다른
+  ///   페이지에 속하므로 상위(동기화) 계층에서 별개 행이 되며 충돌하지 않는다.
+  /// - **1→N 분할**(`merge_scribble._splitStrokeAtBoundary`)은 호출자가 없어
+  ///   규칙이 미정이다. 배선한다면 조각 id 규칙을 먼저 정할 것.
+  ///
+  /// ## `updatedAt` 을 함께 두지 않은 이유
+  ///
+  /// 스트로크는 **생성 중에만** 내용이 자란다 — 완료 후에는 이동·변형이 아니라
+  /// 삭제와 재생성으로 다룬다. 그래서 같은 id 의 두 판본을 시각으로 가릴 일이
+  /// 없다. 필드 번호는 되돌릴 수 없으므로, 필요해지면 11 번으로 더한다.
+  @$pb.TagNumber(10)
+  $core.String get id => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set id($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasId() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearId() => $_clearField(10);
 }
 
 /// / An inline hyperlink span covering a `[start, end)` character range (UTF-16
