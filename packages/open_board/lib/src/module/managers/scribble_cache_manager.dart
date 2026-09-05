@@ -41,6 +41,15 @@
     /// dispose 후 재접근 시 자동으로 새 인스턴스가 생성됩니다.
     static ScribbleCacheManager? _singleton;
 
+    /// Optional disk-only transformation, scoped to this manager instance.
+    ///
+    /// Receives a normalized key and a detached snapshot. The returned value is
+    /// written to disk without changing the controller or memory cache. Hosts
+    /// must filter keys/account ownership and must not recursively save here.
+    /// Throwing leaves the existing file unchanged and makes the save fail.
+    Future<Scribble> Function(String normalizedKey, Scribble snapshot)?
+        persistenceTransform;
+
     /// 전역 싱글턴 접근자
     ///
     /// `DrawingState` 와 동일한 패턴으로, dispose 된 인스턴스가 감지되면
@@ -75,6 +84,11 @@
 
     /// 🎯 활성 컨트롤러 변경 시 콜백
     void Function(String key)? onActiveControllerChanged;
+
+    /// Same-key writes must retain request order across asynchronous transforms.
+    final Map<String, Future<bool>> _pendingFileSaves = {};
+    final Map<String, Object> _fileSaveEpochs = {};
+    final Map<String, Future<bool>> _pendingPrefixDeletes = {};
 
     /// 자동저장 스케줄러
     late final AutoSaveScheduler _autoSaveScheduler;
@@ -607,15 +621,12 @@
         // 웹에서는 파일 삭제 불가
         if (_isWeb) return true;
 
-        final filePath = await _getFilePath(normalizedKey);
-
-        // 파일 삭제
-        final file = File(filePath);
-        if (await file.exists()) {
-          await file.delete();
-        }
-
-        return true;
+        _fileSaveEpochs.remove(normalizedKey);
+        return await _queueFileOperation(normalizedKey, () async {
+          final file = File(await _getFilePath(normalizedKey));
+          if (await file.exists()) await file.delete();
+          return true;
+        });
       } on Exception catch (error, stackTrace) {
         debugPrintStack(stackTrace: stackTrace);
         debugPrint(error.toString());
@@ -645,14 +656,35 @@
         // 웹에서는 파일 삭제 불가
         if (_isWeb) return true;
 
-        final dir = await cacheDirectory;
-        final targetDir = Directory('${dir.path}/$normalizedPrefix');
-
-        if (await targetDir.exists()) {
-          await targetDir.delete(recursive: true);
+        final pending = <Future<bool>>[];
+        for (final entry in _pendingFileSaves.entries) {
+          if (entry.key.startsWith('$normalizedPrefix/')) {
+            _fileSaveEpochs.remove(entry.key);
+            pending.add(entry.value);
+          }
         }
-
-        return true;
+        for (final entry in _pendingPrefixDeletes.entries) {
+          if (entry.key == normalizedPrefix ||
+              entry.key.startsWith('$normalizedPrefix/') ||
+              normalizedPrefix.startsWith('${entry.key}/')) {
+            pending.add(entry.value);
+          }
+        }
+        final deletion = _afterFileOperations(pending, () async {
+          final dir = await cacheDirectory;
+          final targetDir = Directory('${dir.path}/$normalizedPrefix');
+          if (await targetDir.exists()) await targetDir.delete(recursive: true);
+          return true;
+        });
+        // Install the barrier before yielding so later saves wait for deletion.
+        _pendingPrefixDeletes[normalizedPrefix] = deletion;
+        try {
+          return await deletion;
+        } finally {
+          if (identical(_pendingPrefixDeletes[normalizedPrefix], deletion)) {
+            _pendingPrefixDeletes.remove(normalizedPrefix);
+          }
+        }
       } on Exception catch (error, stackTrace) {
         debugPrintStack(stackTrace: stackTrace);
         debugPrint(error.toString());
@@ -758,6 +790,7 @@
     void dispose() {
       // ✨ dispose 상태 표시 (추가 호출 방지)
       _isDisposed = true;
+      _fileSaveEpochs.clear();
 
       // 🌍 DrawingState 해제는 ScribbleController에서 자동으로 처리됨 ✅
       // (중복 해제 코드 제거됨)
@@ -1360,29 +1393,83 @@
       }
     }
 
-    /// 실제 파일 저장 수행 (내부 메서드)
+    /// Serialize writes per key while allowing unrelated pages to save freely.
     Future<bool> _saveToFileImmediately(
       String normalizedKey,
       Scribble scribble,
     ) async {
-      // 웹에서는 파일 I/O 불가 → 메모리 캐시만 사용
+      if (_isDisposed) return false;
+      // Web has no disk persistence boundary.
       if (_isWeb) return true;
 
+      final epoch = _fileSaveEpochs.putIfAbsent(normalizedKey, Object.new);
+      final snapshot = scribble.deepCopy();
+      final transform = persistenceTransform;
+      return _queueFileOperation(
+        normalizedKey,
+        () => _writeFileSnapshot(normalizedKey, snapshot, epoch, transform),
+      );
+    }
+
+    Future<bool> _queueFileOperation(
+      String key,
+      Future<bool> Function() operation,
+    ) async {
+      final previous = _pendingFileSaves[key];
+      final pending = _afterFileOperations([
+        if (previous != null) previous,
+        for (final entry in _pendingPrefixDeletes.entries)
+          if (key.startsWith('${entry.key}/')) entry.value,
+      ], operation);
+      _pendingFileSaves[key] = pending;
       try {
+        return await pending;
+      } finally {
+        if (identical(_pendingFileSaves[key], pending)) {
+          _pendingFileSaves.remove(key);
+          _fileSaveEpochs.remove(key);
+        }
+      }
+    }
+
+    Future<bool> _afterFileOperations(
+      List<Future<bool>> previous,
+      Future<bool> Function() operation,
+    ) async {
+      try {
+        await Future.wait(previous);
+        return await operation();
+      } catch (error) {
+        debugPrint('ScribbleCacheManager: 파일 작업 실패 - $error');
+        return false;
+      }
+    }
+
+    Future<bool> _writeFileSnapshot(
+      String normalizedKey,
+      Scribble snapshot,
+      Object epoch,
+      Future<Scribble> Function(String, Scribble)? transform,
+    ) async {
+      try {
+        if (!_canWriteSnapshot(normalizedKey, epoch)) return false;
+        final persisted = transform == null
+            ? snapshot
+            : await transform(normalizedKey, snapshot);
+        if (!_canWriteSnapshot(normalizedKey, epoch)) return false;
+        final buffer = persisted.writeToBuffer();
         final filePath = await _getFilePath(normalizedKey);
-
-        // 바이너리 데이터로 변환
-        final buffer = scribble.writeToBuffer();
-
-        // 파일에 저장
-        final file = File(filePath);
-        await file.writeAsBytes(buffer);
-
-        debugPrint('ScribbleCacheManager: 파일 저장 완료 - $normalizedKey');
+        if (!_canWriteSnapshot(normalizedKey, epoch)) return false;
+        await File(filePath).writeAsBytes(buffer);
         return true;
-      } on Exception catch (error) {
+      } catch (error) {
+        // A host transform can throw an Error as well as an Exception. Never
+        // replace the existing file with the untransformed snapshot on failure.
         debugPrint('ScribbleCacheManager: 파일 저장 실패 - $normalizedKey: $error');
         return false;
       }
     }
+
+    bool _canWriteSnapshot(String key, Object epoch) =>
+        !_isDisposed && identical(_fileSaveEpochs[key], epoch);
   }
