@@ -50,51 +50,70 @@ jobs:
           sed -i '/^  path_provider_platform_interface:/d' pubspec.yaml
           sed -i '/^  plugin_platform_interface:/d' pubspec.yaml
 
-      # PRIVATE_REPO_PAT: fine-grained PAT.
-      #   - Resource owner: coco-de (조직) — 개인 계정을 소유자로 만든 토큰은 조직 저장소를 읽지 못한다
-      #   - Repository access: coco-de/open-epub 포함
-      #   - Permissions: Contents: Read-only
-      #   - 조직이 fine-grained PAT 승인을 요구하면 승인까지 끝나야 유효하다
-      # 등록: gh secret set PRIVATE_REPO_PAT --repo coco-de/open-board
+      # SUBMODULE_TOKEN: coco-de 조직 Actions secret(visibility: private) — 조직 비공개 저장소를 읽는 PAT.
+      #   open-board 는 private 저장소라 이 조직 시크릿을 그대로 받는다. 저장소 시크릿을 따로 두지 않는다.
+      #   (종전 저장소 시크릿 PRIVATE_REPO_PAT 는 open-epub 이 접근 범위에 없어 403 — #223)
+      # 갱신: gh secret set SUBMODULE_TOKEN --org coco-de --visibility private
       - name: Configure git auth for private dependencies
         env:
-          PRIVATE_REPO_PAT: ${{ secrets.PRIVATE_REPO_PAT }}
+          SUBMODULE_TOKEN: ${{ secrets.SUBMODULE_TOKEN }}
         run: |
-          if [ -z "$PRIVATE_REPO_PAT" ]; then
-            echo "::error::PRIVATE_REPO_PAT 시크릿이 비어 있습니다. coco-de 조직 소유의 fine-grained PAT(${PRIVATE_DEP_REPO}, Contents: Read-only)를 등록하세요: gh secret set PRIVATE_REPO_PAT --repo ${GITHUB_REPOSITORY}"
+          if [ -z "$SUBMODULE_TOKEN" ]; then
+            echo "::error::SUBMODULE_TOKEN 이 비어 있습니다. coco-de 조직 Actions secret SUBMODULE_TOKEN(visibility: private)이 존재하고 이 저장소에 노출되는지 확인하세요: gh secret list --org coco-de"
             exit 1
           fi
-          git config --global url."https://x-access-token:${PRIVATE_REPO_PAT}@github.com/coco-de/".insteadOf "https://github.com/coco-de/"
+          git config --global url."https://x-access-token:${SUBMODULE_TOKEN}@github.com/coco-de/".insteadOf "https://github.com/coco-de/"
 
       # pub get 이 403 으로 죽기 전에, 토큰 상태와 저장소 접근을 분리해 판정한다.
       # 토큰 값은 출력하지 않는다 — 종류(prefix)·소유자·만료일·HTTP 코드만 남긴다.
-      - name: Verify PRIVATE_REPO_PAT can read the private dependency
+      - name: Verify SUBMODULE_TOKEN can read the private dependency
         env:
-          PRIVATE_REPO_PAT: ${{ secrets.PRIVATE_REPO_PAT }}
+          SUBMODULE_TOKEN: ${{ secrets.SUBMODULE_TOKEN }}
         run: |
-          case "$PRIVATE_REPO_PAT" in
+          case "$SUBMODULE_TOKEN" in
             github_pat_*) kind="fine-grained" ;;
             ghp_*)        kind="classic" ;;
-            *)            kind="unknown(길이 ${#PRIVATE_REPO_PAT} — 토큰 값이 아닌 문자열이 등록됐을 수 있음)" ;;
+            *)            kind="unknown(길이 ${#SUBMODULE_TOKEN} — 토큰 값이 아닌 문자열이 등록됐을 수 있음)" ;;
           esac
 
           hdr="$(mktemp)"; body="$(mktemp)"
           code="$(curl -sS -o "$body" -D "$hdr" -w '%{http_code}' \
-            -H "Authorization: Bearer ${PRIVATE_REPO_PAT}" \
+            -H "Authorization: Bearer ${SUBMODULE_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/user)"
           if [ "$code" != "200" ]; then
-            echo "::error::PRIVATE_REPO_PAT(종류: ${kind}) 가 유효하지 않습니다 — GET /user → HTTP ${code}. 만료됐거나 폐기된 토큰입니다. coco-de 조직 소유의 fine-grained PAT(${PRIVATE_DEP_REPO}, Contents: Read-only)를 재발급해 등록하세요: gh secret set PRIVATE_REPO_PAT --repo ${GITHUB_REPOSITORY}"
+            echo "::error::SUBMODULE_TOKEN(종류: ${kind}) 가 유효하지 않습니다 — GET /user → HTTP ${code}. 만료됐거나 폐기된 토큰입니다. 조직 시크릿을 ${PRIVATE_DEP_REPO} Contents: Read-only 권한의 새 토큰으로 갱신하세요: gh secret set SUBMODULE_TOKEN --org coco-de --visibility private"
             exit 1
           fi
           owner="$(jq -r .login "$body")"
           expires="$(grep -i '^github-authentication-token-expiration:' "$hdr" | cut -d' ' -f2- | tr -d '\r')"
           echo "token: kind=${kind} · owner=${owner} · expires=${expires:-unknown}"
 
+          # 토큰 범위 판별 — API 로 대상 저장소가 보이는지(Repository access), 권한 필드가 무엇인지 읽는다.
+          #   404 = 토큰의 Repository access 에 없음 · 200 = 범위에는 있음(그래도 clone 이 막히면 Contents 권한 부재)
+          repo_code="$(curl -sS -o "$body" -w '%{http_code}' \
+            -H "Authorization: Bearer ${SUBMODULE_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${PRIVATE_DEP_REPO}")"
+          repo_perm="$( [ "$repo_code" = "200" ] && jq -c '.permissions // {}' "$body" || echo '-' )"
+          echo "repo API: GET /repos/${PRIVATE_DEP_REPO} → HTTP ${repo_code} · permissions=${repo_perm}"
+
+          # 대조군 — 같은 토큰으로 이 저장소(조직의 다른 private 저장소)를 읽을 수 있는지. 조직 접근 자체의 문제인지 가른다.
+          if git ls-remote --exit-code "https://github.com/${GITHUB_REPOSITORY}.git" HEAD >/dev/null 2>&1; then
+            echo "control: ${GITHUB_REPOSITORY} 읽기 가능 → 토큰은 조직 저장소에 접근한다"
+          else
+            echo "control: ${GITHUB_REPOSITORY} 도 읽기 불가 → 조직 저장소 전반 접근 불가(Resource owner 개인 계정 또는 조직 정책)"
+          fi
+
           # pub 이 실제로 쓰는 경로(insteadOf 가 적용된 https clone URL)로 읽기 권한을 확인한다.
           if ! git ls-remote --exit-code "https://github.com/${PRIVATE_DEP_REPO}.git" HEAD >/dev/null 2>"$hdr"; then
             remote_msg="$(grep -E '^(remote:|fatal:)' "$hdr" | tr '\n' ' ' | head -c 300)"
-            echo "::error::PRIVATE_REPO_PAT(종류: ${kind}, 소유자: ${owner}) 는 유효하지만 ${PRIVATE_DEP_REPO} 를 읽을 수 없습니다 — ${remote_msg}. Resource owner=coco-de · Repository access 에 open-epub 포함 · Contents: Read-only 로 재발급하고, 조직이 fine-grained PAT 승인을 요구하면 승인까지 완료하세요."
+            case "$repo_code" in
+              404) why="토큰의 Repository access 에 ${PRIVATE_DEP_REPO} 가 없습니다 — 토큰 설정에서 이 저장소를 추가(또는 All repositories)하세요" ;;
+              200) why="${PRIVATE_DEP_REPO} 는 범위에 있지만 Contents 권한이 없습니다(permissions=${repo_perm}) — Permissions › Repository › Contents: Read-only 를 부여하세요" ;;
+              *)   why="API 응답 HTTP ${repo_code} — Resource owner=coco-de · Repository access 에 open-epub 포함 · Contents: Read-only 로 재발급하고, 조직이 fine-grained PAT 승인을 요구하면 승인까지 완료하세요" ;;
+            esac
+            echo "::error::SUBMODULE_TOKEN(종류: ${kind}, 소유자: ${owner}) 는 유효하지만 ${PRIVATE_DEP_REPO} 를 읽을 수 없습니다 — ${remote_msg}. ${why}."
             exit 1
           fi
           echo "✓ ${PRIVATE_DEP_REPO} 읽기 가능 (owner=${owner}, expires=${expires:-unknown})"
