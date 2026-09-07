@@ -20,6 +20,11 @@ dependencies:
   path_provider: ^2.1.5
   marionette_flutter: ^0.6.0
 
+# html 0.15.7(2026-08-28)이 query_selector.matches 를 제거해 flutter_html 3.0.0 컴파일이 깨진다
+# (styled_element.dart:31 "Method not found: 'matches'"). flutter_html 이 고친 버전을 내면 제거한다.
+dependency_overrides:
+  html: 0.15.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
