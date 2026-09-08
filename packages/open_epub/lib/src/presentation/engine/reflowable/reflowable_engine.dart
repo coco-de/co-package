@@ -23,6 +23,9 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';
 
+import 'archive_svg.dart';
+import 'epub_stylesheet.dart';
+import 'epub_xhtml.dart';
 import 'mathml_to_tex.dart';
 import 'vertical_text_block.dart';
 
@@ -496,26 +499,32 @@ Widget buildReflowableHtml({
   String? baseHref,
   String? fontFamily,
 }) {
+  final stylesheet = EpubStylesheet.parse(data);
+  final html = extractRenderableHtml(data);
   // never-empty: 렌더 가능한 콘텐츠(텍스트·이미지·svg·math)가 없으면 공백 금지.
-  if (_isBlankContent(data)) {
+  // title 등 head 텍스트는 본문이 아니므로 추출 뒤에 판정한다. (#278)
+  if (_isBlankContent(html)) {
     return const _BlankContentNotice();
   }
-  // 세로쓰기: 인라인 선언 또는 override + 단순 텍스트 콘텐츠일 때만. (S15.4)
-  if ((forceVertical || declaresVerticalWriting(data)) &&
-      isSimpleTextContent(data)) {
+  // 세로쓰기: 인라인 style, 매칭된 스타일시트(html/body), 또는 override.
+  // <style> 원문 정규식은 쓰지 않는다 — 미사용 클래스 오탐. (#278)
+  final vertical = forceVertical ||
+      declaresVerticalWriting(html) ||
+      stylesheet.rootIsVerticalWriting;
+  if (vertical && isSimpleTextContent(html)) {
     // decodePlainText: HTML 엔티티(&#160; 등)를 디코드한 평문. extractPlainText는
     // raw(엔티티 미디코드)라 세로 셀에 '& # 1 6 0 ;'가 그대로 렌더되는 버그가 있어
     // 디코드 결과를 쓴다. (S15.4 marionette 통합테스트에서 발견)
     return VerticalTextBlock(
-      text: const SpineTextExtractor().decodePlainText(data).decoded,
+      text: const SpineTextExtractor().decodePlainText(html).decoded,
       fontSize: fontSize,
       lineHeight: lineHeight,
-      leftToRight: isVerticalLr(data),
+      leftToRight: isVerticalLr(html) || stylesheet.rootIsVerticalLr,
       fontFamily: fontFamily,
     );
   }
   return HtmlWidget(
-    data,
+    html,
     buildAsync: false,
     textStyle: TextStyle(
       fontSize: fontSize,
@@ -523,6 +532,7 @@ Widget buildReflowableHtml({
       fontFamily: fontFamily,
     ),
     factoryBuilder: () => _EpubWidgetFactory(),
+    customStylesBuilder: stylesheet.isEmpty ? null : stylesheet.stylesFor,
     onTapUrl: (url) {
       if (url.isNotEmpty) onLinkTap?.call(url);
       // 항상 handled로 표시 — 외부 url_launcher 시도(미의존)를 막는다.
@@ -530,6 +540,13 @@ Widget buildReflowableHtml({
     },
     customWidgetBuilder: (element) {
       switch (element.localName) {
+        case 'svg':
+          return archiveSvgWidget(
+            element,
+            loadImage: imageLoader == null
+                ? null
+                : (src) => imageLoader(resolveDocumentHref(baseHref, src)),
+          );
         case 'img':
           final src = element.attributes['src'];
           final alt = element.attributes['alt'];

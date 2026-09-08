@@ -1,5 +1,21 @@
 ## Unreleased
 
+### Fixed
+- 챕터 XHTML의 `<head><title>`이 본문 첫 줄로 새어 나오던 문제 — 렌더 입력을
+  `<body>`로 좁힌다. (#278)
+- `<style>` 안의 미사용 `.vert{writing-mode:vertical-rl}` 만으로 가로쓰기 챕터가
+  세로 격자로 붕괴하던 오탐 — 세로쓰기 판정을 인라인 style과 실제로 매칭된
+  html/body 규칙으로 제한한다. (#278)
+- EPUB3 SVG-래핑 FXL 페이지가 archive `<image href>`/`xlink:href`를 버려 백지가
+  되던 문제 — 아카이브 바이트를 data URI로 치환해 렌더하고, 실패 시 never-empty
+  placeholder를 표시한다. (#278)
+
+### Added
+- 문서 내 `<style>`의 태그/클래스/id·자손 선택자를 `customStylesBuilder`로 적용해
+  저자 지정 색·여백·font-size가 fwfh가 지원하는 범위에서 반영된다. ZIP 외부 CSS
+  인라인은 #274와 구성된다. `position`/`float`/다단 등 fwfh 비지원 속성은 무시한다.
+  (#278)
+
 ### Changed
 - `ReflowablePageView` 페이지(paged) 모드 넘김을 **드래그-투-턴**(drag-to-turn)으로
   개선(kobic#8240). 기존에는 최상위 `GestureDetector`가 fling 속도 임계(250)만 보고

@@ -8,16 +8,44 @@
 
 import 'package:flutter/material.dart';
 
-/// XHTML이 세로쓰기(`writing-mode: vertical-rl|vertical-lr`)를 인라인으로
-/// 선언하는지. 스타일시트로만 선언한 책은 호스트가 override로 강제한다.
+/// 본문에 세로쓰기(`writing-mode: vertical-rl|vertical-lr`)가 있는지.
+/// `<style>`/`<script>`/`<head>`는 렌더되지 않으므로 판정에서 제외한다 —
+/// 미사용 `.vert{writing-mode:vertical-rl}` 한 줄이 가로쓰기 챕터를 세로로
+/// 붕괴시키던 오탐을 막기 위함. (#278)
 bool declaresVerticalWriting(String html) =>
-    RegExp(r'writing-mode\s*:\s*vertical-(rl|lr)', caseSensitive: false)
-        .hasMatch(html);
+    _verticalWriting.hasMatch(_withoutHiddenBlocks(html));
 
 /// 세로쓰기 방향이 vertical-lr(컬럼 좌→우)인지. 그 외/미선언은 false(vertical-rl).
 bool isVerticalLr(String html) =>
-    RegExp(r'writing-mode\s*:\s*vertical-lr', caseSensitive: false)
-        .hasMatch(html);
+    _verticalLr.hasMatch(_withoutHiddenBlocks(html));
+
+final _verticalWriting = RegExp(
+  r'writing-mode\s*:\s*vertical-(rl|lr)',
+  caseSensitive: false,
+);
+
+final _verticalLr = RegExp(
+  r'writing-mode\s*:\s*vertical-lr',
+  caseSensitive: false,
+);
+
+/// `<style>`/`<script>`/`<head>`는 렌더되지 않으므로 세로쓰기 판정에서 제외.
+String _withoutHiddenBlocks(String html) {
+  var out = html;
+  out = out.replaceAll(
+    RegExp(r'<style\b[^>]*>[\s\S]*?</style\s*>', caseSensitive: false),
+    '',
+  );
+  out = out.replaceAll(
+    RegExp(r'<script\b[^>]*>[\s\S]*?</script\s*>', caseSensitive: false),
+    '',
+  );
+  out = out.replaceAll(
+    RegExp(r'<head\b[^>]*>[\s\S]*?</head\s*>', caseSensitive: false),
+    '',
+  );
+  return out;
+}
 
 /// 세로 조판으로 렌더해도 안전한 단순 텍스트 콘텐츠인지 — 이미지·SVG·수식·표가
 /// 없으면 true. 복잡 콘텐츠는 가로 렌더로 폴백해야 한다(안전).

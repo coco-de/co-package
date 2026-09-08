@@ -46,6 +46,15 @@ dependencies:
   # (S11.2에서 레거시 파서용으로 drop됐던 것을 렌더 목적으로 재도입)
   html: ^0.15.4
 
+  # #278: 문서 <style> 선택자 매칭. fwfh가 전이 의존하지만 customStylesBuilder
+  # 전처리에서 직접 파싱하므로 명시 의존으로 승격한다.
+  csslib: ^1.0.2
+
+  # #278: SVG-래핑 FXL의 archive <image href>를 data URI로 치환한 뒤
+  # SvgPicture.string으로 렌더. fwfh_svg가 전이 의존하지만 직접 참조하므로
+  # 명시 의존으로 승격한다(기존에는 테스트 전용 dev_dependency).
+  flutter_svg: ^2.0.0
+
   # S15.2(#109, gap #6 재생분): Media Overlays 오디오 재생 기본 구현. MediaAudioPlayer
   # 추상 인터페이스 뒤에 두어 호스트가 자체 오디오 스택으로 교체 가능하며, 테스트는
   # fake player로 결정적으로 검증한다(플러그인 경계는 미단언).
@@ -63,10 +72,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-
-  # S11.4(#91): 인라인 <svg> 렌더(fwfh_svg) 회귀 단언용. fwfh_svg가 이미 전이
-  # 의존하므로 새 해석 없이 SvgPicture 타입만 테스트에서 참조한다.
-  flutter_svg: ^2.0.0
 
 flutter:
   uses-material-design: true

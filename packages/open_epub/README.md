@@ -196,6 +196,8 @@ EpubReader(
 | Media Overlays (read-aloud) | `mediaOverlayController` + `session.loadMediaOverlay(spineHref)` |
 | MathML | Built-in MathML → TeX fallback render |
 | Inline SVG | Rendered via `fwfh_svg` |
+| Author CSS (`<style>` class/id) | Applied via `customStylesBuilder` (fwfh-supported properties) |
+| SVG-wrapped FXL page images | Archive `href`/`xlink:href` resolved to bitmaps |
 | CFI interop | `EpubCfiMapper` (import/export standard CFI) |
 | Full-text search | `session.buildSearchIndex()` |
 | Selection & highlights | `SelectionArea` + `EpubHighlight` |

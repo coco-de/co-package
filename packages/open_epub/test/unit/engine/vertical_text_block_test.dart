@@ -55,6 +55,16 @@ void main() {
         isTrue,
       );
     });
+
+    test('<style> 안의 미사용 클래스는 오탐하지 않는다 (#278)', () {
+      expect(
+        declaresVerticalWriting(
+          '<html><head><style>.vert{writing-mode:vertical-rl}</style></head>'
+          '<body><p>English chapter</p></body></html>',
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('isSimpleTextContent', () {
