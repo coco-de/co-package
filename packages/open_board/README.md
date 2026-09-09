@@ -174,6 +174,29 @@ final bytes = controller.exportAsBytes();
 controller.importFromBytes(bytes);
 ```
 
+### Image Edit Intent
+
+`ScribbleNotifier.activeImageEdit` exposes a `ScribbleImageEdit` only during
+synchronous state-change notifications for committed image membership changes.
+Capture it inside `notifier.addListener` (or the controller's synchronous
+`onScribbleChanged`) before awaiting. Its `before` and `after` lists contain
+deep-copied, frozen `ImageDrawable`s and remain immutable after the callback.
+
+`ScribbleImageEditKind` is `edit`, `undo`, or `redo`. Committed drawable operations,
+`setScribble(addToUndoHistory: true)`, `clear()`, and actual undo/redo application
+(including controller and `DrawingState` delegations) are covered. Membership is
+compared by image ID, including duplicate counts; geometry, source, metadata, or
+ordering changes alone produce no token. Snapshots include all images in their
+original order, not just the added/removed subset.
+
+The getter is null for external `setScribble(addToUndoHistory: false)`/loads,
+baseline resets, cursor/tool/temporary frames, and membership no-ops. Nested
+notifications get their own token or null, then restore the outer listener's
+token. The getter resets on return; it is not an asynchronous event stream and
+is not available in the deferred `onHistoryApplied` callback. It identifies the
+operation, **not a human user**: live/replay code can call the same editing APIs.
+Hosts must retain their own external-load/replay policy.
+
 ### ScribbleCacheManager
 
 Unified manager for both scribble data persistence and controller management with shared tool settings.

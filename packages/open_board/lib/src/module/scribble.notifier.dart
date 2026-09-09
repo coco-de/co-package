@@ -2,6 +2,7 @@
 import 'dart:async';
 
 // 🐦 Flutter imports:
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
@@ -23,6 +24,7 @@ import 'package:open_board/src/module/stroke/stroke_processor.dart';
 import 'package:open_board/src/module/stroke/eraser_processor.dart';
 import 'package:open_board/src/module/text/text_drawable_manager.dart';
 import 'package:open_board/src/module/image/image_drawable_manager.dart';
+import 'package:open_board/src/module/image/scribble_image_edit.dart';
 
 abstract class ScribbleNotifierBase extends ValueNotifier<ScribbleState> {
   ScribbleNotifierBase(super.value);
@@ -135,6 +137,10 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 그린 스트로크가 충돌한다. 그것이 이 필드를 도입한 이유의 절반이다.
   final String Function() strokeIdFactory;
 
+  ScribbleImageEdit? _activeImageEdit;
+  ScribbleImageEdit? _pendingImageEdit;
+  ScribbleImageEditKind? _historyImageEditKind;
+
   ScribbleNotifier({
     /// If you pass a scribble here, the notifier will use that scribble as a
     /// starting point.
@@ -179,9 +185,38 @@ class ScribbleNotifier extends ScribbleNotifierBase
   /// 현재 ScribbleState 전체 반환 (외부 접근용)
   ScribbleState get currentState => state;
 
+  /// The image membership change being synchronously notified, otherwise null.
+  ///
+  /// Capture this in a state listener before awaiting. Images are compared by
+  /// ID (including multiplicity); geometry, source and order alone do not count.
+  /// External loads, history baseline resets and temporary frames have no edit.
+  /// This describes an operation, not proof of human input: live/replay callers
+  /// can invoke the same committed APIs.
+  ScribbleImageEdit? get activeImageEdit => _activeImageEdit;
+
   /// 펜 정지 감지 타이머 활성 여부 (테스트 전용)
   @visibleForTesting
   bool get debugStraightenTimerActive => _straightenTimer?.isActive ?? false;
+
+  @override
+  void notifyListeners() {
+    final previousEdit = _activeImageEdit;
+    _activeImageEdit = _pendingImageEdit;
+    // Consume before dispatch so nested load/tool/temporary notifications cannot
+    // inherit the outer edit. Restore it only when the outer listener resumes.
+    _pendingImageEdit = null;
+    try {
+      super.notifyListeners();
+    } finally {
+      _activeImageEdit = previousEdit;
+    }
+  }
+
+  @override
+  void undo() => _applyImageHistory(.undo, super.undo);
+
+  @override
+  void redo() => _applyImageHistory(.redo, super.redo);
 
   /// Only apply the scribble from the undo history, otherwise keep current state
   @override
@@ -201,6 +236,17 @@ class ScribbleNotifier extends ScribbleNotifierBase
         : (historyState.scribble.deepCopy()
             ..strokes.clear()
             ..strokes.addAll(strokes));
+
+    final kind = _historyImageEditKind;
+    if (kind != null) {
+      // The mixin selected this history entry and will apply it immediately via
+      // temporaryValue. Do not infer an edit from canUndo or a later callback.
+      _pendingImageEdit = _imageEditBetween(
+        currentState.scribble,
+        cleanedScribble,
+        kind,
+      );
+    }
 
     // 히스토리 적용 알림은 상태 변환이 끝난 뒤로 미룬다.
     if (onHistoryApplied != null) {
@@ -224,7 +270,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
       final Erasing s => s.copyWith(scribble: scribble),
     };
     if (addToUndoHistory) {
-      state = newState;
+      _commitImageEdit(newState);
       onScribbleFinished?.call();
     } else {
       temporaryValue = newState;
@@ -257,17 +303,19 @@ class ScribbleNotifier extends ScribbleNotifierBase
         state.scribble.imageDrawables.isEmpty) {
       return;
     }
-    state = Drawing(
-      scribble: Scribble(
-        x: state.scribble.x,
-        y: state.scribble.y,
-        width: state.scribble.width,
-        height: state.scribble.height,
-        strokes: [],
-        textDrawables: [],
-        version: state.scribble.version,
+    _commitImageEdit(
+      Drawing(
+        scribble: Scribble(
+          x: state.scribble.x,
+          y: state.scribble.y,
+          width: state.scribble.width,
+          height: state.scribble.height,
+          strokes: [],
+          textDrawables: [],
+          version: state.scribble.version,
+        ),
+        activePointerIds: state.activePointerIds,
       ),
-      activePointerIds: state.activePointerIds,
     );
   }
 
@@ -1196,10 +1244,54 @@ class ScribbleNotifier extends ScribbleNotifierBase
       ),
     };
     if (addToUndoHistory) {
-      state = newState;
+      _commitImageEdit(newState);
       onScribbleFinished?.call();
     } else {
       temporaryValue = newState;
+    }
+  }
+
+  void _applyImageHistory(ScribbleImageEditKind kind, VoidCallback apply) {
+    final previousKind = _historyImageEditKind;
+    final previousPending = _pendingImageEdit;
+    _historyImageEditKind = kind;
+    _pendingImageEdit = null;
+    try {
+      apply();
+    } finally {
+      _historyImageEditKind = previousKind;
+      _pendingImageEdit = previousPending;
+    }
+  }
+
+  ScribbleImageEdit? _imageEditBetween(
+    Scribble before,
+    Scribble after,
+    ScribbleImageEditKind kind,
+  ) {
+    final beforeIds = before.imageDrawables.map((image) => image.id).toList()
+      ..sort();
+    final afterIds = after.imageDrawables.map((image) => image.id).toList()
+      ..sort();
+    if (listEquals(beforeIds, afterIds)) return null;
+    return ScribbleImageEdit(
+      before: before.imageDrawables,
+      after: after.imageDrawables,
+      kind: kind,
+    );
+  }
+
+  void _commitImageEdit(ScribbleState newState) {
+    final previousPending = _pendingImageEdit;
+    _pendingImageEdit = _imageEditBetween(
+      state.scribble,
+      newState.scribble,
+      .edit,
+    );
+    try {
+      state = newState;
+    } finally {
+      _pendingImageEdit = previousPending;
     }
   }
 
