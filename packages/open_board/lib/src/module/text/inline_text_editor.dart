@@ -10,6 +10,23 @@ import 'package:open_board/src/module/text/link_span_offsets.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 
+/// 인라인 에디터 외곽 폭 (완료 버튼 포함).
+///
+/// [textWidth] 는 TextField 와 같은 [textScaler] 로 측정한 잉크 폭이어야 한다.
+/// 옛 `textWidth * 1.05` 배율은 짧은 단어에서 여유 1~2px 밖에 안 되어, Android
+/// TextField 가 캐럿+마지막 글리프를 클립한다 (UB-695 / unibook#13507).
+@visibleForTesting
+double computeInlineEditorWidth({
+  required double textWidth,
+  required double fontSize,
+  required double doneButtonWidth,
+  double cursorWidth = 2.0,
+  double minWidth = 40.0,
+}) {
+  final endReserve = fontSize + cursorWidth;
+  return math.max(minWidth, textWidth + endReserve + 8 + doneButtonWidth + 8);
+}
+
 /// 링크 타깃 입력 UI 를 호스트 앱이 제공하기 위한 콜백.
 ///
 /// 확인 시 정규화된 링크 타깃(외부: `https://...`, 내부: `page:N`)을, 취소하면
@@ -510,16 +527,20 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       style: textStyle,
     );
 
+    // TextField 는 MediaQuery.textScaler 를 쓰는데 TextPainter 기본값은
+    // noScaling 이라, 태블릿 글자 크기>100% 에서 측정폭 < 실제 렌더폭이 된다.
+    final textScaler = MediaQuery.textScalerOf(context);
     final textPainter = TextPainter(
       text: textSpan,
       textAlign: widget.textSettings.textAlignment.textAlign,
       textDirection: .ltr,
+      textScaler: textScaler,
     );
 
     // 화면 너비에서 여백을 뺀 크기로 레이아웃
     textPainter.layout(maxWidth: screenSize.width - 60);
 
-    // 에디터 크기 계산 (텍스트 크기 + 패딩 + 완료 버튼 공간)
+    // 에디터 크기 계산 (텍스트 크기 + 캐럿/글리프 여유 + 완료 버튼 공간)
     const minWidth = 40.0;
     const minHeight = 30.0;
     // 완료 버튼 너비 — 텍스트 라벨("완료")이 아이콘보다 넓어 기존 32 에서 확장.
@@ -527,11 +548,14 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
 
     final textWidth = textPainter.width;
     final textHeight = textPainter.height;
+    textPainter.dispose();
 
-    double editorWidth = math.max(
-      minWidth,
-      textWidth * 1.05 + 8 + doneButtonWidth + 8,
-    ); // 완료 버튼 공간 추가
+    double editorWidth = computeInlineEditorWidth(
+      textWidth: textWidth,
+      fontSize: actualFontSize,
+      doneButtonWidth: doneButtonWidth,
+      minWidth: minWidth,
+    );
     double editorHeight = math.max(minHeight, textHeight * 1.05);
 
     // 화면 경계 제한
