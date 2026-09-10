@@ -125,6 +125,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       this.linkTargetResolver,
       this.shouldDeferDrawStart,
       this.canSelectItem,
+      this.preserveViewTransform = false,
     });
 
     /// 텍스트 주석 링크 타깃 입력 UI 제공자 — [TextInteractionManager] 를 거쳐
@@ -163,6 +164,11 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
     /// 도구와 무관하게 계속 동작한다 (kobic#12374 보존). 미주입(`null`) 시
     /// 기존과 완전히 동일하다. 상세는 [CanSelectScribbleItem] 참조.
     final CanSelectScribbleItem? canSelectItem;
+
+    /// When true, layout/orientation/scale-fit changes do not reset
+    /// [transformationController] to identity. Used by replay cameras that
+    /// own the view transform.
+    final bool preserveViewTransform;
 
     /// ✨ 이미지 캡처를 위한 GlobalKey - 외부에서 접근 가능
     final GlobalKey? repaintBoundaryKey;
@@ -753,16 +759,19 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
                           .abs() >
                       0.5;
 
-              if (_isFirstBuild ||
-                  (contentSizeChanged && !_hasUserInteracted) ||
-                  hasOrientationChanged ||
-                  isSignificantChange) {
+              if (!widget.preserveViewTransform &&
+                  (_isFirstBuild ||
+                      (contentSizeChanged && !_hasUserInteracted) ||
+                      hasOrientationChanged ||
+                      isSignificantChange)) {
                 // 레이아웃 사전-피팅 방식: 컨트롤러는 1.0 유지
                 transformationController!.value = Matrix4.identity();
-                _isFirstBuild = false;
               }
+              _isFirstBuild = false;
 
-              if (contentSizeChanged && !_hasUserInteracted) {
+              if (!widget.preserveViewTransform &&
+                  contentSizeChanged &&
+                  !_hasUserInteracted) {
                 // 컨트롤러는 1.0 유지
                 transformationController!.value = Matrix4.identity();
               }

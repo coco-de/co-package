@@ -43,6 +43,10 @@ class _DrawingPageState extends State<DrawingPage> {
 
   static const _pageIds = ['page-0', 'page-1', 'page-2'];
   static const _contentId = 'demo-book';
+  static const _replayMaxScale = 16.0;
+
+  Size? _logicalContentSize;
+  Size _viewportSize = Size.zero;
 
   @override
   void initState() {
@@ -141,6 +145,7 @@ class _DrawingPageState extends State<DrawingPage> {
     );
     _recorder!.start(_bookController.eventStream);
 
+    _logicalContentSize = _viewportSize == Size.zero ? null : _viewportSize;
     setState(() => _isRecording = true);
   }
 
@@ -284,6 +289,7 @@ class _DrawingPageState extends State<DrawingPage> {
     _replayWallStartMicros = DateTime.now().microsecondsSinceEpoch;
     _transformController.value = Matrix4.identity();
     _isReplaying = true;
+    _applyHandwritingFit();
 
     // 16ms 주기로 프레임 업데이트 (~60fps)
     _replayTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
@@ -341,7 +347,9 @@ class _DrawingPageState extends State<DrawingPage> {
         }
       case PageChangedEvent(:final toIndex):
         _finishCurrentAnimation();
-        _goToPage(toIndex);
+        _goToPage(toIndex).then((_) {
+          if (_isReplaying) _applyHandwritingFit();
+        });
       case UndoPerformedEvent():
         _finishCurrentAnimation();
         _activeController.undo();
@@ -358,14 +366,8 @@ class _DrawingPageState extends State<DrawingPage> {
         _finishCurrentAnimation();
         _replayPageStrokes[_pageIds[_currentPageIndex]]?.clear();
         _activeController.clear();
-      case ViewportChangedEvent(:final scale, :final centerX, :final centerY):
-        // 녹화된 확대/축소/이동을 transformationController에 적용
-        final matrix = Matrix4.identity()
-          ..setEntry(0, 3, centerX)
-          ..setEntry(1, 3, centerY)
-          ..setEntry(0, 0, scale)
-          ..setEntry(1, 1, scale);
-        _transformController.value = matrix;
+      case ViewportChangedEvent():
+        _applyHandwritingFit();
       default:
         break;
     }
@@ -442,6 +444,22 @@ class _DrawingPageState extends State<DrawingPage> {
   }
 
   // === 뷰포트 변경 이벤트 (확대/축소) ===
+
+  void _applyHandwritingFit() {
+    final logical = _logicalContentSize;
+    if (!_isReplaying || logical == null || _viewportSize == Size.zero) {
+      return;
+    }
+    final pageId = _pageIds[_currentPageIndex];
+    final strokes = _recordedStrokes[pageId] ?? const <Stroke>[];
+    _transformController.value =
+        ScribbleCoordinateConverter.fitHandwritingToViewport(
+      strokes: strokes,
+      contentLogicalSize: logical,
+      viewportSize: _viewportSize,
+      maxScale: _replayMaxScale,
+    );
+  }
 
   void _onTransformChanged(Matrix4 transform) {
     if (!_isRecording) return;
@@ -535,21 +553,37 @@ class _DrawingPageState extends State<DrawingPage> {
                   constraints.maxWidth,
                   constraints.maxHeight,
                 );
+                final viewportChanged = size != _viewportSize;
+                _viewportSize = size;
+                if (!_isRecording && !_isReplaying && !_hasRecording) {
+                  _logicalContentSize = size;
+                } else {
+                  _logicalContentSize ??= size;
+                }
+                final logical = _logicalContentSize ?? size;
+                if (_isReplaying && viewportChanged) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _isReplaying) {
+                      _applyHandwritingFit();
+                    }
+                  });
+                }
                 return ScribbleWidget(
                   key: ValueKey('page-$_currentPageIndex'),
                   notifier: _notifier,
                   modeNotifier: _modeNotifier,
                   repaintBoundaryKey: _activeController.repaintBoundaryKey,
-                  contentLogicalSize: size,
+                  contentLogicalSize: logical,
                   isScribbleEnable: !_isReplaying,
                   drawPen: true,
                   drawEraser: true,
-                  maxScale: 3.0,
+                  maxScale: _isReplaying ? _replayMaxScale : 3.0,
                   panDirection: PanDirection.both,
+                  preserveViewTransform: _isReplaying,
                   onTransformChanged: _onTransformChanged,
                   transformationController: _transformController,
                   child: SizedBox.fromSize(
-                    size: size,
+                    size: logical,
                     child: _SampleContent(pageIndex: _currentPageIndex),
                   ),
                 );
