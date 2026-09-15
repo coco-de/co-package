@@ -18,7 +18,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.1.0
+  co_faker: ^0.2.0
 ```
 
 ## Quick start
@@ -38,7 +38,71 @@ void main() {
 ```
 
 `CoFaker` uses one random stream. Reusing the same seed creates the same
-sequence, which is useful for tests and local fixtures.
+sequence, which is useful for tests and local fixtures. Pass `now` as well
+when dates must be repeatable: the `date` module measures from that clock.
+
+## Records From A Schema
+
+`faker.schema` turns a field schema (the shape used by entity manifests and
+code generators) into records. Roles such as name, email, price, image, or
+date are inferred from the field names and can be forced per field:
+
+```dart
+final faker = CoFaker(locale: 'ko', seed: 7, now: DateTime.utc(2026));
+
+final course = faker.schema(
+  {
+    'title': 'String',
+    'instructor': 'String',
+    'price': 'int',
+    'startsAt': 'DateTime?',
+    'thumbnailUrl': 'String',
+    'status': 'String',
+  },
+  index: 0,
+  enums: {'status': ['draft', 'open', 'closed']},
+  roles: {'title': 'productName'},
+  entity: 'course',
+);
+
+final courses = faker.schema.records(20, fields, streamKey: 'course');
+```
+
+- Every field draws from its own derived stream, so adding or removing a
+  field never changes the other values.
+- Enum fields cycle through their values by index, so every value appears.
+- Dates are generated in UTC and serialized with a `Z` suffix on `String`
+  fields.
+- `referenceCounts: {'courseId': 20}` bounds foreign keys; `entity` decides
+  whether a bare `name` field is a person's name or a title.
+- `faker.schema.infer('dueAt', type: 'DateTime')` exposes the inferred
+  `CoFieldRole` for tooling.
+
+## Derived Streams And Balanced Picks
+
+```dart
+final base = CoFaker(seed: 42);
+final titles = base.derive('course/title'); // independent of `base`
+final prices = base.derive('course/price');
+
+final status = base.random.pickBalanced(['draft', 'open', 'closed'], index);
+```
+
+`derive` never consumes the parent stream, and the same seed and key always
+produce the same derived stream. `pickBalanced` cycles by index and does not
+consume the stream either.
+
+## Offline Images And UTC Dates
+
+```dart
+faker.image.placeholderDataUri(width: 640, height: 480, label: 'Cover');
+faker.image.avatarDataUri(size: 96); // initials from a localized first name
+faker.date.past(days: 30, utc: true).toIso8601String(); // ends with `Z`
+```
+
+`placeholderDataUri` and `avatarDataUri` embed an SVG in the value, so widget
+tests, golden files, and static demos render without any request.
+`avatarUrl` and `placeholderUrl` still point at public placeholder services.
 
 ## Fixtures Without A Server
 
@@ -115,6 +179,21 @@ final value = faker.fake(
     'orderNumber': (faker) => 'ORD-${faker.number.int(min: 1000, max: 9999)}',
   },
 );
+```
+
+## Pinning Before A pub.dev Release
+
+Until the package is published, depend on it by git reference and pin the
+same commit everywhere values must match (a generator, the generated code,
+and its golden files):
+
+```yaml
+dependencies:
+  co_faker:
+    git:
+      url: https://github.com/coco-de/co-package.git
+      path: packages/co_faker
+      ref: <commit>
 ```
 
 ## Development

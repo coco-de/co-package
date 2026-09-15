@@ -2,7 +2,7 @@ name: co_faker
 description: >-
   Pure Dart fake data generation for tests, prototypes, fixtures, and local
   development. Deterministic, multilingual, and extensible without a server.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_faker
 resolution: workspace
 
