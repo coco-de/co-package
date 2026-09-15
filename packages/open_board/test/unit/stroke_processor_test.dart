@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
@@ -17,9 +18,7 @@ void main() {
 
     group('createPointFromEvent', () {
       test('이벤트의 position에서 포인트를 생성한다', () {
-        const event = PointerDownEvent(
-          position: Offset(50, 75),
-        );
+        const event = PointerDownEvent(position: Offset(50, 75));
 
         final point = processor.createPointFromEvent(event);
 
@@ -82,11 +81,10 @@ void main() {
         expect(point.p, 0.0);
       });
 
-      test('커스텀 pressureCurve가 적용된다', () {
-        final customProcessor = StrokeProcessor(
-          pressureCurve: Curves.easeIn,
-        );
+      test('커스텀 pressureCurve가 스타일러스 하드웨어 필압에 적용된다', () {
+        final customProcessor = StrokeProcessor(pressureCurve: Curves.easeIn);
         const event = PointerDownEvent(
+          kind: PointerDeviceKind.stylus,
           position: Offset(50, 75),
           pressureMin: 0.0,
           pressureMax: 1.0,
@@ -99,10 +97,37 @@ void main() {
         expect(point.p, lessThan(0.5));
       });
 
-      test('타임스탬프가 설정된다', () {
+      test('손가락 터치 필압에는 pressureCurve 를 적용하지 않는다 (kobic UB-633)', () {
+        // 터치 필압은 접촉 면적 기반 값이라 필기 압력이 아니고, 속도 시뮬레이션의
+        // 시작값으로만 쓰인다 — 곡선을 태우면 시뮬레이션 시작 두께가 달라진다.
+        final customProcessor = StrokeProcessor(pressureCurve: Curves.easeIn);
         const event = PointerDownEvent(
           position: Offset(50, 75),
+          pressureMin: 0.0,
+          pressureMax: 1.0,
+          pressure: 0.5,
         );
+
+        final point = customProcessor.createPointFromEvent(event);
+
+        expect(point.p, closeTo(0.5, 1e-9));
+      });
+
+      test('필압 정보가 없는 스타일러스의 중립값 0.5 에는 곡선을 적용하지 않는다', () {
+        // 곡선을 태우면 필압 없는 입력이 선택한 굵기보다 두껍게 기록된다
+        final customProcessor = StrokeProcessor(pressureCurve: Curves.easeOut);
+        const event = PointerDownEvent(
+          kind: PointerDeviceKind.stylus,
+          position: Offset(50, 75),
+        );
+
+        final point = customProcessor.createPointFromEvent(event);
+
+        expect(point.p, 0.5);
+      });
+
+      test('타임스탬프가 설정된다', () {
+        const event = PointerDownEvent(position: Offset(50, 75));
 
         final point = processor.createPointFromEvent(event);
 
@@ -115,9 +140,7 @@ void main() {
 
       setUp(() {
         modeState = ScribbleModeState(
-          inkGroupInfo: InkGroupInfo(
-            selectedInk: InkModes.pencil,
-          ),
+          inkGroupInfo: InkGroupInfo(selectedInk: InkModes.pencil),
           scaleFactor: 1.0,
         );
       });
@@ -126,9 +149,7 @@ void main() {
         final state = Erasing(scribble: createScribble());
 
         final result = processor.addPointToStroke(
-          const PointerMoveEvent(
-            position: Offset(50, 50),
-          ),
+          const PointerMoveEvent(position: Offset(50, 50)),
           state,
           modeState,
         );
@@ -140,9 +161,7 @@ void main() {
         final state = Drawing(scribble: createScribble());
 
         final result = processor.addPointToStroke(
-          const PointerMoveEvent(
-            position: Offset(50, 50),
-          ),
+          const PointerMoveEvent(position: Offset(50, 50)),
           state,
           modeState,
         );
@@ -151,9 +170,7 @@ void main() {
       });
 
       test('활성 라인에 포인트를 추가한다', () {
-        final activeLine = createStroke(
-          points: [createPoint(x: 0, y: 0)],
-        );
+        final activeLine = createStroke(points: [createPoint(x: 0, y: 0)]);
         final state = Drawing(
           scribble: createScribble(),
           activeLine: activeLine,
@@ -161,9 +178,7 @@ void main() {
         );
 
         final result = processor.addPointToStroke(
-          const PointerMoveEvent(
-            position: Offset(50, 50),
-          ),
+          const PointerMoveEvent(position: Offset(50, 50)),
           state,
           modeState,
         );
@@ -176,9 +191,7 @@ void main() {
       });
 
       test('너무 가까운 포인트는 추가하지 않는다', () {
-        final activeLine = createStroke(
-          points: [createPoint(x: 50, y: 50)],
-        );
+        final activeLine = createStroke(points: [createPoint(x: 50, y: 50)]);
         final state = Drawing(
           scribble: createScribble(),
           activeLine: activeLine,
@@ -187,9 +200,7 @@ void main() {
 
         // 매우 가까운 위치
         final result = processor.addPointToStroke(
-          const PointerMoveEvent(
-            position: Offset(50.001, 50.001),
-          ),
+          const PointerMoveEvent(position: Offset(50.001, 50.001)),
           state,
           modeState,
         );

@@ -20,6 +20,7 @@ import 'package:open_board/src/core/utils/stroke_id.dart';
 import 'package:open_board/src/module/widgets/scribble_widget.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
+import 'package:open_board/src/module/stroke/pen_pressure_response.dart';
 import 'package:open_board/src/module/stroke/stroke_processor.dart';
 import 'package:open_board/src/module/stroke/eraser_processor.dart';
 import 'package:open_board/src/module/text/text_drawable_manager.dart';
@@ -71,9 +72,12 @@ class ScribbleNotifier extends ScribbleNotifierBase
 
   BuildContext? currContext;
 
-  /// The curve that's used to map pen pressure to the pressure value when
-  /// recording.
-  final Curve pressureCurve = Curves.linear;
+  /// 스타일러스 하드웨어 필압을 기록 압력으로 옮기는 응답 곡선.
+  ///
+  /// 선형이 아니다 — 평소 필기 압력이 정규화 범위의 아래쪽에 몰려 선형으로는
+  /// 필압 차이가 거의 드러나지 않는다. 근거·수치는 [PenPressureResponse]
+  /// (kobic UB-633).
+  final Curve pressureCurve = PenPressureResponse.curve;
 
   /// ♻️ 스트로크 생성/계산 프로세서
   late final StrokeProcessor strokeProcessor;
@@ -469,6 +473,20 @@ class ScribbleNotifier extends ScribbleNotifierBase
       // shapeType 'pending'), 그 외(line/ellipse/rectangle)면 그 자체를
       // shapeType 으로 두어 드래그 bounding-box 결정적 드로잉을 한다.
       final shapeTarget = modeState.inkGroupInfo.shapeType;
+      // 필압 입력 여부는 **포인터 모드가 아니라 실제 입력 기기**로 판정한다
+      // (kobic UB-633). 종전에는 `allowedPointersMode != penOnly` 로 가짜
+      // 필압을 켜서, 손·펜 겸용 모드의 스타일러스는 하드웨어 필압이 버려지고
+      // 속도로만 두께가 변했으며, 펜 전용 모드의 필압 없는 스타일러스는
+      // 균일선이 되어 '필압 감지' 가 아무 일도 하지 않았다.
+      final usesHardwarePressure = PenPressureResponse.providesHardwarePressure(
+        event,
+      );
+      // 하드웨어 필압은 응답 곡선과 짝을 이루는 thinning 을 쓰고, 속도
+      // 시뮬레이션 스트로크는 종전 값을 유지한다. thinning 은 스트로크에
+      // 저장되므로 이미 그린 필기의 모양은 바뀌지 않는다.
+      final penThinning = usesHardwarePressure
+          ? PenPressureResponse.hardwareThinning
+          : PenPressureResponse.simulatedThinning;
       s = (state as Drawing).copyWith(
         pointerPosition: getPointFromEvent(event),
         activeLine: Stroke(
@@ -491,19 +509,19 @@ class ScribbleNotifier extends ScribbleNotifierBase
             // 굵어진다. 커서 미리보기와 실제 스트로크 두께가 일치한다.
             size: modeState.options.size,
             // 필압(두께 변화)은 pen 만 적용. uniformPen/fixedPen 은 균일 두께.
-            thinning: selectedInk == InkModes.pen ? 0.7 : 0.0,
+            thinning: selectedInk == InkModes.pen ? penThinning : 0.0,
             smoothing: 0.5,
             streamline: 0.5,
             taperStart: 0.0,
             taperEnd: 0.0,
             capStart: true,
             capEnd: true,
-            // 균일 계열(uniformPen/fixedPen)은 가짜 압력도 끈다. penOnly
-            // (스타일러스)는 실제 압력을 쓰므로 시뮬레이션 비활성화.
+            // 균일 계열(uniformPen/fixedPen)은 가짜 압력도 끈다. 그 밖에는
+            // 입력 기기가 하드웨어 필압을 주지 않을 때만 속도로 흉내 낸다.
             simulatePressure:
                 selectedInk != InkModes.fixedPen &&
                 selectedInk != InkModes.uniformPen &&
-                modeState.allowedPointersMode != .penOnly,
+                !usesHardwarePressure,
           ),
         ),
       );

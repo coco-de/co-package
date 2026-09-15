@@ -130,8 +130,9 @@ void main() {
     });
 
     test('fixedPen은 penOnly 모드와 무관하게 simulatePressure=false', () {
-      // simulatePressure 공식: ink != "fixedPen" && pointerMode != penOnly
-      // → fixedPen이면 항상 false (pointerMode와 무관)
+      // simulatePressure 공식: 균일 계열(fixedPen·uniformPen)이 아니고 입력
+      // 기기가 하드웨어 필압을 주지 않을 때만 true (kobic UB-633 — 종전의
+      // pointerMode 기준 판정을 대체) → fixedPen이면 항상 false
       final notifier = ScribbleNotifier();
       final modeNotifier = ScribbleModeNotifier();
       addTearDown(notifier.dispose);
