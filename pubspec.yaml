@@ -1,0 +1,30 @@
+name: co_package_workspace
+description: Cocode Dart and Flutter package workspace.
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+
+workspace:
+  - packages/co_faker
+
+dev_dependencies:
+  lints: ^6.0.0
+  melos: ^8.6.0
+
+melos:
+  scripts:
+    analyze:
+      run: melos exec -- dart analyze --fatal-infos
+      description: Analyze every workspace package.
+
+    format:
+      run: melos exec -- dart format --output=none --set-exit-if-changed .
+      description: Check formatting for every workspace package.
+
+    test:
+      run: melos exec --dir-exists=test -- dart test
+      description: Run every Dart package test suite.
+
+    verify:
+      run: melos run format && melos run analyze && melos run test
+      description: Run formatting, analysis, and tests.
