@@ -2,7 +2,7 @@ name: co_package_workspace
 description: Cocode Dart and Flutter package workspace.
 
 environment:
-  sdk: ">=3.8.0 <4.0.0"
+  sdk: ">=3.10.0 <4.0.0"
 
 workspace:
   - packages/co_faker
