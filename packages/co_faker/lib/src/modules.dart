@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:core';
 import 'dart:core' as core;
 
@@ -262,42 +263,52 @@ class CoFakerDate {
   final CoFaker faker;
 
   /// Generates a date between [from] and [to], inclusive.
-  DateTime between(DateTime from, DateTime to) {
+  ///
+  /// With [utc] the result is a UTC value, so `toIso8601String()` carries a
+  /// `Z` suffix and fixtures compare equal across machines in different time
+  /// zones. Without it the result is in the local time zone.
+  DateTime between(DateTime from, DateTime to, {bool utc = false}) {
     if (from.isAfter(to)) {
       throw ArgumentError.value(from, 'from', 'must not be after to');
     }
     final range = to.millisecondsSinceEpoch - from.millisecondsSinceEpoch;
-    if (range == 0) return from;
+    final offset = range == 0 ? 0 : faker.random.int(max: range);
     return DateTime.fromMillisecondsSinceEpoch(
-      from.millisecondsSinceEpoch + faker.random.int(max: range),
+      from.millisecondsSinceEpoch + offset,
+      isUtc: utc,
     );
   }
 
   /// Generates a date within the previous [days] days.
-  DateTime past({int days = 365}) {
+  DateTime past({int days = 365, bool utc = false}) {
     _checkDays(days);
-    return between(faker.now.subtract(Duration(days: days)), faker.now);
+    return between(
+      faker.now.subtract(Duration(days: days)),
+      faker.now,
+      utc: utc,
+    );
   }
 
   /// Generates a date within the next [days] days.
-  DateTime future({int days = 365}) {
+  DateTime future({int days = 365, bool utc = false}) {
     _checkDays(days);
-    return between(faker.now, faker.now.add(Duration(days: days)));
+    return between(faker.now, faker.now.add(Duration(days: days)), utc: utc);
   }
 
   /// Generates a date of birth for an age in the inclusive range.
-  DateTime dateOfBirth({int minAge = 18, int maxAge = 70}) {
+  DateTime dateOfBirth({int minAge = 18, int maxAge = 70, bool utc = false}) {
     if (minAge < 0 || maxAge < minAge) {
       throw ArgumentError('minAge and maxAge must describe a valid age range');
     }
     final age = faker.number.int(min: minAge, max: maxAge);
-    final end = DateTime(faker.now.year - age, faker.now.month, faker.now.day);
-    final start = DateTime(
-      faker.now.year - age - 1,
-      faker.now.month,
-      faker.now.day + 1,
-    );
-    return between(start, end);
+    final now = utc ? faker.now.toUtc() : faker.now;
+    final end = utc
+        ? DateTime.utc(now.year - age, now.month, now.day)
+        : DateTime(now.year - age, now.month, now.day);
+    final start = utc
+        ? DateTime.utc(now.year - age - 1, now.month, now.day + 1)
+        : DateTime(now.year - age - 1, now.month, now.day + 1);
+    return between(start, end, utc: utc);
   }
 
   static void _checkDays(int days) {
@@ -370,13 +381,113 @@ class CoFakerId {
   }
 }
 
-/// Generates image URLs without downloading or contacting a server.
+/// Generates image URLs and offline image data URIs without downloading or
+/// contacting a server.
+///
+/// [avatarUrl] and [placeholderUrl] point at public placeholder services and
+/// need network access when rendered. [placeholderDataUri] and
+/// [avatarDataUri] embed a small SVG in the value itself, so widget tests,
+/// golden files, and offline demos render them without any request.
 class CoFakerImage {
   /// Creates an image generator backed by [faker].
   CoFakerImage(this.faker);
 
   /// The faker instance used by this module.
   final CoFaker faker;
+
+  /// Background colors used by the data URI generators.
+  static const List<String> palette = <String>[
+    '#4F6D8F',
+    '#5B8C5A',
+    '#B2452D',
+    '#1E6E76',
+    '#A66B0A',
+    '#6B4E9B',
+    '#8A5A44',
+    '#3C7A89',
+  ];
+
+  /// Generates an SVG placeholder image as a `data:image/svg+xml;base64,` URI.
+  ///
+  /// The background is picked from [palette] unless [background] is given,
+  /// and [label] (default `width×height`) is centered in [foreground]. The
+  /// value renders offline in `Image.network`, `<img>`, and golden tests.
+  String placeholderDataUri({
+    int width = 640,
+    int height = 480,
+    String? label,
+    String? background,
+    String? foreground,
+  }) {
+    _checkSize(width);
+    _checkSize(height);
+    final fill = background ?? faker.random.pick<String>(palette);
+    final text = _escapeXml(label ?? '$width\u00d7$height');
+    final fontSize = (width < height ? width : height) ~/ 8;
+    return _svgDataUri(
+      width: width,
+      height: height,
+      fill: fill,
+      textFill: foreground ?? '#FFFFFF',
+      text: text,
+      fontSize: fontSize < 12 ? 12 : fontSize,
+    );
+  }
+
+  /// Generates a square avatar with [initials] as a
+  /// `data:image/svg+xml;base64,` URI.
+  ///
+  /// When [initials] is omitted the first character of a localized first
+  /// name is used, so the avatar matches the locale of the fixture.
+  String avatarDataUri({
+    int size = 128,
+    String? initials,
+    String? background,
+    String? foreground,
+  }) {
+    _checkSize(size);
+    final fill = background ?? faker.random.pick<String>(palette);
+    final label = initials ?? faker.person.firstName().substring(0, 1);
+    return _svgDataUri(
+      width: size,
+      height: size,
+      fill: fill,
+      textFill: foreground ?? '#FFFFFF',
+      text: _escapeXml(label),
+      fontSize: size ~/ 2,
+      rounded: true,
+    );
+  }
+
+  static String _svgDataUri({
+    required int width,
+    required int height,
+    required String fill,
+    required String textFill,
+    required String text,
+    required int fontSize,
+    bool rounded = false,
+  }) {
+    final radius = rounded ? ' rx="${width ~/ 2}"' : '';
+    final svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="$width" '
+        'height="$height" viewBox="0 0 $width $height">'
+        '<rect width="$width" height="$height"$radius fill="$fill"/>'
+        '<text x="50%" y="50%" dominant-baseline="central" '
+        'text-anchor="middle" font-family="sans-serif" '
+        'font-size="$fontSize" fill="$textFill">$text</text>'
+        '</svg>';
+    return 'data:image/svg+xml;base64,${base64Encode(utf8.encode(svg))}';
+  }
+
+  static String _escapeXml(String value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&apos;');
+  }
 
   /// Generates a stable avatar URL pointing at a public placeholder service.
   String avatarUrl({int size = 128}) {

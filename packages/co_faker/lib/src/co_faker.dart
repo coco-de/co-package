@@ -2,6 +2,7 @@ import 'co_faker_locale.dart';
 import 'co_faker_locales.dart';
 import 'modules.dart';
 import 'random_source.dart';
+import 'schema.dart';
 
 /// A callback used by [CoFaker.generate].
 typedef CoFakerBuilder<T> = T Function(CoFaker faker, int index);
@@ -10,10 +11,11 @@ typedef CoFakerBuilder<T> = T Function(CoFaker faker, int index);
 /// scripts.
 ///
 /// A single [CoFaker] owns the random stream, locale, and module instances.
-/// Pass [seed] whenever a test or fixture needs repeatable data.
+/// Pass [seed] whenever a test or fixture needs repeatable data, and pass
+/// [now] as well when dates must be repeatable too.
 ///
 /// ```dart
-/// final faker = CoFaker(locale: 'ko', seed: 42);
+/// final faker = CoFaker(locale: 'ko', seed: 42, now: DateTime.utc(2026));
 /// final user = faker.object({
 ///   'id': (_) => faker.id.uuid(),
 ///   'name': (_) => faker.person.fullName(),
@@ -23,6 +25,7 @@ typedef CoFakerBuilder<T> = T Function(CoFaker faker, int index);
 ///   'index': index,
 ///   'name': faker.person.fullName(),
 /// });
+/// final course = faker.schema({'title': 'String', 'price': 'int'});
 /// ```
 class CoFaker {
   /// Creates a fake data generator.
@@ -60,6 +63,9 @@ class CoFaker {
   /// The random source shared by all modules.
   final CoRandom random;
 
+  /// The seed of [random], or `null` when the stream is not seeded.
+  int? get seed => random.seed;
+
   /// The effective locale data after English fallback is applied.
   late final CoFakerLocale localeData;
 
@@ -92,8 +98,12 @@ class CoFaker {
   /// Identifier values.
   late final CoFakerId id = CoFakerId(this);
 
-  /// Image URLs.
+  /// Image URLs and offline image data URIs.
   late final CoFakerImage image = CoFakerImage(this);
+
+  /// Records generated from a field schema, callable as
+  /// `faker.schema(fields)`.
+  late final CoFakerSchema schema = CoFakerSchema(this);
 
   /// Creates another view with the same random stream and a different locale.
   ///
@@ -105,6 +115,22 @@ class CoFaker {
       locale: locale,
       now: now,
       random: random,
+      locales: _customLocales,
+    );
+  }
+
+  /// Creates a generator with an independent random stream derived from this
+  /// generator's seed and [key], keeping the locale, clock, and custom
+  /// locales.
+  ///
+  /// Use one derived generator per entity, record, or field so that adding a
+  /// field to a fixture does not change the values of the other fields. The
+  /// same seed and [key] always produce the same derived stream.
+  CoFaker derive(String key) {
+    return CoFaker(
+      locale: locale,
+      now: now,
+      random: random.derive(key),
       locales: _customLocales,
     );
   }
@@ -161,8 +187,10 @@ class CoFaker {
       'lorem.sentence': (_) => text.sentence(),
       'commerce.productName': (_) => commerce.productName(),
       'commerce.companyName': (_) => commerce.companyName(),
+      'commerce.category': (_) => commerce.category(),
       'id.uuid': (_) => id.uuid(),
       'image.avatarUrl': (_) => image.avatarUrl(),
+      'image.placeholderDataUri': (_) => image.placeholderDataUri(),
       ...custom,
     };
 

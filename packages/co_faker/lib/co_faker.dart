@@ -7,3 +7,6 @@ library;
 export 'src/co_faker.dart';
 export 'src/co_faker_locale.dart';
 export 'src/co_faker_locales.dart';
+export 'src/modules.dart';
+export 'src/random_source.dart';
+export 'src/schema.dart';
