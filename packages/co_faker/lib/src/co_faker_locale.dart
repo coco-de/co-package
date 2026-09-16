@@ -19,6 +19,7 @@ class CoFakerLocale {
     this.productAdjectives = const <String>[],
     this.productNouns = const <String>[],
     this.categories = const <String>[],
+    this.places = const <String>[],
     this.domains = const <String>[],
     this.emailDomains = const <String>[],
     this.phoneFormats = const <String>[],
@@ -71,6 +72,9 @@ class CoFakerLocale {
   /// Product categories.
   final List<String> categories;
 
+  /// Meeting places and venues such as stations, plazas and lobbies.
+  final List<String> places;
+
   /// Domain names used by generated URLs.
   final List<String> domains;
 
@@ -117,6 +121,7 @@ class CoFakerLocale {
           : productAdjectives,
       productNouns: productNouns.isEmpty ? fallback.productNouns : productNouns,
       categories: categories.isEmpty ? fallback.categories : categories,
+      places: places.isEmpty ? fallback.places : places,
       domains: domains.isEmpty ? fallback.domains : domains,
       emailDomains: emailDomains.isEmpty ? fallback.emailDomains : emailDomains,
       phoneFormats: phoneFormats.isEmpty ? fallback.phoneFormats : phoneFormats,

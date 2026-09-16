@@ -1,3 +1,14 @@
+## 0.3.0
+
+- Add schema roles `currencyPair` (`USD/KRW`, two distinct ISO 4217 codes),
+  `place` (meeting places and venues from the new locale `places` list) and
+  `rate` (positive decimal with four digits). Inferred from field names such
+  as `pair`, `placeName`/`venue`/`meetingPoint`, and `*Rate`/`exchangeRate`,
+  so P2P exchange fixtures no longer render lorem words or person names for
+  currency pairs, rates and meeting places.
+- Add `CoFakerLocale.places` (Korean and English data; other locales fall
+  back to English).
+
 ## 0.2.0
 
 - Add `faker.schema(...)` / `CoFakerSchema`: generate records from a field
