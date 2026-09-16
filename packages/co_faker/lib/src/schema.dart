@@ -132,7 +132,16 @@ enum CoFieldRole {
   number,
 
   /// A couple of localized words.
-  text;
+  text,
+
+  /// A currency pair such as `USD/KRW` (two distinct ISO 4217 codes).
+  currencyPair,
+
+  /// A meeting place or venue name from the locale's `places` list.
+  place,
+
+  /// An exchange or conversion rate: a positive decimal with four digits.
+  rate;
 
   /// Parses a role name such as `title`, `Date` or `badge`.
   ///
@@ -315,6 +324,18 @@ class CoFakerSchema {
         key == 'sequence') {
       return CoFieldRole.ordinal;
     }
+    if (key == 'pair' || key.endsWith('pair')) return CoFieldRole.currencyPair;
+    if (key == 'place' ||
+        _containsAny(key, const [
+          'placename',
+          'venue',
+          'meetingpoint',
+          'meetingplace',
+          'spot',
+        ])) {
+      return CoFieldRole.place;
+    }
+    if (key.endsWith('rate')) return CoFieldRole.rate;
     if (key.contains('email')) return CoFieldRole.email;
     if (key.contains('account')) return CoFieldRole.username;
     if (key.contains('phone') || key.contains('mobile') || key == 'tel') {
@@ -657,6 +678,14 @@ class CoFakerSchema {
         return f.number.int();
       case CoFieldRole.text:
         return f.text.words(2);
+      case CoFieldRole.currencyPair:
+        final base = f.random.pick(_currencyCodes);
+        final quotes = _currencyCodes.where((c) => c != base).toList();
+        return '$base/${f.random.pick(quotes)}';
+      case CoFieldRole.place:
+        return f.random.pick(f.localeData.places);
+      case CoFieldRole.rate:
+        return f.number.decimal(min: 0.01, max: 2000, decimals: 4);
     }
   }
 
@@ -688,6 +717,24 @@ class CoFakerSchema {
         return raw?.toString() ?? '';
     }
   }
+
+  /// Major ISO 4217 codes used by [CoFieldRole.currencyPair].
+  static const List<String> _currencyCodes = <String>[
+    'USD',
+    'EUR',
+    'JPY',
+    'KRW',
+    'CNY',
+    'GBP',
+    'AUD',
+    'CAD',
+    'CHF',
+    'HKD',
+    'SGD',
+    'TWD',
+    'THB',
+    'VND',
+  ];
 
   static const List<String> _defaultStatuses = <String>[
     'pending',

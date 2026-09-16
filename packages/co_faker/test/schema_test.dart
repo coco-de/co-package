@@ -149,4 +149,60 @@ void main() {
       expect(() => faker().schema(fields, index: -1), throwsArgumentError);
     });
   });
+
+  group('0.3.0 roles', () {
+    CoFaker faker({String locale = 'ko'}) =>
+        CoFaker(locale: locale, seed: 11, now: DateTime.utc(2026, 1, 1, 9));
+
+    test('infers currencyPair, place and rate from field names', () {
+      final schema = faker().schema;
+      expect(schema.infer('pair'), CoFieldRole.currencyPair);
+      expect(schema.infer('fxPair'), CoFieldRole.currencyPair);
+      expect(schema.infer('placeName'), CoFieldRole.place);
+      expect(schema.infer('venue'), CoFieldRole.place);
+      expect(schema.infer('meetingPoint'), CoFieldRole.place);
+      expect(schema.infer('midRate', type: 'String'), CoFieldRole.rate);
+      expect(schema.infer('exchangeRate', type: 'double'), CoFieldRole.rate);
+      // rating is still a rating, name is still a name
+      expect(schema.infer('rating'), CoFieldRole.rating);
+      expect(schema.infer('name', entity: 'user'), CoFieldRole.name);
+    });
+
+    test(
+      'generates a distinct-code pair, a localized place and a decimal rate',
+      () {
+        final record = faker().schema(const {
+          'pair': 'String',
+          'placeName': 'String',
+          'midRate': 'String',
+          'rate': 'double',
+        }, index: 2);
+        final pair = record['pair']! as String;
+        expect(pair, matches(RegExp(r'^[A-Z]{3}/[A-Z]{3}$')));
+        expect(pair.substring(0, 3), isNot(pair.substring(4)));
+        expect(CoFakerLocales.korean.places, contains(record['placeName']));
+        expect(double.parse(record['midRate']! as String), greaterThan(0));
+        expect(record['rate'], isA<double>());
+        expect(
+          faker(
+            locale: 'en',
+          ).schema(const {'placeName': 'String'})['placeName'],
+          isIn(CoFakerLocales.english.places),
+        );
+        // other locales fall back to English places
+        expect(
+          faker(
+            locale: 'de',
+          ).schema(const {'placeName': 'String'})['placeName'],
+          isIn(CoFakerLocales.english.places),
+        );
+      },
+    );
+
+    test('CoFieldRole.parse knows the new roles', () {
+      expect(CoFieldRole.parse('currency_pair'), CoFieldRole.currencyPair);
+      expect(CoFieldRole.parse('place'), CoFieldRole.place);
+      expect(CoFieldRole.parse('rate'), CoFieldRole.rate);
+    });
+  });
 }
