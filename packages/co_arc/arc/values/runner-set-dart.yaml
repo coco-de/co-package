@@ -1,0 +1,33 @@
+# gha-runner-scale-set values — Dart/Flutter Linux 러너
+# chart: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set
+#
+# helm 릴리스 이름(arc-dart)이 곧 워크플로우의 `runs-on: arc-dart` 값이 됩니다.
+
+# org 전체 레포에서 사용 (특정 레포만 쓰려면 레포 URL로 변경)
+githubConfigUrl: https://github.com/coco-de
+
+# arc/README.md 2단계에서 만든 시크릿 이름
+githubConfigSecret: arc-github-secret
+
+# 오토스케일 범위
+minRunners: 0
+maxRunners: 5
+
+# Docker-in-Docker: 워크플로우의 `services:` (Postgres/Redis 등)와
+# `container:` 잡 실행에 필요합니다. 불필요하면 이 블록을 제거해 기본 모드로.
+containerMode:
+  type: dind
+
+template:
+  spec:
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:latest
+        command: ["/home/runner/run.sh"]
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi

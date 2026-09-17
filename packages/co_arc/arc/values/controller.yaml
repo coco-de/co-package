@@ -1,0 +1,20 @@
+# gha-runner-scale-set-controller values
+# chart: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
+#
+# 기본값으로 충분히 동작합니다. 필요한 항목만 오버라이드하세요.
+
+replicaCount: 1
+
+# 컨트롤러 리소스 (작은 클러스터 기준 보수적으로)
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# 로그 레벨: debug | info | warn | error
+flags:
+  logLevel: info
+  logFormat: text

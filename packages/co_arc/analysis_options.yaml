@@ -1,0 +1,9 @@
+include: ../../analysis_options.yaml
+
+# co_arc는 pub에 공개하는 라이브러리가 아니라 TUI 실행 파일(coarc)이라
+# 공개 API 문서 규칙은 적용하지 않는다.
+linter:
+  rules:
+    depend_on_referenced_packages: true
+    public_member_api_docs: false
+    library_private_types_in_public_api: false

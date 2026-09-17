@@ -1,0 +1,47 @@
+# 러너 연결 확인용 스모크 테스트
+# Actions 탭에서 수동 실행(Run workflow)하면 러너에 잡이 배정되는지,
+# Dart 스택이 제대로 깔려 있는지 확인할 수 있습니다.
+
+name: Runner Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '확인할 러너'
+        type: choice
+        default: macos-selfhosted
+        options:
+          - macos-selfhosted
+          - arc-dart
+
+jobs:
+  smoke-macos:
+    if: inputs.target == 'macos-selfhosted'
+    runs-on: [self-hosted, macos, flutter]
+    steps:
+      - name: 러너 정보
+        run: |
+          echo "runner  : $RUNNER_NAME"
+          echo "os/arch : $(uname -s) $(uname -m)"
+          echo "host    : $(hostname)"
+      - name: Dart 스택 확인
+        run: |
+          which dart && dart --version || echo "⚠️ dart 없음"
+          which flutter && flutter --version || echo "⚠️ flutter 없음"
+          which melos && melos --version || echo "ℹ️ melos 없음 (잡에서 pub global activate 예정이면 무시)"
+          which pod && pod --version || echo "ℹ️ CocoaPods 없음 (iOS 빌드 안 하면 무시)"
+          xcodebuild -version 2>/dev/null || echo "ℹ️ Xcode 없음 (iOS 빌드 안 하면 무시)"
+
+  smoke-arc:
+    if: inputs.target == 'arc-dart'
+    runs-on: arc-dart
+    container:
+      image: dart:stable
+    steps:
+      - name: 러너 정보
+        run: |
+          echo "runner  : $RUNNER_NAME"
+          echo "os/arch : $(uname -s) $(uname -m)"
+      - name: Dart 확인
+        run: dart --version

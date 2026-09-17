@@ -7,6 +7,7 @@ environment:
 # 워크스페이스 멤버 (단일 루트 lockfile 공유).
 # open_board 는 Flutter 패키지이므로 루트 해석에는 `flutter pub get` 이 필요하다.
 workspace:
+  - packages/co_arc
   - packages/co_faker
   - packages/open_board
 
