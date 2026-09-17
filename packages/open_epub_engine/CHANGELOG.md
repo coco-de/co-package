@@ -6,6 +6,14 @@
   additive 확장(기존 v1 토큰은 하위 호환 디코드된다). (open-epub 위치 복원
   정확도 개선 — 재진입 시 위치 복원이 챕터 단위로만 동작하던 문제)
 
+## [1.1.0](https://github.com/coco-de/co-package/compare/open_epub_engine-v1.0.0...open_epub_engine-v1.1.0) (2026-09-17)
+
+
+### 기능
+
+* **open_epub:** ✨ open-epub 모노레포를 co-package 워크스페이스로 이관 ([523b667](https://github.com/coco-de/co-package/commit/523b66789a8998f9ede9165ae253046af1742539))
+* **open_epub:** ✨ open-epub 모노레포를 co-package 워크스페이스로 이관 ([ec34ab3](https://github.com/coco-de/co-package/commit/ec34ab3f4b4f9a70c4d692b7c07def421b154511))
+
 ## 1.0.0
 
 open_epub_engine 1.0 — **순수-Dart EPUB 2/3 엔진의 첫 안정 릴리스**. 리더

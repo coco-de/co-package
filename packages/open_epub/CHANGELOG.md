@@ -82,6 +82,15 @@
   - 저장 시점과 크게 다른 뷰포트·폰트 크기로 복원하면 여전히 근사치다(같은
     기기·세션 재진입을 전제).
 
+## [1.2.0](https://github.com/coco-de/co-package/compare/open_epub-v1.1.0...open_epub-v1.2.0) (2026-09-17)
+
+
+### 기능
+
+* **open_epub:** ✨ open-epub 모노레포를 co-package 워크스페이스로 이관 ([523b667](https://github.com/coco-de/co-package/commit/523b66789a8998f9ede9165ae253046af1742539))
+* **open_epub:** ✨ open-epub 모노레포를 co-package 워크스페이스로 이관 ([ec34ab3](https://github.com/coco-de/co-package/commit/ec34ab3f4b4f9a70c4d692b7c07def421b154511))
+* **reflowable:** ✨ 렌더 충실도 — title 누출·세로쓰기 오탐·SVG FXL·스타일시트 ([#278](https://github.com/coco-de/co-package/issues/278)) ([#279](https://github.com/coco-de/co-package/issues/279)) ([c496592](https://github.com/coco-de/co-package/commit/c4965926d8002c843668241567a2cae15c8c3265))
+
 ## 1.0.0
 
 open_epub 1.0 — **ADR-002 breaking 재설계**. 리더 패키지를 Flutter 렌더/위젯/컨트롤러

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0](https://github.com/coco-de/co-package/compare/open_board-v0.1.0...open_board-v0.2.0) (2026-09-17)
+
+
+### 기능
+
+* **scribble:** ✨ 멀티디바이스 뷰어 — 필기 중심점 기준 재생 ([#288](https://github.com/coco-de/co-package/issues/288)) ([#289](https://github.com/coco-de/co-package/issues/289)) ([53d6ea8](https://github.com/coco-de/co-package/commit/53d6ea8e5a9a0acd6aa59d1b8d9bba8dcb8b6484))
+* **scribble:** ✨ 이미지 멤버십 편집 토큰 제공 ([#285](https://github.com/coco-de/co-package/issues/285)) ([#286](https://github.com/coco-de/co-package/issues/286)) ([7d8cefe](https://github.com/coco-de/co-package/commit/7d8cefe829dd53f56e3d5b0c9ed14a2032683289))
+
+
+### 버그 수정
+
+* **example:** 🐛 html 0.15.6 고정 — html 0.15.7 이 flutter_html 3.0.0 컴파일을 깨뜨림 ([#223](https://github.com/coco-de/co-package/issues/223)) ([#284](https://github.com/coco-de/co-package/issues/284)) ([f40e435](https://github.com/coco-de/co-package/commit/f40e43584c7e6efcb318f0268cddf057eccab6d4))
+* **scribble:** 🐛 펜 필압 응답 곡선 — 평소 필기 압력이 두께로 드러나게 (UB-633) ([#290](https://github.com/coco-de/co-package/issues/290)) ([e00f17b](https://github.com/coco-de/co-package/commit/e00f17bc2e3b17ee68c8a3afcf0982fd6bf8d1a9))
+* **text:** 🐛 인라인 텍스트박스 입력 중 마지막 글자 클립 수정 (UB-695) ([#287](https://github.com/coco-de/co-package/issues/287)) ([7ef84a2](https://github.com/coco-de/co-package/commit/7ef84a255a7c1610274991aaf20eb7d4b84ca274))
+
 ## [0.1.0](https://github.com/coco-de/open-board/compare/v0.0.1...v0.1.0) (2026-09-05)
 
 
