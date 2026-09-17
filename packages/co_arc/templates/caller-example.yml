@@ -1,0 +1,55 @@
+# 서비스 레포에 복사해서 쓰는 예시 — .github/workflows/ci.yml
+#
+# 구성 예: melos 모노레포 (Flutter 앱 + Jaspr 웹 + Serverpod 서버)
+#   - 모노레포 전체 analyze/test → macOS self-hosted 러너
+#   - Serverpod 서버 테스트     → ARC Linux 러너 (Postgres/Redis 컨테이너)
+#   - Jaspr 웹 빌드             → ARC Linux 러너
+#
+# 사용 전 확인:
+#   1. co-package → Settings → Actions → General → Access 를
+#      "Accessible from repositories in the coco-de organization"으로 설정
+#   2. 러너가 등록되어 있어야 함 (co-package/packages/co_arc/scripts 또는 arc/)
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 모노레포 전체: bootstrap → analyze → test (macOS self-hosted)
+  monorepo:
+    uses: coco-de/co-package/.github/workflows/melos-ci.yml@main
+    with:
+      runs-on: '["self-hosted", "macos", "flutter"]'
+      # melos.yaml에 scripts.analyze / scripts.test가 있으면:
+      # analyze-script: analyze
+      # test-script: test
+
+  # Serverpod 서버 테스트 (ARC Linux + Postgres/Redis)
+  server:
+    uses: coco-de/co-package/.github/workflows/serverpod-ci.yml@main
+    with:
+      runs-on: '"arc-dart"'
+      server-directory: packages/my_project_server
+
+  # Jaspr 웹 빌드 (ARC Linux)
+  web:
+    uses: coco-de/co-package/.github/workflows/jaspr-ci.yml@main
+    with:
+      runs-on: '"arc-dart"'
+      project-directory: apps/web
+      upload-artifact: true
+
+  # 릴리스 빌드가 필요하면 (iOS는 macOS 러너 필수):
+  # app-build:
+  #   uses: coco-de/co-package/.github/workflows/flutter-ci.yml@main
+  #   with:
+  #     runs-on: '["self-hosted", "macos", "flutter"]'
+  #     working-directory: apps/mobile
+  #     build-targets: 'apk,ios'
