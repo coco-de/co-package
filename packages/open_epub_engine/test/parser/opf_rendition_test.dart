@@ -32,8 +32,7 @@ void main() {
       expect(
         parser
             .parse(_opf(
-                meta:
-                    '<meta property="rendition:orientation">portrait</meta>'))
+                meta: '<meta property="rendition:orientation">portrait</meta>'))
             .metadata
             .orientation,
         EpubOrientation.portrait,
@@ -80,8 +79,9 @@ void main() {
 
   test('S13.2 — 기존 layout/spread 회귀 없음', () {
     final md = parser
-        .parse(_opf(meta: '<meta property="rendition:layout">pre-paginated</meta>'
-            '<meta property="rendition:spread">both</meta>'))
+        .parse(_opf(
+            meta: '<meta property="rendition:layout">pre-paginated</meta>'
+                '<meta property="rendition:spread">both</meta>'))
         .metadata;
     expect(md.layout, EpubLayout.fixedLayout);
     expect(md.spread, EpubSpread.both);

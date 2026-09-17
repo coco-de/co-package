@@ -11,8 +11,7 @@ import 'package:open_epub_engine/src/api/epub_source.dart';
 import 'package:open_epub_engine/testing.dart';
 
 void main() {
-  testWidgets('진행률 %가 페이지 이동 시 라이브로 갱신된다 (#68 S9.4)',
-      (tester) async {
+  testWidgets('진행률 %가 페이지 이동 시 라이브로 갱신된다 (#68 S9.4)', (tester) async {
     final controller = EpubViewController();
     addTearDown(controller.dispose);
 

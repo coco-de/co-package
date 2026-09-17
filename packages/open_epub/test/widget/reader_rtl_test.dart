@@ -112,10 +112,8 @@ Uint8List _rtlEpub() => zipEpub({
   </body>
 </html>
 ''',
-      'OEBPS/ch1.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch1.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>アラビア語やヘブライ語の本。</p></body></html>',
-      'OEBPS/ch2.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch2.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>右から左へ読む。</p></body></html>',
     });

@@ -38,8 +38,8 @@ void main() {
     });
 
     test('cover가 아니면 null', () {
-      expect(const CoverSkipPatch().apply(_book(spine: const [_c1, _c2])),
-          isNull);
+      expect(
+          const CoverSkipPatch().apply(_book(spine: const [_c1, _c2])), isNull);
     });
   });
 

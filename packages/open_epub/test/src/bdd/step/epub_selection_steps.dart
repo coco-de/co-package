@@ -129,8 +129,7 @@ Future<void> _detectTextLayer(BddWorld world) async {
 
 TextLayerVerdict _requireVerdict(BddWorld world) {
   final verdict = _stateOf(world).verdict;
-  expect(verdict, isNotNull,
-      reason: '텍스트 레이어 판정이 선행되어야 합니다 (When 선행 필요)');
+  expect(verdict, isNotNull, reason: '텍스트 레이어 판정이 선행되어야 합니다 (When 선행 필요)');
   return verdict!;
 }
 
@@ -168,8 +167,7 @@ Future<void> userTapsHighlightColor(BddWorld world, String color) async {
 
 /// Usage: Then 해당 텍스트에 `<color>`색 하이라이트가 시각화된다
 Future<void> textHighlightedWithColor(BddWorld world, String color) async {
-  throw UnimplementedError(
-      '하이라이트 시각화 미구현 — E3(S3.13 EpubHighlightPage) 범위');
+  throw UnimplementedError('하이라이트 시각화 미구현 — E3(S3.13 EpubHighlightPage) 범위');
 }
 
 /// Usage: Then BookHighlight가 BookPosition start, end와 color=`<color>`로 저장된다
@@ -182,8 +180,7 @@ Future<void> bookHighlightStoredWithColor(BddWorld world, String color) async {
 
 /// Usage: Given "`<text>`"에 노란 하이라이트가 적용되어 있다
 Future<void> yellowHighlightAppliedTo(BddWorld world, String text) async {
-  throw UnimplementedError(
-      '하이라이트 적용/영속 미구현 — E3(S3.13/S3.5) 범위');
+  throw UnimplementedError('하이라이트 적용/영속 미구현 — E3(S3.13/S3.5) 범위');
 }
 
 /// Usage: When 사용자가 하이라이트를 탭하여 "Note" 액션을 선택한다
@@ -203,14 +200,12 @@ Future<void> noteLinkedToHighlight(BddWorld world) async {
 
 /// Usage: Then 하이라이트 목록에서 메모 미리보기가 표시된다
 Future<void> highlightListShowsNotePreview(BddWorld world) async {
-  throw UnimplementedError(
-      '하이라이트 목록 화면 미구현 — E3(S3.13 EpubHighlightPage) 범위');
+  throw UnimplementedError('하이라이트 목록 화면 미구현 — E3(S3.13 EpubHighlightPage) 범위');
 }
 
 /// Usage: Given 노란색 하이라이트가 적용되어 있다
 Future<void> yellowHighlightExists(BddWorld world) async {
-  throw UnimplementedError(
-      '하이라이트 적용/영속 미구현 — E3(S3.13/S3.5) 범위');
+  throw UnimplementedError('하이라이트 적용/영속 미구현 — E3(S3.13/S3.5) 범위');
 }
 
 /// Usage: When 사용자가 하이라이트를 탭하여 "Delete"를 선택한다
@@ -220,14 +215,12 @@ Future<void> userTapsHighlightDelete(BddWorld world) async {
 
 /// Usage: Then 해당 하이라이트가 시각적으로 제거된다
 Future<void> highlightVisuallyRemoved(BddWorld world) async {
-  throw UnimplementedError(
-      '하이라이트 시각화/제거 미구현 — E3(S3.13) 범위');
+  throw UnimplementedError('하이라이트 시각화/제거 미구현 — E3(S3.13) 범위');
 }
 
 /// Usage: Then 데이터 저장소에서도 삭제된다
 Future<void> dataStoreAlsoDeletes(BddWorld world) async {
-  throw UnimplementedError(
-      '하이라이트 데이터 저장소 미구현 — E3(S3.2/S3.5/S3.8) 범위');
+  throw UnimplementedError('하이라이트 데이터 저장소 미구현 — E3(S3.2/S3.5/S3.8) 범위');
 }
 
 /// Usage: Given Fixed Layout 페이지의 텍스트 레이어가 `<n>`자 이상 가시 텍스트를 갖는다

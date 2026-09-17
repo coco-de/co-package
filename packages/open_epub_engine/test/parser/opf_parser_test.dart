@@ -99,7 +99,8 @@ void main() {
 
   group('OpfParser.parse — error cases', () {
     test('잘못된 XML이면 OpfParseException', () {
-      expect(() => parser.parse('not <xml>'), throwsA(isA<OpfParseException>()));
+      expect(
+          () => parser.parse('not <xml>'), throwsA(isA<OpfParseException>()));
     });
 
     test('root가 <package>가 아니면 OpfParseException', () {
@@ -333,7 +334,8 @@ void main() {
       expect(bundle.rawRenditionLayout, rawLayout);
       expect(bundle.rawRenditionLayout, 'galaxy');
 
-      expect(bundle.spine.map((s) => s.idref), parsed.spine.map((s) => s.idref));
+      expect(
+          bundle.spine.map((s) => s.idref), parsed.spine.map((s) => s.idref));
       expect(bundle.spine.map((s) => s.href), parsed.spine.map((s) => s.href));
 
       expect(bundle.tocRefs.navHref, tocRefs.navHref);
@@ -346,7 +348,8 @@ void main() {
         caps.pageProgressionDirection,
       );
       expect(bundle.capabilities.hasMediaOverlay, caps.hasMediaOverlay);
-      expect(bundle.capabilities.pageProgressionDirection, EpubPageProgression.rtl);
+      expect(bundle.capabilities.pageProgressionDirection,
+          EpubPageProgression.rtl);
       expect(bundle.capabilities.hasMediaOverlay, isTrue);
     });
 
@@ -376,7 +379,8 @@ void main() {
       final bundle = parser.parseBundle(bigOpf);
       final parsed = parser.parse(bigOpf);
       expect(bundle.spine, hasLength(500));
-      expect(bundle.spine.map((s) => s.idref), parsed.spine.map((s) => s.idref));
+      expect(
+          bundle.spine.map((s) => s.idref), parsed.spine.map((s) => s.idref));
       expect(bundle.tocRefs.navHref, 'nav.xhtml');
     });
 

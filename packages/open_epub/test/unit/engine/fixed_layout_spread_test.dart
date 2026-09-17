@@ -15,7 +15,8 @@ void main() {
       expect(slotFromSpineProperties(['page-spread-right']), SpreadSlot.right);
     });
 
-    test('rendition:page-spread-center → SpreadSlot.center (left/right보다 우선)', () {
+    test('rendition:page-spread-center → SpreadSlot.center (left/right보다 우선)',
+        () {
       expect(
         slotFromSpineProperties([
           'page-spread-left',

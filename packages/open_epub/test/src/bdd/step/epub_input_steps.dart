@@ -99,8 +99,7 @@ Future<void> userSelectedTextOnDesktop(
 
 /// Usage: When 사용자가 우클릭한다
 Future<void> userRightClicks(BddWorld world, WidgetTester tester) async {
-  throw UnimplementedError(
-      'DesktopInput 우클릭(onContextMenu) 미구현 — S3.18 범위');
+  throw UnimplementedError('DesktopInput 우클릭(onContextMenu) 미구현 — S3.18 범위');
 }
 
 /// Usage: Then 컨텍스트 메뉴(Highlight/Copy/Note)가 표시된다

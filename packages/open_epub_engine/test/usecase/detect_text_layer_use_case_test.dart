@@ -98,7 +98,8 @@ void main() {
 
     test('visibility:hidden 제외', () {
       final v = detector.detect(
-        body('<span style="visibility:hidden">${'x' * 100}</span><span>ok</span>'),
+        body(
+            '<span style="visibility:hidden">${'x' * 100}</span><span>ok</span>'),
       );
       expect(v.visibleCharCount, 2);
     });
@@ -158,7 +159,8 @@ void main() {
 
   group('TextLayerVerdict 엔티티', () {
     test('available 팩토리', () {
-      final v = TextLayerVerdict.available(visibleCharCount: 60, reason: 'text:60');
+      final v =
+          TextLayerVerdict.available(visibleCharCount: 60, reason: 'text:60');
       expect(v.hasSelectableText, isTrue);
       expect(v.isAvailable, isTrue);
       expect(v.isUnavailable, isFalse);
@@ -172,8 +174,10 @@ void main() {
     });
 
     test('== / hashCode (값 동등)', () {
-      final a = TextLayerVerdict.available(visibleCharCount: 60, reason: 'text:60');
-      final b = TextLayerVerdict.available(visibleCharCount: 60, reason: 'text:60');
+      final a =
+          TextLayerVerdict.available(visibleCharCount: 60, reason: 'text:60');
+      final b =
+          TextLayerVerdict.available(visibleCharCount: 60, reason: 'text:60');
       expect(a, b);
       expect(a.hashCode, b.hashCode);
       expect(

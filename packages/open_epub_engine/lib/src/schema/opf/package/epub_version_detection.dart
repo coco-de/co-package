@@ -58,8 +58,8 @@ class EpubVersionDetection {
 
     final isEpub3Family =
         declared == EpubVersion.epub3 || declared == EpubVersion.epub31;
-    final hasMismatch = (isEpub3Family && !hasNav) ||
-        (declared == EpubVersion.epub2 && hasNav);
+    final hasMismatch =
+        (isEpub3Family && !hasNav) || (declared == EpubVersion.epub2 && hasNav);
 
     return EpubVersionDetection(
       declared: declared,

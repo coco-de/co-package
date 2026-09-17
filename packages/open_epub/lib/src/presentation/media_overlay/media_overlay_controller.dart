@@ -25,7 +25,8 @@ enum MediaOverlayState { idle, playing, paused }
 /// Media Overlays 재생을 제어한다. [ChangeNotifier]로 상태 변경을 알리고,
 /// [activeParIndex]로 현재 낭독 중인 par를 노출한다.
 class MediaOverlayController extends ChangeNotifier {
-  MediaOverlayController({required MediaAudioPlayer player}) : _player = player {
+  MediaOverlayController({required MediaAudioPlayer player})
+      : _player = player {
     _posSub = _player.positionStream.listen(_onPosition);
   }
 

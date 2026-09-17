@@ -173,8 +173,7 @@ Future<void> nMbEpubExists(BddWorld world, int sizeMB) async {
 /// Usage: Then 첫 페이지가 `<seconds>`초 안에 표시된다
 /// 경과 시간은 시나리오 본문의 Stopwatch가 단언한다 — 여기서는 첫 페이지
 /// 위치가 잡혔는지 확인한다.
-Future<void> firstPageShownWithinSeconds(
-    BddWorld world, double seconds) async {
+Future<void> firstPageShownWithinSeconds(BddWorld world, double seconds) async {
   expect(world.lastError, isNull);
   final session = world.requireSession;
   expect(session.position.spineHref, session.book.spine.first.href);

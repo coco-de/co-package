@@ -24,7 +24,8 @@ class JustAudioMediaPlayer implements MediaAudioPlayer {
   final AudioPlayer _player;
 
   @override
-  Future<void> load(Uint8List bytes, {String contentType = 'audio/mpeg'}) async {
+  Future<void> load(Uint8List bytes,
+      {String contentType = 'audio/mpeg'}) async {
     await _player.setAudioSource(_BytesAudioSource(bytes, contentType));
   }
 

@@ -6,7 +6,8 @@ import 'package:open_epub_engine/testing.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('S15.1 — OpfParser: manifest media-overlay → spine.mediaOverlayHref', () {
+  group('S15.1 — OpfParser: manifest media-overlay → spine.mediaOverlayHref',
+      () {
     const parser = OpfParser();
 
     test('media-overlay 속성이 SMIL href로 해석되어 spine에 채워진다', () {
@@ -117,7 +118,8 @@ void main() {
     });
 
     test('MO 없는 일반 책 → empty (회귀)', () async {
-      final session = await EpubBookSession.open(EpubSource.bytes(validEpub3()));
+      final session =
+          await EpubBookSession.open(EpubSource.bytes(validEpub3()));
       addTearDown(session.dispose);
       final overlay = await session.loadMediaOverlay('ch1.xhtml');
       expect(overlay.isEmpty, isTrue);

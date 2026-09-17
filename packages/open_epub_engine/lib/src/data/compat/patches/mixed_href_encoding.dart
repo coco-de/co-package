@@ -20,9 +20,8 @@ class MixedHrefEncodingPatch implements EpubPatch {
 
   @override
   PatchResult? apply(EpubBook book) {
-    final hasEncoded =
-        book.spine.any((s) => s.href.contains('%')) ||
-            _anyEncoded(book.outline.items);
+    final hasEncoded = book.spine.any((s) => s.href.contains('%')) ||
+        _anyEncoded(book.outline.items);
     if (!hasEncoded) return null;
 
     var count = 0;

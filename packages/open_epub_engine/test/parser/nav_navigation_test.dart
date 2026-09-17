@@ -98,8 +98,8 @@ void main() {
         });
 
     test('landmarks/page-list이 세션에 노출된다', () async {
-      final session =
-          await EpubBookSession.open(EpubSource.bytes(epubWithNav(_navWithAll)));
+      final session = await EpubBookSession.open(
+          EpubSource.bytes(epubWithNav(_navWithAll)));
       expect(session.navigation.landmarks, hasLength(2));
       expect(session.navigation.pageList, hasLength(2));
       expect(session.navigation.landmarks.first.type, equals('cover'));

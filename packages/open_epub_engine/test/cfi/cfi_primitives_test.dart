@@ -84,7 +84,9 @@ void main() {
       expect(pos!.container.id, equals('title'));
     });
 
-    test('position → path → position 왕복 (createPathFromPosition ↔ navigateToPosition)', () {
+    test(
+        'position → path → position 왕복 (createPathFromPosition ↔ navigateToPosition)',
+        () {
       // div로 먼저 이동
       final divPath = CFIPath(parts: [
         const CFIPart(index: 2),

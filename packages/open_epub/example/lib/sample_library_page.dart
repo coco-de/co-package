@@ -14,10 +14,7 @@ class SampleLibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('EPUB3 샘플 라이브러리'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('EPUB3 샘플 라이브러리'), centerTitle: true),
       body: ListView.separated(
         key: const ValueKey('sample-library-list'),
         padding: const EdgeInsets.all(12),
@@ -31,16 +28,24 @@ class SampleLibraryPage extends StatelessWidget {
               key: ValueKey('sample-${book.id}'),
               leading: CircleAvatar(
                 backgroundColor: theme.colorScheme.primaryContainer,
-                child: Icon(book.icon,
-                    color: theme.colorScheme.onPrimaryContainer),
+                child: Icon(
+                  book.icon,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
               ),
-              title: Text(book.title, maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
+              title: Text(
+                book.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(book.subtitle,
-                      maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(
+                    book.subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 4),
                   _FeatureChip(label: book.featureTag),
                 ],

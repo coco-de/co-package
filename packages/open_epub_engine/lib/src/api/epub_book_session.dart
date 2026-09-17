@@ -651,8 +651,8 @@ class _EpubBookSessionImpl implements EpubBookSession {
       final oldXhtml = readSpineXhtml(pos.spineHref);
       if (oldXhtml != null) oldContent = {pos.spineHref: oldXhtml};
     }
-    final next =
-        await _assemble(newSource, _position, _security, oldContent: oldContent);
+    final next = await _assemble(newSource, _position, _security,
+        oldContent: oldContent);
     _ensureActive();
     _state = next;
     _position = next.position;

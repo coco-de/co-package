@@ -205,8 +205,7 @@ Future<void> operatorTapsCopyToClipboard(BddWorld world) async {
 /// Usage: Then 진단 결과 JSON이 클립보드에 복사된다
 Future<void> diagnosticsJsonCopiedToClipboard(BddWorld world) async {
   expect(_copiedDiagnosticsJson, isNotNull);
-  final decoded =
-      jsonDecode(_copiedDiagnosticsJson!) as Map<String, dynamic>;
+  final decoded = jsonDecode(_copiedDiagnosticsJson!) as Map<String, dynamic>;
   expect(decoded.keys, containsAll(['appliedPatches', 'unresolvedIssues']));
   final copiedIds = (decoded['appliedPatches'] as List)
       .cast<Map<String, dynamic>>()

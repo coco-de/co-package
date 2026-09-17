@@ -6,8 +6,7 @@ import 'package:open_epub_engine/open_epub_engine.dart';
 import 'package:open_epub_engine/testing.dart';
 import 'package:test/test.dart';
 
-String _nav(String bodyInner) =>
-    '<html xmlns="http://www.w3.org/1999/xhtml" '
+String _nav(String bodyInner) => '<html xmlns="http://www.w3.org/1999/xhtml" '
     'xmlns:epub="http://www.idpf.org/2007/ops"><body>$bodyInner</body></html>';
 
 void main() {

@@ -85,7 +85,7 @@ class _InMemoryBookSearchIndex implements BookSearchIndex {
 /// String 인스턴스를 재계산하지 않고 재사용함을 identity로 검증하는 데 쓴다.
 /// (S9.7 #71)
 @visibleForTesting
-List<String> debugLoweredTexts(BookSearchIndex index) => index
-        is _InMemoryBookSearchIndex
-    ? [for (final e in index._entries) e.lowerText]
-    : const [];
+List<String> debugLoweredTexts(BookSearchIndex index) =>
+    index is _InMemoryBookSearchIndex
+        ? [for (final e in index._entries) e.lowerText]
+        : const [];

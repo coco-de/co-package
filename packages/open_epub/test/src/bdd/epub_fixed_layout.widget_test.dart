@@ -47,8 +47,7 @@ void main() {
       (1024, '2-page'),
       (1440, '2-page'),
     ]) {
-      testWidgets('화면 폭에 따른 자동 spread — $width → $mode (@P0)',
-          (tester) async {
+      testWidgets('화면 폭에 따른 자동 spread — $width → $mode (@P0)', (tester) async {
         await background();
         await renditionSpreadIs(world, 'auto');
         await screenWidthIs(world, tester, width);

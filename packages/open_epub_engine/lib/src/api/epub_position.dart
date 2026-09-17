@@ -26,7 +26,7 @@ import 'dart:convert';
 /// BookPosition v1 — Reflowable 또는 Fixed Layout 위치 표현. sealed class.
 sealed class EpubPosition {
   const EpubPosition({required this.spineHref, required this.progress})
-    : assert(progress >= 0.0 && progress <= 1.0, 'progress must be 0.0..1.0');
+      : assert(progress >= 0.0 && progress <= 1.0, 'progress must be 0.0..1.0');
 
   final String spineHref;
   final double progress;
@@ -43,7 +43,8 @@ sealed class EpubPosition {
   String toToken() {
     final token = jsonEncode(toJson());
     if (utf8.encode(token).length > maxTokenBytes) {
-      throw EpubPositionTooLargeException(actualBytes: utf8.encode(token).length);
+      throw EpubPositionTooLargeException(
+          actualBytes: utf8.encode(token).length);
     }
     return token;
   }
@@ -76,22 +77,26 @@ sealed class EpubPosition {
       throw EpubPositionDecodeException('missing or invalid "s" (spineHref)');
     }
     if (p is! num || p < 0.0 || p > 1.0) {
-      throw EpubPositionDecodeException('"p" (progress) must be a number in [0,1]');
+      throw EpubPositionDecodeException(
+          '"p" (progress) must be a number in [0,1]');
     }
 
     switch (t) {
       case 'r':
         final c = decoded['c'];
         if (c is! int || c < 0) {
-          throw EpubPositionDecodeException('"c" (charOffset) must be non-negative int');
+          throw EpubPositionDecodeException(
+              '"c" (charOffset) must be non-negative int');
         }
         final x = decoded['x'];
         if (x != null && (x is! int || x < 0)) {
-          throw EpubPositionDecodeException('"x" (pageIndex) must be non-negative int when present');
+          throw EpubPositionDecodeException(
+              '"x" (pageIndex) must be non-negative int when present');
         }
         final a = decoded['a'];
         if (a != null && (a is! num || !a.isFinite)) {
-          throw EpubPositionDecodeException('"a" (scrollAlignment) must be a finite number when present');
+          throw EpubPositionDecodeException(
+              '"a" (scrollAlignment) must be a finite number when present');
         }
         return EpubReflowablePosition(
           spineHref: s,
@@ -104,7 +109,8 @@ sealed class EpubPosition {
       case 'f':
         final i = decoded['i'];
         if (i is! int || i < 0) {
-          throw EpubPositionDecodeException('"i" (pageIndex) must be non-negative int');
+          throw EpubPositionDecodeException(
+              '"i" (pageIndex) must be non-negative int');
         }
         return EpubFixedPosition(
           spineHref: s,
@@ -132,14 +138,15 @@ class EpubReflowablePosition extends EpubPosition {
     required this.charOffset,
     this.pageIndex,
     this.scrollAlignment,
-  }) : assert(charOffset >= 0, 'charOffset must be non-negative'),
-       assert(pageIndex == null || pageIndex >= 0, 'pageIndex must be non-negative'),
-       assert(
-         scrollAlignment == null ||
-             (scrollAlignment > double.negativeInfinity &&
-                 scrollAlignment < double.infinity),
-         'scrollAlignment must be finite',
-       );
+  })  : assert(charOffset >= 0, 'charOffset must be non-negative'),
+        assert(pageIndex == null || pageIndex >= 0,
+            'pageIndex must be non-negative'),
+        assert(
+          scrollAlignment == null ||
+              (scrollAlignment > double.negativeInfinity &&
+                  scrollAlignment < double.infinity),
+          'scrollAlignment must be finite',
+        );
 
   final int charOffset;
   final int? pageIndex;

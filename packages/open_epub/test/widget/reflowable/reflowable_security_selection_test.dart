@@ -11,7 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_engine.dart';
 
-Widget _host(String data, {double fontSize = 16, EpubLinkTapCallback? onLinkTap}) =>
+Widget _host(String data,
+        {double fontSize = 16, EpubLinkTapCallback? onLinkTap}) =>
     MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
@@ -45,7 +46,8 @@ void main() {
         _host('<body><style>.h{color:red}</style><p>본문 스타일</p></body>'),
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('color:red', findRichText: true), findsNothing);
+      expect(
+          find.textContaining('color:red', findRichText: true), findsNothing);
       expect(find.textContaining('본문 스타일', findRichText: true), findsOneWidget);
     });
 
@@ -83,7 +85,8 @@ void main() {
       // 가능한 RichText로 본문을 렌더한다.
       expect(find.byType(SelectableRegion), findsOneWidget);
       expect(find.byType(RichText), findsWidgets);
-      expect(find.textContaining('선택 가능한 본문', findRichText: true), findsOneWidget);
+      expect(
+          find.textContaining('선택 가능한 본문', findRichText: true), findsOneWidget);
     });
   });
 
@@ -105,8 +108,7 @@ void main() {
       expect(tapped, 'openepub-hl:h7');
     });
 
-    testWidgets('글자 크기 변경(재배치) 후에도 하이라이트 탭이 유지된다 (F2.2 회귀)',
-        (tester) async {
+    testWidgets('글자 크기 변경(재배치) 후에도 하이라이트 탭이 유지된다 (F2.2 회귀)', (tester) async {
       String? tapped;
       // 16px 렌더
       await tester.pumpWidget(_host(highlighted, onLinkTap: (h) => tapped = h));

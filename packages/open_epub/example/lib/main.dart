@@ -9,8 +9,10 @@ import 'highlight_demo_page.dart' show HighlightDemoPage;
 import 'sample_library_page.dart' show SampleLibraryPage;
 import 'v1_demo_page.dart' show V1DemoPage;
 
-const bool _isFlutterTest =
-    bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);
+const bool _isFlutterTest = bool.fromEnvironment(
+  'FLUTTER_TEST',
+  defaultValue: false,
+);
 
 void main() {
   // marionette 통합테스트용 바인딩(디버그 전용). Material IconButton/InkWell 등은
@@ -49,10 +51,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('open_epub Demo'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('open_epub Demo'), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -80,9 +79,9 @@ class HomePage extends StatelessWidget {
               title: const Text('1.0 코어 데모'),
               subtitle: const Text('EpubBookSession + EpubReader'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const V1DemoPage()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const V1DemoPage())),
             ),
           ),
 

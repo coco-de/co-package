@@ -46,24 +46,24 @@ void main() {
 
     test('IDPF: 난독화 후 해제하면 원본 (앞 1040 바이트 변경)', () {
       const id = 'urn:uuid:9a306f5e-1234-5678-9abc-def012345678';
-      final obf =
-          FontObfuscation.deobfuscate(data: original, algorithm: _idpf, identifier: id);
+      final obf = FontObfuscation.deobfuscate(
+          data: original, algorithm: _idpf, identifier: id);
       // 앞부분은 바뀌고 뒷부분(1040~)은 그대로
       expect(obf.sublist(0, 20), isNot(equals(original.sublist(0, 20))));
       expect(obf.sublist(1040), equals(original.sublist(1040)));
-      final restored =
-          FontObfuscation.deobfuscate(data: obf, algorithm: _idpf, identifier: id);
+      final restored = FontObfuscation.deobfuscate(
+          data: obf, algorithm: _idpf, identifier: id);
       expect(restored, equals(original));
     });
 
     test('Adobe: 난독화 후 해제하면 원본 (앞 1024 바이트 변경)', () {
       const id = 'urn:uuid:9a306f5e-1234-5678-9abc-def012345678';
-      final obf =
-          FontObfuscation.deobfuscate(data: original, algorithm: _adobe, identifier: id);
+      final obf = FontObfuscation.deobfuscate(
+          data: original, algorithm: _adobe, identifier: id);
       expect(obf.sublist(0, 16), isNot(equals(original.sublist(0, 16))));
       expect(obf.sublist(1024), equals(original.sublist(1024)));
-      final restored =
-          FontObfuscation.deobfuscate(data: obf, algorithm: _adobe, identifier: id);
+      final restored = FontObfuscation.deobfuscate(
+          data: obf, algorithm: _adobe, identifier: id);
       expect(restored, equals(original));
     });
 
@@ -123,7 +123,8 @@ void main() {
   </enc:EncryptedData>
 </encryption>''';
       final session = await EpubBookSession.open(
-        EpubSource.bytes(epubWithEncryption(encryptionXml: encXml, fontContent: obf)),
+        EpubSource.bytes(
+            epubWithEncryption(encryptionXml: encXml, fontContent: obf)),
       );
       final read = session.resources.readBytes('fonts/x.otf');
       expect(read, equals(fontOriginal)); // 투명 해제 → 원본
@@ -140,8 +141,8 @@ void main() {
   </enc:EncryptedData>
 </encryption>''';
       expect(
-        () => EpubBookSession.open(EpubSource.bytes(
-            epubWithEncryption(encryptionXml: encXml, fontContent: fontOriginal))),
+        () => EpubBookSession.open(EpubSource.bytes(epubWithEncryption(
+            encryptionXml: encXml, fontContent: fontOriginal))),
         throwsA(isA<EpubEncryptedUnsupported>()),
       );
     });

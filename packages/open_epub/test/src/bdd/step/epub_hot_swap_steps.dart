@@ -30,8 +30,7 @@ const String _containerXml = '''
 /// 3챕터(ch01~ch03) 초안 책 — feature의 spineHref="ch03.xhtml" 전제용.
 /// [marker]로 본문을 바꿔 '수정 후 새 bytes'를 표현한다 (spine 구조 동일).
 Uint8List _draftEpub3({required String title, required String marker}) {
-  String chapter(int n) =>
-      '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+  String chapter(int n) => '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
       '<p>$n장 본문 ($marker)</p></body></html>';
   return zipEpub({
     'mimetype': 'application/epub+zip',
@@ -217,8 +216,7 @@ Future<void> authorPreviewingBook(BddWorld world) async {
 /// Usage: When Author가 spine 항목 순서를 변경한 새 EPUB을 전달한다
 Future<void> authorSendsEpubWithReorderedSpine(BddWorld world) async {
   // spine 구조가 바뀌어 현재 위치(ch2.xhtml)가 새 spine에 없는 책.
-  await world.requireSession
-      .swapSource(EpubSource.bytes(singleChapterEpub3()));
+  await world.requireSession.swapSource(EpubSource.bytes(singleChapterEpub3()));
   await world.settle();
 }
 

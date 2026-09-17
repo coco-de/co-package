@@ -11,7 +11,8 @@ import 'package:open_epub/src/presentation/engine/fixed_layout/fixed_layout_engi
 
 void main() {
   group('FixedLayoutEngine — auto spread breakpoint (BDD F3.3)', () {
-    testWidgets('screenWidth < 1024 + spread:auto → 1-page (Row 없음)', (tester) async {
+    testWidgets('screenWidth < 1024 + spread:auto → 1-page (Row 없음)',
+        (tester) async {
       final book = _fakeBook(
         spread: EpubSpread.auto,
         spine: const [('a', []), ('b', [])],
@@ -32,7 +33,8 @@ void main() {
       expect(find.text('b.xhtml'), findsNothing);
     });
 
-    testWidgets('screenWidth ≥ 1024 + spread:auto → 2-page (Row + L/R)', (tester) async {
+    testWidgets('screenWidth ≥ 1024 + spread:auto → 2-page (Row + L/R)',
+        (tester) async {
       await _setViewSize(tester, 1200, 800);
       final book = _fakeBook(
         spread: EpubSpread.auto,
@@ -177,7 +179,8 @@ void main() {
       expect(find.text('p1.xhtml'), findsNothing);
     });
 
-    testWidgets('rendition:page-spread-center → 단독 row (다른 페이지 없음)', (tester) async {
+    testWidgets('rendition:page-spread-center → 단독 row (다른 페이지 없음)',
+        (tester) async {
       await _setViewSize(tester, 1200, 800);
       final book = _fakeBook(
         spread: EpubSpread.both,
@@ -282,7 +285,8 @@ void main() {
 // -------- helpers --------
 
 /// tester 화면 view를 [width] × [height]로 강제. 호출 후 끝에서 자동 reset.
-Future<void> _setViewSize(WidgetTester tester, double width, double height) async {
+Future<void> _setViewSize(
+    WidgetTester tester, double width, double height) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(() {

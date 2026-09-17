@@ -135,7 +135,8 @@ class DetectTextLayerUseCase {
         .trim();
     final len = text.length;
     if (len >= _minVisibleChars) {
-      return TextLayerVerdict.available(visibleCharCount: len, reason: 'text:$len');
+      return TextLayerVerdict.available(
+          visibleCharCount: len, reason: 'text:$len');
     }
     if (len == 0) {
       return TextLayerVerdict.unavailable(reason: 'image-only');

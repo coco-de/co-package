@@ -28,10 +28,10 @@ SpreadSlot? slotFromSpineProperties(List<String> properties) {
 /// 2-page spread 한 줄을 구성하는 표시 단위.
 class SpreadRow {
   const SpreadRow({this.left, this.right, this.center})
-    : assert(
-        center == null || (left == null && right == null),
-        'center page must be alone in a row',
-      );
+      : assert(
+          center == null || (left == null && right == null),
+          'center page must be alone in a row',
+        );
 
   /// center page (page-spread-center)인 경우 하나만 채움.
   final EpubSpineItem? center;
@@ -100,8 +100,7 @@ List<SpreadRow> buildSpreadRows(
       }
       // next가 right 강제 또는 미명시 → cur=left, next=right.
       // RTL이면서 양쪽 다 미명시일 때만 좌우를 반전한다(명시 슬롯은 물리적 유지).
-      final reversePair =
-          rightToLeft && curSlot == null && nextSlot == null;
+      final reversePair = rightToLeft && curSlot == null && nextSlot == null;
       rows.add(
         reversePair
             ? SpreadRow(left: next, right: cur)
@@ -141,8 +140,11 @@ class FixedLayoutSpreadRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(child: left == null ? const SizedBox.shrink() : pageBuilder(left)),
-        Expanded(child: right == null ? const SizedBox.shrink() : pageBuilder(right)),
+        Expanded(
+            child: left == null ? const SizedBox.shrink() : pageBuilder(left)),
+        Expanded(
+            child:
+                right == null ? const SizedBox.shrink() : pageBuilder(right)),
       ],
     );
   }

@@ -27,8 +27,8 @@ void main() {
         charOffset: 9876,
         pageIndex: 42,
       );
-      final decoded = EpubPosition.fromToken(original.toToken())
-          as EpubReflowablePosition;
+      final decoded =
+          EpubPosition.fromToken(original.toToken()) as EpubReflowablePosition;
       expect(decoded, original);
       expect(decoded.pageIndex, 42);
     });
@@ -69,8 +69,8 @@ void main() {
       );
       final json = jsonDecode(original.toToken()) as Map<String, dynamic>;
       expect(json['a'], -1.35);
-      final decoded = EpubPosition.fromToken(original.toToken())
-          as EpubReflowablePosition;
+      final decoded =
+          EpubPosition.fromToken(original.toToken()) as EpubReflowablePosition;
       expect(decoded, original);
       expect(decoded.scrollAlignment, -1.35);
     });
@@ -83,15 +83,14 @@ void main() {
         pageIndex: 2,
         scrollAlignment: 0.0,
       );
-      final decoded = EpubPosition.fromToken(original.toToken())
-          as EpubReflowablePosition;
+      final decoded =
+          EpubPosition.fromToken(original.toToken()) as EpubReflowablePosition;
       expect(decoded, original);
     });
 
     test('scrollAlignment 없는 기존 v1 토큰도 하위 호환 디코드된다', () {
       const token = '{"v":1,"t":"r","s":"a.xhtml","p":0.1,"c":50}';
-      final decoded =
-          EpubPosition.fromToken(token) as EpubReflowablePosition;
+      final decoded = EpubPosition.fromToken(token) as EpubReflowablePosition;
       expect(decoded.scrollAlignment, isNull);
     });
   });
@@ -103,8 +102,8 @@ void main() {
         progress: 0.05,
         pageIndex: 3,
       );
-      final decoded = EpubPosition.fromToken(original.toToken())
-          as EpubFixedPosition;
+      final decoded =
+          EpubPosition.fromToken(original.toToken()) as EpubFixedPosition;
       expect(decoded, original);
       expect(decoded.pageIndex, 3);
     });
@@ -142,7 +141,8 @@ void main() {
         progress: 0.5,
         charOffset: 0,
       );
-      expect(() => pos.toToken(), throwsA(isA<EpubPositionTooLargeException>()));
+      expect(
+          () => pos.toToken(), throwsA(isA<EpubPositionTooLargeException>()));
     });
   });
 
@@ -254,7 +254,8 @@ void main() {
     });
 
     test('Reflowable vs Fixed는 다른 타입이라 not ==', () {
-      const a = EpubReflowablePosition(spineHref: 'x', progress: 0.0, charOffset: 0);
+      const a =
+          EpubReflowablePosition(spineHref: 'x', progress: 0.0, charOffset: 0);
       const b = EpubFixedPosition(spineHref: 'x', progress: 0.0, pageIndex: 0);
       expect(a == b, isFalse);
     });

@@ -49,8 +49,8 @@ class BrokenSpineHrefPatch implements EpubPatch {
     final pruned = prune(book.outline.items);
     if (removed == 0) return null;
 
-    final patched =
-        PatchedEpubBook.from(book).copyWith(outline: EpubOutline(items: pruned));
+    final patched = PatchedEpubBook.from(book)
+        .copyWith(outline: EpubOutline(items: pruned));
     return PatchResult(book: patched, impact: {'removedDeadLinks': removed});
   }
 }

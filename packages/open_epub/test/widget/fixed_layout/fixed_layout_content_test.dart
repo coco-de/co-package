@@ -78,8 +78,10 @@ void main() {
             logicalSize: const Size(600, 800),
             content: const SizedBox(width: 600, height: 800),
             enableZoom: false,
-            contentBuilder: (context, logicalSize, content) =>
-                ColoredBox(key: const Key('wrap'), color: const Color(0x00000000), child: content),
+            contentBuilder: (context, logicalSize, content) => ColoredBox(
+                key: const Key('wrap'),
+                color: const Color(0x00000000),
+                child: content),
           ),
         ),
       );

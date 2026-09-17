@@ -7,7 +7,8 @@ import 'package:open_epub/src/presentation/engine/fixed_layout/fixed_layout_page
 
 void main() {
   group('FixedLayoutPage — InteractiveViewer 줌 (BDD F3.2)', () {
-    testWidgets('InteractiveViewer가 트리에 존재 (enableZoom default true)', (tester) async {
+    testWidgets('InteractiveViewer가 트리에 존재 (enableZoom default true)',
+        (tester) async {
       await tester.pumpWidget(_wrap(
         const FixedLayoutPage(
           logicalSize: Size(800, 600),
@@ -30,7 +31,8 @@ void main() {
       expect(find.byType(InteractiveViewer), findsNothing);
     });
 
-    testWidgets('default minZoom=1.0, maxZoom=4.0, doubleTapZoom=2.0', (tester) async {
+    testWidgets('default minZoom=1.0, maxZoom=4.0, doubleTapZoom=2.0',
+        (tester) async {
       await tester.pumpWidget(_wrap(
         const FixedLayoutPage(
           logicalSize: Size(800, 600),
@@ -38,7 +40,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      final viewer = tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
+      final viewer =
+          tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
       expect(viewer.minScale, 1.0);
       expect(viewer.maxScale, 4.0);
     });
@@ -51,12 +54,14 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      final state = tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
+      final state =
+          tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
       expect(state.currentScale, closeTo(1.0, 0.0001));
       expect(state.isZoomedIn, isFalse);
     });
 
-    testWidgets('onDoubleTapAt: 줌 인 → isZoomedIn=true, currentScale=doubleTapZoom',
+    testWidgets(
+        'onDoubleTapAt: 줌 인 → isZoomedIn=true, currentScale=doubleTapZoom',
         (tester) async {
       await tester.pumpWidget(_wrap(
         const FixedLayoutPage(
@@ -65,7 +70,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      final state = tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
+      final state =
+          tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
 
       state.onDoubleTapAt(const Offset(100, 100));
       await tester.pumpAndSettle();
@@ -81,7 +87,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      final state = tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
+      final state =
+          tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
 
       // 줌 인
       state.onDoubleTapAt(const Offset(50, 50));
@@ -105,10 +112,12 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      final viewer = tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
+      final viewer =
+          tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
       expect(viewer.maxScale, 5.0);
 
-      final state = tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
+      final state =
+          tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
       state.onDoubleTapAt(Offset.zero);
       await tester.pumpAndSettle();
       expect(state.currentScale, closeTo(3.0, 0.0001));
@@ -122,7 +131,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      final state = tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
+      final state =
+          tester.state<FixedLayoutPageState>(find.byType(FixedLayoutPage));
       expect(state.isZoomedIn, isFalse);
 
       // 더블 탭 제스처 트리거 (kDoubleTapMinTime은 flutter에 없으므로 직접 지정)

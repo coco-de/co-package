@@ -60,8 +60,7 @@ void main() {
   });
 
   group('buildReflowableHtml — img src를 baseHref 기준으로 로더에 전달', () {
-    testWidgets('하위 폴더 본문의 ../images src가 OPF 상대로 해석되어 로드된다',
-        (tester) async {
+    testWidgets('하위 폴더 본문의 ../images src가 OPF 상대로 해석되어 로드된다', (tester) async {
       final requested = <String>[];
       Future<Uint8List?> spyLoader(String src) async {
         requested.add(src);

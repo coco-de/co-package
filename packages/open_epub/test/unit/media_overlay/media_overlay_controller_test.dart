@@ -28,8 +28,7 @@ void main() {
       expect(player.playCount, 1);
     });
 
-    test('clipEnd 도달 → 다음 par로 auto-advance (같은 파일=재로드 없음, seek만)',
-        () async {
+    test('clipEnd 도달 → 다음 par로 auto-advance (같은 파일=재로드 없음, seek만)', () async {
       await controller.start(_overlay2SameFile(), loadAudio: _bytesLoader);
       // par0 clipEnd=2.5s 도달
       player.emitPosition(const Duration(milliseconds: 2500));
@@ -37,7 +36,8 @@ void main() {
 
       expect(controller.activeParIndex.value, 1);
       expect(player.loads, hasLength(1)); // 같은 오디오 → 재로드 없음
-      expect(player.seeks.last, const Duration(milliseconds: 2500)); // clipBegin1
+      expect(
+          player.seeks.last, const Duration(milliseconds: 2500)); // clipBegin1
     });
 
     test('마지막 par clipEnd 도달 → stop (활성 -1, idle, pause)', () async {
@@ -105,7 +105,8 @@ void main() {
 
 // -------- helpers --------
 
-Future<Uint8List?> _bytesLoader(String src) async => Uint8List.fromList([1, 2, 3]);
+Future<Uint8List?> _bytesLoader(String src) async =>
+    Uint8List.fromList([1, 2, 3]);
 
 EpubMediaOverlay _overlay2SameFile() => const EpubMediaOverlay(pars: [
       EpubMediaPar(
@@ -149,7 +150,8 @@ class FakeMediaAudioPlayer implements MediaAudioPlayer {
   void emitPosition(Duration d) => _positions.add(d);
 
   @override
-  Future<void> load(Uint8List bytes, {String contentType = 'audio/mpeg'}) async {
+  Future<void> load(Uint8List bytes,
+      {String contentType = 'audio/mpeg'}) async {
     loads.add(bytes.length);
   }
 

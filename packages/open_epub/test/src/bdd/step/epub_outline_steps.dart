@@ -179,8 +179,7 @@ Future<void> userTapsOutlineItem(BddWorld world, String title) async {
       if (s.linear) s.href,
   ];
   final index = hrefs.indexOf(item!.spineHref);
-  expect(index, isNonNegative,
-      reason: '목차 항목의 spineHref가 spine에 존재해야 합니다');
+  expect(index, isNonNegative, reason: '목차 항목의 spineHref가 spine에 존재해야 합니다');
   final denom = hrefs.length <= 1 ? 1 : hrefs.length - 1;
   await session.jumpTo(EpubReflowablePosition(
     spineHref: item.spineHref,

@@ -140,7 +140,8 @@ class FakeMediaAudioPlayer implements MediaAudioPlayer {
   void emitPosition(Duration d) => _positions.add(d);
 
   @override
-  Future<void> load(Uint8List bytes, {String contentType = 'audio/mpeg'}) async {}
+  Future<void> load(Uint8List bytes,
+      {String contentType = 'audio/mpeg'}) async {}
   @override
   Future<void> play() async {}
   @override

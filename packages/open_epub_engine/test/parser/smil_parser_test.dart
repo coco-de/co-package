@@ -32,7 +32,8 @@ void main() {
       expect(mo.pars[0].clipBegin, Duration.zero);
       expect(mo.pars[0].clipEnd, const Duration(milliseconds: 5200));
       expect(mo.pars[1].clipBegin, const Duration(milliseconds: 5200));
-      expect(mo.pars[1].clipEnd, const Duration(seconds: 10, milliseconds: 500));
+      expect(
+          mo.pars[1].clipEnd, const Duration(seconds: 10, milliseconds: 500));
     });
 
     test('text 없는 par는 제외', () {
@@ -67,7 +68,8 @@ void main() {
     });
 
     test('clock notation: mm:ss / hh:mm:ss', () {
-      expect(SmilParser.parseClock('02:03'), const Duration(minutes: 2, seconds: 3));
+      expect(SmilParser.parseClock('02:03'),
+          const Duration(minutes: 2, seconds: 3));
       expect(SmilParser.parseClock('1:02:03.5'),
           const Duration(hours: 1, minutes: 2, seconds: 3, milliseconds: 500));
     });

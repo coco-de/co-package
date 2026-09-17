@@ -64,8 +64,7 @@ void main() {
   // open-epub 위치 복원 정확도 개선 — 재진입 시 위치 복원이 챕터(spine)
   // 단위로만 동작하던 문제. fixedPageSize 없이도 같은 챕터 내 윈도우 이동이
   // 위치로 저장·복원되는지 검증한다.
-  testWidgets(
-      'paged 모드(fixedPageSize 없음)에서도 같은 챕터 내 윈도우 이동이 저장·복원된다',
+  testWidgets('paged 모드(fixedPageSize 없음)에서도 같은 챕터 내 윈도우 이동이 저장·복원된다',
       (tester) async {
     final source = largeEpub3(chapters: 2, paragraphsPerChapter: 60);
     final positions = <EpubPosition>[];
@@ -121,8 +120,7 @@ void main() {
     expect(restoredState.windowIndex, saved.pageIndex);
   });
 
-  testWidgets('스크롤(기본) 모드에서도 같은 챕터 내부 스크롤 위치가 저장·복원된다',
-      (tester) async {
+  testWidgets('스크롤(기본) 모드에서도 같은 챕터 내부 스크롤 위치가 저장·복원된다', (tester) async {
     final source = largeEpub3(chapters: 2, paragraphsPerChapter: 60);
     final positions = <EpubPosition>[];
 

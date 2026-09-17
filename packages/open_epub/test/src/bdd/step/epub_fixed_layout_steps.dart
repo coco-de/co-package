@@ -211,10 +211,10 @@ Future<void> displayedInTwoPageSpread(
 /// Usage: Then 해당 페이지는 좌측 슬롯에 표시된다
 Future<void> pageRendersInLeftSlot(BddWorld world, WidgetTester tester) async {
   final spine = world.requireSession.book.spine;
-  final left = spine
-      .firstWhere((item) => item.properties.contains('page-spread-left'));
-  final right = spine
-      .firstWhere((item) => item.properties.contains('page-spread-right'));
+  final left =
+      spine.firstWhere((item) => item.properties.contains('page-spread-left'));
+  final right =
+      spine.firstWhere((item) => item.properties.contains('page-spread-right'));
   final engineWidth = tester.getSize(find.byType(FixedLayoutEngine)).width;
   final leftCenter = tester.getCenter(find.text(left.href));
   final rightCenter = tester.getCenter(find.text(right.href));

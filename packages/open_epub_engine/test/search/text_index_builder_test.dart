@@ -2,7 +2,8 @@
 // BDD: F7.1
 
 import 'package:test/test.dart';
-import 'package:open_epub_engine/src/data/compat/patch_catalog.dart' show PatchedEpubBook;
+import 'package:open_epub_engine/src/data/compat/patch_catalog.dart'
+    show PatchedEpubBook;
 import 'package:open_epub_engine/src/data/search/text_index_builder.dart';
 import 'package:open_epub_engine/src/domain/entity/epub_metadata.dart';
 import 'package:open_epub_engine/src/domain/entity/epub_outline.dart';
@@ -27,8 +28,8 @@ void main() {
     });
     final hits = await index.search('foo');
     expect(hits, hasLength(3));
-    expect(hits.map((h) => h.spineHref),
-        ['ch1.xhtml', 'ch2.xhtml', 'ch2.xhtml']);
+    expect(
+        hits.map((h) => h.spineHref), ['ch1.xhtml', 'ch2.xhtml', 'ch2.xhtml']);
     expect(hits.first.charOffset, 12); // 'hello world ' = 12
   });
 

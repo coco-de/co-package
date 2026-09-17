@@ -19,13 +19,23 @@ void main() {
 
     test('여러 charOffset이 CFI 왕복으로 보존된다', () {
       // 본문 곳곳의 offset (경계·중간)
-      for (final off in [0, 1, 5, 12, 20, 30, plain.length ~/ 2, plain.length - 1]) {
+      for (final off in [
+        0,
+        1,
+        5,
+        12,
+        20,
+        30,
+        plain.length ~/ 2,
+        plain.length - 1
+      ]) {
         final cfi = mapper.charOffsetToCfi(xhtml, off);
         expect(cfi, isNotNull, reason: 'charOffset $off → CFI 생성 실패');
         expect(cfi, startsWith('epubcfi('));
         final back = mapper.cfiToCharOffset(xhtml, cfi!);
         expect(back, isNotNull, reason: 'CFI → charOffset 실패 (off=$off)');
-        expect(back, equals(off), reason: 'round-trip 불일치 (off=$off, cfi=$cfi)');
+        expect(back, equals(off),
+            reason: 'round-trip 불일치 (off=$off, cfi=$cfi)');
       }
     });
 

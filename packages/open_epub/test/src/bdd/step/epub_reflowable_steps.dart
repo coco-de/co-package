@@ -190,8 +190,8 @@ Future<void> nextPageRenderedWithinMs(
   const frame = Duration(milliseconds: 15);
   final budget = Duration(milliseconds: ms);
   var elapsed = Duration.zero;
-  while (
-      elapsed < budget && find.textContaining('2장', findRichText: true).evaluate().isEmpty) {
+  while (elapsed < budget &&
+      find.textContaining('2장', findRichText: true).evaluate().isEmpty) {
     await tester.pump(frame);
     elapsed += frame;
   }

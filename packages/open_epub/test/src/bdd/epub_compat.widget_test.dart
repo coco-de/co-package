@@ -35,11 +35,7 @@ void main() {
           patchId: 'broken-spine-href',
           severity: 'high'
         ),
-        (
-          issue: 'mimetype 파일 누락',
-          patchId: 'missing-mimetype',
-          severity: 'low'
-        ),
+        (issue: 'mimetype 파일 누락', patchId: 'missing-mimetype', severity: 'low'),
         (issue: 'NCX/nav 모두 빈', patchId: 'empty-toc', severity: 'high'),
       ];
       for (final example in examples) {

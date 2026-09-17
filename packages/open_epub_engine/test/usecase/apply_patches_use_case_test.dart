@@ -35,8 +35,8 @@ class _TagPatch implements EpubPatch {
   @override
   String get description => 'fake $patchId';
   @override
-  PatchResult? apply(EpubBook book) =>
-      PatchResult(book: PatchedEpubBook.from(book), impact: {'applied': patchId});
+  PatchResult? apply(EpubBook book) => PatchResult(
+      book: PatchedEpubBook.from(book), impact: {'applied': patchId});
 }
 
 /// 절대 적용되지 않는 patch.

@@ -152,8 +152,7 @@ void main() {
       expect(session.position, saved);
       expect(session.progress, 0.45);
       expect(
-        session.diagnostics.unresolvedIssues
-            .map((i) => i.code),
+        session.diagnostics.unresolvedIssues.map((i) => i.code),
         isNot(contains('position-restore-failed')),
       );
     });

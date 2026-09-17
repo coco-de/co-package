@@ -10,7 +10,8 @@ import '../../api/epub_book.dart';
 import '../../data/search/text_index_builder.dart';
 
 class BuildSearchIndexUseCase {
-  const BuildSearchIndexUseCase({TextIndexBuilder builder = const TextIndexBuilder()})
+  const BuildSearchIndexUseCase(
+      {TextIndexBuilder builder = const TextIndexBuilder()})
       : _builder = builder;
 
   final TextIndexBuilder _builder;

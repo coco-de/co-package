@@ -21,8 +21,8 @@ class HtmlSanitizer {
   }
 
   String _stripTag(String html, String tag) {
-    final paired = RegExp('<$tag\\b[^>]*>[\\s\\S]*?</$tag\\s*>',
-        caseSensitive: false);
+    final paired =
+        RegExp('<$tag\\b[^>]*>[\\s\\S]*?</$tag\\s*>', caseSensitive: false);
     final lone = RegExp('<$tag\\b[^>]*/?>', caseSensitive: false);
     return html.replaceAll(paired, '').replaceAll(lone, '');
   }

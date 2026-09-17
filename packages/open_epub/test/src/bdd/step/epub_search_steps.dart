@@ -86,12 +86,10 @@ Uint8List _flutterEpub3() => zipEpub({
   </body>
 </html>
 ''',
-      'OEBPS/ch1.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch1.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>Flutter는 위젯으로 화면을 그린다.</p>'
           '<p>Flutter 앱은 한 코드로 여러 플랫폼에서 돈다.</p></body></html>',
-      'OEBPS/ch2.xhtml':
-          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+      'OEBPS/ch2.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
           '<p>Dart와 Flutter로 멀티플랫폼 앱을 만든다.</p></body></html>',
     });
 
@@ -321,8 +319,7 @@ Future<void> userPerformsSearch(SearchWorld world) async {
 
 /// Usage: Then 그 페이지는 결과에 포함되지 않는다
 Future<void> pageExcludedFromResults(SearchWorld world) async {
-  expect(world.textlessHrefs, isNotEmpty,
-      reason: '텍스트 레이어 없는 페이지가 감지되어야 합니다');
+  expect(world.textlessHrefs, isNotEmpty, reason: '텍스트 레이어 없는 페이지가 감지되어야 합니다');
   for (final hit in world.hits) {
     expect(world.textlessHrefs, isNot(contains(hit.spineHref)));
   }
@@ -333,7 +330,6 @@ Future<void> pageExcludedFromResults(SearchWorld world) async {
 /// 안내 문구가 기대 문구와 일치함을 검증한다.
 Future<void> searchPanelFooterShowsMessage(
     SearchWorld world, String message) async {
-  final built =
-      '${world.textlessHrefs.length}개 페이지는 텍스트 레이어가 없어 검색에서 제외되었습니다';
+  final built = '${world.textlessHrefs.length}개 페이지는 텍스트 레이어가 없어 검색에서 제외되었습니다';
   expect(built, message);
 }

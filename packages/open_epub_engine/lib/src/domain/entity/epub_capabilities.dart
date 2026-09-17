@@ -45,8 +45,7 @@ class BookCapabilities {
   final bool hasMediaOverlay;
 
   /// RTL 진행 방향인지 편의 getter.
-  bool get isRightToLeft =>
-      pageProgressionDirection == EpubPageProgression.rtl;
+  bool get isRightToLeft => pageProgressionDirection == EpubPageProgression.rtl;
 
   static const BookCapabilities defaults = BookCapabilities();
 }

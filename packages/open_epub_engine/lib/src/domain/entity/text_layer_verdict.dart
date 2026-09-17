@@ -62,7 +62,6 @@ class TextLayerVerdict {
   int get hashCode => Object.hash(hasSelectableText, visibleCharCount, reason);
 
   @override
-  String toString() =>
-      'TextLayerVerdict(selectable: $hasSelectableText, '
+  String toString() => 'TextLayerVerdict(selectable: $hasSelectableText, '
       'chars: $visibleCharCount, reason: $reason)';
 }

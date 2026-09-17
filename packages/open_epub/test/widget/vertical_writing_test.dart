@@ -65,8 +65,7 @@ void main() {
       expect(find.byType(HtmlWidget), findsNothing);
     });
 
-    testWidgets('세로쓰기 + 이미지 등 복잡 콘텐츠 → 가로(HtmlWidget) 폴백',
-        (tester) async {
+    testWidgets('세로쓰기 + 이미지 등 복잡 콘텐츠 → 가로(HtmlWidget) 폴백', (tester) async {
       await tester.pumpWidget(_html(
         '<body style="writing-mode: vertical-rl">'
         '<p>본문</p><img src="a.png"/></body>',

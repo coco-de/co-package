@@ -59,5 +59,6 @@ void main() {
 }
 
 List<EpubSpineItem> _fakeSpine(List<String> hrefs) => hrefs
-    .map((h) => EpubSpineItem(idref: h, href: h, mediaType: 'application/xhtml+xml'))
+    .map((h) =>
+        EpubSpineItem(idref: h, href: h, mediaType: 'application/xhtml+xml'))
     .toList();

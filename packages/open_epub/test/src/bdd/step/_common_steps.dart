@@ -44,8 +44,7 @@ class BddWorld {
   final List<EpubBookSession> _retired = [];
 
   EpubBookSession get requireSession {
-    expect(session, isNotNull,
-        reason: '세션이 열려 있어야 합니다 (openSession 선행 필요)');
+    expect(session, isNotNull, reason: '세션이 열려 있어야 합니다 (openSession 선행 필요)');
     return session!;
   }
 

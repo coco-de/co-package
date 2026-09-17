@@ -110,8 +110,7 @@ void main() {
       expect(loaded.resources.readString('nope.xhtml'), isNull);
     });
 
-    test('오프로딩 결과가 동기 파싱과 동일한 book/navigation/capabilities를 만든다',
-        () async {
+    test('오프로딩 결과가 동기 파싱과 동일한 book/navigation/capabilities를 만든다', () async {
       final viaIsolate = await offloaded.load(EpubSource.bytes(validEpub3()));
       final viaSync = await repo.load(EpubSource.bytes(validEpub3()));
       expect(viaIsolate.book.metadata.title, viaSync.book.metadata.title);
