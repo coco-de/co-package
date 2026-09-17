@@ -4,6 +4,9 @@ include: package:flutter_lints/flutter.yaml
 # Module-specific overrides
 analyzer:
   exclude:
+    # example 은 워크스페이스 멤버가 아니라 단독 해석(private open-epub git 의존성)이므로
+    # 루트 package_config 로는 분석할 수 없다 — 패키지 분석에서 제외한다.
+    - "example/**"
     - "**/*.g.dart"
     - "**/*.pb.dart"
     - "**/*.pbenum.dart"
