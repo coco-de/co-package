@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+// ===== .obt (Open Board Timeline) 파일 포맷 =====
+//
+// 바이너리 구조:
+//   [Magic "OBT\0" (4B)] [Format Version uint32 LE (4B)] [Protobuf Payload]
+//
+// 이 메시지는 헤더 이후의 Protobuf payload
+
+message ScribbleTimeline {
+  /// 콘텐츠 식별자
+  string contentId = 1;
+  /// 세션 시작 시각 (마이크로초, epoch)
+  int64 startTimestamp = 2;
+  /// 세션 종료 시각 (마이크로초, epoch)
+  int64 endTimestamp = 3;
+  /// 시맨틱 버전 "1.0.0"
+  string version = 4;
+
+  /// 페이지 ID 목록 (순서 보장)
+  repeated string pageIds = 5;
+
+  /// 이벤트 시퀀스 (시간순 정렬)
+  repeated TimelineEvent events = 6;
+
+  /// seek용 스냅샷 (30초 간격)
+  repeated TimelineSnapshot snapshots = 7;
+
+  /// .bin 정합성 검증 (pageId → bin의 updatedAt)
+  map<string, string> pageUpdatedAt = 8;
+
+  /// 콘텐츠 식별 핑거프린트
+  ContentFingerprint contentFingerprint = 9;
+}
+
+message TimelineEvent {
+  /// 절대 타임스탬프 (마이크로초, epoch)
+  int64 timestamp = 1;
+  oneof event {
+    TlPageChanged pageChanged = 2;
+    TlStrokeAdded strokeAdded = 3;
+    TlStrokeRemoved strokeRemoved = 4;
+    TlUndo undo = 5;
+    TlRedo redo = 6;
+    TlPageAdded pageAdded = 7;
+    TlPageRemoved pageRemoved = 8;
+    TlPageCleared pageCleared = 9;
+
+    // Phase 1 추가
+    TlViewportChanged viewportChanged = 10;
+    TlSessionParticipant sessionParticipant = 11;
+  }
+}
+
+message TlPageChanged {
+  int32 fromIndex = 1;
+  int32 toIndex = 2;
+  string fromPageId = 3;
+  string toPageId = 4;
+}
+
+/// Stroke 데이터 미포함 — .bin의 strokeIndex로 참조
+message TlStrokeAdded {
+  string pageId = 1;
+  int32 strokeIndex = 2;
+}
+
+message TlStrokeRemoved {
+  string pageId = 1;
+  int32 strokeIndex = 2;
+}
+
+message TlUndo {
+  string pageId = 1;
+}
+
+message TlRedo {
+  string pageId = 1;
+}
+
+message TlPageAdded {
+  string pageId = 1;
+  int32 atIndex = 2;
+}
+
+message TlPageRemoved {
+  string pageId = 1;
+  int32 atIndex = 2;
+}
+
+message TlPageCleared {
+  string pageId = 1;
+}
+
+message TlViewportChanged {
+  string pageId       = 1;
+  double scale        = 2;
+  double centerX      = 3;
+  double centerY      = 4;
+  double viewportWidth  = 5;
+  double viewportHeight = 6;
+}
+
+message TlSessionParticipant {
+  string participantId = 1;
+  string displayName   = 2;
+  string role          = 3;  // "teacher" | "student"
+  string action        = 4;  // "joined" | "left"
+}
+
+/// seek 스냅샷 (경량 — Stroke 데이터 없음)
+message TimelineSnapshot {
+  /// 세션 시작 기준 오프셋 (마이크로초)
+  int64 offsetMicros = 1;
+  /// 해당 시점의 활성 페이지 인덱스
+  int32 activePageIndex = 2;
+  /// 해당 시점의 각 페이지 스트로크 수 (pageId → count)
+  map<string, int32> pageStrokeCounts = 3;
+}
+
+/// 콘텐츠 식별용 핑거프린트
+message ContentFingerprint {
+  /// SHA-256 hex string
+  string hash = 1;
+  /// 해시 알고리즘 ("sha256")
+  string algorithm = 2;
+  /// 앱에서 자유롭게 추가 가능한 메타데이터
+  /// 예: {"bookId": "abc", "title": "수학1", "author": "김튜터"}
+  map<string, string> metadata = 3;
+}

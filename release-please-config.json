@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "dart",
+
+  "//": "패키지별 독립 버전. 단, separate-pull-requests=false(기본) 로 릴리즈를 한 커밋에 묶어 형제 패키지 태그가 항상 같은 커밋을 가리키게 한다 — 소비 측(kobic)이 형제 패키지를 서로 다른 커밋 조합으로 받는 사고를 구조적으로 차단.",
+  "separate-pull-requests": false,
+  "include-component-in-tag": true,
+
+  "//open_board": "open-board 저장소에서 이관. 마지막 릴리즈는 태그 open_board-v0.1.0(구 v0.1.0, 이관 시 개명)으로 인식되며, 그 이후 커밋이 다음 릴리즈 노트에 담긴다.",
+
+  "changelog-sections": [
+    { "type": "feat",     "section": "기능" },
+    { "type": "fix",      "section": "버그 수정" },
+    { "type": "perf",     "section": "성능" },
+    { "type": "revert",   "section": "되돌림" },
+    { "type": "refactor", "section": "리팩터링" },
+    { "type": "docs",     "section": "문서" },
+    { "type": "build",    "section": "빌드",   "hidden": true },
+    { "type": "ci",       "section": "CI",     "hidden": true },
+    { "type": "test",     "section": "테스트", "hidden": true },
+    { "type": "style",    "section": "스타일", "hidden": true },
+    { "type": "chore",    "section": "기타",   "hidden": true }
+  ],
+
+  "packages": {
+    "packages/open_board": { "component": "open_board" }
+  }
+}

@@ -1,4 +1,7 @@
-name: Dart packages
+name: CI
+
+# open_board 가 Flutter 패키지라 pub workspace 해석(pub get)에 Flutter SDK 가 필요하다.
+# 순수 Dart 패키지(co_arc, co_faker)도 같은 워크스페이스로 함께 해석된다.
 
 on:
   pull_request:
@@ -8,17 +11,31 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.47.0"
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
+      - uses: subosito/flutter-action@v2
         with:
-          sdk: stable
-      - run: dart pub get
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      # --no-example: packages/open_board/example 은 private coco-de/open-epub 을 git
+      # 의존성으로 쓰므로 CI 의 워크스페이스 해석에서 제외한다(인증 불가 → exit 69).
+      - run: flutter pub get --no-example
       - run: dart pub global activate melos
-      - run: melos run verify
+      - run: melos run format
+      - run: melos run analyze
+      - run: melos run test:dart
+      - run: melos run test:flutter
 
   # co_arc 러너 스크립트/워크플로우 문법 검증
   lint-runner-infra:
