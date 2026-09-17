@@ -5,6 +5,7 @@ environment:
   sdk: ">=3.10.0 <4.0.0"
 
 workspace:
+  - packages/co_arc
   - packages/co_faker
 
 dev_dependencies:
