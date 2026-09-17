@@ -1,0 +1,41 @@
+name: open_epub_engine
+description: >-
+  Pure-Dart EPUB 2/3 parser, object model, and CFI locator engine for open_epub.
+  open_epub 1.0 코어의 커스텀 파서를 추출·확장하고, epub_pro(MIT)의 CFI
+  서브시스템을 채택했다. epubx/epub_view를 대체한다.
+version: 1.0.0
+# pub.dev 별도 발행 (ADR-002-a 옵션 A: 엔진 별도 발행 + lockstep). 발행 순서 엔진→리더.
+homepage: https://github.com/coco-de/co-package/tree/main/packages/open_epub_engine
+repository: https://github.com/coco-de/co-package
+topics:
+  - epub
+  - ebook
+  - epub3
+  - parser
+  - cfi
+
+environment:
+  sdk: ">=3.6.0 <4.0.0" # pub workspace 최소 요건
+
+# 모노레포 pub workspace 멤버 (S10.1, ADR-008)
+resolution: workspace
+
+dependencies:
+  # EPUB 컨테이너(ZIP) 해제
+  archive: ^4.0.9
+  # OPF/NCX/nav/SMIL XML 파싱 + CFI DOM 탐색(S12.1, src/cfi)
+  xml: ^7.0.1
+  # 이식한 epub_pro CFI 프리미티브가 사용 (S12.1, #94)
+  collection: ^1.19.0
+  # IDPF 폰트 난독화 해제(SHA-1) (S13.5, #102)
+  crypto: ^3.0.0
+  # 경로 정규화 (spine href 상대경로 해석 등)
+  path: ^1.9.0
+  # EpubSource.url 원격 로딩 (S1.20, api/epub_source.dart)
+  http: ^1.6.0
+  # @visibleForTesting — data layer는 flutter 의존 없이 순수 Dart 유지 (S9.1 #65)
+  meta: ^1.9.0
+
+dev_dependencies:
+  lints: ^6.0.0 # 워크스페이스 flutter_lints 6과 정합
+  test: ^1.25.0

@@ -4,8 +4,13 @@ description: Cocode Dart and Flutter package workspace.
 environment:
   sdk: ">=3.10.0 <4.0.0"
 
+# 워크스페이스 멤버 (단일 루트 lockfile 공유).
+# open_epub 은 Flutter 패키지이므로 루트 해석에는 `flutter pub get` 이 필요하다.
 workspace:
   - packages/co_faker
+  - packages/open_epub_engine
+  - packages/open_epub
+  - packages/open_epub/example # open_epub → open_epub_engine 을 로컬 해석하도록 워크스페이스 편입
 
 dev_dependencies:
   lints: ^6.0.0
@@ -22,9 +27,21 @@ melos:
       description: Check formatting for every workspace package.
 
     test:
-      run: melos exec --dir-exists=test -- dart test
-      description: Run every Dart package test suite.
+      run: melos run test:dart && melos run test:flutter
+      description: Run every package test suite (pure Dart, then Flutter).
+
+    test:dart:
+      run: melos exec --no-flutter --dir-exists=test -- dart test
+      description: Run pure-Dart package tests.
+
+    test:flutter:
+      run: melos exec --flutter --dir-exists=test --ignore="*example*" -- flutter test
+      description: Run Flutter package tests (example apps excluded).
+
+    license-check:
+      run: bash tool/check_licenses.sh
+      description: Verify third-party attribution for ported code (open_epub_engine CFI, ADR-005).
 
     verify:
-      run: melos run format && melos run analyze && melos run test
-      description: Run formatting, analysis, and tests.
+      run: melos run format && melos run analyze && melos run license-check && melos run test
+      description: Run formatting, analysis, license check, and tests.

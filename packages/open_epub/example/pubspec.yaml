@@ -1,0 +1,39 @@
+name: open_epub_example
+description: Example app for open_epub package.
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+# 모노레포 pub workspace 멤버 (S10.3) — open_epub → open_epub_engine 를 로컬 해석
+resolution: workspace
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  open_epub:
+    path: ../
+
+  cupertino_icons: ^1.0.9
+
+  # 하이라이트 데모 영속 (#43)
+  shared_preferences: ^2.5.5
+  marionette_flutter: ^0.6.0
+
+  # 데모 EPUB 합성 생성 (#235) — lib/demo_epub.dart
+  archive: ^4.0.9
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/

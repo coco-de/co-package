@@ -1,4 +1,7 @@
-name: Dart packages
+name: CI
+
+# open_epub 이 Flutter 패키지라 pub workspace 해석(pub get)에 Flutter SDK 가 필요하다.
+# 순수 Dart 패키지(co_faker, open_epub_engine)도 같은 워크스페이스로 함께 해석된다.
 
 on:
   pull_request:
@@ -8,14 +11,33 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
 jobs:
+  # 이식(epub_pro CFI) 코드의 attribution 누락 차단 — SDK 불필요.
+  license-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tool/check_licenses.sh
+
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
+      - uses: subosito/flutter-action@v2
         with:
-          sdk: stable
-      - run: dart pub get
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
       - run: dart pub global activate melos
-      - run: melos run verify
+      - run: melos run format
+      - run: melos run analyze
+      - run: melos run test:dart
+      - run: melos run test:flutter
