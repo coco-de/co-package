@@ -1,0 +1,165 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [development, main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "빌드까지만 수행하고 gh-pages 푸시는 건너뛴다 (PAT·빌드 진단용)"
+        type: boolean
+        default: false
+
+# Pages 소스 = gh-pages 브랜치(legacy). 빌드 산출물을 gh-pages 로 직접 푸시한다.
+# actions/deploy-pages(Actions 아티팩트 방식)는 Pages 소스가 "GitHub Actions"여야 동작하므로
+# 현재 설정(브랜치 배포)과 맞지 않아 사용하지 않는다.
+permissions:
+  contents: write
+
+# dry-run 은 실제 배포와 다른 그룹 — 진단 실행이 진행 중인 배포를 취소하지 않는다.
+concurrency:
+  group: ${{ inputs.dry_run && 'pages-dry-run' || 'pages' }}
+  cancel-in-progress: true
+
+env:
+  # example 이 git 의존성으로 쓰는 비공개 저장소. 아래 PAT 검증 단계가 이 저장소 읽기를 확인한다.
+  PRIVATE_DEP_REPO: coco-de/open-epub
+  # 자격증명이 없으면 프롬프트로 무한 대기하지 않고 즉시 실패한다.
+  GIT_TERMINAL_PROMPT: "0"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # 이 잡은 checkout 자격증명을 쓰지 않는다 — 배포 푸시는 GITHUB_TOKEN 을 URL 에 직접 넣는다.
+          persist-credentials: false
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Remove workspace resolution and clean dev_dependencies
+        run: |
+          sed -i '/^resolution:/d' pubspec.yaml
+          sed -i '/^  fake_async:/d' pubspec.yaml
+          sed -i '/^  mocktail:/d' pubspec.yaml
+          sed -i '/^  shared_preferences:/d' pubspec.yaml
+          sed -i '/^  path_provider_platform_interface:/d' pubspec.yaml
+          sed -i '/^  plugin_platform_interface:/d' pubspec.yaml
+
+      # SUBMODULE_TOKEN: coco-de 조직 Actions secret(visibility: private) — 조직 비공개 저장소를 읽는 PAT.
+      #   open-board 는 private 저장소라 이 조직 시크릿을 그대로 받는다. 저장소 시크릿을 따로 두지 않는다.
+      #   (종전 저장소 시크릿 PRIVATE_REPO_PAT 는 open-epub 이 접근 범위에 없어 403 — #223)
+      # 갱신: gh secret set SUBMODULE_TOKEN --org coco-de --visibility private
+      - name: Configure git auth for private dependencies
+        env:
+          SUBMODULE_TOKEN: ${{ secrets.SUBMODULE_TOKEN }}
+        run: |
+          if [ -z "$SUBMODULE_TOKEN" ]; then
+            echo "::error::SUBMODULE_TOKEN 이 비어 있습니다. coco-de 조직 Actions secret SUBMODULE_TOKEN(visibility: private)이 존재하고 이 저장소에 노출되는지 확인하세요: gh secret list --org coco-de"
+            exit 1
+          fi
+          git config --global url."https://x-access-token:${SUBMODULE_TOKEN}@github.com/coco-de/".insteadOf "https://github.com/coco-de/"
+
+      # pub get 이 403 으로 죽기 전에, 토큰 상태와 저장소 접근을 분리해 판정한다.
+      # 토큰 값은 출력하지 않는다 — 종류(prefix)·소유자·만료일·HTTP 코드만 남긴다.
+      - name: Verify SUBMODULE_TOKEN can read the private dependency
+        env:
+          SUBMODULE_TOKEN: ${{ secrets.SUBMODULE_TOKEN }}
+        run: |
+          case "$SUBMODULE_TOKEN" in
+            github_pat_*) kind="fine-grained" ;;
+            ghp_*)        kind="classic" ;;
+            *)            kind="unknown(길이 ${#SUBMODULE_TOKEN} — 토큰 값이 아닌 문자열이 등록됐을 수 있음)" ;;
+          esac
+
+          # 저장된 문자열의 형태 — 값은 절대 출력하지 않는다. 잘못 붙여넣은 시크릿(잘림·공백·따옴표)을 여기서 잡는다.
+          #   fine-grained(github_pat_…)는 93자, classic(ghp_…)은 40자다.
+          len=${#SUBMODULE_TOKEN}
+          ws="no";     case "$SUBMODULE_TOKEN" in *[[:space:]]*) ws="yes" ;; esac
+          quotes="no"; case "$SUBMODULE_TOKEN" in *[\"\']*)     quotes="yes" ;; esac
+          echo "token shape: kind=${kind} · length=${len} · whitespace=${ws} · quotes=${quotes}"
+
+          hdr="$(mktemp)"; body="$(mktemp)"
+          code="$(curl -sS -o "$body" -D "$hdr" -w '%{http_code}' \
+            -H "Authorization: Bearer ${SUBMODULE_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/user)"
+          if [ "$code" != "200" ]; then
+            shape_hint=""
+            if [ "$kind" = "fine-grained" ] && [ "$len" != "93" ]; then shape_hint=" 길이 ${len}(기대 93) — 복사가 잘렸거나 다른 문자가 섞였습니다."; fi
+            if [ "$ws" = "yes" ] || [ "$quotes" = "yes" ]; then shape_hint="${shape_hint} 공백/따옴표가 포함돼 있습니다 — printf '%s' \"\$TOKEN\" | gh secret set … 로 다시 넣으세요."; fi
+            if [ "$code" = "401" ] && [ -z "$shape_hint" ]; then
+              # 형태가 정상인 401 — 조직을 Resource owner 로 만든 fine-grained PAT 는 조직 승인 전까지 Bad credentials 다.
+              shape_hint=" 형태는 정상입니다. (1) 조직이 fine-grained PAT 승인을 요구하면 승인 전까지 401 입니다 → https://github.com/organizations/coco-de/settings/personal-access-token-requests 에서 승인하세요. (2) 대기 건이 없으면 저장 후 재생성(regenerate)·폐기된 토큰입니다."
+            fi
+            echo "::error::SUBMODULE_TOKEN(종류: ${kind}, 길이 ${len}) 가 인증되지 않습니다 — GET /user → HTTP ${code}.${shape_hint} 갱신: gh secret set SUBMODULE_TOKEN --org coco-de --visibility private"
+            exit 1
+          fi
+          owner="$(jq -r .login "$body")"
+          expires="$(grep -i '^github-authentication-token-expiration:' "$hdr" | cut -d' ' -f2- | tr -d '\r')"
+          echo "token: kind=${kind} · owner=${owner} · expires=${expires:-unknown}"
+
+          # 토큰 범위 판별 — API 로 대상 저장소가 보이는지(Repository access), 권한 필드가 무엇인지 읽는다.
+          #   404 = 토큰의 Repository access 에 없음 · 200 = 범위에는 있음(그래도 clone 이 막히면 Contents 권한 부재)
+          repo_code="$(curl -sS -o "$body" -w '%{http_code}' \
+            -H "Authorization: Bearer ${SUBMODULE_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${PRIVATE_DEP_REPO}")"
+          repo_perm="$( [ "$repo_code" = "200" ] && jq -c '.permissions // {}' "$body" || echo '-' )"
+          echo "repo API: GET /repos/${PRIVATE_DEP_REPO} → HTTP ${repo_code} · permissions=${repo_perm}"
+
+          # 대조군 — 같은 토큰으로 이 저장소(조직의 다른 private 저장소)를 읽을 수 있는지. 조직 접근 자체의 문제인지 가른다.
+          if git ls-remote --exit-code "https://github.com/${GITHUB_REPOSITORY}.git" HEAD >/dev/null 2>&1; then
+            echo "control: ${GITHUB_REPOSITORY} 읽기 가능 → 토큰은 조직 저장소에 접근한다"
+          else
+            echo "control: ${GITHUB_REPOSITORY} 도 읽기 불가 → 조직 저장소 전반 접근 불가(Resource owner 개인 계정 또는 조직 정책)"
+          fi
+
+          # pub 이 실제로 쓰는 경로(insteadOf 가 적용된 https clone URL)로 읽기 권한을 확인한다.
+          if ! git ls-remote --exit-code "https://github.com/${PRIVATE_DEP_REPO}.git" HEAD >/dev/null 2>"$hdr"; then
+            remote_msg="$(grep -E '^(remote:|fatal:)' "$hdr" | tr '\n' ' ' | head -c 300)"
+            case "$repo_code" in
+              404) why="토큰의 Repository access 에 ${PRIVATE_DEP_REPO} 가 없습니다 — 토큰 설정에서 이 저장소를 추가(또는 All repositories)하세요" ;;
+              200) why="${PRIVATE_DEP_REPO} 는 범위에 있지만 Contents 권한이 없습니다(permissions=${repo_perm}) — Permissions › Repository › Contents: Read-only 를 부여하세요" ;;
+              *)   why="API 응답 HTTP ${repo_code} — Resource owner=coco-de · Repository access 에 open-epub 포함 · Contents: Read-only 로 재발급하고, 조직이 fine-grained PAT 승인을 요구하면 승인까지 완료하세요" ;;
+            esac
+            echo "::error::SUBMODULE_TOKEN(종류: ${kind}, 소유자: ${owner}) 는 유효하지만 ${PRIVATE_DEP_REPO} 를 읽을 수 없습니다 — ${remote_msg}. ${why}."
+            exit 1
+          fi
+          echo "✓ ${PRIVATE_DEP_REPO} 읽기 가능 (owner=${owner}, expires=${expires:-unknown})"
+
+      - name: Install dependencies
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build web (WebAssembly, fallback to JS)
+        working-directory: example
+        run: |
+          flutter build web --wasm --release --base-href /open-board/ || \
+          flutter build web --release --base-href /open-board/
+
+      - name: Dry run — skip deploy
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "dry-run: 빌드 성공, gh-pages 푸시는 건너뜀 (${GITHUB_SHA::7}, ${GITHUB_REF_NAME})"
+          echo "✅ dry-run: PAT 검증·의존성 설치·웹 빌드 통과, 배포 생략 (\`${GITHUB_SHA::7}\`)" >> "$GITHUB_STEP_SUMMARY"
+
+      # gh-pages 를 단일 커밋으로 강제 갱신 → 배포 산출물이 히스토리에 누적되지 않는다.
+      - name: Deploy to gh-pages branch
+        if: ${{ !inputs.dry_run }}
+        working-directory: example/build/web
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          touch .nojekyll
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "deploy: ${GITHUB_SHA::7} 최신 빌드 (${GITHUB_REF_NAME})"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
+          echo "🚀 배포: \`${GITHUB_SHA::7}\` → https://coco-de.github.io/open-board/" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,35 @@
+name: open_board_example
+description: "Open Board 패키지 데모 앱"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  open_board:
+    path: ../
+  open_epub:
+    git:
+      url: https://github.com/coco-de/open-epub.git
+      # 1.0 EpubReader + EpubViewController (open-epub PR #56). 머지 후 main으로 repin.
+      ref: c0f1d4571350be45f6993bd6385861f61ae73905
+  flutter_smooth_markdown: ^0.8.1
+  path_provider: ^2.1.5
+  marionette_flutter: ^0.6.0
+
+# html 0.15.7(2026-08-28)이 query_selector.matches 를 제거해 flutter_html 3.0.0 컴파일이 깨진다
+# (styled_element.dart:31 "Method not found: 'matches'"). flutter_html 이 고친 버전을 내면 제거한다.
+dependency_overrides:
+  html: 0.15.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/books/

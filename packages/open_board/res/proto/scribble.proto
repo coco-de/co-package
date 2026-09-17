@@ -1,0 +1,197 @@
+syntax = "proto3";
+
+message Point {
+  double x = 1 [json_name="x"];
+  /// The vertical coordinate.
+  double y = 2 [json_name="y"];
+  /// The pressure for this point.
+  double p = 3 [json_name="p"];
+  /// The altitude for this point.
+  double altitude = 4 [json_name="altitude"];
+  /// The azimuth for this point.
+  double azimuth = 5 [json_name="azimuth"];
+  /// The opacity for this point.
+  double opacity = 6 [json_name="opacity"];
+  /// The sizeV for this point.
+  repeated double size = 7 [json_name="size"];
+  /// The timestamp for this point.
+  double deprecated_timestamp = 8;
+  int64 timestamp = 9 [json_name="timestamp"];
+}
+
+message Segment {
+  Point start = 1 [json_name="start"];
+  Point end = 2 [json_name="end"];
+  int32 startIndex = 3 [json_name="startIndex"];
+  int32 endIndex = 4 [json_name="endIndex"];
+  repeated Point points = 5 [json_name="points"];
+}
+
+message StrokePoint {
+  Point point = 1 [json_name="point"];
+  Point vector = 2 [json_name="vector"];
+  double distance = 3 [json_name="distance"];
+  double runningLength = 4 [json_name="runningLength"];
+}
+
+message StrokeOptions {
+  /// The base size (diameter) of the stroke.
+  double size = 1 [json_name="size"];
+
+  /// The effect of pressure on the stroke's size.
+  double thinning = 2 [json_name="thinning"];
+
+  /// Controls the density of points along the stroke's edges.
+  double smoothing = 3 [json_name="smoothing"];
+
+  /// Controls the level of variation allowed in the input points.
+  double streamline = 4 [json_name="streamline"];
+
+  // The distance to taper the front of the stroke.
+  double taperStart = 5 [json_name="taperStart"];
+
+  // Whether to add a cap to the start of the stroke.
+  bool capStart = 6 [json_name="capStart"];
+
+  // The distance to taper the end of the stroke.
+  double taperEnd = 7 [json_name="taperEnd"];
+
+  // Whether to add a cap to the end of the stroke.
+  bool capEnd = 8 [json_name="capEnd"];
+
+  // Whether to simulate pressure or use the point's provided pressures.
+  bool simulatePressure = 9 [json_name="simulatePressure"];
+
+  // Whether the line is complete.
+  bool isComplete = 10 [json_name="isComplete"];
+}
+
+message Stroke {
+  repeated Point points = 1 [json_name="points"];
+  uint32 color = 2 [json_name="color"];
+  string ink = 3 [json_name="ink"];
+  string createdAt = 4 [json_name="createdAt"];
+  StrokeOptions options = 5 [json_name="options"];
+  string shapeType = 6 [json_name="shapeType"];
+  double width = 7 [json_name="width"];
+  repeated Segment segments = 8 [json_name="segments"];
+  double confidence = 9 [json_name="confidence"];
+
+  // 스트로크의 **논리 식별자** — 기기·세션을 넘어 "같은 스트로크" 를 가리킨다.
+  //
+  // `TextDrawable.id` / `ImageDrawable.id` 와 같은 역할을 스트로크에도 준다.
+  // 종전에는 스트로크에만 식별자가 없어, 오프라인 다중 기기 동기화가 내용
+  // 해시로만 같음을 판정해야 했다 — 해시는 좌표가 1픽셀만 달라도 갈리므로
+  // 같은 스트로크가 두 벌로 남는다.
+  //
+  // ## 값 규약
+  //
+  // - 발급자는 **엔진**(`ScribbleNotifier`)이며 스트로크 생성 시 1회 발급한다.
+  //   호스트가 규칙을 정해야 하면 `ScribbleNotifier(strokeIdFactory:)` 로
+  //   주입한다.
+  // - **시각 기반 값을 쓰지 말 것.** 오프라인 다중 기기에서 같은 밀리초에
+  //   그린 스트로크가 충돌한다. 기본 발급자는 `Random.secure()` 기반 v4 다.
+  // - **미발급 판정은 `id.isEmpty`** 로 한다. `hasId()` 는 `Stroke(id: '')`
+  //   에서도 true 라(protobuf-dart 는 "값이 설정됐는가" 만 본다) 명시적 빈
+  //   문자열을 "발급됨" 으로 오판한다.
+  // - 레거시 `.bin` 에는 이 필드가 **없다**(전량 미발급). 로드 시 즉석에서
+  //   채우지 말 것 — 두 기기가 서로 다른 값을 만들어 오히려 갈라진다.
+  //
+  // ## 복제·분할 시
+  //
+  // - **1→1 이동**(양면↔단면 좌표 변환 등)은 id 를 그대로 승계한다.
+  // - **양면 열람의 좌우 복제**는 같은 id 를 양쪽에 둔다. 두 사본은 서로 다른
+  //   페이지에 속하므로 상위(동기화) 계층에서 별개 행이 되며 충돌하지 않는다.
+  // - **1→N 분할**(`merge_scribble._splitStrokeAtBoundary`)은 호출자가 없어
+  //   규칙이 미정이다. 배선한다면 조각 id 규칙을 먼저 정할 것.
+  //
+  // ## `updatedAt` 을 함께 두지 않은 이유
+  //
+  // 스트로크는 **생성 중에만** 내용이 자란다 — 완료 후에는 이동·변형이 아니라
+  // 삭제와 재생성으로 다룬다. 그래서 같은 id 의 두 판본을 시각으로 가릴 일이
+  // 없다. 필드 번호는 되돌릴 수 없으므로, 필요해지면 11 번으로 더한다.
+  string id = 10 [json_name="id"];
+}
+
+/// An inline hyperlink span covering a `[start, end)` character range (UTF-16
+/// code units) of the owning [TextDrawable.text]. Currently only external web
+/// URLs are supported; internal page links may be added later as an additive
+/// field (e.g. a `oneof` target).
+message TextLinkSpan {
+  /// Inclusive start offset (UTF-16 code units) into [TextDrawable.text].
+  int32 start = 1 [json_name="start"];
+  /// Exclusive end offset (UTF-16 code units) into [TextDrawable.text].
+  int32 end = 2 [json_name="end"];
+  /// Link target. Interpretation/opening is delegated to the host application
+  /// (e.g. kobic), consistent with `ImageDrawable.source`:
+  ///   - External web URL (e.g. `https://...`) — host opens in a browser.
+  ///   - In-document page link `page:N` (1-based) — host navigates to page N
+  ///     (`jumpToPage`). (#7222)
+  string url = 3 [json_name="url"];
+}
+
+message TextDrawable {
+  string id = 1 [json_name="id"];
+  string text = 2 [json_name="text"];
+  double x = 3 [json_name="x"];
+  double y = 4 [json_name="y"];
+  string fontFamily = 5 [json_name="fontFamily"];
+  double fontSize = 6 [json_name="fontSize"];
+  uint32 color = 7 [json_name="color"];
+  bool isBold = 8 [json_name="isBold"];
+  bool isItalic = 9 [json_name="isItalic"];
+  bool isUnderlined = 10 [json_name="isUnderlined"];
+  string textAlign = 11 [json_name="textAlign"];
+  bool hidden = 12 [json_name="hidden"];
+  string createdAt = 13 [json_name="createdAt"];
+  string updatedAt = 14 [json_name="updatedAt"];
+  double rotation = 15 [json_name="rotation"];
+  /// Inline external hyperlink spans over ranges of [text] (kobic #7162).
+  repeated TextLinkSpan linkSpans = 16 [json_name="linkSpans"];
+  /// Soft-wrap layout width in canvas units, captured from the inline editor
+  /// at commit time (kobic unibook#12538/#12548 — UB-627/UB-632). Static
+  /// rendering lays the text out with this as `maxWidth` so the line breaks
+  /// visible during editing survive the commit. 0 = unset/legacy — render
+  /// with unbounded width exactly as before (pre-existing drawables keep
+  /// their old appearance).
+  double maxWidth = 17 [json_name="maxWidth"];
+}
+
+/// Image drawable on the canvas. The actual bytes/decoding are resolved by the
+/// host application via `source` (URL or file path); this package only owns
+/// position, geometry, and identifying metadata.
+message ImageDrawable {
+  string id = 1 [json_name="id"];
+  /// URL or file path. Interpretation is delegated to the host (e.g. kobic).
+  string source = 2 [json_name="source"];
+  double x = 3 [json_name="x"];
+  double y = 4 [json_name="y"];
+  double width = 5 [json_name="width"];
+  double height = 6 [json_name="height"];
+  double rotation = 7 [json_name="rotation"];
+  /// 0.0 (fully transparent) ~ 1.0 (fully opaque).
+  double opacity = 8 [json_name="opacity"];
+  bool hidden = 9 [json_name="hidden"];
+  string createdAt = 10 [json_name="createdAt"];
+  string updatedAt = 11 [json_name="updatedAt"];
+  /// Natural pixel dimensions of the source image, used to preserve aspect
+  /// ratio when resizing. May be 0 if unknown at insertion time.
+  double naturalWidth = 12 [json_name="naturalWidth"];
+  double naturalHeight = 13 [json_name="naturalHeight"];
+}
+
+message Scribble {
+  double width = 1 [json_name="width"];
+  double height = 2 [json_name="height"];
+  repeated Stroke strokes = 3 [json_name="lines"];
+  string updatedAt = 4 [json_name="updatedAt"];
+  string createdAt = 5 [json_name="createdAt"];
+  string version = 6 [json_name="version"];
+  double x = 7 [json_name="x"];
+  double y = 8 [json_name="y"];
+  repeated TextDrawable textDrawables = 9 [json_name="textDrawables"];
+  repeated ImageDrawable imageDrawables = 10 [json_name="imageDrawables"];
+  /// Reserved for upcoming Video/Link drawable rollout (Stories #173, #174).
+  reserved 11, 12;
+}
+

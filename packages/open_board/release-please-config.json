@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "dart",
+
+  "//": "단일 패키지 레포 — 태그에 컴포넌트명을 붙이지 않아 v<version> 형태가 된다.",
+  "include-component-in-tag": false,
+
+  "//bootstrap": "kobic 이 마지막으로 참조해 온 커밋. 이 이후 쌓인 미릴리즈 변경이 첫 릴리즈 노트에 담긴다.",
+  "bootstrap-sha": "c96522aace373c8f836dc56ff8073835ba326546",
+
+  "changelog-sections": [
+    { "type": "feat",     "section": "기능" },
+    { "type": "fix",      "section": "버그 수정" },
+    { "type": "perf",     "section": "성능" },
+    { "type": "revert",   "section": "되돌림" },
+    { "type": "refactor", "section": "리팩터링" },
+    { "type": "docs",     "section": "문서" },
+    { "type": "build",    "section": "빌드",   "hidden": true },
+    { "type": "ci",       "section": "CI",     "hidden": true },
+    { "type": "test",     "section": "테스트", "hidden": true },
+    { "type": "style",    "section": "스타일", "hidden": true },
+    { "type": "chore",    "section": "기타",   "hidden": true }
+  ],
+
+  "packages": {
+    ".": {}
+  }
+}
