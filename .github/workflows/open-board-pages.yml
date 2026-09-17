@@ -1,8 +1,15 @@
-name: Deploy to GitHub Pages
+name: Deploy open_board demo to GitHub Pages
+
+# open-board 저장소에서 이관. packages/open_board/example 웹 데모를 이 저장소의
+# gh-pages 브랜치로 배포한다 → https://coco-de.github.io/co-package/
+# (Pages 소스를 gh-pages 브랜치로 설정해야 동작한다.)
 
 on:
   push:
-    branches: [development, main]
+    branches: [main]
+    paths:
+      - "packages/open_board/**"
+      - ".github/workflows/open-board-pages.yml"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -42,6 +49,7 @@ jobs:
           cache: true
 
       - name: Remove workspace resolution and clean dev_dependencies
+        working-directory: packages/open_board
         run: |
           sed -i '/^resolution:/d' pubspec.yaml
           sed -i '/^  fake_async:/d' pubspec.yaml
@@ -51,7 +59,7 @@ jobs:
           sed -i '/^  plugin_platform_interface:/d' pubspec.yaml
 
       # SUBMODULE_TOKEN: coco-de 조직 Actions secret(visibility: private) — 조직 비공개 저장소를 읽는 PAT.
-      #   open-board 는 private 저장소라 이 조직 시크릿을 그대로 받는다. 저장소 시크릿을 따로 두지 않는다.
+      #   저장소가 public 이면 visibility: private 조직 시크릿은 노출되지 않는다 — 이 경우 저장소 시크릿으로 SUBMODULE_TOKEN 을 따로 등록한다.
       #   (종전 저장소 시크릿 PRIVATE_REPO_PAT 는 open-epub 이 접근 범위에 없어 403 — #223)
       # 갱신: gh secret set SUBMODULE_TOKEN --org coco-de --visibility private
       - name: Configure git auth for private dependencies
@@ -133,14 +141,14 @@ jobs:
           echo "✓ ${PRIVATE_DEP_REPO} 읽기 가능 (owner=${owner}, expires=${expires:-unknown})"
 
       - name: Install dependencies
-        working-directory: example
+        working-directory: packages/open_board/example
         run: flutter pub get
 
       - name: Build web (WebAssembly, fallback to JS)
-        working-directory: example
+        working-directory: packages/open_board/example
         run: |
-          flutter build web --wasm --release --base-href /open-board/ || \
-          flutter build web --release --base-href /open-board/
+          flutter build web --wasm --release --base-href /co-package/ || \
+          flutter build web --release --base-href /co-package/
 
       - name: Dry run — skip deploy
         if: ${{ inputs.dry_run }}
@@ -151,7 +159,7 @@ jobs:
       # gh-pages 를 단일 커밋으로 강제 갱신 → 배포 산출물이 히스토리에 누적되지 않는다.
       - name: Deploy to gh-pages branch
         if: ${{ !inputs.dry_run }}
-        working-directory: example/build/web
+        working-directory: packages/open_board/example/build/web
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -162,4 +170,4 @@ jobs:
           git add -A
           git commit -qm "deploy: ${GITHUB_SHA::7} 최신 빌드 (${GITHUB_REF_NAME})"
           git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
-          echo "🚀 배포: \`${GITHUB_SHA::7}\` → https://coco-de.github.io/open-board/" >> "$GITHUB_STEP_SUMMARY"
+          echo "🚀 배포: \`${GITHUB_SHA::7}\` → https://coco-de.github.io/co-package/" >> "$GITHUB_STEP_SUMMARY"

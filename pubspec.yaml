@@ -4,8 +4,11 @@ description: Cocode Dart and Flutter package workspace.
 environment:
   sdk: ">=3.10.0 <4.0.0"
 
+# 워크스페이스 멤버 (단일 루트 lockfile 공유).
+# open_board 는 Flutter 패키지이므로 루트 해석에는 `flutter pub get` 이 필요하다.
 workspace:
   - packages/co_faker
+  - packages/open_board
 
 dev_dependencies:
   lints: ^6.0.0
@@ -17,13 +20,24 @@ melos:
       run: melos exec -- dart analyze --fatal-infos
       description: Analyze every workspace package.
 
+    # open_board 는 dcm format(line-length 80, cascading widget extensions) 규약을
+    # 쓰므로 dart format 과 결과가 다르다(82 파일). 패키지 내 lefthook 훅이 dcm
+    # format 을 강제하므로 여기서는 제외한다.
     format:
-      run: melos exec -- dart format --output=none --set-exit-if-changed .
-      description: Check formatting for every workspace package.
+      run: melos exec --ignore="open_board" -- dart format --output=none --set-exit-if-changed .
+      description: Check formatting for every workspace package (open_board uses dcm format).
 
     test:
-      run: melos exec --dir-exists=test -- dart test
-      description: Run every Dart package test suite.
+      run: melos run test:dart && melos run test:flutter
+      description: Run every package test suite (pure Dart, then Flutter).
+
+    test:dart:
+      run: melos exec --no-flutter --dir-exists=test -- dart test
+      description: Run pure-Dart package tests.
+
+    test:flutter:
+      run: melos exec --flutter --dir-exists=test --ignore="*example*" -- flutter test
+      description: Run Flutter package tests (example apps excluded).
 
     verify:
       run: melos run format && melos run analyze && melos run test

@@ -1,6 +1,10 @@
 # Lefthook Configuration
 # https://github.com/evilmartians/lefthook
 #
+# 모노레포 루트 설정. dart/dcm 훅은 `root:` 로 packages/open_board 에 한정한다
+# (open-board 저장소에서 이관 — 다른 패키지는 각자 훅을 추가한다).
+# commit-msg 의 Conventional Commits 검사는 저장소 전체에 적용된다.
+#
 # NOTE: dcm format 통일 (dart format과 동시 사용 시 충돌 방지)
 # - dcm format: 포맷팅 (dart format 제거)
 # - dart analyze + dcm analyze: 정적 분석 (서로 다른 규칙 검사)
@@ -10,6 +14,7 @@ pre-commit:
   commands:
     # dcm 포맷 체크 (dart format 제거 — 충돌 방지)
     format:
+      root: "packages/open_board/"
       glob: "*.dart"
       exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm,pb,pbenum,pbjson,pbserver}.dart"
       run: dcm format {staged_files}
@@ -18,6 +23,7 @@ pre-commit:
     # dart + dcm 통합 분석
     # NOTE: --fatal-infos로 info 레벨도 차단, dcm은 --no-fatal-style 사용
     analyze:
+      root: "packages/open_board/"
       glob: "*.dart"
       exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm,pb,pbenum,pbjson,pbserver}.dart"
       run: dart analyze --fatal-infos {staged_files} && dcm analyze --no-fatal-style {staged_files}
@@ -27,6 +33,7 @@ pre-push:
   commands:
     # dcm 포맷 체크 (dart format 제거 — 충돌 방지)
     format-check:
+      root: "packages/open_board/"
       glob: "*.dart"
       exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm,pb,pbenum,pbjson,pbserver}.dart"
       run: dcm format --dry-run {push_files}
@@ -34,6 +41,7 @@ pre-push:
     # dart + dcm 통합 분석
     # NOTE: pre-push는 게이트 역할 → --fatal-infos + --fatal-style로 모든 이슈 차단
     analyze:
+      root: "packages/open_board/"
       glob: "*.dart"
       exclude: "**/*.{g,freezed,gr,config,module,gen,mocks,mock,gm,pb,pbenum,pbjson,pbserver}.dart"
       run: dart analyze --fatal-infos {push_files} && dcm analyze --fatal-style {push_files}

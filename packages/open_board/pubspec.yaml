@@ -1,6 +1,9 @@
 name: open_board
-description: A new Flutter package project.
+description: >-
+  Flutter drawing & annotation widget — pen/pencil/marker/eraser, lasso
+  selection, text and image annotations, multi-page, recording and replay.
 version: 0.1.0
+repository: https://github.com/coco-de/co-package/tree/main/packages/open_board
 
 environment:
   sdk: ">=3.10.0 <5.0.0"

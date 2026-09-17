@@ -7,7 +7,10 @@ Flutter drawing & annotation library with multi-page support, recording, and rep
 ```yaml
 dependencies:
   open_board:
-    path: ../open-board  # or git/pub reference
+    git:
+      url: https://github.com/coco-de/co-package.git
+      path: packages/open_board
+      ref: <commit or open_board-vX.Y.Z tag>
 ```
 
 ```dart
