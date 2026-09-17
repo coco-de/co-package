@@ -5,7 +5,6 @@ import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
 import 'package:open_board/src/module/text/text_drawable_factory.dart';
 import 'package:open_board/src/module/text/text_painter.dart';
-import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 
 /// 인라인 에디터 커밋 시 줄바꿈 폭 기록 (kobic unibook#12538/#12548).
 ///

@@ -166,7 +166,7 @@ class ScribbleNotifier extends ScribbleNotifierBase
           scribble ??
           Scribble(strokes: [], createdAt: DateTime.now().toIso8601String()),
     );
-    this.maxHistoryLength = 30;
+    maxHistoryLength = 30;
 
     // ♻️ StrokeProcessor 초기화
     strokeProcessor = StrokeProcessor(pressureCurve: pressureCurve);

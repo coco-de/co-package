@@ -2,7 +2,6 @@
 // ignore_for_file: prefer-moving-to-variable
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/painter/stroke_paint_delegate.dart';

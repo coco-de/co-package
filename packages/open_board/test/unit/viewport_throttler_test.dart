@@ -15,7 +15,7 @@ void main() {
 
     tearDown(() => throttler.dispose());
 
-    ViewportMessage _msg({double scale = 1.0, int ts = 0}) => ViewportMessage(
+    ViewportMessage msg({double scale = 1.0, int ts = 0}) => ViewportMessage(
           pageId: 'p1',
           scale: scale,
           centerX: 100,
@@ -27,9 +27,9 @@ void main() {
 
     test('100ms 내 여러 변경 중 마지막 값만 전송', () {
       fakeAsync((async) {
-        throttler.onViewportChanged(_msg(scale: 1.0, ts: 1));
-        throttler.onViewportChanged(_msg(scale: 1.5, ts: 2));
-        throttler.onViewportChanged(_msg(scale: 2.0, ts: 3));
+        throttler.onViewportChanged(msg(scale: 1.0, ts: 1));
+        throttler.onViewportChanged(msg(scale: 1.5, ts: 2));
+        throttler.onViewportChanged(msg(scale: 2.0, ts: 3));
 
         expect(emitted, isEmpty);
 
@@ -43,12 +43,12 @@ void main() {
 
     test('100ms 이후 새 변경은 새 윈도우 시작', () {
       fakeAsync((async) {
-        throttler.onViewportChanged(_msg(scale: 1.0, ts: 1));
+        throttler.onViewportChanged(msg(scale: 1.0, ts: 1));
         async.elapse(const Duration(milliseconds: 100));
 
         expect(emitted, hasLength(1));
 
-        throttler.onViewportChanged(_msg(scale: 3.0, ts: 200));
+        throttler.onViewportChanged(msg(scale: 3.0, ts: 200));
         async.elapse(const Duration(milliseconds: 100));
 
         expect(emitted, hasLength(2));
@@ -58,7 +58,7 @@ void main() {
 
     test('dispose 후 타이머 정리', () {
       fakeAsync((async) {
-        throttler.onViewportChanged(_msg(scale: 1.0, ts: 1));
+        throttler.onViewportChanged(msg(scale: 1.0, ts: 1));
         throttler.dispose();
         async.elapse(const Duration(milliseconds: 200));
 

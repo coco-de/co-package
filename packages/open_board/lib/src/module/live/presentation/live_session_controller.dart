@@ -53,7 +53,7 @@ class LiveSessionController extends ChangeNotifier {
       TransportConnectionState.disconnected;
 
   /// 원격 이벤트 적용을 억제하는 플래그 (동기화 중 등)
-  bool _suppressRemoteEvents = false;
+  final bool _suppressRemoteEvents = false;
 
   /// 활성 스트로크 ID (로컬에서 진행 중인 스트로크)
   String? _activeStrokeId;
@@ -125,7 +125,7 @@ class LiveSessionController extends ChangeNotifier {
 
         transport.sendStrokeComplete(StrokeCompleteMessage(
           pageId: pageId,
-          strokeId: _activeStrokeId ?? 'stroke-${_strokeIdCounter}',
+          strokeId: _activeStrokeId ?? 'stroke-$_strokeIdCounter',
           stroke: stroke,
           strokeIndex: strokeIndex,
           timestampMicros: event.timestampMicros,

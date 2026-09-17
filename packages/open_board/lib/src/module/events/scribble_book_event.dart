@@ -206,7 +206,7 @@ class SessionParticipantEvent extends ScribbleBookEvent {
 
   @override
   String toString() =>
-      'SessionParticipantEvent(${participantId}, ${action.name}, '
+      'SessionParticipantEvent($participantId, ${action.name}, '
       't=$timestampMicros)';
 }
 

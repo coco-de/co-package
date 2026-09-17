@@ -125,8 +125,12 @@
     /// ✨ 각 키별 원본 이미지 크기 저장 (MeasureSize에서 측정됨)
     final Map<String, Size> _originalImageSizes = {};
 
-    /// 자동 저장 활성화 상태
-    bool _autoSaveEnabled = true;
+    /// 자동 저장 활성화 여부
+    ///
+    /// 리플레이 등 표시 전용 구동 중에는 false로 설정해 중간 애니메이션
+    /// 프레임이 onScribbleChanged → scheduleAutoSave 경로로 원본 파일을
+    /// 오염시키는 것을 막는다.
+    bool autoSaveEnabled = true;
 
     /// 스트로크 분할/머지 시스템
     /// 양면↔단면 모드 전환 시 분할 결과 캐시
@@ -177,7 +181,8 @@
 
     /// 특정 키의 컨트롤러를 가져오거나 생성 (동기식)
     /// 키 형식: 'contentId/pageId' (예: 'book123/page1')
-    ScribbleController getController(String key) {
+    @override
+  ScribbleController getController(String key) {
       final normalizedKey = _normalizeKey(key);
 
       if (!_controllerCache.containsKey(normalizedKey)) {
@@ -191,7 +196,7 @@
           onScribbleChanged: (scribble) {
             if (_isDisposed) return; // ✨ dispose 후 호출 방지
 
-            if (_autoSaveEnabled) {
+            if (autoSaveEnabled) {
               scheduleAutoSave(normalizedKey, scribble);
             }
 
@@ -218,7 +223,8 @@
     }
 
     /// 특정 키의 컨트롤러가 존재하는지 확인
-    bool hasController(String key) {
+    @override
+  bool hasController(String key) {
       final normalizedKey = _normalizeKey(key);
       return _controllerCache.containsKey(normalizedKey);
     }
@@ -382,7 +388,8 @@
     }
 
     /// 특정 페이지가 비어있는지 확인
-    bool isPageEmpty(String key) {
+    @override
+  bool isPageEmpty(String key) {
       final normalizedKey = _normalizeKey(key);
       final controller = _controllerCache[normalizedKey];
       return controller?.isEmpty ?? true;
@@ -409,7 +416,8 @@
     // ===== 탭 전환 시 활성 컨트롤러 관리 =====
 
     /// 🎯 특정 컨트롤러를 활성 컨트롤러로 설정 (탭 전환 시 호출)
-    void setActiveController(String key) {
+    @override
+  void setActiveController(String key) {
       final normalizedKey = _normalizeKey(key);
       final controller = _controllerCache[normalizedKey];
 
@@ -495,7 +503,8 @@
     }
 
     /// 필기 데이터 저장 (디바운스 적용)
-    Future<bool> saveScribble(
+    @override
+  Future<bool> saveScribble(
       String key,
       Scribble scribble, {
       bool immediate = false,
@@ -570,7 +579,8 @@
     }
 
     /// 필기 데이터 로드
-    Future<Scribble?> loadScribble(String key) async {
+    @override
+  Future<Scribble?> loadScribble(String key) async {
       try {
         final normalizedKey = _normalizeKey(key);
 
@@ -606,7 +616,8 @@
     }
 
     /// 필기 데이터 삭제
-    Future<bool> deleteScribble(String key) async {
+    @override
+  Future<bool> deleteScribble(String key) async {
       try {
         final normalizedKey = _normalizeKey(key);
 
@@ -712,10 +723,11 @@
     /// 특정 프리픽스로 시작하는 모든 필기 키 목록 가져오기
     /// 예: keyPrefix가 'content123'이면 'content123/page1', 'content123/page2' 등 반환
     Future<List<String>> getScribbleKeys(String keyPrefix) async {
-      if (_isWeb)
+      if (_isWeb) {
         return _memoryCache.keys
             .where((k) => k.startsWith(_normalizeKey(keyPrefix)))
             .toList();
+      }
       try {
         final dir = await cacheDirectory;
         final normalizedPrefix = _normalizeKey(keyPrefix);
@@ -748,18 +760,6 @@
     /// 메모리 캐시 정리
     void clearMemoryCache() {
       _memoryCache.clear();
-    }
-
-    /// 자동 저장 활성화 여부
-    bool get autoSaveEnabled => _autoSaveEnabled;
-
-    /// 자동 저장 활성화 설정
-    ///
-    /// 리플레이 등 표시 전용 구동 중에는 false로 설정해 중간 애니메이션
-    /// 프레임이 onScribbleChanged → scheduleAutoSave 경로로 원본 파일을
-    /// 오염시키는 것을 막는다.
-    set autoSaveEnabled(bool value) {
-      _autoSaveEnabled = value;
     }
 
     /// 특정 키의 컨트롤러와 관련 캐시를 모두 제거
@@ -1228,9 +1228,7 @@
           final originalSize = _originalImageSizes[_normalizeKey(key)];
           Size targetSize;
 
-          targetSize = originalSize != null
-              ? originalSize
-              : _determineTargetResolution(
+          targetSize = originalSize ?? _determineTargetResolution(
                   currentSize,
                 ); // 목표 해상도 대비 현재 위젯 크기 비율 계산
           final widthRatio = targetSize.width / currentSize.width;
@@ -1417,7 +1415,7 @@
     ) async {
       final previous = _pendingFileSaves[key];
       final pending = _afterFileOperations([
-        if (previous != null) previous,
+        ?previous,
         for (final entry in _pendingPrefixDeletes.entries)
           if (key.startsWith('${entry.key}/')) entry.value,
       ], operation);

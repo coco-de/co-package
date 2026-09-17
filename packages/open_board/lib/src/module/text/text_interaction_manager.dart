@@ -76,7 +76,7 @@ class TextInteractionManager {
   bool _isDraggingText = false;
 
   // 변형 상태
-  bool _isTransformingText = false;
+  final bool _isTransformingText = false;
 
   // 오버레이 표시 상태
   bool _showTextOverlay = false; // 크기조절 상태

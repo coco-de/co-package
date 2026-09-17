@@ -98,7 +98,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
   /// - 줌인/줌아웃, 팬 등 인터랙션 자동 지원
   // ignore: must_be_immutable
   final class ScribbleWidget extends StatefulWidget {
-    ScribbleWidget({
+    const ScribbleWidget({
       super.key,
       required this.notifier,
       required this.modeNotifier,

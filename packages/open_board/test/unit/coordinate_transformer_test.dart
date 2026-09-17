@@ -59,7 +59,7 @@ void main() {
       setUp(() {
         controller = TransformationController();
         // 2배 스케일 적용
-        controller.value = Matrix4.identity()..scale(2.0);
+        controller.value = Matrix4.identity()..scaleByDouble(2.0, 2.0, 2.0, 1.0);
         transformer = CoordinateTransformer(controller);
       });
 
@@ -82,7 +82,7 @@ void main() {
       setUp(() {
         controller = TransformationController();
         // 오프셋 (50, 100) 적용 (translation)
-        final matrix = Matrix4.identity()..translate(50.0, 100.0);
+        final matrix = Matrix4.identity()..translateByDouble(50.0, 100.0, 0.0, 1.0);
         controller.value = matrix;
         transformer = CoordinateTransformer(controller);
       });
@@ -107,8 +107,8 @@ void main() {
         controller = TransformationController();
         // 2배 스케일 + 오프셋 (50, 100)
         final matrix = Matrix4.identity()
-          ..translate(50.0, 100.0)
-          ..scale(2.0);
+          ..translateByDouble(50.0, 100.0, 0.0, 1.0)
+          ..scaleByDouble(2.0, 2.0, 2.0, 1.0);
         controller.value = matrix;
         transformer = CoordinateTransformer(controller);
       });

@@ -16,7 +16,7 @@ class ScribbleModeState {
 
   final ScribblePointerMode allowedPointersMode;
 
-  ScribbleModeState({
+  const ScribbleModeState({
     /// 현재 위젯 줌 배율 (InteractiveViewer).
     ///
     /// ⚠️ 펜 두께 계산에는 더 이상 사용하지 않는다. 두께는 문서(캔버스) 좌표

@@ -245,8 +245,9 @@ void main() {
       expect(await next, isTrue);
       expect(await another, isTrue);
       expect((await readFile('user/book/1')).strokes.single.id, 'new');
-      if (byPrefix)
+      if (byPrefix) {
         expect((await readFile('user/book/2')).strokes.single.id, 'other');
+      }
     });
   }
 

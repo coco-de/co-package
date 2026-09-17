@@ -652,7 +652,7 @@ class _DrawingPageState extends State<DrawingPage> {
 
     if (_isReplaying) {
       return Text(
-        'Playing ${_replayEventIndex}/${_recordedEvents.length} events',
+        'Playing $_replayEventIndex/${_recordedEvents.length} events',
         style: style,
       );
     }
