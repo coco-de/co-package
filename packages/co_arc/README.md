@@ -1,15 +1,15 @@
-# co-arc
+# co_arc
 
-**Cocode Actions Runner Cluster** — coco-de 조직의 Flutter · Dart 풀스택 서비스(Flutter / Jaspr / Serverpod)를 배포·테스트하기 위한 self-hosted 러너 인프라 레포입니다.
+**Cocode Actions Runner Cluster** — coco-de 조직의 Flutter · Dart 풀스택 서비스(Flutter / Jaspr / Serverpod)를 배포·테스트하기 위한 self-hosted 러너 인프라 패키지입니다. ([co-package](../../README.md) 모노레포의 `packages/co_arc`)
 
-서비스 코드는 각자의 레포에 두고, 이 레포는 다음만 담당합니다.
+서비스 코드는 각자의 레포에 두고, 이 패키지는 다음만 담당합니다.
 
 | 영역 | 내용 | 위치 |
 |---|---|---|
 | 러너 등록 | 로컬 머신(macOS)을 self-hosted 러너로 등록/해제하는 스크립트 | [`scripts/`](scripts/) |
-| 러너 TUI | 러너 상태 조회·등록·해제·서비스 제어를 한 화면에서 (Dart) | [`tui/`](tui/) |
+| 러너 TUI | 러너 상태 조회·등록·해제·서비스 제어를 한 화면에서 (Dart, `coarc`) | [`bin/`](bin/) · [`lib/`](lib/) · [docs/tui.md](docs/tui.md) |
 | ARC | Kubernetes 기반 러너 오토스케일링 (Actions Runner Controller) | [`arc/`](arc/) |
-| 재사용 워크플로우 | 서비스 레포들이 `workflow_call`로 가져다 쓰는 공용 CI | [`.github/workflows/`](.github/workflows/) |
+| 재사용 워크플로우 | 서비스 레포들이 `workflow_call`로 가져다 쓰는 공용 CI | [`.github/workflows/`](../../.github/workflows/) (모노레포 루트) |
 | 문서 | 러너 세팅 런북 | [`docs/`](docs/) |
 
 ## 빠른 시작
@@ -40,16 +40,16 @@
 레포를 clone하지 않고 바로 전역 설치할 수 있습니다:
 
 ```bash
-dart pub global activate --source git https://github.com/coco-de/co-arc.git --git-path tui
+dart pub global activate --source git https://github.com/coco-de/co-package.git --git-path packages/co_arc
 coarc                     # org coco-de 스코프로 실행 (러너 목록·등록·해제·서비스 제어)
 coarc list --org coco-de  # TUI 없이 목록만 스냅샷 출력
 ```
 
-`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령을 바로 쓸 수 있습니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다. 자세한 키/옵션은 [`tui/README.md`](tui/README.md) 참고.
+`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령을 바로 쓸 수 있습니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다. 자세한 키/옵션은 [docs/tui.md](docs/tui.md) 참고.
 
 ### 3. 러너 연결 확인
 
-레포의 **Actions → Runner Smoke Test → Run workflow** 를 실행하면 러너에 잡이 배정되고 Dart 스택 버전이 출력됩니다.
+co-package 레포의 **Actions → Runner Smoke Test → Run workflow** 를 실행하면 러너에 잡이 배정되고 Dart 스택 버전이 출력됩니다.
 
 ### 4. 서비스 레포에서 공용 CI 사용
 
@@ -64,25 +64,25 @@ on:
 
 jobs:
   ci:
-    uses: coco-de/co-arc/.github/workflows/melos-ci.yml@main
+    uses: coco-de/co-package/.github/workflows/melos-ci.yml@main
     with:
       runs-on: '["self-hosted", "macOS", "flutter"]'
 ```
 
 전체 예시는 [`templates/caller-example.yml`](templates/caller-example.yml) 참고.
 
-> **참고** — private 레포끼리 재사용 워크플로우를 호출하려면 조직 설정에서 허용이 필요합니다:
-> `co-arc → Settings → Actions → General → Access → "Accessible from repositories in the coco-de organization"`
+> **참고** — co-package는 public 레포라 재사용 워크플로우를 별도 설정 없이 호출할 수 있습니다. (private 레포로 바꿀 경우
+> `Settings → Actions → General → Access → "Accessible from repositories in the coco-de organization"` 허용이 필요합니다.)
 
 ## 재사용 워크플로우 목록
 
 | 워크플로우 | 용도 | 주요 입력 |
 |---|---|---|
-| [`melos-ci.yml`](.github/workflows/melos-ci.yml) | melos 모노레포 공용 CI (bootstrap → analyze → test) | `runs-on`, `flutter-channel` |
-| [`flutter-ci.yml`](.github/workflows/flutter-ci.yml) | 단일 Flutter 앱 CI + 선택적 빌드(apk/ios/web) | `runs-on`, `build-targets` |
-| [`serverpod-ci.yml`](.github/workflows/serverpod-ci.yml) | Serverpod 서버 테스트 (Postgres·Redis 서비스 컨테이너) | `runs-on`, `server-directory` |
-| [`jaspr-ci.yml`](.github/workflows/jaspr-ci.yml) | Jaspr 웹 빌드/테스트 | `runs-on`, `project-directory` |
-| [`runner-smoke.yml`](.github/workflows/runner-smoke.yml) | 러너 연결/환경 확인 (수동 실행) | `runs-on` |
+| [`melos-ci.yml`](../../.github/workflows/melos-ci.yml) | melos 모노레포 공용 CI (bootstrap → analyze → test) | `runs-on`, `flutter-channel` |
+| [`flutter-ci.yml`](../../.github/workflows/flutter-ci.yml) | 단일 Flutter 앱 CI + 선택적 빌드(apk/ios/web) | `runs-on`, `build-targets` |
+| [`serverpod-ci.yml`](../../.github/workflows/serverpod-ci.yml) | Serverpod 서버 테스트 (Postgres·Redis 서비스 컨테이너) | `runs-on`, `server-directory` |
+| [`jaspr-ci.yml`](../../.github/workflows/jaspr-ci.yml) | Jaspr 웹 빌드/테스트 | `runs-on`, `project-directory` |
+| [`runner-smoke.yml`](../../.github/workflows/runner-smoke.yml) | 러너 연결/환경 확인 (수동 실행) | `runs-on` |
 
 ## 러너 전략
 

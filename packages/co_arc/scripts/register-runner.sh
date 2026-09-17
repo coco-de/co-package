@@ -53,7 +53,7 @@ RUNNER_GROUP=""
 TOOL_CACHE=""
 AS_SERVICE=false
 
-# 이름 미지정 등록 시 붙일 영어 공룡 이름 풀 (tui/lib/src/naming.dart와 동일).
+# 이름 미지정 등록 시 붙일 영어 공룡 이름 풀 (lib/src/naming.dart와 동일).
 DINOS=(raptor trex stego triceratops brachio ankylo velociraptor diplodocus \
   allosaurus spinosaurus pterodactyl brontosaurus compsognathus gallimimus \
   iguanodon megalosaurus ornithomimus parasaurolophus protoceratops utahraptor \
@@ -231,7 +231,7 @@ harden_service_plist() {
 #
 # 설정 줄은 `키 값` 두 토큰이다(NF == 2). `Sleep On Power Button 1`처럼 이름에
 # 공백이 들어간 줄을 값으로 잘못 읽지 않도록 토큰 수까지 본다.
-# (같은 판정을 tui/lib/src/local.dart의 `pmsetAcValue`가 TUI 경로에서 수행한다.)
+# (같은 판정을 lib/src/local.dart의 `pmsetAcValue`가 TUI 경로에서 수행한다.)
 pmset_ac_value() {
   awk -v key="$1" '
     /^[^ ]/ { in_ac = ($0 ~ /^AC Power/); next }
