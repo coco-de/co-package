@@ -36,8 +36,10 @@ melos:
       run: melos exec --no-flutter --dir-exists=test -- dart test
       description: Run pure-Dart package tests.
 
+    # --no-pub: 루트 워크스페이스 해석을 그대로 쓴다. flutter test 의 암묵적 pub get 은
+    # example/ 까지 해석하려 해 private git 의존성(open_board example)에서 죽는다.
     test:flutter:
-      run: melos exec --flutter --dir-exists=test --ignore="*example*" -- flutter test
+      run: melos exec --flutter --dir-exists=test --ignore="*example*" -- flutter test --no-pub
       description: Run Flutter package tests (example apps excluded).
 
     verify:
