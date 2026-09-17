@@ -1,6 +1,6 @@
 name: CI
 
-# open_board 가 Flutter 패키지라 pub workspace 해석(pub get)에 Flutter SDK 가 필요하다.
+# open_epub·open_board 가 Flutter 패키지라 pub workspace 해석(pub get)에 Flutter SDK 가 필요하다.
 # 순수 Dart 패키지(co_arc, co_faker)도 같은 워크스페이스로 함께 해석된다.
 
 on:
@@ -19,6 +19,13 @@ env:
   FLUTTER_VERSION: "3.47.0"
 
 jobs:
+  # 이식(epub_pro CFI) 코드의 attribution 누락 차단 — SDK 불필요.
+  license-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tool/check_licenses.sh
+
   verify:
     runs-on: ubuntu-latest
     steps:

@@ -1,0 +1,78 @@
+/// open_epub_engine — pure-Dart EPUB 2/3 파서·모델·CFI 엔진.
+///
+/// open_epub(Flutter 리더)가 소비하는 파싱 계층으로, epubx/epub_view를 대체한다.
+/// 커스텀 파서(OPF/NCX/nav)를 기반으로 vers-one/EpubReader 설계를 참고해 확장하고,
+/// epub_pro의 CFI를 보충 매퍼로 채택한다. (ADR-008/010)
+///
+/// S10.3(#80)에서 open_epub 1.0의 순수-Dart 레이어(api·domain·data)를 이 패키지로
+/// 추출했다. Flutter 렌더/위젯/컨트롤러는 open_epub에 잔류한다.
+///
+/// ## 1.0 공개 API 정책 (S6.1 #237)
+/// 이 배럴의 export가 곧 semver 계약이다. 고수준 진입점은 [EpubBookSession.open]이며,
+/// 파서·도메인 모델·CFI 어댑터·검색/코덱은 헤드리스(CLI·서버) 소비를 위해 공개한다.
+/// 구현 세부는 공개하지 않는다 — 리포지토리 구현(EpubRepositoryImpl)과 세션이 내부에서
+/// 오케스트레이션하는 유스케이스(open/apply-patches/resolve-position)는 제외하고,
+/// 리포지토리는 도메인 계약([EpubRepository])만 노출한다. 테스트 픽스처는 별도
+/// 배럴 `package:open_epub_engine/testing.dart`로 분리돼 있다(프로덕션 표면 아님).
+library;
+
+// ── Schema (OPF/NCX/nav 모델) ──────────────────────────────────────────────
+export 'src/schema/opf/package/epub_version.dart' show EpubVersion;
+export 'src/schema/opf/package/epub_version_detection.dart'
+    show EpubVersionDetection;
+
+// ── API (공개 진입 표면) ───────────────────────────────────────────────────
+export 'src/api/epub_analytics.dart';
+export 'src/api/epub_book.dart';
+export 'src/api/epub_book_session.dart';
+export 'src/api/epub_position.dart';
+export 'src/api/epub_security_config.dart';
+export 'src/api/epub_source.dart';
+
+// ── Domain — Entity ────────────────────────────────────────────────────────
+export 'src/domain/entity/epub_failure.dart';
+export 'src/domain/entity/epub_highlight.dart';
+export 'src/domain/entity/epub_capabilities.dart';
+export 'src/domain/entity/epub_media_overlay.dart';
+export 'src/domain/entity/epub_metadata.dart';
+export 'src/domain/entity/epub_navigation.dart';
+export 'src/domain/entity/epub_outline.dart';
+export 'src/domain/entity/epub_rendition.dart';
+export 'src/domain/entity/epub_resource.dart';
+export 'src/domain/entity/epub_selection.dart';
+export 'src/domain/entity/epub_spine_item.dart';
+export 'src/domain/entity/loaded_epub.dart';
+export 'src/domain/entity/text_layer_verdict.dart';
+
+// ── Domain — Repository 계약 ───────────────────────────────────────────────
+export 'src/domain/repository/epub_repository.dart';
+
+// ── Domain — UseCase (소비자 진입 유스케이스만 공개) ───────────────────────
+// 검색 인덱스 빌드·텍스트 레이어 감지는 리더/소비자가 직접 쓰는 공개 유스케이스.
+// open/apply-patches/resolve-position은 EpubBookSession이 내부에서 오케스트레이션하는
+// 구현 세부라 1.0 공개 표면에서 제외한다. (S6.1 #237)
+export 'src/domain/usecase/build_search_index_use_case.dart';
+export 'src/domain/usecase/detect_text_layer_use_case.dart';
+
+// ── Data — Parser ──────────────────────────────────────────────────────────
+export 'src/data/parser/container_parser.dart';
+export 'src/data/parser/nav_parser.dart';
+export 'src/data/parser/ncx_parser.dart';
+export 'src/data/parser/opf_parser.dart';
+export 'src/data/parser/smil_parser.dart';
+
+// ── Data — Codec / Compat / Search / Security / Text ───────────────────────
+// 리포지토리 구현(EpubRepositoryImpl)은 공개하지 않는다 — 소비자는
+// EpubBookSession.open()으로 진입하고, 타입이 필요하면 도메인 계약
+// EpubRepository를 쓴다. (S6.1 #237)
+export 'src/data/codec/book_position_codec.dart';
+export 'src/data/compat/patch_catalog.dart';
+export 'src/data/search/text_index_builder.dart';
+export 'src/data/security/encryption_parser.dart';
+export 'src/data/security/html_sanitizer.dart';
+export 'src/data/text/search_highlighter.dart';
+export 'src/data/text/spine_text_extractor.dart';
+
+// ── CFI (S12, ADR-010) — charOffset↔CFI 매퍼 + interop. 이식한 프리미티브
+//    (src/cfi/core·dom, epub_pro MIT)는 내부 구현으로 두고, 어댑터만 노출한다.
+export 'src/cfi/epub_cfi_mapper.dart' show EpubCfiMapper, BookCfiParts;

@@ -8,6 +8,8 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | --- | --- |
 | [`co_arc`](packages/co_arc/README.md) | Cocode Actions Runner Cluster — self-hosted 러너 관리 TUI(`coarc`), 등록 스크립트, ARC 설정, 재사용 CI 워크플로우. |
 | [`co_faker`](packages/co_faker/README.md) | Pure Dart, deterministic, multilingual fake data generation. |
+| [`open_epub_engine`](packages/open_epub_engine/README.md) | Pure Dart EPUB 2/3 parser, object model, and CFI locator engine. |
+| [`open_epub`](packages/open_epub/README.md) | Customizable EPUB reader widget for Flutter (reflowable + fixed layout). |
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
 
 ## Reusable workflows

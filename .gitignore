@@ -4,12 +4,22 @@
 pubspec.lock
 pubspec_overrides.yaml
 build/
+**/build/
 .melos_tool/
+**/doc/api/
+/coverage/
+
+# Flutter
+.flutter-plugins-dependencies
+**/ios/Flutter/.last_build_id
+app.*.symbols
+app.*.map.json
 
 # IDE
 .idea/
 *.iml
 .vscode/
+.swiftpm/
 
 # OS
 .DS_Store
@@ -24,3 +34,17 @@ _work/
 # 시크릿 — 절대 커밋 금지
 *.pem
 .env.*
+
+# Local agent config
+CLAUDE.md
+
+# EPUB fixtures: 라이선스 확인 완료 후 커밋된 공개 데모용 EPUB3 샘플만 예외
+# (IDPF epub3-samples CC-BY-SA 3.0 / GFDL 1.2 — THIRD_PARTY_LICENSES 참조).
+# 나머지(대용량/저작권 미확인 로컬 전용 픽스처)는 계속 무시.
+*.epub
+!packages/open_epub/example/assets/georgia-cfi.epub
+!packages/open_epub/example/assets/linear-algebra.epub
+!packages/open_epub/example/assets/moby-dick-mo.epub
+!packages/open_epub/example/assets/mymedia_lite.epub
+!packages/open_epub/example/assets/regime-anticancer-arabic.epub
+!packages/open_epub/example/assets/wasteland.epub
