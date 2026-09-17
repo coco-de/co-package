@@ -1,0 +1,16 @@
+name: coarc_tui
+description: co-arc self-hosted runner 관리 TUI (GitHub Actions runners)
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+
+executables:
+  coarc: coarc
+
+dependencies:
+  characters: ^1.3.0
+  dart_tui: ^1.4.0
+dev_dependencies:
+  test: ^1.31.2

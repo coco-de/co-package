@@ -1,0 +1,12 @@
+# actionlint 설정 — self-hosted 러너 커스텀 라벨 목록
+# (여기 없는 라벨을 runs-on에 쓰면 CI lint가 실패합니다)
+self-hosted-runner:
+  labels:
+    # co-arc 러너 라벨 (scripts/ · arc/)
+    - flutter
+    - arc-dart
+    # coco-de org 운영 러너 라벨
+    - docker
+    - docker-build
+    - unibook
+    - good-teacher
