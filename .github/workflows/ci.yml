@@ -28,7 +28,9 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      - run: flutter pub get
+      # --no-example: packages/open_board/example 은 private coco-de/open-epub 을 git
+      # 의존성으로 쓰므로 CI 의 워크스페이스 해석에서 제외한다(인증 불가 → exit 69).
+      - run: flutter pub get --no-example
       - run: dart pub global activate melos
       - run: melos run format
       - run: melos run analyze

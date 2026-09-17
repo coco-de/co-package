@@ -12,7 +12,7 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 ## Development
 
 ```bash
-flutter pub get   # open_board 가 Flutter 패키지라 워크스페이스 해석에 Flutter SDK 가 필요하다
+flutter pub get --no-example   # open_board 가 Flutter 패키지라 워크스페이스 해석에 Flutter SDK 가 필요하다
 dart pub global activate melos
 melos run verify
 ```
