@@ -74,14 +74,9 @@ class StrokeProcessor {
     if (overridePressureOnWeb || event.pressureMin == event.pressureMax) {
       p = 0.5;
     } else {
-      // 보정이 어긋난 기기는 pressureMax를 초과한 압력을 보고할 수 있으므로
-      // Curve.transform의 [0,1] 정의역에 맞게 클램프한다.
-      final normalized = clampDouble(
-        (event.pressure - event.pressureMin) /
-            (event.pressureMax - event.pressureMin),
-        0.0,
-        1.0,
-      );
+      // 정규화(플랫폼별 척도 해석 + [0,1] 클램프)는 PenPressureResponse 가
+      // 소유한다 — iOS 는 Apple force 절대값, 그 밖은 기기 보고 범위 비율.
+      final normalized = PenPressureResponse.normalize(event);
       p = PenPressureResponse.providesHardwarePressure(event)
           ? pressureCurve.transform(normalized)
           : normalized;

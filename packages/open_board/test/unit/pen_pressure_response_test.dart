@@ -1,4 +1,5 @@
 // 🐦 Flutter imports:
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 
 // 📦 Package imports:
@@ -14,7 +15,13 @@ import 'package:open_board/src/module/stroke/stroke_processor.dart';
 /// "필압 감지가 미세하다(기기에 따라 차이 큼)" 는 보고의 원인은 평소 필기
 /// 압력이 정규화 범위 아래쪽에 몰리는데 그것을 선형으로 두께에 옮긴 것이다.
 /// Apple Pencil 은 `maximumPossibleForce` 가 약 4.17 이고 Apple 이 정의한
-/// "평균 터치" 는 force 1.0 이라, 평소 필기가 정규화 0.24 근처가 된다.
+/// "평균 터치" 는 force 1.0 이라, `maximumPossibleForce` 로 나누면 평소
+/// 필기가 정규화 0.24 근처가 된다.
+///
+/// 재보고(2026-09-22, 1.947.0): 곡선만으로는 iPad 가 여전히 균일선이었다.
+/// 그래서 iOS 는 `force` 를 Apple 정의대로 절대값으로 읽는다 —
+/// `force / appleFullScaleForce(2.0)` 로 평균 터치를 0.5 에 둔다. 이 파일의
+/// 마지막 두 그룹이 그 축을 고정한다 (Android 기록값 불변 포함).
 void main() {
   // Apple Pencil 의 pressureMax(= UITouch.maximumPossibleForce)
   const applePencilMaxForce = 4.1666666666666667;
@@ -124,7 +131,10 @@ void main() {
     });
   });
 
-  group('UB-633 회귀 — Apple Pencil 척도에서 필압이 드러난다', () {
+  group('UB-633 1차 — maximumPossibleForce 비율 매핑 위에서도 곡선이 필압을 키운다', () {
+    // 이 그룹은 곡선 자체의 효과를 **비율 매핑**(Android·웹 경로와 같은
+    // 식) 위에서 고정한다. iOS 는 이제 이 매핑을 타지 않는다 — 아래
+    // 'UB-633 재보고' 그룹 참조. 수치는 1차 수정(PR #290) 당시의 근거다.
     // force 는 Apple 정의 기준 — 1.0 이 평균 터치
     double normalizedForce(double force) => force / applePencilMaxForce;
 
@@ -162,7 +172,9 @@ void main() {
       expect(newRadius(0.0), closeTo(0.05, 1e-12));
     });
 
-    test('StrokeProcessor 가 Apple Pencil 이벤트를 곡선으로 기록한다', () {
+    test('iOS 가 아닌 플랫폼은 pressureMax 비율을 곡선에 태운다', () {
+      // flutter_test 의 기본 플랫폼은 Android — 비율 경로다.
+      expect(defaultTargetPlatform, isNot(TargetPlatform.iOS));
       const processor = StrokeProcessor(
         pressureCurve: PenPressureResponse.curve,
       );
@@ -172,6 +184,157 @@ void main() {
       );
 
       expect(point.p, closeTo(0.4224, 1e-9));
+    });
+  });
+
+  group('reportsAppleForceUnits · normalize — 플랫폼별 척도 해석', () {
+    void runOnIos() {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    }
+
+    test('iOS 에서 pressureMax > 1 인 스타일러스는 Apple force 단위다', () {
+      runOnIos();
+      expect(
+        PenPressureResponse.reportsAppleForceUnits(
+          stylusDown(pressure: 1.0, pressureMax: applePencilMaxForce),
+        ),
+        isTrue,
+      );
+    });
+
+    test('iOS 라도 pressureMax == 1 이면 이미 정규화된 값 — 이중 보정하지 않는다', () {
+      runOnIos();
+      final event = stylusDown(pressure: 0.3);
+
+      expect(PenPressureResponse.reportsAppleForceUnits(event), isFalse);
+      expect(PenPressureResponse.normalize(event), closeTo(0.3, 1e-12));
+    });
+
+    test('iOS 가 아니면 pressureMax 가 커도 비율 매핑이다 (Android 불변)', () {
+      expect(defaultTargetPlatform, isNot(TargetPlatform.iOS));
+      final event = stylusDown(pressure: 1.0, pressureMax: applePencilMaxForce);
+
+      expect(PenPressureResponse.reportsAppleForceUnits(event), isFalse);
+      expect(
+        PenPressureResponse.normalize(event),
+        closeTo(1.0 / applePencilMaxForce, 1e-12),
+      );
+    });
+
+    test('Android S Pen 값은 종전 그대로 통과한다 (기록값 불변)', () {
+      for (final pressure in [0.0, 0.1, 0.3, 0.5, 0.75, 1.0]) {
+        final event = stylusDown(pressure: pressure);
+        // 종전 식과 정확히 같아야 한다 — 이 축이 흔들리면 Galaxy 필기가 바뀐다
+        final legacy = (event.pressure - event.pressureMin) /
+            (event.pressureMax - event.pressureMin);
+
+        expect(
+          PenPressureResponse.normalize(event),
+          legacy,
+          reason: 'p=$pressure',
+        );
+      }
+    });
+
+    test('Android 의 범위 초과·미만 값은 [0, 1] 로 클램프된다', () {
+      expect(PenPressureResponse.normalize(stylusDown(pressure: 1.2)), 1.0);
+      expect(PenPressureResponse.normalize(stylusDown(pressure: -0.1)), 0.0);
+    });
+
+    test('iOS: 평균 터치(force 1.0)가 정확히 0.5 에 놓인다', () {
+      runOnIos();
+      expect(
+        PenPressureResponse.normalize(
+          stylusDown(pressure: 1.0, pressureMax: applePencilMaxForce),
+        ),
+        closeTo(0.5, 1e-12),
+      );
+    });
+
+    test('iOS: appleFullScaleForce 이상은 1.0 으로 포화하고 0 은 0 이다', () {
+      runOnIos();
+      double n(double force) => PenPressureResponse.normalize(
+        stylusDown(pressure: force, pressureMax: applePencilMaxForce),
+      );
+
+      expect(n(0.0), 0.0);
+      expect(n(PenPressureResponse.appleFullScaleForce), 1.0);
+      expect(n(applePencilMaxForce), 1.0);
+      expect(n(0.5), closeTo(0.25, 1e-12));
+    });
+  });
+
+  group('UB-633 재보고 — iPad 필압이 Galaxy S Pen 과 같은 자리에서 벌어진다', () {
+    void runOnIos() {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    }
+
+    // 종전(1차 수정) iOS 매핑 — maximumPossibleForce 비율 위의 곡선
+    double previousIosRadius(double force) => getStrokeRadius(
+      1,
+      PenPressureResponse.hardwareThinning,
+      PenPressureResponse.curve.transform(force / applePencilMaxForce),
+    );
+
+    double iosRadius(double force) => getStrokeRadius(
+      1,
+      PenPressureResponse.hardwareThinning,
+      PenPressureResponse.curve.transform(
+        PenPressureResponse.normalize(
+          stylusDown(pressure: force, pressureMax: applePencilMaxForce),
+        ),
+      ),
+    );
+
+    test('iPad 평균 필기(force 1.0)와 S Pen 중간 필압(0.5)이 같은 두께로 기록된다', () {
+      const processor = StrokeProcessor(
+        pressureCurve: PenPressureResponse.curve,
+      );
+      // Android(기본 플랫폼) S Pen 중간 필압
+      final sPen = processor.createPointFromEvent(stylusDown(pressure: 0.5));
+
+      runOnIos();
+      final pencil = processor.createPointFromEvent(
+        stylusDown(pressure: 1.0, pressureMax: applePencilMaxForce),
+      );
+
+      expect(pencil.p, closeTo(0.75, 1e-12));
+      expect(pencil.p, closeTo(sPen.p, 1e-12));
+      // 종전 iOS 기록값(0.4224)과 **다르다** — 분리의 직접 증거
+      expect(pencil.p, isNot(closeTo(0.4224, 1e-3)));
+    });
+
+    test('평소 필압 구간(force 0.5 → 1.5)의 두께 변화폭이 1차 수정보다 넓다', () {
+      runOnIos();
+      final previousDelta = previousIosRadius(1.5) - previousIosRadius(0.5);
+      final delta = iosRadius(1.5) - iosRadius(0.5);
+
+      expect(previousDelta, closeTo(0.328, 0.001));
+      expect(delta, closeTo(0.45, 0.001));
+      expect(delta, greaterThan(previousDelta * 1.3));
+    });
+
+    test('세게(force 2.0 = 평균의 2배)가 최대 두께에 닿는다 — 종전엔 4.17 이 필요했다', () {
+      runOnIos();
+      // 종전: force 2.0 은 반지름 0.71 — 최대(0.95)에 못 미치고 4.17 에서야 닿았다
+      expect(previousIosRadius(2.0), closeTo(0.707, 0.001));
+      expect(previousIosRadius(applePencilMaxForce), closeTo(0.95, 1e-9));
+      // 수정: 평균의 2배에서 최대 두께
+      expect(iosRadius(2.0), closeTo(0.95, 1e-12));
+    });
+
+    test('가볍게(force 0.3)는 여전히 가늘고, 가볍게↔세게의 두께 폭은 종전보다 넓다', () {
+      runOnIos();
+      // 가벼운 필압이 굵어져 대비를 잃지 않는다 (선택 굵기의 60% 이하)
+      expect(iosRadius(0.3), lessThanOrEqualTo(0.30));
+      // 반지름 폭(세게 − 가볍게): 종전 0.53 → 0.65
+      final previousSpan = previousIosRadius(2.0) - previousIosRadius(0.3);
+      final span = iosRadius(2.0) - iosRadius(0.3);
+      expect(previousSpan, closeTo(0.531, 0.001));
+      expect(span, closeTo(0.650, 0.001));
+      expect(span, greaterThan(previousSpan));
     });
   });
 }

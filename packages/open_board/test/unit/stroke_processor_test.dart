@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -111,6 +112,25 @@ void main() {
         final point = customProcessor.createPointFromEvent(event);
 
         expect(point.p, closeTo(0.5, 1e-9));
+      });
+
+      test('iOS Apple Pencil 은 force 절대값(1.0 = 평균)으로 정규화한다 (UB-633 재보고)', () {
+        debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        // Flutter iOS 엔진: pressure = UITouch.force, pressureMax =
+        // maximumPossibleForce(Apple Pencil ≈ 4.17). 비율로 나누면 평균
+        // 터치가 0.24 가 되므로 force / 2.0 으로 읽는다.
+        const event = PointerDownEvent(
+          kind: PointerDeviceKind.stylus,
+          position: Offset(10, 10),
+          pressureMin: 0.0,
+          pressureMax: 4.1666666666666667,
+          pressure: 1.0,
+        );
+
+        final point = processor.createPointFromEvent(event);
+
+        expect(point.p, closeTo(0.5, 1e-12));
       });
 
       test('필압 정보가 없는 스타일러스의 중립값 0.5 에는 곡선을 적용하지 않는다', () {

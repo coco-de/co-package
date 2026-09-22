@@ -24,6 +24,22 @@ import 'package:flutter/widgets.dart';
 /// 그려지고, 필압을 바꿔도 두께 차이가 1px 안팎에 그친다 — "펜 필압 감지가
 /// 미세하다(기기에 따라 차이 큼)" 는 보고(UB-633)의 원인이다.
 ///
+/// ## iOS 는 force 를 Apple 의 정의대로 절대값으로 읽는다 (UB-633 재보고)
+///
+/// 위 곡선만으로는 부족했다 — 실기기 QA(2026-09-22, 1.947.0)에서 Galaxy Tab
+/// S Pen 은 필압이 두께로 드러나는데 iPad Apple Pencil 은 거의 균일선이었다.
+/// 곡선은 척도 차이를 *줄일* 뿐 없애지 못한다: 같은 곡선을 타도 iPad 의 평소
+/// 필기(정규화 0.24)는 S Pen 의 평소 필기(정규화 0.4~0.5 부근)보다 아래
+/// 구간에 머문다.
+///
+/// 그래서 iOS 에서는 `maximumPossibleForce` 로 나누지 않고 Apple 의 정의
+/// (`force 1.0` = 평균 터치)를 그대로 쓴다 — [normalize] 는 force 를
+/// [appleFullScaleForce](평균 터치의 2배)로 나눠 평균 터치를 정확히 0.5 에
+/// 둔다. 그러면 iPad 의 평균 필기가 S Pen 의 중간 필압과 같은 자리에서 같은
+/// 곡선을 타고, 그 위(세게)와 아래(가볍게)가 같은 폭으로 벌어진다.
+/// Android 와 웹의 기록값은 바뀌지 않는다(각각 `AXIS_PRESSURE` 범위·브라우저가
+/// 이미 0..1 로 정규화한 값이라 종전 비율 매핑이 맞다).
+///
 /// ## 응답 곡선
 ///
 /// [PenPressureCurve] 는 2차 ease-out(`1 - (1 - t)²`)이다.
@@ -53,6 +69,50 @@ abstract final class PenPressureResponse {
 
   /// 하드웨어 필압 응답 곡선.
   static const Curve curve = PenPressureCurve();
+
+  /// iOS `UITouch.force` 의 만점 — Apple 정의(`force 1.0` = 평균 터치)의
+  /// **2배**. 평균 필기가 정규화 0.5 에 놓이고, 그 2배 이상의 힘은 최대
+  /// 두께로 포화한다(`maximumPossibleForce` ≈ 4.17 의 절반 지점).
+  ///
+  /// 기기 간 보정을 손볼 때 만지는 값은 이것 하나다 — 곡선·thinning 은
+  /// 플랫폼 공통이다.
+  static const double appleFullScaleForce = 2.0;
+
+  /// [event] 의 필압이 Apple force 단위(`UITouch.force` 원값)인가.
+  ///
+  /// Flutter iOS 엔진은 `force` 를 `pressure` 로, `maximumPossibleForce` 를
+  /// `pressureMax` 로 그대로 넘긴다. 필압을 보고하는 iOS 입력은
+  /// `pressureMax > 1`(Apple Pencil ≈ 4.17) 이므로 그것을 원값의 증거로
+  /// 삼는다 — 이미 0..1 로 정규화된 값(웹·`pressureMax == 1`)에 이중 보정을
+  /// 걸지 않기 위한 가드다.
+  static bool reportsAppleForceUnits(PointerEvent event) {
+    if (kIsWeb) return false;
+
+    return defaultTargetPlatform == TargetPlatform.iOS &&
+        event.pressureMax > 1.0;
+  }
+
+  /// [event] 의 필압을 0..1 로 정규화한다 (곡선 적용 **전** 값).
+  ///
+  /// - Apple force 단위([reportsAppleForceUnits]): `force / `
+  ///   [appleFullScaleForce] — `maximumPossibleForce` 로 나누지 않는다
+  /// - 그 밖(Android `AXIS_PRESSURE` 범위 · 웹): `(pressure - min) / (max - min)`
+  ///
+  /// 보정이 어긋난 기기는 범위를 넘는 값을 보고할 수 있으므로 어느 쪽이든
+  /// `Curve.transform` 의 정의역 [0, 1] 로 클램프한다. 필압 범위가 없는
+  /// 입력(`pressureMin == pressureMax`)은 호출자가 먼저 걸러 중립값을 쓴다.
+  static double normalize(PointerEvent event) {
+    final double ratio;
+    if (reportsAppleForceUnits(event)) {
+      ratio = event.pressure / appleFullScaleForce;
+    } else {
+      ratio =
+          (event.pressure - event.pressureMin) /
+          (event.pressureMax - event.pressureMin);
+    }
+
+    return clampDouble(ratio, 0.0, 1.0);
+  }
 
   /// [event] 가 하드웨어 필압을 제공하는가.
   ///
