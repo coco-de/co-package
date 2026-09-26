@@ -141,7 +141,8 @@ final class GoldenMatrix<T> {
 
   /// Registers one test per planned variant of [name].
   ///
-  /// [build] creates a fresh widget for every variant. [prepare] runs before
+  /// The group first runs [GoldenLocalization.preload] with the planned
+  /// locales. [build] creates a fresh widget for every variant. [prepare] runs before
   /// the build (install fixtures), [interact] after the first pump (tap,
   /// type), and [dispose] after capture even when the variant failed.
   /// [coverage] replaces the matrix coverage for this scenario only.
@@ -190,6 +191,14 @@ final class GoldenMatrix<T> {
     group(
       '$suite/$name',
       () {
+        // setUpAll runs outside the fake-async zone of widget tests, so
+        // translations that load asynchronously (deferred libraries) finish
+        // here; activate then switches synchronously per variant.
+        setUpAll(
+          () => localization.preload({
+            for (final variant in plan.variants) variant.locale,
+          }),
+        );
         if (mode == GoldenMatrixMode.capture) {
           tearDownAll(() => report.write(environment.outputDirectory));
         }

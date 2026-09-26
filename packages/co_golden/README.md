@@ -10,8 +10,8 @@ for apps that translate with Slang:
 - **Theme-agnostic axis.** `GoldenTheme<T>` carries whatever your app root
   consumes — a CoUI `ThemeData`, a Material `ThemeData`, or your own type.
 - **Slang binding.** `SlangGoldenLocalization` switches `LocaleSettings` per
-  variant, restores it afterwards, and fails instead of silently falling back
-  when a locale is not shipped.
+  variant, restores it afterwards, loads lazy (deferred) locales up front, and
+  fails instead of silently falling back when a locale is not shipped.
 - **Real device geometry.** Logical size, device pixel ratio, safe area,
   platform, brightness, and text scale are applied to the test view, so
   platform-adaptive scaling behaves like on the device.
@@ -103,6 +103,13 @@ final matrix = GoldenMatrix<ThemeData>(
   app: (variant, child) => MyApp(locale: variant.locale, child: child),
 );
 ```
+
+Slang generates lazy settings by default: every locale except the base one
+lives in a deferred library. Widget tests run in a fake-async zone where
+loading a library never completes, so a test that awaits it hangs, and a
+synchronous switch before the load throws. The matrix therefore calls
+`preload` with the planned locales in `setUpAll`, and `activate` switches
+synchronously. When you use the binding on its own, await `preload` first.
 
 ### CoUI and other design systems
 
