@@ -28,6 +28,8 @@
   "packages": {
     "packages/open_epub_engine": { "component": "open_epub_engine" },
     "packages/open_epub": { "component": "open_epub" },
-    "packages/open_board": { "component": "open_board" }
+    "packages/open_board": { "component": "open_board" },
+    "packages/co_golden": { "component": "co_golden" },
+    "packages/co_golden_gallery": { "component": "co_golden_gallery" }
   }
 }
