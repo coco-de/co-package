@@ -1,9 +1,11 @@
 import 'dart:convert';
 
-import 'package:meta/meta.dart';
+import 'package:coui_web/coui_web.dart';
+import 'package:jaspr/server.dart' as jaspr;
 
 import 'favicon.dart';
 import 'model.dart';
+import 'view.dart';
 
 /// Resolves the `src` of an image in the rendered page.
 typedef GalleryImageUrl = String Function(GalleryImage image);
@@ -14,7 +16,7 @@ final class GalleryPageOptions {
   /// Creates page options. [brandColor] must be a `#RRGGBB` color.
   GalleryPageOptions({
     this.title = 'Golden Gallery',
-    this.brandColor = '#0062D1',
+    this.brandColor = '#5BE0C8',
     this.noindex = false,
     this.metadata = const [],
     this.links = const [],
@@ -45,8 +47,7 @@ final class GalleryPageOptions {
   final DateTime generatedAt;
 
   /// Heading of the section that holds images without device, theme, or
-  /// locale, such as regression baselines. Those images are kept apart from
-  /// the matrix grids and hidden while an axis filter is set.
+  /// locale, such as regression baselines.
   final String plainTitle;
 }
 
@@ -62,469 +63,78 @@ String escapeGalleryHtml(String value) => value
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
-/// Renders the whole gallery as one self-contained HTML document.
+/// Renders a standalone gallery with Jaspr and CoUI Web components.
 ///
-/// Styles and script are inline and no external resource is loaded besides
-/// the images themselves, whose URLs come from [imageUrl], and the favicon
-/// files in [galleryFavicons], which must sit next to the page — the `build`
-/// command writes them.
-String renderGalleryHtml(
+/// CSS and script stay inline. The CLI writes the cocode favicon files in
+/// [galleryFavicons] beside the page. CoUI components render on the server;
+/// the small script adds filters, theme switching, and the lightbox.
+Future<String> renderGalleryHtml(
   GalleryCatalog catalog,
   GalleryPageOptions options, {
   required GalleryImageUrl imageUrl,
-}) {
+}) async {
   final lightbox = <Map<String, Object?>>[];
-  final out = StringBuffer()
-    ..writeln('<!doctype html>')
-    ..writeln('<html lang="ko">')
-    ..writeln('<head>')
-    ..writeln('<meta charset="utf-8">')
-    ..writeln(
+  final imageIndices = <GalleryImage, int>{};
+  for (final scenario in catalog.scenarios) {
+    for (final image in scenario.images) {
+      if (image.path.isEmpty) continue;
+      imageIndices[image] = lightbox.length;
+      lightbox.add({
+        'src': imageUrl(image),
+        'title': '${scenario.suite} / ${scenario.name}',
+        'label': image.label,
+        'status': image.status.name,
+        'errors': image.errors,
+      });
+    }
+  }
+
+  jaspr.Jaspr.initializeApp();
+  final response = await jaspr.renderComponent(
+    CoUIWeb(
+      theme: ThemeData.coui,
+      locale: const Locale('ko'),
+      supportedLocales: const [Locale('ko')],
+      disableBrowserContextMenu: false,
+      enableScrollInterception: false,
+      enableThemeAnimation: false,
+      child: GalleryView(
+        catalog: catalog,
+        title: options.title,
+        plainTitle: options.plainTitle,
+        metadata: options.metadata,
+        links: options.links,
+        generatedAt: options.generatedAt,
+        imageUrl: imageUrl,
+        imageIndices: imageIndices,
+      ),
+    ),
+    standalone: true,
+  );
+  if (response.statusCode != 200) {
+    throw StateError('CoUI gallery rendering failed (${response.statusCode}).');
+  }
+  final body = utf8.decode(response.body);
+  final head = StringBuffer()
+    ..write('<meta charset="utf-8">')
+    ..write(
       '<meta name="viewport" content="width=device-width, initial-scale=1">',
-    );
+    )
+    ..write('<meta name="generator" content="co_golden_gallery">')
+    ..write('${galleryFavicons.map((icon) => icon.link).join('\n')}\n')
+    ..write('<title>${escapeGalleryHtml(options.title)}</title>')
+    ..write('<style>${_css(options.brandColor)}</style>');
   if (options.noindex) {
-    out.writeln('<meta name="robots" content="noindex, nofollow">');
+    head.write('<meta name="robots" content="noindex, nofollow">');
   }
-  out
-    ..writeln('<meta name="generator" content="co_golden_gallery">')
-    ..writeln(galleryFavicons.map((icon) => icon.link).join('\n'))
-    ..writeln('<title>${escapeGalleryHtml(options.title)}</title>')
-    ..writeln('<style>${_css(options.brandColor)}</style>')
-    ..writeln('</head>')
-    ..writeln('<body>');
-
-  _writeHeader(out, catalog, options);
-  _writeToolbar(out, catalog);
-  out
-    ..writeln('<div class="layout">')
-    ..writeln('<nav class="toc" aria-label="시나리오 목록">')
-    ..writeln('<details open><summary>시나리오</summary>');
-  // Matrix scenarios are grouped by suite. Images without axes (for example
-  // regression baselines) get their own group after them, so the grids and
-  // the plain cards never mix within a suite.
-  final plain = [
-    for (final scenario in catalog.scenarios)
-      if (!scenario.fromManifest) scenario,
-  ];
-  final matrixSuites = [
-    for (final suite in catalog.suites)
-      if (catalog.scenarios.any((s) => s.suite == suite && s.fromManifest))
-        suite,
-  ];
-  Iterable<GalleryScenario> matrixOf(String suite) =>
-      catalog.scenarios.where((s) => s.suite == suite && s.fromManifest);
-
-  for (final suite in matrixSuites) {
-    out
-      ..writeln(
-        '<div class="toc-suite" data-suite="${escapeGalleryHtml(suite)}">',
-      )
-      ..writeln('<h2>${escapeGalleryHtml(suite)}</h2><ul>');
-    for (final scenario in matrixOf(suite)) {
-      _writeTocItem(out, scenario, scenario.name);
-    }
-    out.writeln('</ul></div>');
-  }
-  if (plain.isNotEmpty) {
-    out
-      ..writeln('<div class="toc-suite plain">')
-      ..writeln('<h2>${escapeGalleryHtml(options.plainTitle)}</h2><ul>');
-    for (final scenario in plain) {
-      _writeTocItem(out, scenario, _plainHeading(scenario));
-    }
-    out.writeln('</ul></div>');
-  }
-  out
-    ..writeln('</details>')
-    ..writeln('</nav>')
-    ..writeln('<main id="gallery">');
-
-  for (final suite in matrixSuites) {
-    out
-      ..writeln(
-        '<section class="suite" data-suite="${escapeGalleryHtml(suite)}">',
-      )
-      ..writeln('<h2 class="suite-title">${escapeGalleryHtml(suite)}</h2>');
-    for (final scenario in matrixOf(suite)) {
-      _writeScenario(out, scenario, scenario.name, imageUrl, lightbox);
-    }
-    out.writeln('</section>');
-  }
-  if (plain.isNotEmpty) {
-    out
-      ..writeln('<section class="suite plain">')
-      ..writeln(
-        '<h2 class="suite-title">${escapeGalleryHtml(options.plainTitle)}</h2>',
-      )
-      ..writeln(
-        '<p class="suite-note">기기·테마·언어 정보가 없는 이미지입니다. '
-        '기기·테마·언어 필터를 고르면 숨겨집니다.</p>',
-      );
-    for (final scenario in plain) {
-      _writeScenario(
-        out,
-        scenario,
-        _plainHeading(scenario),
-        imageUrl,
-        lightbox,
-      );
-    }
-    out.writeln('</section>');
-  }
-  out
-    ..writeln('<p class="empty" id="empty" hidden>조건에 맞는 이미지가 없습니다.</p>')
-    ..writeln('</main>')
-    ..writeln('</div>')
-    ..writeln(_dialog)
-    ..writeln(
+  final scripts =
       '<script type="application/json" id="gallery-data">'
-      '${_jsonForScript(lightbox)}</script>',
-    )
-    ..writeln('<script>$_script</script>')
-    ..writeln('</body>')
-    ..writeln('</html>');
-  return out.toString();
+      '${_jsonForScript(lightbox)}</script><script>$_script</script>';
+  return '<!doctype html><html lang="ko" data-theme="dark"><head>$head</head>'
+      '<body>$body$scripts</body></html>';
 }
 
-void _writeTocItem(StringBuffer out, GalleryScenario scenario, String label) {
-  final failed = scenario.failedCount;
-  out.writeln(
-    '<li data-toc="${escapeGalleryHtml(scenario.anchor)}">'
-    '<a href="#${escapeGalleryHtml(scenario.anchor)}">'
-    '${escapeGalleryHtml(label)}</a>'
-    '<span class="count">${scenario.images.length}</span>'
-    '${failed > 0 ? '<span class="count fail">실패 $failed</span>' : ''}'
-    '</li>',
-  );
-}
-
-String _plainHeading(GalleryScenario scenario) =>
-    '${scenario.suite} / ${scenario.name}';
-
-void _writeHeader(
-  StringBuffer out,
-  GalleryCatalog catalog,
-  GalleryPageOptions options,
-) {
-  final generated = options.generatedAt.toIso8601String().substring(0, 16);
-  out
-    ..writeln('<header class="top">')
-    ..writeln('<div class="title">')
-    ..writeln('<h1>${escapeGalleryHtml(options.title)}</h1>')
-    ..writeln('<ul class="stats">')
-    ..writeln('<li><b>${catalog.scenarios.length}</b> 시나리오</li>')
-    ..writeln('<li><b>${catalog.imageCount}</b> 이미지</li>')
-    ..writeln(
-      '<li class="${catalog.failedCount > 0 ? 'bad' : 'good'}">'
-      '<b>${catalog.failedCount}</b> 실패</li>',
-    )
-    ..writeln('</ul>')
-    ..writeln('<dl class="meta">');
-  for (final (label, value) in options.metadata) {
-    out.writeln(
-      '<div><dt>${escapeGalleryHtml(label)}</dt>'
-      '<dd>${escapeGalleryHtml(value)}</dd></div>',
-    );
-  }
-  out
-    ..writeln('<div><dt>생성</dt><dd>$generated UTC</dd></div>')
-    ..writeln('</dl>')
-    ..writeln('</div>')
-    ..writeln('<div class="actions">');
-  for (final (label, url) in options.links) {
-    out.writeln(
-      '<a class="link" href="${escapeGalleryHtml(url)}" rel="noopener">'
-      '${escapeGalleryHtml(label)}</a>',
-    );
-  }
-  out
-    ..writeln(
-      '<button type="button" id="theme-toggle" class="link" '
-      'aria-label="화면 테마 전환">테마: 자동</button>',
-    )
-    ..writeln('</div>')
-    ..writeln('</header>');
-}
-
-void _writeToolbar(StringBuffer out, GalleryCatalog catalog) {
-  final images = [for (final scenario in catalog.scenarios) ...scenario.images];
-  List<String> distinct(String? Function(GalleryImage image) pick) {
-    final seen = <String>{};
-    return [
-      for (final image in images)
-        if (pick(image) case final value? when seen.add(value)) value,
-    ];
-  }
-
-  void select(String id, String label, List<String> values) {
-    out.writeln(
-      '<label class="field"><span>$label</span>'
-      '<select id="$id"><option value="">전체</option>',
-    );
-    for (final value in values) {
-      final escaped = escapeGalleryHtml(value);
-      out.writeln('<option value="$escaped">$escaped</option>');
-    }
-    out.writeln('</select></label>');
-  }
-
-  out
-    ..writeln('<div class="toolbar" role="search">')
-    ..writeln(
-      '<label class="field grow"><span>검색</span>'
-      '<input id="q" type="search" autocomplete="off" '
-      'placeholder="시나리오, 설명, 파일 이름"></label>',
-    );
-  select('f-suite', '스위트', catalog.suites);
-  select('f-device', '기기', distinct((image) => image.device));
-  select('f-theme', '테마', distinct((image) => image.theme));
-  select('f-locale', '언어', distinct((image) => image.locale));
-  out
-    ..writeln(
-      '<label class="check"><input id="f-failed" type="checkbox"> 실패만</label>',
-    )
-    ..writeln('<output id="visible" aria-live="polite"></output>')
-    ..writeln('</div>');
-}
-
-void _writeScenario(
-  StringBuffer out,
-  GalleryScenario scenario,
-  String heading,
-  GalleryImageUrl imageUrl,
-  List<Map<String, Object?>> lightbox,
-) {
-  final search = [
-    scenario.suite,
-    scenario.name,
-    scenario.description ?? '',
-    for (final image in scenario.images) image.name,
-  ].join(' ').toLowerCase();
-  out
-    ..writeln(
-      '<section class="scenario" id="${escapeGalleryHtml(scenario.anchor)}" '
-      'data-suite="${escapeGalleryHtml(scenario.suite)}" '
-      'data-search="${escapeGalleryHtml(search)}">',
-    )
-    ..writeln('<div class="scenario-head">')
-    ..writeln('<h3>${escapeGalleryHtml(heading)}</h3>');
-  if (scenario.description case final description?) {
-    out.writeln('<p>${escapeGalleryHtml(description)}</p>');
-  }
-  out
-    ..writeln('<ul class="badges">')
-    ..writeln(
-      '<li>${scenario.fromManifest ? '매트릭스' : '이미지'} '
-      '${scenario.images.length}</li>',
-    );
-  if (scenario.failedCount > 0) {
-    out.writeln('<li class="fail">실패 ${scenario.failedCount}</li>');
-  }
-  out
-    ..writeln('</ul>')
-    ..writeln('</div>');
-  if (scenario.fromManifest) {
-    _writeMatrix(out, scenario, imageUrl, lightbox);
-  } else {
-    _writeCards(out, scenario, imageUrl, lightbox);
-  }
-  out.writeln('</section>');
-}
-
-void _writeMatrix(
-  StringBuffer out,
-  GalleryScenario scenario,
-  GalleryImageUrl imageUrl,
-  List<Map<String, Object?>> lightbox,
-) {
-  final images = scenario.images;
-  final axes = scenario.axes;
-  final cells = <String, GalleryImage>{};
-  final samples = <String, GalleryImage>{};
-  for (final image in images) {
-    cells['${image.device ?? image.name}\u0000${image.columnKey}'] = image;
-    samples.putIfAbsent(image.columnKey, () => image);
-  }
-  // Rows follow the declared device order and columns the declared theme ×
-  // locale × text scale order. Manifests written before co_golden recorded
-  // the axes fall back to the order in which each value first appears.
-  final devices = _sorted(
-    _firstSeen([for (final image in images) image.device ?? image.name]),
-    [_rank(_orderOf(axes?.devices, const []))],
-    (device) => [device],
-  );
-  final themeRank = _rank(
-    _orderOf(axes?.themes, [for (final image in images) image.theme ?? '']),
-  );
-  final localeRank = _rank(
-    _orderOf(axes?.locales, [for (final image in images) image.locale ?? '']),
-  );
-  final scaleRank = _rank(
-    _orderOf(axes?.textScales, [
-      for (final image in images) image.textScale ?? 1.0,
-    ]),
-  );
-  final columns = _sorted<String, Object>(
-    samples.keys.toList(),
-    [
-      (value) => themeRank(value),
-      (value) => localeRank(value),
-      (value) => scaleRank(value),
-    ],
-    (column) {
-      final image = samples[column]!;
-      return [image.theme ?? '', image.locale ?? '', image.textScale ?? 1.0];
-    },
-  );
-  GalleryImage? sample(String column) => samples[column];
-
-  out
-    ..writeln('<div class="matrix-wrap"><table class="matrix">')
-    ..writeln('<thead><tr><th scope="col">기기</th>');
-  for (final column in columns) {
-    final first = sample(column);
-    out.writeln(
-      '<th scope="col" data-theme="${escapeGalleryHtml(first?.theme ?? '')}" '
-      'data-locale="${escapeGalleryHtml(first?.locale ?? '')}">'
-      '${escapeGalleryHtml(column)}</th>',
-    );
-  }
-  out.writeln('</tr></thead><tbody>');
-  for (final device in devices) {
-    out.writeln(
-      '<tr data-device="${escapeGalleryHtml(device)}">'
-      '<th scope="row">${escapeGalleryHtml(device)}</th>',
-    );
-    for (final column in columns) {
-      final image = cells['$device\u0000$column'];
-      if (image == null) {
-        out.writeln('<td class="none" aria-label="해당 조합 없음"></td>');
-        continue;
-      }
-      out
-        ..write('<td ${_dataAttributes(image)}>')
-        ..write(_shot(scenario, image, imageUrl, lightbox))
-        ..writeln('</td>');
-    }
-    out.writeln('</tr>');
-  }
-  out.writeln('</tbody></table></div>');
-}
-
-/// Distinct [values] in the order they first appear.
-List<T> _firstSeen<T>(Iterable<T> values) {
-  final seen = <T>{};
-  return [
-    for (final value in values)
-      if (seen.add(value)) value,
-  ];
-}
-
-/// [declared] when it names any value, otherwise the order in which
-/// [values] first appear.
-List<T> _orderOf<T>(List<T>? declared, Iterable<T> values) =>
-    declared != null && declared.isNotEmpty ? declared : _firstSeen(values);
-
-/// Position of a value in [order]; unknown values sort after every known one.
-int Function(Object value) _rank<T>(List<T> order) => (value) {
-  final index = order.indexOf(value as T);
-  return index < 0 ? order.length : index;
-};
-
-/// [items] ordered by the ranks of their [keys], one rank function per key;
-/// ties keep the original order.
-List<T> _sorted<T, K extends Object>(
-  List<T> items,
-  List<int Function(K value)> ranks,
-  List<K> Function(T item) keys,
-) {
-  final position = {for (var i = 0; i < items.length; i++) items[i]: i};
-  return [...items]..sort((a, b) {
-    final left = keys(a);
-    final right = keys(b);
-    for (var i = 0; i < ranks.length; i++) {
-      final order = ranks[i](left[i]).compareTo(ranks[i](right[i]));
-      if (order != 0) {
-        return order;
-      }
-    }
-    return position[a]!.compareTo(position[b]!);
-  });
-}
-
-void _writeCards(
-  StringBuffer out,
-  GalleryScenario scenario,
-  GalleryImageUrl imageUrl,
-  List<Map<String, Object?>> lightbox,
-) {
-  out.writeln('<div class="cards">');
-  for (final image in scenario.images) {
-    out
-      ..write('<figure class="card" ${_dataAttributes(image)}>')
-      ..write(_shot(scenario, image, imageUrl, lightbox))
-      ..write('<figcaption>${escapeGalleryHtml(image.name)}</figcaption>')
-      ..writeln('</figure>');
-  }
-  out.writeln('</div>');
-}
-
-String _dataAttributes(GalleryImage image) =>
-    'data-device="${escapeGalleryHtml(image.device ?? '')}" '
-    'data-theme="${escapeGalleryHtml(image.theme ?? '')}" '
-    'data-locale="${escapeGalleryHtml(image.locale ?? '')}" '
-    'data-status="${image.status.name}"';
-
-String _shot(
-  GalleryScenario scenario,
-  GalleryImage image,
-  GalleryImageUrl imageUrl,
-  List<Map<String, Object?>> lightbox,
-) {
-  final failed = image.status == GalleryStatus.failed;
-  final overflow = image.overflowCount > 0
-      ? '<span class="flag">오버플로 ${image.overflowCount}</span>'
-      : '';
-  final flag = failed ? '<span class="flag">실패</span>$overflow' : '';
-  if (image.path.isEmpty) {
-    return '<div class="shot missing">$flag<span>캡처 없음</span>'
-        '${_errors(image)}</div>';
-  }
-  final index = lightbox.length;
-  final src = imageUrl(image);
-  lightbox.add({
-    'src': src,
-    'title': '${scenario.suite} / ${scenario.name}',
-    'label': image.label,
-    'status': image.status.name,
-    'errors': image.errors,
-  });
-  final size = image.width != null && image.height != null
-      ? ' width="${image.width}" height="${image.height}"'
-      : '';
-  final alt = escapeGalleryHtml('${scenario.name} — ${image.label}');
-  return '<button type="button" class="shot${failed ? ' failed' : ''}" '
-      'data-index="$index" aria-label="$alt 크게 보기">$flag'
-      '<img src="${escapeGalleryHtml(src)}" alt="$alt" loading="lazy" '
-      'decoding="async"$size></button>${_errors(image)}';
-}
-
-String _errors(GalleryImage image) {
-  if (image.errors.isEmpty) {
-    return '';
-  }
-  final items = image.errors
-      .map((error) => '<li>${escapeGalleryHtml(error)}</li>')
-      .join();
-  return '<details class="errors"><summary>오류 ${image.errors.length}'
-      '</summary><ul>$items</ul></details>';
-}
-
-/// JSON that is safe inside a `<script>` element.
 String _jsonForScript(Object? value) {
-  // JSON escapes for `<`, `>` and `&`, so the data can never close the
-  // script element or open a comment. Built from a backslash constant so the
-  // escape sequences stay literal text in this source file.
   const slash = r'\';
   return jsonEncode(value)
       .replaceAll('<', '${slash}u003c')
@@ -532,147 +142,171 @@ String _jsonForScript(Object? value) {
       .replaceAll('&', '${slash}u0026');
 }
 
-const String _dialog = '''
-<dialog id="viewer" aria-labelledby="viewer-title">
-  <div class="viewer-bar">
-    <div><p id="viewer-title"></p><p id="viewer-label"></p></div>
-    <div class="viewer-actions">
-      <button type="button" id="viewer-prev" aria-label="이전 이미지">이전</button>
-      <button type="button" id="viewer-next" aria-label="다음 이미지">다음</button>
-      <button type="button" id="viewer-close" aria-label="닫기">닫기</button>
-    </div>
-  </div>
-  <ul id="viewer-errors"></ul>
-  <div class="viewer-body"><img id="viewer-image" alt=""></div>
-</dialog>''';
-
-// `[hidden]` must beat author `display` values: the filter script hides
-// scenarios and cards with the attribute, and `.scenario` / `.card` set
-// `display: grid`, which outranks the browser's own `[hidden]` rule.
-String _css(String brand) =>
-    '''
+// The colors and geometry follow cocode-home's site tokens. CoUI's semantic
+// slots resolve to the same palette, while these page rules lay out the data.
+String _css(String brand) {
+  final lightBrand = brand.toUpperCase() == '#5BE0C8'
+      ? '#167463'
+      : 'color-mix(in srgb, $brand 55%, #000)';
+  return '''
 :root {
-  --brand: $brand;
-  --bg: #f4f6f9; --surface: #ffffff; --ink: #121a26; --muted: #5b6878;
-  --line: #d8dfe8; --soft: #e9eef5; --fail: #c62828; --fail-soft: #fdecec;
-  --ok: #1d7a4b; --shadow: 0 1px 2px rgba(18, 26, 38, .08);
-  color-scheme: light;
-  font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --bg: #0b0d0e; --surface: #121517; --panel: #181c1e;
+  --ink: #e7eaeb; --secondary: #9aa1a3; --muted: #81888b;
+  --line: #22282a; --line-strong: #343b3e;
+  --soft: #181c1e; --fail: #e38b78; --fail-soft: #2b1b18; --on-fail: #0b0d0e;
+  --ok: #5be0c8; --brand: $brand;
+  --coui-surface: 11 13 14; --coui-surface-container-low: 18 21 23;
+  --coui-surface-container: 24 28 30; --coui-on-surface: 231 234 235;
+  --coui-on-surface-variant: 154 161 163; --coui-outline: 106 114 117;
+  --coui-outline-variant: 34 40 42; --coui-primary: 231 234 235;
+  --coui-on-primary: 11 13 14; --coui-error: 227 139 120;
+  color-scheme: dark;
+  font-family: Pretendard, "Apple SD Gothic Neo", "Segoe UI", system-ui, sans-serif;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0d1219; --surface: #151c26; --ink: #e4eaf2; --muted: #98a6b8;
-    --line: #253244; --soft: #1b2533; --fail: #ff6b6b; --fail-soft: #3a1c1f;
-    --ok: #5bc98e; --shadow: none; color-scheme: dark;
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #fafbfc; --surface: #ffffff; --panel: #eaeef0;
+    --ink: #14161a; --secondary: #4a5053; --muted: #62686b;
+    --line: #dce1e4; --line-strong: #bdc3c7;
+    --soft: #eaeef0; --fail: #b53e24; --fail-soft: #fbece7; --on-fail: #ffffff;
+    --ok: #167463; --brand: $lightBrand;
+    --coui-surface: 250 251 252; --coui-surface-container-low: 255 255 255;
+    --coui-surface-container: 234 238 240; --coui-on-surface: 20 22 26;
+    --coui-on-surface-variant: 74 80 83; --coui-outline: 121 127 130;
+    --coui-outline-variant: 220 225 228; --coui-primary: 20 22 26;
+    --coui-on-primary: 243 245 247; --coui-error: 181 62 36;
+    color-scheme: light;
   }
 }
-:root[data-theme="dark"] {
-  --bg: #0d1219; --surface: #151c26; --ink: #e4eaf2; --muted: #98a6b8;
-  --line: #253244; --soft: #1b2533; --fail: #ff6b6b; --fail-soft: #3a1c1f;
-  --ok: #5bc98e; --shadow: none; color-scheme: dark;
+:root[data-theme="light"] {
+  --bg: #fafbfc; --surface: #ffffff; --panel: #eaeef0;
+  --ink: #14161a; --secondary: #4a5053; --muted: #62686b;
+  --line: #dce1e4; --line-strong: #bdc3c7;
+  --soft: #eaeef0; --fail: #b53e24; --fail-soft: #fbece7; --on-fail: #ffffff;
+  --ok: #167463; --brand: $lightBrand;
+  --coui-surface: 250 251 252; --coui-surface-container-low: 255 255 255;
+  --coui-surface-container: 234 238 240; --coui-on-surface: 20 22 26;
+  --coui-on-surface-variant: 74 80 83; --coui-outline: 121 127 130;
+  --coui-outline-variant: 220 225 228; --coui-primary: 20 22 26;
+  --coui-on-primary: 243 245 247; --coui-error: 181 62 36;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.55; }
+html { scroll-padding-top: 94px; }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.6; }
+.coui-root { width: 100%; color: var(--ink); font-family: inherit; }
 a { color: var(--brand); }
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.top { display: flex; flex-wrap: wrap; gap: 16px 24px; justify-content: space-between; align-items: flex-start;
-  padding: 24px 20px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
-.title { display: grid; gap: 8px; min-width: 0; }
-h1 { margin: 0; font-size: 24px; line-height: 1.25; letter-spacing: -.01em; text-wrap: balance; }
-.stats { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; list-style: none; color: var(--muted); }
+h1, h2, h3, p, figure, dl, dd { margin: 0; }
+.top { max-width: 1440px; margin-inline: auto; display: flex; flex-wrap: wrap; gap: 24px;
+  justify-content: space-between; align-items: flex-end; padding: 56px max(24px, calc((100% - 1200px) / 2)) 36px; }
+.title { display: grid; gap: 12px; min-width: 0; }
+.eyebrow { color: var(--brand); font: 500 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .16em; }
+h1 { font-size: clamp(30px, 4vw, 54px); line-height: 1.15; font-weight: 650; letter-spacing: -.035em; text-wrap: balance; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 0; list-style: none; color: var(--secondary); }
 .stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .stats .bad b { color: var(--fail); }
 .stats .good b { color: var(--ok); }
-.meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; font-size: 12px; color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 12px; color: var(--muted); }
 .meta div { display: flex; gap: 6px; }
 .meta dt { font-weight: 600; }
-.meta dd { margin: 0; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.meta dd { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.link { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border: 1px solid var(--line);
-  border-radius: 8px; background: var(--surface); color: var(--ink); text-decoration: none; cursor: pointer; }
-.toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end;
-  padding: 12px 20px; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--line); }
-.field { display: grid; gap: 2px; font-size: 12px; color: var(--muted); }
-.field.grow { flex: 1 1 220px; }
-.field input, .field select { min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px;
-  background: var(--surface); }
-.check { display: inline-flex; gap: 6px; align-items: center; min-height: 36px; }
-#visible { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
-.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; padding: 20px; }
-.toc { position: sticky; top: 72px; align-self: start; max-height: calc(100vh - 96px); overflow: auto; }
-.toc summary { font-weight: 600; cursor: pointer; margin-bottom: 8px; }
-.toc h2 { margin: 12px 0 4px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.toc ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
-.toc li { display: flex; gap: 6px; align-items: baseline; }
-.toc a { color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
-.toc a:hover { color: var(--brand); }
-.count { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.link, .viewer-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px;
+  padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 6px; background: transparent;
+  color: var(--ink); text-decoration: none; cursor: pointer; font-weight: 600; }
+.link:hover, .viewer-button:hover { background: var(--panel); }
+.toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 12px 18px;
+  align-items: flex-end; padding: 16px max(24px, calc((100% - 1200px) / 2));
+  background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(10px);
+  border-block: 1px solid var(--line); }
+.field { display: grid; gap: 5px; font-size: 12px; color: var(--secondary); }
+.field.grow { flex: 1 1 240px; }
+.field input, .field select { min-height: 40px; padding: 0 12px; border: 1px solid var(--line-strong);
+  border-radius: 6px; background: var(--panel); color: var(--ink); }
+.check { display: inline-flex; gap: 7px; align-items: center; min-height: 40px; }
+.check input { accent-color: var(--brand); }
+#visible { margin-inline-start: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.layout { max-width: 1440px; margin-inline: auto; display: grid; grid-template-columns: 220px minmax(0, 1fr);
+  gap: 40px; padding: 36px max(24px, calc((100% - 1200px) / 2)) 100px; }
+.toc { position: sticky; top: 94px; align-self: start; max-height: calc(100vh - 118px); overflow: auto; }
+.toc summary { font-weight: 600; cursor: pointer; margin-block-end: 12px; }
+.toc h2 { margin: 20px 0 6px; color: var(--brand); font: 500 11px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: .08em; text-transform: uppercase; }
+.toc ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+.toc li { display: flex; gap: 8px; align-items: baseline; }
+.toc-link { color: var(--secondary); text-decoration: none; overflow-wrap: anywhere; }
+.toc-link:hover { color: var(--brand); }
+.count { font: 500 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); white-space: nowrap; }
 .count.fail { color: var(--fail); }
-main { display: grid; gap: 36px; min-width: 0; }
+main { display: grid; gap: 56px; min-width: 0; }
 .suite { display: grid; gap: 20px; }
-.suite-title { margin: 0; font-size: 20px; padding-bottom: 6px; border-bottom: 2px solid var(--brand); }
+.suite-title { padding-block-end: 12px; border-bottom: 1px solid var(--line-strong); font-size: 24px;
+  font-weight: 600; letter-spacing: -.02em; }
 .suite.plain .suite-title { border-bottom-color: var(--line); }
-.suite-note { margin: -12px 0 0; color: var(--muted); font-size: 13px; }
-.scenario { display: grid; gap: 12px; scroll-margin-top: 80px; }
-.scenario-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
-.scenario-head h3 { margin: 0; font-size: 16px; }
-.scenario-head p { margin: 0; color: var(--muted); flex-basis: 100%; }
-.badges { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 12px; }
-.badges li { padding: 1px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); }
-.badges .fail { background: var(--fail-soft); color: var(--fail); }
-.matrix-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.suite-note { margin-block-start: -8px; color: var(--secondary); font-size: 13px; }
+.scenario { scroll-margin-top: 100px; }
+.scenario-card { width: 100%; background: var(--surface) !important; border: 1px solid var(--line) !important;
+  border-radius: 6px !important; box-shadow: none !important; }
+.scenario-content { display: grid; gap: 18px; min-width: 0; }
+.scenario-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+.scenario-head h3 { font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
+.scenario-head p { color: var(--secondary); flex-basis: 100%; }
+.badges { display: flex; gap: 6px; margin-inline-start: auto; }
+.status-badge { display: inline-flex; align-items: center; min-height: 25px; padding: 2px 8px;
+  border: 1px solid var(--line-strong) !important; border-radius: 4px !important;
+  background: var(--panel) !important; color: var(--secondary) !important; font-size: 12px; }
+.status-badge.fail { border-color: var(--fail) !important; background: var(--fail-soft) !important;
+  color: var(--fail) !important; }
+.matrix-wrap { overflow-x: auto; border-block-start: 1px solid var(--line); }
 .matrix { border-collapse: collapse; }
-.matrix th, .matrix td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-.matrix thead th { position: sticky; top: 0; background: var(--surface); font-size: 12px; font-weight: 600; color: var(--muted);
-  text-align: left; white-space: nowrap; }
-.matrix tbody th { font-size: 12px; text-align: left; white-space: nowrap; color: var(--muted); font-weight: 600; }
+.matrix th, .matrix td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.matrix thead th { position: sticky; top: 0; background: var(--surface); font-size: 12px; font-weight: 600;
+  color: var(--secondary); text-align: start; white-space: nowrap; }
+.matrix tbody th { font-size: 12px; text-align: start; white-space: nowrap; color: var(--secondary); font-weight: 600; }
 .matrix tr:last-child th, .matrix tr:last-child td { border-bottom: 0; }
-.matrix td.none { background: repeating-linear-gradient(45deg, transparent 0 6px, var(--soft) 6px 12px); min-width: 80px; }
-.shot { position: relative; display: block; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
-  background: var(--soft); cursor: zoom-in; box-shadow: var(--shadow); }
+.matrix td.none { background: repeating-linear-gradient(45deg, transparent 0 6px, var(--panel) 6px 12px); min-width: 80px; }
+.shot { position: relative; display: block; padding: 0; border: 1px solid var(--line-strong); border-radius: 6px;
+  overflow: hidden; background: var(--panel); cursor: zoom-in; }
 .shot img { display: block; height: 240px; width: auto; max-width: none; }
 .shot.failed { border-color: var(--fail); outline: 2px solid var(--fail); outline-offset: -1px; }
-.shot.missing { display: grid; place-items: center; gap: 4px; width: 120px; height: 240px; color: var(--fail);
-  background: var(--fail-soft); cursor: default; }
-.flag { position: absolute; top: 6px; left: 6px; z-index: 1; padding: 1px 6px; border-radius: 4px; background: var(--fail);
-  color: #fff; font-size: 11px; font-weight: 600; }
-.flag + .flag { top: 28px; }
+.shot.missing { display: grid; place-items: center; gap: 4px; width: 120px; height: 240px;
+  color: var(--fail); background: var(--fail-soft); cursor: default; }
+.flag { position: absolute; inset-block-start: 6px; inset-inline-start: 6px; z-index: 1; padding: 1px 6px;
+  border-radius: 4px; background: var(--fail); color: var(--on-fail); font-size: 11px; font-weight: 600; }
+.flag + .flag { inset-block-start: 28px; }
 .shot.missing .flag { position: static; }
-.errors { max-width: 320px; margin-top: 6px; font-size: 12px; color: var(--fail); }
-.errors ul { margin: 4px 0 0; padding-left: 16px; }
+.errors { max-width: 320px; margin-block-start: 6px; font-size: 12px; color: var(--fail); }
+.errors ul { margin: 4px 0 0; padding-inline-start: 16px; }
 .cards { display: flex; flex-wrap: wrap; gap: 16px; }
-.card { margin: 0; display: grid; gap: 6px; }
-.card figcaption { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; max-width: 320px; }
+.card { display: grid; gap: 6px; }
+.card figcaption { font-size: 12px; color: var(--secondary); overflow-wrap: anywhere; max-width: 320px; }
 .card .shot img { height: 220px; }
-.muted .shot { opacity: .2; }
-.empty { color: var(--muted); }
-dialog { width: min(1200px, 96vw); max-height: 94vh; padding: 0; border: 1px solid var(--line); border-radius: 12px;
-  background: var(--surface); color: var(--ink); }
-dialog::backdrop { background: rgba(8, 12, 18, .72); }
-.viewer-bar { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: center; padding: 12px 16px;
-  border-bottom: 1px solid var(--line); }
-.viewer-bar p { margin: 0; }
+.muted .shot { filter: grayscale(1); }
+.empty { color: var(--secondary); }
+dialog { width: min(1200px, 96vw); max-height: 94vh; padding: 0; border: 1px solid var(--line-strong);
+  border-radius: 6px; background: var(--surface); color: var(--ink); }
+dialog::backdrop { background: rgba(8, 9, 10, .8); }
+.viewer-bar { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: center;
+  padding: 14px 18px; border-bottom: 1px solid var(--line); }
 #viewer-title { font-weight: 600; }
-#viewer-label { color: var(--muted); font-size: 12px; }
+#viewer-label { color: var(--secondary); font-size: 12px; }
 .viewer-actions { display: flex; gap: 8px; }
-.viewer-actions button { min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px;
-  background: var(--surface); cursor: pointer; }
 #viewer-errors { margin: 0; padding: 8px 32px 0; color: var(--fail); font-size: 12px; }
 #viewer-errors:empty { display: none; }
 .viewer-body { overflow: auto; max-height: calc(94vh - 72px); padding: 16px; display: grid; place-items: center; }
 .viewer-body img { max-width: 100%; height: auto; }
 @media (max-width: 900px) {
-  .layout { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .toc { position: static; max-height: none; }
-  .toc details:not([open]) { margin-bottom: 0; }
-  .top, .toolbar { padding-inline: 16px; }
+  .top, .toolbar, .layout { padding-inline: 24px; }
   .shot img { height: 180px; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 ''';
+}
 
 const String _script = r'''
 (() => {
@@ -681,15 +315,15 @@ const String _script = r'''
   const root = document.documentElement;
   const toggle = $('theme-toggle');
   const labels = { auto: '테마: 자동', light: '테마: 밝게', dark: '테마: 어둡게' };
-  let mode = 'auto';
-  try { mode = localStorage.getItem('co-golden-theme') || 'auto'; } catch (_) {}
+  let mode = 'dark';
+  try { mode = localStorage.getItem('co-golden-theme') || 'dark'; } catch (_) {}
   const applyMode = () => {
     if (mode === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', mode);
     toggle.textContent = labels[mode] || labels.auto;
   };
   applyMode();
   toggle.addEventListener('click', () => {
-    mode = mode === 'auto' ? 'light' : mode === 'light' ? 'dark' : 'auto';
+    mode = mode === 'dark' ? 'light' : mode === 'light' ? 'auto' : 'dark';
     try { localStorage.setItem('co-golden-theme', mode); } catch (_) {}
     applyMode();
   });

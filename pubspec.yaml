@@ -2,7 +2,7 @@ name: co_package_workspace
 description: Cocode Dart and Flutter package workspace.
 
 environment:
-  sdk: ">=3.10.0 <4.0.0"
+  sdk: ">=3.11.0 <4.0.0"
 
 # 워크스페이스 멤버 (단일 루트 lockfile 공유).
 # open_epub·open_board 는 Flutter 패키지이므로 루트 해석에는 `flutter pub get` 이 필요하다.
