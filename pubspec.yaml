@@ -9,6 +9,8 @@ environment:
 workspace:
   - packages/co_arc
   - packages/co_faker
+  - packages/co_golden
+  - packages/co_golden_gallery
   - packages/open_epub_engine
   - packages/open_epub
   - packages/open_epub/example # open_epub → open_epub_engine 을 로컬 해석하도록 워크스페이스 편입

@@ -1,0 +1,23 @@
+name: co_golden_gallery
+description: >-
+  Builds a single-file, searchable HTML gallery from co_golden capture output
+  and plain golden PNG trees: a device × theme × locale grid per scenario,
+  failure highlighting, and images served locally or from a CDN or bucket.
+version: 0.1.0
+repository: https://github.com/coco-de/co-package/tree/main/packages/co_golden_gallery
+resolution: workspace
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+
+executables:
+  co_golden_gallery:
+
+dependencies:
+  args: ^2.7.0
+  meta: ^1.16.0
+  path: ^1.9.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.0
