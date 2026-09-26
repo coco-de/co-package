@@ -49,10 +49,10 @@ dart run bin/co_golden_gallery.dart build --input ../../build/co_golden
 ```
 
 `coui_web` and `coui_core` come from the private `coco-de/coui` repository at
-the same pinned revision as `cocode-home`. The workspace root pins both in
-`dependency_overrides`; projects consuming this package must pin both to that
-revision too. Dependency resolution requires Git credentials with access to
-the repository.
+the same pinned revision as `cocode-home`. This package pins both in
+`dependency_overrides` so standalone activation works. Projects consuming this
+package as a dependency must also pin both to that revision. Dependency
+resolution requires Git credentials with access to the repository.
 
 | Option | Meaning |
 | --- | --- |

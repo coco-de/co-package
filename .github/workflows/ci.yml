@@ -35,6 +35,22 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # co_golden_gallery renders with private coco-de/coui. This public repo
+      # has no Actions secret that can read it, so check source formatting here
+      # and run the remaining workspace checks without resolving that member.
+      - run: dart format --output=none --set-exit-if-changed packages/co_golden_gallery
+      - name: Exclude private CoUI gallery from public CI workspace
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          pubspec = Path('pubspec.yaml')
+          marker = '  - packages/co_golden_gallery\n'
+          text = pubspec.read_text()
+          if text.count(marker) != 1:
+              raise SystemExit('co_golden_gallery workspace entry not found exactly once')
+          pubspec.write_text(text.replace(marker, ''))
+          PY
       # --no-example: packages/open_board/example 은 private coco-de/open-epub 을 git
       # 의존성으로 쓰므로 CI 의 워크스페이스 해석에서 제외한다(인증 불가 → exit 69).
       - run: flutter pub get --no-example

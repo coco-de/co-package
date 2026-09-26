@@ -1,6 +1,6 @@
 name: co_golden_gallery
 description: >-
-  Builds a single-file, searchable HTML gallery from co_golden capture output
+  Builds a searchable HTML gallery from co_golden capture output
   and plain golden PNG trees: a device × theme × locale grid per scenario,
   failure highlighting, and images served locally or from a CDN or bucket.
 version: 0.1.0
@@ -24,3 +24,16 @@ dev_dependencies:
   crypto: ^3.0.0
   lints: ^6.0.0
   test: ^1.26.0
+
+# Also applies when this package is activated as a standalone git executable.
+dependency_overrides:
+  coui_web:
+    git:
+      url: https://github.com/coco-de/coui.git
+      path: packages/coui_web
+      ref: 86930350cacd5511d6994c289cd4c436d4bb56a9
+  coui_core:
+    git:
+      url: https://github.com/coco-de/coui.git
+      path: packages/coui_core
+      ref: 86930350cacd5511d6994c289cd4c436d4bb56a9
