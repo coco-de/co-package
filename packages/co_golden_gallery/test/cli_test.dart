@@ -108,6 +108,22 @@ void main() {
     expect(html, contains('src="../'));
   });
 
+  test('uses --plain-title for the section without axes', () async {
+    final (code, _, _) = await run([
+      'build',
+      '-i',
+      root.path,
+      '-o',
+      output.path,
+      '--plain-title',
+      '회귀 골든',
+    ]);
+
+    expect(code, 0);
+    final html = File(p.join(output.path, 'index.html')).readAsStringSync();
+    expect(html, contains('<h2 class="suite-title">회귀 골든</h2>'));
+  });
+
   test('fails when a manifest names a missing image', () async {
     File(
       p.join(root.path, 'images', 'auth', 'login', 'phone__dark__ko.png'),

@@ -17,6 +17,7 @@ final class GalleryPageOptions {
     this.noindex = false,
     this.metadata = const [],
     this.links = const [],
+    this.plainTitle = '축 없는 이미지',
     DateTime? generatedAt,
   }) : generatedAt = (generatedAt ?? DateTime.now()).toUtc() {
     if (!isGalleryColor(brandColor)) {
@@ -41,6 +42,11 @@ final class GalleryPageOptions {
 
   /// Build time shown in the header.
   final DateTime generatedAt;
+
+  /// Heading of the section that holds images without device, theme, or
+  /// locale, such as regression baselines. Those images are kept apart from
+  /// the matrix grids and hidden while an axis filter is set.
+  final String plainTitle;
 }
 
 /// Whether [value] is a `#RRGGBB` color.
@@ -78,6 +84,7 @@ String renderGalleryHtml(
   }
   out
     ..writeln('<meta name="generator" content="co_golden_gallery">')
+    ..writeln('<link rel="icon" href="${_favicon(options.brandColor)}">')
     ..writeln('<title>${escapeGalleryHtml(options.title)}</title>')
     ..writeln('<style>${_css(options.brandColor)}</style>')
     ..writeln('</head>')
@@ -89,22 +96,38 @@ String renderGalleryHtml(
     ..writeln('<div class="layout">')
     ..writeln('<nav class="toc" aria-label="시나리오 목록">')
     ..writeln('<details open><summary>시나리오</summary>');
-  for (final suite in catalog.suites) {
+  // Matrix scenarios are grouped by suite. Images without axes (for example
+  // regression baselines) get their own group after them, so the grids and
+  // the plain cards never mix within a suite.
+  final plain = [
+    for (final scenario in catalog.scenarios)
+      if (!scenario.fromManifest) scenario,
+  ];
+  final matrixSuites = [
+    for (final suite in catalog.suites)
+      if (catalog.scenarios.any((s) => s.suite == suite && s.fromManifest))
+        suite,
+  ];
+  Iterable<GalleryScenario> matrixOf(String suite) =>
+      catalog.scenarios.where((s) => s.suite == suite && s.fromManifest);
+
+  for (final suite in matrixSuites) {
     out
       ..writeln(
         '<div class="toc-suite" data-suite="${escapeGalleryHtml(suite)}">',
       )
       ..writeln('<h2>${escapeGalleryHtml(suite)}</h2><ul>');
-    for (final scenario in catalog.scenarios.where((s) => s.suite == suite)) {
-      final failed = scenario.failedCount;
-      out.writeln(
-        '<li data-toc="${escapeGalleryHtml(scenario.anchor)}">'
-        '<a href="#${escapeGalleryHtml(scenario.anchor)}">'
-        '${escapeGalleryHtml(scenario.name)}</a>'
-        '<span class="count">${scenario.images.length}</span>'
-        '${failed > 0 ? '<span class="count fail">실패 $failed</span>' : ''}'
-        '</li>',
-      );
+    for (final scenario in matrixOf(suite)) {
+      _writeTocItem(out, scenario, scenario.name);
+    }
+    out.writeln('</ul></div>');
+  }
+  if (plain.isNotEmpty) {
+    out
+      ..writeln('<div class="toc-suite plain">')
+      ..writeln('<h2>${escapeGalleryHtml(options.plainTitle)}</h2><ul>');
+    for (final scenario in plain) {
+      _writeTocItem(out, scenario, _plainHeading(scenario));
     }
     out.writeln('</ul></div>');
   }
@@ -113,14 +136,35 @@ String renderGalleryHtml(
     ..writeln('</nav>')
     ..writeln('<main id="gallery">');
 
-  for (final suite in catalog.suites) {
+  for (final suite in matrixSuites) {
     out
       ..writeln(
         '<section class="suite" data-suite="${escapeGalleryHtml(suite)}">',
       )
       ..writeln('<h2 class="suite-title">${escapeGalleryHtml(suite)}</h2>');
-    for (final scenario in catalog.scenarios.where((s) => s.suite == suite)) {
-      _writeScenario(out, scenario, imageUrl, lightbox);
+    for (final scenario in matrixOf(suite)) {
+      _writeScenario(out, scenario, scenario.name, imageUrl, lightbox);
+    }
+    out.writeln('</section>');
+  }
+  if (plain.isNotEmpty) {
+    out
+      ..writeln('<section class="suite plain">')
+      ..writeln(
+        '<h2 class="suite-title">${escapeGalleryHtml(options.plainTitle)}</h2>',
+      )
+      ..writeln(
+        '<p class="suite-note">기기·테마·언어 정보가 없는 이미지입니다. '
+        '기기·테마·언어 필터를 고르면 숨겨집니다.</p>',
+      );
+    for (final scenario in plain) {
+      _writeScenario(
+        out,
+        scenario,
+        _plainHeading(scenario),
+        imageUrl,
+        lightbox,
+      );
     }
     out.writeln('</section>');
   }
@@ -138,6 +182,21 @@ String renderGalleryHtml(
     ..writeln('</html>');
   return out.toString();
 }
+
+void _writeTocItem(StringBuffer out, GalleryScenario scenario, String label) {
+  final failed = scenario.failedCount;
+  out.writeln(
+    '<li data-toc="${escapeGalleryHtml(scenario.anchor)}">'
+    '<a href="#${escapeGalleryHtml(scenario.anchor)}">'
+    '${escapeGalleryHtml(label)}</a>'
+    '<span class="count">${scenario.images.length}</span>'
+    '${failed > 0 ? '<span class="count fail">실패 $failed</span>' : ''}'
+    '</li>',
+  );
+}
+
+String _plainHeading(GalleryScenario scenario) =>
+    '${scenario.suite} / ${scenario.name}';
 
 void _writeHeader(
   StringBuffer out,
@@ -228,6 +287,7 @@ void _writeToolbar(StringBuffer out, GalleryCatalog catalog) {
 void _writeScenario(
   StringBuffer out,
   GalleryScenario scenario,
+  String heading,
   GalleryImageUrl imageUrl,
   List<Map<String, Object?>> lightbox,
 ) {
@@ -244,7 +304,7 @@ void _writeScenario(
       'data-search="${escapeGalleryHtml(search)}">',
     )
     ..writeln('<div class="scenario-head">')
-    ..writeln('<h3>${escapeGalleryHtml(scenario.name)}</h3>');
+    ..writeln('<h3>${escapeGalleryHtml(heading)}</h3>');
   if (scenario.description case final description?) {
     out.writeln('<p>${escapeGalleryHtml(description)}</p>');
   }
@@ -274,27 +334,46 @@ void _writeMatrix(
   GalleryImageUrl imageUrl,
   List<Map<String, Object?>> lightbox,
 ) {
-  final devices = <String>[];
-  final columns = <String>[];
+  final images = scenario.images;
+  final axes = scenario.axes;
   final cells = <String, GalleryImage>{};
-  for (final image in scenario.images) {
-    final device = image.device ?? image.name;
-    if (!devices.contains(device)) {
-      devices.add(device);
-    }
-    if (!columns.contains(image.columnKey)) {
-      columns.add(image.columnKey);
-    }
-    cells['$device\u0000${image.columnKey}'] = image;
+  final samples = <String, GalleryImage>{};
+  for (final image in images) {
+    cells['${image.device ?? image.name}\u0000${image.columnKey}'] = image;
+    samples.putIfAbsent(image.columnKey, () => image);
   }
-  GalleryImage? sample(String column) {
-    for (final image in scenario.images) {
-      if (image.columnKey == column) {
-        return image;
-      }
-    }
-    return null;
-  }
+  // Rows follow the declared device order and columns the declared theme ×
+  // locale × text scale order. Manifests written before co_golden recorded
+  // the axes fall back to the order in which each value first appears.
+  final devices = _sorted(
+    _firstSeen([for (final image in images) image.device ?? image.name]),
+    [_rank(_orderOf(axes?.devices, const []))],
+    (device) => [device],
+  );
+  final themeRank = _rank(
+    _orderOf(axes?.themes, [for (final image in images) image.theme ?? '']),
+  );
+  final localeRank = _rank(
+    _orderOf(axes?.locales, [for (final image in images) image.locale ?? '']),
+  );
+  final scaleRank = _rank(
+    _orderOf(axes?.textScales, [
+      for (final image in images) image.textScale ?? 1.0,
+    ]),
+  );
+  final columns = _sorted<String, Object>(
+    samples.keys.toList(),
+    [
+      (value) => themeRank(value),
+      (value) => localeRank(value),
+      (value) => scaleRank(value),
+    ],
+    (column) {
+      final image = samples[column]!;
+      return [image.theme ?? '', image.locale ?? '', image.textScale ?? 1.0];
+    },
+  );
+  GalleryImage? sample(String column) => samples[column];
 
   out
     ..writeln('<div class="matrix-wrap"><table class="matrix">')
@@ -327,6 +406,47 @@ void _writeMatrix(
     out.writeln('</tr>');
   }
   out.writeln('</tbody></table></div>');
+}
+
+/// Distinct [values] in the order they first appear.
+List<T> _firstSeen<T>(Iterable<T> values) {
+  final seen = <T>{};
+  return [
+    for (final value in values)
+      if (seen.add(value)) value,
+  ];
+}
+
+/// [declared] when it names any value, otherwise the order in which
+/// [values] first appear.
+List<T> _orderOf<T>(List<T>? declared, Iterable<T> values) =>
+    declared != null && declared.isNotEmpty ? declared : _firstSeen(values);
+
+/// Position of a value in [order]; unknown values sort after every known one.
+int Function(Object value) _rank<T>(List<T> order) => (value) {
+  final index = order.indexOf(value as T);
+  return index < 0 ? order.length : index;
+};
+
+/// [items] ordered by the ranks of their [keys], one rank function per key;
+/// ties keep the original order.
+List<T> _sorted<T, K extends Object>(
+  List<T> items,
+  List<int Function(K value)> ranks,
+  List<K> Function(T item) keys,
+) {
+  final position = {for (var i = 0; i < items.length; i++) items[i]: i};
+  return [...items]..sort((a, b) {
+    final left = keys(a);
+    final right = keys(b);
+    for (var i = 0; i < ranks.length; i++) {
+      final order = ranks[i](left[i]).compareTo(ranks[i](right[i]));
+      if (order != 0) {
+        return order;
+      }
+    }
+    return position[a]!.compareTo(position[b]!);
+  });
 }
 
 void _writeCards(
@@ -423,6 +543,23 @@ const String _dialog = '''
   <div class="viewer-body"><img id="viewer-image" alt=""></div>
 </dialog>''';
 
+/// Inline favicon in the accent color, so a static host is not asked for
+/// `/favicon.ico` (a 404 in the browser console).
+String _favicon(String brand) {
+  final svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+      '<rect width="32" height="32" rx="7" fill="$brand"/>'
+      '<g fill="#fff"><rect x="7" y="7" width="8" height="8" rx="1.5"/>'
+      '<rect x="17" y="7" width="8" height="8" rx="1.5"/>'
+      '<rect x="7" y="17" width="8" height="8" rx="1.5"/>'
+      '<rect x="17" y="17" width="8" height="8" rx="1.5" opacity=".55"/>'
+      '</g></svg>';
+  return 'data:image/svg+xml;base64,${base64Encode(utf8.encode(svg))}';
+}
+
+// `[hidden]` must beat author `display` values: the filter script hides
+// scenarios and cards with the attribute, and `.scenario` / `.card` set
+// `display: grid`, which outranks the browser's own `[hidden]` rule.
 String _css(String brand) =>
     '''
 :root {
@@ -446,6 +583,7 @@ String _css(String brand) =>
   --ok: #5bc98e; --shadow: none; color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.55; }
 a { color: var(--brand); }
 button, select, input { font: inherit; color: inherit; }
@@ -487,6 +625,8 @@ h1 { margin: 0; font-size: 24px; line-height: 1.25; letter-spacing: -.01em; text
 main { display: grid; gap: 36px; min-width: 0; }
 .suite { display: grid; gap: 20px; }
 .suite-title { margin: 0; font-size: 20px; padding-bottom: 6px; border-bottom: 2px solid var(--brand); }
+.suite.plain .suite-title { border-bottom-color: var(--line); }
+.suite-note { margin: -12px 0 0; color: var(--muted); font-size: 13px; }
 .scenario { display: grid; gap: 12px; scroll-margin-top: 80px; }
 .scenario-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
 .scenario-head h3 { margin: 0; font-size: 16px; }

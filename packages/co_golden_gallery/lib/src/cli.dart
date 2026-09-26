@@ -30,6 +30,14 @@ ArgParser _parser() => ArgParser()
   )
   ..addOption('title', defaultsTo: 'Golden Gallery', help: 'Page title.')
   ..addOption(
+    'plain-title',
+    valueHelp: 'text',
+    defaultsTo: '축 없는 이미지',
+    help:
+        'Heading of the section with images that have no device, theme, or '
+        'locale, such as regression baselines.',
+  )
+  ..addOption(
     'asset-base-url',
     valueHelp: 'url',
     help:
@@ -184,6 +192,7 @@ Future<int> runGalleryCli(
       noindex: args.flag('noindex'),
       metadata: metadata,
       links: links,
+      plainTitle: args.option('plain-title')!,
     ),
     imageUrl: imageUrl,
   );

@@ -44,6 +44,48 @@ void main() {
     expect(plain.images.single.path, 'images/regression/auth/login_page.png');
   });
 
+  test('reads the declared axis order from the manifest plan', () {
+    writeManifest(
+      root,
+      suite: 'store',
+      scenario: 'header',
+      results: [result(stem: 'phone__light__ko', theme: 'light', locale: 'ko')],
+      axes: {
+        'devices': ['phone', 'desktop'],
+        'themes': ['light', 'dark'],
+        'locales': ['ko', 'zh-Hant'],
+        'textScales': [1, 1.3],
+      },
+    );
+
+    final scenarios = scanGallerySources([root]).catalog.scenarios;
+    final header = scenarios.singleWhere((s) => s.name == 'header');
+    final login = scenarios.singleWhere((s) => s.name == 'login');
+
+    expect(header.axes!.devices, ['phone', 'desktop']);
+    expect(header.axes!.themes, ['light', 'dark']);
+    expect(header.axes!.locales, ['ko', 'zh-Hant']);
+    expect(header.axes!.textScales, [1.0, 1.3]);
+    expect(login.axes, isNull, reason: 'manifests before plan.axes');
+  });
+
+  test('rejects a malformed plan.axes', () {
+    writeManifest(
+      root,
+      suite: 'store',
+      scenario: 'header',
+      results: [result(stem: 'phone__light__ko', theme: 'light', locale: 'ko')],
+      axes: {
+        'themes': ['light', 2],
+      },
+    );
+
+    expect(
+      () => scanGallerySources([root]),
+      throwsA(isA<GallerySourceException>()),
+    );
+  });
+
   test('reports images that a manifest names but that do not exist', () {
     File(
       p.join(root.path, 'images', 'auth', 'login', 'phone__dark__ko.png'),

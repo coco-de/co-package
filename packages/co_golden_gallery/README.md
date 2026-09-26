@@ -44,6 +44,7 @@ dart pub global run co_golden_gallery build --input build/co_golden
 | `--copy-images` | Copy the images next to `index.html` for a self-contained folder. |
 | `--noindex` | Add `<meta name="robots" content="noindex, nofollow">`. |
 | `--title`, `--brand-color` | Page title and `#RRGGBB` accent. |
+| `--plain-title` | Heading of the section with images that have no device, theme, or locale (default `축 없는 이미지`). |
 | `--meta label=value` | Header entries such as the commit. Repeatable. |
 | `--link label=url` | Header links. Repeatable. |
 | `--summary file` | Write counts and failed variants as JSON (for CI summaries). |
@@ -63,6 +64,14 @@ to the output directory.
 An image named by a manifest carries the manifest's metadata; any other image
 is grouped by its path. Two inputs that provide the same gallery path are an
 error.
+
+Matrix scenarios are grouped by suite and shown as a device × variant grid.
+Rows and columns follow the coverage order that co_golden writes under
+`plan.axes` (devices; themes × locales × text scales); manifests without it
+fall back to the order in which each value first appears. Images without
+axes, such as regression baselines, are collected in their own section after
+the matrix suites (`--plain-title`) and are hidden while a device, theme, or
+locale filter is set.
 
 ## Exit codes
 
