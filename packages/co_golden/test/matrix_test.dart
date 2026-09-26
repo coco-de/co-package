@@ -132,6 +132,12 @@ void main() {
         'combinations': 4,
         'excluded': 0,
         'selected': 4,
+        'axes': {
+          'devices': ['phone-compact', 'desktop'],
+          'themes': ['light', 'dark'],
+          'locales': ['en'],
+          'textScales': [1.0],
+        },
       });
       expect(results, hasLength(4));
       expect(results.map((result) => result['status']).toSet(), {'passed'});

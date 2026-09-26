@@ -81,6 +81,7 @@ final class GoldenPlan<T> {
     required this.variants,
     required this.excluded,
     required this.combinations,
+    required this.axes,
   });
 
   /// Variants to run, in axis order (device, theme, locale, text scale).
@@ -92,11 +93,51 @@ final class GoldenPlan<T> {
   /// Size of the Cartesian product before rules and sampling.
   final int combinations;
 
-  /// Counts written to run manifests.
+  /// Axis values of the coverage in declaration order.
+  ///
+  /// Sampling and rules can leave the first device without some themes or
+  /// locales, so the order in which variants first appear is not the
+  /// coverage order. A gallery orders its grid by these lists instead.
+  final GoldenAxes axes;
+
+  /// Counts and axis order written to run manifests.
   Map<String, Object?> toJson() => {
     'combinations': combinations,
     'excluded': excluded.length,
     'selected': variants.length,
+    'axes': axes.toJson(),
+  };
+}
+
+/// Axis values of a coverage, in the order they were declared.
+@immutable
+final class GoldenAxes {
+  /// Creates the axis lists.
+  const GoldenAxes({
+    required this.devices,
+    required this.themes,
+    required this.locales,
+    required this.textScales,
+  });
+
+  /// Device names.
+  final List<String> devices;
+
+  /// Theme names.
+  final List<String> themes;
+
+  /// BCP 47 locale tags, for example `zh-Hans`.
+  final List<String> locales;
+
+  /// Text scale factors.
+  final List<double> textScales;
+
+  /// JSON form written under `plan.axes`.
+  Map<String, Object?> toJson() => {
+    'devices': devices,
+    'themes': themes,
+    'locales': locales,
+    'textScales': textScales,
   };
 }
 
@@ -211,6 +252,14 @@ final class GoldenCoverage<T> {
       variants: List.unmodifiable(selected),
       excluded: List.unmodifiable(excluded),
       combinations: combinations,
+      axes: GoldenAxes(
+        devices: List.unmodifiable([for (final device in devices) device.name]),
+        themes: List.unmodifiable([for (final theme in themes) theme.name]),
+        locales: List.unmodifiable([
+          for (final locale in locales) locale.toLanguageTag(),
+        ]),
+        textScales: List.unmodifiable(textScales),
+      ),
     );
   }
 

@@ -68,6 +68,53 @@ void main() {
       );
     });
 
+    test('keeps the declared axis order for the gallery grid', () {
+      final plan = _coverage(
+        locales: const [Locale('en'), Locale('zh', 'Hant'), Locale('ko')],
+        textScales: const [1, 1.3],
+      ).plan();
+
+      expect(plan.axes.devices, [
+        'phone-compact',
+        'phone',
+        'tablet',
+        'desktop',
+      ]);
+      expect(plan.axes.themes, ['light', 'dark']);
+      expect(plan.axes.locales, ['en', 'zh-Hant', 'ko']);
+      expect(plan.axes.textScales, [1.0, 1.3]);
+      expect(plan.toJson()['axes'], {
+        'devices': ['phone-compact', 'phone', 'tablet', 'desktop'],
+        'themes': ['light', 'dark'],
+        'locales': ['en', 'zh-Hant', 'ko'],
+        'textScales': [1.0, 1.3],
+      });
+    });
+
+    test('keeps every declared axis value even when rules and sampling '
+        'drop it from the first device', () {
+      final plan = _coverage(
+        sampling: GoldenSampling.pairwise,
+        rules: [
+          GoldenCoverageRule.exclude(
+            'no light theme on compact phones',
+            (variant) =>
+                variant.device.name == 'phone-compact' &&
+                variant.theme.name == 'light',
+          ),
+        ],
+      ).plan();
+
+      final compact = plan.variants.where(
+        (variant) => variant.device.name == 'phone-compact',
+      );
+      expect(compact.map((variant) => variant.theme.name).toSet(), {
+        'dark',
+      }, reason: 'the first device no longer carries the first theme');
+      expect(plan.axes.themes, ['light', 'dark']);
+      expect(plan.axes.locales, ['ko', 'en']);
+    });
+
     test('adds a text token only when the scale is not 1', () {
       final plan = _coverage(
         devices: const [GoldenDevice.phone],
