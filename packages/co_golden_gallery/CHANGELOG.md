@@ -2,7 +2,8 @@
 
 - Render the gallery with Jaspr and `coui_web` components, using the
   `cocode-home` dark-first style and mint accent while retaining single-file
-  HTML output and the existing CLI options. Pin CoUI for standalone activation.
+  HTML output and the existing CLI options. Document the CoUI overrides needed
+  by downstream runner projects.
 
 ## 0.1.0
 

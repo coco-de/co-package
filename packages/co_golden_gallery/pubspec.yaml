@@ -25,7 +25,7 @@ dev_dependencies:
   lints: ^6.0.0
   test: ^1.26.0
 
-# Also applies when this package is activated as a standalone git executable.
+# Used by this workspace. Git consumers must repeat both overrides at their root.
 dependency_overrides:
   coui_web:
     git:
