@@ -20,6 +20,13 @@ void main() {
     output.deleteSync(recursive: true);
   });
 
+  void expectFavicons() {
+    for (final icon in galleryFavicons) {
+      final file = File(p.join(output.path, icon.fileName));
+      expect(file.readAsBytesSync(), icon.bytes, reason: icon.fileName);
+    }
+  }
+
   Future<(int, String, String)> run(List<String> arguments) async {
     final out = StringBuffer();
     final err = StringBuffer();
@@ -54,6 +61,7 @@ void main() {
     final html = File(p.join(output.path, 'index.html')).readAsStringSync();
     expect(html, contains('src="images/auth/login/phone__light__ko.png"'));
     expect(html, contains('noindex'));
+    expectFavicons();
     expect(
       File(
         p.join(output.path, 'images', 'regression', 'auth', 'login_page.png'),
@@ -91,6 +99,7 @@ void main() {
       ),
     );
     expect(Directory(p.join(output.path, 'images')).existsSync(), isFalse);
+    expectFavicons();
   });
 
   test('refers to local files relatively by default', () async {
@@ -122,6 +131,46 @@ void main() {
     expect(code, 0);
     final html = File(p.join(output.path, 'index.html')).readAsStringSync();
     expect(html, contains('<h2 class="suite-title">회귀 골든</h2>'));
+  });
+
+  test('refuses to copy an image over a favicon file', () async {
+    writePng(p.join(root.path, 'Favicon.ico'));
+    writeManifest(
+      root,
+      suite: 'misc',
+      scenario: 'clash',
+      results: [
+        result(
+          stem: 'clash',
+          theme: 'light',
+          locale: 'ko',
+          image: 'Favicon.ico',
+        ),
+      ],
+    );
+
+    final (code, _, err) = await run([
+      'build',
+      '-i',
+      root.path,
+      '-o',
+      output.path,
+      '--copy-images',
+    ]);
+    expect(code, galleryDataError);
+    expect(err, contains('Favicon.ico'));
+    expect(File(p.join(output.path, 'index.html')).existsSync(), isFalse);
+
+    // Without --copy-images the image stays where it is: no clash.
+    final (linked, _, _) = await run([
+      'build',
+      '-i',
+      root.path,
+      '-o',
+      output.path,
+    ]);
+    expect(linked, 0);
+    expectFavicons();
   });
 
   test('fails when a manifest names a missing image', () async {

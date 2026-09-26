@@ -9,6 +9,7 @@
 library;
 
 export 'src/cli.dart' show galleryDataError, galleryUsageError, runGalleryCli;
+export 'src/favicon.dart';
 export 'src/html.dart';
 export 'src/model.dart';
 export 'src/scanner.dart';

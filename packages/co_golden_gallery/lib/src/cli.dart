@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 
+import 'favicon.dart';
 import 'html.dart';
 import 'model.dart';
 import 'scanner.dart';
@@ -11,7 +12,8 @@ import 'scanner.dart';
 /// Exit code for invalid arguments.
 const int galleryUsageError = 64;
 
-/// Exit code for unusable input data (bad manifests, missing images).
+/// Exit code for unusable input data (bad manifests, missing images, or a
+/// copied image that would overwrite a favicon file).
 const int galleryDataError = 65;
 
 ArgParser _parser() => ArgParser()
@@ -26,7 +28,7 @@ ArgParser _parser() => ArgParser()
     abbr: 'o',
     valueHelp: 'dir',
     defaultsTo: 'build/golden-gallery',
-    help: 'Directory that receives index.html.',
+    help: 'Directory that receives index.html and the favicon files.',
   )
   ..addOption('title', defaultsTo: 'Golden Gallery', help: 'Page title.')
   ..addOption(
@@ -159,6 +161,22 @@ Future<int> runGalleryCli(
     );
     return galleryDataError;
   }
+  if (copyImages) {
+    // The favicon files sit next to index.html, where copied images land
+    // too. Compare case-insensitively: the default macOS file system is.
+    final favicons = {for (final icon in galleryFavicons) icon.fileName};
+    final clashes = [
+      for (final path in scan.files.keys)
+        if (favicons.contains(p.posix.normalize(path).toLowerCase())) path,
+    ];
+    if (clashes.isNotEmpty) {
+      err.writeln(
+        '${clashes.length} image(s) would overwrite a favicon file next to '
+        'index.html:\n${clashes.map((path) => '  $path').join('\n')}',
+      );
+      return galleryDataError;
+    }
+  }
 
   final output = Directory(args.option('output')!);
   output.createSync(recursive: true);
@@ -197,6 +215,10 @@ Future<int> runGalleryCli(
     imageUrl: imageUrl,
   );
   File(p.join(output.path, 'index.html')).writeAsStringSync(html);
+  // Written in every mode: the page links them relatively.
+  for (final icon in galleryFavicons) {
+    File(p.join(output.path, icon.fileName)).writeAsBytesSync(icon.bytes);
+  }
 
   if (copyImages) {
     for (final MapEntry(key: path, value: source) in scan.files.entries) {
