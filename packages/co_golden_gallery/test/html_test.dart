@@ -95,11 +95,22 @@ void main() {
     expect(render(), contains('[hidden] { display: none !important; }'));
   });
 
-  test('inlines a favicon so no /favicon.ico is requested', () {
+  test('links the cocode favicon files relative to the page', () {
+    final html = render();
+    final head = html.substring(0, html.indexOf('</head>'));
+
+    // SVG first, as on cocode.im. Relative URLs keep the icons working below
+    // a path such as GitHub Pages' /<repo>/.
     expect(
-      render(),
-      contains('<link rel="icon" href="data:image/svg+xml;base64,'),
+      head,
+      contains(
+        '<link rel="icon" type="image/svg+xml" href="favicon.svg">\n'
+        '<link rel="icon" sizes="32x32" href="favicon.ico">\n'
+        '<link rel="apple-touch-icon" href="apple-touch-icon.png">\n',
+      ),
     );
+    // Safari does not show data URI favicons.
+    expect(head, isNot(contains('data:image')));
   });
 
   test('collects images without axes after the matrix suites', () {

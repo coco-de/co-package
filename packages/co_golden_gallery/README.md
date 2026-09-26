@@ -13,6 +13,13 @@ Builds a single-file, searchable HTML gallery from
   scripts or styles.
 - Images stay local, are copied next to the page, or are served from a URL
   prefix such as a storage bucket.
+- The page carries the cocode favicon set — the same files as
+  [cocode.im](https://cocode.im): `favicon.svg` (the "CO." mark, which follows
+  the browser theme), `favicon.ico` (a 32 × 32 PNG for browsers without SVG
+  favicons), and `apple-touch-icon.png` (180 × 180). They are written next to
+  `index.html` in every mode and linked relatively, so the gallery also works
+  below a path such as GitHub Pages' `/<repo>/`. They are files rather than
+  data URIs because Safari does not show data URI favicons.
 
 ## Usage
 
@@ -39,7 +46,7 @@ dart pub global run co_golden_gallery build --input build/co_golden
 | Option | Meaning |
 | --- | --- |
 | `--input`, `-i` | Source root with `runs/` manifests and an `images/` tree. Repeatable. |
-| `--output`, `-o` | Directory that receives `index.html` (default `build/golden-gallery`). |
+| `--output`, `-o` | Directory that receives `index.html` and the favicon files (default `build/golden-gallery`). |
 | `--asset-base-url` | Serve every image from this http(s) prefix plus its gallery path. |
 | `--copy-images` | Copy the images next to `index.html` for a self-contained folder. |
 | `--noindex` | Add `<meta name="robots" content="noindex, nofollow">`. |
@@ -79,7 +86,7 @@ locale filter is set.
 | --- | --- |
 | 0 | The gallery was written. |
 | 64 | Invalid arguments. |
-| 65 | Unusable input: missing directory, unreadable or foreign manifest, newer schema, missing images, or no image at all. |
+| 65 | Unusable input: missing directory, unreadable or foreign manifest, newer schema, missing images, no image at all, or (with `--copy-images`) an image whose path would overwrite a favicon file. |
 
 Failed variants do not change the exit code — read them from `--summary`, so
 a pipeline can publish the gallery and still fail afterwards.

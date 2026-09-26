@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 
+import 'favicon.dart';
 import 'model.dart';
 
 /// Resolves the `src` of an image in the rendered page.
@@ -64,7 +65,9 @@ String escapeGalleryHtml(String value) => value
 /// Renders the whole gallery as one self-contained HTML document.
 ///
 /// Styles and script are inline and no external resource is loaded besides
-/// the images themselves, whose URLs come from [imageUrl].
+/// the images themselves, whose URLs come from [imageUrl], and the favicon
+/// files in [galleryFavicons], which must sit next to the page — the `build`
+/// command writes them.
 String renderGalleryHtml(
   GalleryCatalog catalog,
   GalleryPageOptions options, {
@@ -84,7 +87,7 @@ String renderGalleryHtml(
   }
   out
     ..writeln('<meta name="generator" content="co_golden_gallery">')
-    ..writeln('<link rel="icon" href="${_favicon(options.brandColor)}">')
+    ..writeln(galleryFavicons.map((icon) => icon.link).join('\n'))
     ..writeln('<title>${escapeGalleryHtml(options.title)}</title>')
     ..writeln('<style>${_css(options.brandColor)}</style>')
     ..writeln('</head>')
@@ -542,20 +545,6 @@ const String _dialog = '''
   <ul id="viewer-errors"></ul>
   <div class="viewer-body"><img id="viewer-image" alt=""></div>
 </dialog>''';
-
-/// Inline favicon in the accent color, so a static host is not asked for
-/// `/favicon.ico` (a 404 in the browser console).
-String _favicon(String brand) {
-  final svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
-      '<rect width="32" height="32" rx="7" fill="$brand"/>'
-      '<g fill="#fff"><rect x="7" y="7" width="8" height="8" rx="1.5"/>'
-      '<rect x="17" y="7" width="8" height="8" rx="1.5"/>'
-      '<rect x="7" y="17" width="8" height="8" rx="1.5"/>'
-      '<rect x="17" y="17" width="8" height="8" rx="1.5" opacity=".55"/>'
-      '</g></svg>';
-  return 'data:image/svg+xml;base64,${base64Encode(utf8.encode(svg))}';
-}
 
 // `[hidden]` must beat author `display` values: the filter script hides
 // scenarios and cards with the attribute, and `.scenario` / `.card` set
