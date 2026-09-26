@@ -1,3 +1,9 @@
+## Unreleased
+
+- Render the gallery with Jaspr and `coui_web` components, using the
+  `cocode-home` dark-first style and mint accent while retaining single-file
+  output and the existing CLI options.
+
 ## 0.1.0
 
 - Initial release: `co_golden_gallery build` turns co_golden run manifests

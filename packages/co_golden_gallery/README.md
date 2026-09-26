@@ -1,7 +1,12 @@
 # co_golden_gallery
 
-Builds a single-file, searchable HTML gallery from
+Builds a searchable HTML gallery from
 [co_golden](../co_golden/README.md) capture output and plain golden PNG trees.
+Jaspr renders the page with `coui_web` cards, badges, buttons, and links.
+Its dark-first palette, mint accent, typography, and flat panels follow
+[`cocode-home`](https://github.com/coco-de/cocode-home) (`cocode.im`). The
+generated page keeps CSS and browser behavior inline. Deploy `index.html`, its
+favicon files, and any locally served images together.
 
 - Scenarios with a co_golden run manifest are shown as a **device × variant
   grid** (rows are devices, columns are theme · locale · text scale) with
@@ -9,8 +14,8 @@ Builds a single-file, searchable HTML gallery from
 - Other images below `images/` are shown as cards grouped by directory, so
   existing golden baselines can sit next to the matrix captures.
 - Search, suite/device/theme/locale filters, a failures-only switch, a
-  keyboard-friendly lightbox, and light/dark themes — all inline, no external
-  scripts or styles.
+  keyboard-friendly lightbox, and dark/light/system themes — all inline, no
+  external scripts or styles. Dark is the default.
 - Images stay local, are copied next to the page, or are served from a URL
   prefix such as a storage bucket.
 - The page carries the cocode favicon set — the same files as
@@ -35,13 +40,19 @@ dart run co_golden_gallery build \
   --summary build/golden-gallery-summary.json
 ```
 
-Without installing it as a dependency:
+From this workspace:
 
 ```sh
-dart pub global activate --source git https://github.com/coco-de/co-package.git \
-  --git-path packages/co_golden_gallery --git-ref <commit>
-dart pub global run co_golden_gallery build --input build/co_golden
+flutter pub get
+cd packages/co_golden_gallery
+dart run bin/co_golden_gallery.dart build --input ../../build/co_golden
 ```
+
+`coui_web` and `coui_core` come from the private `coco-de/coui` repository at
+the same pinned revision as `cocode-home`. The workspace root pins both in
+`dependency_overrides`; projects consuming this package must pin both to that
+revision too. Dependency resolution requires Git credentials with access to
+the repository.
 
 | Option | Meaning |
 | --- | --- |
@@ -50,7 +61,7 @@ dart pub global run co_golden_gallery build --input build/co_golden
 | `--asset-base-url` | Serve every image from this http(s) prefix plus its gallery path. |
 | `--copy-images` | Copy the images next to `index.html` for a self-contained folder. |
 | `--noindex` | Add `<meta name="robots" content="noindex, nofollow">`. |
-| `--title`, `--brand-color` | Page title and `#RRGGBB` accent. |
+| `--title`, `--brand-color` | Page title and `#RRGGBB` accent (default `#5BE0C8`). |
 | `--plain-title` | Heading of the section with images that have no device, theme, or locale (default `축 없는 이미지`). |
 | `--meta label=value` | Header entries such as the commit. Repeatable. |
 | `--link label=url` | Header links. Repeatable. |

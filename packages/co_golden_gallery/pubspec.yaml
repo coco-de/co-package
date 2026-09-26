@@ -8,13 +8,15 @@ repository: https://github.com/coco-de/co-package/tree/main/packages/co_golden_g
 resolution: workspace
 
 environment:
-  sdk: ">=3.10.0 <4.0.0"
+  sdk: ">=3.11.0 <4.0.0"
 
 executables:
   co_golden_gallery:
 
 dependencies:
   args: ^2.7.0
+  coui_web: any
+  jaspr: ^0.23.5
   meta: ^1.16.0
   path: ^1.9.0
 

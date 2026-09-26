@@ -59,7 +59,7 @@ ArgParser _parser() => ArgParser()
   ..addOption(
     'brand-color',
     valueHelp: '#RRGGBB',
-    defaultsTo: '#0062D1',
+    defaultsTo: '#5BE0C8',
     help: 'Accent color.',
   )
   ..addMultiOption(
@@ -202,7 +202,7 @@ Future<int> runGalleryCli(
         .join('/');
   }
 
-  final html = renderGalleryHtml(
+  final html = await renderGalleryHtml(
     scan.catalog,
     GalleryPageOptions(
       title: args.option('title')!,

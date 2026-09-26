@@ -15,7 +15,7 @@ void main() {
   });
   tearDown(() => root.deleteSync(recursive: true));
 
-  String render({
+  Future<String> render({
     String title = 'Gallery',
     bool noindex = false,
     List<(String, String)> metadata = const [],
@@ -32,16 +32,16 @@ void main() {
     imageUrl: (image) => 'https://cdn.example/runs/abc/${image.path}',
   );
 
-  test('escapes text from manifests and options', () {
-    final html = render(title: '<b>Title</b>');
+  test('escapes text from manifests and options', () async {
+    final html = await render(title: '<b>Title</b>');
 
     expect(html, contains('&lt;b&gt;Title&lt;/b&gt;'));
     expect(html, isNot(contains('<b>Title</b>')));
     expect(html, contains('Login &lt;form&gt; &amp; social buttons'));
   });
 
-  test('keeps embedded data from closing the script element', () {
-    final html = render();
+  test('keeps embedded data from closing the script element', () async {
+    final html = await render();
     final data = RegExp(
       r'<script type="application/json" id="gallery-data">(.*?)</script>',
       dotAll: true,
@@ -52,13 +52,16 @@ void main() {
     expect(data, contains('${slash}u003c/script${slash}u003e'));
   });
 
-  test('adds the robots meta only when asked', () {
-    expect(render(), isNot(contains('name="robots"')));
-    expect(render(noindex: true), contains('content="noindex, nofollow"'));
+  test('adds the robots meta only when asked', () async {
+    expect(await render(), isNot(contains('name="robots"')));
+    expect(
+      await render(noindex: true),
+      contains('content="noindex, nofollow"'),
+    );
   });
 
-  test('renders a matrix table for manifest scenarios', () {
-    final html = render();
+  test('renders a matrix table for manifest scenarios', () async {
+    final html = await render();
 
     expect(html, contains('<table class="matrix">'));
     expect(html, contains('<tr data-device="phone">'));
@@ -71,16 +74,16 @@ void main() {
     );
   });
 
-  test('renders cards for plain images', () {
-    final html = render();
+  test('renders cards for plain images', () async {
+    final html = await render();
 
     expect(html, contains('<div class="cards">'));
     expect(html, contains('<figcaption>login_page</figcaption>'));
     expect(html, contains('width="20" height="10"'));
   });
 
-  test('shows counts and metadata in the header', () {
-    final html = render(metadata: const [('commit', 'abc1234')]);
+  test('shows counts and metadata in the header', () async {
+    final html = await render(metadata: const [('commit', 'abc1234')]);
 
     expect(html, contains('<b>2</b> 시나리오'));
     expect(html, contains('<b>3</b> 이미지'));
@@ -89,18 +92,28 @@ void main() {
     expect(html, contains('2026-09-26T03:04 UTC'));
   });
 
-  test('lets the hidden attribute win over display rules', () {
-    // The filter hides scenarios and cards with `hidden`; `.scenario` and
-    // `.card` set `display: grid`, which beats the browser's own rule.
-    expect(render(), contains('[hidden] { display: none !important; }'));
+  test('renders CoUI components with the cocode-home dark palette', () async {
+    final html = await render();
+
+    expect(html, contains('<html lang="ko" data-theme="dark">'));
+    expect(html, contains('class="coui-root '));
+    expect(html, contains('scenario-card'));
+    expect(html, contains('var(--coui-radius-6)'));
+    expect(html, contains('--bg: #0b0d0e'));
+    expect(html, contains('--brand: #5BE0C8'));
+    expect(html, contains('id="theme-toggle"'));
   });
 
-  test('links the cocode favicon files relative to the page', () {
-    final html = render();
+  test('lets the hidden attribute win over display rules', () async {
+    // The filter hides scenarios and cards with `hidden`; `.scenario` and
+    // `.card` set `display: grid`, which beats the browser's own rule.
+    expect(await render(), contains('[hidden] { display: none !important; }'));
+  });
+
+  test('links the cocode favicon files relative to the page', () async {
+    final html = await render();
     final head = html.substring(0, html.indexOf('</head>'));
 
-    // SVG first, as on cocode.im. Relative URLs keep the icons working below
-    // a path such as GitHub Pages' /<repo>/.
     expect(
       head,
       contains(
@@ -109,12 +122,11 @@ void main() {
         '<link rel="apple-touch-icon" href="apple-touch-icon.png">\n',
       ),
     );
-    // Safari does not show data URI favicons.
     expect(head, isNot(contains('data:image')));
   });
 
-  test('collects images without axes after the matrix suites', () {
-    final html = render();
+  test('collects images without axes after the matrix suites', () async {
+    final html = await render();
     final matrix = html.indexOf('<section class="suite" data-suite="auth">');
     final plain = html.indexOf('<section class="suite plain">');
 
@@ -129,9 +141,9 @@ void main() {
     );
   });
 
-  test('takes the heading of the plain section from the options', () {
+  test('takes the heading of the plain section from the options', () async {
     expect(
-      render(plainTitle: '회귀 골든'),
+      await render(plainTitle: '회귀 골든'),
       contains('<h2 class="suite-title">회귀 골든</h2>'),
     );
   });
@@ -167,7 +179,8 @@ void main() {
     ];
 
     String section(String html, String anchor) {
-      final start = html.indexOf('<section class="scenario" id="$anchor"');
+      final idAt = html.indexOf('id="$anchor"');
+      final start = html.lastIndexOf('<section', idAt);
       expect(start, isNonNegative, reason: anchor);
       return html.substring(start, html.indexOf('</section>', start));
     }
@@ -186,7 +199,7 @@ void main() {
         match.group(1)!,
     ];
 
-    test('follows the declared theme × locale order', () {
+    test('follows the declared theme × locale order', () async {
       writeManifest(
         root,
         suite: 'store',
@@ -200,7 +213,7 @@ void main() {
         },
       );
       catalog = scanGallerySources([root]).catalog;
-      final html = render();
+      final html = await render();
 
       expect(columns(html, 'store--header'), [
         'light · en',
@@ -211,29 +224,32 @@ void main() {
       expect(rows(html, 'store--header'), ['phone', 'phone-compact']);
     });
 
-    test('groups by theme, then locale, when the manifest has no axes', () {
-      writeManifest(
-        root,
-        suite: 'store',
-        scenario: 'footer',
-        results: pairwise,
-      );
-      catalog = scanGallerySources([root]).catalog;
-      final html = render();
+    test(
+      'groups by theme, then locale, when the manifest has no axes',
+      () async {
+        writeManifest(
+          root,
+          suite: 'store',
+          scenario: 'footer',
+          results: pairwise,
+        );
+        catalog = scanGallerySources([root]).catalog;
+        final html = await render();
 
-      // First appearance alone gave light · ko | dark · en | light · en |
-      // dark · ko.
-      expect(columns(html, 'store--footer'), [
-        'light · ko',
-        'light · en',
-        'dark · ko',
-        'dark · en',
-      ]);
-      expect(rows(html, 'store--footer'), ['phone-compact', 'phone']);
-    });
+        // First appearance alone gave light · ko | dark · en | light · en |
+        // dark · ko.
+        expect(columns(html, 'store--footer'), [
+          'light · ko',
+          'light · en',
+          'dark · ko',
+          'dark · en',
+        ]);
+        expect(rows(html, 'store--footer'), ['phone-compact', 'phone']);
+      },
+    );
   });
 
-  test('rejects a brand color that is not #RRGGBB', () {
+  test('rejects a brand color that is not #RRGGBB', () async {
     expect(
       () => GalleryPageOptions(brandColor: 'red;} body{display:none'),
       throwsArgumentError,
