@@ -59,6 +59,7 @@ void writeManifest(
   required List<Map<String, Object?>> results,
   String? description,
   int schemaVersion = 1,
+  Object? axes,
 }) {
   File(p.join(root.path, 'runs', suite, '$scenario.json'))
     ..parent.createSync(recursive: true)
@@ -71,7 +72,7 @@ void writeManifest(
         'description': description,
         'mode': 'capture',
         'generatedAt': '2026-09-26T00:00:00.000Z',
-        'plan': {'combinations': results.length, 'excluded': 0},
+        'plan': {'combinations': results.length, 'excluded': 0, 'axes': ?axes},
         'results': results,
       }),
     );

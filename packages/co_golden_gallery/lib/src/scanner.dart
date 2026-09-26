@@ -162,7 +162,8 @@ void _readManifest(
   );
   builder
     ..fromManifest = true
-    ..description ??= description is String ? description : null;
+    ..description ??= description is String ? description : null
+    ..axes ??= _readAxes(decoded['plan'], file);
 
   for (final raw in results) {
     if (raw is! Map<String, Object?>) {
@@ -215,6 +216,40 @@ void _readManifest(
       ),
     );
   }
+}
+
+/// Axis order from `plan.axes`, or null for a manifest written before
+/// co_golden recorded it.
+GalleryAxes? _readAxes(Object? plan, File file) {
+  final raw = plan is Map<String, Object?> ? plan['axes'] : null;
+  if (raw == null) {
+    return null;
+  }
+  GallerySourceException malformed() =>
+      GallerySourceException('${file.path} has a malformed plan.axes.');
+  if (raw is! Map<String, Object?>) {
+    throw malformed();
+  }
+  List<String> names(String key) {
+    final values = raw[key] ?? const <Object?>[];
+    if (values is! List<Object?> || values.any((value) => value is! String)) {
+      throw malformed();
+    }
+    return List.unmodifiable(values.cast<String>());
+  }
+
+  final scales = raw['textScales'] ?? const <Object?>[];
+  if (scales is! List<Object?> || scales.any((value) => value is! num)) {
+    throw malformed();
+  }
+  return GalleryAxes(
+    devices: names('devices'),
+    themes: names('themes'),
+    locales: names('locales'),
+    textScales: List.unmodifiable(
+      scales.cast<num>().map((scale) => scale.toDouble()),
+    ),
+  );
 }
 
 void _claim(Map<String, String> files, String galleryPath, String absolute) {
@@ -289,6 +324,7 @@ final class _ScenarioBuilder {
   final List<GalleryImage> images = [];
   String? description;
   bool fromManifest = false;
+  GalleryAxes? axes;
 
   GalleryScenario build() {
     final ordered = <GalleryImage>[...images];
@@ -301,6 +337,7 @@ final class _ScenarioBuilder {
       description: description,
       fromManifest: fromManifest,
       images: List<GalleryImage>.unmodifiable(ordered),
+      axes: axes,
     );
   }
 }

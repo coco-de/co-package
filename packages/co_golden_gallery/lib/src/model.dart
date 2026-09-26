@@ -84,6 +84,34 @@ final class GalleryImage {
   }
 }
 
+/// Axis values a co_golden coverage declared, in declaration order.
+///
+/// Run manifests carry them under `plan.axes`. The gallery orders a
+/// scenario's grid by them; without them it falls back to the order in which
+/// each value first appears, which sampling and exclusion rules can scramble.
+@immutable
+final class GalleryAxes {
+  /// Creates the axis lists.
+  const GalleryAxes({
+    this.devices = const [],
+    this.themes = const [],
+    this.locales = const [],
+    this.textScales = const [],
+  });
+
+  /// Device names.
+  final List<String> devices;
+
+  /// Theme names.
+  final List<String> themes;
+
+  /// Locale tags.
+  final List<String> locales;
+
+  /// Text scale factors.
+  final List<double> textScales;
+}
+
 /// A scenario and its images.
 @immutable
 final class GalleryScenario {
@@ -94,6 +122,7 @@ final class GalleryScenario {
     required this.images,
     this.description,
     this.fromManifest = false,
+    this.axes,
   });
 
   /// Suite of the scenario (usually the package).
@@ -111,6 +140,9 @@ final class GalleryScenario {
 
   /// Images in manifest (plan) order, or by name for plain images.
   final List<GalleryImage> images;
+
+  /// Axis order declared by the coverage, when the manifest carries it.
+  final GalleryAxes? axes;
 
   /// Number of images whose manifest status is failed.
   int get failedCount =>
