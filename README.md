@@ -33,6 +33,21 @@ The workspace uses Dart's native `workspace` declaration. Packages use
 `resolution: workspace`, so dependency resolution stays consistent across the
 repository.
 
+### Graft code graph
+
+This repository shares the Graft agent instructions in `AGENTS.md`. The
+generated `graft/` graph stays local, so each contributor builds it after
+cloning the repository:
+
+```bash
+npx --yes @nanonets/graft@0.18.0 build
+```
+
+The build needs no API key. Run the same command after large code changes, or
+query the graph directly with `npx --yes @nanonets/graft@0.18.0 ask "<task>" --source`;
+queries refresh changed files automatically. The pinned version keeps the
+shared instructions and generated graph format consistent.
+
 ## License
 
 BSD-3-Clause (Cocode Inc.)
