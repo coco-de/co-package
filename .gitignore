@@ -48,3 +48,6 @@ CLAUDE.md
 !packages/open_epub/example/assets/mymedia_lite.epub
 !packages/open_epub/example/assets/regime-anticancer-arabic.epub
 !packages/open_epub/example/assets/wasteland.epub
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
