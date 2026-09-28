@@ -8,6 +8,7 @@ environment:
 # open_epub·open_board 는 Flutter 패키지이므로 루트 해석에는 `flutter pub get` 이 필요하다.
 workspace:
   - packages/co_arc
+  - packages/co_bdd # co-test-gen 저장소에서 이관·개명 (구 co_test_gen)
   - packages/co_faker
   - packages/co_golden
   - packages/co_golden_gallery

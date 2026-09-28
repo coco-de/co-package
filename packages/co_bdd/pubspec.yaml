@@ -1,0 +1,35 @@
+name: co_bdd
+version: 0.1.2
+description: >-
+  BDD Dual Test Generator — generates Widget Test + Patrol E2E Test
+  from Gherkin .feature files with a shared TestDriver abstraction.
+  Write BDD steps once, run them as both widget tests and Patrol integration tests.
+homepage: https://github.com/coco-de/co-package/tree/main/packages/co_bdd
+repository: https://github.com/coco-de/co-package/tree/main/packages/co_bdd
+issue_tracker: https://github.com/coco-de/co-package/issues
+topics:
+  - bdd
+  - testing
+  - gherkin
+  - patrol
+  - code-generation
+
+environment:
+  sdk: ">=3.10.0 <5.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  build: ">=2.0.0 <5.0.0"
+  flutter:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  patrol: ^4.6.1
+  patrol_finders: ^3.5.0
+
+dev_dependencies:
+  build_runner: 2.15.0
+  lints: ^6.1.0
+  test: ^1.31.0
+
+resolution: workspace
