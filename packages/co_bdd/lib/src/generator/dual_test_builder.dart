@@ -76,7 +76,7 @@ class DualTestBuilder implements Builder {
 
     // sharedSteps 옵션 (기본값: false)
     // true이면 sharedStepFileNames에 매칭되는 step은
-    // 로��� step 대신 sharedStepsImport 패키지에서 import됩니다.
+    // 로컬 step 대신 sharedStepsImport 패키지에서 import됩니다.
     final useSharedSteps = options.config['sharedSteps'] as bool? ?? false;
 
     // sharedStepsImport 옵션 — 공유 step 패키지 import 경로
@@ -84,14 +84,18 @@ class DualTestBuilder implements Builder {
         options.config['sharedStepsImport'] as String? ??
         defaultSharedStepsImport;
 
-    // sharedStepNames 옵션 — 프로젝트별 공유 step 목록 등���
+    // sharedStepNames 옵션 — 이 빌드(패키지)만의 공유 step 목록.
+    //
+    // ⚠️ 전역 [sharedStepFileNames] 를 고치지 않는다. 예전에는 여기서
+    // clear/addAll 한 뒤 위젯 테스트를 쓰는 `await` 이후 Patrol 생성에서 다시
+    // 읽었는데, `build_runner --workspace` 는 여러 패키지의 build() 를 한
+    // isolate 에서 번갈아 돌리므로 그 사이 다른 패키지가 목록을 바꿔 놓으면
+    // `.patrol_test.dart` 가 남의 목록으로 생성됐다 (unibook#14429).
     final customSharedNames =
         (options.config['sharedStepNames'] as List<dynamic>?)?.cast<String>();
-    if (customSharedNames != null) {
-      sharedStepFileNames
-        ..clear()
-        ..addAll(customSharedNames);
-    }
+    final sharedStepNames = Set<String>.unmodifiable(
+      customSharedNames ?? sharedStepFileNames,
+    );
 
     // Widget Test 생성
     final widgetScenarios = feature.scenarios.where(
@@ -104,6 +108,7 @@ class DualTestBuilder implements Builder {
         stepFolder: stepFolder,
         useSharedSteps: useSharedSteps,
         sharedStepsImport: sharedStepsImport,
+        sharedStepNames: sharedStepNames,
       );
       await buildStep.writeAsString(widgetTestId, widgetTestCode);
     }
@@ -119,6 +124,7 @@ class DualTestBuilder implements Builder {
         stepFolder: stepFolder,
         useSharedSteps: useSharedSteps,
         sharedStepsImport: sharedStepsImport,
+        sharedStepNames: sharedStepNames,
       );
       await buildStep.writeAsString(patrolTestId, patrolTestCode);
     }

@@ -23,14 +23,17 @@ import 'package:co_bdd/src/generator/feature_parser.dart';
 /// Default import path for shared steps package.
 const defaultSharedStepsImport = 'package:co_bdd/shared_steps.dart';
 
-/// Registry of shared step file names (without `.dart` extension).
+/// Default registry of shared step file names (without `.dart` extension).
 ///
 /// When `sharedSteps: true`, steps matching these names are imported from
 /// the shared steps package instead of the local step folder.
 ///
-/// Projects should override this by providing their own set via
-/// [registerSharedSteps] or by populating `sharedStepFileNames` in
-/// their build configuration.
+/// Prefer the `sharedStepNames` builder option (or the `sharedStepNames`
+/// argument of [generateWidgetTest] / [generatePatrolTest]). This set is only
+/// the fallback used when no list is given — the builder **reads** it once per
+/// build and never writes to it. It used to be cleared and refilled on every
+/// build, so in a `build_runner --workspace` run one package's list could leak
+/// into another package's `.patrol_test.dart` generated after an `await`.
 ///
 /// To add a new shared step:
 /// 1. Create the step file in `lib/src/shared_step/{given|when|then}/`
@@ -49,7 +52,9 @@ String generateWidgetTest(
   required String stepFolder,
   bool useSharedSteps = false,
   String sharedStepsImport = defaultSharedStepsImport,
+  Set<String>? sharedStepNames,
 }) {
+  final sharedNames = sharedStepNames ?? sharedStepFileNames;
   final buffer = StringBuffer()
     ..writeln('// GENERATED CODE - DO NOT MODIFY BY HAND')
     ..writeln('// ignore_for_file: type=lint')
@@ -74,7 +79,7 @@ String generateWidgetTest(
   for (final step in widgetSteps) {
     final fileName = step.fileName;
     if (importedFiles.add(fileName)) {
-      if (useSharedSteps && sharedStepFileNames.contains(fileName)) {
+      if (useSharedSteps && sharedNames.contains(fileName)) {
         needsSharedImport = true;
       } else {
         buffer.writeln("import '$stepFolder/$fileName.dart';");
@@ -144,7 +149,9 @@ String generatePatrolTest(
   required String stepFolder,
   bool useSharedSteps = false,
   String sharedStepsImport = defaultSharedStepsImport,
+  Set<String>? sharedStepNames,
 }) {
+  final sharedNames = sharedStepNames ?? sharedStepFileNames;
   final buffer = StringBuffer()
     ..writeln('// GENERATED CODE - DO NOT MODIFY BY HAND')
     ..writeln('// ignore_for_file: type=lint')
@@ -166,7 +173,7 @@ String generatePatrolTest(
   for (final step in patrolSteps) {
     final fileName = step.fileName;
     if (importedFiles.add(fileName)) {
-      if (useSharedSteps && sharedStepFileNames.contains(fileName)) {
+      if (useSharedSteps && sharedNames.contains(fileName)) {
         needsSharedImport = true;
       } else {
         buffer.writeln("import '$stepFolder/$fileName.dart';");
