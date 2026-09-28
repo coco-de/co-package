@@ -1,8 +1,5 @@
 # co_bdd
 
-> **Renamed from `co_test_gen`** and moved from `coco-de/co-test-gen` into this
-> repository (`packages/co_bdd`). See [Migrating from co_test_gen](#migrating-from-co_test_gen).
-
 BDD Dual Test Generator for Flutter — write Gherkin `.feature` files once, generate both **Widget Tests** and **Patrol E2E Tests** with shared step functions.
 
 ## Why?
@@ -47,7 +44,7 @@ targets:
 | `stepFolder` | `step` | Directory holding local step files, relative to the `.feature`. |
 | `sharedSteps` | `false` | Resolve known step names from a shared package instead of local files. |
 | `sharedStepsImport` | `package:co_bdd/shared_steps.dart` | Import URI for the shared step library. |
-| `sharedStepNames` | built-in list | Step file names to resolve from the shared package. |
+| `sharedStepNames` | every step `shared_steps.dart` exports | Step file names to resolve from the shared package. Give it only to narrow the set. |
 | `defaultTarget` | `both` | Execution target for scenarios that carry **no** target tag. One of `both` / `widget-only` / `patrol-only`. |
 
 ##### `defaultTarget` — don't generate what you can't run
@@ -147,10 +144,12 @@ instead of re-creating `i_tap_the_save_button.dart`-style local steps.
 
 ```yaml
 options:
-  sharedSteps: true
-  sharedStepsImport: "package:co_bdd/shared_steps.dart"
-  sharedStepNames: [i_tap_the_widget, the_widget_should_be_displayed] # …
+  sharedSteps: true # every step below; new ones arrive with a co_bdd bump
 ```
+
+To add project steps, point `sharedStepsImport` at your own barrel that
+re-exports this library, and list the extra names in `sharedStepNames`
+together with the co_bdd ones you keep.
 
 | Gherkin phrase | Step |
 |---|---|
@@ -167,6 +166,8 @@ options:
 | `I should see {'N'} {'key'} widgets` | `iShouldSeeWidgets` |
 | `the {'key'} widget should contain {'text'} text` | `theWidgetShouldContainText` |
 | `the {'key'} widget should be selected` / `should not be selected` | Semantics `isSelected` |
+| `the {'key'} widget should be enabled` / `should be disabled` | declared `Semantics(enabled:)` under the key |
+| `the {'key'} toggle should be on` / `should be off` | declared `Semantics(toggled:)` under the key |
 | `the current page should be {'N'}` | exact label of the `current_page_indicator` key |
 | `the {'panel'} widget should be anchored to {'anchor'}` | popover `bottomEnd` placement |
 | `the error message` / `loading indicator` / `success message` / `total count` `should be displayed`, `I confirm deletion`, `I tap the next page button` | fixed phrases on `CommonKeys` |
@@ -174,9 +175,25 @@ options:
 Keep **domain** steps local: `Given` page mounts and mock state, composite
 actions, and steps whose name claims more than a key check (e.g. "the review
 should be deleted") — rewriting those to a shared phrase silently weakens what
-the scenario verifies. Design-system–specific checks (a button's enabled state,
-a toggle's value) belong in a project adapter that re-exports this library with
-`show` and adds its own steps.
+the scenario verifies.
+
+State steps (enabled · toggled · selected) read what the control **declares to
+assistive technologies** — `Semantics(enabled:)`, `Semantics(toggled:)` — instead of
+design-system widget types, so the same phrase works for CoUI and Material
+controls. They fail when the key has no such declaration or more than one, rather
+than silently picking the first control.
+
+## Test helpers
+
+Exported from `package:co_bdd/co_bdd.dart`.
+
+| Helper | Purpose |
+|---|---|
+| `testScaleVariants(description, body, scaling: …)` · `ScaleVariant` | Runs one widget test body across `scaling × textScaler` combinations (`kDefaultScaleInvariantTextScalers` = 1, 1.15, 1.3, 2). `scaling` is required — the project adapter supplies its design system's default |
+| `expectNoLayoutOverflow` · `expectNoTextClipping` | Layout exceptions, and text silently clamped by a fixed height (which throws nothing) |
+| `waitForBlocState` · `pumpFramesUntilBlocState` | Wait on a `bloc_signals` state signal instead of fixed delays |
+| `installFakeWebViewPlatform()` | Mount screens that embed a web view in widget tests |
+| `declaredSemanticsFlag` · `widgetTesterOf` | Building blocks for your own state steps |
 
 ## Scenario Tags
 
@@ -221,21 +238,6 @@ Future<void> iEnterInTheEmailField(TestDriver driver, String param1) async {
   await driver.enterText(const Key('email_field'), param1);
 }
 ```
-
-## Migrating from co_test_gen
-
-The package was renamed when it moved into `coco-de/co-package`. Everything else is
-unchanged — replace the three identifiers and re-run `build_runner`.
-
-| | before | after |
-|---|---|---|
-| dependency | `co_test_gen` (git `coco-de/co-test-gen`) | `co_bdd` (git `coco-de/co-package`, `path: packages/co_bdd`) |
-| import | `package:co_test_gen/co_test_gen.dart` | `package:co_bdd/co_bdd.dart` |
-| builder key in `build.yaml` | `co_test_gen\|dual_test_gen` | `co_bdd\|dual_test_gen` |
-
-Releases before the move are tagged `co_bdd-v0.1.1` / `co_bdd-v0.1.2` here (originally
-`v0.1.1` / `v0.1.2` in `coco-de/co-test-gen`); their commits were rewritten into
-`packages/co_bdd`, so `git log -- packages/co_bdd` shows the full history.
 
 ## License
 

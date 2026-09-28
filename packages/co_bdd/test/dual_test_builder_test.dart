@@ -51,8 +51,6 @@ const _sharedImport = "import 'package:co_bdd/shared_steps.dart';";
 const _localImport = "import 'step/i_tap_the_widget.dart';";
 
 void main() {
-  tearDown(sharedStepFileNames.clear);
-
   group('DualTestBuilder — 공유 step 목록은 빌드마다 독립이다', () {
     test('should keep each package list when two builds interleave '
         '(workspace 빌드에서 패키지별 목록이 섞이지 않는다)', () async {
@@ -100,41 +98,34 @@ void main() {
       }
     });
 
-    test('should not mutate the global sharedStepFileNames', () async {
-      sharedStepFileNames.add('sentinel');
+    test('should default to every co_bdd shared step when the option is '
+        'absent (목록이 없으면 co_bdd 공유 step 전부)', () async {
       final builder = DualTestBuilder(
-        options: const BuilderOptions({
-          'sharedSteps': true,
-          'sharedStepNames': ['i_tap_the_widget'],
-        }),
+        options: const BuilderOptions({'sharedSteps': true}),
       );
+      final step = _FakeBuildStep(AssetId('a', 'test/src/bdd/race.feature'), """
+Feature: Default
+  Scenario: Shared steps without a list
+    When I tap the {'search_button'} widget
+    Then the {'save_button'} widget should be enabled
+    And the {'push_toggle'} toggle should be on
+    And I open the settings page
+""");
 
-      await builder.build(
-        _FakeBuildStep(AssetId('a', 'test/src/bdd/race.feature'), _feature),
-      );
+      await builder.build(step);
 
-      expect(sharedStepFileNames, {'sentinel'});
+      final code = step.outputs['test/src/bdd/race.widget_test.dart']!;
+      expect(code, contains(_sharedImport));
+      for (final name in [
+        'i_tap_the_widget',
+        'the_widget_should_be_enabled',
+        'the_toggle_should_be_on',
+      ]) {
+        expect(sharedStepFileNames, contains(name));
+        expect(code, isNot(contains("import 'step/$name.dart';")));
+      }
+      // 도메인 step 은 여전히 로컬이다.
+      expect(code, contains("import 'step/i_open_the_settings_page.dart';"));
     });
-
-    test(
-      'should fall back to the global list when the option is absent',
-      () async {
-        sharedStepFileNames.add('i_tap_the_widget');
-        final builder = DualTestBuilder(
-          options: const BuilderOptions({'sharedSteps': true}),
-        );
-        final step = _FakeBuildStep(
-          AssetId('a', 'test/src/bdd/race.feature'),
-          _feature,
-        );
-
-        await builder.build(step);
-
-        expect(
-          step.outputs['test/src/bdd/race.widget_test.dart'],
-          contains(_sharedImport),
-        );
-      },
-    );
   });
 }

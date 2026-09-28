@@ -13,8 +13,7 @@
 /// Configure via build.yaml:
 /// ```yaml
 /// options:
-///   sharedSteps: true
-///   sharedStepsImport: "package:test_driver/shared_steps.dart"
+///   sharedSteps: true   # every co_bdd shared step, from package:co_bdd/shared_steps.dart
 /// ```
 library;
 
@@ -23,24 +22,48 @@ import 'package:co_bdd/src/generator/feature_parser.dart';
 /// Default import path for shared steps package.
 const defaultSharedStepsImport = 'package:co_bdd/shared_steps.dart';
 
-/// Default registry of shared step file names (without `.dart` extension).
+/// Step file names (without `.dart`) that `package:co_bdd/shared_steps.dart`
+/// exports — the default for `sharedStepNames`.
 ///
-/// When `sharedSteps: true`, steps matching these names are imported from
-/// the shared steps package instead of the local step folder.
+/// With `sharedSteps: true` and no list, every co_bdd shared step resolves
+/// from the shared library, so a project picks up a new shared step by bumping
+/// co_bdd instead of editing each `build.yaml`. Give `sharedStepNames` only to
+/// narrow the set — for example when `sharedStepsImport` points to a project
+/// barrel that re-exports part of this library.
 ///
-/// Prefer the `sharedStepNames` builder option (or the `sharedStepNames`
-/// argument of [generateWidgetTest] / [generatePatrolTest]). This set is only
-/// the fallback used when no list is given — the builder **reads** it once per
-/// build and never writes to it. It used to be cleared and refilled on every
-/// build, so in a `build_runner --workspace` run one package's list could leak
-/// into another package's `.patrol_test.dart` generated after an `await`.
-///
-/// To add a new shared step:
-/// 1. Create the step file in `lib/src/shared_step/{given|when|then}/`
-/// 2. Export it from `lib/shared_steps.dart`
-/// 3. Add the file name (without .dart) to this set
-final sharedStepFileNames = <String>{
-  // Override this set per-project or register via builder options
+/// `test/shared_steps_contract_test.dart` keeps this set equal to the exports
+/// of `lib/shared_steps.dart`. It is `const` on purpose: the default used to be
+/// a mutable registry refilled on every build, and in a
+/// `build_runner --workspace` run one package's list leaked into another
+/// package's output (coco-de/unibook#14429).
+const Set<String> sharedStepFileNames = {
+  'i_clear_the_widget',
+  'i_confirm_deletion',
+  'i_enter_in_the_widget',
+  'i_long_press_the_widget',
+  'i_scroll_until_the_widget_is_visible',
+  'i_should_see_widgets',
+  'i_tap_the_next_page_button',
+  'i_tap_the_text',
+  'i_tap_the_widget',
+  'i_tap_the_widget_at_index',
+  'i_wait_for_seconds',
+  'the_current_page_should_be',
+  'the_error_message_should_be_displayed',
+  'the_loading_indicator_should_be_displayed',
+  'the_success_message_should_be_displayed',
+  'the_text_should_be_displayed',
+  'the_toggle_should_be_off',
+  'the_toggle_should_be_on',
+  'the_total_count_should_be_displayed',
+  'the_widget_should_be_anchored_to',
+  'the_widget_should_be_disabled',
+  'the_widget_should_be_displayed',
+  'the_widget_should_be_enabled',
+  'the_widget_should_be_selected',
+  'the_widget_should_contain_text',
+  'the_widget_should_not_be_displayed',
+  'the_widget_should_not_be_selected',
 };
 
 /// Generates Widget Test code.
