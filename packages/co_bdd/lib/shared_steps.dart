@@ -16,7 +16,7 @@
 ///       # ...
 /// ```
 ///
-/// 프로젝트 전용 step(디자인 시스템 판정 등)을 함께 쓰려면 자체 배럴에서
+/// 프로젝트 전용 step 을 함께 쓰려면 자체 배럴에서
 /// 이 라이브러리를 `show` 로 다시 내보내고 `sharedStepsImport` 를 그 배럴로
 /// 둔다 — 채택 목록이 한 파일에 드러난다.
 ///
@@ -27,6 +27,10 @@
 /// - 이름이 본문보다 큰 상태를 주장하는 step (예: "the review should be
 ///   deleted" 가 성공 메시지만 본다) — 공유 문장으로 바꾸면 주장이 약해진다
 /// - 특정 화면 전용 Key·헬퍼에 기대는 판정
+///
+/// 상태 판정 step(활성 · 켜짐 · 선택)은 디자인 시스템 타입이 아니라 컨트롤이
+/// 스크린리더에 알리는 `Semantics` 선언을 읽는다 — CoUI · Material 어느 쪽이든
+/// 같은 문장으로 쓴다.
 ///
 /// ## 규칙
 ///
@@ -52,9 +56,13 @@ export 'src/shared_step/the_error_message_should_be_displayed.dart';
 export 'src/shared_step/the_loading_indicator_should_be_displayed.dart';
 export 'src/shared_step/the_success_message_should_be_displayed.dart';
 export 'src/shared_step/the_text_should_be_displayed.dart';
+export 'src/shared_step/the_toggle_should_be_off.dart';
+export 'src/shared_step/the_toggle_should_be_on.dart';
 export 'src/shared_step/the_total_count_should_be_displayed.dart';
 export 'src/shared_step/the_widget_should_be_anchored_to.dart';
+export 'src/shared_step/the_widget_should_be_disabled.dart';
 export 'src/shared_step/the_widget_should_be_displayed.dart';
+export 'src/shared_step/the_widget_should_be_enabled.dart';
 export 'src/shared_step/the_widget_should_be_selected.dart';
 export 'src/shared_step/the_widget_should_contain_text.dart';
 export 'src/shared_step/the_widget_should_not_be_displayed.dart';

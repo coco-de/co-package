@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:co_bdd/src/generator/feature_parser.dart';
+import 'package:co_bdd/src/generator/test_generator.dart'
+    show sharedStepFileNames;
 import 'package:test/test.dart';
 
 /// 공유 step 의 이름 계약 — **생성기와 같은 코드**로 판정한다.
@@ -65,6 +67,13 @@ void main() {
       });
     });
   }
+
+  test('생성기의 기본 공유 step 목록 == export 목록', () {
+    // 목록을 생략한 build.yaml 은 이 기본값으로 공유 step 을 고른다. 어긋나면
+    // 새 step 이 소비 프로젝트에 조용히 안 잡히거나(누락), 없는 심볼을 import 해
+    // 생성 테스트가 컴파일되지 않는다(초과).
+    expect(sharedStepFileNames, exported);
+  });
 
   test('export 목록에 실제 파일이 없는 이름이 없다', () {
     final stems = files

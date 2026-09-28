@@ -70,6 +70,12 @@ export 'src/driver/widget_tester_of.dart';
 // build 4.x) 으로 컴파일이 깨진다. generator 는 build_runner 엔트리인 `builder.dart`
 // 에서만 직접 사용하므로 배럴에서 제외한다. (kobic#6398)
 
+// Helpers
+export 'src/helper/bloc_signal_wait.dart';
+export 'src/helper/declared_semantics.dart';
+export 'src/helper/fake_webview_platform.dart';
+export 'src/helper/scale_variants.dart';
+
 // Keys
 export 'src/key/common_keys.dart';
 

@@ -99,15 +99,9 @@ void main() {
     });
   });
 
+  // 목록을 주지 않으면 co_bdd 공유 step 전부가 기본값이다 — 아래 두 generic
+  // step 은 거기 들고, 'I tap the login button' 은 들지 않는다.
   group('sharedSteps (generic key-based)', () {
-    setUp(() {
-      sharedStepFileNames
-        ..clear()
-        ..addAll(['i_tap_the_widget', 'the_widget_should_be_displayed']);
-    });
-
-    tearDown(() => sharedStepFileNames.clear());
-
     final sharedFeature = FeatureFile(
       name: 'Generic Step Test',
       tags: [],

@@ -358,6 +358,117 @@ void main() {
     });
   });
 
+  group('활성 step 은 Key 하위의 Semantics(enabled:) 선언을 본다', () {
+    Widget control({required bool enabled}) => Semantics(
+      key: const Key('submit'),
+      button: true,
+      enabled: enabled,
+      child: const SizedBox(width: 40, height: 40),
+    );
+
+    testWidgets('enabled: true', (tester) async {
+      final driver = await pump(tester, control(enabled: true));
+
+      await theWidgetShouldBeEnabled(driver, 'submit');
+      await expectFails(() => theWidgetShouldBeDisabled(driver, 'submit'));
+    });
+
+    testWidgets('enabled: false', (tester) async {
+      final driver = await pump(tester, control(enabled: false));
+
+      await theWidgetShouldBeDisabled(driver, 'submit');
+      await expectFails(() => theWidgetShouldBeEnabled(driver, 'submit'));
+    });
+
+    testWidgets('Material 버튼은 onPressed 가 없으면 비활성으로 판정된다', (tester) async {
+      final driver = await pump(
+        tester,
+        Column(
+          children: [
+            const ElevatedButton(
+              key: Key('off'),
+              onPressed: null,
+              child: Text('끔'),
+            ),
+            ElevatedButton(
+              key: const Key('on'),
+              onPressed: () {},
+              child: const Text('켬'),
+            ),
+          ],
+        ),
+      );
+
+      await theWidgetShouldBeDisabled(driver, 'off');
+      await theWidgetShouldBeEnabled(driver, 'on');
+    });
+
+    testWidgets('식별용 래퍼에 Key 가 있어도 자손 컨트롤의 선언을 읽는다', (tester) async {
+      final driver = await pump(
+        tester,
+        Semantics(
+          key: const Key('login_button'),
+          container: true,
+          identifier: 'login_button',
+          child: Semantics(
+            enabled: false,
+            child: const SizedBox(width: 40, height: 40),
+          ),
+        ),
+      );
+
+      await theWidgetShouldBeDisabled(driver, 'login_button');
+    });
+
+    testWidgets('선언이 없거나 여럿이면 실패한다 — 엉뚱한 컨트롤을 조용히 고르지 않는다', (tester) async {
+      final driver = await pump(
+        tester,
+        Column(
+          children: [
+            const SizedBox(key: Key('plain'), width: 10, height: 10),
+            Column(
+              key: const Key('two'),
+              children: [
+                Semantics(enabled: true, child: const SizedBox(height: 10)),
+                Semantics(enabled: true, child: const SizedBox(height: 10)),
+              ],
+            ),
+          ],
+        ),
+      );
+
+      await expectFails(() => theWidgetShouldBeEnabled(driver, 'plain'));
+      await expectFails(() => theWidgetShouldBeEnabled(driver, 'two'));
+    });
+  });
+
+  group('토글 step 은 Key 하위의 Semantics(toggled:) 선언을 본다', () {
+    Widget toggle({required bool value}) => Semantics(
+      key: const Key('push_toggle'),
+      toggled: value,
+      child: Semantics(
+        enabled: true,
+        child: const SizedBox(width: 40, height: 24),
+      ),
+    );
+
+    testWidgets('toggled: true', (tester) async {
+      final driver = await pump(tester, toggle(value: true));
+
+      await theToggleShouldBeOn(driver, 'push_toggle');
+      await expectFails(() => theToggleShouldBeOff(driver, 'push_toggle'));
+    });
+
+    testWidgets('toggled: false — 꺼진 토글도 활성이다', (tester) async {
+      final driver = await pump(tester, toggle(value: false));
+
+      await theToggleShouldBeOff(driver, 'push_toggle');
+      await expectFails(() => theToggleShouldBeOn(driver, 'push_toggle'));
+      // 토글 값과 활성 여부는 다른 관심사다.
+      await theWidgetShouldBeEnabled(driver, 'push_toggle');
+    });
+  });
+
   group('selected step 은 Semantics isSelected 로 판정한다', () {
     Widget chip({bool? selected}) => Semantics(
       key: const Key('chip'),
