@@ -1,0 +1,720 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+class CustomTextEdit extends StatefulWidget {
+  CustomTextEdit({
+    super.key,
+    required this.child,
+    required this.onInsert,
+    required this.onDelete,
+    required this.onComposing,
+    required this.onAction,
+    this.onCommand,
+    required this.onKeyEvent,
+    required this.focusNode,
+    this.autofocus = false,
+    this.readOnly = false,
+    // this.initEditingState = TextEditingValue.empty,
+    int? viewId,
+    this.inputType = TextInputType.text,
+    this.inputAction = TextInputAction.newline,
+    this.keyboardAppearance = Brightness.light,
+    this.deleteDetection = false,
+  }) : viewId = viewId ?? PlatformDispatcher.instance.implicitView?.viewId {
+    if (this.viewId == null) {
+      throw Exception('Cannot open input connection without a valid viewId.');
+    }
+  }
+
+  final Widget child;
+
+  final void Function(String) onInsert;
+
+  final void Function() onDelete;
+
+  final void Function(String?) onComposing;
+
+  final void Function(TextInputAction) onAction;
+
+  /// Called with the editing command (a macOS selector such as
+  /// `cancelOperation:`) for a key the input method passed through instead of
+  /// consuming. See [TextInputClient.performSelector].
+  final void Function(String selector)? onCommand;
+
+  final KeyEventResult Function(FocusNode, KeyEvent) onKeyEvent;
+
+  final FocusNode focusNode;
+
+  final bool autofocus;
+
+  final bool readOnly;
+
+  final TextInputType inputType;
+
+  final TextInputAction inputAction;
+
+  final Brightness keyboardAppearance;
+
+  final bool deleteDetection;
+
+  final int? viewId;
+
+  @override
+  CustomTextEditState createState() => CustomTextEditState();
+}
+
+class CustomTextEditState extends State<CustomTextEdit> with TextInputClient {
+  TextInputConnection? _connection;
+
+  /// Text synchronously written when an IME action arrived with an active
+  /// composing range. Android may subsequently send the same text as a
+  /// collapsed editing value; it must not reach the terminal twice.
+  String? _actionCommittedText;
+
+  /// The content of an open, not-yet-resolved composing range in
+  /// [deleteDetection] mode - see [_updateEditingValueWithDeleteDetection].
+  /// Non-null exactly while such a range is open and its fate (genuine
+  /// preview vs. trapped keystroke) has not yet been decided.
+  String? _pendingComposingText;
+
+  /// The `composing.start` of [_pendingComposingText], used to tell a
+  /// composing range that is being extended in place (same base, growing
+  /// text - a real preview) from one that has been replaced by an unrelated
+  /// fresh range at the same base (a trapped keystroke, see f6568e1).
+  int? _pendingComposingBase;
+
+  /// The committed text of the platform's editing value that has already
+  /// been sent as input, while the editing value is cleared lazily (see
+  /// [_clearsLazily]).
+  ///
+  /// It is tracked by content, not by length. The next value is compared
+  /// against it, so only what is new is sent. The comparison stays right when
+  /// an input method rewrites text it had committed.
+  String _committedText = '';
+
+  @override
+  void initState() {
+    widget.focusNode.addListener(_onFocusChange);
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(CustomTextEdit oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.focusNode != oldWidget.focusNode) {
+      oldWidget.focusNode.removeListener(_onFocusChange);
+      widget.focusNode.addListener(_onFocusChange);
+    }
+
+    if (!_shouldCreateInputConnection) {
+      _closeInputConnectionIfNeeded();
+    } else {
+      if (oldWidget.readOnly && widget.focusNode.hasFocus) {
+        _openInputConnection();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    _closeInputConnectionIfNeeded();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      focusNode: widget.focusNode,
+      autofocus: widget.autofocus,
+      onKeyEvent: _onKeyEvent,
+      child: widget.child,
+    );
+  }
+
+  bool get hasInputConnection => _connection != null && _connection!.attached;
+
+  void requestKeyboard() {
+    if (widget.focusNode.hasFocus) {
+      _openInputConnection();
+    } else {
+      widget.focusNode.requestFocus();
+    }
+  }
+
+  void closeKeyboard() {
+    if (hasInputConnection) {
+      _connection?.close();
+    }
+  }
+
+  void setEditingState(TextEditingValue value) {
+    _currentEditingState = value;
+    _connection?.setEditingState(value);
+  }
+
+  /// Drops any in-flight composition and restores the initial editing state.
+  void resetEditingState() {
+    widget.onComposing(null);
+    _resetEditingState();
+  }
+
+  void setEditableRect(Rect rect, Rect caretRect) {
+    if (!hasInputConnection) {
+      return;
+    }
+
+    _connection?.setEditableSizeAndTransform(
+      rect.size,
+      Matrix4.translationValues(0, 0, 0),
+    );
+
+    _connection?.setCaretRect(caretRect);
+  }
+
+  void _onFocusChange() {
+    _openOrCloseInputConnectionIfNeeded();
+  }
+
+  KeyEventResult _onKeyEvent(FocusNode focusNode, KeyEvent event) {
+    if (!_currentEditingState.composing.isCollapsed) {
+      return KeyEventResult.skipRemainingHandlers;
+    }
+
+    final result = widget.onKeyEvent(focusNode, event);
+    if (result == KeyEventResult.handled) {
+      // Handled here, the key never reaches the input method, and whatever
+      // it produced for earlier keys has already arrived: nothing can be
+      // composing. See [_clearsLazily].
+      _clearIfIdle();
+    }
+    return result;
+  }
+
+  void _openOrCloseInputConnectionIfNeeded() {
+    if (widget.focusNode.hasFocus && widget.focusNode.consumeKeyboardToken()) {
+      _openInputConnection();
+    } else if (!widget.focusNode.hasFocus) {
+      _closeInputConnectionIfNeeded();
+      _dropComposition();
+    }
+  }
+
+  /// Whether the platform's editing value keeps committed text until a point
+  /// where no input method can be composing, instead of being cleared as
+  /// soon as a composition resolves.
+  ///
+  /// Clearing it as soon as a composition resolves races the input method.
+  /// A Korean input method commits one syllable and starts composing the
+  /// next in the same keystroke (`insertText:` `한`, then `setMarkedText:`
+  /// `ㄱ`). The clear sent in reply to the commit therefore reaches the
+  /// platform while it is composing again. On macOS that makes the embedder
+  /// call `discardMarkedText`, which ends the new composition: `한글` turns
+  /// into `한ㄱㅡㄹ`. This happens at every syllable boundary, not
+  /// occasionally.
+  ///
+  /// On desktop every keystroke reaches the framework as a key event before
+  /// any text input it produces, so a key the terminal handles itself is a
+  /// point where the input method is idle ([_onKeyEvent]); so is an input
+  /// action ([performAction]). Soft keyboards send no key events. There, and
+  /// on the web, the value is still cleared as soon as a composition
+  /// resolves.
+  bool get _clearsLazily {
+    if (kIsWeb || widget.deleteDetection) {
+      return false;
+    }
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.macOS ||
+      TargetPlatform.linux ||
+      TargetPlatform.windows =>
+        true,
+      _ => false,
+    };
+  }
+
+  /// Clears the platform's editing value if it holds anything. Call only
+  /// where no input method can be composing (see [_clearsLazily]).
+  void _clearIfIdle() {
+    if (!_clearsLazily || _currentEditingState == _initEditingState) {
+      return;
+    }
+    _resetEditingState();
+  }
+
+  /// Forgets an open composition when the input connection goes away.
+  ///
+  /// The input method's session ends with the connection, and nothing it
+  /// held was sent. Without this the preview stays drawn at the cursor, and
+  /// the next key after focus returns would be handed to an input method
+  /// that is no longer composing ([_onKeyEvent]).
+  void _dropComposition() {
+    final hadComposition = !_currentEditingState.composing.isCollapsed ||
+        _pendingComposingText != null;
+    _currentEditingState = _initEditingState;
+    _committedText = '';
+    _actionCommittedText = null;
+    _pendingComposingText = null;
+    _pendingComposingBase = null;
+    if (hadComposition && mounted) {
+      widget.onComposing(null);
+    }
+  }
+
+  bool get _shouldCreateInputConnection => kIsWeb || !widget.readOnly;
+
+  void _openInputConnection() {
+    if (!_shouldCreateInputConnection) {
+      return;
+    }
+
+    if (hasInputConnection) {
+      _connection!.show();
+    } else {
+      final config = TextInputConfiguration(
+        viewId: widget.viewId,
+        inputType: widget.inputType,
+        inputAction: widget.inputAction,
+        keyboardAppearance: widget.keyboardAppearance,
+        autocorrect: false,
+        enableSuggestions: false,
+        enableIMEPersonalizedLearning: false,
+      );
+
+      _connection = TextInput.attach(this, config);
+
+      _connection!.show();
+
+      // setEditableRect(Rect.zero, Rect.zero);
+
+      _currentEditingState = _initEditingState;
+      _committedText = '';
+      _connection!.setEditingState(_initEditingState);
+    }
+  }
+
+  void _closeInputConnectionIfNeeded() {
+    if (_connection != null && _connection!.attached) {
+      _connection!.close();
+      _connection = null;
+    }
+  }
+
+  TextEditingValue get _initEditingState => widget.deleteDetection
+      ? const TextEditingValue(
+          text: '  ',
+          selection: TextSelection.collapsed(offset: 2),
+        )
+      : const TextEditingValue(
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
+        );
+
+  late var _currentEditingState = _initEditingState.copyWith();
+
+  @override
+  TextEditingValue? get currentTextEditingValue {
+    return _currentEditingState;
+  }
+
+  @override
+  AutofillScope? get currentAutofillScope {
+    return null;
+  }
+
+  @override
+  void updateEditingValue(TextEditingValue value) {
+    _currentEditingState = value;
+
+    if (widget.deleteDetection) {
+      _updateEditingValueWithDeleteDetection(value);
+      return;
+    }
+
+    if (_clearsLazily) {
+      _updateEditingValueKeepingText(value);
+      return;
+    }
+
+    // Get input after composing is done
+    if (!_currentEditingState.composing.isCollapsed) {
+      final text = _currentEditingState.text;
+      final composingText = _currentEditingState.composing.textInside(text);
+      widget.onComposing(composingText);
+      return;
+    }
+
+    widget.onComposing(null);
+
+    final textDelta = _textDelta(_currentEditingState);
+    final actionCommittedText = _actionCommittedText;
+
+    if (actionCommittedText != null) {
+      if (textDelta == actionCommittedText) {
+        _actionCommittedText = null;
+        _resetEditingState();
+        return;
+      }
+
+      // Preserve input that arrives together with a delayed action commit.
+      // This is uncommon, but it prevents losing a character if an IME batches
+      // the next edit with its final composition commit.
+      if (textDelta.startsWith(actionCommittedText)) {
+        _actionCommittedText = null;
+        final remainingText = textDelta.substring(actionCommittedText.length);
+        if (remainingText.isNotEmpty) {
+          widget.onInsert(remainingText);
+        }
+        _resetEditingState();
+        return;
+      }
+
+      _actionCommittedText = null;
+    }
+
+    if (_currentEditingState.text.length < _initEditingState.text.length) {
+      widget.onDelete();
+    } else if (textDelta.isEmpty &&
+        _currentEditingState.text == _initEditingState.text) {
+      // The local buffer is already at its floor (empty, cursor at 0), so
+      // there is nothing left for a backspace to shorten. Some soft
+      // keyboards still emit this exact no-op editing value for that
+      // keypress instead of staying silent - treat it as the delete it
+      // represents rather than as an empty insert.
+      widget.onDelete();
+    } else {
+      widget.onInsert(textDelta);
+    }
+
+    // Reset editing state if composing is done
+    if (_currentEditingState.composing.isCollapsed &&
+        _currentEditingState.text != _initEditingState.text) {
+      _resetEditingState();
+    }
+  }
+
+  /// Handles [updateEditingValue] where the platform's editing value is
+  /// cleared lazily ([_clearsLazily]).
+  ///
+  /// The value keeps committed text until a key the terminal handles clears
+  /// it. Text is therefore sent as it is committed: the part of the value
+  /// before the composing range, minus what earlier values already sent.
+  void _updateEditingValueKeepingText(TextEditingValue value) {
+    final text = value.text;
+    final composing = value.composing;
+    final isComposing = composing.isValid &&
+        !composing.isCollapsed &&
+        composing.end <= text.length;
+    final committed = isComposing ? text.substring(0, composing.start) : text;
+
+    // A composition an action committed may be echoed by the input method on
+    // the very next value, if at all. It was sent with the action (see
+    // [_commitComposingTextForAction]), so its echo is not new input.
+    final actionCommittedText = _actionCommittedText;
+    _actionCommittedText = null;
+    if (actionCommittedText != null &&
+        _committedText.isEmpty &&
+        committed.startsWith(actionCommittedText)) {
+      _committedText = actionCommittedText;
+    }
+
+    _sendCommittedChange(committed);
+    widget.onComposing(isComposing ? composing.textInside(text) : null);
+  }
+
+  /// Sends how [committed], the committed text of the latest editing value,
+  /// differs from what was already sent.
+  ///
+  /// Normally it only grows, and the new text is sent. It shrinks or diverges
+  /// when the platform rewrites text it had committed: the macOS accent menu
+  /// replaces the `e` it typed with `é`. The program has already received
+  /// the old text, so the change is replayed: one backspace for each
+  /// character that went away, then the text that replaced it.
+  void _sendCommittedChange(String committed) {
+    final sent = _committedText;
+    _committedText = committed;
+
+    if (committed.startsWith(sent)) {
+      final added = committed.substring(sent.length);
+      if (added.isNotEmpty) {
+        widget.onInsert(added);
+      }
+      return;
+    }
+
+    var common = 0;
+    final sentCharacters = sent.characters.iterator;
+    final committedCharacters = committed.characters.iterator;
+    while (sentCharacters.moveNext() &&
+        committedCharacters.moveNext() &&
+        sentCharacters.current == committedCharacters.current) {
+      common += sentCharacters.current.length;
+    }
+
+    final removed = sent.substring(common).characters.length;
+    for (var i = 0; i < removed; i++) {
+      widget.onDelete();
+    }
+    final added = committed.substring(common);
+    if (added.isNotEmpty) {
+      widget.onInsert(added);
+    }
+  }
+
+  /// Handles [updateEditingValue] for [CustomTextEdit.deleteDetection] mode.
+  ///
+  /// This mode pads the editing state with a sentinel (see
+  /// [_initEditingState]) so a backspace at offset 0 always has something to
+  /// remove, letting the deletion be derived from how much of the sentinel
+  /// is left rather than from a raw text-length diff against empty.
+  ///
+  /// Composition must still work here. While `value.composing` is a genuine,
+  /// still-open multi-character preview, emission is deferred and only the
+  /// text the IME actually commits is emitted once composing closes.
+  ///
+  /// The complication is the pattern some Android keyboards (Gboard,
+  /// Samsung, SwiftKey) produce for a single already-resolved keypress: they
+  /// wrap it in a composing range that never collapses on its own (fixed by
+  /// f6568e1). Such a range opens fresh with exactly one character in it -
+  /// but so does a genuine preview, on its very first keystroke. A bare
+  /// length check can't tell those apart, so instead this tracks whether an
+  /// open composing range is being *extended in place*:
+  ///
+  ///   - a range whose base stays put and whose text keeps growing is a
+  ///     real, still-open preview - keep deferring.
+  ///   - a range that collapses is a resolved commit - emit it once.
+  ///   - a *different* range appearing at the same base without the
+  ///     previous one ever growing or collapsing is the f6568e1 shape: the
+  ///     previous keystroke was already resolved and is never coming back,
+  ///     so it is flushed now instead of waiting for a collapse that will
+  ///     never arrive.
+  void _updateEditingValueWithDeleteDetection(TextEditingValue value) {
+    final text = value.text;
+    final initLength = _initEditingState.text.length;
+
+    // An out-of-band commit is echoed by the IME on the very next editing
+    // value, if at all, so the guard lives for exactly this call. Holding it
+    // any longer would swallow the same word typed again later.
+    final actionCommittedText = _actionCommittedText;
+    _actionCommittedText = null;
+
+    if (value.composing.isValid) {
+      final composingText = value.composing.textInside(text);
+      final base = value.composing.start;
+      final pending = _pendingComposingText;
+
+      final isExtendingPending = pending != null &&
+          base == _pendingComposingBase &&
+          composingText.length > pending.length;
+
+      if (isExtendingPending) {
+        _pendingComposingText = composingText;
+        widget.onComposing(composingText);
+        return;
+      }
+
+      if (pending != null && pending.length > 1) {
+        // The pending range already held more than one character, so it was
+        // never an ambiguous fresh single-keystroke open - it was already a
+        // confirmed, substantial preview (e.g. a pinyin buffer). Replacing
+        // it wholesale, even with something shorter, is an ordinary step in
+        // the same composition (e.g. picking a hanzi candidate), not the
+        // f6568e1 trapped-keystroke shape, which only ever involves single
+        // characters. Keep deferring.
+        _pendingComposingText = composingText;
+        _pendingComposingBase = base;
+        widget.onComposing(composingText);
+        return;
+      }
+
+      if (pending != null) {
+        // The pending range was a single, unconfirmed character and has now
+        // been replaced by another fresh range without ever growing or
+        // collapsing - the previous keystroke is done and will never
+        // collapse on its own (f6568e1), so flush it now. The replacement
+        // is exactly as resolved as the one it replaced (nothing else has
+        // arrived to prove otherwise), so it is flushed immediately too
+        // rather than reopened as a new pending range.
+        if (pending.isNotEmpty) {
+          widget.onInsert(pending);
+        }
+        if (composingText.isNotEmpty) {
+          widget.onInsert(composingText);
+        }
+        widget.onComposing(null);
+        _resetEditingState();
+        return;
+      }
+
+      // Freshly opened range, nothing pending yet. This might be the start
+      // of a genuine preview or a trapped keystroke - hold it pending and
+      // let the next update (extension, collapse, or replacement above)
+      // decide, instead of assuming either way.
+      _pendingComposingText = composingText;
+      _pendingComposingBase = base;
+      widget.onComposing(composingText);
+      return;
+    }
+
+    widget.onComposing(null);
+    _pendingComposingText = null;
+    _pendingComposingBase = null;
+
+    if (text.length < initLength) {
+      final deleteCount = initLength - text.length;
+      for (var i = 0; i < deleteCount; i++) {
+        widget.onDelete();
+      }
+      _resetEditingState();
+      return;
+    }
+
+    if (text.length > initLength) {
+      final textDelta = text.substring(initLength);
+
+      // A composition committed out of band — by an action (Enter) or by
+      // [commitComposing] — is often echoed back by the IME a moment later as
+      // its own delayed commit. It has already been emitted, so swallow the
+      // echo instead of sending the whole word to the terminal a second time.
+      if (actionCommittedText != null) {
+        if (textDelta == actionCommittedText) {
+          _resetEditingState();
+          return;
+        }
+
+        // Some IMEs batch the next edit into that delayed commit. Only the
+        // echoed part is dropped; the rest is genuinely new input.
+        if (textDelta.startsWith(actionCommittedText)) {
+          final remainingText = textDelta.substring(actionCommittedText.length);
+          if (remainingText.isNotEmpty) {
+            widget.onInsert(remainingText);
+          }
+          _resetEditingState();
+          return;
+        }
+      }
+
+      if (textDelta.isNotEmpty) {
+        widget.onInsert(textDelta);
+      }
+      _resetEditingState();
+      return;
+    }
+
+    if (text != _initEditingState.text) {
+      _resetEditingState();
+    }
+  }
+
+  @override
+  void performAction(TextInputAction action) {
+    _commitComposingTextForAction();
+    widget.onAction(action);
+    // An action arrives once the input method has finished with the key
+    // that caused it, so nothing is composing (see [_clearsLazily]).
+    _clearIfIdle();
+  }
+
+  @override
+  void performSelector(String selectorName) {
+    widget.onCommand?.call(selectorName);
+  }
+
+  /// Commits a pending IME composition as terminal input, and reports whether
+  /// there was one.
+  ///
+  /// Input that reaches the terminal from outside the keyboard — a mobile
+  /// extra-keys bar, a paste button — is appended to what the terminal has
+  /// already received, but an open composition has *not* been received yet: it
+  /// is still sitting in the IME, deferred until the composition resolves. Send
+  /// such input without committing first and it lands against a line the user
+  /// cannot see the rest of, so `www` + Tab completes an empty line instead of
+  /// `www`.
+  ///
+  /// Prefer this over [resetEditingState] for anything that types: resetting
+  /// throws the composition away, which loses what the user typed.
+  bool commitComposing() => _commitComposingTextForAction();
+
+  String _textDelta(TextEditingValue value) {
+    final initialTextLength = _initEditingState.text.length;
+    if (value.text.length < initialTextLength) {
+      return '';
+    }
+
+    return value.text.substring(initialTextLength);
+  }
+
+  /// Emits an open composition as input and clears it. Returns false when
+  /// there was nothing composing.
+  bool _commitComposingTextForAction() {
+    if (_currentEditingState.composing.isCollapsed) {
+      return false;
+    }
+
+    final textDelta = widget.deleteDetection
+        ? _textDelta(_currentEditingState)
+        : _unsentText(_currentEditingState);
+    widget.onComposing(null);
+
+    if (textDelta.isNotEmpty) {
+      widget.onInsert(textDelta);
+      _actionCommittedText = textDelta;
+    }
+
+    _resetEditingState();
+    return true;
+  }
+
+  /// The part of [value]'s text not sent yet: what follows the committed
+  /// text already sent ([_committedText], empty unless [_clearsLazily]).
+  String _unsentText(TextEditingValue value) {
+    final text = value.text;
+    return text.startsWith(_committedText)
+        ? text.substring(_committedText.length)
+        : text;
+  }
+
+  void _resetEditingState() {
+    _currentEditingState = _initEditingState;
+    _committedText = '';
+    _pendingComposingText = null;
+    _pendingComposingBase = null;
+    _connection?.setEditingState(_initEditingState);
+  }
+
+  @override
+  void updateFloatingCursor(RawFloatingCursorPoint point) {
+    // print('updateFloatingCursor $point');
+  }
+
+  @override
+  void showAutocorrectionPromptRect(int start, int end) {
+    // print('showAutocorrectionPromptRect');
+  }
+
+  @override
+  void connectionClosed() {
+    _dropComposition();
+  }
+
+  @override
+  void performPrivateCommand(String action, Map<String, dynamic> data) {
+    // print('performPrivateCommand $action');
+  }
+
+  @override
+  void insertTextPlaceholder(Size size) {
+    // print('insertTextPlaceholder');
+  }
+
+  @override
+  void removeTextPlaceholder() {
+    // print('removeTextPlaceholder');
+  }
+
+  @override
+  void showToolbar() {
+    // print('showToolbar');
+  }
+}
