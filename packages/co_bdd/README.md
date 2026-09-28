@@ -139,6 +139,45 @@ This generates:
 
 Both call the same step functions.
 
+## Shared steps
+
+`package:co_bdd/shared_steps.dart` ships domain-free steps that take widget keys
+or texts as parameters, so every project reuses **the same implementation**
+instead of re-creating `i_tap_the_save_button.dart`-style local steps.
+
+```yaml
+options:
+  sharedSteps: true
+  sharedStepsImport: "package:co_bdd/shared_steps.dart"
+  sharedStepNames: [i_tap_the_widget, the_widget_should_be_displayed] # …
+```
+
+| Gherkin phrase | Step |
+|---|---|
+| `I tap the {'key'} widget` | `iTapTheWidget` |
+| `I tap the {'key'} widget at index {'N'}` | `iTapTheWidgetAtIndex` (0-based) |
+| `I tap the {'text'} text` | `iTapTheText` |
+| `I long press the {'key'} widget` | `iLongPressTheWidget` |
+| `I enter {'value'} in the {'key'} widget` | `iEnterInTheWidget` |
+| `I clear the {'key'} widget` | `iClearTheWidget` |
+| `I scroll until the {'key'} widget is visible` | `iScrollUntilTheWidgetIsVisible` |
+| `I wait for {'N'} seconds` | `iWaitForSeconds` |
+| `the {'key'} widget should be displayed` / `should not be displayed` | `theWidgetShouldBeDisplayed` / `theWidgetShouldNotBeDisplayed` |
+| `the {'text'} text should be displayed` | `theTextShouldBeDisplayed` |
+| `I should see {'N'} {'key'} widgets` | `iShouldSeeWidgets` |
+| `the {'key'} widget should contain {'text'} text` | `theWidgetShouldContainText` |
+| `the {'key'} widget should be selected` / `should not be selected` | Semantics `isSelected` |
+| `the current page should be {'N'}` | exact label of the `current_page_indicator` key |
+| `the {'panel'} widget should be anchored to {'anchor'}` | popover `bottomEnd` placement |
+| `the error message` / `loading indicator` / `success message` / `total count` `should be displayed`, `I confirm deletion`, `I tap the next page button` | fixed phrases on `CommonKeys` |
+
+Keep **domain** steps local: `Given` page mounts and mock state, composite
+actions, and steps whose name claims more than a key check (e.g. "the review
+should be deleted") — rewriting those to a shared phrase silently weakens what
+the scenario verifies. Design-system–specific checks (a button's enabled state,
+a toggle's value) belong in a project adapter that re-exports this library with
+`show` and adds its own steps.
+
 ## Scenario Tags
 
 | Tag | Widget Test | Patrol E2E |

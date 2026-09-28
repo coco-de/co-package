@@ -79,6 +79,9 @@ abstract final class CommonKeys {
   /// Error message container.
   static const errorMessage = Key('error_message');
 
+  /// Success message (toast / banner) container.
+  static const successMessage = Key('success_message');
+
   /// Empty state container.
   static const emptyState = Key('empty_state');
 
@@ -87,4 +90,12 @@ abstract final class CommonKeys {
 
   /// Scroll view / list view.
   static const scrollView = Key('scroll_view');
+
+  // === List / Pagination ===
+
+  /// Total item count label of a list.
+  static const totalCount = Key('total_count');
+
+  /// "Next page" button of a pagination control.
+  static const nextPageButton = Key('next_page_button');
 }

@@ -60,6 +60,7 @@ library;
 export 'src/driver/patrol_test_driver.dart';
 export 'src/driver/test_driver.dart';
 export 'src/driver/widget_test_driver.dart';
+export 'src/driver/widget_tester_of.dart';
 
 // Generator (build-time only)
 //
