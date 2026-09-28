@@ -26,7 +26,7 @@ cocode ADE 터미널(coco-de/cocode#452)과 Lumide(SoFluffyOS/lumide#64)에서 �
 | `pubspec.yaml` | `version` · `description` · `publish_to: none` · `repository` · `issue_tracker` |
 | `FORK.md` · `CHANGELOG.md` 맨 위 항목 | 이 문서와 포크 릴리스 노트 |
 
-- 업스트림 PR: klc/xterm3 에 같은 수정을 보냈다(링크는 PR 을 연 뒤 이 줄에 적는다).
+- 업스트림 PR: klc/xterm3 에 같은 수정을 보낸다. 진행 기록은 coco-de/cocode#452 에 남긴다.
 - 업스트림이 머지해 릴리스하면 이 포크를 지우고 pub.dev `xterm3` 로 되돌린다.
 
 ## 쓰는 법
