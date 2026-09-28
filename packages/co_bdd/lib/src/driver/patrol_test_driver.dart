@@ -3,7 +3,7 @@
 // 아직 동일하게 제공되지 않아 당분간 native 를 유지한다.
 // ignore_for_file: deprecated_member_use
 
-import 'package:co_test_gen/src/driver/test_driver.dart';
+import 'package:co_bdd/src/driver/test_driver.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';

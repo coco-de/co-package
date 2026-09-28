@@ -1,6 +1,6 @@
 builders:
   dual_test_gen:
-    import: "package:co_test_gen/builder.dart"
+    import: "package:co_bdd/builder.dart"
     builder_factories: ["dualTestBuilder"]
     build_extensions:
       ".feature":

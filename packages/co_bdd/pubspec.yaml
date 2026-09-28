@@ -1,4 +1,4 @@
-name: co_test_gen
+name: co_bdd
 version: 0.1.2
 description: >-
   BDD Dual Test Generator — generates Widget Test + Patrol E2E Test

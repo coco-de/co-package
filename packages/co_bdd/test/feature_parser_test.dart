@@ -1,4 +1,4 @@
-import 'package:co_test_gen/src/generator/feature_parser.dart';
+import 'package:co_bdd/src/generator/feature_parser.dart';
 import 'package:test/test.dart';
 
 void main() {

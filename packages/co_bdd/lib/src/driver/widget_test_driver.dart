@@ -1,4 +1,4 @@
-import 'package:co_test_gen/src/driver/test_driver.dart';
+import 'package:co_bdd/src/driver/test_driver.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol_finders/patrol_finders.dart';

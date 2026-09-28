@@ -3,8 +3,8 @@ library;
 
 import 'dart:async';
 
-import 'package:co_test_gen/src/generator/feature_parser.dart';
-import 'package:co_test_gen/src/generator/test_generator.dart'
+import 'package:co_bdd/src/generator/feature_parser.dart';
+import 'package:co_bdd/src/generator/test_generator.dart'
     show
         defaultSharedStepsImport,
         generatePatrolTest,
@@ -19,7 +19,7 @@ import 'package:build/build.dart';
 /// ```yaml
 /// builders:
 ///   dual_test_gen:
-///     import: "package:co_test_gen/builder.dart"
+///     import: "package:co_bdd/builder.dart"
 ///     builder_factories: ["dualTestBuilder"]
 ///     build_extensions:
 ///       ".feature":
@@ -35,7 +35,7 @@ import 'package:build/build.dart';
 /// targets:
 ///   $default:
 ///     builders:
-///       co_test_gen|dual_test_gen:
+///       co_bdd|dual_test_gen:
 ///         enabled: true
 ///         generate_for:
 ///           - test/src/bdd/*.feature

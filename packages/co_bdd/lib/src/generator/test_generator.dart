@@ -18,10 +18,10 @@
 /// ```
 library;
 
-import 'package:co_test_gen/src/generator/feature_parser.dart';
+import 'package:co_bdd/src/generator/feature_parser.dart';
 
 /// Default import path for shared steps package.
-const defaultSharedStepsImport = 'package:co_test_gen/shared_steps.dart';
+const defaultSharedStepsImport = 'package:co_bdd/shared_steps.dart';
 
 /// Registry of shared step file names (without `.dart` extension).
 ///
@@ -64,7 +64,7 @@ String generateWidgetTest(
   // Imports
   buffer
     ..writeln("import 'package:flutter_test/flutter_test.dart';")
-    ..writeln("import 'package:co_test_gen/co_test_gen.dart';");
+    ..writeln("import 'package:co_bdd/co_bdd.dart';");
 
   // Step imports — shared steps are imported from a single package import,
   // local steps are imported individually from the step folder.
@@ -157,7 +157,7 @@ String generatePatrolTest(
   buffer
     ..writeln("import 'package:flutter_test/flutter_test.dart';")
     ..writeln("import 'package:patrol/patrol.dart';")
-    ..writeln("import 'package:co_test_gen/co_test_gen.dart';");
+    ..writeln("import 'package:co_bdd/co_bdd.dart';");
 
   // Step imports — shared steps from package, local steps from folder
   final patrolSteps = _collectStepsForTarget(feature, TestTarget.patrolOnly);

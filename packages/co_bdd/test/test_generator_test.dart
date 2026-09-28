@@ -1,5 +1,5 @@
-import 'package:co_test_gen/src/generator/feature_parser.dart';
-import 'package:co_test_gen/src/generator/test_generator.dart';
+import 'package:co_bdd/src/generator/feature_parser.dart';
+import 'package:co_bdd/src/generator/test_generator.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -44,7 +44,7 @@ void main() {
     test('creates WidgetTestDriver and passes to steps', () {
       final code = generateWidgetTest(feature, stepFolder: 'step');
 
-      expect(code, contains("import 'package:co_test_gen/co_test_gen.dart'"));
+      expect(code, contains("import 'package:co_bdd/co_bdd.dart'"));
       expect(code, contains('WidgetTestDriver(tester)'));
       expect(
         code,
@@ -67,7 +67,7 @@ void main() {
     test('creates PatrolTestDriver and passes to steps', () {
       final code = generatePatrolTest(feature, stepFolder: 'step');
 
-      expect(code, contains("import 'package:co_test_gen/co_test_gen.dart'"));
+      expect(code, contains("import 'package:co_bdd/co_bdd.dart'"));
       expect(code, contains("import 'package:patrol/patrol.dart'"));
       expect(code, contains(r'PatrolTestDriver($)'));
       expect(

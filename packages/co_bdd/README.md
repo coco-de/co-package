@@ -1,10 +1,13 @@
-# co_test_gen
+# co_bdd
+
+> **Renamed from `co_test_gen`** and moved from `coco-de/co-test-gen` into this
+> repository (`packages/co_bdd`). See [Migrating from co_test_gen](#migrating-from-co_test_gen).
 
 BDD Dual Test Generator for Flutter — write Gherkin `.feature` files once, generate both **Widget Tests** and **Patrol E2E Tests** with shared step functions.
 
 ## Why?
 
-Widget tests and Patrol E2E tests serve different purposes but often test the same user flows. Writing step functions twice is wasteful. `co_test_gen` solves this with:
+Widget tests and Patrol E2E tests serve different purposes but often test the same user flows. Writing step functions twice is wasteful. `co_bdd` solves this with:
 
 1. **`TestDriver`** — an abstract interface that wraps both `WidgetTester` and `PatrolIntegrationTester`
 2. **`DualTestBuilder`** — a `build_runner` builder that generates `.widget_test.dart` and `.patrol_test.dart` from a single `.feature` file
@@ -15,7 +18,11 @@ Widget tests and Patrol E2E tests serve different purposes but often test the sa
 
 ```yaml
 dev_dependencies:
-  co_test_gen: ^0.1.0
+  co_bdd:
+    git:
+      url: https://github.com/coco-de/co-package.git
+      path: packages/co_bdd
+      ref: co_bdd-vX.Y.Z # or a commit SHA
   build_runner: ^2.4.0
 ```
 
@@ -25,7 +32,7 @@ dev_dependencies:
 targets:
   $default:
     builders:
-      co_test_gen|dual_test_gen:
+      co_bdd|dual_test_gen:
         enabled: true
         generate_for:
           - test/src/bdd/*.feature
@@ -39,7 +46,7 @@ targets:
 |---|---|---|
 | `stepFolder` | `step` | Directory holding local step files, relative to the `.feature`. |
 | `sharedSteps` | `false` | Resolve known step names from a shared package instead of local files. |
-| `sharedStepsImport` | `package:co_test_gen/shared_steps.dart` | Import URI for the shared step library. |
+| `sharedStepsImport` | `package:co_bdd/shared_steps.dart` | Import URI for the shared step library. |
 | `sharedStepNames` | built-in list | Step file names to resolve from the shared package. |
 | `defaultTarget` | `both` | Execution target for scenarios that carry **no** target tag. One of `both` / `widget-only` / `patrol-only`. |
 
@@ -100,7 +107,7 @@ Feature: Login
 
 ```dart
 // test/src/bdd/step/i_am_on_the_login_page.dart
-import 'package:co_test_gen/co_test_gen.dart';
+import 'package:co_bdd/co_bdd.dart';
 
 Future<void> iAmOnTheLoginPage(TestDriver driver) async {
   await driver.pumpWidget(const LoginPage());
@@ -110,7 +117,7 @@ Future<void> iAmOnTheLoginPage(TestDriver driver) async {
 
 ```dart
 // test/src/bdd/step/i_tap_the_login_button.dart
-import 'package:co_test_gen/co_test_gen.dart';
+import 'package:co_bdd/co_bdd.dart';
 import 'package:flutter/widgets.dart';
 
 Future<void> iTapTheLoginButton(TestDriver driver) async {
@@ -175,6 +182,21 @@ Future<void> iEnterInTheEmailField(TestDriver driver, String param1) async {
   await driver.enterText(const Key('email_field'), param1);
 }
 ```
+
+## Migrating from co_test_gen
+
+The package was renamed when it moved into `coco-de/co-package`. Everything else is
+unchanged — replace the three identifiers and re-run `build_runner`.
+
+| | before | after |
+|---|---|---|
+| dependency | `co_test_gen` (git `coco-de/co-test-gen`) | `co_bdd` (git `coco-de/co-package`, `path: packages/co_bdd`) |
+| import | `package:co_test_gen/co_test_gen.dart` | `package:co_bdd/co_bdd.dart` |
+| builder key in `build.yaml` | `co_test_gen\|dual_test_gen` | `co_bdd\|dual_test_gen` |
+
+Releases before the move are tagged `co_bdd-v0.1.1` / `co_bdd-v0.1.2` here (originally
+`v0.1.1` / `v0.1.2` in `coco-de/co-test-gen`); their commits were rewritten into
+`packages/co_bdd`, so `git log -- packages/co_bdd` shows the full history.
 
 ## License
 

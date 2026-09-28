@@ -4,7 +4,7 @@
 library;
 
 import 'package:build/build.dart';
-import 'package:co_test_gen/src/generator/dual_test_builder.dart';
+import 'package:co_bdd/src/generator/dual_test_builder.dart';
 
 /// build_runner entry point.
 Builder dualTestBuilder(BuilderOptions options) =>

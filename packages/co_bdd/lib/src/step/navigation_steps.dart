@@ -1,4 +1,4 @@
-import 'package:co_test_gen/src/driver/test_driver.dart';
+import 'package:co_bdd/src/driver/test_driver.dart';
 import 'package:flutter/widgets.dart';
 
 /// Reusable bottom navigation step functions.

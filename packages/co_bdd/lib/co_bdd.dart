@@ -6,10 +6,15 @@
 ///
 /// ## Quick Start
 ///
-/// 1. Add to `pubspec.yaml`:
+/// 1. Add to `pubspec.yaml` (git dependency — pin a commit or a
+///    `co_bdd-v*` tag):
 /// ```yaml
 /// dev_dependencies:
-///   co_test_gen: ^0.1.0
+///   co_bdd:
+///     git:
+///       url: https://github.com/coco-de/co-package.git
+///       path: packages/co_bdd
+///       ref: co_bdd-vX.Y.Z # or a commit SHA
 ///   build_runner: ^2.4.0
 /// ```
 ///
@@ -18,7 +23,7 @@
 /// targets:
 ///   $default:
 ///     builders:
-///       co_test_gen|dual_test_gen:
+///       co_bdd|dual_test_gen:
 ///         enabled: true
 ///         generate_for:
 ///           - test/src/bdd/*.feature
@@ -40,7 +45,7 @@
 ///
 /// 4. Write step functions using [TestDriver]:
 /// ```dart
-/// import 'package:co_test_gen/co_test_gen.dart';
+/// import 'package:co_bdd/co_bdd.dart';
 ///
 /// Future<void> iAmOnTheLoginPage(TestDriver driver) async {
 ///   await driver.pumpWidget(const LoginPage());
