@@ -1,9 +1,14 @@
 name: xterm3
-description: Maintained Flutter terminal emulator package with fast rendering and broad VT/xterm compatibility.
-version: 6.3.4
+description: >-
+  Cocode fork of xterm3 (klc/xterm3) 6.3.4 with desktop input method fixes:
+  composed Hangul/CJK text instead of bare jamo, see FORK.md.
+# Build metadata marks the fork; it sorts after 6.3.4 and before any 6.3.5.
+version: 6.3.4+cocode.1
+# The package name is upstream's. Publishing it would claim pub.dev's xterm3.
+publish_to: none
 homepage: https://github.com/klc/xterm3
-repository: https://github.com/klc/xterm3
-issue_tracker: https://github.com/klc/xterm3/issues
+repository: https://github.com/coco-de/co-package/tree/main/packages/xterm3
+issue_tracker: https://github.com/coco-de/co-package/issues
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

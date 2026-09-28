@@ -60,6 +60,27 @@ jobs:
       - run: melos run test:dart
       - run: melos run test:flutter
 
+  # packages/xterm3 — klc/xterm3 포크(AGPL-3.0). 워크스페이스 비회원이라 melos 잡이
+  # 보지 않는다: 업스트림 dev 의존(lints ^3)이 루트 lints ^6 과 한 lockfile 에서
+  # 풀리지 않고, 업스트림과 바이트 동일을 유지해야 동기화된다(packages/xterm3/FORK.md).
+  # 업스트림 CI 와 같은 검사를 macOS 에서 돌린다 — 골든 4장이 macOS 에서 렌더됐다.
+  xterm3:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: packages/xterm3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+
   # co_arc 러너 스크립트/워크플로우 문법 검증
   lint-runner-infra:
     runs-on: ubuntu-latest

@@ -100,3 +100,19 @@ same IDPF repository carries its own file-level notice ("Copyright © 2012
 O'Reilly Media, Inc.") that overrides the repository's default license, so it
 is not redistributed here. 노회찬평전(nohoechan.epub) is not part of the IDPF
 corpus and is excluded for the same reason (real-world in-copyright book).
+
+
+--------------------------------------------------------------------------------
+xterm3 — packages/xterm3/ (a fork kept as its own package)
+--------------------------------------------------------------------------------
+
+packages/xterm3 is a fork of xterm3 (https://github.com/klc/xterm3), licensed
+under the GNU Affero General Public License v3.0 or later. Its code is not
+incorporated into any other package in this repository, and it is not
+covered by the BSD-3-Clause license of the rest of the repository. It keeps
+its own license files:
+
+  packages/xterm3/LICENSE      GNU AGPL-3.0
+  packages/xterm3/LICENSE.MIT  MIT notice of the prior work it derives from
+                               (xterm, xterm2)
+  packages/xterm3/NOTICE       copyright and derivation notice
