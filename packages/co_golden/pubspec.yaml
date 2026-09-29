@@ -4,7 +4,7 @@ description: >-
   themes, locales, and text scales with strict layout diagnostics and a JSON
   run manifest. Theme-agnostic axes fit design systems such as CoUI, and a
   built-in binding switches Slang locales per variant.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_golden
 resolution: workspace
 

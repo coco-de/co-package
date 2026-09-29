@@ -1,8 +1,8 @@
 {
-  "packages/open_epub_engine": "1.0.0",
-  "packages/open_epub": "1.1.0",
-  "packages/open_board": "0.1.0",
-  "packages/co_golden": "0.1.0",
-  "packages/co_golden_gallery": "0.1.0",
-  "packages/co_bdd": "0.1.2"
+  "packages/open_epub_engine": "1.1.0",
+  "packages/open_epub": "1.2.0",
+  "packages/open_board": "0.2.0",
+  "packages/co_golden": "0.2.0",
+  "packages/co_golden_gallery": "0.2.0",
+  "packages/co_bdd": "0.2.0"
 }
