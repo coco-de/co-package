@@ -150,6 +150,7 @@ String _css(String brand) {
       : 'color-mix(in srgb, $brand 55%, #000)';
   return '''
 :root {
+  --gallery-content-width: 1200px; --gallery-gutter: 24px;
   --bg: #0b0d0e; --surface: #121517; --panel: #181c1e;
   --ink: #e7eaeb; --secondary: #9aa1a3; --muted: #81888b;
   --line: #22282a; --line-strong: #343b3e;
@@ -200,8 +201,12 @@ a { color: var(--brand); }
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 h1, h2, h3, p, figure, dl, dd { margin: 0; }
-.top { max-width: 1440px; margin-inline: auto; display: flex; flex-wrap: wrap; gap: 24px;
-  justify-content: space-between; align-items: flex-end; padding: 56px max(24px, calc((100% - 1200px) / 2)) 36px; }
+/* Keep the centered shell's gutter inside its own max-width. Percentage padding on
+   a max-width child resolves against the viewport and shrinks content on wide screens. */
+.top, .layout { max-width: calc(var(--gallery-content-width) + 2 * var(--gallery-gutter));
+  margin-inline: auto; padding-inline: var(--gallery-gutter); }
+.top { display: flex; flex-wrap: wrap; gap: 24px;
+  justify-content: space-between; align-items: flex-end; padding-block: 56px 36px; }
 .title { display: grid; gap: 12px; min-width: 0; }
 .eyebrow { color: var(--brand); font: 500 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .16em; }
 h1 { font-size: clamp(30px, 4vw, 54px); line-height: 1.15; font-weight: 650; letter-spacing: -.035em; text-wrap: balance; }
@@ -219,7 +224,7 @@ h1 { font-size: clamp(30px, 4vw, 54px); line-height: 1.15; font-weight: 650; let
   color: var(--ink); text-decoration: none; cursor: pointer; font-weight: 600; }
 .link:hover, .viewer-button:hover { background: var(--panel); }
 .toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 12px 18px;
-  align-items: flex-end; padding: 16px max(24px, calc((100% - 1200px) / 2));
+  align-items: flex-end; padding: 16px max(var(--gallery-gutter), calc((100% - var(--gallery-content-width)) / 2));
   background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(10px);
   border-block: 1px solid var(--line); }
 .field { display: grid; gap: 5px; font-size: 12px; color: var(--secondary); }
@@ -229,8 +234,8 @@ h1 { font-size: clamp(30px, 4vw, 54px); line-height: 1.15; font-weight: 650; let
 .check { display: inline-flex; gap: 7px; align-items: center; min-height: 40px; }
 .check input { accent-color: var(--brand); }
 #visible { margin-inline-start: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
-.layout { max-width: 1440px; margin-inline: auto; display: grid; grid-template-columns: 220px minmax(0, 1fr);
-  gap: 40px; padding: 36px max(24px, calc((100% - 1200px) / 2)) 100px; }
+.layout { display: grid; grid-template-columns: 220px minmax(0, 1fr);
+  gap: 40px; padding-block: 36px 100px; }
 .toc { position: sticky; top: 94px; align-self: start; max-height: calc(100vh - 118px); overflow: auto; }
 .toc summary { font-weight: 600; cursor: pointer; margin-block-end: 12px; }
 .toc h2 { margin: 20px 0 6px; color: var(--brand); font: 500 11px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
@@ -301,7 +306,6 @@ dialog::backdrop { background: rgba(8, 9, 10, .8); }
 @media (max-width: 900px) {
   .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .toc { position: static; max-height: none; }
-  .top, .toolbar, .layout { padding-inline: 24px; }
   .shot img { height: 180px; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
