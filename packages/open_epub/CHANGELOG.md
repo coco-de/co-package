@@ -91,6 +91,11 @@
 * **open_epub:** ✨ open-epub 모노레포를 co-package 워크스페이스로 이관 ([ec34ab3](https://github.com/coco-de/co-package/commit/ec34ab3f4b4f9a70c4d692b7c07def421b154511))
 * **reflowable:** ✨ 렌더 충실도 — title 누출·세로쓰기 오탐·SVG FXL·스타일시트 ([#278](https://github.com/coco-de/co-package/issues/278)) ([#279](https://github.com/coco-de/co-package/issues/279)) ([c496592](https://github.com/coco-de/co-package/commit/c4965926d8002c843668241567a2cae15c8c3265))
 
+
+### 버그 수정
+
+* **open_epub:** 🐛 엔진 의존 범위를 lockstep 에 맞춰 `>=1.1.0 <1.2.0` 으로 — 함께 릴리스되는 open_epub_engine 1.1.0 과 워크스페이스 해석 정합
+
 ## 1.0.0
 
 open_epub 1.0 — **ADR-002 breaking 재설계**. 리더 패키지를 Flutter 렌더/위젯/컨트롤러
