@@ -1,3 +1,18 @@
+# Changelog
+
+## [0.2.0](https://github.com/coco-de/co-package/compare/co_golden-v0.1.0...co_golden-v0.2.0) (2026-09-29)
+
+
+### 기능
+
+* **co-golden:** ✨ co_golden · co_golden_gallery — 골든 매트릭스 러너와 정적 갤러리 생성기 ([#8](https://github.com/coco-de/co-package/issues/8)) ([5e7080d](https://github.com/coco-de/co-package/commit/5e7080dd36716765d028f755fa6986616061922c))
+* **co-golden:** ✨ 런 매니페스트 plan.axes 에 커버리지 축 순서를 기록한다 ([e00ca8b](https://github.com/coco-de/co-package/commit/e00ca8b7b6e77b2b14c634a5d704904ec7191a17))
+
+
+### 버그 수정
+
+* **co-golden:** 🐛 Slang 지연 로딩 로케일을 setUpAll 에서 미리 로드한다 ([#9](https://github.com/coco-de/co-package/issues/9)) ([b0a1e12](https://github.com/coco-de/co-package/commit/b0a1e124dba8b3227f021413888792c76f3ced99))
+
 ## 0.1.0
 
 - Initial release: `GoldenMatrix` registers one widget test per variant of a
