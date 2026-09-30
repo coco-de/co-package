@@ -1,4 +1,5 @@
 import 'co_faker.dart';
+import 'domain.dart';
 
 /// The kind of value a schema field should receive.
 ///
@@ -237,7 +238,8 @@ class CoFakerSchema {
   ///
   /// [fields] maps field names to Dart type names (`String`, `int`, `double`,
   /// `bool`, `DateTime`, optionally suffixed with `?`). [roles] forces a
-  /// [CoFieldRole] by name for specific fields, [enums] lists the allowed
+  /// [CoFieldRole] or registered domain role by name for specific fields,
+  /// [enums] lists the allowed
   /// values of [CoFieldRole.status] fields, and [referenceCounts] bounds the
   /// values of [CoFieldRole.reference] fields (default 10). [streamKey]
   /// namespaces the derived random streams so two entities with identical
@@ -259,9 +261,13 @@ class CoFakerSchema {
     }
     final result = <String, Object?>{};
     for (final entry in fields.entries) {
-      final roleName = roles[entry.key];
+      final roleName =
+          roles[entry.key] ?? faker.domains.entityRole(entity, entry.key);
       final role = roleName == null ? null : CoFieldRole.parse(roleName);
-      if (roleName != null && role == null) {
+      final domainRole = roleName == null || role != null
+          ? null
+          : faker.domains.findRole(roleName);
+      if (roleName != null && role == null && domainRole == null) {
         throw ArgumentError.value(roleName, 'roles', 'unknown role');
       }
       result[entry.key] = value(
@@ -269,7 +275,8 @@ class CoFakerSchema {
         entry.value,
         index: index,
         role: role,
-        values: enums[entry.key],
+        domainRole: domainRole,
+        values: enums[entry.key] ?? faker.domains.enumValues(entity, entry.key),
         referenceCount: referenceCounts[entry.key],
         source: faker.derive('$streamKey/$index/${entry.key}'),
         entity: entity,
@@ -277,6 +284,51 @@ class CoFakerSchema {
     }
     return result;
   }
+
+  /// Generates one record from a registered pack's entity schema.
+  ///
+  /// Use `pack.entity` when more than one pack defines the same entity name.
+  /// The qualified name and field each namespace an independent stream.
+  Map<String, Object?> entity(
+    String name, {
+    int index = 0,
+    Map<String, String> roles = const <String, String>{},
+    Map<String, List<String>> enums = const <String, List<String>>{},
+    Map<String, int> referenceCounts = const <String, int>{},
+  }) {
+    final found = faker.domains.findEntity(name);
+    if (found == null) {
+      throw ArgumentError.value(name, 'name', 'unknown domain entity');
+    }
+    final qualified = '${found.domain.name}.${found.name}';
+    return record(
+      found.fields,
+      index: index,
+      roles: roles,
+      enums: enums,
+      referenceCounts: referenceCounts,
+      streamKey: qualified,
+      entity: qualified,
+    );
+  }
+
+  /// Generates [count] records from a registered entity schema.
+  List<Map<String, Object?>> entities(
+    String name,
+    int count, {
+    Map<String, String> roles = const <String, String>{},
+    Map<String, List<String>> enums = const <String, List<String>>{},
+    Map<String, int> referenceCounts = const <String, int>{},
+  }) => faker.generate(
+    count,
+    (_, index) => entity(
+      name,
+      index: index,
+      roles: roles,
+      enums: enums,
+      referenceCounts: referenceCounts,
+    ),
+  );
 
   /// Generates [count] records with indexes `0..count-1`.
   List<Map<String, Object?>> records(
@@ -580,6 +632,7 @@ class CoFakerSchema {
     String type, {
     int index = 0,
     CoFieldRole? role,
+    CoDomainRoleRef? domainRole,
     List<String>? values,
     int? referenceCount,
     CoFaker? source,
@@ -587,6 +640,20 @@ class CoFakerSchema {
   }) {
     final f = source ?? faker;
     final baseType = _baseType(type);
+    final selectedDomainRole =
+        domainRole ??
+        (role == null && values == null
+            ? faker.domains.inferRole(name, entity: entity)
+            : null);
+    if (selectedDomainRole != null) {
+      final raw = selectedDomainRole.role.generate(f, (
+        field: name,
+        type: type,
+        index: index,
+        entity: entity,
+      ));
+      return _coerce(f, raw, baseType, index);
+    }
     final resolved =
         role ??
         infer(name, type: baseType, hasEnum: values != null, entity: entity);
