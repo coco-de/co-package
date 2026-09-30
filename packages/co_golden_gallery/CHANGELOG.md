@@ -5,6 +5,14 @@
   HTML output and the existing CLI options. Document the CoUI overrides needed
   by downstream runner projects.
 
+## [0.2.1](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.2.0...co_golden_gallery-v0.2.1) (2026-09-30)
+
+
+### 버그 수정
+
+* **co_golden_gallery:** 🐛 넓은 화면에서 갤러리 본문 폭이 줄어드는 문제 수정 ([2cf03e8](https://github.com/coco-de/co-package/commit/2cf03e8cc9a17b1c4030c74b2f54ea07bfb226d6))
+* **co_golden_gallery:** 🐛 넓은 화면에서 갤러리 콘텐츠 폭 수축 수정 ([0ee4ab4](https://github.com/coco-de/co-package/commit/0ee4ab47ea687a5dd666901e0b2f99fc11f72f63))
+
 ## [0.2.0](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.1.0...co_golden_gallery-v0.2.0) (2026-09-29)
 
 
