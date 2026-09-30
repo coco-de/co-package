@@ -1,8 +1,12 @@
+import 'dart:math' as math;
+
 import 'clinic_data.dart';
+import 'clinic_ops.dart';
 import 'clinic_texts.dart';
 import 'co_faker.dart';
 import 'korea.dart';
 import 'modules.dart';
+import 'signature.dart';
 
 /// A patient profile for EMR fixtures.
 ///
@@ -21,6 +25,12 @@ typedef CoFakePatient = ({
   String address2,
   String insurance,
   String insuranceLabel,
+  String chartNo,
+  int visitCount,
+  DateTime? lastVisitAt,
+  String channel,
+  String channelLabel,
+  String? specialNote,
 });
 
 /// A staff member of a clinic.
@@ -107,7 +117,13 @@ typedef CoFakeFeedback = ({String sentiment, int score, String comment});
 
 /// One turn of a conversation. [speaker] is `counselor`, `patient`, or
 /// `staff`; [at] is the offset from the start of the conversation.
-typedef CoFakeTurn = ({String speaker, String text, Duration at});
+typedef CoFakeTurn = ({
+  String speaker,
+  String text,
+  Duration at,
+  String? language,
+  String? translation,
+});
 
 /// A recorded counseling session with its summary and quote.
 typedef CoFakeCounselSession = ({
@@ -159,6 +175,92 @@ typedef CoFakeGuardian = ({
   String relation,
   String relationLabel,
   String phone,
+});
+
+/// How chart numbers are formatted by [CoFakerClinic.chartNumber].
+enum CoChartNumberFormat {
+  /// The bare number: `123`.
+  plain,
+
+  /// Zero-padded to six digits: `000123`.
+  padded,
+
+  /// Registration year and a five-digit number: `2026-00123`.
+  yearly,
+}
+
+/// A node of the visit purpose tree. Top-level purposes have no
+/// [parentId].
+typedef CoFakeVisitPurposeNode = ({
+  int id,
+  int? parentId,
+  String name,
+  String? color,
+});
+
+/// A clinic room.
+typedef CoFakeRoom = ({
+  int id,
+  String name,
+  String kind,
+  String kindLabel,
+  String? staffName,
+  String? staffRole,
+  String color,
+});
+
+/// One entry of a room queue. [status] is `inProgress`, `priority`,
+/// `waiting`, or `requested`; [order] is the 1-based position.
+typedef CoFakeQueueEntry = ({
+  int order,
+  String patientName,
+  String status,
+  String statusLabel,
+  String purpose,
+  DateTime checkedInAt,
+});
+
+/// The queue snapshot of one room.
+typedef CoFakeRoomQueue = ({
+  int roomId,
+  String roomName,
+  String roomKind,
+  List<CoFakeQueueEntry> entries,
+});
+
+/// A consent history event. [action] is `agreed` or `withdrawn`.
+typedef CoFakeConsentEvent = ({
+  String kind,
+  String kindLabel,
+  String channel,
+  String channelLabel,
+  String action,
+  String actionLabel,
+  String termsVersion,
+  DateTime at,
+});
+
+/// Vital signs. [glucose] is mg/dL, [temperature] °C.
+typedef CoFakeVitals = ({
+  double temperature,
+  int systolic,
+  int diastolic,
+  int pulse,
+  int spo2,
+  int glucose,
+  double heightCm,
+  double weightKg,
+  double bmi,
+});
+
+/// A pen chart mark in normalized `0..1` canvas coordinates. [tool] is
+/// `pen` or `highlighter`.
+typedef CoFakeCanvasMark = ({
+  String tool,
+  String color,
+  double width,
+  String region,
+  CoInkStroke points,
 });
 
 /// Clinic opening hours used by [CoFakerClinic.businessSlots].
@@ -220,11 +322,16 @@ class CoFakerClinic {
   /// The longer clinic texts of the current locale.
   CoFakerClinicTexts get texts => data.texts ?? CoFakerClinicTexts.english;
 
+  /// Front-desk, billing, operations, and CRM texts of the current locale.
+  CoFakerClinicOps get ops => data.ops ?? CoFakerClinicOps.english;
+
   /// Returns the localized label of a code such as `nhis`, `noShow`, or
   /// `spouse`, falling back to English and then to the code itself.
   String label(String code) =>
       data.labels[code] ??
       texts.labels[code] ??
+      ops.labels[code] ??
+      CoFakerClinicOps.english.labels[code] ??
       CoFakerClinicData.english.labels[code] ??
       CoFakerClinicTexts.english.labels[code] ??
       code;
@@ -282,12 +389,19 @@ class CoFakerClinic {
   /// Ages follow a dermatology-clinic distribution (mostly 20-50) unless
   /// [minAge]/[maxAge] are given, and [femaleRatio] defaults to 0.75.
   /// [emailRatio] is the share of patients with an email address.
+  ///
+  /// [chartNumber] and [chartNumberFormat] set the chart number; without
+  /// them a number is derived. Chart number, visit history, acquisition
+  /// channel, and special note come from a stream derived from the name and
+  /// birth date, so they never shift the other fields.
   CoFakePatient patient({
     CoSex? sex,
     int? minAge,
     int? maxAge,
     double femaleRatio = 0.75,
     double emailRatio = 0.4,
+    int? chartNumber,
+    CoChartNumberFormat chartNumberFormat = CoChartNumberFormat.plain,
   }) {
     final resolvedSex = sex ?? faker.person.sex(femaleRatio: femaleRatio);
     final age = minAge != null || maxAge != null
@@ -319,8 +433,12 @@ class CoFakerClinic {
       line2 = '';
     }
     final insurance = insuranceType();
+    final name = faker.person.fullName(firstName: first, lastName: last);
+    final extra = faker.derive('clinic/patient/$name/$birth').clinic;
+    final visits = extra.faker.random.int(max: 24);
+    final channel = extra.acquisitionChannel();
     return (
-      name: faker.person.fullName(firstName: first, lastName: last),
+      name: name,
       sex: resolvedSex,
       birthDate: birth,
       age: _ageOn(birth, faker.now),
@@ -334,7 +452,33 @@ class CoFakerClinic {
       address2: line2,
       insurance: insurance.code,
       insuranceLabel: insurance.label,
+      chartNo: this.chartNumber(
+        chartNumber ?? extra.faker.random.int(min: 1, max: 20000),
+        format: chartNumberFormat,
+      ),
+      visitCount: visits,
+      lastVisitAt: visits == 0
+          ? null
+          : _dayStart(extra.faker.date.past(days: 180, utc: faker.now.isUtc)),
+      channel: channel.code,
+      channelLabel: channel.label,
+      specialNote: extra.faker.random.double() < 0.2
+          ? extra.faker.random.pick(ops.specialNotes)
+          : null,
     );
+  }
+
+  /// Formats chart [number] as [format].
+  String chartNumber(
+    int number, {
+    CoChartNumberFormat format = CoChartNumberFormat.plain,
+  }) {
+    return switch (format) {
+      CoChartNumberFormat.plain => '$number',
+      CoChartNumberFormat.padded => '$number'.padLeft(6, '0'),
+      CoChartNumberFormat.yearly =>
+        '${faker.now.year}-${'$number'.padLeft(5, '0')}',
+    };
   }
 
   /// Generates an insurance type: `nhis` (national health insurance, 80%),
@@ -350,9 +494,49 @@ class CoFakerClinic {
   }
 
   /// Generates a visit purpose with a sub-purpose.
-  ({String purpose, String detail}) visitPurpose() {
+  ///
+  /// [purposeId] and [detailId] match the ids of [visitPurposeTree].
+  ({String purpose, String detail, int purposeId, int detailId})
+  visitPurpose() {
     final spec = faker.random.pick(data.visitPurposes);
-    return (purpose: spec.name, detail: faker.random.pick(spec.details));
+    final detail = faker.random.pick(spec.details);
+    final tree = visitPurposeTree();
+    final parent = tree.firstWhere(
+      (n) => n.parentId == null && n.name == spec.name,
+    );
+    final child = tree.firstWhere(
+      (n) => n.parentId == parent.id && n.name == detail,
+    );
+    return (
+      purpose: spec.name,
+      detail: detail,
+      purposeId: parent.id,
+      detailId: child.id,
+    );
+  }
+
+  /// The visit purpose tree: top-level purposes (ids 1..n, with a color)
+  /// followed by their sub-purposes (`시술 › 레이저`). Does not consume the
+  /// random stream, so ids are stable.
+  List<CoFakeVisitPurposeNode> visitPurposeTree() {
+    final nodes = <CoFakeVisitPurposeNode>[];
+    final purposes = data.visitPurposes;
+    for (var i = 0; i < purposes.length; i++) {
+      nodes.add((
+        id: i + 1,
+        parentId: null,
+        name: purposes[i].name,
+        color:
+            CoFakerClinicOps.palette[(i + 2) % CoFakerClinicOps.palette.length],
+      ));
+    }
+    var next = purposes.length + 1;
+    for (var i = 0; i < purposes.length; i++) {
+      for (final detail in purposes[i].details) {
+        nodes.add((id: next++, parentId: i + 1, name: detail, color: null));
+      }
+    }
+    return nodes;
   }
 
   /// The procedure catalog of the current locale.
@@ -754,6 +938,8 @@ class CoFakerClinic {
         speaker: line.$1,
         text: line.$2,
         at: Duration(seconds: elapsed),
+        language: null,
+        translation: null,
       ));
       elapsed += 4 + line.$2.length ~/ 3 + faker.random.int(max: 20);
     }
@@ -784,7 +970,9 @@ class CoFakerClinic {
   /// patient's language, on the channel that language usually uses.
   ///
   /// This is independent of the faker locale, because one Korean clinic
-  /// inbox receives messages in many languages.
+  /// inbox receives messages in many languages. Every turn carries its
+  /// [CoFakeTurn.language] and, for non-Korean threads, the Korean
+  /// [CoFakeTurn.translation].
   CoFakeInquiry inquiry({String? language, int exchanges = 2}) {
     final lang =
         language ??
@@ -797,24 +985,31 @@ class CoFakerClinic {
         ]);
     final pool = CoFakerClinicTexts.inquiries[lang];
     if (pool == null) throw ArgumentError.value(language, 'language');
-    final remaining = [...pool];
+    final korean = CoFakerClinicTexts.inquiries['ko']!;
+    final remaining = <int>[for (var i = 0; i < pool.length; i++) i];
     final count = exchanges.clamp(1, pool.length);
     final turns = <CoFakeTurn>[];
     var minutes = 0;
     for (var i = 0; i < count; i++) {
-      final item = remaining.removeAt(
+      final index = remaining.removeAt(
         faker.random.int(max: remaining.length - 1),
       );
+      final item = pool[index];
+      final ko = lang == 'ko' || index >= korean.length ? null : korean[index];
       turns
         ..add((
           speaker: 'patient',
           text: item.question,
           at: Duration(minutes: minutes),
+          language: lang,
+          translation: ko?.question,
         ))
         ..add((
           speaker: 'staff',
           text: item.answer,
           at: Duration(minutes: minutes + faker.random.int(min: 1, max: 30)),
+          language: lang,
+          translation: ko?.answer,
         ));
       minutes += 31 + faker.random.int(max: 60);
     }
@@ -1005,6 +1200,575 @@ class CoFakerClinic {
       phone: _phone(),
     );
   }
+
+  // ── Patients ────────────────────────────────────────────────────────
+
+  /// Generates a patient tag with its color.
+  CoColoredLabelSpec patientTag() => faker.random.pick(ops.patientTags);
+
+  /// Generates up to [max] distinct patient tags (possibly none).
+  List<CoColoredLabelSpec> patientTags({int max = 2}) {
+    final pool = [...ops.patientTags];
+    final count = faker.random.int(max: max.clamp(0, pool.length));
+    return <CoColoredLabelSpec>[
+      for (var i = 0; i < count; i++)
+        pool.removeAt(faker.random.int(max: pool.length - 1)),
+    ];
+  }
+
+  /// Generates an acquisition channel (online booking, referral, ad, ...).
+  CoColoredLabelSpec acquisitionChannel() =>
+      faker.random.pick(ops.acquisitionChannels);
+
+  /// Generates a chart special note such as an allergy or a caution.
+  String specialNote() => faker.random.pick(ops.specialNotes);
+
+  /// Masks a name for public screens: `김하늘` → `김*늘`, `김하` → `김*`,
+  /// `남궁민수` → `남**수`. Latin names keep their first and last letter.
+  static String maskName(String name) {
+    final chars = name.runes.map(String.fromCharCode).toList();
+    if (chars.length <= 1) return name;
+    if (chars.length == 2) return '${chars.first}*';
+    return '${chars.first}${'*' * (chars.length - 2)}${chars.last}';
+  }
+
+  /// Generates a masked patient name for waiting-room boards.
+  String maskedName() => maskName(faker.person.fullName());
+
+  // ── Consent ─────────────────────────────────────────────────────────
+
+  /// Consent kind codes of consent history: `privacyRequired`,
+  /// `marketingOptional`, `sensitiveInfo`, `photoUse`, `thirdParty`,
+  /// `aiRecording`, `nightAdvertising`.
+  static const List<String> consentHistoryKinds = <String>[
+    'privacyRequired',
+    'marketingOptional',
+    'sensitiveInfo',
+    'photoUse',
+    'thirdParty',
+    'aiRecording',
+    'nightAdvertising',
+  ];
+
+  /// Generates a terms version (`v3.2`) with its effective date and
+  /// revision note, [monthsAgo] months before `faker.now`.
+  ({String version, DateTime effectiveFrom, String change}) termsVersion({
+    int monthsAgo = 2,
+  }) {
+    final base = faker.now;
+    final month = base.month - monthsAgo;
+    final from = base.isUtc
+        ? DateTime.utc(base.year, month)
+        : DateTime(base.year, month);
+    return (
+      version:
+          'v${faker.random.int(min: 1, max: 4)}.'
+          '${faker.random.int(max: 9)}',
+      effectiveFrom: from,
+      change: faker.random.pick(ops.termsChanges),
+    );
+  }
+
+  /// Generates a consent history of [count] events, oldest first: agreements
+  /// on various channels, and occasional withdrawals of optional consents.
+  List<CoFakeConsentEvent> consentHistory({int count = 5}) {
+    final from = faker.now.subtract(Duration(days: 30 * count));
+    final times = <DateTime>[
+      for (var i = 0; i < count; i++)
+        faker.date.between(from, faker.now, utc: faker.now.isUtc),
+    ]..sort();
+    final agreed = <String>{};
+    final result = <CoFakeConsentEvent>[];
+    for (var i = 0; i < count; i++) {
+      final optional = agreed.where((k) => k != 'privacyRequired').toList();
+      final open = consentHistoryKinds
+          .where((k) => !agreed.contains(k))
+          .toList();
+      final withdraw =
+          optional.isNotEmpty && (open.isEmpty || faker.random.double() < 0.25);
+      final String kind;
+      if (i == 0) {
+        kind = 'privacyRequired';
+      } else if (withdraw) {
+        kind = faker.random.pick(optional);
+      } else {
+        kind = faker.random.pick(open);
+      }
+      if (withdraw && i > 0) {
+        agreed.remove(kind);
+      } else {
+        agreed.add(kind);
+      }
+      final channel = faker.random.pick(const <String>[
+        'tablet',
+        'tablet',
+        'online',
+        'desk',
+        'paper',
+      ]);
+      final action = withdraw && i > 0 ? 'withdrawn' : 'agreed';
+      result.add((
+        kind: kind,
+        kindLabel: label(kind),
+        channel: channel,
+        channelLabel: label(channel),
+        action: action,
+        actionLabel: label(action),
+        termsVersion: 'v3.${faker.random.int(max: 4)}',
+        at: times[i],
+      ));
+    }
+    return result;
+  }
+
+  /// Generates a consent request dispatch status (`sent`, `opened`,
+  /// `signed`, `expired`, `failed`) with its message.
+  ({String status, String message}) consentDispatch({String? status}) {
+    final resolved =
+        status ??
+        _weighted<String>(const <(String, int)>[
+          ('signed', 55),
+          ('opened', 15),
+          ('sent', 15),
+          ('expired', 10),
+          ('failed', 5),
+        ]);
+    final message = ops.consentDispatch[resolved];
+    if (message == null) throw ArgumentError.value(status, 'status');
+    return (status: resolved, message: message);
+  }
+
+  // ── Reception ───────────────────────────────────────────────────────
+
+  /// Schedule and staff colors (`#RRGGBB`).
+  static List<String> get palette => CoFakerClinicOps.palette;
+
+  /// Returns the palette color of [index] (cycling), or a random one.
+  String color({int? index}) => index == null
+      ? faker.random.pick(CoFakerClinicOps.palette)
+      : CoFakerClinicOps.palette[index % CoFakerClinicOps.palette.length];
+
+  /// Returns the clinic room layout (ids from 1) with generated staff for
+  /// attended rooms and a palette color per room.
+  List<CoFakeRoom> rooms({bool includeReception = true}) {
+    final specs = ops.rooms
+        .where((r) => includeReception || r.kind != 'reception')
+        .toList();
+    return <CoFakeRoom>[
+      for (var i = 0; i < specs.length; i++)
+        (
+          id: i + 1,
+          name: specs[i].name,
+          kind: specs[i].kind,
+          kindLabel: label(specs[i].kind),
+          staffName: specs[i].staffRole == null
+              ? null
+              : faker.person.fullName(),
+          staffRole: specs[i].staffRole,
+          color: color(index: i),
+        ),
+    ];
+  }
+
+  /// Queue status codes: `requested`, `waiting`, `priority`, `inProgress`.
+  static const List<String> queueStatuses = <String>[
+    'requested',
+    'waiting',
+    'priority',
+    'inProgress',
+  ];
+
+  /// Generates a queue snapshot per room: at most one `inProgress` entry
+  /// first, then `priority`, `waiting`, and `requested` entries, with
+  /// check-in times 3-15 minutes apart ending before `faker.now`.
+  ///
+  /// [rooms] defaults to [CoFakerClinic.rooms] without the reception room;
+  /// [count] is the number of entries per room (random 0-5 when omitted).
+  List<CoFakeRoomQueue> queueBoard({List<CoFakeRoom>? rooms, int? count}) {
+    final targets = rooms ?? this.rooms(includeReception: false);
+    return <CoFakeRoomQueue>[
+      for (final room in targets) _roomQueue(room, count),
+    ];
+  }
+
+  CoFakeRoomQueue _roomQueue(CoFakeRoom room, int? count) {
+    final size = count ?? faker.random.int(max: 5);
+    final statuses = <String>[
+      for (var i = 0; i < size; i++)
+        i == 0 && faker.random.double() < 0.8
+            ? 'inProgress'
+            : _weighted<String>(const <(String, int)>[
+                ('waiting', 70),
+                ('priority', 10),
+                ('requested', 20),
+              ]),
+    ];
+    const rank = <String, int>{
+      'inProgress': 0,
+      'priority': 1,
+      'waiting': 2,
+      'requested': 3,
+    };
+    statuses.sort((a, b) => rank[a]!.compareTo(rank[b]!));
+    var at = faker.now.subtract(
+      Duration(minutes: 5 + faker.random.int(max: 10)),
+    );
+    final times = <DateTime>[];
+    for (var i = 0; i < size; i++) {
+      times.add(at);
+      at = at.subtract(Duration(minutes: faker.random.int(min: 3, max: 15)));
+    }
+    return (
+      roomId: room.id,
+      roomName: room.name,
+      roomKind: room.kind,
+      entries: <CoFakeQueueEntry>[
+        for (var i = 0; i < size; i++)
+          (
+            order: i + 1,
+            patientName: faker.person.fullName(),
+            status: statuses[i],
+            statusLabel: label(statuses[i]),
+            purpose: visitPurpose().detail,
+            checkedInAt: times[size - 1 - i],
+          ),
+      ],
+    );
+  }
+
+  /// Generates a reception request source: `tablet`, `kiosk`, `online`,
+  /// `app`, or `desk`.
+  ({String code, String label}) receptionSource() {
+    final code = _weighted<String>(const <(String, int)>[
+      ('tablet', 35),
+      ('desk', 30),
+      ('kiosk', 15),
+      ('online', 12),
+      ('app', 8),
+    ]);
+    return (code: code, label: label(code));
+  }
+
+  /// Generates a kiosk visit purpose (`checkin`, `reservation`, `payment`,
+  /// `document`).
+  ({String code, String label}) kioskPurpose() {
+    final code = faker.random.pick(ops.kioskPurposes.keys.toList());
+    return (code: code, label: ops.kioskPurposes[code]!);
+  }
+
+  // ── Chart ───────────────────────────────────────────────────────────
+
+  /// Generates vital signs realistic for [age] (default adult) and [sex]:
+  /// children are shorter and lighter, blood pressure rises with age, and
+  /// a few readings are mildly abnormal.
+  CoFakeVitals vitals({int? age, CoSex? sex}) {
+    final years = age ?? faker.random.int(min: 20, max: 60);
+    final male = (sex ?? faker.person.sex()) == CoSex.male;
+    final double height;
+    if (years < 18) {
+      height = (75 + years * 6.2 + faker.random.double(min: -6, max: 6))
+          .clamp(50, 185)
+          .toDouble();
+    } else {
+      height = (male ? 173.0 : 160.5) + faker.random.double(min: -8, max: 8);
+    }
+    final bmi = years < 18
+        ? faker.random.double(min: 14.5, max: 21)
+        : faker.random.double(min: 18, max: 29);
+    final weight = bmi * (height / 100) * (height / 100);
+    final systolic =
+        (years < 18 ? 100 : 108 + (years - 18) * 0.45) +
+        faker.random.int(min: -10, max: 18);
+    return (
+      temperature: _round1(faker.random.double(min: 36.1, max: 37.4)),
+      systolic: systolic.round(),
+      diastolic: (systolic * 0.65 + faker.random.int(min: -6, max: 6)).round(),
+      pulse: faker.random.int(
+        min: years < 12 ? 75 : 58,
+        max: years < 12 ? 115 : 96,
+      ),
+      spo2: faker.random.int(min: 95, max: 100),
+      glucose: faker.random.int(min: 78, max: years >= 50 ? 135 : 115),
+      heightCm: _round1(height),
+      weightKg: _round1(weight),
+      bmi: _round1(bmi),
+    );
+  }
+
+  /// Face regions of [canvasMarks] in normalized coordinates.
+  static const Map<String, (double, double)> faceRegions =
+      <String, (double, double)>{
+        'forehead': (0.5, 0.22),
+        'glabella': (0.5, 0.36),
+        'leftEye': (0.36, 0.42),
+        'rightEye': (0.64, 0.42),
+        'leftCheek': (0.32, 0.58),
+        'rightCheek': (0.68, 0.58),
+        'nose': (0.5, 0.55),
+        'lips': (0.5, 0.74),
+        'leftJaw': (0.3, 0.8),
+        'rightJaw': (0.7, 0.8),
+        'chin': (0.5, 0.88),
+      };
+
+  /// Generates pen chart marks on a face template in normalized `0..1`
+  /// coordinates: pen circles and dots around procedure regions plus a
+  /// highlighter swipe. Scale with [CoFakerSignature.toOpenBoardPoints]
+  /// (`width`/`height`) to feed `open_board`.
+  ///
+  /// [template] is `face` (regions in [faceRegions]); [regions] picks the
+  /// marked regions (two or three random ones when omitted).
+  List<CoFakeCanvasMark> canvasMarks({
+    String template = 'face',
+    List<String>? regions,
+  }) {
+    if (template != 'face') throw ArgumentError.value(template, 'template');
+    final names = faceRegions.keys.toList();
+    final picked =
+        regions ??
+        <String>[
+          for (var i = 0; i < 2 + faker.random.int(max: 1); i++)
+            names.removeAt(faker.random.int(max: names.length - 1)),
+        ];
+    var time = faker.now.millisecondsSinceEpoch;
+    final marks = <CoFakeCanvasMark>[];
+    for (final region in picked) {
+      final center = faceRegions[region];
+      if (center == null) throw ArgumentError.value(region, 'regions');
+      final radius = faker.random.double(min: 0.04, max: 0.08);
+      final points = <CoInkPoint>[];
+      const steps = 24;
+      for (var i = 0; i <= steps; i++) {
+        final angle = i / steps * 6.283185307179586;
+        final wobble = 1 + faker.random.double(min: -0.08, max: 0.08);
+        points.add((
+          x: _norm(center.$1 + radius * wobble * _cos(angle)),
+          y: _norm(center.$2 + radius * wobble * _sin(angle)),
+          p: 0.6,
+          t: time,
+        ));
+        time += faker.random.int(min: 8, max: 14);
+      }
+      marks.add((
+        tool: 'pen',
+        color: '#E11D48',
+        width: 2,
+        region: region,
+        points: points,
+      ));
+      time += 200;
+    }
+    final y = faker.random.double(min: 0.3, max: 0.7);
+    final highlight = <CoInkPoint>[];
+    for (var i = 0; i <= 10; i++) {
+      highlight.add((
+        x: _norm(0.2 + i * 0.06),
+        y: _norm(y + faker.random.double(min: -0.005, max: 0.005)),
+        p: 1,
+        t: time,
+      ));
+      time += 12;
+    }
+    marks.add((
+      tool: 'highlighter',
+      color: '#FACC15',
+      width: 14,
+      region: 'note',
+      points: highlight,
+    ));
+    return marks;
+  }
+
+  // ── Billing ─────────────────────────────────────────────────────────
+
+  /// Generates an invoice adjustment line (`discount`, `coupon`, `point`,
+  /// `rounding`) for an invoice of [subtotal]; [amount] is negative.
+  ({String kind, String kindLabel, String label, int amount}) adjustment({
+    required int subtotal,
+    String? kind,
+  }) {
+    final resolved =
+        kind ??
+        _weighted<String>(const <(String, int)>[
+          ('discount', 45),
+          ('coupon', 25),
+          ('point', 20),
+          ('rounding', 10),
+        ]);
+    final labels = ops.adjustments[resolved];
+    if (labels == null || labels.isEmpty) {
+      throw ArgumentError.value(kind, 'kind');
+    }
+    final unit = _korean ? 1000 : 1;
+    final amount = switch (resolved) {
+      'rounding' => subtotal % (_korean ? 1000 : 1),
+      'point' => _roundTo(faker.random.int(min: 1, max: 30) * unit, unit),
+      _ => _roundTo(subtotal * faker.random.int(min: 5, max: 20) ~/ 100, unit),
+    };
+    return (
+      kind: resolved,
+      kindLabel: label(resolved),
+      label: faker.random.pick(labels),
+      amount: -amount.clamp(0, subtotal),
+    );
+  }
+
+  /// Generates a card decline with its ISO 8583-style response code:
+  /// the same reasons as `saas.autopayFailure`.
+  ({String code, String responseCode, String reason}) cardDecline() {
+    final failure = faker.saas.autopayFailure();
+    return (
+      code: failure.code,
+      responseCode: _responseCodes[failure.code] ?? '05',
+      reason: failure.reason,
+    );
+  }
+
+  /// Returns a payment result message: `approved`, `cashReceipt`,
+  /// `partialCancel`, `prepaidUsed`, or `declined` (with a generated
+  /// decline reason).
+  String paymentMessage({String code = 'approved'}) {
+    final template = ops.paymentMessages[code];
+    if (template == null) throw ArgumentError.value(code, 'code');
+    return code == 'declined'
+        ? template.replaceAll('{reason}', cardDecline().reason)
+        : template;
+  }
+
+  /// Generates a point transaction (`earn`, `use`, `bonus`, `expire`,
+  /// `refund`, `adjust`); spending reasons have a negative [amount].
+  ({String reason, String label, int amount}) pointTransaction({
+    String? reason,
+  }) {
+    final resolved =
+        reason ??
+        _weighted<String>(const <(String, int)>[
+          ('earn', 50),
+          ('use', 25),
+          ('bonus', 8),
+          ('expire', 8),
+          ('refund', 5),
+          ('adjust', 4),
+        ]);
+    final text = ops.pointReasons[resolved];
+    if (text == null) throw ArgumentError.value(reason, 'reason');
+    final value = faker.random.int(min: 1, max: 50) * (_korean ? 100 : 1);
+    final negative = const <String>{
+      'use',
+      'expire',
+      'refund',
+    }.contains(resolved);
+    return (reason: resolved, label: text, amount: negative ? -value : value);
+  }
+
+  /// Generates a long compound package name combining two or three catalog
+  /// procedures and a gift, for truncation and wrapping tests.
+  String compoundPackageName() {
+    final pool = [...data.procedures.where((p) => p.taxable)];
+    final parts = <String>[
+      for (var i = 0; i < 2 + faker.random.int(max: 1); i++)
+        '${pool.removeAt(faker.random.int(max: pool.length - 1)).name} '
+            '${faker.random.pick(const <int>[3, 5, 10])}${_korean ? '회' : 'x'}',
+    ];
+    return '${parts.join(' + ')} + ${ops.packageBonus}';
+  }
+
+  // ── Statistics ──────────────────────────────────────────────────────
+
+  /// Generates a weekday × hour visit heatmap for Monday-Saturday and the
+  /// opening hours of [hours]: busier late mornings, after lunch, and on
+  /// Saturdays, scaled by [base] visits per busy hour.
+  List<({int weekday, int hour, int count})> visitHeatmap({
+    int base = 8,
+    CoClinicHours hours = const CoClinicHours(),
+  }) {
+    final result = <({int weekday, int hour, int count})>[];
+    for (
+      var weekday = DateTime.monday;
+      weekday <= DateTime.saturday;
+      weekday++
+    ) {
+      final close = weekday == DateTime.saturday
+          ? (hours.saturdayClose ?? hours.open)
+          : hours.close;
+      for (var hour = hours.open ~/ 60; hour * 60 < close; hour++) {
+        final lunch =
+            weekday != DateTime.saturday &&
+            hours.lunchStart != null &&
+            hour * 60 >= hours.lunchStart! &&
+            hour * 60 < (hours.lunchEnd ?? 0);
+        final shape = lunch
+            ? 0.1
+            : (hour == 11 || hour == 15 || hour == 16 ? 1.0 : 0.7) *
+                  (weekday == DateTime.saturday ? 1.3 : 1.0);
+        result.add((
+          weekday: weekday,
+          hour: hour,
+          count: (base * shape * faker.random.double(min: 0.6, max: 1.3))
+              .round(),
+        ));
+      }
+    }
+    return result;
+  }
+
+  // ── Operations and CRM ──────────────────────────────────────────────
+
+  /// Generates an in-clinic task with a memo, an assignee role, and a due
+  /// time today.
+  ({String title, String memo, String assigneeRole, DateTime dueAt, bool done})
+  task() {
+    final role = staffRole();
+    return (
+      title: faker.random.pick(ops.tasks),
+      memo: faker.random.pick(ops.taskMemos),
+      assigneeRole: role.label,
+      dueAt: _at(_dayStart(faker.now), faker.random.int(min: 20, max: 37) * 30),
+      done: faker.random.double() < 0.4,
+    );
+  }
+
+  /// Generates an AI counseling evidence item: its kind, label, and rule.
+  ({String kind, String kindLabel, String rule}) counselEvidence() {
+    final spec = faker.random.pick(ops.evidence);
+    return (kind: spec.kind, kindLabel: label(spec.kind), rule: spec.rule);
+  }
+
+  /// Generates an AI counseling failure message.
+  ({String code, String message}) counselFailure() {
+    final code = faker.random.pick(ops.counselFailures.keys.toList());
+    return (code: code, message: ops.counselFailures[code]!);
+  }
+
+  /// Generates a claim review issue: rule id, severity, diagnosis and fee
+  /// codes, and a message. The rules are illustrative, not official review
+  /// criteria.
+  CoClaimRuleSpec claimIssue() => faker.random.pick(ops.claimRules);
+
+  /// Generates a CRM delivery failure reason, such as sending advertising
+  /// at night without night-time advertising consent.
+  ({String code, String reason}) crmSendFailure() {
+    final code = faker.random.pick(ops.crmFailures.keys.toList());
+    return (code: code, reason: ops.crmFailures[code]!);
+  }
+
+  static const Map<String, String> _responseCodes = <String, String>{
+    'LIMIT_EXCEEDED': '61',
+    'INSUFFICIENT_FUNDS': '51',
+    'CARD_EXPIRED': '54',
+    'CARD_LOST': '41',
+    'CARD_SUSPENDED': '62',
+    'ISSUER_TIMEOUT': '91',
+  };
+
+  static double _round1(double value) => double.parse(value.toStringAsFixed(1));
+
+  static double _norm(double value) =>
+      double.parse(value.clamp(0.0, 1.0).toStringAsFixed(4));
+
+  static double _cos(double x) => math.cos(x);
+
+  static double _sin(double x) => math.sin(x);
 
   String _money(int value) {
     final digits = value.toString();

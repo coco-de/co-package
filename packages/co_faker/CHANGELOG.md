@@ -1,3 +1,39 @@
+## 0.7.0
+
+Widgetbook and golden-test generators. Existing APIs only gain optional
+parameters and record fields; base patient values for a seed are unchanged.
+
+- `clinic.patient` gains `chartNo` (`chartNumber:`, `CoChartNumberFormat`
+  plain/padded/yearly), `visitCount`, `lastVisitAt`, `channel`/
+  `channelLabel`, and `specialNote`, drawn from a stream derived from the
+  patient so the existing fields keep their values. Add `clinic.chartNumber`.
+- Add `clinic.patientTag(s)`, `clinic.acquisitionChannel`,
+  `clinic.specialNote`, `CoFakerClinic.maskName` (`김*늘`) and
+  `clinic.maskedName`.
+- Add `clinic.termsVersion`, `clinic.consentHistory` (agree/withdraw events
+  by kind and channel; the required privacy consent is never withdrawn), and
+  `clinic.consentDispatch`.
+- Add `clinic.rooms()` (room layout with staff and colors),
+  `clinic.queueBoard(rooms:, count:)` (per-room queue snapshots),
+  `clinic.visitPurposeTree()` (ids and parent ids; `visitPurpose` gains
+  `purposeId`/`detailId`), `clinic.receptionSource`, `clinic.kioskPurpose`,
+  `CoFakerClinic.palette` and `clinic.color`.
+- Add `clinic.vitals(age:, sex:)` with age-realistic ranges.
+- Add `clinic.adjustment`, `clinic.cardDecline` (ISO 8583-style response
+  codes, same reasons as `saas.autopayFailure`), `clinic.paymentMessage`,
+  `clinic.pointTransaction`, and `clinic.compoundPackageName`.
+- Add `clinic.visitHeatmap` (weekday × hour).
+- Add `clinic.task`, `clinic.counselEvidence`, `clinic.counselFailure`,
+  `clinic.claimIssue`, and `clinic.crmSendFailure`.
+- `clinic.inquiry` turns gain `language` and a Korean `translation`
+  (`CoFakeTurn`); the inquiry lists are index-aligned across languages.
+- Add `clinic.canvasMarks(template: 'face')`: normalized pen-chart circles
+  and a highlighter swipe; `CoFakerSignature.toOpenBoardPoints` gains
+  `width`/`height` scaling.
+- Add `id.uuidV7(at:)`: deterministic, time-ordered UUID v7.
+- Add `CoFakerClinicOps` (Korean and English) linked by the optional
+  `CoFakerClinicData.ops`.
+
 ## 0.6.0
 
 Operations console (vendor back office) generators. Existing APIs only gain

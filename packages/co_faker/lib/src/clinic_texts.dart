@@ -493,6 +493,10 @@ class CoFakerClinicTexts {
   /// Foreign-patient inquiries and replies keyed by language code (`ko`,
   /// `en`, `ja`, `zh`, `vi`). Independent of the faker locale: a Korean
   /// clinic inbox receives messages in many languages.
+  ///
+  /// The lists are index-aligned: item `i` of every language is a
+  /// translation of item `i` of `ko`, which `clinic.inquiry` uses for the
+  /// Korean translation of each turn.
   static const Map<String, List<CoInquirySpec>> inquiries =
       <String, List<CoInquirySpec>>{
         'ko': <CoInquirySpec>[
@@ -504,6 +508,7 @@ class CoFakerClinicTexts {
             question: '기미 치료 가격이 궁금해요.',
             answer: '1회 99,000원(부가세 포함)이며 상담 후 정확히 안내해 드립니다.',
           ),
+          (question: '외국어가 가능한 직원이 있나요?', answer: '네, 통역 가능한 코디네이터가 도와드립니다.'),
           (
             question: '회복 기간은 얼마나 걸리나요?',
             answer: '대부분 당일 일상생활이 가능하고 붉은기는 몇 시간 내 가라앉아요.',
