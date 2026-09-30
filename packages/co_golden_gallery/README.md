@@ -72,6 +72,25 @@ Dependency resolution requires Git credentials with access to the repository.
 Without `--asset-base-url` or `--copy-images`, images are referenced relative
 to the output directory.
 
+### Deploying below a path (GitHub Pages)
+
+The page needs no base-path option: `index.html` links its favicons and
+images with relative URLs, so the same folder works at a domain root, at
+`https://<owner>.github.io/<repo>/`, or at a sub-path such as
+`/<repo>/golden/`.
+
+- Use `--copy-images` so the images travel with the page, and publish the
+  output folder as that sub-path of the Pages artifact:
+
+  ```sh
+  dart run co_golden_gallery:co_golden_gallery build \
+    --input build/co_golden --output site/golden --copy-images --noindex
+  # upload `site/` with actions/upload-pages-artifact; the gallery is /golden/
+  ```
+
+- `--asset-base-url` must be an absolute http(s) URL. Use it only for images
+  on another host (such as a storage bucket), not for the Pages sub-path.
+
 ## Input layout
 
 ```
