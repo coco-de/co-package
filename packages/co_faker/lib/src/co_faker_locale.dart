@@ -1,3 +1,6 @@
+import 'clinic_data.dart';
+import 'saas_data.dart';
+
 /// Localized data used by [CoFaker].
 ///
 /// Every collection is optional. An empty collection falls back to English,
@@ -7,6 +10,8 @@ class CoFakerLocale {
   const CoFakerLocale({
     required this.code,
     this.firstNames = const <String>[],
+    this.femaleFirstNames = const <String>[],
+    this.maleFirstNames = const <String>[],
     this.lastNames = const <String>[],
     this.genders = const <String>[],
     this.cities = const <String>[],
@@ -28,6 +33,8 @@ class CoFakerLocale {
     this.nameFormat = '{first} {last}',
     this.addressFormat = '{number} {street}, {city}',
     this.postalCodeFormat = '#####',
+    this.clinic,
+    this.saas,
   });
 
   /// Locale identifier such as `en`, `ko`, or `pt_BR`.
@@ -35,6 +42,18 @@ class CoFakerLocale {
 
   /// Given names.
   final List<String> firstNames;
+
+  /// Given names typically used for women, picked by
+  /// `person.firstName(sex: CoSex.female)`.
+  ///
+  /// When empty, [firstNames] is used for both sexes.
+  final List<String> femaleFirstNames;
+
+  /// Given names typically used for men, picked by
+  /// `person.firstName(sex: CoSex.male)`.
+  ///
+  /// When empty, [firstNames] is used for both sexes.
+  final List<String> maleFirstNames;
 
   /// Family names.
   final List<String> lastNames;
@@ -99,6 +118,14 @@ class CoFakerLocale {
   /// Postal code template. `#` is replaced with a random digit.
   final String postalCodeFormat;
 
+  /// Clinic and EMR domain data used by `faker.clinic`, or `null` to fall
+  /// back to English.
+  final CoFakerClinicData? clinic;
+
+  /// SaaS back-office data used by `faker.saas`, or `null` to fall back to
+  /// English.
+  final CoFakerSaasData? saas;
+
   /// Merges this locale over [fallback].
   ///
   /// A collection is considered unspecified when it is empty. Scalar values
@@ -107,6 +134,14 @@ class CoFakerLocale {
     return CoFakerLocale(
       code: code,
       firstNames: firstNames.isEmpty ? fallback.firstNames : firstNames,
+      // Gendered names only inherit when the given names are inherited too,
+      // so a Japanese locale never mixes in English gendered names.
+      femaleFirstNames: firstNames.isEmpty && femaleFirstNames.isEmpty
+          ? fallback.femaleFirstNames
+          : femaleFirstNames,
+      maleFirstNames: firstNames.isEmpty && maleFirstNames.isEmpty
+          ? fallback.maleFirstNames
+          : maleFirstNames,
       lastNames: lastNames.isEmpty ? fallback.lastNames : lastNames,
       genders: genders.isEmpty ? fallback.genders : genders,
       cities: cities.isEmpty ? fallback.cities : cities,
@@ -140,6 +175,8 @@ class CoFakerLocale {
       postalCodeFormat: postalCodeFormat == '#####'
           ? fallback.postalCodeFormat
           : postalCodeFormat,
+      clinic: clinic ?? fallback.clinic,
+      saas: saas ?? fallback.saas,
     );
   }
 }

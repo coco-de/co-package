@@ -1,7 +1,10 @@
+import 'clinic.dart';
 import 'co_faker_locale.dart';
 import 'co_faker_locales.dart';
+import 'korea.dart';
 import 'modules.dart';
 import 'random_source.dart';
+import 'saas.dart';
 import 'schema.dart';
 
 /// A callback used by [CoFaker.generate].
@@ -101,6 +104,19 @@ class CoFaker {
   /// Image URLs and offline image data URIs.
   late final CoFakerImage image = CoFakerImage(this);
 
+  /// Korean identity values that are deliberately invalid: unassignable
+  /// phone numbers, checksum-failing resident and business registration
+  /// numbers, and road-name addresses.
+  late final CoFakerKorea korea = CoFakerKorea(this);
+
+  /// Clinic and EMR domain values: clinics, staff, patients, procedures,
+  /// diagnoses, prescriptions, chart notes, slots, visit flow, payments.
+  late final CoFakerClinic clinic = CoFakerClinic(this);
+
+  /// SaaS back-office values: tenants, plans, subscriptions, invoices,
+  /// messaging, claim masters, integration health, audit logs, KPIs.
+  late final CoFakerSaas saas = CoFakerSaas(this);
+
   /// Records generated from a field schema, callable as
   /// `faker.schema(fields)`.
   late final CoFakerSchema schema = CoFakerSchema(this);
@@ -191,6 +207,13 @@ class CoFaker {
       'id.uuid': (_) => id.uuid(),
       'image.avatarUrl': (_) => image.avatarUrl(),
       'image.placeholderDataUri': (_) => image.placeholderDataUri(),
+      'korea.mobilePhone': (_) => korea.mobilePhone(),
+      'korea.landlinePhone': (_) => korea.landlinePhone(),
+      'korea.rrn': (_) => korea.rrn(),
+      'korea.businessNumber': (_) => korea.businessNumber(),
+      'clinic.clinicName': (_) => clinic.clinicName(),
+      'clinic.chartMemo': (_) => clinic.chartMemo(),
+      'clinic.drugName': (_) => clinic.drugName(),
       ...custom,
     };
 

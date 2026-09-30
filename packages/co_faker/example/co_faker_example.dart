@@ -31,6 +31,21 @@ void main() {
     streamKey: 'course',
   );
 
+  // Clinic (EMR) and SaaS back-office fixtures. Identity values are fake by
+  // construction: unassignable phone blocks and checksum-failing numbers.
+  final patients = faker.generate(3, (faker, _) => faker.clinic.patient());
+  final tenant = faker.saas.tenant();
+  final slots = faker.clinic.businessSlots(DateTime.utc(2026, 1, 2));
+
+  for (final patient in patients) {
+    // ignore: avoid_print
+    print(patient);
+  }
+  // ignore: avoid_print
+  print(tenant);
+  // ignore: avoid_print
+  print('${slots.length} slots, first ${slots.first}');
+
   for (final user in users) {
     // ignore: avoid_print
     print(user);
