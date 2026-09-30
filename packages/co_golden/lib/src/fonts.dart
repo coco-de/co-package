@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 
@@ -42,6 +43,38 @@ Future<void> loadGoldenFonts({AssetBundle? bundle}) async {
     await loader.load();
   }
   _fontsLoaded = true;
+}
+
+/// Loads font files from disk into the test engine, keyed by family name.
+///
+/// Use it for fonts that the app does not declare in `pubspec.yaml`, for
+/// example when the app downloads fonts at runtime (Google Fonts) and tests
+/// would otherwise render Hangul as boxes. Bundle an openly licensed Korean
+/// font such as Pretendard (SIL OFL) under `test/fonts/` and load it in
+/// `flutter_test_config.dart`:
+///
+/// ```dart
+/// await loadGoldenFontFiles({
+///   'Pretendard': ['test/fonts/Pretendard-Regular.otf',
+///                  'test/fonts/Pretendard-Bold.otf'],
+/// });
+/// ```
+///
+/// Paths are relative to the working directory of `flutter test` (the
+/// package root). Throws a [StateError] naming the first missing file.
+Future<void> loadGoldenFontFiles(Map<String, List<String>> families) async {
+  for (final MapEntry(key: family, value: files) in families.entries) {
+    final loader = FontLoader(family);
+    for (final path in files) {
+      final file = File(path);
+      if (!file.existsSync()) {
+        throw StateError('Golden font file not found: ${file.absolute.path}');
+      }
+      final bytes = file.readAsBytesSync();
+      loader.addFont(Future.value(ByteData.sublistView(bytes)));
+    }
+    await loader.load();
+  }
 }
 
 /// Font families to register for a decoded `FontManifest.json`, mapped to

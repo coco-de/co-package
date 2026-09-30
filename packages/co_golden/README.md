@@ -32,8 +32,11 @@ dev_dependencies:
     git:
       url: https://github.com/coco-de/co-package.git
       path: packages/co_golden
-      ref: <commit>
+      ref: co_golden-v<version>
 ```
+
+Pin a release tag, and use the **same ref for every package of your
+workspace** that depends on co_golden (see the repository README).
 
 Declare the tags the matrix adds in `dart_test.yaml`:
 
@@ -181,6 +184,84 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
 
 Package fonts (`packages/<package>/<Family>`) are also registered under the
 plain family name, which design systems usually reference.
+
+Fonts the app does not declare (for example Google Fonts downloaded at
+runtime) render as boxes in tests — Hangul most visibly. Commit an openly
+licensed Korean font (Pretendard, SIL OFL) under `test/fonts/` and load it
+from disk:
+
+```dart
+await loadGoldenFonts();
+await loadGoldenFontFiles({
+  'Pretendard': [
+    'test/fonts/Pretendard-Regular.otf',
+    'test/fonts/Pretendard-Bold.otf',
+  ],
+});
+```
+
+## Deterministic time
+
+Screens that show today's date, relative times ("3분 전"), ages, or "open
+now" change every day and can never match a baseline. Read time through
+`clock.now()` from [`package:clock`](https://pub.dev/packages/clock) (or
+inject a clock) instead of `DateTime.now()`, and fix it for the matrix:
+
+```dart
+final matrix = GoldenMatrix<ThemeData>(
+  suite: 'crm',
+  clock: DateTime.utc(2026, 9, 30, 10, 30), // every variant
+  // ...
+);
+
+matrix.scenario(
+  'birthday_campaign',
+  clock: DateTime.utc(2026, 12, 24, 9), // this scenario only
+  build: (_) => const CampaignPage(),
+);
+```
+
+Each variant runs inside `withClock(Clock.fixed(...))`. Compute ages and
+"days until" values from the same injected time, and pass it to fixture
+generators (for example `CoFaker(now: ...)`).
+
+## Baselines in CI
+
+Font rasterization differs between operating systems, so a baseline is only
+valid on the platform that wrote it.
+
+- **Linux CI owns the baselines.** Run `compare` and `--update-goldens` only
+  on the CI image (for example `ubuntu-latest` with a pinned Flutter).
+- **macOS and Windows are capture-only.** Use `CO_GOLDEN_MODE=capture` locally
+  to look at screens and build galleries; never commit baselines written
+  there.
+- **Known overflows keep comparing.** Set `failOnErrors: false` on a scenario
+  with a known layout defect so it still compares, and track the defect
+  separately, instead of excluding the screen.
+
+On failure, let CI write the new baselines as an artifact and apply them
+after review:
+
+```yaml
+- name: Compare goldens
+  run: CO_GOLDEN_MODE=compare flutter test --tags golden
+- name: Write candidate baselines
+  if: failure()
+  run: CO_GOLDEN_MODE=compare flutter test --tags golden --update-goldens || true
+- uses: actions/upload-artifact@v4
+  if: failure()
+  with:
+    name: golden-baselines
+    path: '**/goldens/**/*.png'
+```
+
+```sh
+# Apply the artifact of a failed run locally, then review the diff.
+run_id=$(gh run list --workflow ci.yml --status failure --limit 1 \
+  --json databaseId --jq '.[0].databaseId')
+gh run download "$run_id" --name golden-baselines --dir .
+git status --short -- '**/goldens/**'
+```
 
 ## Run manifest
 
