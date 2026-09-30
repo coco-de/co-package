@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -94,6 +95,7 @@ final class GoldenMatrix<T> {
     this.renderShadows = true,
     this.freezeAnimations = true,
     this.failOnErrors = true,
+    this.clock,
   }) : environment = environment ?? GoldenMatrixEnvironment.fromEnvironment() {
     checkGoldenName(suite, 'suite');
     final scale = captureScale;
@@ -137,6 +139,16 @@ final class GoldenMatrix<T> {
   /// it rendered. The image is captured either way.
   final bool failOnErrors;
 
+  /// Fixed wall-clock time for every variant, or `null` for the real clock.
+  ///
+  /// Each variant runs inside `withClock(Clock.fixed(clock))` from
+  /// `package:clock`, so screens that read `clock.now()` (instead of
+  /// `DateTime.now()`) render the same dates, relative times, and ages on
+  /// every run. Code that calls `DateTime.now()` directly is not affected —
+  /// read time through `clock` or inject it. `scenario(clock:)` overrides
+  /// this per scenario.
+  final DateTime? clock;
+
   final Set<String> _scenarios = {};
 
   /// Registers one test per planned variant of [name].
@@ -145,7 +157,8 @@ final class GoldenMatrix<T> {
   /// locales. [build] creates a fresh widget for every variant. [prepare] runs before
   /// the build (install fixtures), [interact] after the first pump (tap,
   /// type), and [dispose] after capture even when the variant failed.
-  /// [coverage] replaces the matrix coverage for this scenario only.
+  /// [coverage] replaces the matrix coverage for this scenario only, and
+  /// [clock] replaces the matrix [GoldenMatrix.clock].
   ///
   /// Throws an [ArgumentError] when [name] is not a valid golden name or is
   /// already registered in this matrix.
@@ -161,6 +174,7 @@ final class GoldenMatrix<T> {
     GoldenPump? pump,
     Timeout? timeout,
     Iterable<String> tags = const [],
+    DateTime? clock,
   }) {
     checkGoldenName(name, 'scenario');
     if (!_scenarios.add(name)) {
@@ -205,7 +219,12 @@ final class GoldenMatrix<T> {
         for (final variant in plan.variants) {
           testWidgets(
             variant.label,
-            (tester) => _runVariant(tester, variant, definition, report),
+            (tester) {
+              final fixed = clock ?? this.clock;
+              Future<void> run() =>
+                  _runVariant(tester, variant, definition, report);
+              return fixed == null ? run() : withClock(Clock.fixed(fixed), run);
+            },
             timeout: timeout,
             tags: ['golden', 'co_golden', ...tags],
           );

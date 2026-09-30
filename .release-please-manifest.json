@@ -4,5 +4,6 @@
   "packages/open_board": "0.2.0",
   "packages/co_golden": "0.2.0",
   "packages/co_golden_gallery": "0.2.1",
-  "packages/co_bdd": "0.2.0"
+  "packages/co_bdd": "0.2.0",
+  "packages/co_faker": "0.8.1"
 }

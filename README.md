@@ -15,6 +15,28 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
 | [`xterm3`](packages/xterm3/FORK.md) | [klc/xterm3](https://github.com/klc/xterm3) 6.3.4 포크 — 데스크톱 입력기(한글 두벌식 등) 조합 수정. **AGPL-3.0**, 워크스페이스 비회원(자체 CI 잡). |
 
+## Depending on these packages
+
+Until a package is on pub.dev, depend on it by git tag
+(`<package>-v<version>`, for example `co_faker-v0.8.1`):
+
+```yaml
+dependencies:
+  co_faker:
+    git:
+      url: https://github.com/coco-de/co-package.git
+      path: packages/co_faker
+      ref: co_faker-v0.8.1
+```
+
+- **One ref per workspace.** Every package of a consuming workspace must use
+  the same ref for the same git dependency. Two members pinning different
+  tags (say `co_faker-v0.7.0` and `co_faker-v0.8.0`) make the workspace
+  `pub get` fail with a version-solving error. Upgrade all members in one
+  change, and enforce it with a CI check.
+- Sibling packages released together share one release commit, so their tags
+  from the same release point to the same tree.
+
 ## Reusable workflows
 
 Service repositories call the shared CI workflows in
