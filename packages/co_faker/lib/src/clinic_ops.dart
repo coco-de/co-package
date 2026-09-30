@@ -45,6 +45,10 @@ class CoFakerClinicOps {
     required this.crmFailures,
     required this.packageBonus,
     required this.labels,
+    this.staffNotices = const <String, List<({String title, String body})>>{},
+    this.vitalsNotes = const <String, String>{},
+    this.closure = const <String, String>{},
+    this.closureReasons = const <String>[],
   });
 
   /// Patient tags with colors.
@@ -101,6 +105,26 @@ class CoFakerClinicOps {
 
   /// The gift line appended to compound package names.
   final String packageBonus;
+
+  /// Internal staff notices keyed by kind (`training`, `policy`,
+  /// `schedule`). Empty falls back to English.
+  final Map<String, List<({String title, String body})>> staffNotices;
+
+  /// Vital sign observation templates keyed by finding (`normal`,
+  /// `highBp`, `fever`, `lowSpo2`, `highGlucose`) with `{sys}`, `{dia}`,
+  /// `{pulse}`, `{spo2}`, `{temp}`, and `{glucose}` placeholders. Empty
+  /// falls back to English.
+  final Map<String, String> vitalsNotes;
+
+  /// Closure notice templates: `title`, `holiday`, and `other`, with
+  /// `{clinic}`, `{dates}`, `{name}`, `{reason}`, and `{reopen}`
+  /// placeholders, plus the Korean particles `{eun}` (은/는 after
+  /// `{clinic}`) and `{ro}` (으로/로 after the name or reason). Empty falls back to English.
+  final Map<String, String> closure;
+
+  /// Non-holiday closure reasons (conference, renovation, ...). Empty falls
+  /// back to English.
+  final List<String> closureReasons;
 
   /// Labels for queue statuses, reception sources, consent kinds and
   /// channels, consent actions, evidence kinds, and severities.
@@ -270,6 +294,70 @@ class CoFakerClinicOps {
       'NO_CREDIT': '크레딧 부족',
     },
     packageBonus: '재생 크림 50ml 증정',
+    staffNotices: <String, List<({String title, String body})>>{
+      'training': <({String title, String body})>[
+        (
+          title: '신규 레이저 장비 사용 교육',
+          body:
+              '다음 주 수요일 오후 6시, 시술실1에서 신규 피코 레이저 사용 교육이 있습니다. 시술 담당자는 모두 참석해 주세요.',
+        ),
+        (
+          title: '개인정보보호 정기 교육',
+          body: '이번 달 말까지 온라인 개인정보보호 교육을 이수해 주세요. 이수증은 원무팀에 제출합니다.',
+        ),
+        (
+          title: '응급 상황 대응 훈련',
+          body: '아나필락시스 대응 절차와 응급 키트 위치를 함께 점검합니다. 금요일 진료 종료 후 30분 소요됩니다.',
+        ),
+      ],
+      'policy': <({String title, String body})>[
+        (
+          title: '주민번호 열람 기록 점검 안내',
+          body: '주민번호 전체 열람은 사유 입력 후에만 가능합니다. 월말에 열람 기록을 점검합니다.',
+        ),
+        (
+          title: '시술 전 사진 촬영 의무화',
+          body: '다음 달부터 모든 레이저·주사 시술 전 사진 촬영이 필수입니다. 촬영 누락 시 차트 저장이 제한됩니다.',
+        ),
+        (
+          title: '할인 승인 기준 변경',
+          body: '10% 초과 할인은 상담실장 승인 후 적용합니다. 수납 화면에서 승인 요청을 보내 주세요.',
+        ),
+      ],
+      'schedule': <({String title, String body})>[
+        (
+          title: '추석 연휴 근무표 안내',
+          body: '연휴 전날은 오후 5시까지 진료합니다. 근무표는 공유 폴더에서 확인해 주세요.',
+        ),
+        (
+          title: '토요일 순환 근무 안내',
+          body: '이번 달 토요일 근무는 격주 순환입니다. 교대가 필요하면 목요일까지 알려 주세요.',
+        ),
+        (
+          title: '원장님 학회 일정 공유',
+          body: '다음 주 금요일 원장님 학회 참석으로 오후 진료는 이서준 원장님이 담당합니다.',
+        ),
+      ],
+    },
+    vitalsNotes: <String, String>{
+      'normal':
+          '활력징후 안정적 (BP {sys}/{dia}mmHg, P {pulse}회/분, SpO2 {spo2}%, BT {temp}°C).',
+      'highBp': '혈압 {sys}/{dia}mmHg로 높아 10분 안정 후 재측정 예정.',
+      'fever': '체온 {temp}°C 미열 — 시술 연기 여부 원장님 확인 필요.',
+      'lowSpo2': 'SpO2 {spo2}%로 낮아 재측정, 호흡 곤란 증상은 없음.',
+      'highGlucose': '혈당 {glucose}mg/dL로 높음 — 식후 측정 여부 확인함.',
+    },
+    closure: <String, String>{
+      'title': '{dates} 휴진 안내',
+      'holiday': '{clinic}{eun} {dates} {name}{ro} 휴진합니다. {reopen}부터 정상 진료합니다.',
+      'other': '{clinic}{eun} {dates} {reason}{ro} 휴진합니다. {reopen}부터 정상 진료합니다.',
+    },
+    closureReasons: <String>[
+      '원장님 학회 참석',
+      '내부 인테리어 공사',
+      '의료 장비 정기 점검',
+      '전 직원 워크숍',
+    ],
     labels: <String, String>{
       'requested': '접수신청',
       'waiting': '대기',
@@ -426,6 +514,52 @@ class CoFakerClinicOps {
       'INVALID_NUMBER': 'Invalid number',
     },
     packageBonus: 'free recovery cream',
+    staffNotices: <String, List<({String title, String body})>>{
+      'training': <({String title, String body})>[
+        (
+          title: 'New laser device training',
+          body:
+              'Training on the new laser is next Wednesday at 6 PM in Procedure 1.',
+        ),
+      ],
+      'policy': <({String title, String body})>[
+        (
+          title: 'ID number access review',
+          body:
+              'Full ID numbers can only be revealed with a reason; access is reviewed monthly.',
+        ),
+      ],
+      'schedule': <({String title, String body})>[
+        (
+          title: 'Holiday rota',
+          body:
+              'The day before the holiday closes at 5 PM. Check the shared rota.',
+        ),
+      ],
+    },
+    vitalsNotes: <String, String>{
+      'normal':
+          'Vitals stable (BP {sys}/{dia} mmHg, HR {pulse}, SpO2 {spo2}%, T {temp}°C).',
+      'highBp':
+          'BP {sys}/{dia} mmHg is high; recheck after 10 minutes of rest.',
+      'fever':
+          'Low-grade fever {temp}°C; doctor to decide whether to postpone.',
+      'lowSpo2': 'SpO2 {spo2}% is low; rechecked, no shortness of breath.',
+      'highGlucose':
+          'Glucose {glucose} mg/dL is high; confirmed post-meal reading.',
+    },
+    closure: <String, String>{
+      'title': 'Closed {dates}',
+      'holiday':
+          '{clinic} is closed {dates} for {name}. Regular hours resume {reopen}.',
+      'other':
+          '{clinic} is closed {dates} due to {reason}. Regular hours resume {reopen}.',
+    },
+    closureReasons: <String>[
+      'a medical conference',
+      'renovation',
+      'equipment maintenance',
+    ],
     labels: <String, String>{
       'requested': 'Requested',
       'waiting': 'Waiting',

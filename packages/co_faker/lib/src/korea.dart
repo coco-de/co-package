@@ -13,6 +13,15 @@ typedef CoKoreanAddress = ({
   String line2,
 });
 
+/// A Korean public holiday. [substitute] marks a substitute holiday
+/// (대체공휴일); [block] groups the three days of Seollal and Chuseok.
+typedef CoKoreanHoliday = ({
+  DateTime date,
+  String name,
+  bool substitute,
+  String? block,
+});
+
 /// Generates Korean identity values that are shaped like real ones but are
 /// **deliberately invalid**, so they can never be mistaken for, or collide
 /// with, a real person's or business's identifier.
@@ -171,6 +180,133 @@ class CoFakerKorea {
       line2: detail,
     );
   }
+
+  /// The first and last years supported by [holidays].
+  static const (int, int) holidayYears = (2024, 2030);
+
+  /// Returns the Korean public holidays of [year] (2024-2030), sorted, as
+  /// UTC midnight dates. Does not consume the random stream.
+  ///
+  /// Includes the fixed solar holidays (신정, 삼일절, 어린이날, 현충일,
+  /// 광복절, 개천절, 한글날, 성탄절), the lunar holidays from a per-year
+  /// table (설날 and 추석 with the days before and after, 부처님오신날), and
+  /// substitute holidays under the current rules:
+  ///
+  /// - 설날·추석: a day falling on a Sunday or on another holiday adds a
+  ///   substitute on the next non-holiday weekday.
+  /// - 어린이날: Saturday, Sunday, or another holiday adds a substitute.
+  /// - 삼일절, 광복절, 개천절, 한글날, 부처님오신날, 성탄절: Saturday or
+  ///   Sunday adds a substitute.
+  /// - 신정 and 현충일 have no substitute.
+  ///
+  /// Election days and one-off temporary holidays (임시공휴일) are not
+  /// included; merge them yourself. Throws for years outside
+  /// [holidayYears].
+  static List<CoKoreanHoliday> holidays({required int year}) {
+    final lunar = _lunar[year];
+    if (lunar == null) {
+      throw ArgumentError.value(
+        year,
+        'year',
+        'supported years are ${holidayYears.$1}-${holidayYears.$2}',
+      );
+    }
+    DateTime d(int m, int day) => DateTime.utc(year, m, day);
+    final seollal = d(lunar.$1.$1, lunar.$1.$2);
+    final chuseok = d(lunar.$2.$1, lunar.$2.$2);
+    final buddha = d(lunar.$3.$1, lunar.$3.$2);
+    const oneDay = Duration(days: 1);
+    // (date, name, block, substitute rule): 0 none, 1 weekend, 2 weekend or
+    // overlap, 3 Sunday or overlap (lunar blocks).
+    final base = <(DateTime, String, String?, int)>[
+      (d(1, 1), '신정', null, 0),
+      (seollal.subtract(oneDay), '설날 연휴', 'seollal', 3),
+      (seollal, '설날', 'seollal', 3),
+      (seollal.add(oneDay), '설날 연휴', 'seollal', 3),
+      (d(3, 1), '삼일절', null, 1),
+      (d(5, 5), '어린이날', null, 2),
+      (buddha, '부처님오신날', null, 1),
+      (d(6, 6), '현충일', null, 0),
+      (d(8, 15), '광복절', null, 1),
+      (chuseok.subtract(oneDay), '추석 연휴', 'chuseok', 3),
+      (chuseok, '추석', 'chuseok', 3),
+      (chuseok.add(oneDay), '추석 연휴', 'chuseok', 3),
+      (d(10, 3), '개천절', null, 1),
+      (d(10, 9), '한글날', null, 1),
+      (d(12, 25), '성탄절', null, 1),
+    ];
+    final taken = <DateTime>{for (final h in base) h.$1};
+    final substitutes = <CoKoreanHoliday>[];
+    final blocksDone = <String>{};
+    bool overlaps(DateTime date) => base.where((h) => h.$1 == date).length > 1;
+    DateTime nextFree(DateTime after) {
+      var day = after.add(oneDay);
+      while (taken.contains(day) ||
+          day.weekday == DateTime.saturday ||
+          day.weekday == DateTime.sunday) {
+        day = day.add(oneDay);
+      }
+      return day;
+    }
+
+    for (final h in base) {
+      final (date, name, block, rule) = h;
+      final weekend =
+          date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+      final String? label;
+      DateTime after = date;
+      switch (rule) {
+        case 1:
+          label = weekend ? name : null;
+        case 2:
+          label = weekend || overlaps(date) ? name : null;
+        case 3:
+          final days = base.where((x) => x.$3 == block).map((x) => x.$1);
+          final trigger = days.any(
+            (x) => x.weekday == DateTime.sunday || overlaps(x),
+          );
+          label = trigger && blocksDone.add(block!)
+              ? (block == 'seollal' ? '설날' : '추석')
+              : null;
+          after = days.reduce((a, b) => a.isAfter(b) ? a : b);
+        default:
+          label = null;
+      }
+      if (label == null) continue;
+      final day = nextFree(after);
+      taken.add(day);
+      substitutes.add((
+        date: day,
+        name: '대체공휴일($label)',
+        substitute: true,
+        block: null,
+      ));
+    }
+    final all = <CoKoreanHoliday>[
+      for (final h in base)
+        (date: h.$1, name: h.$2, substitute: false, block: h.$3),
+      ...substitutes,
+    ]..sort((a, b) => a.date.compareTo(b.date));
+    return all;
+  }
+
+  /// Returns the holidays falling on the calendar day of [date], if any.
+  static List<CoKoreanHoliday> holidaysOn(DateTime date) {
+    final day = DateTime.utc(date.year, date.month, date.day);
+    return holidays(year: date.year).where((h) => h.date == day).toList();
+  }
+
+  /// Lunar holidays per year: (설날, 추석, 부처님오신날) as (month, day).
+  static const Map<int, ((int, int), (int, int), (int, int))> _lunar =
+      <int, ((int, int), (int, int), (int, int))>{
+        2024: ((2, 10), (9, 17), (5, 15)),
+        2025: ((1, 29), (10, 6), (5, 5)),
+        2026: ((2, 17), (9, 25), (5, 24)),
+        2027: ((2, 6), (9, 15), (5, 13)),
+        2028: ((1, 26), (10, 3), (5, 2)),
+        2029: ((2, 13), (9, 22), (5, 20)),
+        2030: ((2, 3), (9, 12), (5, 9)),
+      };
 
   /// Generates a card approval number (8 digits).
   String cardApprovalNumber() => faker.random.digits('########');
