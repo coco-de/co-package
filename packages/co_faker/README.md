@@ -18,7 +18,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.8.0
+  co_faker: ^0.8.1
 ```
 
 ## Quick start
@@ -136,6 +136,8 @@ faker.clinic.visitPurposeTree(); // ids + parent ids (시술 › 레이저)
 faker.clinic.vitals(age: 42);
 faker.clinic.consentHistory(); faker.clinic.visitHeatmap();
 faker.clinic.canvasMarks(regions: ['forehead', 'chin']); // 0..1 pen chart
+faker.clinic.canvasMarks(template: 'faceFront'); // 3:4 chart face layout
+faker.clinic.canvasMarks(regionRects: myTemplateRects); // your own layout
 faker.id.uuidV7(at: DateTime.utc(2026, 1, 1)); // time-ordered id
 CoFakerClinic.maskName('김하늘'); // 김*늘
 CoFakerKorea.holidays(year: 2026); // 2024-2030, with substitute holidays

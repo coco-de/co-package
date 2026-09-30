@@ -263,6 +263,9 @@ typedef CoFakeCanvasMark = ({
   CoInkStroke points,
 });
 
+/// A rectangle in normalized `0..1` canvas coordinates.
+typedef CoRegionRect = ({double left, double top, double right, double bottom});
+
 /// Clinic opening hours used by [CoFakerClinic.businessSlots].
 ///
 /// Times are minutes from midnight. [saturdayClose] of `null` closes the
@@ -1660,7 +1663,11 @@ class CoFakerClinic {
     );
   }
 
-  /// Face regions of [canvasMarks] in normalized coordinates.
+  /// Region centers of the default `face` template of [canvasMarks], in
+  /// normalized coordinates of a **square** canvas with a frontal face in
+  /// standard proportions: hairline at y≈0.15, brows ≈0.33, eyes ≈0.42,
+  /// nose tip ≈0.58, lips ≈0.74, chin ≈0.9, face width ≈0.24-0.76.
+  /// "left" and "right" are as seen by the viewer.
   static const Map<String, (double, double)> faceRegions =
       <String, (double, double)>{
         'forehead': (0.5, 0.22),
@@ -1676,39 +1683,106 @@ class CoFakerClinic {
         'chin': (0.5, 0.88),
       };
 
-  /// Generates pen chart marks on a face template in normalized `0..1`
-  /// coordinates: pen circles and dots around procedure regions plus a
-  /// highlighter swipe. Scale with [CoFakerSignature.toOpenBoardPoints]
-  /// (`width`/`height`) to feed `open_board`.
+  /// Region rectangles of the `faceFront` template: a frontal face on a
+  /// 3:4 (width:height) portrait canvas, head from y 0.12 to chin 0.72 and
+  /// face width 0.21-0.79, matching the clinic-emr chart `faceFront`
+  /// outline (brows ≈0.33, eyes ≈0.40, nose 0.42-0.56, lips ≈0.61).
+  static const Map<String, CoRegionRect> faceFrontRegions =
+      <String, CoRegionRect>{
+        'forehead': (left: 0.30, top: 0.15, right: 0.70, bottom: 0.30),
+        'glabella': (left: 0.45, top: 0.31, right: 0.55, bottom: 0.38),
+        'leftEye': (left: 0.30, top: 0.37, right: 0.45, bottom: 0.44),
+        'rightEye': (left: 0.55, top: 0.37, right: 0.70, bottom: 0.44),
+        'nose': (left: 0.45, top: 0.42, right: 0.55, bottom: 0.56),
+        'leftCheek': (left: 0.24, top: 0.45, right: 0.40, bottom: 0.58),
+        'rightCheek': (left: 0.60, top: 0.45, right: 0.76, bottom: 0.58),
+        'lips': (left: 0.40, top: 0.58, right: 0.60, bottom: 0.65),
+        'leftJaw': (left: 0.26, top: 0.58, right: 0.38, bottom: 0.68),
+        'rightJaw': (left: 0.62, top: 0.58, right: 0.74, bottom: 0.68),
+        'chin': (left: 0.43, top: 0.66, right: 0.57, bottom: 0.72),
+      };
+
+  /// Generates pen chart marks in normalized `0..1` coordinates: pen
+  /// circles around procedure regions plus a highlighter swipe. Scale with
+  /// [CoFakerSignature.toOpenBoardPoints] (`width`/`height`) to feed
+  /// `open_board`.
   ///
-  /// [template] is `face` (regions in [faceRegions]); [regions] picks the
-  /// marked regions (two or three random ones when omitted).
+  /// Regions come from, in priority order:
+  /// - [regionRects]: your own rectangles (for example your chart
+  ///   template's layout); each mark is an ellipse inside its rectangle.
+  /// - [template] `faceFront`: [faceFrontRegions] (3:4 canvas), also
+  ///   ellipses inside the rectangles.
+  /// - [template] `face` (default): circles around [faceRegions] centers.
+  ///
+  /// [regions] picks the marked region names (two or three random ones
+  /// when omitted).
   List<CoFakeCanvasMark> canvasMarks({
     String template = 'face',
     List<String>? regions,
+    Map<String, CoRegionRect>? regionRects,
   }) {
-    if (template != 'face') throw ArgumentError.value(template, 'template');
-    final names = faceRegions.keys.toList();
+    final rects =
+        regionRects ?? (template == 'faceFront' ? faceFrontRegions : null);
+    if (rects == null && template != 'face') {
+      throw ArgumentError.value(template, 'template');
+    }
+    if (rects != null && rects.isEmpty) {
+      throw ArgumentError.value(
+        regionRects,
+        'regionRects',
+        'must not be empty',
+      );
+    }
+    final names = rects?.keys.toList() ?? faceRegions.keys.toList();
     final picked =
         regions ??
         <String>[
-          for (var i = 0; i < 2 + faker.random.int(max: 1); i++)
+          for (
+            var i = 0;
+            i < 2 + faker.random.int(max: 1) && names.isNotEmpty;
+            i++
+          )
             names.removeAt(faker.random.int(max: names.length - 1)),
         ];
     var time = faker.now.millisecondsSinceEpoch;
     final marks = <CoFakeCanvasMark>[];
     for (final region in picked) {
-      final center = faceRegions[region];
-      if (center == null) throw ArgumentError.value(region, 'regions');
-      final radius = faker.random.double(min: 0.04, max: 0.08);
+      final double cx;
+      final double cy;
+      final double rx;
+      final double ry;
+      if (rects != null) {
+        final rect = rects[region];
+        if (rect == null) throw ArgumentError.value(region, 'regions');
+        final halfW = (rect.right - rect.left) / 2;
+        final halfH = (rect.bottom - rect.top) / 2;
+        final scale = faker.random.double(min: 0.6, max: 0.8);
+        rx = halfW * scale;
+        ry = halfH * scale;
+        // Shift the center a little but keep the wobbling ellipse inside.
+        cx =
+            rect.left +
+            halfW +
+            faker.random.double(min: -0.08, max: 0.08) * halfW;
+        cy =
+            rect.top +
+            halfH +
+            faker.random.double(min: -0.08, max: 0.08) * halfH;
+      } else {
+        final center = faceRegions[region];
+        if (center == null) throw ArgumentError.value(region, 'regions');
+        cx = center.$1;
+        cy = center.$2;
+        rx = ry = faker.random.double(min: 0.04, max: 0.08);
+      }
       final points = <CoInkPoint>[];
       const steps = 24;
       for (var i = 0; i <= steps; i++) {
         final angle = i / steps * 6.283185307179586;
         final wobble = 1 + faker.random.double(min: -0.08, max: 0.08);
         points.add((
-          x: _norm(center.$1 + radius * wobble * _cos(angle)),
-          y: _norm(center.$2 + radius * wobble * _sin(angle)),
+          x: _norm(cx + rx * wobble * _cos(angle)),
+          y: _norm(cy + ry * wobble * _sin(angle)),
           p: 0.6,
           t: time,
         ));

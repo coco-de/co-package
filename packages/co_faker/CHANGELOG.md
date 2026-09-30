@@ -1,3 +1,15 @@
+## 0.8.1
+
+- `clinic.canvasMarks` gains `regionRects:` (`Map<String, CoRegionRect>` in
+  normalized `0..1` coordinates): each pen mark is an ellipse inside the
+  caller's rectangle, so marks line up with any chart template.
+- Add the `faceFront` template (`CoFakerClinic.faceFrontRegions`): region
+  rectangles of a frontal face on a 3:4 portrait canvas, matching the
+  clinic-emr chart `faceFront` outline.
+- Document the default `face` template (`CoFakerClinic.faceRegions`): region
+  centers on a square canvas in standard frontal proportions. Its output is
+  unchanged for the same seed.
+
 ## 0.8.0
 
 - Add `CoFakerKorea.holidays(year:)` / `holidaysOn(date)`: Korean public
