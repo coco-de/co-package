@@ -4,6 +4,15 @@ import 'dart:core' as core;
 
 import 'co_faker.dart';
 
+/// Biological sex used to pick gendered names and identity digits.
+enum CoSex {
+  /// Female.
+  female,
+
+  /// Male.
+  male,
+}
+
 /// Generates person and identity values.
 class CoFakerPerson {
   /// Creates a person generator backed by [faker].
@@ -13,7 +22,19 @@ class CoFakerPerson {
   final CoFaker faker;
 
   /// Generates a localized first name.
-  String firstName() => faker.random.pick(faker.localeData.firstNames);
+  ///
+  /// With [sex] the name is picked from the locale's gendered name lists
+  /// ([CoFakerLocale.femaleFirstNames] / [CoFakerLocale.maleFirstNames]) and
+  /// falls back to all first names when the locale has none.
+  String firstName({CoSex? sex}) {
+    final data = faker.localeData;
+    final gendered = switch (sex) {
+      CoSex.female => data.femaleFirstNames,
+      CoSex.male => data.maleFirstNames,
+      null => const <String>[],
+    };
+    return faker.random.pick(gendered.isEmpty ? data.firstNames : gendered);
+  }
 
   /// Generates a localized last name.
   String lastName() => faker.random.pick(faker.localeData.lastNames);
@@ -21,9 +42,17 @@ class CoFakerPerson {
   /// Generates a localized gender label.
   String gender() => faker.random.pick(faker.localeData.genders);
 
+  /// Picks a [CoSex], female with probability [femaleRatio].
+  CoSex sex({double femaleRatio = 0.5}) {
+    if (femaleRatio < 0 || femaleRatio > 1) {
+      throw ArgumentError.value(femaleRatio, 'femaleRatio', 'must be 0..1');
+    }
+    return faker.random.double() < femaleRatio ? CoSex.female : CoSex.male;
+  }
+
   /// Generates a name from the current locale's name format.
-  String fullName({String? firstName, String? lastName}) {
-    final first = firstName ?? this.firstName();
+  String fullName({String? firstName, String? lastName, CoSex? sex}) {
+    final first = firstName ?? this.firstName(sex: sex);
     final last = lastName ?? this.lastName();
     return faker.localeData.nameFormat
         .replaceAll('{first}', first)
@@ -31,24 +60,98 @@ class CoFakerPerson {
   }
 
   /// Alias for [fullName], useful when mirroring common faker APIs.
-  String name({String? firstName, String? lastName}) {
-    return fullName(firstName: firstName, lastName: lastName);
+  String name({String? firstName, String? lastName, CoSex? sex}) {
+    return fullName(firstName: firstName, lastName: lastName, sex: sex);
   }
 
   /// Generates a localized job title.
   String jobTitle() => faker.random.pick(faker.localeData.jobTitles);
 
   /// Generates a URL-safe username.
+  ///
+  /// Hangul names are romanized with [romanize] first, so Korean fixtures
+  /// get readable handles such as `seoyeon.kim`.
   String username({String? firstName, String? lastName}) {
-    final first = _slugPart(firstName ?? this.firstName());
-    final last = _slugPart(lastName ?? this.lastName());
+    final first = _slugPart(romanize(firstName ?? this.firstName()));
+    final last = _slugPart(
+      _surnames[lastName ?? this.lastName()] ?? romanize(lastName ?? ''),
+    );
     final base = [first, last].where((part) => part.isNotEmpty).join('.');
     return base.isEmpty ? 'user${faker.number.int(min: 1, max: 9999)}' : base;
+  }
+
+  /// Romanizes Hangul syllables with the Revised Romanization of Korean,
+  /// syllable by syllable and without assimilation rules.
+  ///
+  /// Other characters are kept as-is, so Latin names pass through unchanged.
+  static String romanize(String value) {
+    final buffer = StringBuffer();
+    for (final rune in value.runes) {
+      final index = rune - 0xAC00;
+      if (index < 0 || index > 11171) {
+        buffer.writeCharCode(rune);
+        continue;
+      }
+      buffer
+        ..write(_initials[index ~/ 588])
+        ..write(_medials[(index % 588) ~/ 28])
+        ..write(_finals[index % 28]);
+    }
+    return buffer.toString();
   }
 
   static String _slugPart(String value) {
     return value.toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
   }
+
+  static const List<String> _initials = <String>[
+    'g', 'kk', 'n', 'd', 'tt', 'r', 'm', 'b', 'pp', 's', //
+    'ss', '', 'j', 'jj', 'ch', 'k', 't', 'p', 'h',
+  ];
+
+  static const List<String> _medials = <String>[
+    'a', 'ae', 'ya', 'yae', 'eo', 'e', 'yeo', 'ye', 'o', 'wa', 'wae', //
+    'oe', 'yo', 'u', 'wo', 'we', 'wi', 'yu', 'eu', 'ui', 'i',
+  ];
+
+  static const List<String> _finals = <String>[
+    '', 'k', 'k', 'k', 'n', 'n', 'n', 't', 'l', 'k', 'm', 'l', 'l', 'l', //
+    'p', 'l', 'm', 'p', 'p', 't', 't', 'ng', 't', 't', 'k', 't', 'p', 't',
+  ];
+
+  /// Conventional spellings of common Korean family names.
+  static const Map<String, String> _surnames = <String, String>{
+    '김': 'kim',
+    '이': 'lee',
+    '박': 'park',
+    '최': 'choi',
+    '정': 'jung',
+    '강': 'kang',
+    '조': 'cho',
+    '윤': 'yoon',
+    '장': 'jang',
+    '임': 'lim',
+    '한': 'han',
+    '오': 'oh',
+    '서': 'seo',
+    '신': 'shin',
+    '권': 'kwon',
+    '황': 'hwang',
+    '안': 'ahn',
+    '송': 'song',
+    '전': 'jeon',
+    '홍': 'hong',
+    '유': 'yoo',
+    '고': 'ko',
+    '문': 'moon',
+    '양': 'yang',
+    '손': 'son',
+    '배': 'bae',
+    '백': 'baek',
+    '허': 'heo',
+    '남': 'nam',
+    '심': 'shim',
+  };
 }
 
 /// Generates addresses and geographic values.

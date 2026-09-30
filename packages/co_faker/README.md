@@ -18,7 +18,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.2.0
+  co_faker: ^0.4.0
 ```
 
 ## Quick start
@@ -103,6 +103,54 @@ faker.date.past(days: 30, utc: true).toIso8601String(); // ends with `Z`
 `placeholderDataUri` and `avatarDataUri` embed an SVG in the value, so widget
 tests, golden files, and static demos render without any request.
 `avatarUrl` and `placeholderUrl` still point at public placeholder services.
+
+## Korean Identity, Clinic (EMR), And SaaS Back Office
+
+Three domain modules cover Korean medical-clinic software: `faker.korea`,
+`faker.clinic`, and `faker.saas`. Pass `now` so every date is repeatable.
+
+```dart
+final faker = CoFaker(locale: 'ko', seed: 7, now: DateTime.utc(2026, 9, 30));
+
+final patient = faker.clinic.patient(); // name, sex, birthDate, rrnMasked,
+                                        // phone, address, insurance ...
+final staff = faker.clinic.staff(role: 'counselor'); // 상담실장
+final line = faker.clinic.procedure(category: '레이저'); // price in its band
+final owned = faker.clinic.packageBalance(); // 회차권 remaining sessions
+final soap = faker.clinic.soap();
+final slots = faker.clinic.businessSlots(DateTime.utc(2026, 10, 1));
+final payments = faker.clinic.splitPayment(amount: 350000); // sums up
+
+final tenant = faker.saas.tenant(); // clinic, business number, plan
+final invoice = faker.saas.invoice(monthsAgo: 1); // supply + 10% VAT
+final log = faker.saas.messageLog(); // alimtalk / sms / lms delivery row
+final kpi = faker.saas.timeSeries(days: 30, base: 40, trend: 0.5);
+```
+
+Codes (`nhis`, `waiting`, `noShow`, `prepaid`, `pastDue`, `revealRrn`, ...)
+are locale independent and match typical enum names; `faker.clinic.label` and
+`faker.saas.label` localize them. Korean and English data are built in and
+other locales fall back to English; a custom locale can supply its own
+`CoFakerClinicData` / `CoFakerSaasData`.
+
+### Fake by construction
+
+Identity values look real but can never belong to a real person or company:
+
+| Value | Rule |
+| --- | --- |
+| Mobile phone | `010-0###-####` — subscriber blocks never start with `0` |
+| Landline | `{area}-0##-####` — exchanges never start with the trunk `0` |
+| Resident number (주민등록번호) | Masked `YYMMDD-G******` by default. Unmasked values fail the checksum, which every number issued before 2020-10 satisfies, so unmasked output requires a birth date before 2020-10 |
+| Business number (사업자등록번호) | Always fails the checksum |
+| English phone | `555-01##`, the fictional NANP block |
+| Audit IPs | RFC 5737 documentation ranges only |
+| Drug names | Invented stems, not marketed products |
+| Diagnoses | A small illustrative subset of public ICD-10 / KCD codes — not a claim-grade master |
+
+`CoFakerKorea.isRrnChecksumValid` and `isBusinessNumberChecksumValid` let tests
+assert the rule. Road names and postal code ranges are real public geography,
+so a generated address may coincidentally exist; do not send mail to it.
 
 ## Fixtures Without A Server
 

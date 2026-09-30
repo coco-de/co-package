@@ -141,7 +141,13 @@ enum CoFieldRole {
   place,
 
   /// An exchange or conversion rate: a positive decimal with four digits.
-  rate;
+  rate,
+
+  /// A masked, fake Korean resident registration number (`YYMMDD-G******`).
+  rrn,
+
+  /// A fake Korean business registration number with an invalid checksum.
+  businessNumber;
 
   /// Parses a role name such as `title`, `Date` or `badge`.
   ///
@@ -173,6 +179,8 @@ enum CoFieldRole {
       'organization' || 'brand' => company,
       'int' || 'double' || 'num' => number,
       'string' || 'word' => text,
+      'residentnumber' || 'ssn' => rrn,
+      'bizno' || 'brn' || 'businessregistrationnumber' => businessNumber,
       _ => null,
     };
   }
@@ -323,6 +331,17 @@ class CoFakerSchema {
         key == 'seq' ||
         key == 'sequence') {
       return CoFieldRole.ordinal;
+    }
+    if (key.contains('rrn') || key.contains('residentnumber')) {
+      return CoFieldRole.rrn;
+    }
+    if (_containsAny(key, const [
+      'businessnumber',
+      'businessregistration',
+      'bizno',
+      'brn',
+    ])) {
+      return CoFieldRole.businessNumber;
     }
     if (key == 'pair' || key.endsWith('pair')) return CoFieldRole.currencyPair;
     if (key == 'place' ||
@@ -686,6 +705,10 @@ class CoFakerSchema {
         return f.random.pick(f.localeData.places);
       case CoFieldRole.rate:
         return f.number.decimal(min: 0.01, max: 2000, decimals: 4);
+      case CoFieldRole.rrn:
+        return f.korea.rrn();
+      case CoFieldRole.businessNumber:
+        return f.korea.businessNumber();
     }
   }
 
