@@ -1,3 +1,33 @@
+## 0.6.0
+
+Operations console (vendor back office) generators. Existing APIs only gain
+optional parameters and record fields.
+
+- Add `saas.prepaidLedger()` (won wallet: top-ups with tier bonuses from
+  `CoFakerSaas.prepaidBonusTiers` — 100,000 won +10% up to 15,000,000 won
+  +60% — payment methods, usage, refunds) and `CoFakerSaas.prepaidBonus`.
+- Add notification templates `QUESTIONNAIRE`, `SURVEY`, and the advertising
+  `AD_EVENT`; `saas.messageTemplate(code:)`; templates gain `advertising`
+  and `rejectReason` (advertising templates are always rejected).
+- Add `saas.operator()` (vendor operator roster: role, status, 2FA, allowed
+  RFC 5737 CIDRs) and `saas.operatorEvent(action:)` (console action keys such
+  as `tenant.approve` with target and summary).
+- `saas.invoice` gains `status`, `statusWeights`, `numberFormat`
+  (`CoInvoiceNumberFormat.monthly` → `INV-YYYY-MM-NNNN`), and `sequence`;
+  a `failed` invoice carries `failureCode`/`failureReason`. Add
+  `saas.invoices(count)` and `saas.autopayFailure()` (limit exceeded, card
+  expired, insufficient funds, lost, suspended, issuer timeout).
+- Add `saas.masterChanges(kind:)` (sample `EX-` coded rows with old/new
+  prices) and `saas.masterChecks()` (upload validation checks).
+- `saas.timeSeries` gains `granularity` (`CoTimeGranularity.hour` shaped by
+  clinic hours, `day`, `month` with a winter peak) and `count`.
+- Add `saas.integrationSnapshot()` (status fixed per service by the seed,
+  success rate, 24h calls, latency) and `saas.incidents()`.
+- Add `saas.opsAlert()`, `saas.announcement(kind: release|regulation)` with
+  audience, channels, and read rate, and `saas.tenantActivity()`.
+- Add `CoFakerSaasOps` (Korean and English) linked by the optional
+  `CoFakerSaasData.ops`; `saas.label` falls back to English.
+
 ## 0.5.0
 
 - Add `faker.signature` (`CoFakerSignature`): deterministic handwritten-looking

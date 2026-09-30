@@ -1,6 +1,138 @@
 import 'co_faker.dart';
 import 'korea.dart';
 import 'saas_data.dart';
+import 'saas_ops.dart';
+
+/// How [CoFakerSaas.invoice] formats invoice numbers.
+enum CoInvoiceNumberFormat {
+  /// `INV-YYYYMM-NNNNNN` with six random digits (the default).
+  compact,
+
+  /// `INV-YYYY-MM-NNNN` with a four-digit sequence.
+  monthly,
+}
+
+/// The bucket size of [CoFakerSaas.timeSeries].
+enum CoTimeGranularity {
+  /// One point per hour, shaped by clinic opening hours.
+  hour,
+
+  /// One point per day, shaped by the weekday (the default).
+  day,
+
+  /// One point per month, shaped by a mild yearly season.
+  month,
+}
+
+/// A prepaid (won) ledger entry of a tenant wallet. [kind] is `topUp`,
+/// `usage`, or `refund`; top-ups carry the [bonus] earned by
+/// [CoFakerSaas.prepaidBonusTiers] and the payment [method].
+typedef CoFakePrepaidEntry = ({
+  String kind,
+  String kindLabel,
+  int amount,
+  int bonus,
+  int balanceAfter,
+  String? method,
+  String? methodLabel,
+  DateTime at,
+});
+
+/// A vendor operator of the back office.
+typedef CoFakeOperator = ({
+  String name,
+  String email,
+  String role,
+  String roleLabel,
+  String status,
+  String statusLabel,
+  bool twoFactor,
+  List<String> allowedIps,
+  DateTime? lastLoginAt,
+});
+
+/// An audit event of a vendor operator in the back office. [action] is a
+/// console action key such as `tenant.approve`.
+typedef CoFakeOperatorEvent = ({
+  String id,
+  String action,
+  String actionLabel,
+  String operatorName,
+  String operatorRole,
+  String target,
+  String summary,
+  String ip,
+  DateTime at,
+});
+
+/// A changed row between two claim master versions. [change] is `added`,
+/// `updated`, or `removed`; prices are `null` for unpriced kinds.
+typedef CoFakeMasterChange = ({
+  String kind,
+  String code,
+  String name,
+  String change,
+  String changeLabel,
+  int? oldPrice,
+  int? newPrice,
+});
+
+/// A claim master validation check result.
+typedef CoFakeMasterCheck = ({
+  String code,
+  String label,
+  bool passed,
+  String? detail,
+});
+
+/// A point-in-time health snapshot of one integration service.
+typedef CoFakeIntegrationSnapshot = ({
+  String service,
+  String serviceLabel,
+  String status,
+  String statusLabel,
+  double successRate,
+  int calls24h,
+  int avgLatencyMs,
+  DateTime? lastIncidentAt,
+});
+
+/// An incident or maintenance window of an integration service.
+typedef CoFakeIncident = ({
+  String service,
+  String kind,
+  String kindLabel,
+  String title,
+  DateTime startedAt,
+  DateTime? endedAt,
+  bool resolved,
+});
+
+/// An operations alert.
+typedef CoFakeOpsAlert = ({
+  String level,
+  String levelLabel,
+  String code,
+  String message,
+  DateTime at,
+});
+
+/// A release note or regulatory update announcement with its audience,
+/// channels, and read rate.
+typedef CoFakeAnnouncement = ({
+  String kind,
+  String kindLabel,
+  String title,
+  List<String> items,
+  String audience,
+  String audienceLabel,
+  List<String> channels,
+  double readRate,
+  DateTime publishedAt,
+});
+
+/// A recent activity line of a tenant.
+typedef CoFakeTenantActivity = ({String tenant, String text, DateTime at});
 
 /// A clinic tenant of a SaaS back office.
 typedef CoFakeTenant = ({
@@ -43,6 +175,8 @@ typedef CoFakeInvoice = ({
   String status,
   String statusLabel,
   DateTime? paidAt,
+  String? failureCode,
+  String? failureReason,
 });
 
 /// A message credit ledger entry. Positive [delta] adds credits.
@@ -71,6 +205,8 @@ typedef CoFakeMessageTemplate = ({
   String channel,
   String status,
   String statusLabel,
+  bool advertising,
+  String? rejectReason,
 });
 
 /// A message delivery log row. [recipient] is masked.
@@ -159,8 +295,17 @@ class CoFakerSaas {
 
   bool get _korean => faker.locale.startsWith('ko');
 
-  /// Returns the localized label of a code, or the code itself.
-  String label(String code) => data.labels[code] ?? code;
+  /// The operations console texts of the current locale.
+  CoFakerSaasOps get ops => data.ops ?? CoFakerSaasOps.english;
+
+  /// Returns the localized label of a code, falling back to the operations
+  /// labels, English, and then the code itself.
+  String label(String code) =>
+      data.labels[code] ??
+      ops.labels[code] ??
+      CoFakerSaasData.english.labels[code] ??
+      CoFakerSaasOps.english.labels[code] ??
+      code;
 
   /// Generates a tenant: a clinic with its business details and plan.
   CoFakeTenant tenant() {
@@ -237,30 +382,57 @@ class CoFakerSaas {
   /// Generates a monthly invoice for the month [monthsAgo] months before
   /// `faker.now` (0 is the current month). [supplyAmount] defaults to a plan
   /// price; VAT is 10%.
-  CoFakeInvoice invoice({int monthsAgo = 1, int? supplyAmount}) {
+  ///
+  /// [status] fixes the status and [statusWeights] replaces the default
+  /// distribution of past-due invoices (for example
+  /// `{'paid': 80, 'failed': 15, 'overdue': 5}`). A `failed` invoice is a
+  /// failed card autopay and carries [CoFakeInvoice.failureCode] and
+  /// [CoFakeInvoice.failureReason]. [numberFormat] and [sequence] shape the
+  /// invoice number.
+  CoFakeInvoice invoice({
+    int monthsAgo = 1,
+    int? supplyAmount,
+    String? status,
+    Map<String, int>? statusWeights,
+    CoInvoiceNumberFormat numberFormat = CoInvoiceNumberFormat.compact,
+    int? sequence,
+  }) {
     final periodStart = _addMonths(_monthStart(faker.now), -monthsAgo);
     final periodEnd = _addMonths(periodStart, 1);
     final supply = supplyAmount ?? plan().monthlyPrice;
     final vat = (supply * 0.1).round();
     final issuedAt = periodEnd;
     final dueAt = issuedAt.add(const Duration(days: 10));
-    final String status;
-    if (monthsAgo <= 0) {
-      status = 'draft';
+    final String resolved;
+    if (status != null) {
+      resolved = status;
+    } else if (statusWeights != null) {
+      resolved = _weighted<String>([
+        for (final entry in statusWeights.entries) (entry.key, entry.value),
+      ]);
+    } else if (monthsAgo <= 0) {
+      resolved = 'draft';
     } else if (dueAt.isAfter(faker.now)) {
-      status = faker.random.double() < 0.5 ? 'paid' : 'open';
+      resolved = faker.random.double() < 0.5 ? 'paid' : 'open';
     } else {
-      status = _weighted(const <(String, int)>[
+      resolved = _weighted(const <(String, int)>[
         ('paid', 88),
         ('overdue', 8),
         ('void', 2),
         ('refunded', 2),
       ]);
     }
+    final number = switch (numberFormat) {
+      CoInvoiceNumberFormat.compact =>
+        'INV-${periodStart.year}${_two(periodStart.month)}-'
+            '${sequence?.toString().padLeft(6, '0') ?? faker.random.digits('######')}',
+      CoInvoiceNumberFormat.monthly =>
+        'INV-${periodStart.year}-${_two(periodStart.month)}-'
+            '${sequence?.toString().padLeft(4, '0') ?? faker.random.digits('####')}',
+    };
+    final failure = resolved == 'failed' ? autopayFailure() : null;
     return (
-      number:
-          'INV-${periodStart.year}${_two(periodStart.month)}-'
-          '${faker.random.digits('######')}',
+      number: number,
       periodStart: periodStart,
       periodEnd: periodEnd,
       issuedAt: issuedAt,
@@ -268,11 +440,452 @@ class CoFakerSaas {
       supplyAmount: supply,
       vat: vat,
       total: supply + vat,
-      status: status,
-      statusLabel: label(status),
-      paidAt: status == 'paid' || status == 'refunded'
+      status: resolved,
+      statusLabel: resolved == 'failed'
+          ? (ops.labels['failed'] ?? 'failed')
+          : label(resolved),
+      paidAt: resolved == 'paid' || resolved == 'refunded'
           ? issuedAt.add(Duration(days: faker.random.int(max: 9)))
           : null,
+      failureCode: failure?.code,
+      failureReason: failure?.reason,
+    );
+  }
+
+  /// Generates [count] consecutive monthly invoices, newest first, starting
+  /// with last month and numbered with a running [CoInvoiceNumberFormat]
+  /// sequence from [firstSequence].
+  List<CoFakeInvoice> invoices(
+    int count, {
+    int? supplyAmount,
+    Map<String, int>? statusWeights,
+    CoInvoiceNumberFormat numberFormat = CoInvoiceNumberFormat.monthly,
+    int firstSequence = 1,
+  }) {
+    final supply = supplyAmount ?? plan().monthlyPrice;
+    return <CoFakeInvoice>[
+      for (var i = 0; i < count; i++)
+        invoice(
+          monthsAgo: i + 1,
+          supplyAmount: supply,
+          statusWeights: statusWeights,
+          numberFormat: numberFormat,
+          sequence: firstSequence + count - 1 - i,
+        ),
+    ];
+  }
+
+  /// Autopay failure codes: `LIMIT_EXCEEDED`, `CARD_EXPIRED`,
+  /// `INSUFFICIENT_FUNDS`, `CARD_LOST`, `CARD_SUSPENDED`, `ISSUER_TIMEOUT`.
+  List<String> get autopayFailureCodes => ops.autopayFailures.keys.toList();
+
+  /// Generates a card autopay (or card approval) failure reason.
+  ({String code, String reason}) autopayFailure() {
+    final code = _weighted<String>(const <(String, int)>[
+      ('LIMIT_EXCEEDED', 35),
+      ('INSUFFICIENT_FUNDS', 25),
+      ('CARD_EXPIRED', 20),
+      ('CARD_SUSPENDED', 8),
+      ('CARD_LOST', 7),
+      ('ISSUER_TIMEOUT', 5),
+    ]);
+    return (code: code, reason: ops.autopayFailures[code] ?? code);
+  }
+
+  /// Prepaid top-up bonus tiers `(minimum amount, bonus percent)` in won,
+  /// lowest first: 100,000 won earns 10% up to 60% from 15,000,000 won.
+  static const List<(int, int)> prepaidBonusTiers = <(int, int)>[
+    (100000, 10),
+    (300000, 15),
+    (500000, 20),
+    (1000000, 25),
+    (3000000, 35),
+    (5000000, 45),
+    (10000000, 55),
+    (15000000, 60),
+  ];
+
+  /// Returns the bonus earned by a top-up of [amount] won.
+  static int prepaidBonus(int amount) {
+    var percent = 0;
+    for (final tier in prepaidBonusTiers) {
+      if (amount >= tier.$1) percent = tier.$2;
+    }
+    return amount * percent ~/ 100;
+  }
+
+  /// Generates a prepaid (won) wallet ledger of [count] entries, oldest
+  /// first, from [openingBalance]. Top-ups pick a tier amount and earn the
+  /// tier bonus; usage never drives the balance negative.
+  List<CoFakePrepaidEntry> prepaidLedger({
+    int count = 10,
+    int openingBalance = 0,
+  }) {
+    var balance = openingBalance;
+    final start = faker.now.subtract(Duration(days: count * 5));
+    final result = <CoFakePrepaidEntry>[];
+    for (var i = 0; i < count; i++) {
+      final at = start.add(
+        Duration(days: i * 5, minutes: faker.random.int(max: 1439)),
+      );
+      final String kind;
+      var amount = 0;
+      var bonus = 0;
+      String? method;
+      if (balance < 50000 || faker.random.double() < 0.25) {
+        kind = 'topUp';
+        amount = faker.random.pick(const <int>[
+          100000,
+          300000,
+          500000,
+          1000000,
+          3000000,
+          5000000,
+        ]);
+        bonus = prepaidBonus(amount);
+        method = _weighted<String>(const <(String, int)>[
+          ('card', 55),
+          ('transfer', 30),
+          ('virtualAccount', 15),
+        ]);
+      } else if (faker.random.double() < 0.95) {
+        kind = 'usage';
+        amount = -_roundTo(
+          faker.random.int(min: 10000, max: balance ~/ 2),
+          1000,
+        );
+      } else {
+        kind = 'refund';
+        amount = -_roundTo(
+          faker.random.int(min: 1000, max: balance ~/ 4),
+          1000,
+        );
+      }
+      balance += amount + bonus;
+      result.add((
+        kind: kind,
+        kindLabel: label(kind),
+        amount: amount,
+        bonus: bonus,
+        balanceAfter: balance,
+        method: method,
+        methodLabel: method == null ? null : label(method),
+        at: at,
+      ));
+    }
+    return result;
+  }
+
+  /// Operator role codes: `owner`, `admin`, `billing`, `support`, `viewer`.
+  List<String> get operatorRoles => ops.operatorRoles.keys.toList();
+
+  /// Generates a vendor operator with a role, status, two-factor flag, and
+  /// allowed IP ranges (RFC 5737 documentation ranges only).
+  CoFakeOperator operator({String? role}) {
+    final resolvedRole =
+        role ??
+        _weighted<String>(const <(String, int)>[
+          ('owner', 5),
+          ('admin', 20),
+          ('billing', 15),
+          ('support', 45),
+          ('viewer', 15),
+        ]);
+    final status = _weighted<String>(const <(String, int)>[
+      ('active', 82),
+      ('invited', 10),
+      ('suspended', 8),
+    ]);
+    final sex = faker.person.sex();
+    final first = faker.person.firstName(sex: sex);
+    final last = faker.person.lastName();
+    final restricted = resolvedRole == 'owner' || faker.random.double() < 0.5;
+    return (
+      name: faker.person.fullName(firstName: first, lastName: last),
+      email: faker.internet.email(
+        firstName: first,
+        lastName: last,
+        domain: 'ops.example.com',
+      ),
+      role: resolvedRole,
+      roleLabel: ops.operatorRoles[resolvedRole] ?? resolvedRole,
+      status: status,
+      statusLabel: label(status),
+      twoFactor:
+          resolvedRole == 'owner' ||
+          resolvedRole == 'admin' ||
+          faker.random.double() < 0.6,
+      allowedIps: restricted
+          ? <String>[
+              for (var i = 0; i < 1 + faker.random.int(max: 1); i++)
+                '${faker.random.pick(_testNets)}.${faker.random.int(max: 7) * 32}/27',
+            ]
+          : const <String>[],
+      lastLoginAt: status == 'invited'
+          ? null
+          : faker.date.between(
+              faker.now.subtract(const Duration(days: 14)),
+              faker.now,
+              utc: faker.now.isUtc,
+            ),
+    );
+  }
+
+  /// Console action keys generated by [operatorEvent].
+  List<String> get operatorActions => ops.operatorActions.keys.toList();
+
+  /// Generates a vendor operator audit event within the last [days] days.
+  /// [action] is a console action key such as `tenant.approve`.
+  CoFakeOperatorEvent operatorEvent({String? action, int days = 30}) {
+    final key = action ?? faker.random.pick<String>(operatorActions);
+    final spec = ops.operatorActions[key];
+    if (spec == null) throw ArgumentError.value(action, 'action');
+    final operator = this.operator();
+    final target = switch (key) {
+      'master.publish' => masterVersion().version,
+      'notice.publish' => notice().title,
+      'operator.invite' || 'operator.roleChange' => faker.person.fullName(),
+      _ => faker.clinic.clinicName(),
+    };
+    return (
+      id: faker.id.uuid(),
+      action: key,
+      actionLabel: spec.label,
+      operatorName: operator.name,
+      operatorRole: operator.roleLabel,
+      target: target,
+      summary: spec.summary.replaceAll('{target}', target),
+      ip: '${faker.random.pick(_testNets)}.${faker.random.int(min: 1, max: 254)}',
+      at: faker.date.between(
+        faker.now.subtract(Duration(days: days)),
+        faker.now,
+        utc: faker.now.isUtc,
+      ),
+    );
+  }
+
+  /// Generates [count] changed rows of a claim master of [kind] (`fee`,
+  /// `drug`, `material`, `diagnosis`). Codes use an `EX-` prefix to mark
+  /// them as examples; updated prices move by -5% to +8%.
+  List<CoFakeMasterChange> masterChanges({String kind = 'fee', int count = 5}) {
+    final rows = ops.masterRows[kind];
+    if (rows == null || rows.isEmpty) throw ArgumentError.value(kind, 'kind');
+    final prefix = switch (kind) {
+      'drug' => 'D',
+      'material' => 'M',
+      'diagnosis' => 'X',
+      _ => 'F',
+    };
+    return <CoFakeMasterChange>[
+      for (var i = 0; i < count; i++)
+        _masterChange(kind, prefix, rows[i % rows.length], i),
+    ];
+  }
+
+  CoFakeMasterChange _masterChange(
+    String kind,
+    String prefix,
+    CoMasterRowSpec row,
+    int index,
+  ) {
+    final change = _weighted<String>(const <(String, int)>[
+      ('updated', 70),
+      ('added', 20),
+      ('removed', 10),
+    ]);
+    final base = row.price;
+    final moved = base == null
+        ? null
+        : (base * (1 + faker.random.int(min: -5, max: 8) / 100)).round();
+    return (
+      kind: kind,
+      code: 'EX-$prefix${faker.random.digits('####')}',
+      name: row.name,
+      change: change,
+      changeLabel: label(change),
+      oldPrice: change == 'added' ? null : base,
+      newPrice: change == 'removed' ? null : (change == 'added' ? base : moved),
+    );
+  }
+
+  /// Generates the validation checks of a claim master upload. About one
+  /// check in eight fails with a detail message unless [allPass].
+  List<CoFakeMasterCheck> masterChecks({bool allPass = false}) {
+    return <CoFakeMasterCheck>[
+      for (final entry in ops.masterChecks.entries)
+        _masterCheck(entry.key, entry.value, allPass),
+    ];
+  }
+
+  CoFakeMasterCheck _masterCheck(String code, String label, bool allPass) {
+    final passed = allPass || faker.random.double() >= 0.125;
+    return (
+      code: code,
+      label: label,
+      passed: passed,
+      detail: passed ? null : '${faker.random.int(min: 1, max: 12)} rows',
+    );
+  }
+
+  /// Generates a health snapshot per integration service.
+  ///
+  /// Each service's status is fixed by the seed and the service code (a
+  /// derived stream), so the same service stays down or up across calls and
+  /// regardless of other generated values; [at] defaults to `faker.now`.
+  List<CoFakeIntegrationSnapshot> integrationSnapshot({DateTime? at}) {
+    final time = at ?? faker.now;
+    return <CoFakeIntegrationSnapshot>[
+      for (final service in services) _snapshot(service, time),
+    ];
+  }
+
+  CoFakeIntegrationSnapshot _snapshot(String service, DateTime at) {
+    final f = faker.derive('saas/health/$service');
+    final roll = f.random.int(max: 99);
+    final status = roll < 80 ? 'up' : (roll < 93 ? 'degraded' : 'down');
+    final rate = switch (status) {
+      'up' => f.random.double(min: 99, max: 100),
+      'degraded' => f.random.double(min: 92, max: 99),
+      _ => f.random.double(min: 40, max: 85),
+    };
+    return (
+      service: service,
+      serviceLabel: label(service),
+      status: status,
+      statusLabel: label(status),
+      successRate: double.parse(rate.toStringAsFixed(2)),
+      calls24h: f.random.int(min: 800, max: 60000),
+      avgLatencyMs: switch (status) {
+        'up' => f.random.int(min: 60, max: 400),
+        'degraded' => f.random.int(min: 1200, max: 4000),
+        _ => f.random.int(min: 5000, max: 30000),
+      },
+      lastIncidentAt: status == 'up' && f.random.bool()
+          ? null
+          : at.subtract(Duration(minutes: f.random.int(min: 5, max: 20000))),
+    );
+  }
+
+  /// Generates [count] incidents and maintenance windows within the last
+  /// [days] days, newest first. Only the newest may still be open.
+  List<CoFakeIncident> incidents({int count = 5, int days = 30}) {
+    final items = <CoFakeIncident>[];
+    for (var i = 0; i < count; i++) {
+      final service = faker.random.pick(services);
+      final kind = _weighted<String>(const <(String, int)>[
+        ('degraded', 45),
+        ('maintenance', 35),
+        ('outage', 20),
+      ]);
+      final startedAt = faker.date.between(
+        faker.now.subtract(Duration(days: days)),
+        faker.now.subtract(const Duration(hours: 1)),
+        utc: faker.now.isUtc,
+      );
+      items.add((
+        service: service,
+        kind: kind,
+        kindLabel: label(kind),
+        title: (ops.incidentTitles[kind] ?? '{service}').replaceAll(
+          '{service}',
+          label(service),
+        ),
+        startedAt: startedAt,
+        endedAt: startedAt.add(
+          Duration(minutes: faker.random.int(min: 5, max: 240)),
+        ),
+        resolved: true,
+      ));
+    }
+    items.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+    if (items.isNotEmpty && faker.random.double() < 0.3) {
+      final open = items.first;
+      items[0] = (
+        service: open.service,
+        kind: open.kind,
+        kindLabel: open.kindLabel,
+        title: open.title,
+        startedAt: open.startedAt,
+        endedAt: null,
+        resolved: false,
+      );
+    }
+    return items;
+  }
+
+  /// Generates an operations alert raised within the last day.
+  CoFakeOpsAlert opsAlert({String? level}) {
+    final pool = level == null
+        ? ops.alerts
+        : ops.alerts.where((a) => a.level == level).toList();
+    if (pool.isEmpty) throw ArgumentError.value(level, 'level');
+    final spec = faker.random.pick(pool);
+    return (
+      level: spec.level,
+      levelLabel: label(spec.level),
+      code: spec.code,
+      message: spec.message,
+      at: faker.now.subtract(Duration(minutes: faker.random.int(max: 1439))),
+    );
+  }
+
+  /// Generates an announcement: an EMR release note (`release`) or a
+  /// regulatory update (`regulation`), with its audience, delivery
+  /// channels, and read rate.
+  CoFakeAnnouncement announcement({String? kind}) {
+    final resolved =
+        kind ?? (faker.random.double() < 0.6 ? 'release' : 'regulation');
+    final publishedAt = _past(60);
+    final pool = resolved == 'regulation'
+        ? ops.regulationItems
+        : ops.releaseItems;
+    final items = [...pool];
+    final picked = <String>[
+      for (var i = 0; i < 2 + faker.random.int(max: 1) && items.isNotEmpty; i++)
+        items.removeAt(faker.random.int(max: items.length - 1)),
+    ];
+    final title = resolved == 'regulation'
+        ? ops.regulationTitle.replaceAll(
+            '{month}',
+            '${publishedAt.year}-${_two(publishedAt.month)}',
+          )
+        : ops.releaseTitle.replaceAll(
+            '{version}',
+            'v${publishedAt.year}.${_two(publishedAt.month)}.'
+                '${faker.random.int(min: 1, max: 4)}',
+          );
+    final audience = _weighted<String>(const <(String, int)>[
+      ('allTenants', 70),
+      ('proAndAbove', 15),
+      ('dermatology', 15),
+    ]);
+    return (
+      kind: resolved,
+      kindLabel: label(resolved),
+      title: title,
+      items: picked,
+      audience: audience,
+      audienceLabel: label(audience),
+      channels: <String>[
+        'inApp',
+        if (faker.random.double() < 0.6) 'email',
+        if (resolved == 'regulation' || faker.random.double() < 0.3) 'alimtalk',
+      ],
+      readRate: double.parse(
+        faker.random.double(min: 0.2, max: 0.95).toStringAsFixed(2),
+      ),
+      publishedAt: publishedAt,
+    );
+  }
+
+  /// Generates a recent activity line of a tenant within the last day.
+  CoFakeTenantActivity tenantActivity({String? tenant}) {
+    return (
+      tenant: tenant ?? faker.clinic.clinicName(),
+      text: faker.random
+          .pick(ops.tenantActivities)
+          .replaceAll('{n}', '${faker.random.int(min: 1, max: 240)}'),
+      at: faker.now.subtract(Duration(minutes: faker.random.int(max: 1439))),
     );
   }
 
@@ -333,21 +946,34 @@ class CoFakerSaas {
     );
   }
 
-  /// Generates a notification template with its review status.
-  CoFakeMessageTemplate messageTemplate() {
-    final spec = faker.random.pick(data.messageTemplates);
+  /// Generates a notification template with its review status. [code]
+  /// picks a specific template (`QUESTIONNAIRE`, `SURVEY`, `AD_EVENT`, ...).
+  ///
+  /// Advertising templates (codes starting with `AD_`) are always rejected
+  /// with [CoFakeMessageTemplate.rejectReason], as notification channels do
+  /// not allow advertising.
+  CoFakeMessageTemplate messageTemplate({String? code}) {
+    final pool = code == null
+        ? data.messageTemplates
+        : data.messageTemplates.where((t) => t.code == code).toList();
+    if (pool.isEmpty) throw ArgumentError.value(code, 'code');
+    final spec = faker.random.pick(pool);
     final status = _weighted(const <(String, int)>[
       ('approved', 80),
       ('reviewing', 15),
       ('rejected', 5),
     ]);
+    final advertising = spec.code.startsWith('AD_');
+    final resolved = advertising ? 'rejected' : status;
     return (
       code: spec.code,
       name: spec.name,
       body: spec.body,
       channel: 'alimtalk',
-      status: status,
-      statusLabel: label(status),
+      status: resolved,
+      statusLabel: label(resolved),
+      advertising: advertising,
+      rejectReason: resolved == 'rejected' ? ops.templateRejectReason : null,
     );
   }
 
@@ -551,13 +1177,16 @@ class CoFakerSaas {
     );
   }
 
-  /// Generates a daily KPI series of [days] points ending on the day of
-  /// `faker.now` (inclusive).
+  /// Generates a KPI series ending at `faker.now` (inclusive).
   ///
-  /// Values start around [base], move by [trend] per day, swing with a
-  /// weekly pattern of relative amplitude [weekly] (weekends lower), and get
-  /// relative noise up to [noise]. [integer] rounds values; negatives are
-  /// clamped to zero.
+  /// With the default [granularity] of [CoTimeGranularity.day] there are
+  /// [days] daily points and a weekly pattern of relative amplitude [weekly]
+  /// (weekends lower). [CoTimeGranularity.hour] gives [count] (default 24)
+  /// hourly points shaped by clinic hours (near zero at night, peaks late
+  /// morning and afternoon); [CoTimeGranularity.month] gives [count]
+  /// (default 12) monthly points with a mild winter peak. Values start
+  /// around [base], move by [trend] per point, and get relative noise up to
+  /// [noise]. [integer] rounds values; negatives are clamped to zero.
   List<CoFakePoint> timeSeries({
     int days = 30,
     num base = 100,
@@ -565,23 +1194,45 @@ class CoFakerSaas {
     double weekly = 0.2,
     double noise = 0.1,
     bool integer = true,
+    CoTimeGranularity granularity = CoTimeGranularity.day,
+    int? count,
   }) {
-    if (days < 0) {
-      throw ArgumentError.value(days, 'days', 'must not be negative');
+    final total =
+        count ??
+        switch (granularity) {
+          CoTimeGranularity.hour => 24,
+          CoTimeGranularity.day => days,
+          CoTimeGranularity.month => 12,
+        };
+    if (total < 0) {
+      throw ArgumentError.value(total, 'count', 'must not be negative');
     }
-    final end = _day(faker.now);
     return <CoFakePoint>[
-      for (var i = 0; i < days; i++)
+      for (var i = 0; i < total; i++)
         _point(
-          end.subtract(Duration(days: days - 1 - i)),
+          _bucket(granularity, total - 1 - i),
           i,
           base,
           trend,
           weekly,
           noise,
           integer,
+          granularity,
         ),
     ];
+  }
+
+  DateTime _bucket(CoTimeGranularity granularity, int back) {
+    final now = faker.now;
+    return switch (granularity) {
+      CoTimeGranularity.hour =>
+        (now.isUtc
+                ? DateTime.utc(now.year, now.month, now.day, now.hour)
+                : DateTime(now.year, now.month, now.day, now.hour))
+            .subtract(Duration(hours: back)),
+      CoTimeGranularity.day => _day(now).subtract(Duration(days: back)),
+      CoTimeGranularity.month => _addMonths(_monthStart(now), -back),
+    };
   }
 
   CoFakePoint _point(
@@ -592,12 +1243,24 @@ class CoFakerSaas {
     double weekly,
     double noise,
     bool integer,
+    CoTimeGranularity granularity,
   ) {
     final level = base + trend * i;
-    final weekday = date.weekday;
-    final season = weekday == DateTime.sunday
-        ? -weekly
-        : (weekday == DateTime.saturday ? -weekly / 2 : weekly / 5);
+    final double season;
+    switch (granularity) {
+      case CoTimeGranularity.day:
+        final weekday = date.weekday;
+        season = weekday == DateTime.sunday
+            ? -weekly
+            : (weekday == DateTime.saturday ? -weekly / 2 : weekly / 5);
+      case CoTimeGranularity.hour:
+        season = _hourShape[date.hour] - 1;
+      case CoTimeGranularity.month:
+        season = const <double>[
+          0.15, 0.1, 0, -0.05, -0.1, -0.15, //
+          -0.15, -0.1, -0.05, 0, 0.1, 0.15,
+        ][date.month - 1];
+    }
     final jitter = faker.random.double(min: -noise, max: noise);
     final value = level * (1 + season + jitter);
     final clamped = value < 0 ? 0 : value;
@@ -608,6 +1271,21 @@ class CoFakerSaas {
           : double.parse(clamped.toStringAsFixed(2)),
     );
   }
+
+  /// Relative load per hour of day for a clinic open 10:00-19:00.
+  static const List<double> _hourShape = <double>[
+    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.03, 0.05, 0.2, 0.6, //
+    1.3, 1.6, 1.4, 0.7, 1.4, 1.7, 1.8, 1.5, 1.2, 0.4, //
+    0.15, 0.08, 0.04, 0.03,
+  ];
+
+  static const List<String> _testNets = <String>[
+    '192.0.2',
+    '198.51.100',
+    '203.0.113',
+  ];
+
+  static int _roundTo(int value, int unit) => (value / unit).round() * unit;
 
   DateTime _past(int days) =>
       _day(faker.date.past(days: days, utc: faker.now.isUtc));

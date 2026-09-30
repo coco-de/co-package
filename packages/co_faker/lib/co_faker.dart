@@ -15,5 +15,6 @@ export 'src/modules.dart';
 export 'src/random_source.dart';
 export 'src/saas.dart';
 export 'src/saas_data.dart';
+export 'src/saas_ops.dart';
 export 'src/signature.dart';
 export 'src/schema.dart';

@@ -1,3 +1,5 @@
+import 'saas_ops.dart';
+
 /// A subscription plan with its monthly price and included quotas.
 typedef CoPlanSpec = ({
   String code,
@@ -27,6 +29,7 @@ class CoFakerSaasData {
     required this.notices,
     required this.failureReasons,
     required this.labels,
+    this.ops,
   });
 
   /// Subscription plans, cheapest first.
@@ -47,6 +50,9 @@ class CoFakerSaasData {
   /// template statuses, integration services, health statuses, audit
   /// actions, notice categories, and claim master kinds.
   final Map<String, String> labels;
+
+  /// Operations console texts, or `null` to use [CoFakerSaasOps.english].
+  final CoFakerSaasOps? ops;
 
   /// Korean SaaS data for a clinic software vendor back office.
   static const CoFakerSaasData korean = CoFakerSaasData(
@@ -115,6 +121,21 @@ class CoFakerSaasData {
         code: 'PKG_EXPIRE',
         name: '회차권 만료 예정',
         body: '#{환자명}님, #{회차권명} 잔여 #{잔여회수}회가 #{만료일}에 만료됩니다.',
+      ),
+      (
+        code: 'QUESTIONNAIRE',
+        name: '사전 문진 안내',
+        body: '#{환자명}님, 내원 전 사전 문진을 작성해 주세요.\n#{문진링크}',
+      ),
+      (
+        code: 'SURVEY',
+        name: '만족도 조사',
+        body: '#{환자명}님, #{병원명} 진료는 어떠셨나요? 1분 설문에 참여해 주세요.\n#{설문링크}',
+      ),
+      (
+        code: 'AD_EVENT',
+        name: '이벤트 안내 (광고성)',
+        body: '(광고) #{병원명} 이달의 이벤트! 피코 토닝 10회 특가를 안내드립니다.\n수신거부: #{수신거부링크}',
       ),
     ],
     notices: <CoNoticeSpec>[
@@ -221,6 +242,7 @@ class CoFakerSaasData {
       'refund': '환불',
       'grant': '지급',
     },
+    ops: CoFakerSaasOps.korean,
   );
 
   /// English SaaS data, used as the fallback for every other locale.
@@ -270,6 +292,23 @@ class CoFakerSaasData {
         code: 'RSV_REMIND_D1',
         name: 'Reminder',
         body: 'Hi #{name}, see you tomorrow at #{time} at #{clinic}.',
+      ),
+      (
+        code: 'QUESTIONNAIRE',
+        name: 'Pre-visit questionnaire',
+        body:
+            'Hi #{name}, please fill in the questionnaire before your visit: #{link}',
+      ),
+      (
+        code: 'SURVEY',
+        name: 'Satisfaction survey',
+        body: 'Hi #{name}, how was your visit to #{clinic}? #{link}',
+      ),
+      (
+        code: 'AD_EVENT',
+        name: 'Promotion (advertising)',
+        body:
+            '[Ad] #{clinic} monthly offer: 10 laser toning sessions on sale. Opt out: #{link}',
       ),
     ],
     notices: <CoNoticeSpec>[
@@ -363,5 +402,6 @@ class CoFakerSaasData {
       'refund': 'Refund',
       'grant': 'Grant',
     },
+    ops: CoFakerSaasOps.english,
   );
 }
