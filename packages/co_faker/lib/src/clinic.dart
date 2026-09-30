@@ -1,4 +1,5 @@
 import 'clinic_data.dart';
+import 'clinic_texts.dart';
 import 'co_faker.dart';
 import 'korea.dart';
 import 'modules.dart';
@@ -92,6 +93,74 @@ typedef CoFakePayment = ({
   String? cashReceiptNo,
 });
 
+/// A generated consent form. [disclaimer] states that the text is an
+/// example and not a legal document.
+typedef CoFakeConsentForm = ({
+  String kind,
+  String title,
+  List<String> clauses,
+  String disclaimer,
+});
+
+/// A satisfaction survey answer. [score] is 1-5.
+typedef CoFakeFeedback = ({String sentiment, int score, String comment});
+
+/// One turn of a conversation. [speaker] is `counselor`, `patient`, or
+/// `staff`; [at] is the offset from the start of the conversation.
+typedef CoFakeTurn = ({String speaker, String text, Duration at});
+
+/// A recorded counseling session with its summary and quote.
+typedef CoFakeCounselSession = ({
+  String topic,
+  String procedureCode,
+  String procedure,
+  List<CoFakeTurn> turns,
+  String summary,
+  int quotedPrice,
+  int packagePrice,
+  int sessions,
+  bool booked,
+});
+
+/// A messenger inquiry thread from a (possibly foreign) patient.
+typedef CoFakeInquiry = ({
+  String language,
+  String channel,
+  String handle,
+  List<CoFakeTurn> turns,
+});
+
+/// A public integration call result. The messages are examples, not
+/// official response texts.
+typedef CoFakeIntegrationResult = ({
+  String service,
+  String code,
+  String message,
+  bool ok,
+});
+
+/// A clinic device with a fictional vendor and model.
+typedef CoFakeDevice = ({
+  String kind,
+  String kindLabel,
+  String name,
+  String vendor,
+  String model,
+  String serial,
+});
+
+/// A collaboration note between staff with an `@` mention.
+typedef CoFakeTeamNote = ({String text, String author, List<String> mentions});
+
+/// A guardian or family contact of a patient.
+typedef CoFakeGuardian = ({
+  String name,
+  CoSex sex,
+  String relation,
+  String relationLabel,
+  String phone,
+});
+
 /// Clinic opening hours used by [CoFakerClinic.businessSlots].
 ///
 /// Times are minutes from midnight. [saturdayClose] of `null` closes the
@@ -148,9 +217,17 @@ class CoFakerClinic {
 
   bool get _korean => faker.locale.startsWith('ko');
 
-  /// Returns the localized label of a code such as `nhis` or `noShow`, or
-  /// the code itself when unknown.
-  String label(String code) => data.labels[code] ?? code;
+  /// The longer clinic texts of the current locale.
+  CoFakerClinicTexts get texts => data.texts ?? CoFakerClinicTexts.english;
+
+  /// Returns the localized label of a code such as `nhis`, `noShow`, or
+  /// `spouse`, falling back to English and then to the code itself.
+  String label(String code) =>
+      data.labels[code] ??
+      texts.labels[code] ??
+      CoFakerClinicData.english.labels[code] ??
+      CoFakerClinicTexts.english.labels[code] ??
+      code;
 
   /// Generates a specialty name such as `피부과`.
   String specialty() => faker.random.pick(data.specialties).name;
@@ -571,6 +648,387 @@ class CoFakerClinic {
     result.add(payment(amount: remaining, method: 'card'));
     return result;
   }
+
+  /// Consent form kinds of the current locale (`procedure`, `privacy`,
+  /// `photo`, `marketing`, `anesthesia` in Korean).
+  List<String> get consentKinds =>
+      texts.consentForms.map((f) => f.kind).toList();
+
+  /// Generates a consent form. The clauses are **example text, not a
+  /// legally reviewed document**; [CoFakeConsentForm.disclaimer] says so
+  /// and should be shown wherever the form is rendered.
+  CoFakeConsentForm consentForm({String? kind}) {
+    final forms = kind == null
+        ? texts.consentForms
+        : texts.consentForms.where((f) => f.kind == kind).toList();
+    if (forms.isEmpty) throw ArgumentError.value(kind, 'kind');
+    final form = faker.random.pick(forms);
+    return (
+      kind: form.kind,
+      title: form.title,
+      clauses: form.clauses,
+      disclaimer: texts.consentDisclaimer,
+    );
+  }
+
+  /// Generates a satisfaction answer: positive 70%, neutral 20%, negative
+  /// 10% unless [sentiment] is given. Scores are 4-5, 3-4, and 1-2.
+  CoFakeFeedback feedback({String? sentiment}) {
+    final resolved =
+        sentiment ??
+        _weighted<String>(const <(String, int)>[
+          ('positive', 70),
+          ('neutral', 20),
+          ('negative', 10),
+        ]);
+    final comments = texts.feedback[resolved];
+    if (comments == null || comments.isEmpty) {
+      throw ArgumentError.value(sentiment, 'sentiment');
+    }
+    final score = switch (resolved) {
+      'positive' => faker.random.int(min: 4, max: 5),
+      'neutral' => faker.random.int(min: 3, max: 4),
+      _ => faker.random.int(min: 1, max: 2),
+    };
+    return (
+      sentiment: resolved,
+      score: score,
+      comment: faker.random.pick(comments),
+    );
+  }
+
+  /// Counseling topic codes (`toning`, `lifting`, `botox`, ...).
+  List<String> get counselTopics =>
+      texts.counselTopics.map((t) => t.topic).toList();
+
+  /// Generates a recorded counseling session (AI counseling transcript):
+  /// greeting, concern, recommendation, two or three patient questions,
+  /// a price quote, and a booking decision, with timestamps.
+  CoFakeCounselSession counselSession({String? topic}) {
+    final topics = topic == null
+        ? texts.counselTopics
+        : texts.counselTopics.where((t) => t.topic == topic).toList();
+    if (topics.isEmpty) throw ArgumentError.value(topic, 'topic');
+    final spec = faker.random.pick(topics);
+    final script = texts.counselScript;
+    final matching = data.procedures.where((p) => p.code == spec.procedureCode);
+    final price = matching.isEmpty
+        ? _price(50000, 300000)
+        : procedure(code: spec.procedureCode).price;
+    final packagePrice = _roundTo(
+      (price * spec.sessions * faker.random.int(min: 65, max: 85) / 100)
+          .round(),
+      _korean ? 10000 : 10,
+    );
+    final answers = <String, String>{
+      'pain': spec.pain,
+      'interval': spec.interval,
+      'downtime': spec.downtime,
+      'price': script.priceAnswer
+          .replaceAll('{price}', _money(price))
+          .replaceAll('{sessions}', '${spec.sessions}')
+          .replaceAll('{packagePrice}', _money(packagePrice)),
+    };
+    final asked = <String>[...answers.keys.where((k) => k != 'price')];
+    final questions = <String>[
+      for (var i = 0; i < 1 + faker.random.int(max: 1); i++)
+        asked.removeAt(faker.random.int(max: asked.length - 1)),
+      'price',
+    ];
+    final booked = faker.random.double() < 0.6;
+    final lines = <(String, String)>[
+      ('counselor', script.greeting),
+      ('patient', spec.concern),
+      ('counselor', spec.recommend),
+      for (final q in questions) ...[
+        ('patient', script.questions[q] ?? q),
+        ('counselor', answers[q]!),
+      ],
+      ('patient', booked ? script.bookYes : script.bookNo),
+      ('counselor', booked ? script.bookYesReply : script.bookNoReply),
+    ];
+    var elapsed = 0;
+    final turns = <CoFakeTurn>[];
+    for (final line in lines) {
+      turns.add((
+        speaker: line.$1,
+        text: line.$2,
+        at: Duration(seconds: elapsed),
+      ));
+      elapsed += 4 + line.$2.length ~/ 3 + faker.random.int(max: 20);
+    }
+    return (
+      topic: spec.topic,
+      procedureCode: spec.procedureCode,
+      procedure: spec.procedure,
+      turns: turns,
+      summary: script.summary
+          .replaceAll('{procedure}', spec.procedure)
+          .replaceAll('{price}', _money(price))
+          .replaceAll('{sessions}', '${spec.sessions}')
+          .replaceAll('{packagePrice}', _money(packagePrice))
+          .replaceAll('{outcome}', booked ? script.booked : script.pending),
+      quotedPrice: price,
+      packagePrice: packagePrice,
+      sessions: spec.sessions,
+      booked: booked,
+    );
+  }
+
+  /// Languages supported by [inquiry]: `ko`, `en`, `ja`, `zh`, `vi`.
+  static List<String> get inquiryLanguages =>
+      CoFakerClinicTexts.inquiries.keys.toList();
+
+  /// Generates a messenger inquiry thread in [language] (random when
+  /// omitted): alternating patient questions and staff replies, both in the
+  /// patient's language, on the channel that language usually uses.
+  ///
+  /// This is independent of the faker locale, because one Korean clinic
+  /// inbox receives messages in many languages.
+  CoFakeInquiry inquiry({String? language, int exchanges = 2}) {
+    final lang =
+        language ??
+        _weighted<String>(const <(String, int)>[
+          ('ko', 40),
+          ('ja', 20),
+          ('zh', 20),
+          ('en', 12),
+          ('vi', 8),
+        ]);
+    final pool = CoFakerClinicTexts.inquiries[lang];
+    if (pool == null) throw ArgumentError.value(language, 'language');
+    final remaining = [...pool];
+    final count = exchanges.clamp(1, pool.length);
+    final turns = <CoFakeTurn>[];
+    var minutes = 0;
+    for (var i = 0; i < count; i++) {
+      final item = remaining.removeAt(
+        faker.random.int(max: remaining.length - 1),
+      );
+      turns
+        ..add((
+          speaker: 'patient',
+          text: item.question,
+          at: Duration(minutes: minutes),
+        ))
+        ..add((
+          speaker: 'staff',
+          text: item.answer,
+          at: Duration(minutes: minutes + faker.random.int(min: 1, max: 30)),
+        ));
+      minutes += 31 + faker.random.int(max: 60);
+    }
+    final channel = CoFakerClinicTexts.preferredChannels[lang] ?? 'kakao';
+    return (
+      language: lang,
+      channel: channel,
+      handle: messengerHandle(channel: channel, language: lang),
+      turns: turns,
+    );
+  }
+
+  /// Generates a messenger handle such as `@minji_0312` for [channel]
+  /// (`kakao`, `line`, `wechat`, `whatsapp`, `zalo`, `instagram`), using a
+  /// given name typical of [language] (`ko`, `en`, `ja`, `zh`, `vi`).
+  /// WhatsApp handles are fictional `+1 555-01##` numbers.
+  String messengerHandle({String channel = 'kakao', String language = 'ko'}) {
+    if (channel == 'whatsapp') {
+      return faker.random.digits('+1 555-01##');
+    }
+    final stems = _handleStems[language];
+    final name = stems != null
+        ? faker.random.pick(stems)
+        : CoFakerPerson.romanize(
+            faker.person.firstName(),
+          ).toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
+    final base = name.isEmpty ? 'user' : name;
+    final suffix = faker.random.digits('####');
+    return switch (channel) {
+      'wechat' => 'wxid_$base$suffix',
+      'instagram' => '@$base.$suffix',
+      _ => '@${base}_$suffix',
+    };
+  }
+
+  /// Latin handle stems for languages whose names are not Hangul or Latin.
+  static const Map<String, List<String>> _handleStems = <String, List<String>>{
+    'ja': <String>['yui', 'haruto', 'sakura', 'ren', 'aoi', 'mei', 'sora'],
+    'zh': <String>['xiaomei', 'weiwei', 'lina', 'haoran', 'yuxin', 'jiahui'],
+    'vi': <String>['linh', 'trang', 'minhanh', 'huong', 'tuan', 'ngoc'],
+    'en': <String>['emma', 'olivia', 'liam', 'noah', 'mia', 'lucas'],
+  };
+
+  /// Generates a fictional private insurer name.
+  String insurerName() => faker.random.pick(texts.insurers);
+
+  /// Services supported by [integrationResult].
+  List<String> get integrationServices =>
+      texts.integrationResults.keys.toList();
+
+  /// Generates a public integration result for [service] (`eligibility`,
+  /// `dur`, `insuranceClaim`, `ePrescription`, `identityQr`); successes are
+  /// about 80% of results. The messages are illustrative examples, not the
+  /// official texts of any agency.
+  CoFakeIntegrationResult integrationResult({String? service}) {
+    final resolved = service ?? faker.random.pick<String>(integrationServices);
+    final results = texts.integrationResults[resolved];
+    if (results == null || results.isEmpty) {
+      throw ArgumentError.value(service, 'service');
+    }
+    final ok = results.where((r) => r.ok).toList();
+    final failed = results.where((r) => !r.ok).toList();
+    final pickOk =
+        failed.isEmpty || (ok.isNotEmpty && faker.random.double() < 0.8);
+    final result = faker.random.pick(pickOk ? ok : failed);
+    return (
+      service: resolved,
+      code: result.code,
+      message: result.message,
+      ok: result.ok,
+    );
+  }
+
+  /// Device kind codes generated by [device].
+  static const List<String> deviceKinds = <String>[
+    'picoLaser',
+    'hifu',
+    'rf',
+    'ipl',
+    'ledTherapy',
+    'skinAnalyzer',
+    'photoCamera',
+    'labelPrinter',
+    'cardTerminal',
+    'signaturePad',
+    'kiosk',
+    'bridgePc',
+  ];
+
+  /// Generates a clinic device with a fictional vendor and model name.
+  ///
+  /// Vendors and models are invented to avoid trademarks; [number] numbers
+  /// the unit within the clinic (`피코 레이저 2호기`).
+  CoFakeDevice device({String? kind, int? number}) {
+    final resolved = kind ?? faker.random.pick<String>(deviceKinds);
+    final vendor = faker.random.pick(_vendors);
+    final kindLabel = label(resolved);
+    final model = resolved == 'bridgePc'
+        ? 'EMR-BRIDGE-${faker.random.digits('##')}'
+        : '${vendor.substring(0, 3).toUpperCase()}-'
+              '${resolved.substring(0, 1).toUpperCase()}'
+              '${faker.random.int(min: 10, max: 99) * 10}'
+              '${faker.random.pick(const <String>['', '', ' Pro', ' S', ' II'])}';
+    return (
+      kind: resolved,
+      kindLabel: kindLabel,
+      name: texts.deviceNameFormat
+          .replaceAll('{kind}', kindLabel)
+          .replaceAll(
+            '{number}',
+            '${number ?? faker.random.int(min: 1, max: 3)}',
+          ),
+      vendor: vendor,
+      model: model,
+      serial:
+          'SN-${faker.random.string(4, alphabet: _serialAlphabet)}-'
+          '${faker.random.string(4, alphabet: _serialAlphabet)}',
+    );
+  }
+
+  /// Generates a chart collaboration note with an `@` mention of a staff
+  /// member, such as a handoff between the counselor and the nurse.
+  /// [patient] defaults to a generated name.
+  CoFakeTeamNote teamNote({String? patient}) {
+    final mentioned = staff();
+    final author = faker.person.fullName();
+    final title = _korean ? '${mentioned.roleLabel}님' : mentioned.roleLabel;
+    final template = faker.random.pick(texts.teamNotes);
+    return (
+      text: template
+          .replaceAll('{mention}', '@${mentioned.name} $title')
+          .replaceAll('{patient}', patient ?? faker.person.fullName()),
+      author: author,
+      mentions: <String>[mentioned.name],
+    );
+  }
+
+  /// Family relation codes: `self`, `spouse`, `parent`, `child`,
+  /// `sibling`, `grandparent`, `grandchild`, `legalGuardian`, `other`.
+  static const List<String> relations = <String>[
+    'self',
+    'spouse',
+    'parent',
+    'child',
+    'sibling',
+    'grandparent',
+    'grandchild',
+    'legalGuardian',
+    'other',
+  ];
+
+  /// Generates a family relation code with its label.
+  ({String code, String label}) familyRelation() {
+    final code = faker.random.pick(relations);
+    return (code: code, label: label(code));
+  }
+
+  /// Generates a guardian or family contact plausible for a patient of
+  /// [patientAge]: parents for minors, children or spouses for the elderly,
+  /// mostly spouses otherwise.
+  CoFakeGuardian guardian({int? patientAge}) {
+    final age = patientAge ?? 35;
+    final relation = age < 19
+        ? _weighted<String>(const <(String, int)>[
+            ('parent', 88),
+            ('grandparent', 7),
+            ('legalGuardian', 5),
+          ])
+        : age >= 70
+        ? _weighted<String>(const <(String, int)>[
+            ('child', 60),
+            ('spouse', 30),
+            ('grandchild', 10),
+          ])
+        : _weighted<String>(const <(String, int)>[
+            ('spouse', 50),
+            ('parent', 20),
+            ('sibling', 15),
+            ('child', 10),
+            ('other', 5),
+          ]);
+    final sex = faker.person.sex();
+    return (
+      name: faker.person.fullName(sex: sex),
+      sex: sex,
+      relation: relation,
+      relationLabel: label(relation),
+      phone: _phone(),
+    );
+  }
+
+  String _money(int value) {
+    final digits = value.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(digits[i]);
+    }
+    return _korean ? buffer.toString() : '\$$buffer';
+  }
+
+  static const String _serialAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+  /// Invented device vendors; not real manufacturers.
+  static const List<String> _vendors = <String>[
+    'Lumenixa',
+    'Dermavio',
+    'Sonarique',
+    'Radiqen',
+    'Vistorra',
+    'Kellbrio',
+    'Opalwave',
+    'Tessarin',
+  ];
 
   String _phone() =>
       _korean ? faker.korea.mobilePhone() : faker.internet.phoneNumber();

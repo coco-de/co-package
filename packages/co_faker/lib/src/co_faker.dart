@@ -5,6 +5,7 @@ import 'korea.dart';
 import 'modules.dart';
 import 'random_source.dart';
 import 'saas.dart';
+import 'signature.dart';
 import 'schema.dart';
 
 /// A callback used by [CoFaker.generate].
@@ -117,6 +118,9 @@ class CoFaker {
   /// messaging, claim masters, integration health, audit logs, KPIs.
   late final CoFakerSaas saas = CoFakerSaas(this);
 
+  /// Handwritten-looking signature strokes, SVG, and open_board points.
+  late final CoFakerSignature signature = CoFakerSignature(this);
+
   /// Records generated from a field schema, callable as
   /// `faker.schema(fields)`.
   late final CoFakerSchema schema = CoFakerSchema(this);
@@ -214,6 +218,8 @@ class CoFaker {
       'clinic.clinicName': (_) => clinic.clinicName(),
       'clinic.chartMemo': (_) => clinic.chartMemo(),
       'clinic.drugName': (_) => clinic.drugName(),
+      'clinic.insurerName': (_) => clinic.insurerName(),
+      'clinic.feedback': (_) => clinic.feedback().comment,
       ...custom,
     };
 

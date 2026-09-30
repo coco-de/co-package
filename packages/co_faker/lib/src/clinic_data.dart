@@ -1,3 +1,5 @@
+import 'clinic_texts.dart';
+
 /// A billable procedure, product, or fee line with a typical price band.
 ///
 /// Prices are in the locale's currency minor-free unit (won for Korean, whole
@@ -50,6 +52,7 @@ class CoFakerClinicData {
     required this.cardIssuers,
     required this.labels,
     required this.packageNameFormat,
+    this.texts,
   });
 
   /// Specialties and their clinic name suffixes.
@@ -105,6 +108,10 @@ class CoFakerClinicData {
 
   /// Package name template with `{name}` and `{sessions}` placeholders.
   final String packageNameFormat;
+
+  /// Longer texts (consent forms, feedback, counseling, notes, ...), or
+  /// `null` to use [CoFakerClinicTexts.english].
+  final CoFakerClinicTexts? texts;
 
   /// Korean clinic data: dermatology and aesthetic clinics first.
   static const CoFakerClinicData korean = CoFakerClinicData(
@@ -584,6 +591,7 @@ class CoFakerClinicData {
       'male': '남성',
     },
     packageNameFormat: '{name} {sessions}회',
+    texts: CoFakerClinicTexts.korean,
   );
 
   /// English clinic data, used as the fallback for every other locale.
@@ -817,5 +825,6 @@ class CoFakerClinicData {
       'male': 'Male',
     },
     packageNameFormat: '{name} x{sessions}',
+    texts: CoFakerClinicTexts.english,
   );
 }

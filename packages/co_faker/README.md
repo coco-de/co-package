@@ -18,7 +18,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.4.0
+  co_faker: ^0.5.0
 ```
 
 ## Quick start
@@ -126,6 +126,27 @@ final invoice = faker.saas.invoice(monthsAgo: 1); // supply + 10% VAT
 final log = faker.saas.messageLog(); // alimtalk / sms / lms delivery row
 final kpi = faker.saas.timeSeries(days: 30, base: 40, trend: 0.5);
 ```
+
+Longer clinic texts and signatures:
+
+```dart
+faker.clinic.inquiry(language: 'ja'); // LINE thread, question + reply turns
+faker.clinic.consentForm(kind: 'privacy'); // clauses + "not legal" disclaimer
+faker.clinic.feedback(); // sentiment, score, comment
+faker.clinic.counselSession(topic: 'lifting'); // timed transcript + quote
+faker.clinic.integrationResult(service: 'eligibility');
+faker.clinic.device(kind: 'picoLaser'); // invented vendor and model
+faker.clinic.teamNote(); // "@name role, ..." handoff note
+faker.clinic.guardian(patientAge: 12); // parent, phone
+
+final ink = faker.signature.strokes(name: patient.name); // stable per name
+CoFakerSignature.svgDataUri(ink); // offline image
+CoFakerSignature.toOpenBoardPoints(ink); // open_board Point maps
+```
+
+Consent clauses, integration messages, insurers, devices, and drug names
+are examples only: consent forms carry a disclaimer that they are not
+legally reviewed, and vendor, insurer, and drug names are invented.
 
 Codes (`nhis`, `waiting`, `noShow`, `prepaid`, `pastDue`, `revealRrn`, ...)
 are locale independent and match typical enum names; `faker.clinic.label` and
