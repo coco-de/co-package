@@ -1,3 +1,37 @@
+## 0.5.0
+
+- Add `faker.signature` (`CoFakerSignature`): deterministic handwritten-looking
+  signature strokes (`CoInkPoint` x/y/pressure/timestamp), stable per `name`,
+  with `svgPath`, `svgDataUri`/`dataUri` for offline rendering, and
+  `toOpenBoardPoints` shaped like `open_board`'s `Point` (`x`, `y`, `p`,
+  `timestamp`).
+- Add clinic text generators backed by the new `CoFakerClinicTexts` (Korean
+  and English; `CoFakerClinicData.texts`, other locales fall back to
+  English):
+  - `clinic.inquiry(language:)`: foreign-patient messenger threads in
+    `ko`/`en`/`ja`/`zh`/`vi` on each language's usual channel (KakaoTalk,
+    WhatsApp, LINE, WeChat, Zalo), plus `clinic.messengerHandle`.
+  - `clinic.consentForm(kind:)`: procedure, privacy, photo, marketing, and
+    anesthesia consent clauses, always with a disclaimer that the text is an
+    example and not a legally reviewed form.
+  - `clinic.feedback(sentiment:)`: satisfaction comments (positive 70%,
+    neutral 20%, negative 10%) with matching 1-5 scores.
+  - `clinic.counselSession(topic:)`: counseling transcripts with timed
+    counselor/patient turns, a quote from the procedure catalog, a package
+    price, a booking decision, and a summary.
+  - `clinic.insurerName()` (fictional insurers) and
+    `clinic.integrationResult(service:)`: example eligibility, DUR, claim
+    review, e-prescription, and identity QR responses with `ok` flags.
+  - `clinic.device(kind:)`: clinic devices with invented vendors and model
+    names (no trademarks), serials, and `N호기` display names.
+  - `clinic.teamNote()`: chart collaboration notes with `@` mentions and
+    handoffs.
+  - `clinic.familyRelation()` / `clinic.guardian(patientAge:)`: relation
+    codes and age-plausible guardians.
+- `clinic.label` now also resolves relation, device kind, and sentiment codes
+  and falls back to English labels.
+- Add `clinic.insurerName` and `clinic.feedback` template placeholders.
+
 ## 0.4.0
 
 - Add `faker.korea` (`CoFakerKorea`): Korean identity values that are
