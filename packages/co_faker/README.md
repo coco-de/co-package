@@ -18,7 +18,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.5.0
+  co_faker: ^0.6.0
 ```
 
 ## Quick start
@@ -125,6 +125,20 @@ final tenant = faker.saas.tenant(); // clinic, business number, plan
 final invoice = faker.saas.invoice(monthsAgo: 1); // supply + 10% VAT
 final log = faker.saas.messageLog(); // alimtalk / sms / lms delivery row
 final kpi = faker.saas.timeSeries(days: 30, base: 40, trend: 0.5);
+```
+
+Operations console (vendor back office):
+
+```dart
+faker.saas.prepaidLedger(); // won top-ups with tier bonuses
+faker.saas.operator(); // role, status, 2FA, allowed IPs
+faker.saas.operatorEvent(action: 'tenant.approve');
+faker.saas.invoices(6, numberFormat: CoInvoiceNumberFormat.monthly,
+    statusWeights: {'paid': 80, 'failed': 15, 'overdue': 5});
+faker.saas.masterChanges(kind: 'fee'); faker.saas.masterChecks();
+faker.saas.integrationSnapshot(); faker.saas.incidents();
+faker.saas.timeSeries(granularity: CoTimeGranularity.hour);
+faker.saas.announcement(kind: 'regulation');
 ```
 
 Longer clinic texts and signatures:
