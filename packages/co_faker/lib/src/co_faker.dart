@@ -1,5 +1,6 @@
 import 'clinic.dart';
 import 'co_faker_locale.dart';
+import 'domain.dart';
 import 'co_faker_locales.dart';
 import 'korea.dart';
 import 'modules.dart';
@@ -43,6 +44,7 @@ class CoFaker {
     DateTime? now,
     Map<String, CoFakerLocale> locales = const <String, CoFakerLocale>{},
     CoRandom? random,
+    this.domains = const <CoFakerDomain>[],
   }) : locale = _normalizeLocale(locale),
        now = now ?? DateTime.now(),
        random = random ?? CoRandom(seed),
@@ -63,6 +65,10 @@ class CoFaker {
 
   /// The clock used by date generation.
   final DateTime now;
+
+  /// Registered domain packs, used by [schema] to resolve and infer domain
+  /// roles and to generate domain entities. See [CoFakerDomain].
+  final List<CoFakerDomain> domains;
 
   /// The random source shared by all modules.
   final CoRandom random;
@@ -136,6 +142,7 @@ class CoFaker {
       now: now,
       random: random,
       locales: _customLocales,
+      domains: domains,
     );
   }
 
@@ -152,6 +159,7 @@ class CoFaker {
       now: now,
       random: random.derive(key),
       locales: _customLocales,
+      domains: domains,
     );
   }
 

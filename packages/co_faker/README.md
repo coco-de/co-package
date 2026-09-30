@@ -18,7 +18,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.8.1
+  co_faker: ^0.9.0
 ```
 
 ## Quick start
@@ -77,6 +77,117 @@ final courses = faker.schema.records(20, fields, streamKey: 'course');
   whether a bare `name` field is a person's name or a title.
 - `faker.schema.infer('dueAt', type: 'DateTime')` exposes the inferred
   `CoFieldRole` for tooling.
+
+## 도메인 팩 만들기
+
+기존 `faker.clinic`·`faker.saas` 생성기는 그대로 사용할 수 있습니다. 스키마에서
+도메인 필드 역할을 추론하거나 팩의 엔티티를 생성하려면 필요한 팩을 등록합니다.
+
+```dart
+final faker = CoFaker(
+  locale: 'ko',
+  seed: 7,
+  now: DateTime.utc(2026, 10, 1),
+  domains: CoFakerDomains.all, // clinic, saas, korea 순서
+);
+
+final patient = faker.schema.entity('clinic.patient', index: 0);
+final patients = faker.schema.entities('clinic.patient', 20);
+final invoice = faker.schema.record(
+  {'number': 'String', 'status': 'String'},
+  entity: 'saas.invoice',
+  streamKey: 'saas.invoice',
+  roles: {'number': 'saas.invoiceNumber'},
+);
+```
+
+`seed`와 `now`, 엔티티명, 인덱스, 필드가 같으면 결과가 같습니다. 각 필드는
+`streamKey/index/field`에서 독립된 난수 흐름을 파생하므로 다른 필드를 추가해도
+기존 값은 바뀌지 않습니다. `entity`와 `entities`는 팩의 스키마, 역할, enum을
+읽고 `pack.entity`를 스트림 키로 사용합니다. 같은 이름의 엔티티가 여러 팩에
+있으면 `pack.entity`로 지정하세요. `roles`·`enums` 인자로 일부 필드를
+덮어쓸 수 있습니다.
+
+새 팩은 `CoFakerDomain`을 구현합니다. 생성기는 전달된 `CoFaker`의 난수와
+시계만 사용해야 같은 입력에서 같은 값을 얻습니다.
+
+```dart
+class LibraryDomain extends CoFakerDomain {
+  const LibraryDomain();
+
+  @override
+  String get name => 'library';
+
+  @override
+  Map<String, CoDomainRole> get roles => {
+    'isbn': CoDomainRole(
+      (faker, _) => faker.random.digits('979-11-#####-##-#'),
+      description: 'Example ISBN-shaped value',
+      fieldPatterns: const ['isbn'],
+    ),
+  };
+
+  @override
+  Map<String, Map<String, String>> get entities => const {
+    'book': {'id': 'int', 'title': 'String', 'isbn': 'String'},
+  };
+}
+
+final library = CoFaker(
+  seed: 7,
+  now: DateTime.utc(2026),
+  domains: [...CoFakerDomains.all, const LibraryDomain()],
+);
+final book = library.schema.entity('library.book');
+```
+
+역할 이름은 `library.isbn`처럼 팩 이름을 붙여 명시할 수 있습니다. 필드명
+패턴은 대소문자를 무시하며, `=isbn`은 정확히 일치할 때만, `book.isbn`은
+해당 엔티티에만 적용됩니다. 팩의 `entityRoles`는 이름만으로 알아낼 수 없는
+필드에 역할을 지정하고, `enums`는 status 필드의 허용 값을 제공합니다.
+
+착수 전 엔티티·필드 계획의 커버리지를 점검할 수 있습니다.
+
+```dart
+final report = CoFakerCoverage(faker).check([
+  const CoCoverageEntity('clinic.patient'),
+  const CoCoverageEntity(
+    'appointment',
+    fields: {'patientId': 'int', 'status': 'String'},
+    roles: {'status': 'status'},
+  ),
+]);
+print(report.toMarkdown());
+print(report.toJson()); // cob plan 등에서 사용
+```
+
+CLI는 JSON 계획을 표 또는 JSON으로 출력합니다. `entities`에는 등록된
+엔티티명을 문자열로 넣거나 `name`, `fields`, `roles`, `enums`를 가진 객체를
+넣습니다. `domains`를 생략하면 기본 팩 3개를 사용합니다.
+
+```json
+{
+  "domains": ["clinic", "saas", "korea"],
+  "entities": [
+    "clinic.patient",
+    {
+      "name": "appointment",
+      "fields": {"patientId": "int", "status": "String"},
+      "enums": {"status": ["booked", "cancelled"]}
+    }
+  ]
+}
+```
+
+```sh
+dart run co_faker:coverage --input plan.json
+dart run co_faker:coverage --input plan.json --format json --strict
+```
+
+`--input` 없이 실행하면 표준 입력을 읽습니다. `--strict`는 미지원 필드나
+enum 누락이 있으면 종료 코드 1을 반환합니다. 잘못된 입력은 종료 코드 2입니다.
+표의 `supported`는 팩 역할, `generic`은 범용 생성, `needsEnum`은 허용 값
+누락, `unsupported`는 미지 엔티티·역할·타입 또는 의미를 알 수 없는 필드입니다.
 
 ## Derived Streams And Balanced Picks
 
