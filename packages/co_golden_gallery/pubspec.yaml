@@ -3,7 +3,7 @@ description: >-
   Builds a searchable HTML gallery from co_golden capture output
   and plain golden PNG trees: a device × theme × locale grid per scenario,
   failure highlighting, and images served locally or from a CDN or bucket.
-version: 0.2.0
+version: 0.2.1
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_golden_gallery
 resolution: workspace
 
