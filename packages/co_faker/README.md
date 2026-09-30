@@ -18,7 +18,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.7.0
+  co_faker: ^0.8.0
 ```
 
 ## Quick start
@@ -138,6 +138,10 @@ faker.clinic.consentHistory(); faker.clinic.visitHeatmap();
 faker.clinic.canvasMarks(regions: ['forehead', 'chin']); // 0..1 pen chart
 faker.id.uuidV7(at: DateTime.utc(2026, 1, 1)); // time-ordered id
 CoFakerClinic.maskName('김하늘'); // 김*늘
+CoFakerKorea.holidays(year: 2026); // 2024-2030, with substitute holidays
+faker.clinic.closureNotice(date: DateTime.utc(2026, 9, 25)); // 추석 휴진 안내
+faker.clinic.teamNote(authors: myStaff, mentions: myStaff);
+faker.clinic.vitalsNote(vitals: faker.clinic.vitals());
 ```
 
 Operations console (vendor back office):

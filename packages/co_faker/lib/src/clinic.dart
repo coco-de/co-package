@@ -1133,18 +1133,183 @@ class CoFakerClinic {
   /// Generates a chart collaboration note with an `@` mention of a staff
   /// member, such as a handoff between the counselor and the nurse.
   /// [patient] defaults to a generated name.
-  CoFakeTeamNote teamNote({String? patient}) {
-    final mentioned = staff();
-    final author = faker.person.fullName();
-    final title = _korean ? '${mentioned.roleLabel}님' : mentioned.roleLabel;
+  ///
+  /// Pass [authors] and [mentions] (staff display names from your own
+  /// fixture) to pick the author and the mentioned person from them; the
+  /// author is never mentioned when another name is available. Without
+  /// them, invented staff are used and the mention carries a role title.
+  CoFakeTeamNote teamNote({
+    String? patient,
+    List<String>? authors,
+    List<String>? mentions,
+  }) {
     final template = faker.random.pick(texts.teamNotes);
+    final patientName = patient ?? faker.person.fullName();
+    final String author;
+    final String mentioned;
+    final String mention;
+    if (authors == null && mentions == null) {
+      final staffMember = staff();
+      author = faker.person.fullName();
+      mentioned = staffMember.name;
+      final title = _korean
+          ? '${staffMember.roleLabel}님'
+          : staffMember.roleLabel;
+      mention = '@$mentioned $title';
+    } else {
+      final authorPool = authors ?? mentions!;
+      final mentionPool = mentions ?? authors!;
+      if (authorPool.isEmpty || mentionPool.isEmpty) {
+        throw ArgumentError('authors and mentions must not be empty');
+      }
+      author = faker.random.pick(authorPool);
+      final others = mentionPool.where((n) => n != author).toList();
+      mentioned = faker.random.pick(others.isEmpty ? mentionPool : others);
+      mention = _korean ? '@$mentioned님' : '@$mentioned';
+    }
     return (
       text: template
-          .replaceAll('{mention}', '@${mentioned.name} $title')
-          .replaceAll('{patient}', patient ?? faker.person.fullName()),
+          .replaceAll('{mention}', mention)
+          .replaceAll('{patient}', patientName),
       author: author,
-      mentions: <String>[mentioned.name],
+      mentions: <String>[mentioned],
     );
+  }
+
+  /// Generates an internal staff notice of [kind] (`training`, `policy`,
+  /// or `schedule`; random when omitted).
+  ({String kind, String title, String body}) staffNotice({String? kind}) {
+    final notices = ops.staffNotices.isEmpty
+        ? CoFakerClinicOps.english.staffNotices
+        : ops.staffNotices;
+    final resolved = kind ?? faker.random.pick<String>(notices.keys.toList());
+    final pool = notices[resolved];
+    if (pool == null || pool.isEmpty) throw ArgumentError.value(kind, 'kind');
+    final notice = faker.random.pick(pool);
+    return (kind: resolved, title: notice.title, body: notice.body);
+  }
+
+  /// Returns a vital sign observation note (no mentions) for [vitals]
+  /// (generated when omitted). The first abnormal finding wins: high blood
+  /// pressure (≥140/90), fever (≥37.5 °C), low SpO2 (<95%), or high
+  /// glucose (≥140 mg/dL); otherwise a stable summary.
+  String vitalsNote({CoFakeVitals? vitals}) {
+    final v = vitals ?? this.vitals();
+    final notes = ops.vitalsNotes.isEmpty
+        ? CoFakerClinicOps.english.vitalsNotes
+        : ops.vitalsNotes;
+    final key = v.systolic >= 140 || v.diastolic >= 90
+        ? 'highBp'
+        : v.temperature >= 37.5
+        ? 'fever'
+        : v.spo2 < 95
+        ? 'lowSpo2'
+        : v.glucose >= 140
+        ? 'highGlucose'
+        : 'normal';
+    return (notes[key] ?? notes['normal']!)
+        .replaceAll('{sys}', '${v.systolic}')
+        .replaceAll('{dia}', '${v.diastolic}')
+        .replaceAll('{pulse}', '${v.pulse}')
+        .replaceAll('{spo2}', '${v.spo2}')
+        .replaceAll('{temp}', v.temperature.toStringAsFixed(1))
+        .replaceAll('{glucose}', '${v.glucose}');
+  }
+
+  /// Generates a closure notice for [date].
+  ///
+  /// When [date] is a Korean public holiday (2024-2030, see
+  /// [CoFakerKorea.holidays]) the notice covers the whole holiday stretch
+  /// (for example all three days of Chuseok plus a substitute holiday) and
+  /// names it; otherwise it gives a reason such as a conference. Sundays
+  /// are skipped when computing the reopening day.
+  ({DateTime from, DateTime to, String? holiday, String title, String body})
+  closureNotice({required DateTime date, String? clinicName}) {
+    final texts = ops.closure.isEmpty
+        ? CoFakerClinicOps.english.closure
+        : ops.closure;
+    final reasons = ops.closureReasons.isEmpty
+        ? CoFakerClinicOps.english.closureReasons
+        : ops.closureReasons;
+    final day = DateTime.utc(date.year, date.month, date.day);
+    final (first, last) = CoFakerKorea.holidayYears;
+    final inRange = day.year >= first && day.year <= last;
+    final all = inRange
+        ? <CoKoreanHoliday>[
+            ...CoFakerKorea.holidays(year: day.year),
+            if (day.year < last) ...CoFakerKorea.holidays(year: day.year + 1),
+          ]
+        : const <CoKoreanHoliday>[];
+    final closed = {for (final h in all) h.date};
+    final hits = all.where((h) => h.date == day).toList();
+    var from = day;
+    var to = day;
+    String? holiday;
+    if (hits.isNotEmpty) {
+      bool off(DateTime d) =>
+          closed.contains(d) || d.weekday == DateTime.sunday;
+      while (off(from.subtract(const Duration(days: 1))) &&
+          closed.contains(from.subtract(const Duration(days: 1)))) {
+        from = from.subtract(const Duration(days: 1));
+      }
+      while (off(to.add(const Duration(days: 1)))) {
+        to = to.add(const Duration(days: 1));
+      }
+      final main = all.firstWhere(
+        (h) => !h.date.isBefore(from) && !h.date.isAfter(to) && !h.substitute,
+        orElse: () => hits.first,
+      );
+      holiday = main.block == 'seollal'
+          ? (_korean ? '설 연휴' : 'Lunar New Year')
+          : main.block == 'chuseok'
+          ? (_korean ? '추석 연휴' : 'Chuseok')
+          : main.name;
+    }
+    var reopen = to.add(const Duration(days: 1));
+    while (reopen.weekday == DateTime.sunday || closed.contains(reopen)) {
+      reopen = reopen.add(const Duration(days: 1));
+    }
+    final clinic = clinicName ?? this.clinicName();
+    final dates = from == to
+        ? _dateLabel(from)
+        : '${_dateLabel(from)}~${_dateLabel(to)}';
+    final reason = holiday == null ? faker.random.pick(reasons) : '';
+    final body = (holiday == null ? texts['other']! : texts['holiday']!)
+        .replaceAll('{eun}', _particle(clinic, '은', '는'))
+        .replaceAll('{ro}', _particle(holiday ?? reason, '으로', '로'))
+        .replaceAll('{clinic}', clinic)
+        .replaceAll('{dates}', dates)
+        .replaceAll('{name}', holiday ?? '')
+        .replaceAll('{reason}', reason)
+        .replaceAll('{reopen}', _dateLabel(reopen));
+    return (
+      from: from,
+      to: to,
+      holiday: holiday,
+      title: texts['title']!.replaceAll('{dates}', dates),
+      body: body,
+    );
+  }
+
+  /// Picks the Korean particle for [word]: [withFinal] after a final
+  /// consonant (except ㄹ for 으로/로), [withoutFinal] otherwise. Uses the
+  /// last Hangul syllable, ignoring trailing brackets.
+  static String _particle(String word, String withFinal, String withoutFinal) {
+    for (final rune in word.runes.toList().reversed) {
+      final index = rune - 0xAC00;
+      if (index < 0 || index > 11171) continue;
+      final jong = index % 28;
+      if (jong == 0) return withoutFinal;
+      if (jong == 8 && withFinal == '으로') return withoutFinal;
+      return withFinal;
+    }
+    return withoutFinal;
+  }
+
+  String _dateLabel(DateTime d) {
+    if (!_korean) return '${d.month}/${d.day}';
+    const days = <String>['월', '화', '수', '목', '금', '토', '일'];
+    return '${d.month}월 ${d.day}일(${days[d.weekday - 1]})';
   }
 
   /// Family relation codes: `self`, `spouse`, `parent`, `child`,

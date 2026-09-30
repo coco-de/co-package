@@ -1,3 +1,21 @@
+## 0.8.0
+
+- Add `CoFakerKorea.holidays(year:)` / `holidaysOn(date)`: Korean public
+  holidays for 2024-2030 (`CoFakerKorea.holidayYears`) — fixed solar
+  holidays, a per-year lunar table (Seollal, Chuseok, Buddha's Birthday),
+  and substitute holidays under the current rules. Election days and
+  temporary holidays are not included.
+- Add `clinic.closureNotice(date:, clinicName:)`: closure notices that span
+  the whole holiday stretch (for example Chuseok plus Sunday) with the
+  reopening day, or a non-holiday reason, with correct Korean particles.
+- `clinic.teamNote` gains `authors:` and `mentions:` to pick the author and
+  the mentioned staff from the caller's own staff names.
+- Add `clinic.staffNotice(kind: training|policy|schedule)` and
+  `clinic.vitalsNote(vitals:)` (mention-free observation notes that flag
+  high blood pressure, fever, low SpO2, or high glucose).
+- `CoFakerClinicOps` gains optional `staffNotices`, `vitalsNotes`,
+  `closure`, and `closureReasons` (empty falls back to English).
+
 ## 0.7.0
 
 Widgetbook and golden-test generators. Existing APIs only gain optional
