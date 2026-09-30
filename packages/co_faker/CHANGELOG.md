@@ -10,6 +10,13 @@
   centers on a square canvas in standard frontal proportions. Its output is
   unchanged for the same seed.
 
+## [0.9.0](https://github.com/coco-de/co-package/compare/co_faker-v0.8.1...co_faker-v0.9.0) (2026-09-30)
+
+
+### 기능
+
+* **co_faker:** ✨ 등록형 도메인 팩과 스키마 커버리지 점검 추가 ([#39](https://github.com/coco-de/co-package/issues/39)) ([2158468](https://github.com/coco-de/co-package/commit/2158468fb669f1869ec8d9df9732114d63fe208b)), closes [#38](https://github.com/coco-de/co-package/issues/38)
+
 ## 0.8.0
 
 - Add `CoFakerKorea.holidays(year:)` / `holidaysOn(date)`: Korean public
