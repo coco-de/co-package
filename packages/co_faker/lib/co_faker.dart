@@ -6,6 +6,7 @@ library;
 
 export 'src/clinic.dart';
 export 'src/clinic_data.dart';
+export 'src/clinic_ops.dart';
 export 'src/clinic_texts.dart';
 export 'src/co_faker.dart';
 export 'src/co_faker_locale.dart';

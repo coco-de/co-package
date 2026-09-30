@@ -475,6 +475,22 @@ class CoFakerId {
     return '$part1-$part2-$part3-$part4-$part5';
   }
 
+  /// Generates a deterministic UUID v7 whose 48-bit timestamp is [at]
+  /// (default `faker.now`), so identifiers sort by creation time.
+  ///
+  /// The random bits come from the faker stream, so the same seed and
+  /// times give the same identifiers.
+  String uuidV7({DateTime? at}) {
+    final millis = (at ?? faker.now).millisecondsSinceEpoch;
+    if (millis < 0) {
+      throw ArgumentError.value(at, 'at', 'must not be before 1970');
+    }
+    final time = millis.toRadixString(16).padLeft(12, '0');
+    final variant = faker.random.pick(<String>['8', '9', 'a', 'b']);
+    return '${time.substring(0, 8)}-${time.substring(8, 12)}-7${hex(3)}-'
+        '$variant${hex(3)}-${hex(12)}';
+  }
+
   /// Generates a hexadecimal string of [length].
   String hex(int length) {
     if (length < 0) {

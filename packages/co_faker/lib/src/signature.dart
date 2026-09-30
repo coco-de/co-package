@@ -135,16 +135,21 @@ class CoFakerSignature {
 
   /// Converts [strokes] to JSON-ready maps shaped like `open_board`'s
   /// `Point` (`x`, `y`, `p`, `timestamp`), one list per stroke.
+  ///
+  /// [width] and [height] scale the coordinates, which turns normalized
+  /// `0..1` marks (such as `clinic.canvasMarks`) into canvas pixels.
   static List<List<Map<String, Object>>> toOpenBoardPoints(
-    List<CoInkStroke> strokes,
-  ) {
+    List<CoInkStroke> strokes, {
+    double width = 1,
+    double height = 1,
+  }) {
     return <List<Map<String, Object>>>[
       for (final stroke in strokes)
         <Map<String, Object>>[
           for (final point in stroke)
             <String, Object>{
-              'x': point.x,
-              'y': point.y,
+              'x': _round(point.x * width, 2),
+              'y': _round(point.y * height, 2),
               'p': point.p,
               'timestamp': point.t,
             },

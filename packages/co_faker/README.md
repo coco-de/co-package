@@ -18,7 +18,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.6.0
+  co_faker: ^0.7.0
 ```
 
 ## Quick start
@@ -125,6 +125,19 @@ final tenant = faker.saas.tenant(); // clinic, business number, plan
 final invoice = faker.saas.invoice(monthsAgo: 1); // supply + 10% VAT
 final log = faker.saas.messageLog(); // alimtalk / sms / lms delivery row
 final kpi = faker.saas.timeSeries(days: 30, base: 40, trend: 0.5);
+```
+
+Front desk, chart, and billing widgets:
+
+```dart
+final rooms = faker.clinic.rooms();
+faker.clinic.queueBoard(rooms: rooms, count: 4); // per-room queue snapshot
+faker.clinic.visitPurposeTree(); // ids + parent ids (시술 › 레이저)
+faker.clinic.vitals(age: 42);
+faker.clinic.consentHistory(); faker.clinic.visitHeatmap();
+faker.clinic.canvasMarks(regions: ['forehead', 'chin']); // 0..1 pen chart
+faker.id.uuidV7(at: DateTime.utc(2026, 1, 1)); // time-ordered id
+CoFakerClinic.maskName('김하늘'); // 김*늘
 ```
 
 Operations console (vendor back office):
