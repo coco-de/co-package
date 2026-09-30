@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/coco-de/co-package/compare/co_golden-v0.2.0...co_golden-v0.3.0) (2026-09-30)
+
+
+### 기능
+
+* **co_golden:** ✨ 골든 시계 주입·파일 폰트 로더·CI 기준 이미지 가이드, co_faker release-please 편입 ([#35](https://github.com/coco-de/co-package/issues/35)) ([65f0bd0](https://github.com/coco-de/co-package/commit/65f0bd0422a1a2e89d0d7cb5188d53b8e0fcf6ab)), closes [#34](https://github.com/coco-de/co-package/issues/34)
+
 ## [0.2.0](https://github.com/coco-de/co-package/compare/co_golden-v0.1.0...co_golden-v0.2.0) (2026-09-29)
 
 

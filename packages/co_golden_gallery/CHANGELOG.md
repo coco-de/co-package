@@ -5,6 +5,13 @@
   HTML output and the existing CLI options. Document the CoUI overrides needed
   by downstream runner projects.
 
+## [0.2.2](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.2.1...co_golden_gallery-v0.2.2) (2026-09-30)
+
+
+### 문서
+
+* **co_golden_gallery:** 📝 GitHub Pages 하위 경로 배포 안내 ([#36](https://github.com/coco-de/co-package/issues/36)) ([c20ae2c](https://github.com/coco-de/co-package/commit/c20ae2c0c6bb5b6c0be335810bdf2a7145894ec9)), closes [#34](https://github.com/coco-de/co-package/issues/34)
+
 ## [0.2.1](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.2.0...co_golden_gallery-v0.2.1) (2026-09-30)
 
 
