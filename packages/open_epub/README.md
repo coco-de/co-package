@@ -184,6 +184,28 @@ EpubReader(
 );
 ```
 
+## Translating the Reader's Own Text
+
+`EpubReader` draws a few messages itself: the error shown when a book cannot
+be opened, the banner shown when a saved position cannot be restored, and the
+notices for empty books, empty pages and chapters that fail to load (all in
+Korean by default). `EpubReaderStrings` holds that text. Its defaults are
+exactly what the reader has always shown, so apps that pass nothing see no
+change. Override what you need with the `strings:` parameter, or wrap a
+subtree (for example in `MaterialApp.builder`) with `EpubReaderStringsScope`:
+
+```dart
+EpubReader(
+  source: source,
+  strings: const EpubReaderStrings(
+    fileTooLarge: 'This file is too large to open.',
+    networkFailure: 'The book could not be downloaded.',
+    corruptedFile: 'This EPUB is damaged or not valid.',
+    openFailed: 'Something went wrong while opening the book.',
+  ),
+);
+```
+
 ## EPUB 3 Capabilities
 
 | Capability | How |

@@ -45,6 +45,7 @@ import 'package:open_epub_engine/open_epub_engine.dart';
 import '../fixed_layout/fixed_layout_engine.dart'
     show FixedLayoutContentBuilder;
 import '../fixed_layout/viewport_fitter.dart';
+import '../../widgets/epub_reader_strings_scope.dart';
 import 'pagination_strategy.dart';
 import 'reflowable_engine.dart';
 
@@ -589,7 +590,9 @@ class ReflowablePageViewState extends State<ReflowablePageView>
   @override
   Widget build(BuildContext context) {
     if (widget.book.spine.isEmpty) {
-      return const Center(child: Text('이 책에는 표시할 내용이 없습니다.'));
+      return Center(
+        child: Text(EpubReaderStringsScope.of(context).emptyBook),
+      );
     }
 
     return LayoutBuilder(
@@ -909,7 +912,8 @@ class _SpinePageViewState extends State<_SpinePageView> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  '본문을 불러올 수 없습니다.\n${snap.error}',
+                  '${EpubReaderStringsScope.of(context).chapterLoadFailed}\n'
+                  '${snap.error}',
                   textAlign: TextAlign.center,
                 ),
               ),

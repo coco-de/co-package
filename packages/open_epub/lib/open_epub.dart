@@ -119,6 +119,11 @@ export 'src/presentation/widgets/epub_reader.dart'
         EpubPageChangedCallback,
         EpubPositionChangedCallback,
         EpubViewportChangedCallback;
+// 리더가 그리는 문구 — 기본값은 현재 글, 앱이 번역을 주입한다 (co-package#44).
+export 'src/presentation/widgets/epub_reader_strings.dart'
+    show EpubReaderStrings;
+export 'src/presentation/widgets/epub_reader_strings_scope.dart'
+    show EpubReaderStringsScope;
 export 'src/presentation/engine/reflowable/reflowable_engine.dart'
     show
         ReflowableEngine,

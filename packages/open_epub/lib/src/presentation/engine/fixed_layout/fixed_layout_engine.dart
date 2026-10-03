@@ -17,6 +17,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';
+import '../../widgets/epub_reader_strings_scope.dart';
 import 'fixed_layout_page.dart';
 import 'fixed_layout_spread.dart';
 import 'viewport_fitter.dart';
@@ -264,7 +265,9 @@ class FixedLayoutEngineState extends State<FixedLayoutEngine> {
   @override
   Widget build(BuildContext context) {
     if (widget.book.spine.isEmpty) {
-      return const Center(child: Text('이 책에는 표시할 내용이 없습니다.'));
+      return Center(
+        child: Text(EpubReaderStringsScope.of(context).emptyBook),
+      );
     }
 
     return LayoutBuilder(
@@ -351,7 +354,8 @@ class _AsyncFixedLayoutPageState extends State<_AsyncFixedLayoutPage> {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                '페이지를 불러올 수 없습니다.\n${snap.error}',
+                '${EpubReaderStringsScope.of(context).pageLoadFailed}\n'
+                '${snap.error}',
                 textAlign: TextAlign.center,
               ),
             ),
