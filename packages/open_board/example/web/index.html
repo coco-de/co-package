@@ -31,6 +31,31 @@
 
   <title>Open Board Demo</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // Pre-boot background (co_demo_prefs protocol v1): paint the page in the
+    // visitor's theme before Flutter boots, so a dark pick on demo.cocode.im
+    // does not flash white while main.dart.js loads. LIGHT / DARK = this app's
+    // light / dark scaffold background (exampleTheme in lib/demo_settings.dart).
+    (function () {
+      var LIGHT = '#FBF8FF', DARK = '#121318';
+      try {
+        var t = new URLSearchParams(location.search).get('theme');
+        if (t === null) {
+          var h = location.hash, i = h.indexOf('?');
+          if (i >= 0) t = new URLSearchParams(h.slice(i + 1)).get('theme');
+        }
+        t = (t || '').trim().toLowerCase();
+        if (t !== 'light' && t !== 'dark') {
+          // The app follows the system theme when nothing is passed.
+          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        var root = document.documentElement.style;
+        root.colorScheme = t;
+        root.backgroundColor = t === 'dark' ? DARK : LIGHT;
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <!--
