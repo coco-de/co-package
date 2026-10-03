@@ -367,6 +367,39 @@ class CustomToolbar extends StatelessWidget {
 }
 ```
 
+### Translating open_board's own text
+
+open_board draws a little text itself: the link menu, the done button and the
+link dialog of the inline text editor (Korean), and the tool names and
+undo/redo/clear tooltips of `ScribbleFloatingToolbar` (English).
+`OpenBoardStrings` holds that text; its defaults are exactly what open_board
+has always shown, so apps that pass nothing see no change. Override only what
+you need and provide it with `OpenBoardStringsScope` (or the toolbar's
+`strings:` parameter):
+
+```dart
+MaterialApp(
+  builder: (context, child) => OpenBoardStringsScope(
+    strings: const OpenBoardStrings(
+      addLink: 'Add link',
+      editLink: 'Edit link',
+      removeLink: 'Remove link',
+      done: 'Done',
+      linkDialogTitle: 'Link',
+      cancel: 'Cancel',
+      confirm: 'OK',
+    ),
+    child: child!,
+  ),
+  home: const MyBoardPage(),
+);
+```
+
+The text editor opens in an `Overlay`, so `ScribbleWidget` reads the strings
+where it sits and hands them to the editor and its dialog: a scope anywhere
+above the scribble widget works. `strings.toolLabel(tool)` gives the
+translated tool name for your own toolbars.
+
 ## 🔧 Configuration
 
 ### Pointer Mode (Hand-writing Prevention)
