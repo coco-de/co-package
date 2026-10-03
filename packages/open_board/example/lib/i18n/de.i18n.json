@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Open Board Demo"
+  },
+  "common": {
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
+    "clear": "Alles löschen",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "loading": "Wird geladen …"
+  },
+  "home": {
+    "board": {
+      "title": "Board-Demo",
+      "description": "Acht Zeichenwerkzeuge, mehrere Seiten, Aufnahme und Wiedergabe"
+    },
+    "split": {
+      "title": "Demo: geteilte Zeichenfläche",
+      "description": "Zwei Zeichenflächen nebeneinander mit einem schwebenden Werkzeugfeld"
+    },
+    "epub": {
+      "title": "EPUB-Anmerkungsdemo",
+      "description": "Seitenbezogene Handschrift über dem open_epub-Reader (zwischen Lesen und Schreiben wechseln)"
+    }
+  },
+  "tools": {
+    "pen": "Stift",
+    "pencil": "Bleistift",
+    "marker": "Marker",
+    "highlighter": "Textmarker",
+    "fixedPen": "Fester Stift",
+    "uniformPen": "Gleichmäßiger Stift",
+    "eraser": "Radierer",
+    "text": "Text",
+    "shape": "Form",
+    "lasso": "Lasso",
+    "image": "Bild"
+  },
+  "link": {
+    "add": "Link hinzufügen",
+    "edit": "Link bearbeiten",
+    "remove": "Link entfernen",
+    "done": "Fertig",
+    "dialogTitle": "Link",
+    "external": "Externe URL",
+    "internal": "Interne Seite",
+    "pageNumber": "Seitenzahl",
+    "url": "URL",
+    "cancel": "Abbrechen",
+    "confirm": "OK"
+  },
+  "drawing": {
+    "startRecording": "Aufnahme starten",
+    "stopRecording": "Aufnahme beenden",
+    "replay": "Wiedergeben",
+    "stopReplay": "Wiedergabe beenden",
+    "recording": "Aufnahme · Ereignisse: {count}",
+    "replaying": "Wiedergabe · {index}/{total}",
+    "ready": "Bereit zur Wiedergabe · Ereignisse: {count}",
+    "noRecording": "Keine Aufnahme",
+    "page": "Seite {number}",
+    "features": {
+      "title": "Funktionen",
+      "items": [
+        "Zeichenwerkzeuge Stift, Bleistift, Marker und fester Stift",
+        "Sechs voreingestellte Farben",
+        "Einstellbare Strichstärke (0,5–10,0)",
+        "Radierer zum Entfernen von Strichen",
+        "Formerkennung (Kreis, Rechteck, Linie)",
+        "Lasso-Auswahl zum Verschieben von Strichen",
+        "Textwerkzeug für Textnotizen",
+        "Rückgängig und Wiederholen"
+      ]
+    },
+    "recordingGuide": {
+      "title": "Aufnahme & Wiedergabe",
+      "items": [
+        "Rote Aufnahmetaste drücken, um die Aufnahme zu starten",
+        "Zeichnen, Seiten wechseln, vergrößern und verkleinern – alles wird aufgezeichnet",
+        "Stopp drücken, um die Aufnahme zu beenden",
+        "Wiedergabe drücken, um die ganze Sitzung abzuspielen",
+        "Striche, Seitenwechsel und Ansichtsänderungen werden aufgezeichnet"
+      ]
+    },
+    "multiPage": {
+      "title": "Mehrere Seiten",
+      "items": [
+        "Mit der Seitenleiste oben zwischen den Seiten wechseln",
+        "Jede Seite hat eigene Striche und einen eigenen Rückgängig-Verlauf",
+        "ScribbleBookController verwaltet alle Seiten",
+        "ScribbleCacheManager übernimmt Zwischenspeicherung und Speicherung",
+        "Auf verschiedenen Seiten zeichnen und zwischen ihnen wechseln"
+      ],
+      "tip": "Tipp: Auf dieser Seite zeichnen, dann auf einer anderen Seite zeichnen und zurückkehren. Die Striche sind noch da."
+    }
+  },
+  "split": {
+    "title": "Geteilte Zeichenfläche – ein schwebendes Werkzeugfeld"
+  },
+  "epub": {
+    "readingMode": "Lesemodus",
+    "annotationMode": "Anmerkungsmodus",
+    "info": "Notizen werden pro Kapitel (spineHref) gespeichert – open_epub 1.0 EpubReader mit EpubViewController.",
+    "webNote": "Im Web bleiben Notizen nur während dieser Sitzung erhalten.",
+    "sample": "Beispiel: {title}"
+  }
+}

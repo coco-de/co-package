@@ -4,6 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
+import 'package:open_board/src/module/l10n/open_board_strings.dart';
+import 'package:open_board/src/module/l10n/open_board_strings_scope.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/link_aware_text_editing_controller.dart';
 import 'package:open_board/src/module/text/link_span_offsets.dart';
@@ -50,6 +52,7 @@ final class InlineTextEditor extends StatefulWidget {
     required this.scale,
     required this.selectedColor,
     this.linkTargetResolver,
+    this.strings,
     super.key,
   });
 
@@ -76,6 +79,13 @@ final class InlineTextEditor extends StatefulWidget {
 
   /// 링크 타깃 입력 UI 제공자 (미주입 시 내장 Material 다이얼로그로 폴백).
   final LinkTargetResolver? linkTargetResolver;
+
+  /// 에디터가 그리는 문구(링크 메뉴 · 완료 버튼 · 링크 입력 대화상자).
+  ///
+  /// 미지정 시 가장 가까운 [OpenBoardStringsScope], 그것도 없으면
+  /// [OpenBoardStrings] 기본값(현재 글)을 쓴다. 에디터는 Overlay 에 뜨므로
+  /// 필기 위젯은 자기 위치에서 읽은 문구를 여기로 넘긴다.
+  final OpenBoardStrings? strings;
 
   @override
   State<InlineTextEditor> createState() => _InlineTextEditorState();
@@ -300,9 +310,12 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       if (resolver != null) {
         return await resolver(context, initialTarget: initialTarget);
       }
+      // 대화상자는 새 라우트에 뜨므로 에디터 위치의 문구를 넘겨 준다.
+      final strings = _readStrings();
       return await showDialog<String>(
         context: context,
-        builder: (_) => _LinkInputDialog(initialTarget: initialTarget),
+        builder: (_) =>
+            _LinkInputDialog(initialTarget: initialTarget, strings: strings),
       );
     } finally {
       _suppressComplete = false;
@@ -407,6 +420,12 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     }
   }
 
+  /// 에디터 문구 — 주입값, 없으면 이 위치의 [OpenBoardStringsScope] (의존 없이).
+  ///
+  /// 컨텍스트 메뉴 · 대화상자처럼 다른 Overlay/라우트에서 빌드되는 UI 가 쓴다.
+  OpenBoardStrings _readStrings() =>
+      widget.strings ?? OpenBoardStringsScope.read(context);
+
   /// 선택 영역이 있을 때 "링크 추가/편집/삭제" 항목을 추가한 선택 툴바.
   /// 지연 콜백 — 위젯이 아직 활성(mounted·미dispose)일 때만 편집 완료.
   void _completeEditingIfActive() {
@@ -437,13 +456,14 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     // 편집/삭제를 노출한다 — 굿노트 동작 정합 (kobic #8481).
     final target = _linkTargetSelection(selection);
     final hasLink = target != null && _selectionLinkUrl(target) != null;
+    final strings = _readStrings();
     // 대상이 없어도(선택 없음) "링크 추가"를 노출한다 — 그 경우 링크 타깃이
     // 커서 위치에 삽입된다. 이 진입점이 없으면 선택을 만들지 못한 사용자에게
     // 링크 기능이 도달 불가가 된다 (kobic #9838).
     buttonItems.insert(
       0,
       ContextMenuButtonItem(
-        label: hasLink ? '링크 편집' : '링크 추가',
+        label: hasLink ? strings.editLink : strings.addLink,
         onPressed: () => _onLinkMenuTap(selection),
       ),
     );
@@ -451,7 +471,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
       buttonItems.insert(
         1,
         ContextMenuButtonItem(
-          label: '링크 삭제',
+          label: strings.removeLink,
           onPressed: () => _onLinkRemoveTap(selection),
         ),
       );
@@ -693,7 +713,8 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
                           ),
                           child: Center(
                             child: Text(
-                              '완료',
+                              widget.strings?.done ??
+                                  OpenBoardStringsScope.of(context).done,
                               style: TextStyle(
                                 color: Colors.blue,
                                 fontSize: math.min(14, editorHeight * 0.4),
@@ -733,10 +754,13 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
 /// 컨트롤러를 참조해 예외가 발생하므로(kobic #8481 실측), 라우트 언마운트
 /// 시점(dispose)에 함께 정리되도록 StatefulWidget 으로 분리했다.
 final class _LinkInputDialog extends StatefulWidget {
-  const _LinkInputDialog({required this.initialTarget});
+  const _LinkInputDialog({required this.initialTarget, required this.strings});
 
   /// 기존 링크 타깃 (`https://...` 또는 `page:N`, 새 링크면 null).
   final String? initialTarget;
+
+  /// 대화상자 문구 — 에디터가 자기 위치에서 읽어 넘긴다.
+  final OpenBoardStrings strings;
 
   @override
   State<_LinkInputDialog> createState() => _LinkInputDialogState();
@@ -782,16 +806,17 @@ final class _LinkInputDialogState extends State<_LinkInputDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = widget.strings;
     return AlertDialog(
-      title: const Text('링크 입력'),
+      title: Text(strings.linkDialogTitle),
       content: Column(
         mainAxisSize: .min,
         crossAxisAlignment: .stretch,
         children: [
           SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(value: false, label: Text('외부 URL')),
-              ButtonSegment(value: true, label: Text('내부 페이지')),
+            segments: [
+              ButtonSegment(value: false, label: Text(strings.externalLink)),
+              ButtonSegment(value: true, label: Text(strings.internalPage)),
             ],
             selected: {_isInternal},
             onSelectionChanged: (selection) =>
@@ -804,9 +829,9 @@ final class _LinkInputDialogState extends State<_LinkInputDialog> {
               autofocus: true,
               keyboardType: .number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '1',
-                labelText: '페이지 번호',
+                labelText: strings.pageNumber,
               ),
               onSubmitted: (_) => _submit(),
             )
@@ -815,17 +840,17 @@ final class _LinkInputDialogState extends State<_LinkInputDialog> {
               controller: _urlController,
               autofocus: true,
               keyboardType: .url,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'https://example.com',
-                labelText: 'URL',
+                labelText: strings.url,
               ),
               onSubmitted: (_) => _submit(),
             ),
         ],
       ),
       actions: [
-        TextButton(onPressed: _cancel, child: const Text('취소')),
-        TextButton(onPressed: _submit, child: const Text('확인')),
+        TextButton(onPressed: _cancel, child: Text(strings.cancel)),
+        TextButton(onPressed: _submit, child: Text(strings.confirm)),
       ],
     );
   }

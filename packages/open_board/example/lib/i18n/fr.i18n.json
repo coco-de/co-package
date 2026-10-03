@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Démo Open Board"
+  },
+  "common": {
+    "undo": "Annuler",
+    "redo": "Rétablir",
+    "clear": "Tout effacer",
+    "previousPage": "Page précédente",
+    "nextPage": "Page suivante",
+    "loading": "Chargement…"
+  },
+  "home": {
+    "board": {
+      "title": "Démo du tableau",
+      "description": "Huit outils d’écriture, plusieurs pages, enregistrement et relecture"
+    },
+    "split": {
+      "title": "Démo écran partagé",
+      "description": "Deux zones d’écriture côte à côte avec un seul panneau d’outils flottant"
+    },
+    "epub": {
+      "title": "Démo d’annotation EPUB",
+      "description": "Écriture manuscrite liée aux pages sur le lecteur open_epub (bascule lecture / écriture)"
+    }
+  },
+  "tools": {
+    "pen": "Stylo",
+    "pencil": "Crayon",
+    "marker": "Marqueur",
+    "highlighter": "Surligneur",
+    "fixedPen": "Stylo fixe",
+    "uniformPen": "Stylo uniforme",
+    "eraser": "Gomme",
+    "text": "Texte",
+    "shape": "Forme",
+    "lasso": "Lasso",
+    "image": "Image"
+  },
+  "link": {
+    "add": "Ajouter un lien",
+    "edit": "Modifier le lien",
+    "remove": "Supprimer le lien",
+    "done": "Terminé",
+    "dialogTitle": "Lien",
+    "external": "URL externe",
+    "internal": "Page interne",
+    "pageNumber": "Numéro de page",
+    "url": "URL",
+    "cancel": "Annuler",
+    "confirm": "OK"
+  },
+  "drawing": {
+    "startRecording": "Démarrer l’enregistrement",
+    "stopRecording": "Arrêter l’enregistrement",
+    "replay": "Relire",
+    "stopReplay": "Arrêter la relecture",
+    "recording": "Enregistrement · événements : {count}",
+    "replaying": "Relecture · {index}/{total}",
+    "ready": "Prêt à relire · événements : {count}",
+    "noRecording": "Aucun enregistrement",
+    "page": "Page {number}",
+    "features": {
+      "title": "Fonctionnalités",
+      "items": [
+        "Outils d’écriture : stylo, crayon, marqueur et stylo fixe",
+        "Six couleurs prédéfinies",
+        "Épaisseur du trait réglable (0,5–10,0)",
+        "Gomme pour effacer les traits",
+        "Reconnaissance de formes (cercle, rectangle, ligne)",
+        "Sélection au lasso pour déplacer les traits",
+        "Outil texte pour ajouter des notes",
+        "Annuler et rétablir"
+      ]
+    },
+    "recordingGuide": {
+      "title": "Enregistrement et relecture",
+      "items": [
+        "Appuyez sur le bouton rouge pour démarrer l’enregistrement",
+        "Écrivez, changez de page, zoomez : tout est enregistré",
+        "Appuyez sur stop pour terminer l’enregistrement",
+        "Appuyez sur lecture pour relire toute la session",
+        "Les traits, les changements de page et de vue sont enregistrés"
+      ]
+    },
+    "multiPage": {
+      "title": "Plusieurs pages",
+      "items": [
+        "Passez d’une page à l’autre avec la barre de pages ci-dessus",
+        "Chaque page a ses propres traits et son propre historique d’annulation",
+        "ScribbleBookController gère toutes les pages",
+        "ScribbleCacheManager gère le cache et l’enregistrement",
+        "Écrivez sur plusieurs pages et passez de l’une à l’autre"
+      ],
+      "tip": "Astuce : écrivez sur cette page, puis sur une autre, et revenez. Vos traits sont toujours là."
+    }
+  },
+  "split": {
+    "title": "Écran partagé — un seul panneau d’outils flottant"
+  },
+  "epub": {
+    "readingMode": "Mode lecture",
+    "annotationMode": "Mode annotation",
+    "info": "Les notes sont enregistrées par chapitre (spineHref) — open_epub 1.0 EpubReader avec EpubViewController.",
+    "webNote": "Sur le web, les notes ne durent que le temps de cette session.",
+    "sample": "Exemple : {title}"
+  }
+}

@@ -107,6 +107,11 @@ export 'src/module/state/scribble.state.dart';
 export 'src/module/scribble_mode.notifier.dart';
 export 'src/module/state/scribble_mode.state.dart';
 
+// 🌐 패키지가 직접 그리는 문구 (링크 메뉴 · 링크 대화상자 · 도구 이름) — 기본값은
+// 현재 글, 앱이 번역을 주입한다 (co-package#43).
+export 'src/module/l10n/open_board_strings.dart';
+export 'src/module/l10n/open_board_strings_scope.dart';
+
 // 🌍 전역 필기 도구 상태 관리
 export 'src/module/state/drawing_state.dart';
 export 'src/module/state/notifier_registry.dart';

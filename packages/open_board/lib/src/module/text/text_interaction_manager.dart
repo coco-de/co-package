@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:open_board/src/core/utils/extensions/scribble_extension.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
+import 'package:open_board/src/module/l10n/open_board_strings_scope.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
@@ -826,6 +827,9 @@ class TextInteractionManager {
     // widgetState 동기화
     _syncWithWidgetState();
 
+    // 에디터는 Overlay 에 뜨므로 필기 위젯 위치의 문구를 읽어 넘긴다 — 앱이
+    // 필기 위젯 위 어디에 OpenBoardStringsScope 를 두어도 에디터에 닿는다.
+    final strings = OpenBoardStringsScope.read(context);
     _textEditorOverlay = OverlayEntry(
       builder: (context) => InlineTextEditor(
         drawable: textDrawable,
@@ -835,6 +839,7 @@ class TextInteractionManager {
         scale: 1.0,
         selectedColor: modeNotifier.state.inkGroupInfo.selectedColor,
         linkTargetResolver: linkTargetResolver,
+        strings: strings,
         onComplete: (updatedDrawable) {
           _hideTextEditor();
 
@@ -889,6 +894,9 @@ class TextInteractionManager {
     // widgetState 동기화
     _syncWithWidgetState();
 
+    // 에디터는 Overlay 에 뜨므로 필기 위젯 위치의 문구를 읽어 넘긴다 — 앱이
+    // 필기 위젯 위 어디에 OpenBoardStringsScope 를 두어도 에디터에 닿는다.
+    final strings = OpenBoardStringsScope.read(context);
     _textEditorOverlay = OverlayEntry(
       builder: (context) => InlineTextEditor(
         drawable: textDrawable,
@@ -898,6 +906,7 @@ class TextInteractionManager {
         scale: 1.0, // 이미 화면에 스케일 적용되어 있으므로 확대 X
         selectedColor: modeNotifier.state.inkGroupInfo.selectedColor,
         linkTargetResolver: linkTargetResolver,
+        strings: strings,
         onComplete: (updatedDrawable) {
           _hideTextEditor();
 

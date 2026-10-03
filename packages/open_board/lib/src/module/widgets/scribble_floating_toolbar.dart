@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:open_board/src/module/l10n/open_board_strings.dart';
+import 'package:open_board/src/module/l10n/open_board_strings_scope.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
 
 /// 🛠️ 도구 버튼 커스텀 빌더
@@ -68,6 +70,7 @@ class ScribbleFloatingToolbar extends StatefulWidget {
     this.toolButtonBuilder,
     this.colorSwatchBuilder,
     this.thicknessBuilder,
+    this.strings,
   });
 
   /// 연동할 전역 상태. 미지정 시 [DrawingState] 싱글톤 사용.
@@ -104,6 +107,10 @@ class ScribbleFloatingToolbar extends StatefulWidget {
   /// 두께 슬라이더 커스텀.
   final ThicknessBuilder? thicknessBuilder;
 
+  /// 도구 이름 · undo/redo/clear 툴팁 문구. 미지정 시 가장 가까운
+  /// [OpenBoardStringsScope], 그것도 없으면 [OpenBoardStrings] 기본값(영어).
+  final OpenBoardStrings? strings;
+
   @override
   State<ScribbleFloatingToolbar> createState() =>
       _ScribbleFloatingToolbarState();
@@ -113,6 +120,9 @@ class _ScribbleFloatingToolbarState extends State<ScribbleFloatingToolbar> {
   late Offset _offset = widget.initialPosition;
 
   DrawingState get _state => widget.state ?? DrawingState();
+
+  OpenBoardStrings _strings(BuildContext context) =>
+      widget.strings ?? OpenBoardStringsScope.of(context);
 
   void _onPanUpdate(DragUpdateDetails details, BoxConstraints constraints) {
     setState(() {
@@ -207,6 +217,7 @@ class _ScribbleFloatingToolbarState extends State<ScribbleFloatingToolbar> {
             }
             return _DefaultToolButton(
               tool: tool,
+              label: _strings(context).toolLabel(tool),
               selected: selected,
               onTap: onTap,
             );
@@ -274,6 +285,7 @@ class _ScribbleFloatingToolbarState extends State<ScribbleFloatingToolbar> {
   }
 
   Widget _buildUndoRedoRow(BuildContext context) {
+    final strings = _strings(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -281,7 +293,7 @@ class _ScribbleFloatingToolbarState extends State<ScribbleFloatingToolbar> {
           valueListenable: _state.canUndoNotifier,
           builder: (context, canUndo, _) => IconButton(
             icon: const Icon(Icons.undo),
-            tooltip: 'Undo',
+            tooltip: strings.undo,
             onPressed: canUndo ? _state.undo : null,
           ),
         ),
@@ -289,13 +301,13 @@ class _ScribbleFloatingToolbarState extends State<ScribbleFloatingToolbar> {
           valueListenable: _state.canRedoNotifier,
           builder: (context, canRedo, _) => IconButton(
             icon: const Icon(Icons.redo),
-            tooltip: 'Redo',
+            tooltip: strings.redo,
             onPressed: canRedo ? _state.redo : null,
           ),
         ),
         IconButton(
           icon: const Icon(Icons.delete_outline),
-          tooltip: 'Clear',
+          tooltip: strings.clear,
           onPressed: _state.clearActive,
         ),
       ],
@@ -306,11 +318,13 @@ class _ScribbleFloatingToolbarState extends State<ScribbleFloatingToolbar> {
 class _DefaultToolButton extends StatelessWidget {
   const _DefaultToolButton({
     required this.tool,
+    required this.label,
     required this.selected,
     required this.onTap,
   });
 
   final DrawingTool tool;
+  final String label;
   final bool selected;
   final VoidCallback onTap;
 
@@ -318,7 +332,7 @@ class _DefaultToolButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Tooltip(
-      message: drawingToolLabel(tool),
+      message: label,
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
         onTap: onTap,
@@ -434,30 +448,9 @@ IconData drawingToolIcon(DrawingTool tool) {
   }
 }
 
-/// [DrawingTool] → 표시 라벨 매핑.
-String drawingToolLabel(DrawingTool tool) {
-  switch (tool) {
-    case DrawingTool.pen:
-      return 'Pen';
-    case DrawingTool.pencil:
-      return 'Pencil';
-    case DrawingTool.marker:
-      return 'Marker';
-    case DrawingTool.highlighter:
-      return 'Highlighter';
-    case DrawingTool.fixedPen:
-      return 'Fixed';
-    case DrawingTool.uniformPen:
-      return 'Uniform';
-    case DrawingTool.erase:
-      return 'Eraser';
-    case DrawingTool.text:
-      return 'Text';
-    case DrawingTool.shape:
-      return 'Shape';
-    case DrawingTool.lasso:
-      return 'Lasso';
-    case DrawingTool.image:
-      return 'Image';
-  }
-}
+/// [DrawingTool] → 기본(영어) 표시 라벨 매핑.
+///
+/// 번역된 이름은 [OpenBoardStrings.toolLabel] 을 쓴다 — 이 함수는
+/// [OpenBoardStrings] 기본값과 같은 글을 돌려준다.
+String drawingToolLabel(DrawingTool tool) =>
+    const OpenBoardStrings().toolLabel(tool);
