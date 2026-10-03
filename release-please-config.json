@@ -36,6 +36,7 @@
     "packages/co_golden": { "component": "co_golden" },
     "packages/co_golden_gallery": { "component": "co_golden_gallery" },
     "packages/co_bdd": { "component": "co_bdd", "bump-minor-pre-major": true },
-    "packages/co_faker": { "component": "co_faker", "bump-minor-pre-major": true }
+    "packages/co_faker": { "component": "co_faker", "bump-minor-pre-major": true },
+    "packages/co_demo_prefs": { "component": "co_demo_prefs", "bump-minor-pre-major": true }
   }
 }
