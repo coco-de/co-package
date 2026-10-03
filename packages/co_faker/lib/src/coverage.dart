@@ -160,7 +160,16 @@ class CoFakerCoverage {
         final enumValues =
             request.enums[field] ??
             faker.domains.enumValues(request.name, field);
-        rows.add(_checkField(request.name, field, type, roleName, enumValues));
+        rows.add(
+          _checkField(
+            request.name,
+            field,
+            type,
+            roleName,
+            enumValues,
+            overrideDomain: request.enums.containsKey(field),
+          ),
+        );
       }
     }
     return CoCoverageReport(rows);
@@ -171,8 +180,9 @@ class CoFakerCoverage {
     String field,
     String type,
     String? roleName,
-    List<String>? enumValues,
-  ) {
+    List<String>? enumValues, {
+    bool overrideDomain = false,
+  }) {
     final baseType = type.endsWith('?')
         ? type.substring(0, type.length - 1)
         : type;
@@ -210,24 +220,31 @@ class CoFakerCoverage {
     final inferredDomain = roleName == null && enumValues == null
         ? faker.domains.inferRole(field, entity: entity)
         : null;
-    final selectedDomain = domainRole ?? inferredDomain;
+    final selectedDomain = overrideDomain ? null : domainRole ?? inferredDomain;
     if (selectedDomain != null) {
+      final supported = selectedDomain.role.supportedTypes;
       return CoCoverageRow(
         entity: entity,
         field: field,
         type: type,
         role: '${selectedDomain.domain.name}.${selectedDomain.name}',
-        status: CoCoverageStatus.supported,
+        status: supported == null || supported.contains(baseType)
+            ? CoCoverageStatus.supported
+            : CoCoverageStatus.unsupported,
+        detail: supported == null || supported.contains(baseType)
+            ? ''
+            : 'Role supports ${supported.join(', ')}',
       );
     }
-    final resolved =
-        genericRole ??
-        faker.schema.infer(
-          field,
-          type: type,
-          hasEnum: enumValues != null,
-          entity: entity,
-        );
+    final resolved = overrideDomain
+        ? CoFieldRole.status
+        : genericRole ??
+              faker.schema.infer(
+                field,
+                type: type,
+                hasEnum: enumValues != null,
+                entity: entity,
+              );
     final needsEnum =
         resolved == CoFieldRole.status &&
         (enumValues == null || enumValues.isEmpty);

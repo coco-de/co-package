@@ -28,10 +28,21 @@ class CoDomainRole {
     this.generate, {
     this.description = '',
     this.fieldPatterns = const <String>[],
+    this.generateRecord,
+    this.supportedTypes,
   });
 
   /// Produces the value; it must draw only from the given faker.
   final CoDomainRoleGenerator generate;
+
+  /// Optional coherent record adapter. Receives a fresh, record-derived stream
+  /// shared by key (not by mutable state) across fields of the same record.
+  /// Existing roles keep their original independent field streams.
+  final CoDomainRoleGenerator? generateRecord;
+
+  /// Declared primitive output types, when this role uses a strict adapter.
+  /// `null` retains the legacy coercion behavior for existing/custom packs.
+  final List<String>? supportedTypes;
 
   /// One line for coverage reports and documentation.
   final String description;

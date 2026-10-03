@@ -274,11 +274,12 @@ class CoFakerSchema {
         entry.key,
         entry.value,
         index: index,
-        role: role,
-        domainRole: domainRole,
+        role: enums.containsKey(entry.key) ? CoFieldRole.status : role,
+        domainRole: enums.containsKey(entry.key) ? null : domainRole,
         values: enums[entry.key] ?? faker.domains.enumValues(entity, entry.key),
         referenceCount: referenceCounts[entry.key],
         source: faker.derive('$streamKey/$index/${entry.key}'),
+        recordSource: faker.derive('$streamKey/$index'),
         entity: entity,
       );
     }
@@ -636,6 +637,7 @@ class CoFakerSchema {
     List<String>? values,
     int? referenceCount,
     CoFaker? source,
+    CoFaker? recordSource,
     String? entity,
   }) {
     final f = source ?? faker;
@@ -646,12 +648,25 @@ class CoFakerSchema {
             ? faker.domains.inferRole(name, entity: entity)
             : null);
     if (selectedDomainRole != null) {
-      final raw = selectedDomainRole.role.generate(f, (
-        field: name,
-        type: type,
-        index: index,
-        entity: entity,
-      ));
+      final adapter = selectedDomainRole.role;
+      if (adapter.supportedTypes != null &&
+          !adapter.supportedTypes!.contains(baseType)) {
+        throw ArgumentError.value(
+          type,
+          'type',
+          '${selectedDomainRole.domain.name}.${selectedDomainRole.name} '
+              'supports ${adapter.supportedTypes!.join(', ')}',
+        );
+      }
+      final generator = recordSource != null && adapter.generateRecord != null
+          ? adapter.generateRecord!
+          : adapter.generate;
+      final raw = generator(
+        recordSource != null && adapter.generateRecord != null
+            ? recordSource
+            : f,
+        (field: name, type: type, index: index, entity: entity),
+      );
       return _coerce(f, raw, baseType, index);
     }
     final resolved =

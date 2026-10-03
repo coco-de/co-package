@@ -88,7 +88,7 @@ final faker = CoFaker(
   locale: 'ko',
   seed: 7,
   now: DateTime.utc(2026, 10, 1),
-  domains: CoFakerDomains.all, // clinic, saas, korea 순서
+  domains: CoFakerDomains.all, // clinic, saas, korea 우선순위 + 신규 팩
 );
 
 final patient = faker.schema.entity('clinic.patient', index: 0);
@@ -163,7 +163,7 @@ print(report.toJson()); // cob plan 등에서 사용
 
 CLI는 JSON 계획을 표 또는 JSON으로 출력합니다. `entities`에는 등록된
 엔티티명을 문자열로 넣거나 `name`, `fields`, `roles`, `enums`를 가진 객체를
-넣습니다. `domains`를 생략하면 기본 팩 3개를 사용합니다.
+넣습니다. `domains`를 생략하면 `CoFakerDomains.all`의 등록된 팩을 사용합니다.
 
 ```json
 {
@@ -183,6 +183,53 @@ CLI는 JSON 계획을 표 또는 JSON으로 출력합니다. `entities`에는 �
 dart run co_faker:coverage --input plan.json
 dart run co_faker:coverage --input plan.json --format json --strict
 ```
+
+### PRD 데모용 도메인 팩
+
+36개 PRD(#653–#688)의 신규 역할은 `vet`, `dental`, `homecare`, `fx`,
+`remit`, `travel_wallet`, `commerce`, `grocery`, `b2b_trade`, `group_deal`,
+`booking`, `fitness`, `space_rental`, `dining`, `daycare`, `exam_prep`, `hrd`,
+`neighborhood`, `meetup`, `fandom`, `content`, `helpdesk`, `campaign`,
+`workplace`, `brokerage`, `logistics`, `hospitality` 팩에서 제공합니다.
+`CoFakerDomains.byName('travel_wallet')`로 조회하거나 필요한 팩만 등록합니다.
+
+신규 팩은 일반 `name`·`status`·`comment` 필드에 전역 패턴을 추가하지 않습니다.
+`roles: {'name': 'grocery.produceName'}`처럼 **팩을 명시**하거나 등록된 엔티티를
+사용하세요. 숫자 역할의 단위와 지원 타입이 명시되며, 잘못된 타입에는 임의
+숫자를 대신 만들지 않고 오류를 냅니다. `enums:`에 직접 넣은 레시피 값은
+기존 SaaS 채널/상태 역할을 포함해 우선 적용됩니다.
+
+```dart
+final demo = CoFaker(
+  locale: 'ko', seed: 436, now: DateTime.utc(2026, 1, 15),
+  domains: CoFakerDomains.all,
+);
+final pet = demo.derive('guardian/1/pet/1').vet.pet(animalKind: 'dog');
+final product = demo.derive('catalog').catalog.item(grocery: true, index: 7);
+final rates = demo.fx.rateSeries(currencyCode: 'JPY', days: 30);
+final question = demo.derive('questions/1').examPrep.question(index: 1);
+final slots = demo.booking.slots(days: 7, sundayClosed: true);
+final recipient = demo.derive('recipient/1').remit.recipient(countryCode: 'VN');
+final transfer = demo.derive('transfer/1').remit.transfer(
+  recipient: recipient, sendAmount: 1000000, status: 'approved',
+);
+// Primitive JSON: pet.toJson(), product.toJson(), rates.map((p) => p.toJson()),
+// question.toJson(), slots.map((s) => s.toJson()), transfer.toJson().
+```
+
+`rateSeries` 역할은 실제 일별 시계열 JSON 문자열이고,
+`choiceSet`은 `①…|②…` 문자열, `vitalReading`은 단위가 포함된 바이탈 JSON입니다.
+typed API는 각각 `CoFakeFxRatePoint`, `CoFakeExamQuestion`,
+`CoFakeVitalReading.generate(faker)`입니다. 환율은 가상값이며 FX의
+`baseRate`(KRW / `unitAmount` 외화)와 송금의 `appliedRate`(외화 / 1 KRW)는
+방향이 다릅니다. 송금은 `rateNumerator`·`rateDenominator`·`receiveMinorUnits`도
+제공합니다(VN 예시: 1785/100, 1,000,000 KRW → 17,850,000 VND).
+
+[팩 계약과 단위](docs/domain-packs.md),
+[36개 원문별 정확한 역할 목록](docs/prd_domain_inventory.json),
+[검증 범위와 남은 경계](docs/prd-domain-coverage.md)를 확인하세요.
+전체 앱 시드 건수·투어 고정 레코드·연결 관계·집계·상태 전이는 레시피가
+조립하며, 등록된 스키마는 재사용 가능한 예시 스키마입니다.
 
 `--input` 없이 실행하면 표준 입력을 읽습니다. `--strict`는 미지원 필드나
 enum 누락이 있으면 종료 코드 1을 반환합니다. 잘못된 입력은 종료 코드 2입니다.
