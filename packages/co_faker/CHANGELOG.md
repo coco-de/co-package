@@ -11,6 +11,13 @@
   checks for numeric/enum bounds, relationships, UTC dates, field stability,
   English fallback and scoped authored-data restrictions.
 
+## [0.10.0](https://github.com/coco-de/co-package/compare/co_faker-v0.9.0...co_faker-v0.10.0) (2026-10-03)
+
+
+### 기능
+
+* **co_faker:** ✨ 데모 도메인 팩 27종과 출처 회귀 ([#48](https://github.com/coco-de/co-package/issues/48)) ([a815c50](https://github.com/coco-de/co-package/commit/a815c500fea0bbd6e9ef2d1aab70855b8859db8e))
+
 ## 0.8.1
 
 - `clinic.canvasMarks` gains `regionRects:` (`Map<String, CoRegionRect>` in
