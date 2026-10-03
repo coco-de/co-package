@@ -1,3 +1,16 @@
+## Unreleased
+
+- Add 27 Korean/English domain packs for the 36 demo PRDs, preserving the
+  original `clinic`, `saas`, `korea` lookup precedence and seeded defaults.
+- Add coherent typed FX histories, masked remittance recipients/transfers,
+  veterinary profiles, brand-free catalogs, UTC booking slots, authored exam
+  questions, vital readings and eight human-authored simulated support drafts.
+- Add strict primitive role-type metadata and opt-in record-derived adapters;
+  explicit recipe enums override domain roles without altering default outputs.
+- Add an independent source/role inventory and coverage CLI, plus regression
+  checks for numeric/enum bounds, relationships, UTC dates, field stability,
+  English fallback and scoped authored-data restrictions.
+
 ## 0.8.1
 
 - `clinic.canvasMarks` gains `regionRects:` (`Map<String, CoRegionRect>` in

@@ -1,6 +1,12 @@
 import 'clinic.dart';
 import 'co_faker_locale.dart';
 import 'domain.dart';
+import 'domain_packs/co_faker_fx.dart';
+import 'domain_packs/co_faker_remit.dart';
+import 'domain_packs/co_faker_vet.dart';
+import 'domain_packs/co_faker_booking.dart';
+import 'domain_packs/co_faker_catalog.dart';
+import 'domain_packs/co_faker_exam_prep.dart';
 import 'co_faker_locales.dart';
 import 'korea.dart';
 import 'modules.dart';
@@ -123,6 +129,24 @@ class CoFaker {
   /// SaaS back-office values: tenants, plans, subscriptions, invoices,
   /// messaging, claim masters, integration health, audit logs, KPIs.
   late final CoFakerSaas saas = CoFakerSaas(this);
+
+  /// Offline fictional currency quotes and daily UTC rate series.
+  late final CoFakerFx fx = CoFakerFx(this);
+
+  /// Masked remittance recipients and coherent illustrative transfers.
+  late final CoFakerRemit remit = CoFakerRemit(this);
+
+  /// Coherent fictional pet species, breed and weight profiles.
+  late final CoFakerVet vet = CoFakerVet(this);
+
+  /// Coherent UTC booking blocks, including optional closed Sundays.
+  late final CoFakerBooking booking = CoFakerBooking(this);
+
+  /// Brand-free commerce/grocery catalog entries.
+  late final CoFakerCatalog catalog = CoFakerCatalog(this);
+
+  /// Authored IT questions with shuffled choices and matching answers.
+  late final CoFakerExamPrep examPrep = CoFakerExamPrep(this);
 
   /// Handwritten-looking signature strokes, SVG, and open_board points.
   late final CoFakerSignature signature = CoFakerSignature(this);

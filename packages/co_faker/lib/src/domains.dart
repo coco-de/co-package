@@ -1,5 +1,32 @@
 import 'clinic.dart';
 import 'domain.dart';
+import 'domain_packs/co_fx_domain.dart';
+import 'domain_packs/co_remit_domain.dart';
+import 'domain_packs/co_vet_domain.dart';
+import 'domain_packs/co_commerce_domain.dart';
+import 'domain_packs/co_grocery_domain.dart';
+import 'domain_packs/co_booking_domain.dart';
+import 'domain_packs/co_dental_domain.dart';
+import 'domain_packs/co_homecare_domain.dart';
+import 'domain_packs/co_travel_wallet_domain.dart';
+import 'domain_packs/co_b2b_trade_domain.dart';
+import 'domain_packs/co_group_deal_domain.dart';
+import 'domain_packs/co_fitness_domain.dart';
+import 'domain_packs/co_space_rental_domain.dart';
+import 'domain_packs/co_dining_domain.dart';
+import 'domain_packs/co_daycare_domain.dart';
+import 'domain_packs/co_exam_prep_domain.dart';
+import 'domain_packs/co_hrd_domain.dart';
+import 'domain_packs/co_neighborhood_domain.dart';
+import 'domain_packs/co_meetup_domain.dart';
+import 'domain_packs/co_fandom_domain.dart';
+import 'domain_packs/co_content_domain.dart';
+import 'domain_packs/co_helpdesk_domain.dart';
+import 'domain_packs/co_campaign_domain.dart';
+import 'domain_packs/co_workplace_domain.dart';
+import 'domain_packs/co_brokerage_domain.dart';
+import 'domain_packs/co_logistics_domain.dart';
+import 'domain_packs/co_hospitality_domain.dart';
 import 'korea.dart';
 import 'saas.dart';
 
@@ -18,8 +45,127 @@ abstract final class CoFakerDomains {
   /// events, operators.
   static const CoFakerDomain saas = CoSaasDomain();
 
-  /// Every built-in pack, most specific first.
-  static const List<CoFakerDomain> all = <CoFakerDomain>[clinic, saas, korea];
+  /// Fictional currency quotes and pickup labels.
+  static const CoFakerDomain fx = CoFxDomain();
+
+  /// Masked recipients and remittance corridors.
+  static const CoFakerDomain remit = CoRemitDomain();
+
+  /// Veterinary profiles and unbranded example medicine labels.
+  static const CoFakerDomain vet = CoVetDomain();
+
+  /// Brand-free common catalog/order values.
+  static const CoFakerDomain commerce = CoCommerceDomain();
+
+  /// Fresh grocery catalog and picker labels.
+  static const CoFakerDomain grocery = CoGroceryDomain();
+
+  /// UTC booking blocks and common booking labels.
+  static const CoFakerDomain booking = CoBookingDomain();
+
+  /// Dental procedure and valid FDI-tooth examples.
+  static const CoFakerDomain dental = CoDentalDomain();
+
+  /// Masked home-care recipients and illustrative vitals.
+  static const CoFakerDomain homecare = CoHomecareDomain();
+
+  /// Fictional merchants, budgets and masked travel cards.
+  static const CoFakerDomain travelWallet = CoTravelWalletDomain();
+
+  /// Fictional wholesale buyers and package specifications.
+  static const CoFakerDomain b2bTrade = CoB2bTradeDomain();
+
+  /// Generic group deals and example benefits.
+  static const CoFakerDomain groupDeal = CoGroupDealDomain();
+
+  /// Fitness classes and pass labels.
+  static const CoFakerDomain fitness = CoFitnessDomain();
+
+  /// Fictional rental spaces and host messages.
+  static const CoFakerDomain spaceRental = CoSpaceRentalDomain();
+
+  /// Fictional restaurant and queue labels.
+  static const CoFakerDomain dining = CoDiningDomain();
+
+  /// Daycare given names and unbranded fictional drug labels.
+  static const CoFakerDomain daycare = CoDaycareDomain();
+
+  /// Authored IT questions and coherent answer adapters.
+  static const CoFakerDomain examPrep = CoExamPrepDomain();
+
+  /// Fictional corporate training and certificate labels.
+  static const CoFakerDomain hrd = CoHrdDomain();
+
+  /// Fictional neighborhood text and place labels.
+  static const CoFakerDomain neighborhood = CoNeighborhoodDomain();
+
+  /// Fictional clubs, gatherings and dues.
+  static const CoFakerDomain meetup = CoMeetupDomain();
+
+  /// The two approved fictional creators and fan text.
+  static const CoFakerDomain fandom = CoFandomDomain();
+
+  /// Original fictional works and prose.
+  static const CoFakerDomain content = CoContentDomain();
+
+  /// Authored support tickets and simulated AI drafts.
+  static const CoFakerDomain helpdesk = CoHelpdeskDomain();
+
+  /// Fictional campaign copy and recipe-aligned delivery codes.
+  static const CoFakerDomain campaign = CoCampaignDomain();
+
+  /// Shared HR, project and expense labels.
+  static const CoFakerDomain workplace = CoWorkplaceDomain();
+
+  /// Fictional providers and general-information-only consultations.
+  static const CoFakerDomain brokerage = CoBrokerageDomain();
+
+  /// Last-mile, freight and WMS labels.
+  static const CoFakerDomain logistics = CoLogisticsDomain();
+
+  /// Stay, housekeeping and concierge labels.
+  static const CoFakerDomain hospitality = CoHospitalityDomain();
+
+  /// All packs, preserving the original clinic, saas, korea precedence.
+  static const List<CoFakerDomain> all = <CoFakerDomain>[
+    clinic,
+    saas,
+    korea,
+    fx,
+    remit,
+    vet,
+    commerce,
+    grocery,
+    booking,
+    dental,
+    homecare,
+    travelWallet,
+    b2bTrade,
+    groupDeal,
+    fitness,
+    spaceRental,
+    dining,
+    daycare,
+    examPrep,
+    hrd,
+    neighborhood,
+    meetup,
+    fandom,
+    content,
+    helpdesk,
+    campaign,
+    workplace,
+    brokerage,
+    logistics,
+    hospitality,
+  ];
+
+  /// Resolves a registered built-in pack by its snake_case name.
+  static CoFakerDomain byName(String name) => all.firstWhere(
+    (pack) => pack.name == name,
+    orElse: () =>
+        throw ArgumentError.value(name, 'name', 'unknown domain pack'),
+  );
 }
 
 String _dateString(DateTime value) => value.toIso8601String().substring(0, 10);
