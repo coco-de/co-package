@@ -2,7 +2,7 @@ name: co_demo_prefs
 description: >-
   Carries the visitor's language and theme from cocode sites into demo apps:
   a URL query for new tabs and a postMessage handshake for iframe previews.
-version: 1.0.0
+version: 1.0.1
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_demo_prefs
 resolution: workspace
 

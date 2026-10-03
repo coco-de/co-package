@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/coco-de/co-package/compare/open_board-v0.2.0...open_board-v0.3.0) (2026-10-03)
+
+
+### 기능
+
+* **open_board:** 🌐 예제 앱 11개 언어 · 다크 테마 · 포털 이어받기 (+ 패키지 표시 문구 주입) ([#43](https://github.com/coco-de/co-package/issues/43)) ([#49](https://github.com/coco-de/co-package/issues/49)) ([f578dd5](https://github.com/coco-de/co-package/commit/f578dd54d009609f73fea0c2d99b7a883040eb4b))
+
+
+### 버그 수정
+
+* **examples:** 💄 부팅 전 배경을 넘겨받은 테마로 — 흰 화면 깜빡임 제거 (+ co_demo_prefs 권고) ([#52](https://github.com/coco-de/co-package/issues/52)) ([#54](https://github.com/coco-de/co-package/issues/54)) ([3e242da](https://github.com/coco-de/co-package/commit/3e242dab95d767a9a1d4360593311cd3b0a5b6e7))
+
 ## [0.2.0](https://github.com/coco-de/co-package/compare/open_board-v0.1.0...open_board-v0.2.0) (2026-09-29)
 
 
