@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/coco-de/co-package/compare/co_demo_prefs-v1.0.0...co_demo_prefs-v1.0.1) (2026-10-03)
+
+
+### 버그 수정
+
+* **examples:** 💄 부팅 전 배경을 넘겨받은 테마로 — 흰 화면 깜빡임 제거 (+ co_demo_prefs 권고) ([#52](https://github.com/coco-de/co-package/issues/52)) ([#54](https://github.com/coco-de/co-package/issues/54)) ([3e242da](https://github.com/coco-de/co-package/commit/3e242dab95d767a9a1d4360593311cd3b0a5b6e7))
+
 ## 1.0.0 (2026-10-03)
 
 
