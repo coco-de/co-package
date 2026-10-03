@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:open_board/open_board.dart';
-import 'package:open_epub/open_epub_v1.dart';
+import 'package:open_epub/open_epub.dart';
 
 import 'widgets/drawing_toolbar.dart';
 
@@ -21,7 +21,7 @@ import 'widgets/drawing_toolbar.dart';
 /// - 챕터 전환 시 ScribbleCacheManager로 spineHref별 필기 저장/복원
 ///
 /// 1.0 마이그레이션 포인트:
-/// - 위젯: EpubReaderWidget(0.1.x) → EpubReader(1.0, open_epub_v1.dart)
+/// - 위젯: EpubReaderWidget(0.1.x) → EpubReader(1.0, open_epub.dart)
 /// - 컨트롤러: EpubReaderController(0.1.x) → EpubViewController(1.0)
 /// - 필기 키: 페이지 번호 → spineHref(EpubPosition) 앵커. 글자 크기 고정 +
 ///   spineHref 기준이라 재배치(repagination)에도 필기가 어긋나지 않는다(S8.4).

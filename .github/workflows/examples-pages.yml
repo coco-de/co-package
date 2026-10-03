@@ -1,0 +1,114 @@
+name: Examples Pages
+
+# open_board · open_epub 예제 웹 데모를 이 저장소의 GitHub Pages 한 사이트로 배포한다 (#42).
+#   /              안내 페이지 (tool/pages/index.html)
+#   /open-board/   packages/open_board/example
+#   /open-epub/    packages/open_epub/example
+# 조직 Pages 의 커스텀 도메인 아래 https://docs.cocode.im/co-package/ 로 서빙된다.
+# Actions 아티팩트 배포라 저장소 Pages 설정이 build_type=workflow(소스: GitHub Actions)여야 한다.
+#
+# PR 은 빌드 · 검사만 한다. main push 와 main 에서 돌린 workflow_dispatch 만 배포한다.
+# 두 예제 모두 워크스페이스 멤버라 로컬 패키지로 해석된다 — 비공개 의존성도, 토큰도 필요 없다.
+
+on:
+  pull_request:
+    paths:
+      - "packages/open_board/**"
+      - "packages/open_epub/**"
+      - "packages/open_epub_engine/**"
+      - "pubspec.yaml"
+      - "tool/pages/**"
+      - ".github/workflows/examples-pages.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/open_board/**"
+      - "packages/open_epub/**"
+      - "packages/open_epub_engine/**"
+      - "pubspec.yaml"
+      - "tool/pages/**"
+      - ".github/workflows/examples-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 배포 실행은 `pages` 그룹 하나로 줄 세우고, 진행 중인 배포는 취소하지 않는다.
+# PR 빌드는 PR 마다 따로 묶어 새 커밋이 오면 이전 빌드를 취소한다 — 배포 대기열에 끼어들지 않는다.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FLUTTER_VERSION: "3.47.0" # ci.yml 과 같은 SDK
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      # ci.yml 과 같은 이유 — co_golden_gallery 는 비공개 coco-de/coui 로 렌더하는데, 이 공개
+      # 저장소의 Actions 에는 그걸 읽을 시크릿이 없다. 예제 빌드에는 필요 없는 멤버다.
+      - name: Exclude private CoUI gallery from the workspace
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          pubspec = Path('pubspec.yaml')
+          marker = '  - packages/co_golden_gallery\n'
+          text = pubspec.read_text()
+          if text.count(marker) != 1:
+              raise SystemExit('co_golden_gallery workspace entry not found exactly once')
+          pubspec.write_text(text.replace(marker, ''))
+          PY
+
+      - run: flutter pub get --no-example
+
+      - name: Build open_board example
+        working-directory: packages/open_board/example
+        run: flutter build web --release --no-wasm-dry-run --base-href /co-package/open-board/
+
+      - name: Build open_epub example
+        working-directory: packages/open_epub/example
+        run: flutter build web --release --no-wasm-dry-run --base-href /co-package/open-epub/
+
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp tool/pages/index.html _site/index.html
+          cp -R packages/open_board/example/build/web _site/open-board
+          cp -R packages/open_epub/example/build/web _site/open-epub
+          du -sh _site/*
+
+      # S-16 — 업로드 직전, 인증 env 가 없는 스텝에서 산출물 전체를 스캔한다.
+      - name: Scan site for credentials
+        run: python3 tool/pages/check_no_credentials.py _site
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

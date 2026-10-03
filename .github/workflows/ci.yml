@@ -50,8 +50,9 @@ jobs:
               raise SystemExit('co_golden_gallery workspace entry not found exactly once')
           pubspec.write_text(text.replace(marker, ''))
           PY
-      # --no-example: packages/open_board/example 은 private coco-de/open-epub 을 git
-      # 의존성으로 쓰므로 CI 의 워크스페이스 해석에서 제외한다(인증 불가 → exit 69).
+      # 예제 앱(open_epub/example · open_board/example)은 워크스페이스 멤버라 여기서 함께
+      # 해석 · 분석된다 — 비공개 의존성이 없어 토큰이 필요 없다(#42). --no-example 은 루트
+      # example/ 을 따로 해석하지 않게 하는 플래그로, 루트에는 example/ 이 없다.
       - run: flutter pub get --no-example
       - run: dart format --output=none --set-exit-if-changed packages/co_golden_gallery
       - run: dart pub global activate melos
