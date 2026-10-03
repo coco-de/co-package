@@ -1,0 +1,14 @@
+# 예제 앱 번역 (co-package#44) — `dart run slang` 으로 lib/i18n/strings*.g.dart 를 다시 만든다.
+# 생성물은 커밋한다(CI 는 생성하지 않는다). 언어 집합 · 순서는 co_demo_prefs 의 DemoLocale 과 같다.
+base_locale: ko
+fallback_strategy: base_locale
+input_directory: lib/i18n
+input_file_pattern: .i18n.json
+output_directory: lib/i18n
+output_file_name: strings.g.dart
+lazy: false
+locale_handling: true
+flutter_integration: true
+string_interpolation: braces
+timestamp: false
+statistics: false

@@ -9,7 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:open_epub/open_epub.dart';
 
+import 'demo_settings.dart';
+import 'i18n/strings.g.dart';
+import 'l10n.dart';
 import 'sample_book.dart';
+import 'sample_library_page.dart' show sampleTexts;
 
 class ReaderDemoPage extends StatefulWidget {
   const ReaderDemoPage({super.key, required this.book});
@@ -87,7 +91,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
     final spine = session.book.spine;
     final idx = spine.indexWhere((s) => s.mediaOverlayHref != null);
     if (idx < 0) {
-      _snack('이 책에는 Media Overlay가 없습니다');
+      _snack((t) => t.reader.noMediaOverlay);
       return;
     }
     final href = spine[idx].href;
@@ -95,7 +99,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
 
     final overlay = await session.loadMediaOverlay(href);
     if (overlay.isEmpty) {
-      _snack('Media Overlay(SMIL) 로드 실패');
+      _snack((t) => t.reader.mediaOverlayLoadFailed);
       return;
     }
 
@@ -113,7 +117,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
       // just_audio StreamAudioSource는 iOS 시뮬레이터에서 AVFoundation
       // (-11800)으로 실패한다(실기기/Android는 정상). SMIL 파싱·프래그먼트
       // 하이라이트 배선은 완료된 상태이므로 재생 실패만 안내한다.
-      _snack('오디오 재생 실패(시뮬레이터 제약일 수 있음): $e');
+      _snack((t) => t.reader.audioFailed(error: e));
     }
   }
 
@@ -125,20 +129,25 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
     });
   }
 
-  void _snack(String msg) {
+  /// await 뒤에도 부르므로 문구는 mounted 확인 후에 현재 언어로 만든다.
+  void _snack(String Function(Translations t) message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
+      SnackBar(
+        content: Text(message(context.tr)),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.tr;
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _session?.book.metadata.title ?? widget.book.title,
+          _session?.book.metadata.title ?? sampleTexts(t, widget.book).title,
           key: const ValueKey('reader-title'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -159,12 +168,9 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
                     const Icon(Icons.folder_off_outlined, size: 40),
                     const SizedBox(height: 12),
                     Text(
-                      '이 샘플(${widget.book.asset ?? widget.book.id})은 저장소에 포함되지 않은 '
-                      '로컬 전용 테스트 픽스처입니다(대용량/라이선스 사유로 '
-                      'gitignore 처리됨).\n'
-                      '로컬 개발 환경에서 해당 EPUB 파일을 '
-                      'packages/open_epub/example/assets/ 에 배치한 뒤 '
-                      '다시 실행해 주세요.',
+                      t.reader.localFixture(
+                        asset: widget.book.asset ?? widget.book.id,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -184,19 +190,22 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
               _buildStatusBar(theme),
               const Divider(height: 1),
               Expanded(
-                child: EpubReader(
-                  // key를 asset별로 고정 — 샘플 전환 시 리더 재생성.
-                  key: ValueKey('epub-reader-${widget.book.id}'),
-                  source: EpubSource.bytes(snapshot.data!),
-                  controller: _controller,
-                  paged: _paged,
-                  fontSize: _fontSize,
-                  readingDirection: _rtl
-                      ? EpubPageProgression.rtl
-                      : EpubPageProgression.ltr,
-                  verticalWriting: _vertical,
-                  mediaOverlayController: _moController,
-                  onSessionReady: _onSessionReady,
+                // 책 본문은 콘텐츠 면 — 다크 테마에서도 원래 색.
+                child: LightSurface(
+                  child: EpubReader(
+                    // key를 asset별로 고정 — 샘플 전환 시 리더 재생성.
+                    key: ValueKey('epub-reader-${widget.book.id}'),
+                    source: EpubSource.bytes(snapshot.data!),
+                    controller: _controller,
+                    paged: _paged,
+                    fontSize: _fontSize,
+                    readingDirection: _rtl
+                        ? EpubPageProgression.rtl
+                        : EpubPageProgression.ltr,
+                    verticalWriting: _vertical,
+                    mediaOverlayController: _moController,
+                    onSessionReady: _onSessionReady,
+                  ),
                 ),
               ),
             ],
@@ -209,10 +218,11 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
   // 현재 적용 상태를 marionette 스크린샷으로 검증 가능하게 노출.
   Widget _buildStatusBar(ThemeData theme) {
     final caps = _caps;
+    final t = context.tr.reader;
     final parts = <String>[
-      '모드:${_paged ? "스와이프" : "스크롤"}',
+      '${t.mode}:${_paged ? t.swipe : t.scroll}',
       'RTL:${_rtl ? "on" : "off"}',
-      '세로:${_vertical ? "on" : "off"}',
+      '${t.vertical}:${_vertical ? "on" : "off"}',
       if (caps != null) 'PPD:${caps.pageProgressionDirection.name}',
       if (caps != null && caps.hasMediaOverlay) 'MO:${_moState.name}($_moPar)',
     ];
@@ -230,6 +240,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
 
   Widget _buildControlBar(ThemeData theme) {
     final showMo = widget.book.hasMediaOverlay;
+    final t = context.tr;
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
@@ -239,33 +250,33 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
           children: [
             IconButton(
               key: const ValueKey('reader-prev'),
-              tooltip: '이전 페이지',
+              tooltip: t.common.previousPage,
               icon: const Icon(Icons.chevron_left),
               onPressed: () => _controller.previousPage(),
             ),
             IconButton(
               key: const ValueKey('reader-next'),
-              tooltip: '다음 페이지',
+              tooltip: t.common.nextPage,
               icon: const Icon(Icons.chevron_right),
               onPressed: () => _controller.nextPage(),
             ),
             IconButton(
               key: const ValueKey('reader-font-dec'),
-              tooltip: '글자 작게',
+              tooltip: t.reader.fontSmaller,
               icon: const Icon(Icons.text_decrease),
               onPressed: () =>
                   setState(() => _fontSize = (_fontSize - 2).clamp(12, 32)),
             ),
             IconButton(
               key: const ValueKey('reader-font-inc'),
-              tooltip: '글자 크게',
+              tooltip: t.reader.fontLarger,
               icon: const Icon(Icons.text_increase),
               onPressed: () =>
                   setState(() => _fontSize = (_fontSize + 2).clamp(12, 32)),
             ),
             IconButton(
               key: const ValueKey('reader-scroll-toggle'),
-              tooltip: '세로 스크롤',
+              tooltip: t.reader.verticalScroll,
               isSelected: !_paged,
               icon: const Icon(Icons.view_carousel_outlined),
               selectedIcon: const Icon(Icons.view_agenda_outlined),
@@ -273,7 +284,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
             ),
             IconButton(
               key: const ValueKey('reader-rtl-toggle'),
-              tooltip: 'RTL 넘김 방향',
+              tooltip: t.reader.rtlDirection,
               isSelected: _rtl,
               icon: const Icon(Icons.format_textdirection_l_to_r),
               selectedIcon: const Icon(Icons.format_textdirection_r_to_l),
@@ -281,7 +292,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
             ),
             IconButton(
               key: const ValueKey('reader-vertical-toggle'),
-              tooltip: '세로쓰기',
+              tooltip: t.reader.verticalWriting,
               isSelected: _vertical,
               icon: const Icon(Icons.view_column_outlined),
               selectedIcon: const Icon(Icons.view_column),
@@ -290,7 +301,7 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
             if (showMo)
               IconButton(
                 key: const ValueKey('reader-mo-play'),
-                tooltip: '낭독(Media Overlay)',
+                tooltip: t.reader.narration,
                 isSelected: _moState == MediaOverlayState.playing,
                 icon: const Icon(Icons.play_circle_outline),
                 selectedIcon: const Icon(Icons.pause_circle_outline),

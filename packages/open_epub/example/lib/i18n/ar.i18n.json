@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "عرض open_epub التوضيحي"
+  },
+  "common": {
+    "previousPage": "الصفحة السابقة",
+    "nextPage": "الصفحة التالية",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "close": "إغلاق"
+  },
+  "home": {
+    "library": {
+      "title": "مكتبة نماذج EPUB3",
+      "description": "التحقق من RTL وMathML والكتابة العمودية وMedia Overlay وCFI"
+    },
+    "core": {
+      "title": "عرض النواة 1.0"
+    },
+    "highlight": {
+      "title": "عرض التظليل",
+      "description": "تحديد النص ← اللون ← التظليل + ملاحظة"
+    },
+    "fixedLayout": {
+      "title": "عرض Fixed Layout بحجم A4",
+      "description": "يعرض كتابًا مقسّمًا مسبقًا إلى صفحات بحجم A4 (794×1123)"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "ملف EPUB2 حقيقي بنص متدفق · 22 ميغابايت",
+      "tag": "EPUB2 · ملف كبير"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · أساسيات EPUB3 (nav وCSS)",
+      "tag": "أساسيات EPUB3"
+    },
+    "arabicRtl": {
+      "subtitle": "العربية · page-progression-direction=rtl",
+      "tag": "تقليب الصفحات من اليمين إلى اليسار (E14)"
+    },
+    "mathml": {
+      "subtitle": "71 معادلة MathML · التحويل إلى TeX والبديل",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "الكتابة العمودية اليابانية (vertical-rl) + RTL",
+      "tag": "الكتابة العمودية (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "قراءة صوتية SMIL مع تظليل متزامن مع الصوت",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · المعالم وفهرس متداخل",
+      "tag": "EPUB3 شامل (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · قائمة صفحات من 7 عناصر",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "تخطيط ثابت مقسّم مسبقًا · A4 (794×1123)، 3 صفحات",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "لا يحتوي هذا الكتاب على Media Overlay",
+    "mediaOverlayLoadFailed": "تعذّر تحميل Media Overlay (SMIL)",
+    "audioFailed": "تعذّر تشغيل الصوت (قد يكون ذلك قيدًا في المحاكي): {error}",
+    "localFixture": "هذا النموذج ({asset}) ملف اختبار محلي غير موجود في المستودع (مستبعد عبر .gitignore بسبب الحجم أو الترخيص).\nلفتحه، ضع ملف EPUB في packages/open_epub/example/assets/ في نسختك المحلية ثم شغّل التطبيق من جديد.",
+    "mode": "الوضع",
+    "swipe": "سحب",
+    "scroll": "تمرير",
+    "vertical": "عمودي",
+    "fontSmaller": "تصغير النص",
+    "fontLarger": "تكبير النص",
+    "verticalScroll": "تمرير عمودي",
+    "rtlDirection": "تقليب من اليمين إلى اليسار",
+    "verticalWriting": "كتابة عمودية",
+    "narration": "القراءة الصوتية (Media Overlay)"
+  },
+  "core": {
+    "layoutPatches": "layout: {layout} · التصحيحات: {count}",
+    "recordHighlight": "recordHighlight() — حدث toolUse",
+    "recordBookmark": "recordBookmark() — حدث toolUse",
+    "assetLoadFailed": "تعذّر تحميل الأصل: {error}",
+    "positionTokenTitle": "رمز BookPosition v1",
+    "eventLog": "سجل الأحداث",
+    "positionToken": "رمز الموضع",
+    "waitingForEvents": "في انتظار الأحداث…"
+  },
+  "highlight": {
+    "list": "التظليلات",
+    "action": "تظليل",
+    "openFailed": "تعذّر فتح الكتاب: {error}",
+    "selectFirst": "حدّد نصًا أولًا.",
+    "saved": "تم حفظ التظليل ({color})",
+    "deleted": "تم حذف التظليل",
+    "noteSaved": "تم حفظ الملاحظة",
+    "hintSelected": "اضغط «تظليل» لتلوين التحديد",
+    "hintIdle": "حدّد نصًا ليظهر زر التظليل",
+    "previousChapter": "الفصل السابق",
+    "nextChapter": "الفصل التالي",
+    "note": "ملاحظة",
+    "noteHint": "اكتب ملاحظة",
+    "noteOptional": "ملاحظة (اختيارية)",
+    "colorLabel": "اللون: {color}",
+    "count": "التظليلات: {count}",
+    "empty": "لا توجد تظليلات محفوظة بعد.",
+    "noteLine": "ملاحظة: {note}",
+    "menu": "قائمة التظليل",
+    "editNote": "تعديل الملاحظة",
+    "delete": "حذف",
+    "colors": {
+      "yellow": "أصفر",
+      "green": "أخضر",
+      "blue": "أزرق",
+      "pink": "وردي"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "الصفحة {index}/{total}"
+  },
+  "epubReader": {
+    "fileTooLarge": "الملف كبير جدًا ولا يمكن فتحه.",
+    "networkFailure": "تعذّر جلب الكتاب بسبب خطأ في الشبكة.",
+    "corruptedFile": "ملف EPUB هذا تالف أو غير صالح.",
+    "openFailed": "حدث خطأ أثناء فتح الكتاب.",
+    "positionRestoreFailed": "تعذّر العثور على آخر موضع، لذا يبدأ الكتاب من البداية",
+    "emptyBook": "لا يحتوي هذا الكتاب على شيء لعرضه.",
+    "emptyPage": "لا تحتوي هذه الصفحة على شيء لعرضه.",
+    "chapterLoadFailed": "تعذّر تحميل النص.",
+    "pageLoadFailed": "تعذّر تحميل الصفحة.",
+    "formula": "معادلة"
+  }
+}

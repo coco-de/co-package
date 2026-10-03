@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "Демо open_epub"
+  },
+  "common": {
+    "previousPage": "Предыдущая страница",
+    "nextPage": "Следующая страница",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "close": "Закрыть"
+  },
+  "home": {
+    "library": {
+      "title": "Библиотека примеров EPUB3",
+      "description": "Проверка RTL, MathML, вертикального письма, Media Overlay и CFI"
+    },
+    "core": {
+      "title": "Демо ядра 1.0"
+    },
+    "highlight": {
+      "title": "Демо выделений",
+      "description": "Выбор текста → цвет → выделение + заметка"
+    },
+    "fixedLayout": {
+      "title": "Демо Fixed Layout A4",
+      "description": "Показывает книгу с готовой разбивкой на страницы в формате A4 (794×1123)"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "Настоящая EPUB2 с перетекающим текстом · 22 МБ",
+      "tag": "EPUB2 · большой файл"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · основы EPUB3 (nav, CSS)",
+      "tag": "Основы EPUB3"
+    },
+    "arabicRtl": {
+      "subtitle": "Арабский · page-progression-direction=rtl",
+      "tag": "Листание справа налево (E14)"
+    },
+    "mathml": {
+      "subtitle": "71 формула MathML · преобразование в TeX и запасной вариант",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "Японское вертикальное письмо (vertical-rl) + RTL",
+      "tag": "Вертикальное письмо (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "Озвучка SMIL с синхронной подсветкой",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · ориентиры (landmarks) и вложенное оглавление",
+      "tag": "Полный EPUB3 (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · page-list из 7 пунктов",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "Фиксированный макет с разбивкой · A4 (794×1123), 3 страницы",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "В этой книге нет Media Overlay",
+    "mediaOverlayLoadFailed": "Не удалось загрузить Media Overlay (SMIL)",
+    "audioFailed": "Не удалось воспроизвести звук (возможно, ограничение симулятора): {error}",
+    "localFixture": "Этот пример ({asset}) — локальный тестовый файл, которого нет в репозитории (исключён через .gitignore из-за размера или лицензии).\nЧтобы открыть его, положите EPUB-файл в packages/open_epub/example/assets/ в локальной копии и запустите приложение снова.",
+    "mode": "Режим",
+    "swipe": "листание",
+    "scroll": "прокрутка",
+    "vertical": "Вертикально",
+    "fontSmaller": "Уменьшить текст",
+    "fontLarger": "Увеличить текст",
+    "verticalScroll": "Вертикальная прокрутка",
+    "rtlDirection": "Листание справа налево",
+    "verticalWriting": "Вертикальное письмо",
+    "narration": "Озвучка (Media Overlay)"
+  },
+  "core": {
+    "layoutPatches": "layout: {layout} · исправлений: {count}",
+    "recordHighlight": "recordHighlight() — событие toolUse",
+    "recordBookmark": "recordBookmark() — событие toolUse",
+    "assetLoadFailed": "Не удалось загрузить ресурс: {error}",
+    "positionTokenTitle": "Токен BookPosition v1",
+    "eventLog": "Журнал событий",
+    "positionToken": "Токен позиции",
+    "waitingForEvents": "Ожидание событий…"
+  },
+  "highlight": {
+    "list": "Выделения",
+    "action": "Выделить",
+    "openFailed": "Не удаётся открыть книгу: {error}",
+    "selectFirst": "Сначала выделите текст.",
+    "saved": "Выделение сохранено ({color})",
+    "deleted": "Выделение удалено",
+    "noteSaved": "Заметка сохранена",
+    "hintSelected": "Нажмите «Выделить», чтобы окрасить фрагмент",
+    "hintIdle": "Выделите текст, и появится кнопка «Выделить»",
+    "previousChapter": "Предыдущая глава",
+    "nextChapter": "Следующая глава",
+    "note": "Заметка",
+    "noteHint": "Введите заметку",
+    "noteOptional": "Заметка (необязательно)",
+    "colorLabel": "Цвет: {color}",
+    "count": "Выделений: {count}",
+    "empty": "Сохранённых выделений пока нет.",
+    "noteLine": "Заметка: {note}",
+    "menu": "Меню выделения",
+    "editNote": "Изменить заметку",
+    "delete": "Удалить",
+    "colors": {
+      "yellow": "Жёлтый",
+      "green": "Зелёный",
+      "blue": "Синий",
+      "pink": "Розовый"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "стр. {index}/{total}"
+  },
+  "epubReader": {
+    "fileTooLarge": "Файл слишком большой, его нельзя открыть.",
+    "networkFailure": "Не удалось получить книгу из-за ошибки сети.",
+    "corruptedFile": "Этот EPUB повреждён или некорректен.",
+    "openFailed": "При открытии книги произошла ошибка.",
+    "positionRestoreFailed": "Не удалось найти последнюю позицию, книга открыта с начала",
+    "emptyBook": "В этой книге нечего показать.",
+    "emptyPage": "На этой странице нечего показать.",
+    "chapterLoadFailed": "Не удалось загрузить текст.",
+    "pageLoadFailed": "Не удалось загрузить страницу.",
+    "formula": "Формула"
+  }
+}

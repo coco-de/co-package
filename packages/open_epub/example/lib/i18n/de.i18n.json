@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "open_epub Demo"
+  },
+  "common": {
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "close": "Schließen"
+  },
+  "home": {
+    "library": {
+      "title": "EPUB3-Beispielbibliothek",
+      "description": "Prüft RTL, MathML, vertikale Schrift, Media Overlay und CFI"
+    },
+    "core": {
+      "title": "1.0-Core-Demo"
+    },
+    "highlight": {
+      "title": "Markierungsdemo",
+      "description": "Text auswählen → Farbe → Markierung + Notiz"
+    },
+    "fixedLayout": {
+      "title": "Fixed-Layout-A4-Demo",
+      "description": "Stellt ein vorpaginiertes Buch im A4-Format (794×1123) dar"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "Echtes EPUB2 mit Umbruch · 22 MB groß",
+      "tag": "EPUB2 · große Datei"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · EPUB3-Grundlagen (nav, CSS)",
+      "tag": "EPUB3-Grundlagen"
+    },
+    "arabicRtl": {
+      "subtitle": "Arabisch · page-progression-direction=rtl",
+      "tag": "RTL-Blättern (E14)"
+    },
+    "mathml": {
+      "subtitle": "71 MathML-Formeln · TeX-Umwandlung und Ersatzdarstellung",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "Japanische vertikale Schrift (vertical-rl) + RTL",
+      "tag": "Vertikale Schrift (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "SMIL-Vorlesen mit synchroner Audio-Markierung",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · Landmarks und verschachteltes Inhaltsverzeichnis",
+      "tag": "Umfassendes EPUB3 (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · page-list mit 7 Einträgen",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "Vorpaginiertes festes Layout · A4 (794×1123), 3 Seiten",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "Dieses Buch hat kein Media Overlay",
+    "mediaOverlayLoadFailed": "Media Overlay (SMIL) konnte nicht geladen werden",
+    "audioFailed": "Audiowiedergabe fehlgeschlagen (möglicherweise eine Einschränkung des Simulators): {error}",
+    "localFixture": "Dieses Beispiel ({asset}) ist eine lokale Testdatei, die nicht im Repository liegt (wegen Größe oder Lizenz per .gitignore ausgeschlossen).\nZum Öffnen die EPUB-Datei in der lokalen Arbeitskopie unter packages/open_epub/example/assets/ ablegen und die App neu starten.",
+    "mode": "Modus",
+    "swipe": "Wischen",
+    "scroll": "Scrollen",
+    "vertical": "Vertikal",
+    "fontSmaller": "Schrift kleiner",
+    "fontLarger": "Schrift größer",
+    "verticalScroll": "Vertikal scrollen",
+    "rtlDirection": "Blätterrichtung RTL",
+    "verticalWriting": "Vertikale Schrift",
+    "narration": "Vorlesen (Media Overlay)"
+  },
+  "core": {
+    "layoutPatches": "layout: {layout} · Korrekturen: {count}",
+    "recordHighlight": "recordHighlight() — toolUse-Ereignis",
+    "recordBookmark": "recordBookmark() — toolUse-Ereignis",
+    "assetLoadFailed": "Asset konnte nicht geladen werden: {error}",
+    "positionTokenTitle": "BookPosition-v1-Token",
+    "eventLog": "Ereignisprotokoll",
+    "positionToken": "Positions-Token",
+    "waitingForEvents": "Warte auf Ereignisse …"
+  },
+  "highlight": {
+    "list": "Markierungen",
+    "action": "Markieren",
+    "openFailed": "Das Buch kann nicht geöffnet werden: {error}",
+    "selectFirst": "Bitte zuerst Text auswählen.",
+    "saved": "Markierung gespeichert ({color})",
+    "deleted": "Markierung gelöscht",
+    "noteSaved": "Notiz gespeichert",
+    "hintSelected": "„Markieren“ drücken, um die Auswahl einzufärben",
+    "hintIdle": "Text auswählen, dann erscheint die Schaltfläche „Markieren“",
+    "previousChapter": "Vorheriges Kapitel",
+    "nextChapter": "Nächstes Kapitel",
+    "note": "Notiz",
+    "noteHint": "Notiz eingeben",
+    "noteOptional": "Notiz (optional)",
+    "colorLabel": "Farbe: {color}",
+    "count": "Markierungen: {count}",
+    "empty": "Noch keine Markierungen.",
+    "noteLine": "Notiz: {note}",
+    "menu": "Markierungsmenü",
+    "editNote": "Notiz bearbeiten",
+    "delete": "Löschen",
+    "colors": {
+      "yellow": "Gelb",
+      "green": "Grün",
+      "blue": "Blau",
+      "pink": "Rosa"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "Seite {index}/{total}"
+  },
+  "epubReader": {
+    "fileTooLarge": "Die Datei ist zu groß zum Öffnen.",
+    "networkFailure": "Das Buch konnte wegen eines Netzwerkfehlers nicht geladen werden.",
+    "corruptedFile": "Dieses EPUB ist beschädigt oder ungültig.",
+    "openFailed": "Beim Öffnen des Buches ist ein Fehler aufgetreten.",
+    "positionRestoreFailed": "Die letzte Position wurde nicht gefunden, daher beginnt das Buch von vorn",
+    "emptyBook": "Dieses Buch enthält nichts zum Anzeigen.",
+    "emptyPage": "Diese Seite enthält nichts zum Anzeigen.",
+    "chapterLoadFailed": "Der Text konnte nicht geladen werden.",
+    "pageLoadFailed": "Die Seite konnte nicht geladen werden.",
+    "formula": "Formel"
+  }
+}

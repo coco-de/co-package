@@ -12,6 +12,8 @@ import 'package:open_epub/open_epub.dart';
 
 import 'demo_epub.dart'
     show buildFixedLayoutA4DemoEpub, kA4PageHeight, kA4PageWidth;
+import 'demo_settings.dart';
+import 'l10n.dart';
 
 class FixedLayoutDemoPage extends StatefulWidget {
   const FixedLayoutDemoPage({super.key});
@@ -59,7 +61,7 @@ class _FixedLayoutDemoPageState extends State<FixedLayoutDemoPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fixed Layout A4 데모'),
+        title: Text(context.tr.home.fixedLayout.title),
         centerTitle: true,
       ),
       body: FutureBuilder<Uint8List>(
@@ -74,11 +76,14 @@ class _FixedLayoutDemoPageState extends State<FixedLayoutDemoPage> {
               _buildStatusBar(theme),
               const Divider(height: 1),
               Expanded(
-                child: EpubReader(
-                  source: EpubSource.bytes(snapshot.data!),
-                  controller: _controller,
-                  onSessionReady: _onSessionReady,
-                  onPageChanged: _onPageChanged,
+                // 책 본문(A4 페이지)은 콘텐츠 면 — 다크 테마에서도 원래 색.
+                child: LightSurface(
+                  child: EpubReader(
+                    source: EpubSource.bytes(snapshot.data!),
+                    controller: _controller,
+                    onSessionReady: _onSessionReady,
+                    onPageChanged: _onPageChanged,
+                  ),
                 ),
               ),
             ],
@@ -93,7 +98,11 @@ class _FixedLayoutDemoPageState extends State<FixedLayoutDemoPage> {
     final parts = <String>[
       'layout:$layout',
       'size:${kA4PageWidth.toInt()}×${kA4PageHeight.toInt()} (A4)',
-      if (_spineCount > 0) '${_spineIndex + 1}/$_spineCount쪽',
+      if (_spineCount > 0)
+        context.tr.fixedLayout.pageOf(
+          index: _spineIndex + 1,
+          total: _spineCount,
+        ),
     ];
     return Container(
       width: double.infinity,
@@ -117,13 +126,13 @@ class _FixedLayoutDemoPageState extends State<FixedLayoutDemoPage> {
           children: [
             IconButton(
               key: const ValueKey('fixed-layout-a4-prev'),
-              tooltip: '이전 페이지',
+              tooltip: context.tr.common.previousPage,
               icon: const Icon(Icons.chevron_left),
               onPressed: () => _controller.previousPage(),
             ),
             IconButton(
               key: const ValueKey('fixed-layout-a4-next'),
-              tooltip: '다음 페이지',
+              tooltip: context.tr.common.nextPage,
               icon: const Icon(Icons.chevron_right),
               onPressed: () => _controller.nextPage(),
             ),

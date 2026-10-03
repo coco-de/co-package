@@ -19,6 +19,8 @@ import 'package:flutter/material.dart';
 import 'package:open_epub/open_epub.dart';
 
 import 'demo_epub.dart' show buildDemoEpub;
+import 'demo_settings.dart';
+import 'l10n.dart';
 
 class V1DemoPage extends StatefulWidget {
   const V1DemoPage({super.key});
@@ -90,12 +92,12 @@ class _V1DemoPageState extends State<V1DemoPage> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('BookPosition v1 토큰'),
+        title: Text(context.tr.core.positionTokenTitle),
         content: SelectableText(token),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('닫기'),
+            child: Text(context.tr.common.close),
           ),
         ],
       ),
@@ -116,11 +118,12 @@ class _V1DemoPageState extends State<V1DemoPage> {
   Widget build(BuildContext context) {
     final session = _session;
     final theme = Theme.of(context);
+    final t = context.tr;
 
     return Scaffold(
       appBar: AppBar(
         title: session == null
-            ? const Text('1.0 코어 데모')
+            ? Text(t.home.core.title)
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -130,20 +133,22 @@ class _V1DemoPageState extends State<V1DemoPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'layout: ${session.book.layout.name} · '
-                    '보정 ${session.diagnostics.appliedPatches.length}건',
+                    t.core.layoutPatches(
+                      layout: session.book.layout.name,
+                      count: session.diagnostics.appliedPatches.length,
+                    ),
                     style: theme.textTheme.bodySmall,
                   ),
                 ],
               ),
         actions: [
           IconButton(
-            tooltip: 'recordHighlight() — toolUse 이벤트',
+            tooltip: t.core.recordHighlight,
             icon: const Icon(Icons.border_color_outlined),
             onPressed: session?.recordHighlight,
           ),
           IconButton(
-            tooltip: 'recordBookmark() — toolUse 이벤트',
+            tooltip: t.core.recordBookmark,
             icon: const Icon(Icons.bookmark_add_outlined),
             onPressed: session?.recordBookmark,
           ),
@@ -156,7 +161,7 @@ class _V1DemoPageState extends State<V1DemoPage> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('asset 로드 실패: ${snapshot.error}'),
+                child: Text(t.core.assetLoadFailed(error: '${snapshot.error}')),
               ),
             );
           }
@@ -166,14 +171,17 @@ class _V1DemoPageState extends State<V1DemoPage> {
           return Column(
             children: [
               Expanded(
-                child: EpubReader(
-                  source: EpubSource.bytes(snapshot.data!),
-                  // 데모에서 progress 이벤트를 빠르게 보기 위해 throttle 단축
-                  // (기본 30초).
-                  options: const EpubSessionOptions(
-                    progressThrottle: Duration(seconds: 2),
+                // 책 본문은 콘텐츠 면 — 다크 테마에서도 원래 색.
+                child: LightSurface(
+                  child: EpubReader(
+                    source: EpubSource.bytes(snapshot.data!),
+                    // 데모에서 progress 이벤트를 빠르게 보기 위해 throttle 단축
+                    // (기본 30초).
+                    options: const EpubSessionOptions(
+                      progressThrottle: Duration(seconds: 2),
+                    ),
+                    onSessionReady: _onSessionReady,
                   ),
-                  onSessionReady: _onSessionReady,
                 ),
               ),
               _buildEventPanel(theme),
@@ -188,6 +196,7 @@ class _V1DemoPageState extends State<V1DemoPage> {
 
   Widget _buildEventPanel(ThemeData theme) {
     final session = _session;
+    final t = context.tr;
 
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
@@ -203,7 +212,7 @@ class _V1DemoPageState extends State<V1DemoPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
-                    Text('이벤트 로그', style: theme.textTheme.titleSmall),
+                    Text(t.core.eventLog, style: theme.textTheme.titleSmall),
                     const Spacer(),
                     IconButton(
                       tooltip: 'session.previousPage()',
@@ -218,7 +227,7 @@ class _V1DemoPageState extends State<V1DemoPage> {
                     TextButton.icon(
                       onPressed: session == null ? null : _showPositionToken,
                       icon: const Icon(Icons.pin_drop_outlined, size: 18),
-                      label: const Text('위치 토큰'),
+                      label: Text(t.core.positionToken),
                     ),
                   ],
                 ),
@@ -228,7 +237,7 @@ class _V1DemoPageState extends State<V1DemoPage> {
                 child: _logs.isEmpty
                     ? Center(
                         child: Text(
-                          '이벤트 대기 중...',
+                          t.core.waitingForEvents,
                           style: theme.textTheme.bodySmall,
                         ),
                       )

@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "open_epub Demo"
+  },
+  "common": {
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close"
+  },
+  "home": {
+    "library": {
+      "title": "EPUB3 Sample Library",
+      "description": "Checks for RTL, MathML, vertical writing, Media Overlay and CFI"
+    },
+    "core": {
+      "title": "1.0 Core Demo"
+    },
+    "highlight": {
+      "title": "Highlight Demo",
+      "description": "Select text → color → highlight + note"
+    },
+    "fixedLayout": {
+      "title": "Fixed Layout A4 Demo",
+      "description": "Renders a pre-paginated book at A4 size (794×1123)"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "Real-world EPUB2 reflowable · 22 MB",
+      "tag": "EPUB2 · large file"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · EPUB3 basics (nav, CSS)",
+      "tag": "EPUB3 basics"
+    },
+    "arabicRtl": {
+      "subtitle": "Arabic · page-progression-direction=rtl",
+      "tag": "RTL page turns (E14)"
+    },
+    "mathml": {
+      "subtitle": "71 MathML formulas · TeX conversion and fallback",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "Japanese vertical writing (vertical-rl) + RTL",
+      "tag": "Vertical writing (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "SMIL narration with synchronized audio highlights",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · landmarks and a nested table of contents",
+      "tag": "Comprehensive EPUB3 (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · page-list of 7",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "Pre-paginated fixed layout · A4 (794×1123), 3 pages",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "This book has no Media Overlay",
+    "mediaOverlayLoadFailed": "Could not load the Media Overlay (SMIL)",
+    "audioFailed": "Audio playback failed (possibly a simulator limitation): {error}",
+    "localFixture": "This sample ({asset}) is a local-only test fixture that is not in the repository (excluded by .gitignore for size or licensing reasons).\nTo open it, put the EPUB file in packages/open_epub/example/assets/ in your local checkout and run the app again.",
+    "mode": "Mode",
+    "swipe": "swipe",
+    "scroll": "scroll",
+    "vertical": "Vertical",
+    "fontSmaller": "Smaller text",
+    "fontLarger": "Larger text",
+    "verticalScroll": "Vertical scrolling",
+    "rtlDirection": "Right-to-left page turns",
+    "verticalWriting": "Vertical writing",
+    "narration": "Narration (Media Overlay)"
+  },
+  "core": {
+    "layoutPatches": "layout: {layout} · fixes: {count}",
+    "recordHighlight": "recordHighlight() — toolUse event",
+    "recordBookmark": "recordBookmark() — toolUse event",
+    "assetLoadFailed": "Could not load the asset: {error}",
+    "positionTokenTitle": "BookPosition v1 token",
+    "eventLog": "Event log",
+    "positionToken": "Position token",
+    "waitingForEvents": "Waiting for events…"
+  },
+  "highlight": {
+    "list": "Highlights",
+    "action": "Highlight",
+    "openFailed": "Could not open the book: {error}",
+    "selectFirst": "Select some text first.",
+    "saved": "Highlight saved ({color})",
+    "deleted": "Highlight deleted",
+    "noteSaved": "Note saved",
+    "hintSelected": "Press “Highlight” to color the selection",
+    "hintIdle": "Select text to show the Highlight button",
+    "previousChapter": "Previous chapter",
+    "nextChapter": "Next chapter",
+    "note": "Note",
+    "noteHint": "Enter a note",
+    "noteOptional": "Note (optional)",
+    "colorLabel": "Color: {color}",
+    "count": "Highlights: {count}",
+    "empty": "No highlights yet.",
+    "noteLine": "Note: {note}",
+    "menu": "Highlight menu",
+    "editNote": "Edit note",
+    "delete": "Delete",
+    "colors": {
+      "yellow": "Yellow",
+      "green": "Green",
+      "blue": "Blue",
+      "pink": "Pink"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "page {index}/{total}"
+  },
+  "epubReader": {
+    "fileTooLarge": "This file is too large to open.",
+    "networkFailure": "The book could not be downloaded because of a network error.",
+    "corruptedFile": "This EPUB is damaged or not valid.",
+    "openFailed": "Something went wrong while opening the book.",
+    "positionRestoreFailed": "Could not find your last position, so the book starts from the beginning",
+    "emptyBook": "This book has nothing to show.",
+    "emptyPage": "This page has nothing to show.",
+    "chapterLoadFailed": "Could not load this chapter.",
+    "pageLoadFailed": "Could not load this page.",
+    "formula": "Formula"
+  }
+}

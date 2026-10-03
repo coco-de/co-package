@@ -14,9 +14,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   open_epub:
     path: ../
+
+  # 데모 포털(demo.cocode.im)에서 고른 언어 · 테마 이어받기 — 같은 워크스페이스 멤버 (#44)
+  co_demo_prefs:
+    path: ../../co_demo_prefs
+
+  # 11개 언어 번역 — lib/i18n/*.i18n.json → `dart run slang` (생성물 커밋)
+  intl: any
+  slang: ^4.19.2
+  slang_flutter: ^4.19.0
 
   cupertino_icons: ^1.0.9
 
