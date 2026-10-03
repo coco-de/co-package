@@ -23,6 +23,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';
 
+import '../../widgets/epub_reader_strings_scope.dart';
 import 'archive_svg.dart';
 import 'epub_stylesheet.dart';
 import 'epub_xhtml.dart';
@@ -736,7 +737,9 @@ class _MathFormula extends StatelessWidget {
   Widget build(BuildContext context) {
     final altText = alt?.trim();
     return Semantics(
-      label: (altText != null && altText.isNotEmpty) ? altText : '수식',
+      label: (altText != null && altText.isNotEmpty)
+          ? altText
+          : EpubReaderStringsScope.of(context).formula,
       child: Math.tex(
         tex,
         mathStyle: MathStyle.text,
@@ -757,7 +760,9 @@ class _FormulaPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final altText = alt?.trim();
-    final label = (altText != null && altText.isNotEmpty) ? altText : '수식';
+    final label = (altText != null && altText.isNotEmpty)
+        ? altText
+        : EpubReaderStringsScope.of(context).formula;
     return Semantics(
       label: label,
       child: Container(
@@ -795,7 +800,7 @@ class _BlankContentNotice extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Center(
         child: Text(
-          '이 페이지에는 표시할 내용이 없습니다.',
+          EpubReaderStringsScope.of(context).emptyPage,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -811,7 +816,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('이 책에는 표시할 내용이 없습니다.'));
+    return Center(child: Text(EpubReaderStringsScope.of(context).emptyBook));
   }
 }
 
@@ -825,7 +830,7 @@ class _ErrorState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Text(
-          '본문을 불러올 수 없습니다.\n$error',
+          '${EpubReaderStringsScope.of(context).chapterLoadFailed}\n$error',
           textAlign: TextAlign.center,
         ),
       ),

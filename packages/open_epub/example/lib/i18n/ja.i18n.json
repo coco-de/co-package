@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "open_epub デモ"
+  },
+  "common": {
+    "previousPage": "前のページ",
+    "nextPage": "次のページ",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "close": "閉じる"
+  },
+  "home": {
+    "library": {
+      "title": "EPUB3 サンプルライブラリ",
+      "description": "RTL・MathML・縦書き・Media Overlay・CFI の機能を検証"
+    },
+    "core": {
+      "title": "1.0 コアデモ"
+    },
+    "highlight": {
+      "title": "ハイライトデモ",
+      "description": "テキスト選択 → 色 → ハイライト + メモ"
+    },
+    "fixedLayout": {
+      "title": "Fixed Layout A4 デモ",
+      "description": "pre-paginated の本文を A4（794×1123）サイズで描画"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "実際の EPUB2 リフロー · 22MB の大容量",
+      "tag": "EPUB2 · 大容量"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · EPUB3 の基本（nav・CSS）",
+      "tag": "EPUB3 の基本"
+    },
+    "arabicRtl": {
+      "subtitle": "アラビア語 · page-progression-direction=rtl",
+      "tag": "RTL ページ送り (E14)"
+    },
+    "mathml": {
+      "subtitle": "MathML 数式 71 個 · TeX 変換／フォールバック",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "日本語の縦書き（vertical-rl）+ RTL",
+      "tag": "縦書き (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "SMIL 読み上げ + 音声同期ハイライト",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · landmarks・目次の階層",
+      "tag": "総合 EPUB3 (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · page-list 7 件",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "pre-paginated 固定レイアウト · A4（794×1123）3 ページ",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "この本には Media Overlay がありません",
+    "mediaOverlayLoadFailed": "Media Overlay（SMIL）の読み込みに失敗しました",
+    "audioFailed": "音声の再生に失敗しました（シミュレーターの制約の可能性があります）：{error}",
+    "localFixture": "このサンプル（{asset}）はリポジトリに含まれていないローカル専用のテスト用ファイルです（容量またはライセンスの理由で gitignore 対象）。\nローカルの開発環境で該当する EPUB ファイルを packages/open_epub/example/assets/ に置いてから、もう一度実行してください。",
+    "mode": "モード",
+    "swipe": "スワイプ",
+    "scroll": "スクロール",
+    "vertical": "縦書き",
+    "fontSmaller": "文字を小さく",
+    "fontLarger": "文字を大きく",
+    "verticalScroll": "縦スクロール",
+    "rtlDirection": "RTL ページ送り方向",
+    "verticalWriting": "縦書き",
+    "narration": "読み上げ（Media Overlay）"
+  },
+  "core": {
+    "layoutPatches": "layout: {layout} · 補正 {count} 件",
+    "recordHighlight": "recordHighlight() — toolUse イベント",
+    "recordBookmark": "recordBookmark() — toolUse イベント",
+    "assetLoadFailed": "アセットの読み込みに失敗しました：{error}",
+    "positionTokenTitle": "BookPosition v1 トークン",
+    "eventLog": "イベントログ",
+    "positionToken": "位置トークン",
+    "waitingForEvents": "イベントを待っています…"
+  },
+  "highlight": {
+    "list": "ハイライト一覧",
+    "action": "ハイライト",
+    "openFailed": "本を開けません：{error}",
+    "selectFirst": "先に本文のテキストを選択してください。",
+    "saved": "ハイライトを保存しました（{color}）",
+    "deleted": "ハイライトを削除しました",
+    "noteSaved": "メモを保存しました",
+    "hintSelected": "「ハイライト」ボタンを押して色を付けてください",
+    "hintIdle": "本文のテキストを選択するとハイライトボタンが表示されます",
+    "previousChapter": "前の章",
+    "nextChapter": "次の章",
+    "note": "メモ",
+    "noteHint": "メモを入力してください",
+    "noteOptional": "メモ（任意）",
+    "colorLabel": "色：{color}",
+    "count": "ハイライト：{count}",
+    "empty": "保存されたハイライトはありません。",
+    "noteLine": "メモ：{note}",
+    "menu": "ハイライトメニュー",
+    "editNote": "メモを編集",
+    "delete": "削除",
+    "colors": {
+      "yellow": "黄",
+      "green": "緑",
+      "blue": "青",
+      "pink": "ピンク"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "{index}/{total} ページ"
+  },
+  "epubReader": {
+    "fileTooLarge": "ファイルが大きすぎて開けません。",
+    "networkFailure": "ネットワークエラーのため本を取得できませんでした。",
+    "corruptedFile": "破損しているか、正しくない EPUB です。",
+    "openFailed": "本を開くときにエラーが発生しました。",
+    "positionRestoreFailed": "前回の位置が見つからないため、最初から表示します",
+    "emptyBook": "この本には表示できる内容がありません。",
+    "emptyPage": "このページには表示できる内容がありません。",
+    "chapterLoadFailed": "本文を読み込めません。",
+    "pageLoadFailed": "ページを読み込めません。",
+    "formula": "数式"
+  }
+}

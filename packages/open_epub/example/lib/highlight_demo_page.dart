@@ -37,14 +37,30 @@ import 'package:open_epub/open_epub.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'demo_epub.dart' show buildDemoEpub;
+import 'demo_settings.dart';
+import 'i18n/strings.g.dart';
+import 'l10n.dart';
 
 /// 하이라이트 색상 팔레트 (BDD F5 — 4색).
+///
+/// 키는 저장 데이터(`colorName`)에 그대로 남는 식별자라 바꾸지 않는다 — 화면에는
+/// [highlightColorLabel] 로 번역된 이름을 보인다.
 const Map<String, Color> highlightPalette = {
   '노랑': Color(0xFFFFF59D),
   '초록': Color(0xFFC8E6C9),
   '파랑': Color(0xFFBBDEFB),
   '분홍': Color(0xFFF8BBD0),
 };
+
+/// [highlightPalette] 키의 표시 이름(현재 언어).
+String highlightColorLabel(Translations t, String colorName) =>
+    switch (colorName) {
+      '노랑' => t.highlight.colors.yellow,
+      '초록' => t.highlight.colors.green,
+      '파랑' => t.highlight.colors.blue,
+      '분홍' => t.highlight.colors.pink,
+      _ => colorName,
+    };
 
 /// 데모 하이라이트 1건. 선택 평문 텍스트 + 색상 + 메모.
 @immutable
@@ -374,7 +390,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
   Future<void> startHighlightFlow({String? textOverride}) async {
     final text = (textOverride ?? _selectedText)?.trim() ?? '';
     if (text.isEmpty) {
-      _showSnack('먼저 본문 텍스트를 선택하세요.');
+      _showSnack((t) => t.highlight.selectFirst);
       return;
     }
     final result =
@@ -389,14 +405,17 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
       colorName: result.colorName,
       note: result.note,
     );
-    _showSnack('하이라이트 저장됨 (${result.colorName})');
+    _showSnack(
+      (t) => t.highlight.saved(color: highlightColorLabel(t, result.colorName)),
+    );
   }
 
-  void _showSnack(String message) {
+  /// await 뒤에도 부르므로 문구는 mounted 확인 후에 현재 언어로 만든다.
+  void _showSnack(String Function(Translations t) message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: Text(message(context.tr))));
   }
 
   // --- 하이라이트 목록 ---
@@ -414,7 +433,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
         onDelete: (highlight) async {
           Navigator.pop(sheetContext);
           await removeHighlight(highlight.id);
-          _showSnack('하이라이트 삭제됨');
+          _showSnack((t) => t.highlight.deleted);
         },
         onEditNote: (highlight) async {
           Navigator.pop(sheetContext);
@@ -431,7 +450,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
     );
     if (note == null) return;
     await updateNote(highlight.id, note);
-    _showSnack('메모 저장됨');
+    _showSnack((t) => t.highlight.noteSaved);
   }
 
   // --- build ---
@@ -439,13 +458,14 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.tr;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('하이라이트 데모'),
+        title: Text(t.home.highlight.title),
         actions: [
           IconButton(
-            tooltip: '하이라이트 목록',
+            tooltip: t.highlight.list,
             onPressed: _session == null ? null : _showHighlightList,
             icon: Badge.count(
               count: _highlights.length,
@@ -464,7 +484,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
               child: FloatingActionButton.extended(
                 onPressed: () => unawaited(startHighlightFlow()),
                 icon: const Icon(Icons.border_color_outlined),
-                label: const Text('하이라이트'),
+                label: Text(t.highlight.action),
               ),
             )
           : null,
@@ -475,7 +495,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('책을 열 수 없습니다: ${snapshot.error}'),
+                child: Text(t.highlight.openFailed(error: '${snapshot.error}')),
               ),
             );
           }
@@ -500,7 +520,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
                         anchors: selectableRegionState.contextMenuAnchors,
                         buttonItems: [
                           ContextMenuButtonItem(
-                            label: '하이라이트',
+                            label: t.highlight.action,
                             onPressed: () {
                               selectableRegionState.hideToolbar();
                               unawaited(startHighlightFlow());
@@ -509,12 +529,15 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
                           ...selectableRegionState.contextMenuButtonItems,
                         ],
                       ),
-                  child: ReflowableEngine(
-                    key: ValueKey('engine-$_spineIndex-rev$_revision'),
-                    book: session.book,
-                    initialSpineIndex: _engineSpineIndex,
-                    xhtmlLoader: _loadDecoratedXhtml,
-                    imageLoader: _loadImage,
+                  // 책 본문은 콘텐츠 면 — 다크 테마에서도 원래 색.
+                  child: LightSurface(
+                    child: ReflowableEngine(
+                      key: ValueKey('engine-$_spineIndex-rev$_revision'),
+                      book: session.book,
+                      initialSpineIndex: _engineSpineIndex,
+                      xhtmlLoader: _loadDecoratedXhtml,
+                      imageLoader: _loadImage,
+                    ),
                   ),
                 ),
               ),
@@ -528,6 +551,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
 
   Widget _buildBottomBar(ThemeData theme) {
     final hrefs = _navHrefs;
+    final t = context.tr.highlight;
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
       child: SafeArea(
@@ -538,15 +562,13 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
             children: [
               Expanded(
                 child: Text(
-                  _hasSelection
-                      ? '"하이라이트" 버튼을 눌러 색을 칠하세요'
-                      : '본문 텍스트를 선택하면 하이라이트 버튼이 나타납니다',
+                  _hasSelection ? t.hintSelected : t.hintIdle,
                   style: theme.textTheme.bodySmall,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               IconButton(
-                tooltip: '이전 챕터',
+                tooltip: t.previousChapter,
                 icon: const Icon(Icons.chevron_left),
                 onPressed: _spineIndex > 0 ? () => _moveSpine(-1) : null,
               ),
@@ -555,7 +577,7 @@ class HighlightDemoPageState extends State<HighlightDemoPage> {
                 style: theme.textTheme.bodySmall,
               ),
               IconButton(
-                tooltip: '다음 챕터',
+                tooltip: t.nextChapter,
                 icon: const Icon(Icons.chevron_right),
                 onPressed: _spineIndex < hrefs.length - 1
                     ? () => _moveSpine(1)
@@ -593,22 +615,23 @@ class _NoteDialogState extends State<_NoteDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tr;
     return AlertDialog(
-      title: const Text('메모'),
+      title: Text(t.highlight.note),
       content: TextField(
         controller: _controller,
         autofocus: true,
         maxLines: 3,
-        decoration: const InputDecoration(hintText: '메모를 입력하세요'),
+        decoration: InputDecoration(hintText: t.highlight.noteHint),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
+          child: Text(t.common.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, _controller.text),
-          child: const Text('저장'),
+          child: Text(t.common.save),
         ),
       ],
     );
@@ -639,6 +662,7 @@ class _HighlightSheetState extends State<_HighlightSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final viewInsets = MediaQuery.viewInsetsOf(context);
+    final t = context.tr;
 
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets.bottom),
@@ -649,7 +673,7 @@ class _HighlightSheetState extends State<_HighlightSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('하이라이트', style: theme.textTheme.titleMedium),
+              Text(t.highlight.action, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(
                 '"${widget.excerpt}"',
@@ -664,7 +688,9 @@ class _HighlightSheetState extends State<_HighlightSheet> {
                     Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: Semantics(
-                        label: '색상 ${entry.key}',
+                        label: t.highlight.colorLabel(
+                          color: highlightColorLabel(t, entry.key),
+                        ),
                         button: true,
                         selected: _colorName == entry.key,
                         child: GestureDetector(
@@ -685,9 +711,9 @@ class _HighlightSheetState extends State<_HighlightSheet> {
               TextField(
                 controller: _noteController,
                 maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: '메모 (선택)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: t.highlight.noteOptional,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
@@ -696,7 +722,7 @@ class _HighlightSheetState extends State<_HighlightSheet> {
                   colorName: _colorName,
                   note: _noteController.text,
                 )),
-                child: const Text('저장'),
+                child: Text(t.common.save),
               ),
             ],
           ),
@@ -723,6 +749,7 @@ class _HighlightListSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.tr.highlight;
 
     return SafeArea(
       child: ConstrainedBox(
@@ -736,14 +763,14 @@ class _HighlightListSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
-                '하이라이트 ${highlights.length}개',
+                t.count(count: highlights.length),
                 style: theme.textTheme.titleMedium,
               ),
             ),
             if (highlights.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: Text('저장된 하이라이트가 없습니다.')),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(child: Text(t.empty)),
               )
             else
               Flexible(
@@ -766,19 +793,19 @@ class _HighlightListSheet extends StatelessWidget {
                       subtitle: highlight.note.isEmpty
                           ? null
                           : Text(
-                              '메모: ${highlight.note}',
+                              t.noteLine(note: highlight.note),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                       trailing: PopupMenuButton<String>(
-                        tooltip: '하이라이트 메뉴',
+                        tooltip: t.menu,
                         onSelected: (action) {
                           if (action == 'note') onEditNote(highlight);
                           if (action == 'delete') onDelete(highlight);
                         },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'note', child: Text('메모 편집')),
-                          PopupMenuItem(value: 'delete', child: Text('삭제')),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(value: 'note', child: Text(t.editNote)),
+                          PopupMenuItem(value: 'delete', child: Text(t.delete)),
                         ],
                       ),
                       onTap: () => onTap(highlight),

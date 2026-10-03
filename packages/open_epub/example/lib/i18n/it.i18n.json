@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "Demo di open_epub"
+  },
+  "common": {
+    "previousPage": "Pagina precedente",
+    "nextPage": "Pagina successiva",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "close": "Chiudi"
+  },
+  "home": {
+    "library": {
+      "title": "Libreria di esempi EPUB3",
+      "description": "Verifica RTL, MathML, scrittura verticale, Media Overlay e CFI"
+    },
+    "core": {
+      "title": "Demo del core 1.0"
+    },
+    "highlight": {
+      "title": "Demo evidenziazione",
+      "description": "Selezione del testo → colore → evidenziazione + nota"
+    },
+    "fixedLayout": {
+      "title": "Demo Fixed Layout A4",
+      "description": "Mostra un libro preimpaginato in formato A4 (794×1123)"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "EPUB2 reale con testo adattabile · 22 MB",
+      "tag": "EPUB2 · file grande"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · basi di EPUB3 (nav, CSS)",
+      "tag": "Basi di EPUB3"
+    },
+    "arabicRtl": {
+      "subtitle": "Arabo · page-progression-direction=rtl",
+      "tag": "Pagine da destra a sinistra (E14)"
+    },
+    "mathml": {
+      "subtitle": "71 formule MathML · conversione in TeX e ripiego",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "Scrittura verticale giapponese (vertical-rl) + RTL",
+      "tag": "Scrittura verticale (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "Narrazione SMIL con evidenziazione sincronizzata all’audio",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · punti di riferimento e indice annidato",
+      "tag": "EPUB3 completo (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · page-list di 7 voci",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "Layout fisso preimpaginato · A4 (794×1123), 3 pagine",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "Questo libro non ha un Media Overlay",
+    "mediaOverlayLoadFailed": "Caricamento del Media Overlay (SMIL) non riuscito",
+    "audioFailed": "Riproduzione audio non riuscita (forse un limite del simulatore): {error}",
+    "localFixture": "Questo esempio ({asset}) è un file di test locale non incluso nel repository (escluso da .gitignore per dimensioni o licenza).\nPer aprirlo, metti il file EPUB in packages/open_epub/example/assets/ nella tua copia locale e riavvia l’app.",
+    "mode": "Modalità",
+    "swipe": "pagine",
+    "scroll": "scorrimento",
+    "vertical": "Verticale",
+    "fontSmaller": "Testo più piccolo",
+    "fontLarger": "Testo più grande",
+    "verticalScroll": "Scorrimento verticale",
+    "rtlDirection": "Direzione pagine RTL",
+    "verticalWriting": "Scrittura verticale",
+    "narration": "Narrazione (Media Overlay)"
+  },
+  "core": {
+    "layoutPatches": "layout: {layout} · correzioni: {count}",
+    "recordHighlight": "recordHighlight() — evento toolUse",
+    "recordBookmark": "recordBookmark() — evento toolUse",
+    "assetLoadFailed": "Caricamento dell’asset non riuscito: {error}",
+    "positionTokenTitle": "Token BookPosition v1",
+    "eventLog": "Registro eventi",
+    "positionToken": "Token di posizione",
+    "waitingForEvents": "In attesa di eventi…"
+  },
+  "highlight": {
+    "list": "Evidenziazioni",
+    "action": "Evidenzia",
+    "openFailed": "Impossibile aprire il libro: {error}",
+    "selectFirst": "Seleziona prima del testo.",
+    "saved": "Evidenziazione salvata ({color})",
+    "deleted": "Evidenziazione eliminata",
+    "noteSaved": "Nota salvata",
+    "hintSelected": "Premi «Evidenzia» per colorare la selezione",
+    "hintIdle": "Seleziona del testo per vedere il pulsante Evidenzia",
+    "previousChapter": "Capitolo precedente",
+    "nextChapter": "Capitolo successivo",
+    "note": "Nota",
+    "noteHint": "Scrivi una nota",
+    "noteOptional": "Nota (facoltativa)",
+    "colorLabel": "Colore: {color}",
+    "count": "Evidenziazioni: {count}",
+    "empty": "Nessuna evidenziazione salvata.",
+    "noteLine": "Nota: {note}",
+    "menu": "Menu evidenziazione",
+    "editNote": "Modifica nota",
+    "delete": "Elimina",
+    "colors": {
+      "yellow": "Giallo",
+      "green": "Verde",
+      "blue": "Blu",
+      "pink": "Rosa"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "pagina {index}/{total}"
+  },
+  "epubReader": {
+    "fileTooLarge": "Il file è troppo grande per essere aperto.",
+    "networkFailure": "Impossibile scaricare il libro a causa di un errore di rete.",
+    "corruptedFile": "Questo EPUB è danneggiato o non valido.",
+    "openFailed": "Si è verificato un errore durante l’apertura del libro.",
+    "positionRestoreFailed": "Impossibile trovare l’ultima posizione: il libro riparte dall’inizio",
+    "emptyBook": "Questo libro non ha contenuti da mostrare.",
+    "emptyPage": "Questa pagina non ha contenuti da mostrare.",
+    "chapterLoadFailed": "Impossibile caricare il testo.",
+    "pageLoadFailed": "Impossibile caricare la pagina.",
+    "formula": "Formula"
+  }
+}

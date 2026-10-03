@@ -20,6 +20,8 @@ import '../engine/reflowable/reflowable_engine.dart';
 import '../engine/reflowable/reflowable_page_view.dart';
 import '../media_overlay/media_overlay_controller.dart';
 import '../media_overlay/media_overlay_highlight.dart';
+import 'epub_reader_strings.dart';
+import 'epub_reader_strings_scope.dart';
 
 /// 세션 open 완료 시점에 호출 — 호출자가 analytics 스트림 구독·위치 저장 등
 /// 세션 수준 기능에 접근할 수 있게 한다.
@@ -66,6 +68,7 @@ class EpubReader extends StatefulWidget {
     this.mediaOverlayController,
     this.verticalWriting = false,
     this.fixedPageSize,
+    this.strings,
   });
 
   final EpubSource source;
@@ -165,6 +168,12 @@ class EpubReader extends StatefulWidget {
   /// 여부만으로 엔진 분기). (kobic Epic #7964 S1)
   final Size? fixedPageSize;
 
+  /// 리더가 그리는 문구(오류 화면 · 위치 복원 배너 · 빈 페이지 안내 등).
+  ///
+  /// 미지정 시 가장 가까운 [EpubReaderStringsScope], 그것도 없으면
+  /// [EpubReaderStrings] 기본값(현재 글)을 쓴다.
+  final EpubReaderStrings? strings;
+
   @override
   State<EpubReader> createState() => _EpubReaderState();
 }
@@ -198,6 +207,15 @@ class _EpubReaderState extends State<EpubReader> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = widget.strings;
+    final reader = _buildReader();
+    // 주입 문구는 스코프로 내려 엔진(빈 페이지 · 로드 실패 안내)까지 닿게 한다.
+    return strings == null
+        ? reader
+        : EpubReaderStringsScope(strings: strings, child: reader);
+  }
+
+  Widget _buildReader() {
     return FutureBuilder<EpubBookSession>(
       future: _open,
       builder: (context, snapshot) {
@@ -327,7 +345,9 @@ class _SessionViewState extends State<_SessionView> {
 
   String? get _restoreFailedMessage {
     for (final issue in _session.diagnostics.unresolvedIssues) {
-      if (issue.code == 'position-restore-failed') return issue.message;
+      if (issue.code == 'position-restore-failed') {
+        return EpubReaderStringsScope.of(context).positionRestoreFailed;
+      }
     }
     return null;
   }
@@ -718,19 +738,20 @@ class _OpenErrorView extends StatelessWidget {
 
   final Object error;
 
-  String get _message => switch (error) {
-        EpubFileTooLarge() => '파일이 너무 커서 열 수 없습니다.',
-        EpubNetworkFailure() => '네트워크 오류로 책을 가져오지 못했습니다.',
-        EpubCorrupted() || EpubInvalidFile() => '손상되었거나 올바르지 않은 EPUB입니다.',
-        _ => '책을 여는 중 오류가 발생했습니다.',
+  String _message(EpubReaderStrings strings) => switch (error) {
+        EpubFileTooLarge() => strings.fileTooLarge,
+        EpubNetworkFailure() => strings.networkFailure,
+        EpubCorrupted() || EpubInvalidFile() => strings.corruptedFile,
+        _ => strings.openFailed,
       };
 
   @override
   Widget build(BuildContext context) {
+    final message = _message(EpubReaderStringsScope.of(context));
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text('$_message\n$error', textAlign: TextAlign.center),
+        child: Text('$message\n$error', textAlign: TextAlign.center),
       ),
     );
   }

@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "Démo open_epub"
+  },
+  "common": {
+    "previousPage": "Page précédente",
+    "nextPage": "Page suivante",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "close": "Fermer"
+  },
+  "home": {
+    "library": {
+      "title": "Bibliothèque d’exemples EPUB3",
+      "description": "Vérifie RTL, MathML, écriture verticale, Media Overlay et CFI"
+    },
+    "core": {
+      "title": "Démo du cœur 1.0"
+    },
+    "highlight": {
+      "title": "Démo de surlignage",
+      "description": "Sélection de texte → couleur → surlignage + note"
+    },
+    "fixedLayout": {
+      "title": "Démo Fixed Layout A4",
+      "description": "Affiche un livre prépaginé au format A4 (794×1123)"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "EPUB2 réel en texte recomposable · 22 Mo",
+      "tag": "EPUB2 · fichier volumineux"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · bases d’EPUB3 (nav, CSS)",
+      "tag": "Bases d’EPUB3"
+    },
+    "arabicRtl": {
+      "subtitle": "Arabe · page-progression-direction=rtl",
+      "tag": "Pages de droite à gauche (E14)"
+    },
+    "mathml": {
+      "subtitle": "71 formules MathML · conversion TeX et repli",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "Écriture verticale japonaise (vertical-rl) + RTL",
+      "tag": "Écriture verticale (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "Lecture SMIL avec surlignage synchronisé à l’audio",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · repères (landmarks) et table des matières imbriquée",
+      "tag": "EPUB3 complet (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · page-list de 7 entrées",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "Mise en page fixe prépaginée · A4 (794×1123), 3 pages",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "Ce livre n’a pas de Media Overlay",
+    "mediaOverlayLoadFailed": "Échec du chargement du Media Overlay (SMIL)",
+    "audioFailed": "Échec de la lecture audio (peut-être une limite du simulateur) : {error}",
+    "localFixture": "Cet exemple ({asset}) est un fichier de test local qui n’est pas dans le dépôt (exclu par .gitignore pour des raisons de taille ou de licence).\nPour l’ouvrir, placez le fichier EPUB dans packages/open_epub/example/assets/ de votre copie locale, puis relancez l’application.",
+    "mode": "Mode",
+    "swipe": "balayage",
+    "scroll": "défilement",
+    "vertical": "Vertical",
+    "fontSmaller": "Texte plus petit",
+    "fontLarger": "Texte plus grand",
+    "verticalScroll": "Défilement vertical",
+    "rtlDirection": "Sens de lecture RTL",
+    "verticalWriting": "Écriture verticale",
+    "narration": "Lecture à voix haute (Media Overlay)"
+  },
+  "core": {
+    "layoutPatches": "layout : {layout} · corrections : {count}",
+    "recordHighlight": "recordHighlight() — événement toolUse",
+    "recordBookmark": "recordBookmark() — événement toolUse",
+    "assetLoadFailed": "Échec du chargement de l’asset : {error}",
+    "positionTokenTitle": "Jeton BookPosition v1",
+    "eventLog": "Journal des événements",
+    "positionToken": "Jeton de position",
+    "waitingForEvents": "En attente d’événements…"
+  },
+  "highlight": {
+    "list": "Surlignages",
+    "action": "Surligner",
+    "openFailed": "Impossible d’ouvrir le livre : {error}",
+    "selectFirst": "Sélectionnez d’abord du texte.",
+    "saved": "Surlignage enregistré ({color})",
+    "deleted": "Surlignage supprimé",
+    "noteSaved": "Note enregistrée",
+    "hintSelected": "Appuyez sur « Surligner » pour colorer la sélection",
+    "hintIdle": "Sélectionnez du texte pour afficher le bouton Surligner",
+    "previousChapter": "Chapitre précédent",
+    "nextChapter": "Chapitre suivant",
+    "note": "Note",
+    "noteHint": "Saisissez une note",
+    "noteOptional": "Note (facultative)",
+    "colorLabel": "Couleur : {color}",
+    "count": "Surlignages : {count}",
+    "empty": "Aucun surlignage pour l’instant.",
+    "noteLine": "Note : {note}",
+    "menu": "Menu du surlignage",
+    "editNote": "Modifier la note",
+    "delete": "Supprimer",
+    "colors": {
+      "yellow": "Jaune",
+      "green": "Vert",
+      "blue": "Bleu",
+      "pink": "Rose"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "page {index}/{total}"
+  },
+  "epubReader": {
+    "fileTooLarge": "Ce fichier est trop volumineux pour être ouvert.",
+    "networkFailure": "Le livre n’a pas pu être récupéré à cause d’une erreur réseau.",
+    "corruptedFile": "Cet EPUB est endommagé ou non valide.",
+    "openFailed": "Une erreur s’est produite à l’ouverture du livre.",
+    "positionRestoreFailed": "Impossible de retrouver votre dernière position : le livre s’affiche depuis le début",
+    "emptyBook": "Ce livre n’a rien à afficher.",
+    "emptyPage": "Cette page n’a rien à afficher.",
+    "chapterLoadFailed": "Impossible de charger le texte.",
+    "pageLoadFailed": "Impossible de charger la page.",
+    "formula": "Formule"
+  }
+}

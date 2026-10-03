@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "open_epub 演示"
+  },
+  "common": {
+    "previousPage": "上一页",
+    "nextPage": "下一页",
+    "cancel": "取消",
+    "save": "保存",
+    "close": "关闭"
+  },
+  "home": {
+    "library": {
+      "title": "EPUB3 示例书库",
+      "description": "验证 RTL、MathML、竖排、Media Overlay、CFI 等功能"
+    },
+    "core": {
+      "title": "1.0 核心演示"
+    },
+    "highlight": {
+      "title": "高亮演示",
+      "description": "选择文本 → 选颜色 → 高亮 + 笔记"
+    },
+    "fixedLayout": {
+      "title": "Fixed Layout A4 演示",
+      "description": "将预分页（pre-paginated）正文按 A4（794×1123）尺寸渲染"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "真实 EPUB2 流式排版 · 22MB 大文件",
+      "tag": "EPUB2 · 大文件"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · EPUB3 基础（nav、CSS）",
+      "tag": "EPUB3 基础"
+    },
+    "arabicRtl": {
+      "subtitle": "阿拉伯语 · page-progression-direction=rtl",
+      "tag": "RTL 翻页 (E14)"
+    },
+    "mathml": {
+      "subtitle": "71 个 MathML 公式 · TeX 转换/回退",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "日语竖排（vertical-rl）+ RTL",
+      "tag": "竖排 (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "SMIL 朗读 + 音频同步高亮",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · landmarks、多级目录",
+      "tag": "综合 EPUB3 (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · page-list 7 项",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "预分页固定版式 · A4（794×1123）共 3 页",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "这本书没有 Media Overlay",
+    "mediaOverlayLoadFailed": "Media Overlay（SMIL）加载失败",
+    "audioFailed": "音频播放失败（可能是模拟器限制）：{error}",
+    "localFixture": "此示例（{asset}）是未包含在仓库中的本地测试文件（因体积或许可原因被 gitignore 排除）。\n请在本地开发环境中把对应的 EPUB 文件放到 packages/open_epub/example/assets/，然后重新运行。",
+    "mode": "模式",
+    "swipe": "滑动",
+    "scroll": "滚动",
+    "vertical": "竖排",
+    "fontSmaller": "缩小字号",
+    "fontLarger": "放大字号",
+    "verticalScroll": "纵向滚动",
+    "rtlDirection": "RTL 翻页方向",
+    "verticalWriting": "竖排",
+    "narration": "朗读（Media Overlay）"
+  },
+  "core": {
+    "layoutPatches": "layout: {layout} · 修正 {count} 处",
+    "recordHighlight": "recordHighlight() — toolUse 事件",
+    "recordBookmark": "recordBookmark() — toolUse 事件",
+    "assetLoadFailed": "资源加载失败：{error}",
+    "positionTokenTitle": "BookPosition v1 令牌",
+    "eventLog": "事件日志",
+    "positionToken": "位置令牌",
+    "waitingForEvents": "正在等待事件…"
+  },
+  "highlight": {
+    "list": "高亮列表",
+    "action": "高亮",
+    "openFailed": "无法打开这本书：{error}",
+    "selectFirst": "请先选择正文文本。",
+    "saved": "已保存高亮（{color}）",
+    "deleted": "已删除高亮",
+    "noteSaved": "已保存笔记",
+    "hintSelected": "点击“高亮”按钮为选中内容上色",
+    "hintIdle": "选择正文文本后会出现高亮按钮",
+    "previousChapter": "上一章",
+    "nextChapter": "下一章",
+    "note": "笔记",
+    "noteHint": "输入笔记",
+    "noteOptional": "笔记（可选）",
+    "colorLabel": "颜色：{color}",
+    "count": "高亮：{count}",
+    "empty": "还没有保存的高亮。",
+    "noteLine": "笔记：{note}",
+    "menu": "高亮菜单",
+    "editNote": "编辑笔记",
+    "delete": "删除",
+    "colors": {
+      "yellow": "黄色",
+      "green": "绿色",
+      "blue": "蓝色",
+      "pink": "粉色"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "第 {index}/{total} 页"
+  },
+  "epubReader": {
+    "fileTooLarge": "文件太大，无法打开。",
+    "networkFailure": "网络错误，未能获取这本书。",
+    "corruptedFile": "EPUB 已损坏或格式不正确。",
+    "openFailed": "打开这本书时出错。",
+    "positionRestoreFailed": "找不到上次的位置，将从头开始显示",
+    "emptyBook": "这本书没有可显示的内容。",
+    "emptyPage": "这一页没有可显示的内容。",
+    "chapterLoadFailed": "无法加载正文。",
+    "pageLoadFailed": "无法加载页面。",
+    "formula": "公式"
+  }
+}

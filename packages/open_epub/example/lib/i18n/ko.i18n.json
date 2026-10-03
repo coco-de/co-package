@@ -1,0 +1,137 @@
+{
+  "app": {
+    "title": "open_epub 데모"
+  },
+  "common": {
+    "previousPage": "이전 페이지",
+    "nextPage": "다음 페이지",
+    "cancel": "취소",
+    "save": "저장",
+    "close": "닫기"
+  },
+  "home": {
+    "library": {
+      "title": "EPUB3 샘플 라이브러리",
+      "description": "RTL·MathML·세로쓰기·Media Overlay·CFI 기능 검증"
+    },
+    "core": {
+      "title": "1.0 코어 데모"
+    },
+    "highlight": {
+      "title": "하이라이트 데모",
+      "description": "텍스트 선택 → 색상 → 하이라이트 + 메모"
+    },
+    "fixedLayout": {
+      "title": "Fixed Layout A4 데모",
+      "description": "pre-paginated 본문을 A4(794×1123) 크기로 렌더"
+    }
+  },
+  "samples": {
+    "nohoechan": {
+      "subtitle": "실제 EPUB2 리플로우 · 22MB 대용량",
+      "tag": "EPUB2 · 대용량"
+    },
+    "wasteland": {
+      "subtitle": "T.S. Eliot · EPUB3 기본(nav·CSS)",
+      "tag": "EPUB3 기본"
+    },
+    "arabicRtl": {
+      "subtitle": "아랍어 · page-progression-direction=rtl",
+      "tag": "RTL 넘김 (E14)"
+    },
+    "mathml": {
+      "subtitle": "MathML 71수식 · TeX 변환/폴백",
+      "tag": "MathML (E14)"
+    },
+    "vertical": {
+      "subtitle": "일본어 세로쓰기(vertical-rl) + RTL",
+      "tag": "세로쓰기 (E15)"
+    },
+    "mediaOverlay": {
+      "subtitle": "SMIL 낭독 + 오디오 동기 하이라이트",
+      "tag": "Media Overlay (E15)"
+    },
+    "accessible": {
+      "subtitle": "O'Reilly · landmarks·목차 계층",
+      "tag": "종합 EPUB3 (E13)"
+    },
+    "cfi": {
+      "subtitle": "EPUB CFI · page-list 7",
+      "tag": "CFI (E12)"
+    },
+    "fixedA4": {
+      "subtitle": "pre-paginated 고정 레이아웃 · A4(794×1123) 3쪽",
+      "tag": "Fixed Layout (F3)"
+    }
+  },
+  "reader": {
+    "noMediaOverlay": "이 책에는 Media Overlay가 없습니다",
+    "mediaOverlayLoadFailed": "Media Overlay(SMIL) 로드 실패",
+    "audioFailed": "오디오 재생 실패(시뮬레이터 제약일 수 있음): {error}",
+    "localFixture": "이 샘플({asset})은 저장소에 포함되지 않은 로컬 전용 테스트 픽스처입니다(대용량/라이선스 사유로 gitignore 처리됨).\n로컬 개발 환경에서 해당 EPUB 파일을 packages/open_epub/example/assets/ 에 배치한 뒤 다시 실행해 주세요.",
+    "mode": "모드",
+    "swipe": "스와이프",
+    "scroll": "스크롤",
+    "vertical": "세로",
+    "fontSmaller": "글자 작게",
+    "fontLarger": "글자 크게",
+    "verticalScroll": "세로 스크롤",
+    "rtlDirection": "RTL 넘김 방향",
+    "verticalWriting": "세로쓰기",
+    "narration": "낭독(Media Overlay)"
+  },
+  "core": {
+    "layoutPatches": "layout: {layout} · 보정 {count}건",
+    "recordHighlight": "recordHighlight() — toolUse 이벤트",
+    "recordBookmark": "recordBookmark() — toolUse 이벤트",
+    "assetLoadFailed": "asset 로드 실패: {error}",
+    "positionTokenTitle": "BookPosition v1 토큰",
+    "eventLog": "이벤트 로그",
+    "positionToken": "위치 토큰",
+    "waitingForEvents": "이벤트 대기 중..."
+  },
+  "highlight": {
+    "list": "하이라이트 목록",
+    "action": "하이라이트",
+    "openFailed": "책을 열 수 없습니다: {error}",
+    "selectFirst": "먼저 본문 텍스트를 선택하세요.",
+    "saved": "하이라이트 저장됨 ({color})",
+    "deleted": "하이라이트 삭제됨",
+    "noteSaved": "메모 저장됨",
+    "hintSelected": "\"하이라이트\" 버튼을 눌러 색을 칠하세요",
+    "hintIdle": "본문 텍스트를 선택하면 하이라이트 버튼이 나타납니다",
+    "previousChapter": "이전 챕터",
+    "nextChapter": "다음 챕터",
+    "note": "메모",
+    "noteHint": "메모를 입력하세요",
+    "noteOptional": "메모 (선택)",
+    "colorLabel": "색상 {color}",
+    "count": "하이라이트 {count}개",
+    "empty": "저장된 하이라이트가 없습니다.",
+    "noteLine": "메모: {note}",
+    "menu": "하이라이트 메뉴",
+    "editNote": "메모 편집",
+    "delete": "삭제",
+    "colors": {
+      "yellow": "노랑",
+      "green": "초록",
+      "blue": "파랑",
+      "pink": "분홍"
+    }
+  },
+  "fixedLayout": {
+    "pageOf": "{index}/{total}쪽"
+  },
+  "epubReader": {
+    "fileTooLarge": "파일이 너무 커서 열 수 없습니다.",
+    "networkFailure": "네트워크 오류로 책을 가져오지 못했습니다.",
+    "corruptedFile": "손상되었거나 올바르지 않은 EPUB입니다.",
+    "openFailed": "책을 여는 중 오류가 발생했습니다.",
+    "positionRestoreFailed": "마지막 위치를 찾을 수 없어 처음부터 표시합니다",
+    "emptyBook": "이 책에는 표시할 내용이 없습니다.",
+    "emptyPage": "이 페이지에는 표시할 내용이 없습니다.",
+    "chapterLoadFailed": "본문을 불러올 수 없습니다.",
+    "pageLoadFailed": "페이지를 불러올 수 없습니다.",
+    "formula": "수식"
+  }
+}
