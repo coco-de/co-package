@@ -15,6 +15,15 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
 | [`xterm3`](packages/xterm3/FORK.md) | [klc/xterm3](https://github.com/klc/xterm3) 6.3.4 포크 — 데스크톱 입력기(한글 두벌식 등) 조합 수정. **AGPL-3.0**, 워크스페이스 비회원(자체 CI 잡). |
 
+## Live examples
+
+Web builds of the example apps are published to this repository's GitHub Pages
+site, <https://docs.cocode.im/co-package/>:
+[`open-board/`](https://docs.cocode.im/co-package/open-board/) and
+[`open-epub/`](https://docs.cocode.im/co-package/open-epub/).
+[`examples-pages.yml`](.github/workflows/examples-pages.yml) builds them on pull
+requests and deploys them on every push to `main` that touches them.
+
 ## Depending on these packages
 
 Until a package is on pub.dev, depend on it by git tag

@@ -16,6 +16,7 @@ workspace:
   - packages/open_epub
   - packages/open_epub/example # open_epub → open_epub_engine 을 로컬 해석하도록 워크스페이스 편입
   - packages/open_board
+  - packages/open_board/example # open_epub 을 비공개 git 대신 로컬 멤버로 해석 — 토큰 없이 Pages 빌드 (#42)
 
 dev_dependencies:
   lints: ^6.0.0
@@ -29,10 +30,11 @@ melos:
 
     # open_board 는 dcm format(line-length 80, cascading widget extensions) 규약을
     # 쓰므로 dart format 과 결과가 다르다(82 파일). 패키지 내 lefthook 훅이 dcm
-    # format 을 강제하므로 여기서는 제외한다.
+    # format 을 강제하므로 여기서는 제외한다. 그 아래 example(open_board_example)도
+    # 같은 훅(root: packages/open_board/)의 적용을 받으므로 함께 제외한다.
     format:
-      run: melos exec --ignore="open_board" -- dart format --output=none --set-exit-if-changed .
-      description: Check formatting for every workspace package (open_board uses dcm format).
+      run: melos exec --ignore="open_board" --ignore="open_board_example" -- dart format --output=none --set-exit-if-changed .
+      description: Check formatting for every workspace package (open_board and its example use dcm format).
 
     test:
       run: melos run test:dart && melos run test:flutter
@@ -42,8 +44,8 @@ melos:
       run: melos exec --no-flutter --dir-exists=test -- dart test
       description: Run pure-Dart package tests.
 
-    # --no-pub: 루트 워크스페이스 해석을 그대로 쓴다. flutter test 의 암묵적 pub get 은
-    # example/ 까지 해석하려 해 private git 의존성(open_board example)에서 죽는다.
+    # --no-pub: 루트 워크스페이스 해석을 그대로 쓴다 — 패키지마다 암묵적 pub get 을
+    # 되풀이하지 않는다. example 앱(open_epub_example·open_board_example)은 제외한다.
     test:flutter:
       run: melos exec --flutter --dir-exists=test --ignore="*example*" -- flutter test --no-pub
       description: Run Flutter package tests (example apps excluded).

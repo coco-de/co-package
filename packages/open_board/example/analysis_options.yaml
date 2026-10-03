@@ -1,0 +1,13 @@
+# 예제 앱 전용 분석 설정 — 워크스페이스 멤버라 `melos run analyze` 가 이 디렉토리에서
+# 따로 돈다. 상위 packages/open_board/analysis_options.yaml 은 example/** 를 제외하므로
+# 패키지 분석과 중복되지 않는다.
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+include: package:flutter_lints/flutter.yaml
