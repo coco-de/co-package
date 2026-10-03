@@ -90,6 +90,60 @@ Future<void> bootstrap() async {
 - Map a locale to Flutter with
   `Locale.fromSubtags(languageCode: l.languageCode, scriptCode: l.scriptCode)`.
 
+## Pre-boot background (web)
+
+Until Flutter paints its first frame, the page shows its own background, and
+that background is white by default. Loading `main.dart.js` and the renderer
+can take several seconds, so a visitor who picked dark sees a white page first.
+Receivers on the web SHOULD paint the page background before the engine boots:
+
+- **Theme**: read `theme` from the URL the same way as `DemoPrefs.fromUri`: the
+  query before `#` first, then a query inside the fragment. If the value is
+  missing or is not `light`/`dark`, use what the app would show anyway. For an
+  app that follows the system, that is `prefers-color-scheme`. For an app with
+  only one theme, it is that theme.
+- **Colours**: use exactly the app's light and dark scaffold background
+  (`ThemeData.scaffoldBackgroundColor`), so the first frame lands on the same
+  colour.
+- **`color-scheme`**: set it too, so scrollbars and form controls drawn before
+  Flutter (or outside it) match.
+
+Put this script in `web/index.html`, inside `<head>` and before
+`flutter_bootstrap.js`. It runs synchronously, fetches nothing and fails
+silently:
+
+```html
+<script>
+  // Pre-boot background (co_demo_prefs protocol v1): paint the page in the
+  // visitor's theme before Flutter boots. LIGHT / DARK = the app's light /
+  // dark scaffold background.
+  (function () {
+    var LIGHT = '#FBF8FF', DARK = '#121318';
+    try {
+      var t = new URLSearchParams(location.search).get('theme');
+      if (t === null) {
+        var h = location.hash, i = h.indexOf('?');
+        if (i >= 0) t = new URLSearchParams(h.slice(i + 1)).get('theme');
+      }
+      t = (t || '').trim().toLowerCase();
+      if (t !== 'light' && t !== 'dark') {
+        // The app's own default. An app with a single theme writes it here.
+        t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      var root = document.documentElement.style;
+      root.colorScheme = t;
+      root.backgroundColor = t === 'dark' ? DARK : LIGHT;
+    } catch (e) {}
+  })();
+</script>
+```
+
+- The portal's preview iframe gets the same query in its `src`, so the preview
+  also opens on the right colour.
+- The script covers only the first paint. Live `sync` changes after boot go
+  through the app's theme state, as described above.
+- This is a recommendation within protocol v1. Nothing changes on the wire.
+
 ## Sending from a site
 
 - New tab / iframe `src`: `DemoPrefs(locale: …, theme: …).applyTo(demoUrl)`.
