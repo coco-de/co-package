@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Open Board 데모"
+  },
+  "common": {
+    "undo": "실행 취소",
+    "redo": "다시 실행",
+    "clear": "모두 지우기",
+    "previousPage": "이전 페이지",
+    "nextPage": "다음 페이지",
+    "loading": "불러오는 중…"
+  },
+  "home": {
+    "board": {
+      "title": "보드 데모",
+      "description": "필기 도구 8종, 다중 페이지, 녹화/리플레이 데모"
+    },
+    "split": {
+      "title": "분할 필기 데모",
+      "description": "좌우 분할 필기 + 플로팅 필기 도구 패널 데모"
+    },
+    "epub": {
+      "title": "EPUB 주석 데모",
+      "description": "open_epub 리더 위에 페이지 연동 필기 (읽기/필기 모드 토글)"
+    }
+  },
+  "tools": {
+    "pen": "펜",
+    "pencil": "연필",
+    "marker": "마커",
+    "highlighter": "형광펜",
+    "fixedPen": "고정 펜",
+    "uniformPen": "균일 펜",
+    "eraser": "지우개",
+    "text": "텍스트",
+    "shape": "도형",
+    "lasso": "올가미",
+    "image": "이미지"
+  },
+  "link": {
+    "add": "링크 추가",
+    "edit": "링크 편집",
+    "remove": "링크 삭제",
+    "done": "완료",
+    "dialogTitle": "링크 입력",
+    "external": "외부 URL",
+    "internal": "내부 페이지",
+    "pageNumber": "페이지 번호",
+    "url": "URL",
+    "cancel": "취소",
+    "confirm": "확인"
+  },
+  "drawing": {
+    "startRecording": "녹화 시작",
+    "stopRecording": "녹화 중지",
+    "replay": "재생",
+    "stopReplay": "재생 중지",
+    "recording": "녹화 중 · 이벤트 {count}개",
+    "replaying": "재생 중 · {index}/{total}",
+    "ready": "재생 준비 · 이벤트 {count}개",
+    "noRecording": "녹화 없음",
+    "page": "{number} 페이지",
+    "features": {
+      "title": "기능",
+      "items": [
+        "펜 · 연필 · 마커 · 고정 펜 필기 도구",
+        "기본 색상 6가지",
+        "선 굵기 조절 (0.5–10.0)",
+        "획을 지우는 지우개",
+        "도형 인식 (원 · 사각형 · 직선)",
+        "올가미로 획을 골라 옮기기",
+        "텍스트 메모를 넣는 텍스트 도구",
+        "실행 취소 / 다시 실행"
+      ]
+    },
+    "recordingGuide": {
+      "title": "녹화와 재생",
+      "items": [
+        "빨간 녹화 버튼을 누르면 녹화가 시작됩니다",
+        "그리기 · 페이지 이동 · 확대와 축소가 모두 기록됩니다",
+        "정지 버튼을 누르면 녹화가 끝납니다",
+        "재생 버튼을 누르면 전체 과정을 다시 봅니다",
+        "획 · 페이지 전환 · 화면 이동이 기록됩니다"
+      ]
+    },
+    "multiPage": {
+      "title": "여러 페이지",
+      "items": [
+        "위쪽 페이지 막대로 페이지를 오갑니다",
+        "페이지마다 획과 실행 취소 기록이 따로 있습니다",
+        "ScribbleBookController 가 모든 페이지를 관리합니다",
+        "ScribbleCacheManager 가 캐시와 저장을 맡습니다",
+        "여러 페이지에 그려 보고 오가며 확인해 보세요"
+      ],
+      "tip": "팁: 이 페이지에 그린 뒤 다른 페이지에도 그리고 다시 돌아와 보세요. 그린 획이 그대로 남아 있습니다."
+    }
+  },
+  "split": {
+    "title": "분할 필기 — 하나의 플로팅 도구"
+  },
+  "epub": {
+    "readingMode": "읽기 모드",
+    "annotationMode": "필기 모드",
+    "info": "필기는 챕터(spineHref) 기준으로 저장됩니다 — open_epub 1.0 EpubReader + EpubViewController 연동.",
+    "webNote": "웹에서는 세션 안에서만 필기가 유지됩니다.",
+    "sample": "샘플: {title}"
+  }
+}

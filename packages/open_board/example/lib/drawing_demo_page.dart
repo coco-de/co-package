@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:open_board/open_board.dart';
 
+import 'i18n/strings.g.dart';
+import 'light_surface.dart';
 import 'widgets/drawing_toolbar.dart';
 
 class DrawingPage extends StatefulWidget {
@@ -80,8 +82,12 @@ class _DrawingPageState extends State<DrawingPage> {
     _drawingState.selectedTool.removeListener(_refresh);
     _drawingState.selectedColor.removeListener(_refresh);
     _drawingState.selectedThickness.removeListener(_refresh);
-    _stopRecording();
-    _stopReplay();
+    // dispose 안에서는 setState 를 부를 수 없다(디버그 assert — 보드 데모에서
+    // 뒤로 가면 났다). _stopRecording/_stopReplay 대신 상태 갱신 없이 정리만 한다.
+    _recorder?.stop();
+    _recorder = null;
+    _replayTimer?.cancel();
+    _replayTimer = null;
     _eventBridge?.detach();
     _bookController.removeListener(_refresh);
     _bookController.dispose();
@@ -482,22 +488,26 @@ class _DrawingPageState extends State<DrawingPage> {
     final currentTool = _drawingState.selectedTool.value;
     final currentColor = _drawingState.selectedColor.value;
     final currentWidth = _drawingState.selectedThickness.value;
+    final t = context.t;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Open Board Demo'),
+        title: Text(t.home.board.title),
         actions: [
           IconButton(
             onPressed: () => _notifier.undo(),
             icon: const Icon(Icons.undo),
+            tooltip: t.common.undo,
           ),
           IconButton(
             onPressed: () => _notifier.redo(),
             icon: const Icon(Icons.redo),
+            tooltip: t.common.redo,
           ),
           IconButton(
             onPressed: () => _notifier.clear(),
             icon: const Icon(Icons.delete_outline),
+            tooltip: t.common.clear,
           ),
         ],
       ),
@@ -524,6 +534,7 @@ class _DrawingPageState extends State<DrawingPage> {
                       _currentPageIndex > 0 ? () => _goToPage(_currentPageIndex - 1) : null,
                   icon: const Icon(Icons.chevron_left),
                   iconSize: 20,
+                  tooltip: t.common.previousPage,
                 ),
                 for (int i = 0; i < _pageIds.length; i++)
                   Padding(
@@ -541,6 +552,7 @@ class _DrawingPageState extends State<DrawingPage> {
                       : null,
                   icon: const Icon(Icons.chevron_right),
                   iconSize: 20,
+                  tooltip: t.common.nextPage,
                 ),
               ],
             ),
@@ -610,7 +622,9 @@ class _DrawingPageState extends State<DrawingPage> {
                           ? Colors.red
                           : cs.surfaceContainerHighest,
                     ),
-                    tooltip: _isRecording ? 'Stop Recording' : 'Start Recording',
+                    tooltip: _isRecording
+                        ? t.drawing.stopRecording
+                        : t.drawing.startRecording,
                   ),
                   const SizedBox(width: 8),
                   // Replay button
@@ -620,7 +634,8 @@ class _DrawingPageState extends State<DrawingPage> {
                     icon: Icon(
                       _isReplaying ? Icons.stop : Icons.play_arrow,
                     ),
-                    tooltip: _isReplaying ? 'Stop Replay' : 'Replay',
+                    tooltip:
+                        _isReplaying ? t.drawing.stopReplay : t.drawing.replay,
                   ),
                   const SizedBox(width: 12),
                   // Status
@@ -638,13 +653,14 @@ class _DrawingPageState extends State<DrawingPage> {
 
   Widget _buildRecordingStatus(BuildContext context) {
     final style = Theme.of(context).textTheme.bodySmall;
+    final t = context.t.drawing;
 
     if (_isRecording) {
       return Row(
         children: [
           const Icon(Icons.circle, color: Colors.red, size: 10),
           const SizedBox(width: 6),
-          Text('REC  ${_recorder?.eventCount ?? 0} events',
+          Text(t.recording(count: _recorder?.eventCount ?? 0),
               style: style?.copyWith(color: Colors.red)),
         ],
       );
@@ -652,19 +668,19 @@ class _DrawingPageState extends State<DrawingPage> {
 
     if (_isReplaying) {
       return Text(
-        'Playing $_replayEventIndex/${_recordedEvents.length} events',
+        t.replaying(index: _replayEventIndex, total: _recordedEvents.length),
         style: style,
       );
     }
 
     if (_hasRecording) {
       return Text(
-        'Ready: ${_recordedEvents.length} events',
+        t.ready(count: _recordedEvents.length),
         style: style,
       );
     }
 
-    return Text('No recording', style: style);
+    return Text(t.noRecording, style: style);
   }
 
 }
@@ -676,68 +692,59 @@ class _SampleContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(24),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Page ${pageIndex + 1}',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+    // 필기 종이는 콘텐츠 면 — 다크 테마에서도 흰 바탕 · 검은 글을 유지한다.
+    return LightSurface(
+      child: Builder(
+        builder: (context) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.t.drawing.page(number: pageIndex + 1),
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 12),
+                if (pageIndex == 0) ..._page1Content(context),
+                if (pageIndex == 1) ..._page2Content(context),
+                if (pageIndex == 2) ..._page3Content(context),
+              ],
             ),
-            const SizedBox(height: 8),
-            const Divider(),
-            const SizedBox(height: 12),
-            if (pageIndex == 0) ..._page1Content(context),
-            if (pageIndex == 1) ..._page2Content(context),
-            if (pageIndex == 2) ..._page3Content(context),
-          ],
+          ),
         ),
       ),
     );
   }
 
   List<Widget> _page1Content(BuildContext context) {
+    final t = context.t.drawing.features;
     return [
-      Text('Features',
+      Text(t.title,
           style: Theme.of(context)
               .textTheme
               .headlineSmall
               ?.copyWith(fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
-      ...[
-        'Pen, Pencil, Marker, Fixed Pen drawing tools',
-        'Color selection with 6 preset colors',
-        'Adjustable stroke width (0.5 - 10.0)',
-        'Eraser for removing strokes',
-        'Shape recognition (circle, rectangle, line)',
-        'Lasso selection for moving strokes',
-        'Text tool for adding text annotations',
-        'Undo / Redo support',
-      ].map((item) => _bullet(item)),
+      ...t.items.map((item) => _bullet(item)),
     ];
   }
 
   List<Widget> _page2Content(BuildContext context) {
+    final t = context.t.drawing.recordingGuide;
     return [
-      Text('Recording & Replay',
+      Text(t.title,
           style: Theme.of(context)
               .textTheme
               .headlineSmall
               ?.copyWith(fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
-      ...[
-        'Press the red record button to start recording',
-        'Draw, switch pages, zoom in/out - all events are captured',
-        'Press stop to end recording',
-        'Press play to replay the entire session',
-        'Strokes, page changes, and viewport changes are recorded',
-      ].map((item) => _bullet(item)),
+      ...t.items.map((item) => _bullet(item)),
       const SizedBox(height: 16),
       Container(
         width: double.infinity,
@@ -764,33 +771,27 @@ class _SampleContent extends StatelessWidget {
   }
 
   List<Widget> _page3Content(BuildContext context) {
+    final t = context.t.drawing.multiPage;
     return [
-      Text('Multi-Page Support',
+      Text(t.title,
           style: Theme.of(context)
               .textTheme
               .headlineSmall
               ?.copyWith(fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
-      ...[
-        'Navigate between pages using the page bar above',
-        'Each page has independent strokes and undo history',
-        'ScribbleBookController manages all pages',
-        'ScribbleCacheManager provides caching and persistence',
-        'Try drawing on different pages and switching between them!',
-      ].map((item) => _bullet(item)),
+      ...t.items.map((item) => _bullet(item)),
       const SizedBox(height: 16),
       Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(color: Colors.indigo.shade300, width: 4),
+          border: BorderDirectional(
+            start: BorderSide(color: Colors.indigo.shade300, width: 4),
           ),
           color: Colors.indigo.shade50,
         ),
         child: Text(
-          'Tip: Draw on this page, then switch to another page and draw there. '
-          'Come back to verify your strokes are preserved!',
+          t.tip,
           style: TextStyle(
             color: Colors.indigo.shade700,
             fontSize: 13,
@@ -804,7 +805,7 @@ class _SampleContent extends StatelessWidget {
 
   Widget _bullet(String text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 4),
+      padding: const EdgeInsetsDirectional.only(start: 8, bottom: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

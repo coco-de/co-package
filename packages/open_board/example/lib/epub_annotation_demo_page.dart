@@ -12,6 +12,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:open_board/open_board.dart';
 import 'package:open_epub/open_epub.dart';
 
+import 'i18n/strings.g.dart';
+import 'light_surface.dart';
 import 'widgets/drawing_toolbar.dart';
 
 /// open_epub 1.0 리더 위에 페이지 연동 필기를 올리는 데모.
@@ -125,26 +127,27 @@ class _EpubAnnotationDemoPageState extends State<EpubAnnotationDemoPage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final bytes = _bytes;
+    final t = context.t;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('EPUB Annotation Demo'),
+        title: Text(t.home.epub.title),
         actions: [
           if (_isAnnotationMode) ...[
             IconButton(
               onPressed: () => _activeController.undo(),
               icon: const Icon(Icons.undo),
-              tooltip: 'Undo',
+              tooltip: t.common.undo,
             ),
             IconButton(
               onPressed: () => _activeController.redo(),
               icon: const Icon(Icons.redo),
-              tooltip: 'Redo',
+              tooltip: t.common.redo,
             ),
             IconButton(
               onPressed: () => _activeController.clear(),
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'Clear',
+              tooltip: t.common.clear,
             ),
           ],
         ],
@@ -195,12 +198,15 @@ class _EpubAnnotationDemoPageState extends State<EpubAnnotationDemoPage> {
                             builder: (context, matrix, child) => ClipRect(
                               child: Transform(transform: matrix, child: child),
                             ),
-                            child: EpubReader(
-                              source: EpubSource.bytes(bytes),
-                              controller: _epubController,
-                              showProgressIndicator: false,
-                              onPositionChanged: (position) =>
-                                  unawaited(_onPositionChanged(position)),
+                            // 책 본문은 콘텐츠 면 — 다크 테마에서도 원래 색.
+                            child: LightSurface(
+                              child: EpubReader(
+                                source: EpubSource.bytes(bytes),
+                                controller: _epubController,
+                                showProgressIndicator: false,
+                                onPositionChanged: (position) =>
+                                    unawaited(_onPositionChanged(position)),
+                              ),
                             ),
                           ),
                           // 2) 필기 오버레이 (상단 레이어)
@@ -236,7 +242,9 @@ class _EpubAnnotationDemoPageState extends State<EpubAnnotationDemoPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => unawaited(_toggleMode()),
         icon: Icon(_isAnnotationMode ? Icons.menu_book : Icons.draw),
-        label: Text(_isAnnotationMode ? '읽기 모드' : '필기 모드'),
+        label: Text(
+          _isAnnotationMode ? t.epub.readingMode : t.epub.annotationMode,
+        ),
       ),
     );
   }
@@ -250,15 +258,18 @@ class _InfoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final webNote = kIsWeb ? ' 웹에서는 세션 내에서만 필기가 유지됩니다.' : '';
+    final t = context.t.epub;
+    final info = [t.info, if (kIsWeb) t.webNote].join(' ');
+    // 책 제목은 고유명 — 번역하지 않는다.
+    final sample = t.sample(
+      title: "Alice's Adventures in Wonderland (Project Gutenberg #11)",
+    );
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       color: colorScheme.surfaceContainerLow,
       child: Text(
-        '필기는 챕터(spineHref) 기준으로 저장됩니다 — open_epub 1.0 EpubReader + '
-        'EpubViewController 연동.$webNote\n'
-        "Sample: Alice's Adventures in Wonderland (Project Gutenberg #11)",
+        '$info\n$sample',
         style: TextStyle(
           fontSize: 11,
           color: colorScheme.onSurfaceVariant,
@@ -286,6 +297,7 @@ class _PageNavBar extends StatelessWidget {
         child: ListenableBuilder(
           listenable: controller,
           builder: (context, _) {
+            final t = context.t.common;
             final count = controller.spineCount;
             final index = controller.currentSpineIndex;
             return Row(
@@ -296,9 +308,10 @@ class _PageNavBar extends StatelessWidget {
                       ? () => unawaited(controller.previousPage())
                       : null,
                   icon: const Icon(Icons.chevron_left),
+                  tooltip: t.previousPage,
                 ),
                 Text(
-                  count > 0 ? '${index + 1} / $count' : '로딩 중...',
+                  count > 0 ? '${index + 1} / $count' : t.loading,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 IconButton(
@@ -306,6 +319,7 @@ class _PageNavBar extends StatelessWidget {
                       ? () => unawaited(controller.nextPage())
                       : null,
                   icon: const Icon(Icons.chevron_right),
+                  tooltip: t.nextPage,
                 ),
               ],
             );

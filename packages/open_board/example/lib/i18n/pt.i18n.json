@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Demo do Open Board"
+  },
+  "common": {
+    "undo": "Desfazer",
+    "redo": "Refazer",
+    "clear": "Limpar tudo",
+    "previousPage": "Página anterior",
+    "nextPage": "Próxima página",
+    "loading": "Carregando…"
+  },
+  "home": {
+    "board": {
+      "title": "Demo do quadro",
+      "description": "Oito ferramentas de escrita, várias páginas, gravação e reprodução"
+    },
+    "split": {
+      "title": "Demo de tela dividida",
+      "description": "Duas áreas de escrita lado a lado com um único painel de ferramentas flutuante"
+    },
+    "epub": {
+      "title": "Demo de anotação EPUB",
+      "description": "Escrita à mão vinculada à página sobre o leitor open_epub (alterne entre leitura e escrita)"
+    }
+  },
+  "tools": {
+    "pen": "Caneta",
+    "pencil": "Lápis",
+    "marker": "Marcador",
+    "highlighter": "Marca-texto",
+    "fixedPen": "Caneta fixa",
+    "uniformPen": "Caneta uniforme",
+    "eraser": "Borracha",
+    "text": "Texto",
+    "shape": "Forma",
+    "lasso": "Laço",
+    "image": "Imagem"
+  },
+  "link": {
+    "add": "Adicionar link",
+    "edit": "Editar link",
+    "remove": "Remover link",
+    "done": "Concluído",
+    "dialogTitle": "Link",
+    "external": "URL externa",
+    "internal": "Página interna",
+    "pageNumber": "Número da página",
+    "url": "URL",
+    "cancel": "Cancelar",
+    "confirm": "OK"
+  },
+  "drawing": {
+    "startRecording": "Iniciar gravação",
+    "stopRecording": "Parar gravação",
+    "replay": "Reproduzir",
+    "stopReplay": "Parar reprodução",
+    "recording": "Gravando · eventos: {count}",
+    "replaying": "Reproduzindo · {index}/{total}",
+    "ready": "Pronto para reproduzir · eventos: {count}",
+    "noRecording": "Nenhuma gravação",
+    "page": "Página {number}",
+    "features": {
+      "title": "Recursos",
+      "items": [
+        "Ferramentas de escrita: caneta, lápis, marcador e caneta fixa",
+        "Seis cores predefinidas",
+        "Espessura do traço ajustável (0,5–10,0)",
+        "Borracha para apagar traços",
+        "Reconhecimento de formas (círculo, retângulo, linha)",
+        "Seleção com laço para mover traços",
+        "Ferramenta de texto para adicionar anotações",
+        "Desfazer e refazer"
+      ]
+    },
+    "recordingGuide": {
+      "title": "Gravação e reprodução",
+      "items": [
+        "Toque no botão vermelho para começar a gravar",
+        "Escreva, troque de página, aumente ou diminua o zoom: tudo é gravado",
+        "Toque em parar para encerrar a gravação",
+        "Toque em reproduzir para rever a sessão inteira",
+        "Traços, trocas de página e mudanças de visualização são gravados"
+      ]
+    },
+    "multiPage": {
+      "title": "Várias páginas",
+      "items": [
+        "Navegue entre as páginas com a barra de páginas acima",
+        "Cada página tem seus próprios traços e histórico de desfazer",
+        "ScribbleBookController gerencia todas as páginas",
+        "ScribbleCacheManager cuida do cache e do salvamento",
+        "Experimente escrever em várias páginas e alternar entre elas"
+      ],
+      "tip": "Dica: escreva nesta página, depois em outra e volte. Seus traços continuam aqui."
+    }
+  },
+  "split": {
+    "title": "Tela dividida — um único painel de ferramentas flutuante"
+  },
+  "epub": {
+    "readingMode": "Modo leitura",
+    "annotationMode": "Modo anotação",
+    "info": "As anotações são salvas por capítulo (spineHref) — open_epub 1.0 EpubReader com EpubViewController.",
+    "webNote": "Na web, as anotações ficam salvas apenas durante esta sessão.",
+    "sample": "Amostra: {title}"
+  }
+}

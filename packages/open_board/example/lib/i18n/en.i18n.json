@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Open Board Demo"
+  },
+  "common": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "clear": "Clear",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "loading": "Loading…"
+  },
+  "home": {
+    "board": {
+      "title": "Board Demo",
+      "description": "Eight drawing tools, multiple pages, recording and replay"
+    },
+    "split": {
+      "title": "Split Drawing Demo",
+      "description": "Two side-by-side drawing areas with one floating tool panel"
+    },
+    "epub": {
+      "title": "EPUB Annotation Demo",
+      "description": "Page-linked handwriting on top of the open_epub reader (switch between reading and writing)"
+    }
+  },
+  "tools": {
+    "pen": "Pen",
+    "pencil": "Pencil",
+    "marker": "Marker",
+    "highlighter": "Highlighter",
+    "fixedPen": "Fixed",
+    "uniformPen": "Uniform",
+    "eraser": "Eraser",
+    "text": "Text",
+    "shape": "Shape",
+    "lasso": "Lasso",
+    "image": "Image"
+  },
+  "link": {
+    "add": "Add link",
+    "edit": "Edit link",
+    "remove": "Remove link",
+    "done": "Done",
+    "dialogTitle": "Link",
+    "external": "External URL",
+    "internal": "Internal page",
+    "pageNumber": "Page number",
+    "url": "URL",
+    "cancel": "Cancel",
+    "confirm": "OK"
+  },
+  "drawing": {
+    "startRecording": "Start recording",
+    "stopRecording": "Stop recording",
+    "replay": "Replay",
+    "stopReplay": "Stop replay",
+    "recording": "Recording · events: {count}",
+    "replaying": "Replaying · {index}/{total}",
+    "ready": "Ready to replay · events: {count}",
+    "noRecording": "No recording",
+    "page": "Page {number}",
+    "features": {
+      "title": "Features",
+      "items": [
+        "Pen, pencil, marker and fixed pen drawing tools",
+        "Six preset colors",
+        "Adjustable stroke width (0.5–10.0)",
+        "Eraser for removing strokes",
+        "Shape recognition (circle, rectangle, line)",
+        "Lasso selection for moving strokes",
+        "Text tool for adding text notes",
+        "Undo and redo"
+      ]
+    },
+    "recordingGuide": {
+      "title": "Recording & Replay",
+      "items": [
+        "Press the red record button to start recording",
+        "Draw, switch pages, zoom in and out — every event is captured",
+        "Press stop to end recording",
+        "Press play to replay the whole session",
+        "Strokes, page changes and viewport changes are recorded"
+      ]
+    },
+    "multiPage": {
+      "title": "Multi-Page Support",
+      "items": [
+        "Move between pages with the page bar above",
+        "Each page has its own strokes and undo history",
+        "ScribbleBookController manages all pages",
+        "ScribbleCacheManager handles caching and persistence",
+        "Try drawing on different pages and switching between them"
+      ],
+      "tip": "Tip: draw on this page, then draw on another page and come back. Your strokes are still here."
+    }
+  },
+  "split": {
+    "title": "Split drawing — one floating tool panel"
+  },
+  "epub": {
+    "readingMode": "Reading mode",
+    "annotationMode": "Annotation mode",
+    "info": "Notes are saved per chapter (spineHref) — open_epub 1.0 EpubReader with EpubViewController.",
+    "webNote": "On the web, notes last only for this session.",
+    "sample": "Sample: {title}"
+  }
+}

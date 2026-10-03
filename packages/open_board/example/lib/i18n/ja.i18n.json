@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Open Board デモ"
+  },
+  "common": {
+    "undo": "元に戻す",
+    "redo": "やり直す",
+    "clear": "すべて消去",
+    "previousPage": "前のページ",
+    "nextPage": "次のページ",
+    "loading": "読み込み中…"
+  },
+  "home": {
+    "board": {
+      "title": "ボードデモ",
+      "description": "8 種類の手書きツール、複数ページ、録画と再生"
+    },
+    "split": {
+      "title": "分割手書きデモ",
+      "description": "左右 2 つの手書きエリアを 1 つのフローティングツールパネルで操作"
+    },
+    "epub": {
+      "title": "EPUB 注釈デモ",
+      "description": "open_epub リーダー上でページに連動する手書き（閲覧／手書きモードを切り替え）"
+    }
+  },
+  "tools": {
+    "pen": "ペン",
+    "pencil": "鉛筆",
+    "marker": "マーカー",
+    "highlighter": "蛍光ペン",
+    "fixedPen": "固定ペン",
+    "uniformPen": "均一ペン",
+    "eraser": "消しゴム",
+    "text": "テキスト",
+    "shape": "図形",
+    "lasso": "投げ縄",
+    "image": "画像"
+  },
+  "link": {
+    "add": "リンクを追加",
+    "edit": "リンクを編集",
+    "remove": "リンクを削除",
+    "done": "完了",
+    "dialogTitle": "リンク",
+    "external": "外部 URL",
+    "internal": "内部ページ",
+    "pageNumber": "ページ番号",
+    "url": "URL",
+    "cancel": "キャンセル",
+    "confirm": "OK"
+  },
+  "drawing": {
+    "startRecording": "録画を開始",
+    "stopRecording": "録画を停止",
+    "replay": "再生",
+    "stopReplay": "再生を停止",
+    "recording": "録画中 · イベント：{count}",
+    "replaying": "再生中 · {index}/{total}",
+    "ready": "再生できます · イベント：{count}",
+    "noRecording": "録画なし",
+    "page": "{number} ページ",
+    "features": {
+      "title": "機能",
+      "items": [
+        "ペン・鉛筆・マーカー・固定ペンの手書きツール",
+        "6 色のプリセットカラー",
+        "線の太さを調整（0.5–10.0）",
+        "ストロークを消す消しゴム",
+        "図形認識（円・四角形・直線）",
+        "投げ縄でストロークを選んで移動",
+        "テキストメモを追加するテキストツール",
+        "元に戻す／やり直す"
+      ]
+    },
+    "recordingGuide": {
+      "title": "録画と再生",
+      "items": [
+        "赤い録画ボタンを押すと録画が始まります",
+        "描画・ページ移動・拡大縮小がすべて記録されます",
+        "停止ボタンを押すと録画が終わります",
+        "再生ボタンを押すとセッション全体を再生します",
+        "ストローク・ページの切り替え・表示範囲の変化が記録されます"
+      ]
+    },
+    "multiPage": {
+      "title": "複数ページ",
+      "items": [
+        "上のページバーでページを移動します",
+        "ページごとにストロークと元に戻す履歴が独立しています",
+        "ScribbleBookController がすべてのページを管理します",
+        "ScribbleCacheManager がキャッシュと保存を担当します",
+        "複数のページに描いて、行き来してみてください"
+      ],
+      "tip": "ヒント：このページに描いたら別のページにも描き、また戻ってきてください。描いたストロークはそのまま残っています。"
+    }
+  },
+  "split": {
+    "title": "分割手書き — 1 つのフローティングツール"
+  },
+  "epub": {
+    "readingMode": "閲覧モード",
+    "annotationMode": "手書きモード",
+    "info": "手書きはチャプター（spineHref）単位で保存されます — open_epub 1.0 の EpubReader と EpubViewController を連携。",
+    "webNote": "Web では、手書きはこのセッションの間だけ保持されます。",
+    "sample": "サンプル：{title}"
+  }
+}

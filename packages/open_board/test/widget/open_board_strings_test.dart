@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/open_board.dart';
-import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
 import 'package:open_board/src/module/text/text_drawable_factory.dart';
@@ -152,9 +151,7 @@ void main() {
       widgetState.dispose();
     });
 
-    testWidgets('스코프가 Overlay 아래(필기 위젯 쪽)에만 있어도 에디터가 그 문구를 쓴다', (
-      tester,
-    ) async {
+    testWidgets('스코프가 Overlay 아래(필기 위젯 쪽)에만 있어도 에디터가 그 문구를 쓴다', (tester) async {
       late TextInteractionManager manager;
       final repaintBoundaryKey = GlobalKey();
 

@@ -1,8 +1,11 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:open_board/open_board.dart';
+
+import 'i18n/strings.g.dart';
 
 /// 좌우 2분할 독립 필기 영역 + 하나의 플로팅 도구 데모.
 ///
@@ -162,66 +165,71 @@ class _SplitDrawingPageState extends State<SplitDrawingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.t;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('분할 필기 — 하나의 플로팅 도구'),
+        title: Text(t.split.title),
         actions: [
-          IconButton(
-            key: const ValueKey('test_status'),
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'TestStatus',
-            onPressed: () {
-              final l = _left.scribbleNotifier;
-              final r = _right.scribbleNotifier;
-              debugPrint(
-                '[status] A(strokes=${l.currentScribble.strokes.length} '
-                'undo=${l.canUndo} redo=${l.canRedo}) '
-                'B(strokes=${r.currentScribble.strokes.length} '
-                'undo=${r.canUndo} redo=${r.canRedo}) '
-                'global(undo=${_drawingState.canUndoNotifier.value} '
-                'redo=${_drawingState.canRedoNotifier.value}) '
-                'lastActive=${identical(_drawingState.lastActiveScribbleNotifier, r) ? "B" : identical(_drawingState.lastActiveScribbleNotifier, l) ? "A" : "?"}',
-              );
-            },
-          ),
-          IconButton(
-            key: const ValueKey('test_redo'),
-            icon: const Icon(Icons.redo_outlined),
-            tooltip: 'TestRedo',
-            onPressed: () {
-              _drawingState.redo();
-              setState(() {});
-            },
-          ),
-          IconButton(
-            key: const ValueKey('test_draw_a'),
-            icon: const Icon(Icons.draw_outlined),
-            tooltip: 'TestDrawA',
-            onPressed: () => _injectStroke(_left, const Offset(120, 380)),
-          ),
-          IconButton(
-            key: const ValueKey('test_draw_b'),
-            icon: const Icon(Icons.draw),
-            tooltip: 'TestDrawB',
-            onPressed: () => _injectStroke(_right, const Offset(120, 300)),
-          ),
-          IconButton(
-            key: const ValueKey('test_erase_b'),
-            icon: const Icon(Icons.cleaning_services_outlined),
-            tooltip: 'TestEraseB',
-            onPressed: () => _injectErase(_right, const Offset(110, 300)),
-          ),
-          IconButton(
-            key: const ValueKey('test_erase_b_empty'),
-            icon: const Icon(Icons.cleaning_services),
-            tooltip: 'TestEraseBEmpty',
-            onPressed: () => _injectErase(_right, const Offset(110, 520)),
-          ),
+          // AI 에이전트 검증용 입력 주입 버튼 — marionette 가 디버그 모드에서만
+          // 붙으므로 릴리스(공개 데모)에서는 숨긴다.
+          if (kDebugMode) ...[
+            IconButton(
+              key: const ValueKey('test_status'),
+              icon: const Icon(Icons.info_outline),
+              tooltip: 'TestStatus',
+              onPressed: () {
+                final l = _left.scribbleNotifier;
+                final r = _right.scribbleNotifier;
+                debugPrint(
+                  '[status] A(strokes=${l.currentScribble.strokes.length} '
+                  'undo=${l.canUndo} redo=${l.canRedo}) '
+                  'B(strokes=${r.currentScribble.strokes.length} '
+                  'undo=${r.canUndo} redo=${r.canRedo}) '
+                  'global(undo=${_drawingState.canUndoNotifier.value} '
+                  'redo=${_drawingState.canRedoNotifier.value}) '
+                  'lastActive=${identical(_drawingState.lastActiveScribbleNotifier, r) ? "B" : identical(_drawingState.lastActiveScribbleNotifier, l) ? "A" : "?"}',
+                );
+              },
+            ),
+            IconButton(
+              key: const ValueKey('test_redo'),
+              icon: const Icon(Icons.redo_outlined),
+              tooltip: 'TestRedo',
+              onPressed: () {
+                _drawingState.redo();
+                setState(() {});
+              },
+            ),
+            IconButton(
+              key: const ValueKey('test_draw_a'),
+              icon: const Icon(Icons.draw_outlined),
+              tooltip: 'TestDrawA',
+              onPressed: () => _injectStroke(_left, const Offset(120, 380)),
+            ),
+            IconButton(
+              key: const ValueKey('test_draw_b'),
+              icon: const Icon(Icons.draw),
+              tooltip: 'TestDrawB',
+              onPressed: () => _injectStroke(_right, const Offset(120, 300)),
+            ),
+            IconButton(
+              key: const ValueKey('test_erase_b'),
+              icon: const Icon(Icons.cleaning_services_outlined),
+              tooltip: 'TestEraseB',
+              onPressed: () => _injectErase(_right, const Offset(110, 300)),
+            ),
+            IconButton(
+              key: const ValueKey('test_erase_b_empty'),
+              icon: const Icon(Icons.cleaning_services),
+              tooltip: 'TestEraseBEmpty',
+              onPressed: () => _injectErase(_right, const Offset(110, 520)),
+            ),
+          ],
           ValueListenableBuilder<bool>(
             valueListenable: _drawingState.canUndoNotifier,
             builder: (context, canUndo, _) => IconButton(
               icon: const Icon(Icons.undo),
-              tooltip: 'Undo',
+              tooltip: t.common.undo,
               onPressed: canUndo ? _drawingState.undo : null,
             ),
           ),
@@ -229,7 +237,7 @@ class _SplitDrawingPageState extends State<SplitDrawingPage> {
             valueListenable: _drawingState.canRedoNotifier,
             builder: (context, canRedo, _) => IconButton(
               icon: const Icon(Icons.redo),
-              tooltip: 'Redo',
+              tooltip: t.common.redo,
               onPressed: canRedo ? _drawingState.redo : null,
             ),
           ),
