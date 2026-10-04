@@ -11,6 +11,8 @@ depend on Flutter.
 - Batch and schema helpers for creating typed or map-based fixture data.
 - Built-in English, Korean, Japanese, Chinese, Spanish, French, and German
   data with language fallback.
+- National locales for the ten largest economies by GDP, plus Brazil: names,
+  coherent addresses, fictional phone numbers, and currencies per country.
 - Partial custom locales can override only the data a project needs.
 - No runtime dependencies.
 
@@ -420,6 +422,52 @@ final custom = CoFaker(
 
 Missing lists use English data. The locale data is immutable by convention and
 can be shared between generators.
+
+### Countries: GDP top 10
+
+National locales cover the ten largest economies by nominal GDP (World Bank,
+2025) plus Brazil, which other sources rank in the top ten:
+
+| Country | Locale | Country | Locale |
+|---|---|---|---|
+| United States | `en_US` | France | `fr_FR` |
+| China | `zh_CN` | Russia | `ru_RU` |
+| Germany | `de_DE` | Italy | `it_IT` |
+| Japan | `ja_JP` | Canada | `en_CA` |
+| United Kingdom | `en_GB` | Brazil | `pt_BR` |
+| India | `en_IN` | | |
+
+```dart
+final japan = CoFaker.forCountry('JP', seed: 7, now: DateTime.utc(2026));
+japan.person.fullName();        // 林 蓮
+japan.internet.email();         // kaito.shimizu@example.com
+japan.internet.phoneNumber();   // 070-0103-4483 (fictional)
+japan.address.fullAddress();    // 〒600-8497 京都府京都市下京区宮前3丁目12-3
+
+for (final country in CoFakerCountries.gdpTop10) {
+  final faker = CoFaker(locale: country.locale, seed: 7);
+  print('${country.name}: ${faker.person.fullName()}');
+}
+// United States: Elijah Moore, China: 马浩然, Germany: Finn Neumann, ...
+```
+
+- `CoFaker(locale: 'ja-JP')` and `CoFaker.forCountry('JPN')` select the same
+  locale; `faker.country` tells which country a generator describes.
+- Phone numbers are fictional by construction: a regulator's range reserved
+  for fiction where one exists (NANP 555-01xx, Ofcom, Bundesnetzagentur,
+  ARCEP), otherwise a prefix that no number type uses.
+  `phoneNumber(international: true)` adds the calling code.
+- In `faker.schema` records, the city, postal code, region, and address fields
+  of one record describe the same place. Force a region field with
+  `roles: {'state': 'region'}`.
+- Emails, URLs, and usernames are romanized (`Müller` → `mueller`,
+  `佐藤` → `sato`, `Иванова` → `ivanova`) on reserved example domains.
+- The earlier language codes (`en`, `ko`, `ja`, `zh`, `es`, `fr`, `de`) keep
+  their output. `it`, `pt`, and `ru` previously fell back to English and now
+  resolve to Italy, Brazil, and Russia.
+
+Sources, the phone rationale per country, and the compatibility notes are in
+[docs/countries.md](docs/countries.md).
 
 ## Template Sugar
 

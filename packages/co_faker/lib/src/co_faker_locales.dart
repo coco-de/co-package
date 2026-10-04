@@ -1,8 +1,15 @@
 import 'clinic_data.dart';
 import 'co_faker_locale.dart';
+import 'countries/co_faker_national_locales.dart';
 import 'saas_data.dart';
 
 /// Built-in locale data shipped with co_faker.
+///
+/// The language codes `en`, `ko`, `ja`, `zh`, `es`, `fr` and `de` keep the
+/// data they had before national locales existed, so their output never
+/// changes. National locales (`en_us`, `ja_jp`, ...) are richer; the
+/// languages that had no data before, `it`, `pt` and `ru`, resolve to the
+/// national locales of Italy, Brazil and Russia.
 abstract final class CoFakerLocales {
   /// All built-in locales keyed by normalized locale code.
   static const Map<String, CoFakerLocale> all = <String, CoFakerLocale>{
@@ -13,7 +20,36 @@ abstract final class CoFakerLocales {
     'es': spanish,
     'fr': french,
     'de': german,
+    'it': CoFakerNationalLocales.italy,
+    'pt': CoFakerNationalLocales.brazil,
+    'ru': CoFakerNationalLocales.russia,
+    'en_us': CoFakerNationalLocales.unitedStates,
+    'zh_cn': CoFakerNationalLocales.china,
+    'de_de': CoFakerNationalLocales.germany,
+    'ja_jp': CoFakerNationalLocales.japan,
+    'en_gb': CoFakerNationalLocales.unitedKingdom,
+    'en_in': CoFakerNationalLocales.india,
+    'fr_fr': CoFakerNationalLocales.france,
+    'ru_ru': CoFakerNationalLocales.russia,
+    'it_it': CoFakerNationalLocales.italy,
+    'en_ca': CoFakerNationalLocales.canada,
+    'pt_br': CoFakerNationalLocales.brazil,
   };
+
+  /// Normalizes a locale code the way `CoFaker` does: `ja-JP` becomes
+  /// `ja_jp`.
+  static String normalize(String code) =>
+      code.trim().replaceAll('-', '_').toLowerCase();
+
+  /// Returns the built-in locale `CoFaker` selects for [code]: the exact
+  /// normalized code, then its language, then [english].
+  ///
+  /// Use it to extend a built-in locale with `CoFakerLocale.merge` without
+  /// re-implementing the fallback.
+  static CoFakerLocale resolve(String code) {
+    final normalized = normalize(code);
+    return all[normalized] ?? all[normalized.split('_').first] ?? english;
+  }
 
   /// English locale.
   static const CoFakerLocale english = CoFakerLocale(

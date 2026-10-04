@@ -1,4 +1,5 @@
 import 'co_faker.dart';
+import 'countries/co_faker_locality.dart';
 import 'domain.dart';
 
 /// The kind of value a schema field should receive.
@@ -148,7 +149,12 @@ enum CoFieldRole {
   rrn,
 
   /// A fake Korean business registration number with an invalid checksum.
-  businessNumber;
+  businessNumber,
+
+  /// A state, province, prefecture or region name of a national locale such
+  /// as `en_US`. Never inferred from a field name; force it with
+  /// `roles: {'state': 'region'}`. Fails for a language-only locale.
+  region;
 
   /// Parses a role name such as `title`, `Date` or `badge`.
   ///
@@ -182,6 +188,7 @@ enum CoFieldRole {
       'string' || 'word' => text,
       'residentnumber' || 'ssn' => rrn,
       'bizno' || 'brn' || 'businessregistrationnumber' => businessNumber,
+      'province' || 'prefecture' => region,
       _ => null,
     };
   }
@@ -672,8 +679,33 @@ class CoFakerSchema {
     final resolved =
         role ??
         infer(name, type: baseType, hasEnum: values != null, entity: entity);
-    final raw = _generate(f, resolved, baseType, index, values, referenceCount);
+    final raw = _generate(
+      f,
+      resolved,
+      baseType,
+      index,
+      values,
+      referenceCount,
+      recordSource,
+    );
     return _coerce(f, raw, baseType, index);
+  }
+
+  /// The city and postal code one record of a national locale shares, so
+  /// its city, postal code, region and address fields agree. `null` for a
+  /// language-only locale, which keeps independent fields.
+  ({CoFakerLocality locality, String postalCode})? _place(
+    CoFaker f,
+    CoFaker? recordSource,
+  ) {
+    final national = f.localeData.national;
+    if (national == null) return null;
+    final shared = (recordSource ?? f).derive('~place');
+    final locality = shared.random.pick(national.localities);
+    return (
+      locality: locality,
+      postalCode: shared.address.postalCodeFor(locality),
+    );
   }
 
   Object? _generate(
@@ -683,6 +715,7 @@ class CoFakerSchema {
     int index,
     List<String>? values,
     int? referenceCount,
+    CoFaker? recordSource,
   ) {
     switch (role) {
       case CoFieldRole.id:
@@ -711,13 +744,22 @@ class CoFakerSchema {
       case CoFieldRole.avatar:
         return f.image.avatarDataUri();
       case CoFieldRole.address:
-        return f.address.fullAddress();
+        final place = _place(f, recordSource);
+        if (place == null) return f.address.fullAddress();
+        return f.address
+            .postalAddress(
+              locality: place.locality,
+              postalCode: place.postalCode,
+            )
+            .formatted;
       case CoFieldRole.city:
-        return f.address.city();
+        return _place(f, recordSource)?.locality.city ?? f.address.city();
       case CoFieldRole.country:
         return f.address.country();
       case CoFieldRole.postalCode:
-        return f.address.postalCode();
+        return _place(f, recordSource)?.postalCode ?? f.address.postalCode();
+      case CoFieldRole.region:
+        return _place(f, recordSource)?.locality.region ?? f.address.region();
       case CoFieldRole.company:
         return f.commerce.companyName();
       case CoFieldRole.jobTitle:

@@ -1,4 +1,5 @@
 import 'clinic_data.dart';
+import 'countries/co_faker_national_data.dart';
 import 'saas_data.dart';
 
 /// Localized data used by [CoFaker].
@@ -35,6 +36,7 @@ class CoFakerLocale {
     this.postalCodeFormat = '#####',
     this.clinic,
     this.saas,
+    this.national,
   });
 
   /// Locale identifier such as `en`, `ko`, or `pt_BR`.
@@ -126,6 +128,14 @@ class CoFakerLocale {
   /// English.
   final CoFakerSaasData? saas;
 
+  /// Country data of a national locale such as `ja_JP`, or `null` for a
+  /// language-only locale.
+  ///
+  /// When present, generators use it for coherent addresses, fictional phone
+  /// numbers, romanized usernames and currency-aware prices. See
+  /// `CoFakerCountries`.
+  final CoFakerNationalData? national;
+
   /// Merges this locale over [fallback].
   ///
   /// A collection is considered unspecified when it is empty. Scalar values
@@ -177,6 +187,7 @@ class CoFakerLocale {
           : postalCodeFormat,
       clinic: clinic ?? fallback.clinic,
       saas: saas ?? fallback.saas,
+      national: national ?? fallback.national,
     );
   }
 }

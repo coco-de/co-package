@@ -3,6 +3,9 @@ import 'dart:core';
 import 'dart:core' as core;
 
 import 'co_faker.dart';
+import 'countries/co_faker_locality.dart';
+import 'countries/co_faker_national_data.dart';
+import 'countries/co_postal_address.dart';
 
 /// Biological sex used to pick gendered names and identity digits.
 enum CoSex {
@@ -37,7 +40,18 @@ class CoFakerPerson {
   }
 
   /// Generates a localized last name.
-  String lastName() => faker.random.pick(faker.localeData.lastNames);
+  ///
+  /// In a national locale whose family names agree with the person's sex,
+  /// such as `ru_RU`, [sex] picks the matching form (`Иванова` for a woman).
+  String lastName({CoSex? sex}) {
+    final national = faker.localeData.national;
+    if (sex != null && national != null && national.hasGenderedLastNames) {
+      return faker.random.pick(
+        sex == CoSex.female ? national.femaleLastNames : national.maleLastNames,
+      );
+    }
+    return faker.random.pick(faker.localeData.lastNames);
+  }
 
   /// Generates a localized gender label.
   String gender() => faker.random.pick(faker.localeData.genders);
@@ -51,12 +65,43 @@ class CoFakerPerson {
   }
 
   /// Generates a name from the current locale's name format.
+  ///
+  /// In a national locale with gendered family names the given and family
+  /// names always agree: the sex comes from [sex], from a known [firstName],
+  /// or is picked at random.
   String fullName({String? firstName, String? lastName, CoSex? sex}) {
+    final national = faker.localeData.national;
+    if (national != null && national.hasGenderedLastNames) {
+      final names = _agreeingNames(firstName, lastName, sex);
+      return faker.localeData.nameFormat
+          .replaceAll('{first}', names.first)
+          .replaceAll('{last}', names.last);
+    }
     final first = firstName ?? this.firstName(sex: sex);
     final last = lastName ?? this.lastName();
     return faker.localeData.nameFormat
         .replaceAll('{first}', first)
         .replaceAll('{last}', last);
+  }
+
+  ({String first, String last}) _agreeingNames(
+    String? firstName,
+    String? lastName,
+    CoSex? sex,
+  ) {
+    final data = faker.localeData;
+    final resolved =
+        sex ??
+        (firstName == null
+            ? this.sex()
+            : data.femaleFirstNames.contains(firstName)
+            ? CoSex.female
+            : data.maleFirstNames.contains(firstName)
+            ? CoSex.male
+            : null);
+    final first = firstName ?? this.firstName(sex: resolved);
+    final last = lastName ?? this.lastName(sex: resolved);
+    return (first: first, last: last);
   }
 
   /// Alias for [fullName], useful when mirroring common faker APIs.
@@ -72,10 +117,31 @@ class CoFakerPerson {
   /// Hangul names are romanized with [romanize] first, so Korean fixtures
   /// get readable handles such as `seoyeon.kim`.
   String username({String? firstName, String? lastName}) {
+    final national = faker.localeData.national;
+    if (national != null) {
+      return _nationalUsername(national, firstName, lastName);
+    }
     final first = _slugPart(romanize(firstName ?? this.firstName()));
     final last = _slugPart(
       _surnames[lastName ?? this.lastName()] ?? romanize(lastName ?? ''),
     );
+    final base = [first, last].where((part) => part.isNotEmpty).join('.');
+    return base.isEmpty ? 'user${faker.number.int(min: 1, max: 9999)}' : base;
+  }
+
+  String _nationalUsername(
+    CoFakerNationalData national,
+    String? firstName,
+    String? lastName,
+  ) {
+    final names = national.hasGenderedLastNames
+        ? _agreeingNames(firstName, lastName, null)
+        : (
+            first: firstName ?? this.firstName(),
+            last: lastName ?? this.lastName(),
+          );
+    final first = _slugPart(national.romanize(names.first));
+    final last = _slugPart(national.romanize(names.last));
     final base = [first, last].where((part) => part.isNotEmpty).join('.');
     return base.isEmpty ? 'user${faker.number.int(min: 1, max: 9999)}' : base;
   }
@@ -163,7 +229,108 @@ class CoFakerAddress {
   final CoFaker faker;
 
   /// Generates a city name.
-  String city() => faker.random.pick(faker.localeData.cities);
+  String city() {
+    final national = faker.localeData.national;
+    if (national != null) return faker.random.pick(national.localities).city;
+    return faker.random.pick(faker.localeData.cities);
+  }
+
+  /// Picks a city with its region and postal code templates.
+  ///
+  /// Throws a [StateError] for a language-only locale; use a national
+  /// locale such as `en_US` (see `CoFakerCountries`).
+  CoFakerLocality locality() =>
+      faker.random.pick(_national('locality').localities);
+
+  /// Generates a state, province, prefecture or region name of a national
+  /// locale. Throws a [StateError] for a language-only locale.
+  String region() => locality().region;
+
+  /// Generates a region code such as `CA`, `ON` or `MI` of a national
+  /// locale. Throws a [StateError] for a language-only locale.
+  String regionCode() => locality().regionCode;
+
+  /// Generates a postal code that belongs to [locality].
+  ///
+  /// Throws a [StateError] for a language-only locale.
+  String postalCodeFor(CoFakerLocality locality) {
+    final national = _national('postalCodeFor');
+    return _fill(
+      faker.random.pick(locality.postalCodes),
+      letters: national.postalLetters,
+    );
+  }
+
+  /// Generates a postal address of a national locale whose city, region and
+  /// postal code agree. Pass [locality] or [postalCode] to keep them fixed.
+  ///
+  /// Throws a [StateError] for a language-only locale.
+  CoPostalAddress postalAddress({
+    CoFakerLocality? locality,
+    String? postalCode,
+  }) {
+    final national = _national('postalAddress');
+    final place =
+        locality ?? faker.random.pick<CoFakerLocality>(national.localities);
+    final code = postalCode ?? postalCodeFor(place);
+    final line1 = _streetLine(national);
+    final country = national.country;
+    final formatted = national.addressFormat
+        .replaceAll('{line1}', line1)
+        .replaceAll('{city}', place.city)
+        .replaceAll('{regionCode}', place.regionCode)
+        .replaceAll('{region}', place.region)
+        .replaceAll('{postalCode}', code)
+        .replaceAll('{country}', country.nativeName);
+    return (
+      line1: line1,
+      city: place.city,
+      region: place.region,
+      regionCode: place.regionCode,
+      postalCode: code,
+      countryCode: country.code,
+      country: country.nativeName,
+      formatted: formatted,
+    );
+  }
+
+  CoFakerNationalData _national(String method) {
+    final national = faker.localeData.national;
+    if (national == null) {
+      throw StateError(
+        'address.$method needs a national locale such as en_US; '
+        '"${faker.locale}" has no country data',
+      );
+    }
+    return national;
+  }
+
+  String _streetLine(CoFakerNationalData national) {
+    final street = streetName();
+    final number = _fill(faker.random.pick(national.houseNumberFormats));
+    return national.streetLineFormat
+        .replaceAll('{street}', street)
+        .replaceAll('{number}', number);
+  }
+
+  /// Fills `#` (any digit), `@` (1-9) and `?` (one of [letters]).
+  String _fill(String template, {String letters = ''}) {
+    final buffer = StringBuffer();
+    for (final rune in template.runes) {
+      final character = String.fromCharCode(rune);
+      switch (character) {
+        case '#':
+          buffer.write(faker.random.int(min: 0, max: 9));
+        case '@':
+          buffer.write(faker.random.int(min: 1, max: 9));
+        case '?' when letters.isNotEmpty:
+          buffer.write(letters[faker.random.int(max: letters.length - 1)]);
+        default:
+          buffer.write(character);
+      }
+    }
+    return buffer.toString();
+  }
 
   /// Generates a country name.
   String country() => faker.random.pick(faker.localeData.countries);
@@ -175,7 +342,12 @@ class CoFakerAddress {
   String streetName() => faker.random.pick(faker.localeData.streetNames);
 
   /// Generates a street address.
+  ///
+  /// A national locale writes the street line in its own order, such as
+  /// `Hauptstraße 12` or `本町2丁目3-15`.
   String streetAddress() {
+    final national = faker.localeData.national;
+    if (national != null) return _streetLine(national);
     return faker.localeData.addressFormat
         .replaceAll('{number}', faker.random.int(min: 1, max: 9999).toString())
         .replaceAll('{street}', streetName())
@@ -183,10 +355,21 @@ class CoFakerAddress {
   }
 
   /// Generates a postal code from the locale's `#` template.
-  String postalCode() => faker.random.digits(faker.localeData.postalCodeFormat);
+  ///
+  /// A national locale uses the postal code templates of a random city.
+  String postalCode() {
+    final national = faker.localeData.national;
+    if (national != null) {
+      return postalCodeFor(faker.random.pick(national.localities));
+    }
+    return faker.random.digits(faker.localeData.postalCodeFormat);
+  }
 
   /// Generates a complete address string.
+  ///
+  /// A national locale returns [postalAddress] in the country's format.
   String fullAddress() {
+    if (faker.localeData.national != null) return postalAddress().formatted;
     return '${streetAddress()}, ${postalCode()}, ${country()}';
   }
 
@@ -244,8 +427,35 @@ class CoFakerInternet {
   }
 
   /// Generates a phone number from the locale's phone template.
-  String phoneNumber() =>
-      faker.random.digits(faker.random.pick(faker.localeData.phoneFormats));
+  ///
+  /// A national locale only produces fictional numbers (see
+  /// `CoFakerPhoneFormat`) and writes them with the calling code when
+  /// [international] is true. Language-only locales have a single notation
+  /// and ignore [international].
+  String phoneNumber({bool international = false}) {
+    final national = faker.localeData.national;
+    if (national == null) {
+      return faker.random.digits(
+        faker.random.pick(faker.localeData.phoneFormats),
+      );
+    }
+    final mobiles = national.phoneFormats.where((f) => f.mobile).toList();
+    final landlines = national.phoneFormats.where((f) => !f.mobile).toList();
+    final group = mobiles.isEmpty
+        ? landlines
+        : landlines.isEmpty
+        ? mobiles
+        : faker.random.double() < national.mobileShare
+        ? mobiles
+        : landlines;
+    final format = faker.random.pick(group);
+    final digits = List<int>.generate(
+      format.digitCount,
+      (_) => faker.random.int(min: 0, max: 9),
+      growable: false,
+    );
+    return format.render(digits, international: international);
+  }
 
   static String _urlPart(String value) {
     final part = value.toLowerCase().replaceAll(RegExp('[^a-z0-9/-]'), '-');
@@ -265,25 +475,30 @@ class CoFakerText {
   String word() => faker.random.pick(faker.localeData.words);
 
   /// Generates [count] localized words.
+  ///
+  /// Chinese and Japanese national locales join words without spaces.
   String words(int count) {
     _checkCount(count);
-    return List<String>.generate(count, (_) => word()).join(' ');
+    final separator = faker.localeData.national?.wordSeparator ?? ' ';
+    return List<String>.generate(count, (_) => word()).join(separator);
   }
 
   /// Generates a sentence containing [wordCount] words.
   String sentence({int wordCount = 6}) {
     final value = words(wordCount);
     if (value.isEmpty) return value;
-    return '${value[0].toUpperCase()}${value.substring(1)}.';
+    final end = faker.localeData.national?.sentenceTerminator ?? '.';
+    return '${value[0].toUpperCase()}${value.substring(1)}$end';
   }
 
   /// Generates [count] sentences.
   String sentences(int count, {int wordCount = 6}) {
     _checkCount(count);
+    final separator = faker.localeData.national?.sentenceSeparator ?? ' ';
     return List<String>.generate(
       count,
       (_) => sentence(wordCount: wordCount),
-    ).join(' ');
+    ).join(separator);
   }
 
   /// Generates [count] sentences separated by newlines.
@@ -301,12 +516,30 @@ class CoFakerText {
   }
 
   /// Generates a lowercase slug.
+  ///
+  /// A national locale transliterates the words first (`Lösung` becomes
+  /// `loesung`) and falls back to hexadecimal parts for scripts without a
+  /// letter-by-letter transliteration, such as Chinese.
   String slug({int wordCount = 3}) {
-    return words(wordCount)
-        .toLowerCase()
-        .replaceAll(RegExp('[^a-z0-9 ]'), '')
-        .trim()
-        .replaceAll(RegExp(' +'), '-');
+    final national = faker.localeData.national;
+    if (national == null) {
+      return words(wordCount)
+          .toLowerCase()
+          .replaceAll(RegExp('[^a-z0-9 ]'), '')
+          .trim()
+          .replaceAll(RegExp(' +'), '-');
+    }
+    final parts = List<String>.generate(
+      wordCount,
+      (_) => national
+          .romanize(word())
+          .toLowerCase()
+          .replaceAll(RegExp('[^a-z0-9]'), ''),
+      growable: false,
+    );
+    return [
+      for (final part in parts) part.isEmpty ? faker.id.hex(4) : part,
+    ].join('-');
   }
 
   static void _checkCount(int count) {
@@ -430,10 +663,17 @@ class CoFakerCommerce {
   final CoFaker faker;
 
   /// Generates a product name from a localized adjective and noun.
+  ///
+  /// A national locale uses the language's word order, such as
+  /// `Carnet léger` in French.
   String productName() {
     final adjective = faker.random.pick(faker.localeData.productAdjectives);
     final noun = faker.random.pick(faker.localeData.productNouns);
-    return '$adjective $noun';
+    final national = faker.localeData.national;
+    if (national == null) return '$adjective $noun';
+    return national.productNameFormat
+        .replaceAll('{adjective}', adjective)
+        .replaceAll('{noun}', noun);
   }
 
   /// Generates a product category.
@@ -443,8 +683,17 @@ class CoFakerCommerce {
   String companyName() => faker.random.pick(faker.localeData.companyNames);
 
   /// Generates a price with two decimal places.
+  ///
+  /// A national locale rounds to its currency's minor units, so yen prices
+  /// are whole numbers.
   double price({double min = 5, double max = 500}) {
-    return faker.number.decimal(min: min, max: max);
+    final national = faker.localeData.national;
+    if (national == null) return faker.number.decimal(min: min, max: max);
+    return faker.number.decimal(
+      min: min,
+      max: max,
+      decimals: national.country.currencyMinorUnits,
+    );
   }
 
   /// Returns the current locale's currency code and symbol.

@@ -1,5 +1,26 @@
 ## Unreleased
 
+- Add national locales for the ten largest economies by GDP (World Bank 2025)
+  plus Brazil: `en_US`, `zh_CN`, `de_DE`, `ja_JP`, `en_GB`, `en_IN`,
+  `fr_FR`, `ru_RU`, `it_IT`, `en_CA`, `pt_BR`. They carry gendered names
+  (Russian family names agree with the sex), coherent city, region and postal
+  codes, national address order, romanized usernames, reserved email domains,
+  and currency-aware prices. See `docs/countries.md`.
+- Add `CoFakerCountries` (`all`, `gdpTop10`, `byCode`), `CoFaker.forCountry`,
+  `CoFaker.country`, `CoFakerLocales.resolve`, `address.postalAddress()`,
+  `region()`, `regionCode()`, `locality()`, `postalCodeFor()`, the `region`
+  schema role and `internet.phoneNumber(international: true)`.
+- National phone numbers are fictional by construction: regulator ranges
+  reserved for fiction (NANP, Ofcom, Bundesnetzagentur, ARCEP) or prefixes
+  that libphonenumber rejects for every number type.
+- Schema records of a national locale share one place, so their city, postal
+  code, region and address fields agree.
+- Fix locale lookup to use the normalized code: custom locales registered with
+  a regional code such as `ko-KR` were never selected.
+- Behavior change: regional codes with a national locale (such as `ja_JP`)
+  and the languages `it`, `pt` (Brazil) and `ru`, which used to fall back,
+  now resolve to the national locales. The earlier language codes keep their
+  0.10.0 output, guarded by a snapshot regression test.
 - Add 27 Korean/English domain packs for the 36 demo PRDs, preserving the
   original `clinic`, `saas`, `korea` lookup precedence and seeded defaults.
 - Add coherent typed FX histories, masked remittance recipients/transfers,
