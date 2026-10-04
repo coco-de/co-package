@@ -82,6 +82,18 @@
   - 저장 시점과 크게 다른 뷰포트·폰트 크기로 복원하면 여전히 근사치다(같은
     기기·세션 재진입을 전제).
 
+## [1.3.0](https://github.com/coco-de/co-package/compare/open_epub-v1.2.0...open_epub-v1.3.0) (2026-10-04)
+
+
+### 기능
+
+* **open_epub:** 🌐 예제 앱 11개 언어 · 다크 테마 · 포털 이어받기 (+ 리더 문구 주입) ([#44](https://github.com/coco-de/co-package/issues/44)) ([#50](https://github.com/coco-de/co-package/issues/50)) ([c5a98bc](https://github.com/coco-de/co-package/commit/c5a98bc607bb4db1947f0a5cb34dc4c0accf0d65))
+
+
+### 버그 수정
+
+* **examples:** 💄 부팅 전 배경을 넘겨받은 테마로 — 흰 화면 깜빡임 제거 (+ co_demo_prefs 권고) ([#52](https://github.com/coco-de/co-package/issues/52)) ([#54](https://github.com/coco-de/co-package/issues/54)) ([3e242da](https://github.com/coco-de/co-package/commit/3e242dab95d767a9a1d4360593311cd3b0a5b6e7))
+
 ## [1.2.0](https://github.com/coco-de/co-package/compare/open_epub-v1.1.0...open_epub-v1.2.0) (2026-09-29)
 
 
