@@ -32,6 +32,18 @@
   checks for numeric/enum bounds, relationships, UTC dates, field stability,
   English fallback and scoped authored-data restrictions.
 
+## [0.11.0](https://github.com/coco-de/co-package/compare/co_faker-v0.10.0...co_faker-v0.11.0) (2026-10-04)
+
+
+### 기능
+
+* **co_faker:** ✨ GDP 상위 국가 국가별 목데이터 — 국가 로케일 11종 · 레지스트리 · 가상 전화번호 ([#55](https://github.com/coco-de/co-package/issues/55)) ([214919b](https://github.com/coco-de/co-package/commit/214919b9ede0be55afe6842bda496cd83e6d8245))
+
+
+### 버그 수정
+
+* **co_faker:** 🐛 로케일 조회를 정규화된 코드로 한다 ([#55](https://github.com/coco-de/co-package/issues/55)) ([5482260](https://github.com/coco-de/co-package/commit/548226086f0d0da266d5fbf8a6580bd949a007df))
+
 ## [0.10.0](https://github.com/coco-de/co-package/compare/co_faker-v0.9.0...co_faker-v0.10.0) (2026-10-03)
 
 
