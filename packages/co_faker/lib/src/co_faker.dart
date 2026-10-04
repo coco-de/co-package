@@ -1,5 +1,7 @@
 import 'clinic.dart';
 import 'co_faker_locale.dart';
+import 'countries/co_faker_countries.dart';
+import 'countries/co_faker_country.dart';
 import 'domain.dart';
 import 'domain_packs/co_faker_fx.dart';
 import 'domain_packs/co_faker_remit.dart';
@@ -42,8 +44,9 @@ class CoFaker {
   /// Creates a fake data generator.
   ///
   /// [locale] accepts language codes such as `en`, `ko`, `ja`, `zh`, `es`,
-  /// `fr`, and `de`. Regional values such as `ko_KR` first try an exact
-  /// custom locale, then fall back to the language, then English.
+  /// `fr`, and `de`, and national codes such as `en_US` or `ja-JP` for the
+  /// countries in [CoFakerCountries]. A code first tries an exact custom or
+  /// built-in locale, then falls back to the language, then English.
   CoFaker({
     String locale = 'en',
     int? seed,
@@ -68,6 +71,38 @@ class CoFaker {
     localeData = selected.merge(available['en']!);
   }
 
+  /// Creates a generator for the national locale of [code], an ISO 3166-1
+  /// alpha-2 or alpha-3 country code such as `JP` or `BRA`.
+  ///
+  /// Throws an [ArgumentError] for countries without a national locale; see
+  /// [CoFakerCountries.all].
+  factory CoFaker.forCountry(
+    String code, {
+    int? seed,
+    DateTime? now,
+    Map<String, CoFakerLocale> locales = const <String, CoFakerLocale>{},
+    CoRandom? random,
+    List<CoFakerDomain> domains = const <CoFakerDomain>[],
+  }) {
+    final country = CoFakerCountries.byCode(code);
+    if (country == null) {
+      throw ArgumentError.value(
+        code,
+        'code',
+        'no national locale; supported: '
+            '${CoFakerCountries.all.map((country) => country.code).join(', ')}',
+      );
+    }
+    return CoFaker(
+      locale: country.locale,
+      seed: seed,
+      now: now,
+      locales: locales,
+      random: random,
+      domains: domains,
+    );
+  }
+
   /// The normalized locale code selected for this generator.
   final String locale;
 
@@ -86,6 +121,10 @@ class CoFaker {
 
   /// The effective locale data after English fallback is applied.
   late final CoFakerLocale localeData;
+
+  /// The country of a national locale, or `null` for a language-only locale
+  /// such as `en` or `ko`.
+  CoFakerCountry? get country => localeData.national?.country;
 
   final Map<String, CoFakerLocale> _customLocales;
 

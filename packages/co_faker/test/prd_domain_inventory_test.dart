@@ -368,8 +368,9 @@ void main() {
         final en = _faker(
           locale: 'en',
         ).schema.record({'value': 'String'}, roles: {'value': qualified});
+        // `nl` has no built-in data (`pt` resolves to Brazil since 0.11.0).
         final fallback = _faker(
-          locale: 'pt',
+          locale: 'nl',
         ).schema.record({'value': 'String'}, roles: {'value': qualified});
         expect(fallback, en, reason: qualified);
         expect(en['value'], isNotEmpty, reason: qualified);
