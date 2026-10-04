@@ -34,6 +34,17 @@ void main() {
       expect(unknown.person.fullName(), isNotEmpty);
     });
 
+    test('custom locales are found by their normalized regional code', () {
+      final faker = CoFaker(
+        locale: 'ko-KR',
+        locales: {
+          'ko-KR': const CoFakerLocale(code: 'ko_KR', firstNames: ['테스트']),
+        },
+        seed: 1,
+      );
+      expect(faker.person.firstName(), '테스트');
+    });
+
     test('merges partial custom locale data over English', () {
       final faker = CoFaker(
         locale: 'acme',
