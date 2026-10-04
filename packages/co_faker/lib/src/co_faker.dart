@@ -59,9 +59,11 @@ class CoFaker {
       ...CoFakerLocales.all,
       ..._customLocales,
     };
+    // `this.locale` is the normalized code: the raw parameter would miss
+    // regional keys such as `ja_jp` and custom locales such as `ko-KR`.
     final selected =
-        available[locale] ??
-        available[_languageCode(locale)] ??
+        available[this.locale] ??
+        available[_languageCode(this.locale)] ??
         available['en']!;
     localeData = selected.merge(available['en']!);
   }
