@@ -11,6 +11,8 @@
 
   "//co_bdd": "co-test-gen 저장소에서 이관하며 co_test_gen → co_bdd 로 개명. 마지막 릴리즈는 태그 co_bdd-v0.1.2(구 v0.1.2, 이관 시 개명)로 인식되고, 그 이후 커밋(defaultTarget · 개명 등)이 다음 릴리즈 노트에 담긴다. 0.x 이므로 개명 같은 호환 깨짐은 bump-minor-pre-major 로 1.0.0 이 아니라 0.2.0 으로 올린다.",
 
+  "//co_demo_world": "데모 세계 어댑터(#70). 데모 통합 중 API 가 바뀔 수 있어 첫 릴리스를 1.0.0 이 아니라 0.1.0 으로 낸다.",
+
   "//co_faker": "0.4.0~0.8.1 은 수동 태그(co_faker-vX.Y.Z)로 릴리스했다. 0.8.1 부터 release-please 가 관리한다 — 이후 feat/fix 커밋이 Release PR 에 모인다.",
 
   "//open_board": "open-board 저장소에서 이관. 마지막 릴리즈는 태그 open_board-v0.1.0(구 v0.1.0, 이관 시 개명)으로 인식되며, 그 이후 커밋이 다음 릴리즈 노트에 담긴다.",
@@ -38,6 +40,6 @@
     "packages/co_bdd": { "component": "co_bdd", "bump-minor-pre-major": true },
     "packages/co_faker": { "component": "co_faker", "bump-minor-pre-major": true },
     "packages/co_demo_prefs": { "component": "co_demo_prefs", "bump-minor-pre-major": true },
-    "packages/co_demo_world": { "component": "co_demo_world", "bump-minor-pre-major": true }
+    "packages/co_demo_world": { "component": "co_demo_world", "bump-minor-pre-major": true, "initial-version": "0.1.0" }
   }
 }
