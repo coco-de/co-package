@@ -30,38 +30,38 @@ class SampleLanguage {
     _ => throw ArgumentError.value(code, 'code', 'no sample'),
   };
 
+  /// The letters that the sample writes in: one for each letter of the English
+  /// alphabet. Latin-script languages get accented letters, so that no text of
+  /// the sample reads like an English one.
   String get _alphabet => switch (code) {
     'ja' => 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ',
     'zh' => '甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥天地玄黄',
     'ru' => 'абвгдежзиклмнопрстуфхцчшэюяъыь',
-    _ => '',
+    'de' => 'àáâãäåæçèéêëìíîïñòóôõöøùúûüýþÿ',
+    'fr' => 'áàâãäåæçéèêëíìîïñóòôõöøúùûüýþÿ',
+    'it' => 'âàáãäåæçêèéëîìíïñôòóõöøûùúüýþÿ',
+    _ => 'ãàáâäåæçõèéêëñìíîïôòóöøúùûüýþÿ',
   };
 
-  /// The text of the sample for the English [text].
+  /// The text of the sample for the English [text]: every letter is replaced by
+  /// a letter of the alphabet of the language.
   ///
   /// The placeholders (`{name}`, `#{variable}`), the digits, and the
-  /// punctuation stay as they are. A language that writes in Latin letters
-  /// gets accented vowels and a marker that no English text has.
+  /// punctuation stay as they are. Every English letter maps to the same
+  /// letter wherever it stands, so a text that contains another keeps it
+  /// whole: an explanation that contains its correct choice still does.
   String text(String english) {
     final out = StringBuffer();
-    var hasLetters = false;
     final letter = RegExp(r'\p{L}', unicode: true);
     void rewrite(String piece) {
       for (final rune in piece.runes) {
         final char = String.fromCharCode(rune);
-        if (!letter.hasMatch(char)) {
-          out.write(char);
-          continue;
-        }
-        hasLetters = true;
-        if (_alphabet.isNotEmpty) {
+        if (letter.hasMatch(char)) {
           out.write(
             _alphabet[char.toLowerCase().runes.first % _alphabet.length],
           );
-        } else if (rune < 128) {
-          out.write(_accent(char));
         } else {
-          out.write('x');
+          out.write(char);
         }
       }
     }
@@ -73,25 +73,7 @@ class SampleLanguage {
       last = match.end;
     }
     rewrite(english.substring(last));
-    if (_alphabet.isEmpty && hasLetters) out.write('·${_marker()}');
     return out.toString();
-  }
-
-  String _marker() => switch (code) {
-    'de' => 'ä',
-    'fr' => 'é',
-    'it' => 'à',
-    _ => 'ã',
-  };
-
-  String _accent(String char) {
-    const accents = <String, Map<String, String>>{
-      'de': {'a': 'ä', 'o': 'ö', 'u': 'ü'},
-      'fr': {'a': 'à', 'e': 'é', 'o': 'ô'},
-      'it': {'a': 'à', 'e': 'è', 'o': 'ò'},
-      'pt': {'a': 'ã', 'e': 'ê', 'o': 'õ'},
-    };
-    return accents[code]?[char.toLowerCase()] ?? char;
   }
 
   /// The domain text bundle: every English key, every text rewritten.

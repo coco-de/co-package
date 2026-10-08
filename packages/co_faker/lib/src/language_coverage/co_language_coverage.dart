@@ -49,9 +49,11 @@ class CoCoverageThresholds {
   final double maxSameAsEnglishLatin;
 
   /// The smallest share of the texts of a language that must contain its
-  /// writing system (kana or han, han, Cyrillic, Hangul). The Korean bundle,
-  /// clinic data, and SaaS data measure 97.7% before the units and acronyms
-  /// that equal English are taken out, and 100% after.
+  /// writing system (kana or han, han, Cyrillic, Hangul). A text that equals
+  /// English is left to (c) and not counted here. The Korean bundle, clinic
+  /// data, and SaaS data measure 99.1%, before the units, acronyms, and
+  /// names of its clinic and SaaS data are listed in `allowSameAsEnglish`,
+  /// and 100% after.
   final double minScript;
 
   /// The smallest share of the texts that one generator writes that must
@@ -389,6 +391,7 @@ class _DataLayer {
     );
 
     _compare(englishBundle, CoLanguageTexts.ofBundle(data.bundle));
+    _checkExamPrep(data.bundle.texts);
     stats['bundleKeys'] = <String>[
       for (final key in data.bundle.texts.keys)
         if (reference.bundle.texts.containsKey(key)) key,
@@ -453,6 +456,42 @@ class _DataLayer {
     String message, {
     String? value,
   }) => _issues.add(CoLanguageIssue(check, where, message, value: value));
+
+  /// The pairs of the exam questions: every explanation contains its correct
+  /// choice, and the four choices of a question differ. The English and Korean
+  /// bundles keep both, and the generator relies on them: it shuffles the
+  /// choices and the answer key follows the correct one.
+  void _checkExamPrep(Map<String, List<String>> texts) {
+    final correct = texts['exam_prep.correctChoice'];
+    final explanation = texts['exam_prep.explanation'];
+    final wrong = <List<String>?>[
+      for (var n = 1; n <= 3; n++) texts['exam_prep.wrongChoice$n'],
+    ];
+    if (correct == null || explanation == null || wrong.contains(null)) return;
+    for (var i = 0; i < correct.length; i++) {
+      if (i < explanation.length && !explanation[i].contains(correct[i])) {
+        _issue(
+          CoLanguageCheck.invariant,
+          'exam_prep.explanation[$i]',
+          'does not contain its correct choice "${correct[i]}" '
+              '(exam_prep.correctChoice[$i]): an explanation names its answer',
+          value: explanation[i],
+        );
+      }
+      final choices = <String>[
+        correct[i],
+        for (final list in wrong)
+          if (i < list!.length) list[i],
+      ];
+      if (choices.toSet().length != choices.length) {
+        _issue(
+          CoLanguageCheck.invariant,
+          'exam_prep.questionStem[$i]',
+          'two of the four choices are the same: ${choices.join(' / ')}',
+        );
+      }
+    }
+  }
 
   void _unregistered(String where, String message) =>
       _issue(CoLanguageCheck.unregistered, where, message);
@@ -633,7 +672,9 @@ class _DataLayer {
         }
       }
     }
-    _checkScript(slot.name, where, text, allowed: allowed);
+    // A text that equals English is reported by (c), once; it is not also a
+    // text without the writing system.
+    _checkScript(slot.name, where, text, allowed: allowed || text == english);
   }
 
   void _checkPlaceholders(String where, String english, String text) {
@@ -730,9 +771,8 @@ class _DataLayer {
         _issue(
           CoLanguageCheck.sameAsEnglish,
           same.where,
-          'equals the English text; if it is a loanword, an acronym, or a '
-          "name, allow it: '${same.slot}': ['${_quote(same.text)}']",
-          value: same.text,
+          "equals English; to allow it: '${same.slot}': "
+          "['${_quote(same.text)}']",
         );
       }
     } else if (_same.isNotEmpty) {

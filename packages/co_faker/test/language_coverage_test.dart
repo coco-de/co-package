@@ -446,8 +446,7 @@ void main() {
             texts['catalog.groceryUnit'] = <String>[
               ...english['catalog.groceryUnit']!,
             ];
-            texts['exam_prep.correctChoice']![2] =
-                english['exam_prep.correctChoice']![2];
+            texts['fx.tierName']![0] = english['fx.tierName']![0];
           }, allow: allow),
         ),
       );
@@ -458,7 +457,7 @@ void main() {
       );
       final allowed = run(const <String, List<String>>{
         'catalog.groceryUnit': ['*'],
-        'exam_prep.correctChoice': ['TCP'],
+        'fx.tierName': ['Bronze'],
       });
       expect(allowed.passed, isTrue, reason: '$allowed');
       expect(allowed.stats['allowedSameAsEnglish'], greaterThan(5));
@@ -467,16 +466,16 @@ void main() {
       // that is no slot are reported, so the list never keeps a stale entry.
       final stale = run(const <String, List<String>>{
         'catalog.groceryUnit': ['*'],
-        'exam_prep.correctChoice': ['TCP', 'HTTP'],
+        'fx.tierName': ['Bronze', 'Silver'],
         'catalog.commerceUnit': ['*'],
         'no.such.slot': ['x'],
-        'fx.tierName': [''],
+        'vet.petName': [''],
       });
       expect(_where(stale, CoLanguageCheck.allowance), [
-        'exam_prep.correctChoice',
+        'fx.tierName',
         'catalog.commerceUnit',
         'no.such.slot',
-        'fx.tierName',
+        'vet.petName',
       ]);
     });
 
@@ -618,6 +617,26 @@ void main() {
         report.issuesOf(CoLanguageCheck.placeholder).last.message,
         contains('#{variable}'),
       );
+    });
+
+    test('reject exam questions that lost their pairs', () {
+      // The explanation of a question contains its correct choice, and the
+      // four choices of a question differ: the generator shuffles the choices
+      // and keeps the answer key with the correct one.
+      final bundle = _bundle(ja, (texts) {
+        texts['exam_prep.explanation']![0] = 'ただの説明';
+        texts['exam_prep.wrongChoice1']![1] =
+            texts['exam_prep.correctChoice']![1];
+      });
+      final report = _data(ja.data(bundle: bundle));
+      expect(
+        _where(report, CoLanguageCheck.invariant),
+        unorderedEquals(<String>[
+          'exam_prep.explanation[0]',
+          'exam_prep.questionStem[1]',
+        ]),
+      );
+      expect(_data(ja.data()).issuesOf(CoLanguageCheck.invariant), isEmpty);
     });
 
     test(
@@ -879,7 +898,9 @@ void main() {
       });
       final report = _data(ja.data(bundle: many));
       final markdown = report.toMarkdown(limit: 5);
-      expect(markdown, contains('and ${report.issues.length - 5} more'));
+      final hangul = report.issuesOf(CoLanguageCheck.hangul).length;
+      expect(markdown, contains('## (a) Hangul ($hangul)'));
+      expect(markdown, contains('and ${hangul - 5} more'));
     });
   });
 }

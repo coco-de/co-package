@@ -54,6 +54,11 @@ enum CoLanguageCheck {
   /// A text is empty.
   empty('empty text'),
 
+  /// Texts that belong together no longer do: the explanation of an exam
+  /// question does not contain its correct choice, or two choices of a
+  /// question are the same.
+  invariant('paired texts'),
+
   /// An `allowSameAsEnglish` entry is wrong or no longer needed.
   allowance('allowSameAsEnglish'),
 
