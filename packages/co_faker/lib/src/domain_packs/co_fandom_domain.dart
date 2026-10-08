@@ -8,11 +8,20 @@ class CoFandomDomain extends CoFakerDomain {
   @override
   String get name => 'fandom';
 
-  /// Exact approved names, unchanged across locales.
+  /// The approved names of the Korean and English bundles, which both write
+  /// them as they always have.
+  ///
+  /// The role `creatorName` reads the key `fandom.creatorName` of the language
+  /// bundle, so another language writes two fictional creator names of its own
+  /// there. This constant stays for code that already reads it.
   static const creatorNames = ['모래시계 정원', '하늘결'];
   @override
   Map<String, CoDomainRole> get roles => {
-    'creatorName': enumRole(creatorNames),
+    'creatorName': authoredRole(
+      (f, c) => indexedText(f, 'fandom.creatorName', c.index, rows: 2),
+      description:
+          'One of the two approved fictional creator names, by record index',
+    ),
     'fanNickname': textRole('fandom.fanNickname'),
     'tierName': enumRole(['bronze', 'silver', 'gold', 'platinum']),
     'benefitTitle': textRole('fandom.benefitTitle'),

@@ -364,6 +364,8 @@ const CoL10nBundle koBundle = CoL10nBundle(
     'meetup.cadenceLabel': ['매주 토 07:00', '격주 일 10:00', '매월 첫째 토 14:00'],
 
     // fandom
+    // The two approved fictional creators of the fandom pack.
+    'fandom.creatorName': ['모래시계 정원', '하늘결'],
     'fandom.fanNickname': ['별님', '새싹', '달콩', '빛방울'],
     'fandom.benefitTitle': ['멤버 전용 예시 사진', '모의 이벤트 응모', '가상 클립 먼저 보기'],
     'fandom.postCaption': ['겨울 작업실을 그린 가상 일러스트', '연습 시간을 기록한 예시 게시물'],
