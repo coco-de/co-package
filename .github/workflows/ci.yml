@@ -59,6 +59,10 @@ jobs:
       - run: melos run format
       - run: melos run analyze
       - run: melos run test:dart
+      # 파생 seed 가 VM 과 웹에서 같은지 — 웹으로 배포한 데모와 VM 에서 찍은 골든이 같은 목데이터를 보여야 한다 (#69).
+      - name: co_faker web determinism (chrome · dart2js)
+        working-directory: packages/co_faker
+        run: dart test -p chrome test/random_source_platform_test.dart
       - run: melos run test:flutter
 
   # packages/xterm3 — klc/xterm3 포크(AGPL-3.0). 워크스페이스 비회원이라 melos 잡이
