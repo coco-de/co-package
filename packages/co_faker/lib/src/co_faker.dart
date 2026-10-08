@@ -12,6 +12,7 @@ import 'domain_packs/co_faker_catalog.dart';
 import 'domain_packs/co_faker_exam_prep.dart';
 import 'co_faker_locales.dart';
 import 'korea.dart';
+import 'l10n/co_l10n_clinic.dart';
 import 'modules.dart';
 import 'random_source.dart';
 import 'saas.dart';
@@ -55,6 +56,12 @@ class CoFaker {
   /// language setting, use [CoFaker.forLanguage] instead: it also reads tags
   /// such as `zh-Hans` and `ja_JP.UTF-8`, and gives each language the data
   /// of its national locale.
+  ///
+  /// [clinic] and [saas] read the clinic and SaaS data of the locale itself
+  /// (a custom locale, or the built-in `ko` and `en`), otherwise the data
+  /// registered for its language, otherwise English. A code that is not a
+  /// supported language (a custom code, or Traditional Chinese such as
+  /// `zh_TW`) never receives another language's data.
   CoFaker({
     String locale = 'en',
     int? seed,
@@ -76,7 +83,13 @@ class CoFaker {
         available[this.locale] ??
         available[_languageCode(this.locale)] ??
         available['en']!;
-    localeData = selected.merge(available['en']!);
+    // The clinic and SaaS data a locale lacks comes from the registry of its
+    // language, then from English.
+    localeData = CoL10nClinic.select(
+      selected,
+      fallback: available['en']!,
+      locale: this.locale,
+    );
   }
 
   /// Creates a generator for the national locale of [code], an ISO 3166-1

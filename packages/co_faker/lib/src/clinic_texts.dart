@@ -58,6 +58,8 @@ class CoFakerClinicTexts {
     required this.teamNotes,
     required this.deviceNameFormat,
     required this.labels,
+    this.staffMentionFormat = '@{name} {role}',
+    this.nameMentionFormat = '@{name}',
   });
 
   /// Consent form templates.
@@ -94,6 +96,15 @@ class CoFakerClinicTexts {
   /// Labels for relation codes, device kinds, sentiments, speakers, and
   /// consent kinds.
   final Map<String, String> labels;
+
+  /// How `teamNote` mentions an invented staff member: `{name}` is the
+  /// staff name and `{role}` the role label. English writes `@{name} {role}`
+  /// (`@Ann Author Nurse`); Korean adds the honorific, `@{name} {role}님`.
+  final String staffMentionFormat;
+
+  /// How `teamNote` mentions a staff member whose name the caller passed:
+  /// `@{name}` in English, `@{name}님` in Korean.
+  final String nameMentionFormat;
 
   /// Korean clinic texts.
   static const CoFakerClinicTexts korean = CoFakerClinicTexts(
@@ -287,6 +298,8 @@ class CoFakerClinicTexts {
       '인계: {patient}님 예약 30분 지연 예정, {mention} 일정 조정 부탁드립니다.',
     ],
     deviceNameFormat: '{kind} {number}호기',
+    staffMentionFormat: '@{name} {role}님',
+    nameMentionFormat: '@{name}님',
     labels: <String, String>{
       'self': '본인',
       'spouse': '배우자',
@@ -458,6 +471,8 @@ class CoFakerClinicTexts {
       '{patient} needs a guardian signature. {mention}, please check.',
     ],
     deviceNameFormat: '{kind} #{number}',
+    staffMentionFormat: '@{name} {role}',
+    nameMentionFormat: '@{name}',
     labels: <String, String>{
       'self': 'Self',
       'spouse': 'Spouse',

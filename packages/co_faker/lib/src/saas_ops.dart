@@ -33,6 +33,10 @@ class CoFakerSaasOps {
     required this.tenantActivities,
     required this.templateRejectReason,
     required this.labels,
+    this.senderLabels = const <String>[],
+    this.healthMessages = const <String, String>{},
+    this.auditTargets = const <String, String>{},
+    this.auditRecords = const <String>[],
   });
 
   /// Operator actions keyed by console action key (`tenant.approve`, ...).
@@ -79,6 +83,25 @@ class CoFakerSaasOps {
   /// Labels for operator statuses, audiences, channels, incident kinds,
   /// alert levels, prepaid ledger kinds, and payment methods.
   final Map<String, String> labels;
+
+  /// Names of the sender numbers a tenant registers (`senderNumber`): a main
+  /// line, a booking line, ... Empty falls back to English.
+  final List<String> senderLabels;
+
+  /// The message of a degraded or failing health check (`healthCheck`),
+  /// keyed by status: `degraded` and `down`. A status without an entry reads
+  /// the English message.
+  final Map<String, String> healthMessages;
+
+  /// What an audit event (`auditEvent`) acts on when the action has no
+  /// numbered record, keyed by action code: `login`, `loginFailed`
+  /// (the target of `login` when missing), `roleChange`, and `send`. An
+  /// action without an entry reads the English target.
+  final Map<String, String> auditTargets;
+
+  /// The kinds of record that the remaining audit actions act on; the target
+  /// reads `patient #123`. Empty falls back to English.
+  final List<String> auditRecords;
 
   /// Korean operations texts.
   static const CoFakerSaasOps korean = CoFakerSaasOps(
@@ -274,6 +297,15 @@ class CoFakerSaasOps {
       'updated': '변경',
       'removed': '삭제',
     },
+    senderLabels: <String>['대표번호', '예약 문의', '상담실', '데스크'],
+    healthMessages: <String, String>{'degraded': '응답 지연', 'down': '연결 시간 초과'},
+    auditTargets: <String, String>{
+      'login': '계정',
+      'loginFailed': '계정',
+      'roleChange': '직원 권한',
+      'send': '알림톡',
+    },
+    auditRecords: <String>['환자', '차트', '수납', '예약'],
   );
 
   /// English operations texts, the fallback for every other locale.
@@ -460,5 +492,17 @@ class CoFakerSaasOps {
       'updated': 'Updated',
       'removed': 'Removed',
     },
+    senderLabels: <String>['Main line', 'Bookings', 'Front desk'],
+    healthMessages: <String, String>{
+      'degraded': 'Slow responses',
+      'down': 'Connection timed out',
+    },
+    auditTargets: <String, String>{
+      'login': 'account',
+      'loginFailed': 'account',
+      'roleChange': 'staff role',
+      'send': 'notification',
+    },
+    auditRecords: <String>['patient', 'chart', 'invoice', 'reservation'],
   );
 }
