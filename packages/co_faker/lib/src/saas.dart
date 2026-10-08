@@ -1,5 +1,6 @@
 import 'co_faker.dart';
 import 'korea.dart';
+import 'korean_values.dart';
 import 'saas_data.dart';
 import 'saas_ops.dart';
 
@@ -24,9 +25,10 @@ enum CoTimeGranularity {
   month,
 }
 
-/// A prepaid (won) ledger entry of a tenant wallet. [kind] is `topUp`,
-/// `usage`, or `refund`; top-ups carry the [bonus] earned by
-/// [CoFakerSaas.prepaidBonusTiers] and the payment [method].
+/// A prepaid ledger entry of a tenant wallet, in the currency of the data
+/// ([CoFakerSaasData.currency]). [kind] is `topUp`, `usage`, or `refund`;
+/// top-ups carry the [bonus] earned by the tiers of
+/// [CoSaasPriceScale.prepaidBonusTiers] and the payment [method].
 typedef CoFakePrepaidEntry = ({
   String kind,
   String kindLabel,
@@ -134,7 +136,10 @@ typedef CoFakeAnnouncement = ({
 /// A recent activity line of a tenant.
 typedef CoFakeTenantActivity = ({String tenant, String text, DateTime at});
 
-/// A clinic tenant of a SaaS back office.
+/// A clinic tenant of a SaaS back office. [businessNumber] is a Korean
+/// business registration number for Korean and English data, and follows
+/// [CoFakerSaasData.businessNumberFormat] for data whose
+/// [CoFakerSaasData.koreanValues] is [CoKoreanValues.none].
 typedef CoFakeTenant = ({
   String code,
   String name,
@@ -162,7 +167,8 @@ typedef CoFakeSubscription = ({
   DateTime? cancelledAt,
 });
 
-/// A monthly invoice. [supplyAmount] + [vat] = [total].
+/// A monthly invoice. [supplyAmount] + [vat] = [total], with [vat] at the
+/// [CoSaasPriceScale.vatRate] of the data.
 typedef CoFakeInvoice = ({
   String number,
   DateTime periodStart,
@@ -209,7 +215,8 @@ typedef CoFakeMessageTemplate = ({
   String? rejectReason,
 });
 
-/// A message delivery log row. [recipient] is masked.
+/// A message delivery log row. [recipient] is a masked phone number (English
+/// data, which has always written it out in full, is the exception).
 typedef CoFakeMessageLog = ({
   String id,
   String channel,
@@ -283,6 +290,21 @@ typedef CoFakePoint = ({DateTime date, num value});
 /// Status and action codes are locale independent (`pastDue`, `revealRrn`,
 /// `fallbackSent`, ...); `label(code)` localizes them. Times are relative to
 /// `faker.now`, so a fixed clock gives repeatable dates.
+///
+/// The data of the current locale ([CoFakerSaasData]) decides the currency
+/// format, the VAT rate and the prepaid wallet amounts, and whether
+/// Korean-only values are generated, so a language is added by data alone. A
+/// language without data of its own falls back to English.
+///
+/// Some concepts exist only in Korea: the business registration number of a
+/// tenant, the resident registration number behind the `revealRrn` audit
+/// action, the notification talk (`alimtalk`) channel, and Korean phone
+/// numbers and addresses. Korean data generates them, English data keeps the
+/// ones it has always generated, and data of any other language
+/// ([CoKoreanValues.none]) generates neutral substitutes: its own phone
+/// numbers and national addresses, and a business number in
+/// [CoFakerSaasData.businessNumberFormat]. The labels of the Korean codes
+/// come from the data of the language or fall back to the English ones.
 class CoFakerSaas {
   /// Creates a SaaS generator backed by [faker].
   CoFakerSaas(this.faker);
@@ -293,7 +315,9 @@ class CoFakerSaas {
   /// The SaaS data of the current locale.
   CoFakerSaasData get data => faker.localeData.saas!;
 
-  bool get _korean => faker.locale.startsWith('ko');
+  CoSaasPriceScale get _scale => data.priceScale;
+
+  CoKoreanValues get _values => data.koreanValues;
 
   /// The operations console texts of the current locale.
   CoFakerSaasOps get ops => data.ops ?? CoFakerSaasOps.english;
@@ -307,17 +331,26 @@ class CoFakerSaas {
       CoFakerSaasOps.english.labels[code] ??
       code;
 
+  /// Writes [amount] in the currency of the current data, such as a plan
+  /// price or an invoice total: `$1,234` for English, `1,234` for Korean
+  /// ([CoFakerSaasData.currency]).
+  String money(int amount) => data.currency.format(amount);
+
   /// Generates a tenant: a clinic with its business details and plan.
   CoFakeTenant tenant() {
     final specialty = faker.clinic.specialty();
     final String phone;
     final String address;
-    if (_korean) {
+    if (_values == CoKoreanValues.korean) {
       final road = faker.korea.roadAddress();
       phone = faker.korea.landlinePhone(
         areaCode: CoFakerKorea.areaCodeOf(road.sido),
       );
       address = '${road.line1} ${road.line2}';
+    } else if (_values == CoKoreanValues.none && faker.country != null) {
+      // A national locale: the address is in the order of the country.
+      phone = faker.internet.phoneNumber();
+      address = faker.address.postalAddress().formatted;
     } else {
       phone = faker.internet.phoneNumber();
       address = faker.address.streetAddress();
@@ -326,7 +359,9 @@ class CoFakerSaas {
       code: 'CLN-${faker.random.string(6, alphabet: _codeAlphabet)}',
       name: faker.clinic.clinicName(specialty: specialty),
       specialty: specialty,
-      businessNumber: faker.korea.businessNumber(),
+      businessNumber: _values == CoKoreanValues.none
+          ? faker.random.digits(data.businessNumberFormat)
+          : faker.korea.businessNumber(),
       ownerName: faker.person.fullName(),
       phone: phone,
       address: address,
@@ -381,7 +416,8 @@ class CoFakerSaas {
 
   /// Generates a monthly invoice for the month [monthsAgo] months before
   /// `faker.now` (0 is the current month). [supplyAmount] defaults to a plan
-  /// price; VAT is 10%.
+  /// price; VAT is [CoSaasPriceScale.vatRate] of it (10% for the built-in
+  /// data).
   ///
   /// [status] fixes the status and [statusWeights] replaces the default
   /// distribution of past-due invoices (for example
@@ -400,7 +436,7 @@ class CoFakerSaas {
     final periodStart = _addMonths(_monthStart(faker.now), -monthsAgo);
     final periodEnd = _addMonths(periodStart, 1);
     final supply = supplyAmount ?? plan().monthlyPrice;
-    final vat = (supply * 0.1).round();
+    final vat = (supply * _scale.vatRate).round();
     final issuedAt = periodEnd;
     final dueAt = issuedAt.add(const Duration(days: 10));
     final String resolved;
@@ -494,28 +530,22 @@ class CoFakerSaas {
 
   /// Prepaid top-up bonus tiers `(minimum amount, bonus percent)` in won,
   /// lowest first: 100,000 won earns 10% up to 60% from 15,000,000 won.
-  static const List<(int, int)> prepaidBonusTiers = <(int, int)>[
-    (100000, 10),
-    (300000, 15),
-    (500000, 20),
-    (1000000, 25),
-    (3000000, 35),
-    (5000000, 45),
-    (10000000, 55),
-    (15000000, 60),
-  ];
+  ///
+  /// These are the Korean tiers ([CoSaasPriceScale.koreanBonusTiers]). A
+  /// wallet generated by [prepaidLedger] uses the tiers of the
+  /// [CoSaasPriceScale] of its data.
+  static const List<(int, int)> prepaidBonusTiers =
+      CoSaasPriceScale.koreanBonusTiers;
 
-  /// Returns the bonus earned by a top-up of [amount] won.
+  /// Returns the bonus earned by a top-up of [amount] won, by the Korean
+  /// tiers. See [CoSaasPriceScale.bonusFor] for the tiers of another scale.
   static int prepaidBonus(int amount) {
-    var percent = 0;
-    for (final tier in prepaidBonusTiers) {
-      if (amount >= tier.$1) percent = tier.$2;
-    }
-    return amount * percent ~/ 100;
+    return CoSaasPriceScale.korean.bonusFor(amount);
   }
 
-  /// Generates a prepaid (won) wallet ledger of [count] entries, oldest
-  /// first, from [openingBalance]. Top-ups pick a tier amount and earn the
+  /// Generates a prepaid wallet ledger of [count] entries, oldest first,
+  /// from [openingBalance], in the currency and with the amounts of the
+  /// [CoSaasPriceScale] of the data. Top-ups pick a tier amount and earn the
   /// tier bonus; usage never drives the balance negative.
   List<CoFakePrepaidEntry> prepaidLedger({
     int count = 10,
@@ -532,17 +562,10 @@ class CoFakerSaas {
       var amount = 0;
       var bonus = 0;
       String? method;
-      if (balance < 50000 || faker.random.double() < 0.25) {
+      if (balance < _scale.prepaidLowBalance || faker.random.double() < 0.25) {
         kind = 'topUp';
-        amount = faker.random.pick(const <int>[
-          100000,
-          300000,
-          500000,
-          1000000,
-          3000000,
-          5000000,
-        ]);
-        bonus = prepaidBonus(amount);
+        amount = faker.random.pick(_scale.prepaidTopUps);
+        bonus = _scale.bonusFor(amount);
         method = _weighted<String>(const <(String, int)>[
           ('card', 55),
           ('transfer', 30),
@@ -551,14 +574,14 @@ class CoFakerSaas {
       } else if (faker.random.double() < 0.95) {
         kind = 'usage';
         amount = -_roundTo(
-          faker.random.int(min: 10000, max: balance ~/ 2),
-          1000,
+          faker.random.int(min: _scale.prepaidUsageMin, max: balance ~/ 2),
+          _scale.prepaidUsageRounding,
         );
       } else {
         kind = 'refund';
         amount = -_roundTo(
-          faker.random.int(min: 1000, max: balance ~/ 4),
-          1000,
+          faker.random.int(min: _scale.prepaidRefundMin, max: balance ~/ 4),
+          _scale.prepaidRefundRounding,
         );
       }
       balance += amount + bonus;
@@ -932,13 +955,13 @@ class CoFakerSaas {
       ('rejected', 5),
     ]);
     return (
-      number: _korean
+      number: _values == CoKoreanValues.korean
           ? faker.korea.landlinePhone()
           : faker.internet.phoneNumber(),
       label: faker.random.pick(
-        _korean
-            ? const <String>['대표번호', '예약 문의', '상담실', '데스크']
-            : const <String>['Main line', 'Bookings', 'Front desk'],
+        ops.senderLabels.isEmpty
+            ? CoFakerSaasOps.english.senderLabels
+            : ops.senderLabels,
       ),
       status: status,
       statusLabel: label(status),
@@ -1000,9 +1023,13 @@ class CoFakerSaas {
     final failureCode = failed
         ? faker.random.pick(data.failureReasons.keys.toList())
         : null;
-    final recipient = _korean
-        ? CoFakerKorea.maskPhone(faker.korea.mobilePhone())
-        : faker.internet.phoneNumber();
+    final recipient = switch (_values) {
+      CoKoreanValues.korean => CoFakerKorea.maskPhone(
+        faker.korea.mobilePhone(),
+      ),
+      CoKoreanValues.legacy => faker.internet.phoneNumber(),
+      CoKoreanValues.none => _maskDigits(faker.internet.phoneNumber()),
+    };
     return (
       id: faker.id.uuid(),
       channel: channel,
@@ -1079,6 +1106,9 @@ class CoFakerSaas {
 
   /// Generates a health check result checked within the last 5 minutes.
   CoFakeHealthCheck healthCheck({String? service}) {
+    final messages = ops.healthMessages.isEmpty
+        ? CoFakerSaasOps.english.healthMessages
+        : ops.healthMessages;
     final resolved = service ?? faker.random.pick<String>(services);
     final status = _weighted(const <(String, int)>[
       ('up', 90),
@@ -1099,8 +1129,7 @@ class CoFakerSaas {
         Duration(seconds: faker.random.int(max: 300)),
       ),
       message: switch (status) {
-        'degraded' => _korean ? '응답 지연' : 'Slow responses',
-        'down' => _korean ? '연결 시간 초과' : 'Connection timed out',
+        'degraded' || 'down' => messages[status],
         _ => null,
       },
     );
@@ -1137,14 +1166,17 @@ class CoFakerSaas {
       ('roleChange', 2),
     ]);
     final role = faker.clinic.staffRole();
-    final target = switch (action) {
-      'login' || 'loginFailed' => _korean ? '계정' : 'account',
-      'roleChange' => _korean ? '직원 권한' : 'staff role',
-      'send' => _korean ? '알림톡' : 'notification',
-      _ =>
-        '${faker.random.pick(_korean ? const <String>['환자', '차트', '수납', '예약'] : const <String>['patient', 'chart', 'invoice', 'reservation'])}'
-            ' #${faker.random.int(min: 1, max: 9999)}',
-    };
+    final targets = ops.auditTargets.isEmpty
+        ? CoFakerSaasOps.english.auditTargets
+        : ops.auditTargets;
+    final records = ops.auditRecords.isEmpty
+        ? CoFakerSaasOps.english.auditRecords
+        : ops.auditRecords;
+    final target =
+        targets[action] ??
+        (action == 'loginFailed' ? targets['login'] : null) ??
+        '${faker.random.pick(records)}'
+            ' #${faker.random.int(min: 1, max: 9999)}';
     return (
       id: faker.id.uuid(),
       action: action,
@@ -1286,6 +1318,18 @@ class CoFakerSaas {
   ];
 
   static int _roundTo(int value, int unit) => (value / unit).round() * unit;
+
+  /// Masks every digit of [phone] but the last four, keeping the notation:
+  /// `+49 151 12345678` becomes `+** *** ****5678`.
+  static String _maskDigits(String phone) {
+    final digit = RegExp(r'\d');
+    final total = digit.allMatches(phone).length;
+    var seen = 0;
+    return phone.replaceAllMapped(
+      digit,
+      (match) => ++seen > total - 4 ? match[0]! : '*',
+    );
+  }
 
   DateTime _past(int days) =>
       _day(faker.date.past(days: days, utc: faker.now.isUtc));

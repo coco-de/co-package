@@ -1,10 +1,13 @@
 import 'clinic_ops.dart';
 import 'clinic_texts.dart';
+import 'currency_format.dart';
+import 'korean_values.dart';
 
 /// A billable procedure, product, or fee line with a typical price band.
 ///
-/// Prices are in the locale's currency minor-free unit (won for Korean, whole
-/// dollars for English) and include VAT where [taxable] is `true`.
+/// Prices are whole units of the currency of the data set
+/// ([CoFakerClinicData.currency]): won for Korean, dollars for English. They
+/// include VAT where [taxable] is `true`.
 typedef CoProcedureSpec = ({
   String code,
   String category,
@@ -27,12 +30,111 @@ typedef CoVisitPurposeSpec = ({String name, List<String> details});
 /// A clinic specialty and the suffix used to build clinic names.
 typedef CoSpecialtySpec = ({String name, String clinicSuffix});
 
+/// The price scale of a clinic data set: the units generated amounts are
+/// rounded to and the thresholds that decide when a payment can be split or
+/// paid in installments, all in the currency of the data
+/// ([CoFakerClinicData.currency]).
+///
+/// The defaults are the scale of a US-dollar clinic ([english]); [korean] is
+/// the scale of the won, where the same prices are roughly a thousand times
+/// larger. A language with another currency sets every value in its own
+/// currency: a rounding unit that a price tag in that currency uses, and
+/// thresholds that sit where dollar prices would, converted. The procedure
+/// price bands ([CoProcedureSpec.minPrice]) belong to the same currency.
+class CoClinicPriceScale {
+  /// Creates a price scale. The defaults are [english].
+  const CoClinicPriceScale({
+    this.priceRounding = 5,
+    this.packageRounding = 10,
+    this.prepaidStep = 10,
+    this.installmentMinimum = 500,
+    this.splitMinimum = 50,
+    this.splitRounding = 1,
+    this.adjustmentUnit = 1,
+    this.pointUnit = 1,
+    this.quoteMin = 50000,
+    this.quoteMax = 300000,
+  }) : assert(priceRounding > 0, 'priceRounding must be positive'),
+       assert(packageRounding > 0, 'packageRounding must be positive'),
+       assert(prepaidStep > 0, 'prepaidStep must be positive'),
+       assert(splitRounding > 0, 'splitRounding must be positive'),
+       assert(adjustmentUnit > 0, 'adjustmentUnit must be positive'),
+       assert(pointUnit > 0, 'pointUnit must be positive'),
+       assert(quoteMin <= quoteMax, 'quoteMin must not exceed quoteMax');
+
+  /// The scale of US dollars: the scale of the English data.
+  static const CoClinicPriceScale english = CoClinicPriceScale();
+
+  /// The scale of Korean won: the scale of the Korean data.
+  static const CoClinicPriceScale korean = CoClinicPriceScale(
+    priceRounding: 1000,
+    packageRounding: 10000,
+    prepaidStep: 10000,
+    installmentMinimum: 500000,
+    splitMinimum: 50000,
+    splitRounding: 1000,
+    adjustmentUnit: 1000,
+    pointUnit: 100,
+  );
+
+  /// Procedure prices are rounded to a multiple of this (`procedure`).
+  final int priceRounding;
+
+  /// Session package prices are rounded to a multiple of this (`package`
+  /// and the package quote of `counselSession`).
+  final int packageRounding;
+
+  /// A prepaid balance is a multiple of this, up to a hundred of them
+  /// (`prepaidBalance`).
+  final int prepaidStep;
+
+  /// The smallest card payment that may be paid in installments
+  /// (`payment`).
+  final int installmentMinimum;
+
+  /// The smallest payment that `splitPayment` splits into several; a smaller
+  /// one stays a single payment.
+  final int splitMinimum;
+
+  /// The shares of a split payment are rounded to a multiple of this
+  /// (`splitPayment`).
+  final int splitRounding;
+
+  /// Discounts, coupons, and rounding adjustments are multiples of this, and
+  /// the `rounding` adjustment cuts the remainder below it (`adjustment`).
+  final int adjustmentUnit;
+
+  /// A point transaction is one to fifty times this (`pointTransaction`).
+  final int pointUnit;
+
+  /// The lowest price of a counseling quote for a topic whose procedure is
+  /// not in the catalog (`counselSession`). The built-in catalogs list every
+  /// topic procedure, so only partial custom data reaches it.
+  final int quoteMin;
+
+  /// The highest price of such a quote; see [quoteMin].
+  final int quoteMax;
+}
+
 /// Clinic and EMR domain data used by `faker.clinic`.
 ///
 /// Codes such as staff role, insurance, visit stage, reservation status, and
 /// payment method codes are locale independent; only their labels are
 /// localized. Every list must be non-empty. Build a partial locale by
 /// copying one of the built-in data sets with the fields you need.
+///
+/// The data also decides how amounts and a few values are generated, so a
+/// language only has to add data. [currency] and [priceScale] give the
+/// currency format and the price units, [clinicNameFormat] the order of a
+/// clinic name, and [koreanValues] says whether the Korean-only values
+/// (resident registration numbers, card approval and cash receipt numbers,
+/// the Korean holiday calendar, Korean phone numbers and addresses) are
+/// generated. Texts that the generators assemble (the `회` of a package, the
+/// `님` of a mention, holiday names, date labels) are fields of
+/// [CoFakerClinicTexts] and [CoFakerClinicOps].
+///
+/// A language that has no data of its own gets the English data: see
+/// `CoFaker`.
 class CoFakerClinicData {
   /// Creates a clinic data set.
   const CoFakerClinicData({
@@ -55,6 +157,11 @@ class CoFakerClinicData {
     required this.packageNameFormat,
     this.texts,
     this.ops,
+    this.clinicNameFormat = '{prefix} {suffix}',
+    this.currency = CoCurrencyFormat.usd,
+    this.priceScale = CoClinicPriceScale.english,
+    this.koreanValues = CoKoreanValues.legacy,
+    this.maskedIdFormat = '***-**-####',
   });
 
   /// Specialties and their clinic name suffixes.
@@ -119,7 +226,35 @@ class CoFakerClinicData {
   /// [CoFakerClinicOps.english].
   final CoFakerClinicOps? ops;
 
-  /// Korean clinic data: dermatology and aesthetic clinics first.
+  /// Clinic name template with `{prefix}` (one of [clinicNamePrefixes]) and
+  /// `{suffix}` ([CoSpecialtySpec.clinicSuffix]) placeholders. English writes
+  /// `{prefix} {suffix}` (`Maple Pediatrics`); Korean writes the words
+  /// together with `{prefix}{suffix}` (`맑은피부과의원`), as other languages
+  /// without word spaces do.
+  final String clinicNameFormat;
+
+  /// How amounts are written in texts: `$1,234` for [CoCurrencyFormat.usd],
+  /// `1,234` for [CoCurrencyFormat.korean]. See `faker.clinic.money`.
+  final CoCurrencyFormat currency;
+
+  /// The rounding units and thresholds of generated prices, in [currency].
+  final CoClinicPriceScale priceScale;
+
+  /// Which Korean-only values the generators produce:
+  /// [CoKoreanValues.korean] for the Korean data, [CoKoreanValues.legacy]
+  /// (the default) for the English data, and [CoKoreanValues.none] for new
+  /// language data.
+  final CoKoreanValues koreanValues;
+
+  /// The masked ID number of a patient (`patient().rrnMasked`) when
+  /// [koreanValues] is [CoKoreanValues.none]: `#` is a random digit and any
+  /// other character is written as it is, so `***-**-####` gives
+  /// `***-**-4821`. Korean and legacy data generate a masked resident
+  /// registration number (`YYMMDD-G******`) instead.
+  final String maskedIdFormat;
+
+  /// Korean clinic data: dermatology and aesthetic clinics first, in won,
+  /// with every Korean-only value ([CoKoreanValues.korean]).
   static const CoFakerClinicData korean = CoFakerClinicData(
     specialties: <CoSpecialtySpec>[
       (name: '피부과', clinicSuffix: '피부과의원'),
@@ -599,9 +734,19 @@ class CoFakerClinicData {
     packageNameFormat: '{name} {sessions}회',
     texts: CoFakerClinicTexts.korean,
     ops: CoFakerClinicOps.korean,
+    clinicNameFormat: '{prefix}{suffix}',
+    currency: CoCurrencyFormat.korean,
+    priceScale: CoClinicPriceScale.korean,
+    koreanValues: CoKoreanValues.korean,
   );
 
-  /// English clinic data, used as the fallback for every other locale.
+  /// English clinic data, used as the fallback for every locale whose language
+  /// has no clinic data of its own.
+  ///
+  /// It is a general dermatology and aesthetic clinic in US dollars and the
+  /// model of the data of a new language: translate every list and text,
+  /// then set [currency], [priceScale], [clinicNameFormat], and
+  /// [koreanValues] (`none`) for the language.
   static const CoFakerClinicData english = CoFakerClinicData(
     specialties: <CoSpecialtySpec>[
       (name: 'Dermatology', clinicSuffix: 'Dermatology Clinic'),
@@ -834,5 +979,10 @@ class CoFakerClinicData {
     packageNameFormat: '{name} x{sessions}',
     texts: CoFakerClinicTexts.english,
     ops: CoFakerClinicOps.english,
+    clinicNameFormat: '{prefix} {suffix}',
+    currency: CoCurrencyFormat.usd,
+    priceScale: CoClinicPriceScale.english,
+    koreanValues: CoKoreanValues.legacy,
+    maskedIdFormat: '***-**-####',
   );
 }

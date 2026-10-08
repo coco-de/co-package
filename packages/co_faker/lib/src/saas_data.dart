@@ -1,3 +1,5 @@
+import 'currency_format.dart';
+import 'korean_values.dart';
 import 'saas_ops.dart';
 
 /// A subscription plan with its monthly price and included quotas.
@@ -17,10 +19,129 @@ typedef CoMessageTemplateSpec = ({String code, String name, String body});
 /// A service notice: a [category] code with its title and body.
 typedef CoNoticeSpec = ({String category, String title, String body});
 
+/// The price scale of a SaaS data set: the VAT rate of invoices and the
+/// amounts of the prepaid wallet, in the currency of the data
+/// ([CoFakerSaasData.currency]).
+///
+/// The defaults are what `faker.saas` has always generated for every locale,
+/// English included: a 10% VAT and a prepaid wallet in amounts of the won
+/// ([korean] and [english] are the same scale). The subscription plans
+/// ([CoPlanSpec.monthlyPrice]) and the claim master rows
+/// ([CoMasterRowSpec.price]) are data in the currency of the locale. A
+/// language with another currency sets its own VAT rate and wallet amounts.
+class CoSaasPriceScale {
+  /// Creates a price scale. The defaults are [korean].
+  const CoSaasPriceScale({
+    this.vatRate = 0.1,
+    this.prepaidTopUps = const <int>[
+      100000,
+      300000,
+      500000,
+      1000000,
+      3000000,
+      5000000,
+    ],
+    this.prepaidBonusTiers = koreanBonusTiers,
+    this.prepaidLowBalance = 50000,
+    this.prepaidUsageMin = 10000,
+    this.prepaidUsageRounding = 1000,
+    this.prepaidRefundMin = 1000,
+    this.prepaidRefundRounding = 1000,
+  }) : assert(vatRate >= 0, 'vatRate must not be negative'),
+       assert(
+         prepaidUsageRounding > 0,
+         'prepaidUsageRounding must be positive',
+       ),
+       assert(
+         prepaidRefundRounding > 0,
+         'prepaidRefundRounding must be positive',
+       ),
+       assert(
+         prepaidLowBalance >= 2 * prepaidUsageMin,
+         'prepaidLowBalance must be at least twice prepaidUsageMin',
+       ),
+       assert(
+         prepaidLowBalance >= 4 * prepaidRefundMin,
+         'prepaidLowBalance must be at least four times prepaidRefundMin',
+       );
+
+  /// The scale of the Korean data: a 10% VAT and a wallet in won.
+  static const CoSaasPriceScale korean = CoSaasPriceScale();
+
+  /// The scale of the English data. English has always shared the Korean
+  /// wallet amounts, so it equals [korean]; it is kept so that English output
+  /// stays byte for byte stable.
+  static const CoSaasPriceScale english = CoSaasPriceScale();
+
+  /// The Korean top-up bonus tiers, `(minimum amount, bonus percent)` in won,
+  /// lowest first: 100,000 won earns 10% up to 60% from 15,000,000 won.
+  static const List<(int, int)> koreanBonusTiers = <(int, int)>[
+    (100000, 10),
+    (300000, 15),
+    (500000, 20),
+    (1000000, 25),
+    (3000000, 35),
+    (5000000, 45),
+    (10000000, 55),
+    (15000000, 60),
+  ];
+
+  /// The VAT of an invoice as a fraction of the supply amount: `0.1` for
+  /// 10%, `0.19` for 19% (`invoice`).
+  final double vatRate;
+
+  /// The amounts a prepaid wallet is topped up with (`prepaidLedger`). Must
+  /// not be empty.
+  final List<int> prepaidTopUps;
+
+  /// Top-up bonus tiers `(minimum amount, bonus percent)`, lowest first
+  /// ([bonusFor]).
+  final List<(int, int)> prepaidBonusTiers;
+
+  /// A wallet below this balance is always topped up before it is used. It
+  /// must be at least twice [prepaidUsageMin] and four times
+  /// [prepaidRefundMin].
+  final int prepaidLowBalance;
+
+  /// The smallest usage entry of a wallet; the largest is half the balance.
+  final int prepaidUsageMin;
+
+  /// Usage entries are rounded to a multiple of this.
+  final int prepaidUsageRounding;
+
+  /// The smallest refund entry of a wallet; the largest is a quarter of the
+  /// balance.
+  final int prepaidRefundMin;
+
+  /// Refund entries are rounded to a multiple of this.
+  final int prepaidRefundRounding;
+
+  /// The bonus earned by a top-up of [amount]: the percent of the highest
+  /// tier that [amount] reaches.
+  int bonusFor(int amount) {
+    var percent = 0;
+    for (final tier in prepaidBonusTiers) {
+      if (amount >= tier.$1) percent = tier.$2;
+    }
+    return amount * percent ~/ 100;
+  }
+}
+
 /// SaaS back-office data used by `faker.saas`.
 ///
 /// Status, action, and service codes are locale independent; only the
 /// labels, names, and texts are localized. Every list must be non-empty.
+///
+/// The data also decides how amounts and a few values are generated, so a
+/// language only has to add data: [currency] and [priceScale] give the
+/// currency format, the VAT rate, and the prepaid wallet amounts, and
+/// [koreanValues] says whether the Korean-only values (the business
+/// registration number, Korean phone numbers and addresses) are generated.
+/// The texts that the generators assemble (health messages, audit targets,
+/// sender number labels) are fields of [CoFakerSaasOps].
+///
+/// A language that has no data of its own gets the English data: see
+/// `CoFaker`.
 class CoFakerSaasData {
   /// Creates a SaaS data set.
   const CoFakerSaasData({
@@ -30,6 +151,10 @@ class CoFakerSaasData {
     required this.failureReasons,
     required this.labels,
     this.ops,
+    this.currency = CoCurrencyFormat.usd,
+    this.priceScale = CoSaasPriceScale.english,
+    this.koreanValues = CoKoreanValues.legacy,
+    this.businessNumberFormat = '##########',
   });
 
   /// Subscription plans, cheapest first.
@@ -54,7 +179,29 @@ class CoFakerSaasData {
   /// Operations console texts, or `null` to use [CoFakerSaasOps.english].
   final CoFakerSaasOps? ops;
 
-  /// Korean SaaS data for a clinic software vendor back office.
+  /// How amounts are written: `$1,234` for [CoCurrencyFormat.usd], `1,234`
+  /// for [CoCurrencyFormat.korean]. See `faker.saas.money`.
+  final CoCurrencyFormat currency;
+
+  /// The VAT rate of invoices and the amounts of the prepaid wallet, in
+  /// [currency].
+  final CoSaasPriceScale priceScale;
+
+  /// Which Korean-only values the generators produce:
+  /// [CoKoreanValues.korean] for the Korean data, [CoKoreanValues.legacy]
+  /// (the default) for the English data, and [CoKoreanValues.none] for new
+  /// language data.
+  final CoKoreanValues koreanValues;
+
+  /// The business number of a tenant (`tenant().businessNumber`) when
+  /// [koreanValues] is [CoKoreanValues.none]: `#` is a random digit and any
+  /// other character is written as it is, so `##-#######` gives
+  /// `48-1920374`. Korean and legacy data generate a business registration
+  /// number (사업자등록번호) that fails its checksum instead.
+  final String businessNumberFormat;
+
+  /// Korean SaaS data for a clinic software vendor back office, in won, with
+  /// every Korean-only value ([CoKoreanValues.korean]).
   static const CoFakerSaasData korean = CoFakerSaasData(
     plans: <CoPlanSpec>[
       (
@@ -243,9 +390,17 @@ class CoFakerSaasData {
       'grant': '지급',
     },
     ops: CoFakerSaasOps.korean,
+    currency: CoCurrencyFormat.korean,
+    priceScale: CoSaasPriceScale.korean,
+    koreanValues: CoKoreanValues.korean,
   );
 
-  /// English SaaS data, used as the fallback for every other locale.
+  /// English SaaS data, used as the fallback for every locale whose language
+  /// has no SaaS data of its own.
+  ///
+  /// It is the model of the data of a new language: translate every list and
+  /// text, then set [currency], [priceScale], and [koreanValues] (`none`) for
+  /// the language.
   static const CoFakerSaasData english = CoFakerSaasData(
     plans: <CoPlanSpec>[
       (
@@ -403,5 +558,9 @@ class CoFakerSaasData {
       'grant': 'Grant',
     },
     ops: CoFakerSaasOps.english,
+    currency: CoCurrencyFormat.usd,
+    priceScale: CoSaasPriceScale.english,
+    koreanValues: CoKoreanValues.legacy,
+    businessNumberFormat: '##########',
   );
 }

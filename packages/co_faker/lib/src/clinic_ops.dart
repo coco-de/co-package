@@ -49,6 +49,19 @@ class CoFakerClinicOps {
     this.vitalsNotes = const <String, String>{},
     this.closure = const <String, String>{},
     this.closureReasons = const <String>[],
+    this.holidayNames = const <String, String>{},
+    this.dateFormat = '{month}/{day}',
+    this.weekdayNames = const <String>[
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
+    ],
+    this.dateRangeFormat = '{from}~{to}',
+    this.compoundItemFormat = '{name} {sessions}x',
   });
 
   /// Patient tags with colors.
@@ -125,6 +138,31 @@ class CoFakerClinicOps {
   /// Non-holiday closure reasons (conference, renovation, ...). Empty falls
   /// back to English.
   final List<String> closureReasons;
+
+  /// How a closure notice names the lunar new year and harvest festival
+  /// stretches of the Korean holiday calendar, keyed by their block code
+  /// (`seollal`, `chuseok`). Other Korean holidays keep their Korean names.
+  /// Only data whose [CoFakerClinicData.koreanValues] is not
+  /// [CoKoreanValues.none] uses the calendar. Empty falls back to English.
+  final Map<String, String> holidayNames;
+
+  /// Date label template of closure notices with `{month}`, `{day}`, and
+  /// `{weekday}` ([weekdayNames]) placeholders: `{month}/{day}` for `9/30`,
+  /// `{month}월 {day}일({weekday})` for `9월 30일(수)`.
+  final String dateFormat;
+
+  /// Weekday names for `{weekday}` of [dateFormat], Monday first: seven
+  /// entries.
+  final List<String> weekdayNames;
+
+  /// Template that joins the first and last day of a closure notice,
+  /// `{from}` and `{to}`: `{from}~{to}` for `9/24~9/27`.
+  final String dateRangeFormat;
+
+  /// How `compoundPackageName` writes one procedure of a compound package,
+  /// with `{name}` and `{sessions}` placeholders: `{name} {sessions}x` for
+  /// `Pico toning 3x`, `{name} {sessions}회` for `피코 토닝 3회`.
+  final String compoundItemFormat;
 
   /// Labels for queue statuses, reception sources, consent kinds and
   /// channels, consent actions, evidence kinds, and severities.
@@ -358,6 +396,11 @@ class CoFakerClinicOps {
       '의료 장비 정기 점검',
       '전 직원 워크숍',
     ],
+    holidayNames: <String, String>{'seollal': '설 연휴', 'chuseok': '추석 연휴'},
+    dateFormat: '{month}월 {day}일({weekday})',
+    weekdayNames: <String>['월', '화', '수', '목', '금', '토', '일'],
+    dateRangeFormat: '{from}~{to}',
+    compoundItemFormat: '{name} {sessions}회',
     labels: <String, String>{
       'requested': '접수신청',
       'waiting': '대기',
@@ -560,6 +603,14 @@ class CoFakerClinicOps {
       'renovation',
       'equipment maintenance',
     ],
+    holidayNames: <String, String>{
+      'seollal': 'Lunar New Year',
+      'chuseok': 'Chuseok',
+    },
+    dateFormat: '{month}/{day}',
+    weekdayNames: <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    dateRangeFormat: '{from}~{to}',
+    compoundItemFormat: '{name} {sessions}x',
     labels: <String, String>{
       'requested': 'Requested',
       'waiting': 'Waiting',
