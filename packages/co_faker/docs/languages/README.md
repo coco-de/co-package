@@ -97,6 +97,20 @@ language that is filled is checked with no edit elsewhere.
 The three data files are filled together, in one pull request: a language that
 has some of them is `partial` and fails the gate.
 
+The safety scan (`test/authored_data_safety_test.dart`) reads every language
+that has domain text and asks of its texts, besides the declaration in
+`test/language_safety/<language>.dart`:
+
+- every text of `vet.vetDrug`, `vet.preventiveProduct`, and `daycare.drugLabel`
+  carries the `fictionalMarker` of the language, and none names a real brand;
+- every text of `brokerage.qnaAnswerGeneric` and `brokerage.consultNoteGeneric`
+  starts with the `generalInfoPrefix` and promises no result;
+- `fandom.creatorName` has exactly two texts, which are two fictional names of
+  the language (never the Korean names);
+- a masked name keeps a mask character (`homecare.recipientName`,
+  `hospitality.guestName`), and the plate of `logistics.vehiclePlate` keeps its
+  `●●`.
+
 The translation of a Story is a draft written with an AI assistant, and a
 native speaker has to review it. Write the terms that are medical, legal, or
 financial, and every text that you are not sure about, in the review checklist

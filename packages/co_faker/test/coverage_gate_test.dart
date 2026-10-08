@@ -135,6 +135,21 @@ void main() {
       final info = await _coverage(<String>['--language', 'es']);
       expect(info.exitCode, 0);
       expect(info.stdout, contains('Result: **FAIL**'));
+      // A tool reads the same verdict as JSON, issue by issue.
+      final json = await _coverage(<String>[
+        '--language',
+        'es',
+        '--strict',
+        '--format',
+        'json',
+      ]);
+      expect(json.exitCode, 1);
+      final report = jsonDecode(json.stdout as String) as Map<String, Object?>;
+      expect(report['passed'], isFalse);
+      expect(report['level'], 'base');
+      final issues = (report['issues']! as List).cast<Map<String, Object?>>();
+      expect(issues.single['check'], 'planned');
+      expect(issues.single['where'], 'es');
     });
 
     test('rejects what it cannot read with exit code 2', () async {
