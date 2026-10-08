@@ -81,6 +81,18 @@ void main() {
         );
       }
     });
+
+    test('every language with a registered bundle is a supported language', () {
+      // The gate and the safety scan read CoFakerLanguages: a bundle for a
+      // language that is not listed there would never be checked.
+      final supported = <String>{
+        for (final language in CoFakerLanguages.all) language.code,
+      };
+      expect(
+        CoL10nRegistry.bundles.keys.toSet().difference(supported),
+        isEmpty,
+      );
+    });
   });
 
   group('dart run co_faker:coverage', () {
