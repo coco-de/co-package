@@ -47,6 +47,12 @@
 ///
 /// A language does not have to translate every key. A key that is missing
 /// falls back to English, key by key.
+///
+/// ## Adding a language without changing co_faker
+///
+/// A custom `CoFakerLocale` carries a bundle of its own (`CoFakerLocale.l10n`),
+/// and the generators of that locale read it before the shipped bundle of their
+/// language. [CoL10nRegistry.validate] checks such a bundle in a test.
 class CoL10nBundle {
   /// Creates a bundle of [texts] written in [language].
   const CoL10nBundle({

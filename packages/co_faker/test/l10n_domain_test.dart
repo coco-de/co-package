@@ -185,6 +185,36 @@ void main() {
       }
     });
 
+    test('is the language the clinic and SaaS data are written in', () {
+      // One locale code gets one language from the names, the clinic, and the
+      // domain packs alike: a code the constructor does not know (`ko.UTF-8`)
+      // gets English from all three.
+      final hangul = RegExp('[가-힣]');
+      for (final code in [
+        'ko',
+        'ko_KR',
+        'ko-KR',
+        'ko_KR.UTF-8',
+        'ko-Kore-KR',
+        'ko.UTF-8',
+        'ko@euro',
+        'kok',
+        'en',
+        'en_US',
+        'ja_JP',
+        'zh_CN',
+        'zh_TW',
+        'xx_YY',
+      ]) {
+        final f = _faker(code);
+        expect(
+          f.l10n.language == 'ko',
+          hangul.hasMatch(f.clinic.clinicName()),
+          reason: code,
+        );
+      }
+    });
+
     test('is the English record for Traditional Chinese', () {
       // The basic modules keep their data, but the domain text is English's:
       // Traditional readers are never handed Simplified text.
