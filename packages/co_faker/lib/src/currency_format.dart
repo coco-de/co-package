@@ -30,7 +30,10 @@ class CoCurrencyFormat {
     this.groupSeparator = ',',
     this.decimalSeparator = '.',
     this.fractionDigits = 0,
-  }) : assert(fractionDigits >= 0, 'fractionDigits must not be negative');
+  }) : assert(
+         fractionDigits >= 0 && fractionDigits <= 20,
+         'fractionDigits must be between 0 and 20',
+       );
 
   /// US dollars written `$1,234`: the format of the English data.
   static const CoCurrencyFormat usd = CoCurrencyFormat();
@@ -65,14 +68,15 @@ class CoCurrencyFormat {
   /// Text between the whole part and the fraction: `.` or `,`.
   final String decimalSeparator;
 
-  /// Digits after the [decimalSeparator]. Whole amounts are padded with
-  /// zeros (`1.234,00`); use the currency's minor units (`2` for the euro,
-  /// `0` for the yen) or `0` to write whole units.
+  /// Digits after the [decimalSeparator], from 0 to 20. Whole amounts are
+  /// padded with zeros (`1.234,00`); use the currency's minor units (`2` for
+  /// the euro, `0` for the yen) or `0` to write whole units.
   final int fractionDigits;
 
   /// Writes [amount] in this format, such as `$1,234` for `1234`.
   ///
-  /// A negative amount gets a leading `-` before the whole text.
+  /// A negative amount gets a leading `-` before the whole text, unless it
+  /// rounds to zero.
   String format(num amount) {
     final fixed = amount.abs().toStringAsFixed(fractionDigits);
     final dot = fixed.indexOf('.');
@@ -84,8 +88,11 @@ class CoCurrencyFormat {
         .replaceAll('{symbol}', symbol)
         .replaceAll('{code}', code)
         .replaceAll('{amount}', number);
-    return amount < 0 ? '-$text' : text;
+    final negative = amount < 0 && fixed.contains(_nonZeroDigit);
+    return negative ? '-$text' : text;
   }
+
+  static final RegExp _nonZeroDigit = RegExp('[1-9]');
 
   String _group(String digits) {
     if (groupSeparator.isEmpty) return digits;

@@ -379,7 +379,7 @@ card approval and cash receipt numbers, the public holiday calendar behind
 | --- | --- | --- |
 | `korean` | the Korean data | Korean phones, road-name addresses, and every Korean-only value |
 | `legacy` | the English data, and custom data that does not choose | the locale's phones and addresses, plus the Korean-only values English has always generated, so English output stays byte for byte stable |
-| `none` | the data of every other language | the locale's phones and, in a national locale, its postal addresses; a neutral masked ID (`maskedIdFormat`), business number (`businessNumberFormat`), and 6-digit authorization code; no cash receipt number and no public holidays |
+| `none` | the data of every other language | the locale's phones and, in a national locale, its postal addresses (`addressLineFormat`); a neutral masked ID (`maskedIdFormat`), business number (`businessNumberFormat`), and 6-digit authorization code; no cash receipt number and no public holidays |
 
 A language without data of its own gets the English data, and a code that is
 not a supported language (a custom code, or Traditional Chinese such as

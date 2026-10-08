@@ -334,7 +334,7 @@ class CoFakerSaas {
   /// Writes [amount] in the currency of the current data, such as a plan
   /// price or an invoice total: `$1,234` for English, `1,234` for Korean
   /// ([CoFakerSaasData.currency]).
-  String money(int amount) => data.currency.format(amount);
+  String money(num amount) => data.currency.format(amount);
 
   /// Generates a tenant: a clinic with its business details and plan.
   CoFakeTenant tenant() {
@@ -1106,9 +1106,6 @@ class CoFakerSaas {
 
   /// Generates a health check result checked within the last 5 minutes.
   CoFakeHealthCheck healthCheck({String? service}) {
-    final messages = ops.healthMessages.isEmpty
-        ? CoFakerSaasOps.english.healthMessages
-        : ops.healthMessages;
     final resolved = service ?? faker.random.pick<String>(services);
     final status = _weighted(const <(String, int)>[
       ('up', 90),
@@ -1129,7 +1126,9 @@ class CoFakerSaas {
         Duration(seconds: faker.random.int(max: 300)),
       ),
       message: switch (status) {
-        'degraded' || 'down' => messages[status],
+        'degraded' || 'down' =>
+          ops.healthMessages[status] ??
+              CoFakerSaasOps.english.healthMessages[status],
         _ => null,
       },
     );
@@ -1166,15 +1165,11 @@ class CoFakerSaas {
       ('roleChange', 2),
     ]);
     final role = faker.clinic.staffRole();
-    final targets = ops.auditTargets.isEmpty
-        ? CoFakerSaasOps.english.auditTargets
-        : ops.auditTargets;
     final records = ops.auditRecords.isEmpty
         ? CoFakerSaasOps.english.auditRecords
         : ops.auditRecords;
     final target =
-        targets[action] ??
-        (action == 'loginFailed' ? targets['login'] : null) ??
+        _auditTarget(action) ??
         '${faker.random.pick(records)}'
             ' #${faker.random.int(min: 1, max: 9999)}';
     return (
@@ -1318,6 +1313,17 @@ class CoFakerSaas {
   ];
 
   static int _roundTo(int value, int unit) => (value / unit).round() * unit;
+
+  /// What an audit [action] acts on when it has a fixed target, from the
+  /// operations texts of the data and per key from English: `login`,
+  /// `loginFailed` (the target of `login` when missing), `roleChange`, and
+  /// `send`.
+  String? _auditTarget(String action) {
+    final english = CoFakerSaasOps.english.auditTargets;
+    return ops.auditTargets[action] ??
+        (action == 'loginFailed' ? ops.auditTargets['login'] : null) ??
+        english[action];
+  }
 
   /// Masks every digit of [phone] but the last four, keeping the notation:
   /// `+49 151 12345678` becomes `+** *** ****5678`.

@@ -15,8 +15,10 @@ class VirtualLanguage {
     required this.scale,
     required this.saasScale,
     this.priceFactor = 1,
+    this.withoutProcedures = const <String>[],
     this.clinicNameFormat = '{prefix}{suffix}',
     this.maskedIdFormat = '########',
+    this.addressLineFormat = '{region}{city}{line1}',
     this.businessNumberFormat = '#############',
     this.dateFormat = '{month}月{day}日({weekday})',
     this.weekdayNames = const <String>['月', '火', '水', '木', '金', '土', '日'],
@@ -54,11 +56,17 @@ class VirtualLanguage {
   /// prices of the data are.
   final int priceFactor;
 
+  /// Codes of the catalog procedures that the data leaves out.
+  final List<String> withoutProcedures;
+
   /// See [CoFakerClinicData.clinicNameFormat].
   final String clinicNameFormat;
 
   /// See [CoFakerClinicData.maskedIdFormat].
   final String maskedIdFormat;
+
+  /// See [CoFakerClinicData.addressLineFormat].
+  final String addressLineFormat;
 
   /// See [CoFakerSaasData.businessNumberFormat].
   final String businessNumberFormat;
@@ -106,15 +114,16 @@ class VirtualLanguage {
       visitPurposes: base.visitPurposes,
       procedures: <CoProcedureSpec>[
         for (final spec in base.procedures)
-          (
-            code: spec.code,
-            category: spec.category,
-            name: spec.name,
-            unit: spec.unit,
-            minPrice: spec.minPrice * priceFactor,
-            maxPrice: spec.maxPrice * priceFactor,
-            taxable: spec.taxable,
-          ),
+          if (!withoutProcedures.contains(spec.code))
+            (
+              code: spec.code,
+              category: spec.category,
+              name: spec.name,
+              unit: spec.unit,
+              minPrice: spec.minPrice * priceFactor,
+              maxPrice: spec.maxPrice * priceFactor,
+              taxable: spec.taxable,
+            ),
       ],
       diagnoses: base.diagnoses,
       drugStems: base.drugStems,
@@ -175,6 +184,7 @@ class VirtualLanguage {
       priceScale: scale,
       koreanValues: values,
       maskedIdFormat: maskedIdFormat,
+      addressLineFormat: addressLineFormat,
     );
   }
 
@@ -291,6 +301,7 @@ const VirtualLanguage virtualGerman = VirtualLanguage(
   ),
   clinicNameFormat: '{suffix} {prefix}',
   maskedIdFormat: '##.##.##',
+  addressLineFormat: '{line1}, {city}',
   businessNumberFormat: 'DE#########',
   dateFormat: '{day}.{month}.',
   weekdayNames: <String>['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],

@@ -40,7 +40,7 @@ typedef CoSpecialtySpec = ({String name, String clinicSuffix});
 /// larger. A language with another currency sets every value in its own
 /// currency: a rounding unit that a price tag in that currency uses, and
 /// thresholds that sit where dollar prices would, converted. The procedure
-/// price bands ([CoProcedureSpec.minPrice]) belong to the same currency.
+/// price bands (`CoProcedureSpec.minPrice`) belong to the same currency.
 class CoClinicPriceScale {
   /// Creates a price scale. The defaults are [english].
   const CoClinicPriceScale({
@@ -52,8 +52,8 @@ class CoClinicPriceScale {
     this.splitRounding = 1,
     this.adjustmentUnit = 1,
     this.pointUnit = 1,
-    this.quoteMin = 50000,
-    this.quoteMax = 300000,
+    this.quoteMin = 50,
+    this.quoteMax = 300,
   }) : assert(priceRounding > 0, 'priceRounding must be positive'),
        assert(packageRounding > 0, 'packageRounding must be positive'),
        assert(prepaidStep > 0, 'prepaidStep must be positive'),
@@ -75,6 +75,8 @@ class CoClinicPriceScale {
     splitRounding: 1000,
     adjustmentUnit: 1000,
     pointUnit: 100,
+    quoteMin: 50000,
+    quoteMax: 300000,
   );
 
   /// Procedure prices are rounded to a multiple of this (`procedure`).
@@ -162,6 +164,7 @@ class CoFakerClinicData {
     this.priceScale = CoClinicPriceScale.english,
     this.koreanValues = CoKoreanValues.legacy,
     this.maskedIdFormat = '***-**-####',
+    this.addressLineFormat = '{line1}, {city}',
   });
 
   /// Specialties and their clinic name suffixes.
@@ -227,7 +230,7 @@ class CoFakerClinicData {
   final CoFakerClinicOps? ops;
 
   /// Clinic name template with `{prefix}` (one of [clinicNamePrefixes]) and
-  /// `{suffix}` ([CoSpecialtySpec.clinicSuffix]) placeholders. English writes
+  /// `{suffix}` (`CoSpecialtySpec.clinicSuffix`) placeholders. English writes
   /// `{prefix} {suffix}` (`Maple Pediatrics`); Korean writes the words
   /// together with `{prefix}{suffix}` (`맑은피부과의원`), as other languages
   /// without word spaces do.
@@ -252,6 +255,15 @@ class CoFakerClinicData {
   /// `***-**-4821`. Korean and legacy data generate a masked resident
   /// registration number (`YYMMDD-G******`) instead.
   final String maskedIdFormat;
+
+  /// How `patient().address1` is written when [koreanValues] is
+  /// [CoKoreanValues.none] and the locale is a national one: `{line1}` is the
+  /// street line and `{city}`, `{region}`, and `{regionCode}` the place of
+  /// `faker.address.postalAddress()`. The postal code is its own field
+  /// (`postalCode`). `{line1}, {city}` suits most languages; Japanese and
+  /// Chinese write `{region}{city}{line1}`. A language-only locale has no
+  /// national addresses and keeps a plain street address.
+  final String addressLineFormat;
 
   /// Korean clinic data: dermatology and aesthetic clinics first, in won,
   /// with every Korean-only value ([CoKoreanValues.korean]).
@@ -984,5 +996,6 @@ class CoFakerClinicData {
     priceScale: CoClinicPriceScale.english,
     koreanValues: CoKoreanValues.legacy,
     maskedIdFormat: '***-**-####',
+    addressLineFormat: '{line1}, {city}',
   );
 }

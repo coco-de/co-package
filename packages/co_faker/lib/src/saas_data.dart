@@ -26,8 +26,8 @@ typedef CoNoticeSpec = ({String category, String title, String body});
 /// The defaults are what `faker.saas` has always generated for every locale,
 /// English included: a 10% VAT and a prepaid wallet in amounts of the won
 /// ([korean] and [english] are the same scale). The subscription plans
-/// ([CoPlanSpec.monthlyPrice]) and the claim master rows
-/// ([CoMasterRowSpec.price]) are data in the currency of the locale. A
+/// (`CoPlanSpec.monthlyPrice`) and the claim master rows
+/// (`CoMasterRowSpec.price`) are data in the currency of the locale. A
 /// language with another currency sets its own VAT rate and wallet amounts.
 class CoSaasPriceScale {
   /// Creates a price scale. The defaults are [korean].

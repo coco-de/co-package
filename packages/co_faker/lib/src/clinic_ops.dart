@@ -143,7 +143,8 @@ class CoFakerClinicOps {
   /// stretches of the Korean holiday calendar, keyed by their block code
   /// (`seollal`, `chuseok`). Other Korean holidays keep their Korean names.
   /// Only data whose [CoFakerClinicData.koreanValues] is not
-  /// [CoKoreanValues.none] uses the calendar. Empty falls back to English.
+  /// [CoKoreanValues.none] uses the calendar. A block without an entry reads
+  /// the English name.
   final Map<String, String> holidayNames;
 
   /// Date label template of closure notices with `{month}`, `{day}`, and

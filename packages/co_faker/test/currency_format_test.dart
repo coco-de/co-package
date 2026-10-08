@@ -159,6 +159,19 @@ void main() {
       expect(_cases[4].format.format(-1234.5), '-1.234,50$_nbsp€');
     });
 
+    test('an amount that rounds to zero has no sign', () {
+      expect(CoCurrencyFormat.usd.format(-0.4), r'$0');
+      expect(CoCurrencyFormat.usd.format(-0.6), r'-$1');
+      expect(
+        const CoCurrencyFormat(fractionDigits: 2).format(-0.004),
+        r'$0.00',
+      );
+      expect(
+        const CoCurrencyFormat(fractionDigits: 2).format(-0.006),
+        r'-$0.01',
+      );
+    });
+
     test('the pattern places the symbol or the code, or neither', () {
       const code = CoCurrencyFormat(
         code: 'CHF',

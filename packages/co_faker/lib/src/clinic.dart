@@ -442,7 +442,7 @@ class CoFakerClinic {
                 (65, 6),
               ]) +
               faker.random.int(max: 9);
-    final birth = _birthDate(age);
+    final birth = faker.korea.birthDate(minAge: age, maxAge: age);
     final first = faker.person.firstName(sex: resolvedSex);
     final last = faker.person.lastName();
     final hasEmail = faker.random.double() < emailRatio;
@@ -455,11 +455,14 @@ class CoFakerClinic {
       line1 = address.line1;
       line2 = address.line2;
     } else if (_values == CoKoreanValues.none && faker.country != null) {
-      // A national locale: the city, region and postal code agree, in the
-      // order of the country.
+      // A national locale: the city, region and postal code agree.
       final address = faker.address.postalAddress();
       postal = address.postalCode;
-      line1 = address.formatted;
+      line1 = data.addressLineFormat
+          .replaceAll('{line1}', address.line1)
+          .replaceAll('{city}', address.city)
+          .replaceAll('{region}', address.region)
+          .replaceAll('{regionCode}', address.regionCode);
       line2 = '';
     } else {
       postal = faker.address.postalCode();
@@ -823,7 +826,7 @@ class CoFakerClinic {
   /// Writes [amount] in the currency of the current data, the way the texts
   /// of the generators do: `$1,234` for English, `1,234` for Korean
   /// ([CoFakerClinicData.currency]).
-  String money(int amount) => data.currency.format(amount);
+  String money(num amount) => data.currency.format(amount);
 
   /// Generates one payment of [amount]. [method] forces `card`, `cash`,
   /// `transfer`, or `prepaid`; otherwise card is the most common.
@@ -1309,10 +1312,10 @@ class CoFakerClinic {
         (h) => !h.date.isBefore(from) && !h.date.isAfter(to) && !h.substitute,
         orElse: () => hits.first,
       );
-      final names = ops.holidayNames.isEmpty
-          ? CoFakerClinicOps.english.holidayNames
-          : ops.holidayNames;
-      holiday = names[main.block] ?? main.name;
+      holiday =
+          ops.holidayNames[main.block] ??
+          CoFakerClinicOps.english.holidayNames[main.block] ??
+          main.name;
     }
     var reopen = to.add(const Duration(days: 1));
     while (reopen.weekday == DateTime.sunday || closed.contains(reopen)) {
@@ -2085,20 +2088,6 @@ class CoFakerClinic {
   String _phone() => _values == CoKoreanValues.korean
       ? faker.korea.mobilePhone()
       : faker.internet.phoneNumber();
-
-  /// A date of birth for [age] at midnight in the time zone of `faker.now`:
-  /// what `faker.korea.birthDate` returns, which is only a date, written here
-  /// so that data without Korean values never calls the Korean module.
-  DateTime _birthDate(int age) {
-    final value = faker.date.dateOfBirth(
-      minAge: age,
-      maxAge: age,
-      utc: faker.now.isUtc,
-    );
-    return faker.now.isUtc
-        ? DateTime.utc(value.year, value.month, value.day)
-        : DateTime(value.year, value.month, value.day);
-  }
 
   /// The masked ID number of a patient: a resident registration number for
   /// Korean and legacy data, the `maskedIdFormat` of the data otherwise.

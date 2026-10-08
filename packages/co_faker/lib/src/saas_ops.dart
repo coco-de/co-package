@@ -89,13 +89,14 @@ class CoFakerSaasOps {
   final List<String> senderLabels;
 
   /// The message of a degraded or failing health check (`healthCheck`),
-  /// keyed by status: `degraded` and `down`. Empty falls back to English.
+  /// keyed by status: `degraded` and `down`. A status without an entry reads
+  /// the English message.
   final Map<String, String> healthMessages;
 
   /// What an audit event (`auditEvent`) acts on when the action has no
   /// numbered record, keyed by action code: `login`, `loginFailed`
-  /// (the target of `login` when missing), `roleChange`, and `send`. Empty
-  /// falls back to English.
+  /// (the target of `login` when missing), `roleChange`, and `send`. An
+  /// action without an entry reads the English target.
   final Map<String, String> auditTargets;
 
   /// The kinds of record that the remaining audit actions act on; the target

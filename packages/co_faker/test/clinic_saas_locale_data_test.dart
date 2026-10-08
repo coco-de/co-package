@@ -9,7 +9,7 @@ import 'support/virtual_language.dart';
 /// Korean-only shapes that no value of a language without Korean values may
 /// have: a masked resident registration number, a Korean mobile number, and a
 /// business registration number.
-final RegExp _koreanShapes = RegExp(
+final RegExp _krOnlyShapes = RegExp(
   r'\d{6}-[1-4]\*{6}|010-0\d{3}-\d{4}|\b\d{3}-\d{2}-\d{5}\b',
 );
 
@@ -42,8 +42,8 @@ void main() {
       ('splitRounding', (s) => s.splitRounding, 1000, 1),
       ('adjustmentUnit', (s) => s.adjustmentUnit, 1000, 1),
       ('pointUnit', (s) => s.pointUnit, 100, 1),
-      ('quoteMin', (s) => s.quoteMin, 50000, 50000),
-      ('quoteMax', (s) => s.quoteMax, 300000, 300000),
+      ('quoteMin', (s) => s.quoteMin, 50000, 50),
+      ('quoteMax', (s) => s.quoteMax, 300000, 300),
     ];
 
     test('the built-in data carry what the generators used to hard-code', () {
@@ -270,6 +270,57 @@ void main() {
     });
   });
 
+  group('missing texts', () {
+    test('a text map without an entry reads that entry in English', () {
+      const partial = VirtualLanguage(
+        locale: 'ja_jp',
+        currency: CoCurrencyFormat(code: 'JPY', symbol: '¥'),
+        scale: CoClinicPriceScale(),
+        saasScale: CoSaasPriceScale(),
+        healthMessages: <String, String>{'down': '接続タイムアウト'},
+        auditTargets: <String, String>{'login': 'アカウント'},
+      );
+      final saas = partial.faker().saas;
+      final messages = <String?>{
+        for (var i = 0; i < 300; i++) saas.healthCheck().message,
+      };
+      expect(messages, containsAll(<String>['接続タイムアウト', 'Slow responses']));
+      final targets = <String>{
+        for (var i = 0; i < 600; i++) saas.auditEvent().target,
+      };
+      // `loginFailed` follows `login`; `roleChange` and `send` are English.
+      expect(
+        targets,
+        containsAll(<String>['アカウント', 'staff role', 'notification']),
+      );
+      expect(targets, isNot(contains('account')));
+    });
+
+    test('a counseling topic without a catalog procedure is quoted in the '
+        'quote band of the price scale', () {
+      const language = VirtualLanguage(
+        locale: 'ja_jp',
+        currency: CoCurrencyFormat(code: 'JPY', symbol: '¥'),
+        scale: CoClinicPriceScale(
+          priceRounding: 500,
+          quoteMin: 5000,
+          quoteMax: 30000,
+        ),
+        saasScale: CoSaasPriceScale(),
+        withoutProcedures: <String>['LT-01', 'HIFU-300'],
+      );
+      final clinic = language.faker().clinic;
+      for (var i = 0; i < 30; i++) {
+        final session = clinic.counselSession();
+        expect(session.quotedPrice, inInclusiveRange(5000, 30000));
+        expect(session.quotedPrice % 500, 0);
+      }
+      // The dollar scale quotes in dollars, not in thousands of them.
+      final english = CoClinicPriceScale.english;
+      expect(english.quoteMax, lessThan(1000));
+    });
+  });
+
   group('Korean-only values', () {
     test('Korean data generates every one of them', () {
       final faker = ko();
@@ -404,7 +455,7 @@ void main() {
               if (entry.key != 'clinic.maskName' &&
                   entry.key != 'clinic.inquiry' &&
                   (_hangul.hasMatch(entry.value) ||
-                      _koreanShapes.hasMatch(entry.value)))
+                      _krOnlyShapes.hasMatch(entry.value)))
                 entry.key,
           ];
           expect(hits, isEmpty, reason: '${language.locale} seed $seed');
@@ -437,8 +488,11 @@ void main() {
       for (var i = 0; i < 30; i++) {
         final patient = japanese.clinic.patient();
         expect(patient.rrnMasked, matches(RegExp(r'^\d{8}$')));
-        expect(patient.address1, contains(patient.postalCode));
-        expect(patient.address1, startsWith('〒'));
+        // The postal code has its own field; the address line has the region
+        // and the city in the order of the address format of the data.
+        expect(patient.address1, isNot(contains(patient.postalCode)));
+        expect(patient.address1, isNot(contains('〒')));
+        expect(patient.address1, matches(RegExp('^[^0-9,]+[0-9]')));
         expect(patient.address2, isEmpty);
         final card = japanese.clinic.payment(amount: 80000, method: 'card');
         expect(card.approvalNo, matches(RegExp(r'^\d{6}$')));
@@ -460,10 +514,10 @@ void main() {
         expect(RegExp(r'\d').allMatches(recipient), hasLength(4));
       }
       final german = virtualGerman.faker();
-      expect(
-        german.clinic.patient().rrnMasked,
-        matches(RegExp(r'^\d{2}\.\d{2}\.\d{2}$')),
-      );
+      final patient = german.clinic.patient();
+      expect(patient.rrnMasked, matches(RegExp(r'^\d{2}\.\d{2}\.\d{2}$')));
+      expect(patient.address1, isNot(contains(patient.postalCode)));
+      expect(patient.address1, matches(RegExp(r'^.+, [^,]+$')));
       expect(
         german.saas.tenant().businessNumber,
         matches(RegExp(r'^DE\d{9}$')),
