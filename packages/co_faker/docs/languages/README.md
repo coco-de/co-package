@@ -132,3 +132,28 @@ language file and fails when:
 The test does not ask that a translation appears in the texts: a language with
 inflection (Russian, German, French) writes a term in several forms, and the
 check would reject correct text.
+
+## What the gate does not cover
+
+The gate reads what the data and the generators write. It does not judge the
+quality of a translation, which a native speaker reviews, and a few assumptions
+of the generators are still Korean:
+
+- `CoClinicHours` (the defaults of `businessSlots`, `appointmentSlot`, and
+  `visitHeatmap`) are the opening hours of a Korean dermatology clinic, with
+  the Sunday closed. They are numbers, not text, and are the same in every
+  language.
+- `clinic.inquiry()` and `messengerHandle()` do not follow the locale: one
+  Korean clinic inbox receives messages in several languages, each thread with
+  its Korean translation. The gate calls them with a language and does not look
+  for Hangul in `inquiry()`.
+- The `korea` pack (`korea.mobilePhone`, `korea.rrn`, ...) asks for Korean
+  values by name, so the gate skips its roles. The entities of the clinic and
+  SaaS packs run without it: with the `korea` pack registered, a field such as
+  `phone` or `address1` is inferred to a Korean role.
+- English keeps the Korean plate pattern of `logistics.vehiclePlate` and the
+  Korean names of the two approved creators, byte for byte, so the gate does
+  not look for Hangul in English.
+- The gate cannot see a word that a generator writes in English when it equals
+  the English and Korean text (a code or a token). It does see the texts that
+  differ between English and Korean, and the data of the language.

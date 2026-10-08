@@ -131,6 +131,8 @@ class _Generation {
   final bool strictProse;
 
   final Map<String, _Finding> _findings = <String, _Finding>{};
+  final Map<String, ({int total, int hit, String? miss})> _scriptCounts =
+      <String, ({int total, int hit, String? miss})>{};
   int _texts = 0;
   int _calls = 0;
 
@@ -148,6 +150,7 @@ class _Generation {
               : finding.message,
           value: finding.value,
         ),
+      ..._scriptIssues(),
     ],
     texts: _texts,
     calls: _calls,
@@ -245,8 +248,9 @@ class _Generation {
     return !(ascii && !RegExp(r'\s').hasMatch(text));
   }
 
-  /// Holds [texts] to the writing system of the language, comparing each with
-  /// the English and Korean text at the same place.
+  /// Counts how many of [texts] have the writing system of the language,
+  /// comparing each with the English and Korean text at the same place. The
+  /// verdict comes once every seed has run: see [_scriptIssues].
   void _checkScript(
     String where,
     List<String> texts,
@@ -272,15 +276,29 @@ class _Generation {
         miss ??= text;
       }
     }
-    if (total > 0 && hit / total < minScript) {
-      _report(
-        CoLanguageCheck.script,
-        where,
-        '${total - hit} of $total generated texts have no writing system of '
-        'the language (${script.name}): a text is not translated, or a '
-        'generator writes English whatever the language',
-        value: miss,
-      );
+    final known = _scriptCounts[where];
+    _scriptCounts[where] = (
+      total: (known?.total ?? 0) + total,
+      hit: (known?.hit ?? 0) + hit,
+      miss: known?.miss ?? miss,
+    );
+  }
+
+  /// One issue for each generator whose texts lack the writing system, over
+  /// all the seeds together.
+  Iterable<CoLanguageIssue> _scriptIssues() sync* {
+    for (final entry in _scriptCounts.entries) {
+      final count = entry.value;
+      if (count.total > 0 && count.hit / count.total < minScript) {
+        yield CoLanguageIssue(
+          CoLanguageCheck.script,
+          entry.key,
+          '${count.total - count.hit} of ${count.total} generated texts have '
+          'no writing system of the language (${script.name}): a text is not '
+          'translated, or a generator writes English whatever the language',
+          value: count.miss,
+        );
+      }
     }
   }
 
