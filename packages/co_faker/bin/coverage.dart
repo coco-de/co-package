@@ -112,6 +112,12 @@ Future<void> main(List<String> args) async {
   } on FileSystemException catch (error) {
     stderr.writeln('coverage: $error');
     exitCode = 2;
+  } on StateError catch (error) {
+    // The domain text bundles are checked against English when they load, and
+    // a bundle that is misaligned makes the load fail with the whole list of
+    // what is wrong: print it, and fail.
+    stderr.writeln('coverage: ${error.message}');
+    exitCode = 1;
   }
 }
 
