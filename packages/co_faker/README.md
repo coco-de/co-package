@@ -474,7 +474,9 @@ language data, described under "Language data" above.) A custom locale carries
 a bundle of its own, with no change to co_faker:
 
 ```dart
-const spanish = CoFakerLocale(
+// A custom locale replaces the built-in locale of its code: merge it over the
+// built-in one to keep that locale's names, cities, and so on.
+final spanish = const CoFakerLocale(
   code: 'es',
   l10n: CoL10nBundle(
     language: 'es',
@@ -490,7 +492,7 @@ const spanish = CoFakerLocale(
       'workplace.sprintName': ['Sprint {n}'],
     },
   ),
-);
+).merge(CoFakerLocales.resolve('es'));
 
 final faker = CoFaker(
   locale: 'es',

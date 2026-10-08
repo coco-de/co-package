@@ -148,20 +148,22 @@ class CoFakerLocale {
   /// of the generator's language, then English. See `CoL10nBundle` and
   /// `CoFakerL10n`.
   ///
+  /// A custom locale replaces the built-in locale of the same code, so merge
+  /// it over the built-in one to keep that locale's names and cities:
+  ///
   /// ```dart
+  /// final spanish = const CoFakerLocale(
+  ///   code: 'es',
+  ///   l10n: CoL10nBundle(
+  ///     language: 'es',
+  ///     texts: {
+  ///       'workplace.position': ['Asociado', 'Gerente', 'Líder de equipo'],
+  ///     },
+  ///   ),
+  /// ).merge(CoFakerLocales.resolve('es'));
   /// final faker = CoFaker(
   ///   locale: 'es',
-  ///   locales: {
-  ///     'es': const CoFakerLocale(
-  ///       code: 'es',
-  ///       l10n: CoL10nBundle(
-  ///         language: 'es',
-  ///         texts: {
-  ///           'workplace.position': ['Asociado', 'Gerente', 'Líder de equipo'],
-  ///         },
-  ///       ),
-  ///     ),
-  ///   },
+  ///   locales: {'es': spanish},
   ///   domains: CoFakerDomains.all,
   /// );
   /// ```

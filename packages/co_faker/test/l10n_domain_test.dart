@@ -326,6 +326,39 @@ void main() {
       );
     });
 
+    test('a custom locale merged over the built-in one keeps its data', () {
+      const bundle = CoL10nBundle(
+        language: 'es',
+        texts: {
+          'dental.chairName': ['Sillón 1', 'Sillón 2', 'Sillón 3'],
+        },
+      );
+      final spanish = const CoFakerLocale(
+        code: 'es',
+        l10n: bundle,
+      ).merge(CoFakerLocales.resolve('es'));
+      final custom = _faker('es', locales: {'es': spanish});
+      final builtin = _faker('es');
+      // The names and cities are the built-in Spanish ones...
+      expect(custom.person.fullName(), builtin.person.fullName());
+      expect(custom.address.city(), builtin.address.city());
+      // ...and the domain text is the bundle's, with English for the rest.
+      expect(
+        custom.l10n.list('dental.chairName'),
+        bundle.texts['dental.chairName'],
+      );
+      expect(
+        custom.l10n.list('dental.dentalMaterial'),
+        english.texts['dental.dentalMaterial'],
+      );
+      // A bare custom locale replaces the built-in one instead.
+      final bare = _faker(
+        'es',
+        locales: const {'es': CoFakerLocale(code: 'es', l10n: bundle)},
+      );
+      expect(bare.person.fullName(), _faker('en').person.fullName());
+    });
+
     test('a masked name, drawing only the names its template names', () {
       const bundle = CoL10nBundle(
         language: 'xx',
