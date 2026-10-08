@@ -90,6 +90,28 @@ jobs:
       - run: flutter analyze --fatal-infos
       - run: flutter test
 
+  # MIT xterm2 포크 — 비회원 패키지의 공개 API·IME 대역·회귀를 독립 검증한다.
+  # 원천 Mac 전용 골든은 테스트의 기존 플랫폼 조건을 유지한다.
+  xterm2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/xterm2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get --no-example
+      - name: 변경된 입력 경로와 IME 시험 포맷
+        run: |
+          dart format --output=none --set-exit-if-changed lib/src/terminal_view.dart lib/src/ui/custom_text_edit.dart test/src/ui/ime
+      - run: flutter analyze --no-pub lib test/src/ui/ime
+      - run: flutter test --no-pub --exclude-tags platform-golden
+
   # co_arc 러너 스크립트/워크플로우 문법 검증
   lint-runner-infra:
     runs-on: ubuntu-latest
