@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIT xterm2 포크 채택 작업내역 — Cocode #950</title>
+<style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;line-height:1.65;color:#1d2630;background:#fafafa}h1,h2{line-height:1.25}section{background:white;border:1px solid #dce2e8;border-radius:12px;padding:20px;margin:20px 0}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%}th,td{text-align:left;border-bottom:1px solid #dce2e8;padding:10px}</style>
+<h1>MIT xterm2 포크 채택</h1>
+<p>Cocode #950 · #984 · branch <code>goccd/xterm2-mit-adoption</code> → <code>main</code> · 2026-10-09</p>
+<section><h2>변경과 근거</h2><p><code>leynier/xterm2@6775995f1e09d7b1e01f2a5a4ee87895b5905da8</code>의 MIT 원천 310개 파일을 들여오고, Cocode #984의 클린룸 데스크톱 IME 패치와 새 시험 3파일을 반영했다. AGPL 구현을 이식하지 않았다. 원천 LICENSE의 Git blob은 동일하며 © 2020 xuty 고지를 보존한다.</p><p>배포 후보는 <code>5.3.0+cocode.1</code>, 소비 경로는 <code>packages/xterm2</code>다. 별도 패키지이므로 기존 root workspace의 의존 해석을 바꾸지 않는다.</p></section>
+<section><h2>여기부터 보세요</h2><ol><li><code>packages/xterm2/FORK.md</code>: 원천·고지·검증 한계.</li><li><code>lib/src/terminal_view.dart</code>: 입력 연결이 열린 데스크톱에서 printable key를 IME에 전달.</li><li><code>lib/src/ui/custom_text_edit.dart</code>: 확정 뒤 reset 지연과 Enter 전 조합 확정.</li><li><code>test/src/ui/ime/</code>: 키 선처리·연속 조합 갱신·조합 폐기를 모사하는 대역과 두벌식 말뭉치 28건.</li><li><code>.github/workflows/ci.yml</code>: 독립 Ubuntu 검사. README·CHANGELOG·pubspec은 포크의 출처와 버전을 설명한다.</li></ol></section>
+<section><h2>로컬 검증</h2><table><tr><th>검사</th><th>결과</th></tr><tr><td>Linux Flutter 3.47.3 단위·위젯 전체</td><td>911 통과, 원천 Mac 전용 골든 2 skip, 종료 0</td></tr><tr><td>macOS Flutter 3.47.6 IME</td><td>28/28 통과</td></tr><tr><td>macOS 전체 회귀</td><td>912 통과, htop 골든 1 실패(2픽셀). 수정하지 않은 원천에서도 동일 실패 재현.</td></tr><tr><td>변경 lib·IME 포맷 및 분석</td><td>통과, 분석 0건</td></tr><tr><td>라이선스·자격 증명 검사</td><td>통과, 원천 LICENSE 동일</td></tr><tr><td>워크플로 actionlint</td><td>통과</td></tr><tr><td>Integration</td><td>패키지에 integration_test 없음. 실제 OS 입력기 검증은 소비 앱의 별도 측정 대상.</td></tr></table></section>
+<section><h2>검증 경계</h2><p>대역의 desktop 3종 통과는 macOS 두벌식·Windows MS-IME·Linux ibus-hangul의 실제 입력기 측정을 대신하지 않는다. 소비 앱은 MIT 의존과 고지를 갱신하고, 게시 관문 및 새 설치 파일의 서명·공증·실행을 검증해야 한다. 소유자 승인에 따라 엔진 전환만 #866에 앞서 진행하며 다른 터미널 기능을 구현하지 않는다.</p></section>
+</html>
