@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:co_faker/co_faker.dart';
+import 'package:co_faker/src/domain_packs/authored_roles.dart';
 import 'package:test/test.dart';
 
 CoFaker _faker(
@@ -126,6 +127,29 @@ void main() {
       }
     });
   });
+
+  test(
+    'a role that cycles a table asserts that the bundle has a text per row',
+    () {
+      // `dental.chairName` has three texts in every language.
+      final f = _faker('en');
+      const context = (field: 'value', type: 'String', index: 5, entity: null);
+      expect(
+        indexedTextRole('dental.chairName', rows: 3).generate(f, context),
+        'Dental chair 3',
+      );
+      expect(
+        () => indexedTextRole('dental.chairName', rows: 4).generate(f, context),
+        throwsA(
+          isA<AssertionError>().having(
+            (error) => error.message,
+            'message',
+            allOf(contains('dental.chairName'), contains('3'), contains('4')),
+          ),
+        ),
+      );
+    },
+  );
 
   group('every role', () {
     test('generates text without a leftover placeholder in every language', () {

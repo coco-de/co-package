@@ -56,7 +56,7 @@ class CoFxDomain extends CoFakerDomain {
     'maskedAccount': authoredRole((f, _) => CoFakerFx(f).maskedAccount()),
     'referenceNo': codeRole('NR', dated: true),
     'krwAmount': intRole(10000, 5000000, step: 1000),
-    'branchName': indexedTextRole('fx.branchName'),
+    'branchName': indexedTextRole('fx.branchName', rows: _branchKinds.length),
     'branchKind': authoredRole(
       (f, c) => _branchKinds[c.index % _branchKinds.length],
       coherent: true,

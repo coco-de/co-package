@@ -1,4 +1,5 @@
 import '../co_faker.dart';
+import 'authored_roles.dart';
 import 'co_fake_catalog_item.dart';
 
 /// Authored brand-free catalogs shared by commerce and fresh grocery packs.
@@ -47,9 +48,9 @@ class CoFakerCatalog {
     final units = grocery ? 'catalog.groceryUnit' : 'catalog.commerceUnit';
     return CoFakeCatalogItem(
       code: '$prefix-${((index ?? slot) + 1).toString().padLeft(4, '0')}',
-      name: faker.l10n.pickBalanced(names, slot),
+      name: indexedText(faker, names, slot, rows: pool.length),
       category: spec.$1,
-      unitLabel: faker.l10n.pickBalanced(units, slot),
+      unitLabel: indexedText(faker, units, slot, rows: pool.length),
       storageType: spec.$2,
       price: spec.$3,
       listPrice: spec.$3 + (grocery ? 3000 : 5000),

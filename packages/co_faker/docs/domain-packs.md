@@ -137,9 +137,11 @@ empty bundles and read English until their bundle is filled in.
   one seed picks the same entry whatever the language. Roles that follow the
   record index (the class, equipment, and room of one row) rely on that order.
 - A pack never branches on the locale. It reads the bundle with
-  `textRole(key)`, `indexedTextRole(key)`, `taxonomyRole(key)`,
+  `textRole(key)`, `indexedTextRole(key, rows: n)`, `taxonomyRole(key)`,
   `maskedNameRole()`, or `faker.l10n.format(key, args)`, and fills the
-  placeholders (`{n}`) itself.
+  placeholders (`{n}`) itself. A role that cycles a table of `n` rows (the
+  codes and numbers that stay in the pack) states `n`, and an assertion fails
+  when the bundle has another number of texts for it.
 - What is not text stays in the pack: codes (`enumRole`), numbers, prices,
   dates, and identifiers do not depend on the language.
 - A new role adds its key to the English bundle and the Korean one;

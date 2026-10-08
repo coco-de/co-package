@@ -66,7 +66,7 @@ class CoLogisticsDomain extends CoFakerDomain {
       (f, c) => _skus[c.index % _skus.length],
       coherent: true,
     ),
-    'itemName': indexedTextRole('logistics.itemName'),
+    'itemName': indexedTextRole('logistics.itemName', rows: _skus.length),
     'binCode': authoredRole(
       (f, c) =>
           '${['A', 'B', 'C', 'D'][c.index % 4]}-${(1 + c.index % 12).toString().padLeft(2, '0')}-${(1 + c.index % 4).toString().padLeft(2, '0')}-${1 + c.index % 3}',

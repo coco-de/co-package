@@ -31,7 +31,7 @@ class CoB2bTradeDomain extends CoFakerDomain {
           'HM-${_items[c.index % _items.length].$1}-${(c.index + 1).toString().padLeft(4, '0')}',
       coherent: true,
     ),
-    'itemSpec': indexedTextRole('b2b_trade.itemSpec'),
+    'itemSpec': indexedTextRole('b2b_trade.itemSpec', rows: _items.length),
     'packUnit': authoredRole(
       (f, c) => _items[c.index % _items.length].$2,
       type: 'int',

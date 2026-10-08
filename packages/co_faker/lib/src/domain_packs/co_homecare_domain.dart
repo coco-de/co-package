@@ -10,21 +10,28 @@ class CoHomecareDomain extends CoFakerDomain {
   const CoHomecareDomain();
   @override
   String get name => 'homecare';
+
+  /// The kind of each care task; its label is `homecare.careTaskLabel` in the
+  /// language bundles, in the same order.
+  static const _careTaskKinds = <String>[
+    'meal',
+    'medication',
+    'hygiene',
+    'mobility',
+    'toileting',
+    'emotional',
+  ];
   static CoFakeVitalReading _vital(CoFaker f) =>
       CoFakeVitalReading.generate(f.derive('homecare/vital'));
   @override
   Map<String, CoDomainRole> get roles => {
     'recipientName': maskedNameRole(),
     'careGrade': textRole('homecare.careGrade'),
-    'careTaskLabel': indexedTextRole('homecare.careTaskLabel'),
-    'careTaskKind': enumRole([
-      'meal',
-      'medication',
-      'hygiene',
-      'mobility',
-      'toileting',
-      'emotional',
-    ]),
+    'careTaskLabel': indexedTextRole(
+      'homecare.careTaskLabel',
+      rows: _careTaskKinds.length,
+    ),
+    'careTaskKind': enumRole(_careTaskKinds),
     'vitalReading': authoredRole(
       (f, _) => jsonEncode(_vital(f).toJson()),
       coherent: true,

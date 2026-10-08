@@ -22,8 +22,14 @@ class CoHelpdeskDomain extends CoFakerDomain {
   ];
   @override
   Map<String, CoDomainRole> get roles => {
-    'ticketSubject': indexedTextRole('helpdesk.ticketSubject'),
-    'ticketDescription': indexedTextRole('helpdesk.ticketDescription'),
+    'ticketSubject': indexedTextRole(
+      'helpdesk.ticketSubject',
+      rows: _ticketCategories.length,
+    ),
+    'ticketDescription': indexedTextRole(
+      'helpdesk.ticketDescription',
+      rows: _ticketCategories.length,
+    ),
     'ticketCategory': authoredRole(
       (f, c) => _ticketCategories[c.index % _ticketCategories.length],
       coherent: true,

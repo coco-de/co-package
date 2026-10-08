@@ -1,3 +1,4 @@
+import '../co_faker.dart';
 import '../domain.dart';
 
 // New packs deliberately have no global/suffix field patterns. Entity mappings
@@ -27,10 +28,30 @@ CoDomainRole authoredRole(
 /// `CoL10nBundle`), so a language needs no change here.
 CoDomainRole textRole(String key) => authoredRole((f, _) => f.l10n.pick(key));
 
+/// The text of [key] for the record [index], cycling when [index] passes the
+/// last text, without consuming random state.
+///
+/// [rows] is the number of rows of the table the text belongs to: the codes,
+/// numbers, or other labels of the same pack that cycle with the same index.
+/// The key has one text for each row, in the same order; when it does not, the
+/// pack and its bundle disagree, and an assertion fails.
+String indexedText(CoFaker f, String key, int index, {required int rows}) {
+  assert(
+    f.l10n.list(key).length == rows,
+    'l10n key "$key" has ${f.l10n.list(key).length} texts for a table of '
+    '$rows rows',
+  );
+  return f.l10n.pickBalanced(key, index);
+}
+
 /// Cycles through the authored text of [key] in record order without
 /// consuming random state, so roles that follow the same row agree.
-CoDomainRole indexedTextRole(String key) =>
-    authoredRole((f, c) => f.l10n.pickBalanced(key, c.index), coherent: true);
+///
+/// [rows] is the number of rows of the pack's table; see [indexedText].
+CoDomainRole indexedTextRole(String key, {required int rows}) => authoredRole(
+  (f, c) => indexedText(f, key, c.index, rows: rows),
+  coherent: true,
+);
 
 /// Cycles enum codes in record order without consuming random state.
 CoDomainRole enumRole(List<String> values) => authoredRole(

@@ -7,6 +7,17 @@ class CoWorkplaceDomain extends CoFakerDomain {
   const CoWorkplaceDomain();
   @override
   String get name => 'workplace';
+
+  /// The expense account codes; the account names are `workplace.accountName`
+  /// in the language bundles, in the same order.
+  static const _accountCodes = <String>[
+    'DEMO-601',
+    'DEMO-602',
+    'DEMO-603',
+    'DEMO-604',
+    'DEMO-605',
+    'DEMO-606',
+  ];
   @override
   Map<String, CoDomainRole> get roles => {
     'employeeName': firstNameRole(),
@@ -49,17 +60,13 @@ class CoWorkplaceDomain extends CoFakerDomain {
     'commentBody': textRole('workplace.commentBody'),
     'merchantName': textRole('workplace.merchantName'),
     'accountCode': authoredRole(
-      (f, c) => [
-        'DEMO-601',
-        'DEMO-602',
-        'DEMO-603',
-        'DEMO-604',
-        'DEMO-605',
-        'DEMO-606',
-      ][c.index % 6],
+      (f, c) => _accountCodes[c.index % _accountCodes.length],
       coherent: true,
     ),
-    'accountName': indexedTextRole('workplace.accountName'),
+    'accountName': indexedTextRole(
+      'workplace.accountName',
+      rows: _accountCodes.length,
+    ),
     'rejectReasonText': textRole('workplace.rejectReasonText'),
   };
   @override

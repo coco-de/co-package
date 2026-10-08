@@ -1,4 +1,5 @@
 import '../co_faker.dart';
+import 'authored_roles.dart';
 import 'co_fake_exam_question.dart';
 
 /// General IT questions authored for the package, not copied from exams/books.
@@ -41,7 +42,8 @@ class CoFakerExamPrep {
     final slot = index == null
         ? faker.random.int(max: sections.length - 1)
         : index % sections.length;
-    final l10n = faker.l10n;
+    String text(String key) =>
+        indexedText(faker, key, slot, rows: sections.length);
     final order = [0, 1, 2, 3];
     for (var i = order.length - 1; i > 0; i--) {
       final other = faker.random.int(max: i);
@@ -50,17 +52,15 @@ class CoFakerExamPrep {
       order[other] = temp;
     }
     // Choice 0 is the correct answer before the shuffle.
-    final choices = [
-      for (final key in _choiceKeys) l10n.pickBalanced(key, slot),
-    ];
+    final choices = [for (final key in _choiceKeys) text(key)];
     return CoFakeExamQuestion(
-      subjectName: l10n.pickBalanced('exam_prep.subjectName', slot),
-      unitName: l10n.pickBalanced('exam_prep.unitName', slot),
+      subjectName: text('exam_prep.subjectName'),
+      unitName: text('exam_prep.unitName'),
       section: sections[slot],
-      stem: l10n.pickBalanced('exam_prep.questionStem', slot),
+      stem: text('exam_prep.questionStem'),
       choices: List.unmodifiable(order.map((i) => choices[i])),
       answerKeys: List.unmodifiable([order.indexOf(0) + 1]),
-      explanation: l10n.pickBalanced('exam_prep.explanation', slot),
+      explanation: text('exam_prep.explanation'),
       difficulty: ['easy', 'normal', 'hard'][slot % 3],
     );
   }

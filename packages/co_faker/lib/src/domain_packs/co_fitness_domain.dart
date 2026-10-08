@@ -7,23 +7,44 @@ class CoFitnessDomain extends CoFakerDomain {
   const CoFitnessDomain();
   @override
   String get name => 'fitness';
+
+  /// The class categories and levels, and the pass terms in days: the labels,
+  /// equipment, rooms, and pass names are the texts of the same rows in the
+  /// language bundles (`fitness.classCategoryLabel`, `classLevelLabel`,
+  /// `equipment`, `studioRoom`, `passName`).
+  static const _categories = <String>['mat', 'reformer', 'chair', 'yoga'];
+  static const _levels = <String>['beginner', 'intermediate', 'advanced'];
+  static const _passDays = <int>[60, 180, 30];
   @override
   Map<String, CoDomainRole> get roles => {
     'className': authoredRole(
       (f, c) => f.l10n.format('fitness.className', {
-        'category': f.l10n.pickBalanced('fitness.classCategoryLabel', c.index),
-        'level': f.l10n.pickBalanced('fitness.classLevelLabel', c.index),
+        'category': indexedText(
+          f,
+          'fitness.classCategoryLabel',
+          c.index,
+          rows: _categories.length,
+        ),
+        'level': indexedText(
+          f,
+          'fitness.classLevelLabel',
+          c.index,
+          rows: _levels.length,
+        ),
       }),
       coherent: true,
     ),
-    'classCategory': enumRole(['mat', 'reformer', 'chair', 'yoga']),
-    'classLevel': enumRole(['beginner', 'intermediate', 'advanced']),
-    'equipment': indexedTextRole('fitness.equipment'),
-    'studioRoom': indexedTextRole('fitness.studioRoom'),
+    'classCategory': enumRole(_categories),
+    'classLevel': enumRole(_levels),
+    'equipment': indexedTextRole('fitness.equipment', rows: _categories.length),
+    'studioRoom': indexedTextRole(
+      'fitness.studioRoom',
+      rows: _categories.length,
+    ),
     'instructorSpecialty': textRole('fitness.instructorSpecialty'),
-    'passName': indexedTextRole('fitness.passName'),
+    'passName': indexedTextRole('fitness.passName', rows: _passDays.length),
     'passTerm': authoredRole(
-      (f, c) => [60, 180, 30][c.index % 3],
+      (f, c) => _passDays[c.index % _passDays.length],
       type: 'int',
       coherent: true,
       description: 'Pass validity in days, coherent with passName: 60, 180, 30',

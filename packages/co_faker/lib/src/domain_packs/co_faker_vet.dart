@@ -45,12 +45,18 @@ class CoFakerVet {
     if (weights == null) {
       throw ArgumentError.value(kind, 'animalKind');
     }
+    final names = faker.l10n.list('vet.breed.$kind');
+    assert(
+      names.length == weights.length,
+      'vet.breed.$kind has ${names.length} names for ${weights.length} '
+      'weight ranges',
+    );
     // The same draw as `faker.random.pick` over the breeds of the species.
     final breed = faker.random.int(max: weights.length - 1);
     return CoFakePet(
       name: faker.l10n.pick('vet.petName'),
       animalKind: kind,
-      breed: faker.l10n.list('vet.breed.$kind')[breed],
+      breed: names[breed],
       coatColor: faker.l10n.pick('vet.coatColor'),
       weightKg: faker.number.decimal(
         min: weights[breed].$1,

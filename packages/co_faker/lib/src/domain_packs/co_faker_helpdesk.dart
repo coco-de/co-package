@@ -1,4 +1,5 @@
 import '../co_faker.dart';
+import 'authored_roles.dart';
 
 /// Human-authored simulated AI drafts; no model/runtime/network dependency.
 class CoFakerHelpdesk {
@@ -27,7 +28,12 @@ class CoFakerHelpdesk {
     (i) => {
       'code': 'AD-${_draftCategories[i]}-${i + 1}',
       'category': _draftCategories[i],
-      'templateBody': faker.l10n.pickBalanced('helpdesk.draftBody', i),
+      'templateBody': indexedText(
+        faker,
+        'helpdesk.draftBody',
+        i,
+        rows: _draftCategories.length,
+      ),
       'sourceArticleCode': 'HA-${(i + 1).toString().padLeft(4, '0')}',
       'isSimulated': true,
     },
