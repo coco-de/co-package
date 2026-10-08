@@ -12,6 +12,7 @@ import 'domain_packs/co_faker_catalog.dart';
 import 'domain_packs/co_faker_exam_prep.dart';
 import 'co_faker_locales.dart';
 import 'korea.dart';
+import 'l10n/co_faker_l10n.dart';
 import 'l10n/co_l10n_clinic.dart';
 import 'modules.dart';
 import 'random_source.dart';
@@ -276,6 +277,11 @@ class CoFaker {
 
   /// Handwritten-looking signature strokes, SVG, and open_board points.
   late final CoFakerSignature signature = CoFakerSignature(this);
+
+  /// Authored domain text in the language of this generator, read by key: the
+  /// labels, names, and sentences of the domain packs and the dedicated
+  /// generators. See [CoFakerL10n].
+  late final CoFakerL10n l10n = CoFakerL10n(this);
 
   /// Records generated from a field schema, callable as
   /// `faker.schema(fields)`.

@@ -1,3 +1,5 @@
+import 'l10n/co_l10n_registry.dart';
+
 /// A writing system, used to tell the text of one language in
 /// [CoFakerLanguages] from another.
 ///
@@ -55,9 +57,11 @@ class CoFakerLanguage {
   /// When `false`, the basic modules (person, address, internet, text, and so
   /// on) still speak the language and the domain data is English.
   ///
-  /// One lookup answers it for every language; no language carries a flag of
-  /// its own.
-  bool get domain => _hasDomainData(code);
+  /// It is computed from the bundle registry: a language has domain data when
+  /// it ships a domain text bundle that is not empty (see [CoL10nRegistry]).
+  /// No language carries a flag of its own, so filling a language's bundle is
+  /// what turns it on.
+  bool get domain => CoL10nRegistry.hasDomainData(code);
 
   @override
   String toString() => 'CoFakerLanguage($code)';
@@ -298,15 +302,3 @@ const Set<String> _traditionalChinese = <String>{'hant', 'tw', 'hk', 'mo'};
 final RegExp _codesetOrModifier = RegExp('[.@]');
 final RegExp _separator = RegExp('[-_]');
 final RegExp _regionShape = RegExp(r'^(?:[a-z]{2}|[0-9]{3})$');
-
-/// Whether the domain data of the language [code] is authored in that
-/// language.
-///
-/// This is the one place that answers it: [CoFakerLanguage.domain] reads
-/// nothing else, and no registry line carries a flag. For now the answer is
-/// fixed, because Korean and English are the only languages with authored
-/// domain text. Story S2 of the language-support Epic replaces the body with
-/// a computation from the domain bundle registry (a language has domain data
-/// when it ships a non-empty bundle), so that a language Story turns it on by
-/// adding its bundle and never edits this file.
-bool _hasDomainData(String code) => code == 'ko' || code == 'en';

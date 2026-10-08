@@ -1,5 +1,6 @@
 import 'clinic_data.dart';
 import 'countries/co_faker_national_data.dart';
+import 'l10n/co_l10n_bundle.dart';
 import 'saas_data.dart';
 
 /// Localized data used by [CoFaker].
@@ -37,6 +38,7 @@ class CoFakerLocale {
     this.clinic,
     this.saas,
     this.national,
+    this.l10n,
   });
 
   /// Locale identifier such as `en`, `ko`, or `pt_BR`.
@@ -136,10 +138,42 @@ class CoFakerLocale {
   /// `CoFakerCountries`.
   final CoFakerNationalData? national;
 
+  /// Authored domain text of this locale: the labels, names, and sentences of
+  /// the domain packs and the dedicated generators, or `null` for none.
+  ///
+  /// This is how a custom locale adds a language without a change to
+  /// co_faker. The bundle uses the keys of the English bundle
+  /// (`dental.dentalProcedure`) with as many texts per key as English has, and
+  /// it may translate only some keys; a key it lacks reads the shipped bundle
+  /// of the generator's language, then English. See `CoL10nBundle` and
+  /// `CoFakerL10n`.
+  ///
+  /// ```dart
+  /// final faker = CoFaker(
+  ///   locale: 'es',
+  ///   locales: {
+  ///     'es': const CoFakerLocale(
+  ///       code: 'es',
+  ///       l10n: CoL10nBundle(
+  ///         language: 'es',
+  ///         texts: {
+  ///           'workplace.position': ['Asociado', 'Gerente', 'Líder de equipo'],
+  ///         },
+  ///       ),
+  ///     ),
+  ///   },
+  ///   domains: CoFakerDomains.all,
+  /// );
+  /// ```
+  final CoL10nBundle? l10n;
+
   /// Merges this locale over [fallback].
   ///
   /// A collection is considered unspecified when it is empty. Scalar values
-  /// use the fallback when they still have the constructor default.
+  /// use the fallback when they still have the constructor default. The
+  /// domain text bundle, [l10n], is the exception: it is this locale's own and
+  /// is never taken from [fallback], so merging over English does not make
+  /// English text answer for another language.
   CoFakerLocale merge(CoFakerLocale fallback) {
     return CoFakerLocale(
       code: code,
@@ -188,6 +222,10 @@ class CoFakerLocale {
       clinic: clinic ?? fallback.clinic,
       saas: saas ?? fallback.saas,
       national: national ?? fallback.national,
+      // Not inherited, unlike the data above: an English bundle must not
+      // answer for another language. The generator reads English itself, key
+      // by key, after this locale's bundle and the shipped one of its language.
+      l10n: l10n,
     );
   }
 }
