@@ -117,7 +117,9 @@ void main() {
     });
 
     test('other locales fall back to English SaaS data', () {
-      final faker = CoFaker(locale: 'de', seed: 1, now: now);
+      // `nl` stands for a language that has no SaaS data and never will: a
+      // language of the Epic (`de`) gets its own data when it is localized.
+      final faker = CoFaker(locale: 'nl', seed: 1, now: now);
       expect(faker.saas.data, same(CoFakerSaasData.english));
       expect(faker.saas.label('pastDue'), 'Past due');
       expect(faker.saas.tenant().name, isNotEmpty);

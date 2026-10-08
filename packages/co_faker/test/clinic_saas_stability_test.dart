@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:co_faker/co_faker.dart';
+import 'package:co_faker/src/l10n/co_l10n_clinic.dart';
 import 'package:test/test.dart';
 
 import 'support/clinic_saas_snapshot.dart';
+import 'support/language_state.dart';
 
 /// Output of every public `faker.clinic` and `faker.saas` generator, recorded
 /// with co_faker 0.11.0 before the two modules stopped reading the locale
@@ -92,7 +95,17 @@ void main() {
     }
   }
 
+  // A fallback code keeps its output only while its language has no clinic or
+  // SaaS data of its own. Once a language is localized (the registries say
+  // which: `domainLocalized`), every code of it reads the language data
+  // instead of the English or Korean data that the fixture recorded, on
+  // purpose (see the CHANGELOG): `ja` and `ja_JP` change together, while
+  // `zh_TW` (Traditional Chinese), `es`, and `xx_YY` read English for good and
+  // keep their digests. Both data sets are left out together, because the
+  // calls of one read the other: a SaaS tenant is named by the clinic data,
+  // and a clinic reads the SaaS labels.
   for (final locale in clinicSaasFallbackLocales) {
+    if (domainLocalized(locale)) continue;
     test('$locale keeps its 0.11.0 clinic and saas output', () {
       final calls = fallbacks[locale]! as Map<String, Object?>;
       final actual = recordClinicSaas(locale, clinicSaasFallbackSeed);
@@ -103,6 +116,27 @@ void main() {
       expect(mismatches, isEmpty, reason: mismatches.join(', '));
     });
   }
+
+  test('a code that is left out reads the data of its language', () {
+    // The left-out codes are no longer fallbacks: they read the clinic and
+    // SaaS data that their language registered, so the digests of the fixture
+    // no longer apply to them.
+    for (final locale in clinicSaasFallbackLocales.where(domainLocalized)) {
+      final language = CoFakerLanguages.resolve(locale).language.code;
+      final entry = CoL10nClinic.entries[language]!;
+      final faker = CoFaker(locale: locale, seed: 1);
+      expect(
+        faker.clinic.data,
+        same(entry.clinic ?? CoFakerClinicData.english),
+        reason: locale,
+      );
+      expect(
+        faker.saas.data,
+        same(entry.saas ?? CoFakerSaasData.english),
+        reason: locale,
+      );
+    }
+  });
 }
 
 Map<String, Object?> _recordFull(String locale) {

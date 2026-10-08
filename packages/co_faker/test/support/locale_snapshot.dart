@@ -23,6 +23,21 @@ const List<String> stableLocaleCodes = <String>[
   'xx_YY',
 ];
 
+/// Whether [key] of the snapshot is a domain key: a value that the domain
+/// data of the language decides (the clinic and the SaaS data, and the
+/// entities that the clinic and SaaS packs generate), as opposed to the base
+/// modules (person, address, internet, text, ...) that the locale data decides.
+///
+/// The base keys keep their 0.10.0 bytes for every code, always. The domain
+/// keys keep them while the language has no domain data of its own: once a
+/// language is localized its clinic, SaaS, and domain pack output reads the
+/// language instead of English, which is the point of localizing it. See
+/// `domainLocalized` in `language_state.dart`.
+bool isDomainSnapshotKey(String key) =>
+    key.startsWith('clinic.') ||
+    key == 'schema.patient' ||
+    key == 'schema.invoice';
+
 /// Exercises the generic public API of a seeded [CoFaker] for [locale] and
 /// returns every value as a string, keyed by call site.
 ///
