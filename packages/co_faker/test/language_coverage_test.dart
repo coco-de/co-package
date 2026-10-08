@@ -725,6 +725,31 @@ void main() {
       expect(complete.stats['generatedTexts'], greaterThan(10000));
     });
 
+    test('tell data that the registries do not hold from a missing text', () {
+      // Without a generator of its own the gate runs the ones that an app gets,
+      // which read the registries. Data that is not what the registries hold
+      // is reported as such, not as a pile of untranslated texts.
+      final report = CoLanguageCoverage().check(ja.data());
+      final wiring = report.issues.where(
+        (issue) => issue.where == 'CoFaker.forLanguage',
+      );
+      expect(
+        wiring.map((issue) => issue.message),
+        containsAll(<Matcher>[
+          contains('clinic data that was checked'),
+          contains('SaaS data that was checked'),
+        ]),
+      );
+      // The registered data of Korean is what its generators read.
+      expect(
+        CoLanguageCoverage()
+            .checkRegistered('ko')
+            .issues
+            .where((issue) => issue.where == 'CoFaker.forLanguage'),
+        isEmpty,
+      );
+    });
+
     test('compute the table of languages from the registries', () {
       final rows = CoLanguageCoverage.support();
       expect(

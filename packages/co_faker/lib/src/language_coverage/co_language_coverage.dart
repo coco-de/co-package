@@ -223,6 +223,9 @@ class CoLanguageCoverage {
       ).run(reference, data, issues, notes, stats);
     }
     if (generate && level == CoLanguageLevel.localized) {
+      // Without a generator of its own, the gate runs the generators that an
+      // app gets, which read the registries: they have to be the data checked.
+      if (faker == null) issues.addAll(_wiring(data));
       final result = runGenerationChecks(
         language: language,
         script: script,
@@ -247,6 +250,43 @@ class CoLanguageCoverage {
       stats: stats,
       reference: isReference,
     );
+  }
+
+  /// What is wrong when the generators of an app (`CoFaker.forLanguage`) do not
+  /// read [data]: the bundle of another language, or clinic or SaaS data other
+  /// than the data that was checked. It happens when [data] is not what the
+  /// registries hold, and tells that apart from a text that is not written.
+  static List<CoLanguageIssue> _wiring(CoLanguageData data) {
+    final language = data.language;
+    final probe = CoFaker.forLanguage(
+      language,
+      seed: 1,
+      now: generationClock,
+      domains: generationDomains,
+    );
+    return <CoLanguageIssue>[
+      if (probe.l10n.language != language)
+        CoLanguageIssue(
+          CoLanguageCheck.error,
+          'CoFaker.forLanguage',
+          'reads the text of "${probe.l10n.language}", not of "$language": '
+              'the language is not registered with the data that was checked',
+        ),
+      if (data.clinic != null && !identical(probe.clinic.data, data.clinic))
+        const CoLanguageIssue(
+          CoLanguageCheck.error,
+          'CoFaker.forLanguage',
+          'does not read the clinic data that was checked: the registry of '
+              'the language holds other data',
+        ),
+      if (data.saas != null && !identical(probe.saas.data, data.saas))
+        const CoLanguageIssue(
+          CoLanguageCheck.error,
+          'CoFaker.forLanguage',
+          'does not read the SaaS data that was checked: the registry of the '
+              'language holds other data',
+        ),
+    ];
   }
 
   /// One row for each language of `CoFakerLanguages.all`, computed from the
