@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#60 작업내역 — clinic · saas 로케일화 (금액 · 서식 · 인라인 문구를 언어별 데이터 필드로)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; --accent: #0969da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; --accent: #4493f8; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 20px 0 4px; }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  pre, code { background: var(--code); border-radius: 6px; }
+  code { padding: 1px 5px; font-size: 0.92em; }
+  ul, ol { padding-left: 1.4em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>clinic · saas 로케일화 — 금액 · 서식 · 인라인 문구를 언어별 데이터 필드로</h1>
+  <p class="muted">#60 (Epic #57 · S3) · <code>story/60-clinic-saas-locale-data</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> <code>faker.clinic</code> · <code>faker.saas</code> 가 로케일 코드(<code>_korean = startsWith('ko')</code>)로 고르던 금액 규모 · 통화 서식 · 한국 전용 값 · 인라인 문구를 <strong>데이터 클래스 필드</strong>로 옮겼다. 영어 데이터는 현재 영어 동작을, 한국어 데이터는 현재 한국어 동작을 필드 값으로 갖기 때문에 ko · en 출력은 바이트 동일이고(선행 커밋의 스냅샷이 수정 없이 통과), 언어 Story 는 <code>lib/src/l10n/&lt;lang&gt;/</code> 의 스텁 두 개에 데이터만 채우면 된다.</p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>파일</th><th class="num">+ / −</th><th>역할</th></tr>
+    <tr><td><code>lib/src/currency_format.dart</code> · <code>korean_values.dart</code> (신규)</td><td class="num">155 / 0</td><td><code>CoCurrencyFormat</code>(코드 · 기호 · 패턴 · 구분자 · 소수 자릿수) · <code>CoKoreanValues</code>(korean · legacy · none)</td></tr>
+    <tr><td><code>lib/src/clinic_data.dart</code> · <code>saas_data.dart</code></td><td class="num">328 / 6</td><td><code>CoClinicPriceScale</code> · <code>CoSaasPriceScale</code> 와 데이터 클래스의 새 필드 · ko/en 상수의 필드 값</td></tr>
+    <tr><td><code>lib/src/clinic_ops.dart</code> · <code>clinic_texts.dart</code> · <code>saas_ops.dart</code></td><td class="num">111 / 0</td><td>조립 문구 필드: 휴일명 · 날짜 서식 · 호칭 · 복합 패키지 단위 · 점검 문구 · 감사 대상 · 발신번호 라벨</td></tr>
+    <tr><td><code>lib/src/clinic.dart</code> · <code>saas.dart</code></td><td class="num">242 / 123</td><td><code>_korean</code> 32곳(getter 2개 포함)을 데이터 조회로 교체, <code>money()</code> 공개, 중립(none) 경로</td></tr>
+    <tr><td><code>lib/src/l10n/co_l10n_clinic.dart</code> + 스텁 14개 (신규)</td><td class="num">351 / 0</td><td>언어 레지스트리와 <code>zh ja de fr ru it pt</code> 의 <code>&lt;lang&gt;_clinic.dart</code> · <code>_saas.dart</code> (<code>null</code> 상수)</td></tr>
+    <tr><td><code>lib/src/co_faker.dart</code> · <code>lib/co_faker.dart</code></td><td class="num">16 / 1</td><td>데이터 선택 한 줄(<code>CoL10nClinic.select</code>)과 export 2줄</td></tr>
+    <tr><td><code>test/</code> (신규 6 + 픽스처 1)</td><td class="num">6,292 / 0</td><td>안전망 스냅샷(픽스처 약 170KB) · 통화 표 · 규모 · 한국 전용 값 · 레지스트리 · 가상 언어</td></tr>
+    <tr><td><code>README.md</code></td><td class="num">40 / 0</td><td>언어 데이터 필드와 한국 전용 개념 안내</td></tr>
+  </table>
+  <p class="muted">합계 34개 파일, +7,535 −130 (이 문서 제외). <code>test/legacy_locale_stability_test.dart</code> · <code>test/support/locale_snapshot.dart</code> · 0.10.0 픽스처는 손대지 않았다. CHANGELOG 와 <code>docs/languages/</code> 는 S4(#61) 소관이다.</p>
+  <h3>커밋</h3>
+  <ul>
+    <li><code>test(co_faker): ✅ clinic · saas 공개 생성기 출력 스냅샷 — ko · en 3 seed 전수 고정 (#60)</code> — <strong>이관 전 선행</strong></li>
+    <li><code>feat(co_faker): ✨ clinic · saas 금액 규모 · 통화 서식 · 한국 전용 값을 언어별 데이터 필드로 이관 (#60)</code></li>
+    <li><code>feat(co_faker): ✨ 언어별 clinic · saas 데이터 레지스트리와 스텁 — 로케일 → 언어 → 영어 순 선택 (#60)</code></li>
+    <li><code>test(co_faker): ✅ 통화 서식 표 · 규모 · 한국 전용 값 · 레지스트리 선택 · 번체 폴백 (#60)</code></li>
+    <li><code>docs(co_faker): 📝 README — 금액 · 서식 · 한국 전용 값은 언어 데이터 필드 (#60)</code> · <code>fix(co_faker): 🐛 리뷰 반영 …</code></li>
+    <li class="muted">이 문서를 담은 문서 커밋은 목록에서 뺐다.</li>
+  </ul>
+
+  <h2>왜 이렇게 했나</h2>
+  <h3>1. 안전망 먼저, 호출마다 새 생성기</h3>
+  <p><code>CoFakerClinic</code> 86개 · <code>CoFakerSaas</code> 37개 공개 멤버(데이터 접근자 제외 전수, 일회성 mirrors 스크립트로 빠진 것 0 확인)를 기본 인자와 대표 인자로 호출해 digest(64비트)와 표본을 고정했다. 가중 분기(건강 점검 · 감사 대상 · 결제 수단)는 반복해서 모든 분기를 지난다. <strong>호출마다 새 생성기</strong>를 써서 한 호출의 난수 소비 변화가 뒤 호출로 번지지 않는다. ko · en 은 seed 3종, 영어/한국어로 폴백하는 15개 코드(<code>ja_JP</code> · <code>zh_TW</code> · <code>xx_YY</code> …)는 한 seed. 변이 3건(원 포인트 단위 · 선불 지갑 최소 사용액 · 영어 날짜 서식)이 실패로 잡히는 것을 확인했다.</p>
+  <h3>2. 한국 전용 값은 세 갈래 — <code>CoKoreanValues</code></h3>
+  <p>이슈의 예(<code>koreanIdentity</code> + 레거시 플래그)는 두 불리언이지만 유효한 조합은 셋뿐이라(한국 전화/주소만 쓰고 주민번호는 안 쓰는 데이터는 의미가 없다) 열거형 하나로 묶었다. <code>korean</code> = ko, <code>legacy</code> = 영어와 새 필드를 비운 사용자 정의 데이터(<strong>기본값</strong>), <code>none</code> = 새 언어. legacy 는 영어가 늘 내던 값(주민번호 마스킹 · 8자리 승인번호 · 마스킹 현금영수증 · 사업자번호 · 한국 공휴일)을 그대로 낸다.</p>
+  <p class="muted">버린 대안: 불리언 둘 — 의미 없는 조합이 생긴다. 로케일 코드를 선택 로직으로 옮겨 계속 쓰기 — "코드가 아니라 데이터가 정한다"는 목표와 어긋난다.</p>
+  <h3>3. 중립 대체(none)의 정의</h3>
+  <p>전화는 <code>internet.phoneNumber()</code>, 주소는 국가 로케일이면 <code>postalAddress()</code>(<code>addressLineFormat</code> 으로 우편번호를 뺀 주소 줄, 언어 전용 로케일이면 단순 주소), 환자 ID 는 <code>maskedIdFormat</code> 템플릿, 사업자번호는 <code>businessNumberFormat</code>, 카드는 평범한 6자리 승인코드, 현금영수증 번호 없음, 휴진 안내에 공휴일 없음. 안전망의 clinic · saas 호출 전수를 가상 일본어/독일어 데이터로 돌려 한글과 한국 형식(주민번호 마스킹 · 010 · 사업자번호)이 0 임을 테스트가 고정한다.</p>
+  <h3>4. 금액 · 서식은 const 값 객체, 기본값은 영어</h3>
+  <p><code>CoCurrencyFormat</code> 의 <code>pattern</code>(<code>{symbol}{amount}</code> · <code>{amount} {symbol}</code> · <code>{symbol} {amount}</code>)과 구분자 · 소수 자릿수로 <code>¥1,234</code> · <code>1.234,00 €</code> · <code>R$ 1.234,00</code> · <code>1 234,00 ₽</code> 를 데이터만으로 쓴다. 코드 · 기호 · 소수 자릿수가 국가 데이터와 맞는지는 표 테스트와, 레지스트리에 들어온 언어 데이터에 자동으로 걸리는 가드가 본다(영어 <code>$1,234</code> 는 정수 달러 표기라 예외). 규모는 <code>_korean ? A : B</code> 쌍 전부(10000:10 · 500000:500 · 50000:50 · 1000:1 · 100:1 · 1000:5)에 더해 부가세율과 선불 지갑 금액까지 필드로 뽑았다 — 독일어 19% 같은 값이 코드 수정 없이 들어가야 하기 때문이다. 모든 새 필드에 기본값이 있어 기존 사용자 정의 데이터는 그대로 컴파일되고 같은 출력을 낸다.</p>
+  <h3>5. 문구는 템플릿 필드, 누락은 영어로 폴백</h3>
+  <p><code>회</code>/<code>x</code> · <code>@이름님</code> · 설/추석 연휴명 · 날짜 · 응답 지연/연결 시간 초과 · 대표번호/예약 문의 · 계정/직원 권한/알림톡/환자·차트·수납·예약을 <code>{name}</code> · <code>{role}</code> · <code>{month}</code> 같은 템플릿과 목록/맵 필드로 옮겼다. 비어 있으면 영어, 맵은 <strong>키 단위</strong>로 영어 폴백한다(리뷰 반영).</p>
+  <h3>6. 레지스트리는 "파일이 슬롯"</h3>
+  <p><code>CoL10nClinic.entries</code> 는 한 const 맵이고 항목마다 빈 줄로 나뉜다. 항목이 읽는 <code>zhClinic</code> 같은 상수가 <code>&lt;lang&gt;_clinic.dart</code> 의 <code>null</code> 스텁이라, 언어 Story 는 자기 파일의 <code>null</code> 만 <code>const CoFakerClinicData(...)</code> 로 바꾼다(레지스트리 · 테스트 수정 없음). 스크래치 복사본에서 <code>zh</code> 스텁만 채워 <code>zh</code> · <code>zh_CN</code> · <code>zh-Hans-CN</code> · <code>forLanguage('zh-Hans')</code> 가 중국어 데이터를, <code>zh_TW</code> · <code>zh_HK</code> · <code>zh-Hant</code> · 스텁 언어는 영어를 받는 것을 확인했다. 선택은 로케일 자신의 데이터 → 레지스트리 → 영어이고, <code>CoFakerLanguages.resolve(locale).supported</code> 가 false(번체 · 지원 밖 · 커스텀 코드)면 레지스트리를 건너뛴다.</p>
+  <h3>7. 영어에 남은 불편한 사실은 보존했다</h3>
+  <p>영어 SaaS 선불 지갑은 원 규모 숫자(10만~500만)이고, 영어 휴진 안내는 어린이날 같은 한국 공휴일을 한국어 이름으로 낸다. 둘 다 바이트 동일 계약 때문에 <code>legacy</code> 값으로 보존했고 dartdoc 에 적었다. 영어 견적 대역(<code>quoteMin/Max</code>)만은 내장 데이터가 닿지 않는 경로라 달러 규모(50~300)로 바로잡았다.</p>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>lib/src/l10n/co_l10n_clinic.dart</code> 의 <code>select</code> — 선택 순서와 번체 가드. <code>lib/src/co_faker.dart</code> 의 변경은 그 호출 한 줄이다.</li>
+    <li><code>lib/src/clinic.dart</code> 의 <code>patient</code> · <code>payment</code> · <code>closureNotice</code> 와 맨 아래 <code>_phone</code> · <code>_maskedId</code> · <code>_approvalNo</code> · <code>_cashReceiptNo</code> — <code>CoKoreanValues</code> 분기가 모인 곳. 난수 소비 순서가 옛 코드와 같다(안전망이 증명).</li>
+    <li><code>lib/src/clinic_data.dart</code> · <code>saas_data.dart</code> 위쪽의 규모 클래스와 ko/en 상수의 새 필드 값(옛 하드코딩과 1:1).</li>
+    <li><code>test/clinic_saas_stability_test.dart</code> + <code>test/support/clinic_saas_snapshot.dart</code> — 호출 표가 안전망의 명세. 이후 커밋에서 이 둘과 픽스처는 수정하지 않았다.</li>
+    <li><code>test/support/virtual_language.dart</code> — 언어 Story 가 필드를 채우는 모양의 예(JPY 10% · EUR 19%).</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>132개 파일, 변경 0 (기준선 109개)</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>398개 통과 (기준선 318 + 안전망 22 + 신규 58), 0.10.0 스냅샷 · 기존 테스트 수정 없음</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported, 요약 출력이 기준선과 동일</td></tr>
+    <tr><td><code>graft grep "_korean"</code></td><td>clinic.dart · saas.dart 0건 (남는 hit 는 이를 가드하는 테스트의 문자열뿐)</td></tr>
+    <tr><td>독립 코드 리뷰 (<code>code-review</code> high)</td><td>8건 중 5건 코드 수정(주소 줄 · 키 단위 폴백 · 영어 견적 대역 · 음수 0 · 생년월일 복제), 3건 사유와 함께 유지(아래)</td></tr>
+  </table>
+
+  <h2>알려진 한계 · 범위 밖</h2>
+  <ul>
+    <li><strong>코드가 아니라 데이터가 정한다.</strong> 예전에는 <code>ko*</code> 로케일이면 데이터와 무관하게 한국식으로 동작했다. 이제 <code>ko*</code> 코드의 사용자 정의 clinic/saas 데이터가 새 필드를 비우면 영어 규모 · 서식(legacy)을 받는다. 내장 <code>CoFakerClinicData.korean</code> 을 쓰거나 필드를 채워야 한다 — <strong>S4 가 CHANGELOG 에 동작 변경으로 적을 것</strong>. 반대로 clinic/saas 데이터를 주지 않는 사용자 정의 <code>ko</code> 로케일은 예전의 "영어 텍스트 + 한국식 동작" 혼합 대신 내장 한국어 데이터를 받는다. 내장 <code>ko</code> · <code>ko_KR</code> 의 출력은 그대로다.</li>
+    <li>clinic 데이터와 saas 데이터는 서로 독립으로 폴백한다. 한 언어가 한쪽만 채우면 그동안 혼합 데이터가 된다(두 파일을 같은 PR 에서 채우는 언어 Story 에서는 드러나지 않는다).</li>
+    <li><code>clinic.inquiry()</code> · <code>messengerHandle()</code> 은 "한국 클리닉 인박스" 설계상 로케일 독립이라(기본 40% 한국어 스레드) 한글 누출 게이트는 <code>language:</code> 를 지정하거나 예외로 둬야 한다. <code>CoClinicHours</code> 기본값(한국 피부과 영업시간)과 일요일 휴무 가정도 데이터화하지 않았다.</li>
+    <li>범위 밖: <code>domains.dart</code> · <code>schema.dart</code> 의 <code>korea</code> role(S2) · CHANGELOG · <code>docs/languages/</code>(S4) · <code>es</code> 슬롯(Epic 제외) · 데이터 클래스 <code>copyWith</code>.</li>
+  </ul>
+
+  <h2>후속 Story 가 알아야 할 것</h2>
+  <table>
+    <tr><th>채울 곳</th><th>필드</th></tr>
+    <tr><td><code>l10n/&lt;lang&gt;/&lt;lang&gt;_clinic.dart</code></td><td>영어 데이터의 모든 목록 · 맵(길이는 영어와 같게) + <code>texts</code> · <code>ops</code> + 새 필드 <code>currency</code> · <code>priceScale</code> · <code>clinicNameFormat</code> · <code>koreanValues: none</code> · <code>maskedIdFormat</code> · <code>addressLineFormat</code> · ops 의 <code>dateFormat</code> · <code>weekdayNames</code> · <code>compoundItemFormat</code> · texts 의 <code>staffMentionFormat</code> · <code>nameMentionFormat</code></td></tr>
+    <tr><td><code>l10n/&lt;lang&gt;/&lt;lang&gt;_saas.dart</code></td><td>영어 데이터의 모든 목록 · 맵 + <code>ops</code> + 새 필드 <code>currency</code> · <code>priceScale</code>(<code>vatRate</code> · 선불 지갑 금액/구간) · <code>koreanValues: none</code> · <code>businessNumberFormat</code> · ops 의 <code>senderLabels</code> · <code>healthMessages</code> · <code>auditTargets</code> · <code>auditRecords</code></td></tr>
+  </table>
+  <p class="muted">등록된 언어 데이터는 <code>test/clinic_saas_registry_test.dart</code> 가 자동으로 검사한다: <code>koreanValues == none</code>, 통화 코드 · 기호 · 소수 자릿수가 국가 데이터와 같음. 레지스트리에 등록된 언어는 <code>CoL10nClinic.clinicOf</code> · <code>saasOf</code> 로 조회한다(S4 의 "현지화 여부는 레지스트리에서 읽는다").</p>
+</main></body></html>
