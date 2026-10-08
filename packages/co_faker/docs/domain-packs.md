@@ -123,6 +123,34 @@ foreign-key engine. Complete cross-record code references and fixed-tour graphs
 are recipe assembly. Typed remittance transfers explicitly take a recipient
 object to retain that association.
 
+## Language bundles
+
+The authored text of the packs and of the dedicated generators (`fx`, `remit`,
+`vet`, `catalog`, `examPrep`, and the helpdesk drafts) lives in language
+bundles, not in the packs. A role reads its text by key through `faker.l10n`:
+`<pack>.<role>` (`dental.dentalProcedure`), or `<generator>.<name>`
+(`fx.currencyName.USD`) for the generators. Korean and English are built in
+(`lib/src/l10n/ko` and `en`). Chinese, Japanese, German, French, Russian,
+Italian, and Portuguese are registered with empty bundles and read English
+until their bundle is filled in; Spanish supports the basic modules only and
+has no bundle.
+
+- A key has the same number of texts in every language, in the same order, so
+  one seed picks the same entry whatever the language. Roles that follow the
+  record index (the class, equipment, and room of one row) rely on that order.
+- A pack never branches on the locale. It reads the bundle with
+  `textRole(key)`, `indexedTextRole(key, rows: n)`, `taxonomyRole(key)`,
+  `maskedNameRole()`, or `faker.l10n.format(key, args)`, and fills the
+  placeholders (`{n}`) itself. A role that cycles a table of `n` rows (the
+  codes and numbers that stay in the pack) states `n`, and an assertion fails
+  when the bundle has another number of texts for it.
+- What is not text stays in the pack: codes (`enumRole`), numbers, prices,
+  dates, and identifiers do not depend on the language.
+- A new role adds its key to the English bundle and the Korean one;
+  `test/l10n_domain_test.dart` fails for a key that no pack reads and for a key
+  a pack reads that no bundle has.
+- A custom locale adds a language with `CoFakerLocale.l10n`; see the README.
+
 ## Authored-data restrictions
 
 New organization/place/works labels are explicitly fictional or generic.

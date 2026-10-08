@@ -7,67 +7,50 @@ class CoFitnessDomain extends CoFakerDomain {
   const CoFitnessDomain();
   @override
   String get name => 'fitness';
+
+  /// The class categories and levels, and the pass terms in days: the labels,
+  /// equipment, rooms, and pass names are the texts of the same rows in the
+  /// language bundles (`fitness.classCategoryLabel`, `classLevelLabel`,
+  /// `equipment`, `studioRoom`, `passName`).
+  static const _categories = <String>['mat', 'reformer', 'chair', 'yoga'];
+  static const _levels = <String>['beginner', 'intermediate', 'advanced'];
+  static const _passDays = <int>[60, 180, 30];
   @override
   Map<String, CoDomainRole> get roles => {
     'className': authoredRole(
-      (f, c) => localized(
-        f,
-        '${['매트', '리포머', '체어', '요가'][c.index % 4]} ${['기초', '중급', '상급'][c.index % 3]}',
-        '${['Mat', 'Reformer', 'Chair', 'Yoga'][c.index % 4]} ${['beginner', 'intermediate', 'advanced'][c.index % 3]}',
-      ),
+      (f, c) => f.l10n.format('fitness.className', {
+        'category': indexedText(
+          f,
+          'fitness.classCategoryLabel',
+          c.index,
+          rows: _categories.length,
+        ),
+        'level': indexedText(
+          f,
+          'fitness.classLevelLabel',
+          c.index,
+          rows: _levels.length,
+        ),
+      }),
       coherent: true,
     ),
-    'classCategory': enumRole(['mat', 'reformer', 'chair', 'yoga']),
-    'classLevel': enumRole(['beginner', 'intermediate', 'advanced']),
-    'equipment': authoredRole(
-      (f, c) => localized(
-        f,
-        ['매트', '리포머', '체어', '요가 블록'][c.index % 4],
-        ['Mat', 'Reformer', 'Chair', 'Yoga block'][c.index % 4],
-      ),
-      coherent: true,
+    'classCategory': enumRole(_categories),
+    'classLevel': enumRole(_levels),
+    'equipment': indexedTextRole('fitness.equipment', rows: _categories.length),
+    'studioRoom': indexedTextRole(
+      'fitness.studioRoom',
+      rows: _categories.length,
     ),
-    'studioRoom': authoredRole(
-      (f, c) => localized(
-        f,
-        ['매트룸', '리포머룸', '체어룸', '요가룸'][c.index % 4],
-        ['Mat room', 'Reformer room', 'Chair room', 'Yoga room'][c.index % 4],
-      ),
-      coherent: true,
-    ),
-    'instructorSpecialty': textRole(
-      ['매트 수업', '리포머 수업', '요가 수업'],
-      ['Mat instruction', 'Reformer instruction', 'Yoga instruction'],
-    ),
-    'passName': authoredRole(
-      (f, c) => localized(
-        f,
-        ['매트 10회권(예시)', '리포머 20회권(예시)', '1개월 이용권(예시)'][c.index % 3],
-        [
-          '10 mat classes (example)',
-          '20 reformer classes (example)',
-          'Monthly pass (example)',
-        ][c.index % 3],
-      ),
-      coherent: true,
-    ),
+    'instructorSpecialty': textRole('fitness.instructorSpecialty'),
+    'passName': indexedTextRole('fitness.passName', rows: _passDays.length),
     'passTerm': authoredRole(
-      (f, c) => [60, 180, 30][c.index % 3],
+      (f, c) => _passDays[c.index % _passDays.length],
       type: 'int',
       coherent: true,
       description: 'Pass validity in days, coherent with passName: 60, 180, 30',
     ),
-    'cancelReason': textRole(
-      ['일정 변경', '수업 시간 변경'],
-      ['Schedule changed', 'Class time changed'],
-    ),
-    'noShowNote': textRole(
-      ['출석 확인이 없는 예시 기록입니다.', '시작 시각 이후 미출석으로 표시한 예시입니다.'],
-      [
-        'Example record without attendance confirmation.',
-        'Example marked absent after class start.',
-      ],
-    ),
+    'cancelReason': textRole('fitness.cancelReason'),
+    'noShowNote': textRole('fitness.noShowNote'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

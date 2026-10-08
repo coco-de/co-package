@@ -7,7 +7,8 @@ import '../domain.dart';
 CoDomainRole authoredRole(
   CoDomainRoleGenerator generate, {
   String type = 'String',
-  String description = 'Authored fictional example; Korean or English fallback',
+  String description =
+      'Authored fictional example in the locale language; English fallback',
   bool coherent = false,
 }) => CoDomainRole(
   generate,
@@ -20,9 +21,37 @@ CoDomainRole authoredRole(
       : [type],
 );
 
-/// Picks from authored Korean/English text, never generic lorem.
-CoDomainRole textRole(List<String> ko, List<String> en) =>
-    authoredRole((f, _) => f.random.pick(f.locale.startsWith('ko') ? ko : en));
+/// Picks from the authored text of [key] in the generator's language, never
+/// generic lorem.
+///
+/// The key is `<pack>.<role>`: its texts live in the language bundles (see
+/// `CoL10nBundle`), so a language needs no change here.
+CoDomainRole textRole(String key) => authoredRole((f, _) => f.l10n.pick(key));
+
+/// The text of [key] for the record [index], cycling when [index] passes the
+/// last text, without consuming random state.
+///
+/// [rows] is the number of rows of the table the text belongs to: the codes,
+/// numbers, or other labels of the same pack that cycle with the same index.
+/// The key has one text for each row, in the same order; when it does not, the
+/// pack and its bundle disagree, and an assertion fails.
+String indexedText(CoFaker f, String key, int index, {required int rows}) {
+  assert(
+    f.l10n.list(key).length == rows,
+    'l10n key "$key" has ${f.l10n.list(key).length} texts for a table of '
+    '$rows rows',
+  );
+  return f.l10n.pickBalanced(key, index);
+}
+
+/// Cycles through the authored text of [key] in record order without
+/// consuming random state, so roles that follow the same row agree.
+///
+/// [rows] is the number of rows of the pack's table; see [indexedText].
+CoDomainRole indexedTextRole(String key, {required int rows}) => authoredRole(
+  (f, c) => indexedText(f, key, c.index, rows: rows),
+  coherent: true,
+);
 
 /// Cycles enum codes in record order without consuming random state.
 CoDomainRole enumRole(List<String> values) => authoredRole(
@@ -49,10 +78,15 @@ CoDomainRole decimalRole(double min, double max, {int decimals = 1}) =>
 CoDomainRole firstNameRole() => authoredRole((f, _) => f.person.firstName());
 
 /// Produces a masked example rather than a complete identity.
+///
+/// The language's `common.maskedName` template chooses what is masked; only
+/// the name it uses is drawn.
 CoDomainRole maskedNameRole() => authoredRole(
-  (f, _) => f.locale.startsWith('ko')
-      ? '${f.person.lastName()}○○'
-      : '${f.person.firstName().substring(0, 1)}***',
+  (f, _) => f.l10n.format('common.maskedName', {
+    'lastName': () => f.person.lastName(),
+    'firstName': () => f.person.firstName(),
+    'initial': () => f.person.firstName().substring(0, 1),
+  }),
   description: 'Masked fictional name; no complete identity',
 );
 
@@ -79,18 +113,30 @@ CoDomainRole parentRole(int rootCount) => authoredRole(
 
 /// Names the same two-level taxonomy as [parentRole], keeping children under
 /// their root's vocabulary instead of independently sampling unrelated labels.
-CoDomainRole taxonomyRole(List<String> ko, List<String> en) =>
-    authoredRole((f, c) {
-      final names = f.locale.startsWith('ko') ? ko : en;
-      final rootCount = names.length;
-      if (c.index < rootCount) {
-        return names[c.index];
-      }
-      final child = c.index - rootCount;
-      final root = names[child % rootCount];
-      final ordinal = 1 + child ~/ rootCount;
-      return localized(f, '$root · 세부 $ordinal', '$root · subtopic $ordinal');
-    }, coherent: true);
+///
+/// The root names are the texts of [key]; a child is named by the language's
+/// `common.taxonomyChild` template. [roots] is the root count the paired
+/// [parentRole] was given: the key has one name for each root, and an assertion
+/// fails when it does not, because a child would then name a root that its
+/// `parentId` does not point to.
+CoDomainRole taxonomyRole(String key, {required int roots}) => authoredRole((
+  f,
+  c,
+) {
+  final names = f.l10n.list(key);
+  assert(
+    names.length == roots,
+    'l10n key "$key" has ${names.length} names for a taxonomy of $roots roots',
+  );
+  final rootCount = names.length;
+  if (c.index < rootCount) {
+    return names[c.index];
+  }
+  final child = c.index - rootCount;
+  final root = names[child % rootCount];
+  final ordinal = 1 + child ~/ rootCount;
+  return f.l10n.format('common.taxonomyChild', {'root': root, 'n': ordinal});
+}, coherent: true);
 
 /// Adds an integer primary key to primitive role fields.
 Map<String, String> roleFields(Map<String, String> roles) => {
@@ -102,7 +148,3 @@ Map<String, String> roleFields(Map<String, String> roles) => {
 Map<String, String> roleMapping(Iterable<String> fields) => {
   for (final field in fields) field: field,
 };
-
-/// Selects Korean or an English fallback without random draws.
-String localized(CoFaker f, String ko, String en) =>
-    f.locale.startsWith('ko') ? ko : en;

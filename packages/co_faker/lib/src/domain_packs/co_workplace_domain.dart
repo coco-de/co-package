@@ -7,31 +7,24 @@ class CoWorkplaceDomain extends CoFakerDomain {
   const CoWorkplaceDomain();
   @override
   String get name => 'workplace';
+
+  /// The expense account codes; the account names are `workplace.accountName`
+  /// in the language bundles, in the same order.
+  static const _accountCodes = <String>[
+    'DEMO-601',
+    'DEMO-602',
+    'DEMO-603',
+    'DEMO-604',
+    'DEMO-605',
+    'DEMO-606',
+  ];
   @override
   Map<String, CoDomainRole> get roles => {
     'employeeName': firstNameRole(),
-    'department': textRole(
-      ['프런트엔드팀', '백엔드팀', '디자인팀', '고객지원팀', '인사팀'],
-      [
-        'Frontend team',
-        'Backend team',
-        'Design team',
-        'Customer support',
-        'HR team',
-      ],
-    ),
-    'position': textRole(
-      ['사원', '매니저', '팀장'],
-      ['Associate', 'Manager', 'Team lead'],
-    ),
-    'workPlace': textRole(
-      ['솔빛 사무실(가상)', '가람 업무센터(가상)', '재택'],
-      ['Solbit office (fictional)', 'Garam work center (fictional)', 'Remote'],
-    ),
-    'shiftName': textRole(
-      ['주간 근무', '오전 근무', '주말 당직'],
-      ['Day shift', 'Morning shift', 'Weekend duty'],
-    ),
+    'department': textRole('workplace.department'),
+    'position': textRole('workplace.position'),
+    'workPlace': textRole('workplace.workPlace'),
+    'shiftName': textRole('workplace.shiftName'),
     'leaveType': enumRole([
       'annual',
       'half_am',
@@ -48,13 +41,7 @@ class CoWorkplaceDomain extends CoFakerDomain {
       'corrected',
     ]),
     'approvalDecision': enumRole(['pending', 'approved', 'rejected']),
-    'approvalComment': textRole(
-      ['첨부한 예시 기록을 확인했습니다.', '예시 사유에 추가 확인이 필요합니다.'],
-      [
-        'Reviewed the attached example record.',
-        'The example reason needs further clarification.',
-      ],
-    ),
+    'approvalComment': textRole('workplace.approvalComment'),
     'expenseCategory': enumRole([
       'meal',
       'transport',
@@ -63,80 +50,24 @@ class CoWorkplaceDomain extends CoFakerDomain {
       'travel',
       'etc',
     ]),
-    'projectName': textRole(
-      ['고객 포털 정비(가상)', '사내 위키 정리(가상)', '접근성 개선 예시'],
-      [
-        'Customer portal refresh (fictional)',
-        'Internal wiki cleanup (fictional)',
-        'Example accessibility improvement',
-      ],
-    ),
-    'workItemTitle': textRole(
-      ['로그인 오류 문구 개선', '예시 표 정렬 확인', '알림 상태 표시 정리'],
-      [
-        'Improve login error wording',
-        'Check example table sorting',
-        'Organize notification state display',
-      ],
-    ),
-    'labelName': textRole(
-      ['문구', '접근성', '백로그', '확인 필요'],
-      ['Copy', 'Accessibility', 'Backlog', 'Needs checking'],
-    ),
-    'milestoneTitle': textRole(
-      ['첫 검토 마일스톤', '예시 화면 완료', '회귀 확인'],
-      ['First review milestone', 'Example screen complete', 'Regression check'],
-    ),
+    'projectName': textRole('workplace.projectName'),
+    'workItemTitle': textRole('workplace.workItemTitle'),
+    'labelName': textRole('workplace.labelName'),
+    'milestoneTitle': textRole('workplace.milestoneTitle'),
     'sprintName': authoredRole(
-      (f, c) => localized(f, '스프린트 ${c.index + 1}', 'Sprint ${c.index + 1}'),
+      (f, c) => f.l10n.format('workplace.sprintName', {'n': c.index + 1}),
     ),
-    'commentBody': textRole(
-      ['예시 화면을 확인한 뒤 의견을 남깁니다.', '다음 작업 전에 문구를 함께 확인해 주세요.'],
-      [
-        'Leaving feedback after checking the example screen.',
-        'Please review the wording before the next task.',
-      ],
-    ),
-    'merchantName': textRole(
-      ['한식당 들꽃(가상)', '골목 다과점(가상)', '솔빛 사무용품점(가상)'],
-      [
-        'Wildflower dining (fictional)',
-        'Lane snack shop (fictional)',
-        'Solbit office supplies (fictional)',
-      ],
-    ),
+    'commentBody': textRole('workplace.commentBody'),
+    'merchantName': textRole('workplace.merchantName'),
     'accountCode': authoredRole(
-      (f, c) => [
-        'DEMO-601',
-        'DEMO-602',
-        'DEMO-603',
-        'DEMO-604',
-        'DEMO-605',
-        'DEMO-606',
-      ][c.index % 6],
+      (f, c) => _accountCodes[c.index % _accountCodes.length],
       coherent: true,
     ),
-    'accountName': authoredRole(
-      (f, c) => (f.locale.startsWith('ko')
-          ? ['식대(예시)', '교통비(예시)', '회의비(예시)', '소모품비(예시)', '출장비(예시)', '기타비(예시)']
-          : [
-              'Meals (example)',
-              'Transport (example)',
-              'Meeting (example)',
-              'Supplies (example)',
-              'Travel (example)',
-              'Other (example)',
-            ])[c.index % 6],
-      coherent: true,
+    'accountName': indexedTextRole(
+      'workplace.accountName',
+      rows: _accountCodes.length,
     ),
-    'rejectReasonText': textRole(
-      ['예시 영수증 누락', '항목 분류 확인 필요', '예시 정책 한도 확인 필요'],
-      [
-        'Missing example receipt',
-        'Item classification needs checking',
-        'Example policy limit needs checking',
-      ],
-    ),
+    'rejectReasonText': textRole('workplace.rejectReasonText'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

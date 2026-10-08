@@ -10,43 +10,28 @@ class CoHomecareDomain extends CoFakerDomain {
   const CoHomecareDomain();
   @override
   String get name => 'homecare';
+
+  /// The kind of each care task; its label is `homecare.careTaskLabel` in the
+  /// language bundles, in the same order.
+  static const _careTaskKinds = <String>[
+    'meal',
+    'medication',
+    'hygiene',
+    'mobility',
+    'toileting',
+    'emotional',
+  ];
   static CoFakeVitalReading _vital(CoFaker f) =>
       CoFakeVitalReading.generate(f.derive('homecare/vital'));
   @override
   Map<String, CoDomainRole> get roles => {
     'recipientName': maskedNameRole(),
-    'careGrade': textRole(
-      ['장기요양 1등급', '장기요양 2등급', '장기요양 3등급', '장기요양 4등급', '장기요양 5등급', '인지지원등급'],
-      [
-        'Care grade 1',
-        'Care grade 2',
-        'Care grade 3',
-        'Care grade 4',
-        'Care grade 5',
-        'Cognitive support grade',
-      ],
+    'careGrade': textRole('homecare.careGrade'),
+    'careTaskLabel': indexedTextRole(
+      'homecare.careTaskLabel',
+      rows: _careTaskKinds.length,
     ),
-    'careTaskLabel': authoredRole(
-      (f, c) => (f.locale.startsWith('ko')
-          ? ['식사 돕기', '복약 확인', '위생 돕기', '이동 돕기', '배변 돕기', '말벗']
-          : [
-              'Meal assistance',
-              'Medication record check',
-              'Hygiene assistance',
-              'Mobility assistance',
-              'Toileting assistance',
-              'Conversation',
-            ])[c.index % 6],
-      coherent: true,
-    ),
-    'careTaskKind': enumRole([
-      'meal',
-      'medication',
-      'hygiene',
-      'mobility',
-      'toileting',
-      'emotional',
-    ]),
+    'careTaskKind': enumRole(_careTaskKinds),
     'vitalReading': authoredRole(
       (f, _) => jsonEncode(_vital(f).toJson()),
       coherent: true,

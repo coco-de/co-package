@@ -9,14 +9,7 @@ class CoTravelWalletDomain extends CoFakerDomain {
   String get name => 'travel_wallet';
   @override
   Map<String, CoDomainRole> get roles => {
-    'merchantNameFictional': textRole(
-      ['골목 우동집(가상)', '역 앞 편의점(가상)', '여행자 숙소(가상)'],
-      [
-        'Lane noodle shop (fictional)',
-        'Station convenience shop (fictional)',
-        'Traveler lodge (fictional)',
-      ],
-    ),
+    'merchantNameFictional': textRole('travel_wallet.merchantNameFictional'),
     'spendCategory': enumRole([
       'food',
       'transport',
@@ -25,18 +18,9 @@ class CoTravelWalletDomain extends CoFakerDomain {
       'sightseeing',
       'other',
     ]),
-    'cityName': textRole(
-      ['오사카', '도쿄', '방콕', '하노이'],
-      ['Osaka', 'Tokyo', 'Bangkok', 'Hanoi'],
-    ),
-    'cardAlias': textRole(
-      ['나들이 트래블(가상)', '여행 예산 카드(가상)'],
-      ['Outing travel card (fictional)', 'Trip budget card (fictional)'],
-    ),
-    'tripName': textRole(
-      ['오사카 3박 4일', '방콕 주말 여행', '하노이 산책 여행'],
-      ['Four days in Osaka', 'Bangkok weekend', 'Hanoi walking trip'],
-    ),
+    'cityName': textRole('travel_wallet.cityName'),
+    'cardAlias': textRole('travel_wallet.cardAlias'),
+    'tripName': textRole('travel_wallet.tripName'),
     'budgetCategory': enumRole([
       'food',
       'transport',

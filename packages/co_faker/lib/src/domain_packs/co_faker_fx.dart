@@ -12,27 +12,18 @@ class CoFakerFx {
 
   /// Shared recipe currencies; PHP/NPR are additional helper corridors.
   static const currencyCodes = ['USD', 'JPY', 'EUR', 'CNY', 'THB', 'VND'];
-  static const _quotes = <String, (String, String, int, double, List<int>)>{
-    'USD': ('미국 달러', 'US dollar', 1, 1452.30, [1, 5, 10, 20, 50, 100]),
-    'JPY': ('일본 엔', 'Japanese yen', 100, 935.20, [1000, 2000, 5000, 10000]),
-    'EUR': ('유로', 'Euro', 1, 1580.40, [5, 10, 20, 50, 100, 200]),
-    'CNY': ('중국 위안', 'Chinese yuan', 1, 202.40, [1, 5, 10, 20, 50, 100]),
-    'THB': ('태국 바트', 'Thai baht', 1, 41.20, [20, 50, 100, 500, 1000]),
-    'VND': (
-      '베트남 동',
-      'Vietnamese dong',
-      100,
-      5.62,
-      [10000, 20000, 50000, 100000, 200000, 500000],
-    ),
-    'PHP': ('필리핀 페소', 'Philippine peso', 1, 25.40, [20, 50, 100, 500, 1000]),
-    'NPR': (
-      '네팔 루피',
-      'Nepalese rupee',
-      1,
-      10.80,
-      [5, 10, 20, 50, 100, 500, 1000],
-    ),
+
+  /// Unit amount, base rate, and banknote units of each currency; the name is
+  /// `fx.currencyName.<code>` in the language bundles.
+  static const _quotes = <String, (int, double, List<int>)>{
+    'USD': (1, 1452.30, [1, 5, 10, 20, 50, 100]),
+    'JPY': (100, 935.20, [1000, 2000, 5000, 10000]),
+    'EUR': (1, 1580.40, [5, 10, 20, 50, 100, 200]),
+    'CNY': (1, 202.40, [1, 5, 10, 20, 50, 100]),
+    'THB': (1, 41.20, [20, 50, 100, 500, 1000]),
+    'VND': (100, 5.62, [10000, 20000, 50000, 100000, 200000, 500000]),
+    'PHP': (1, 25.40, [20, 50, 100, 500, 1000]),
+    'NPR': (1, 10.80, [5, 10, 20, 50, 100, 500, 1000]),
   };
 
   /// Selects a supported currency; unknown codes fail explicitly.
@@ -44,10 +35,10 @@ class CoFakerFx {
     }
     return CoFakeFxCurrency(
       code: selected,
-      name: faker.locale.startsWith('ko') ? quote.$1 : quote.$2,
-      unitAmount: quote.$3,
-      baseRate: quote.$4,
-      denominations: quote.$5,
+      name: faker.l10n.text('fx.currencyName.$selected'),
+      unitAmount: quote.$1,
+      baseRate: quote.$2,
+      denominations: quote.$3,
     );
   }
 

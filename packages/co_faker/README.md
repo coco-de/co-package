@@ -463,6 +463,64 @@ final custom = CoFaker(
 Missing lists use English data. The locale data is immutable by convention and
 can be shared between generators.
 
+### Domain text in your language
+
+The domain packs and the dedicated generators (`fx`, `remit`, `vet`,
+`catalog`, `examPrep`, ...) read their labels, names, and sentences from a
+language bundle by key, `faker.l10n`, so a language is data and not code.
+Korean and English are built in, and every other language reads English until
+its bundle is filled in. (`faker.clinic` and `faker.saas` have their own
+language data, described under "Language data" above.) A custom locale carries
+a bundle of its own, with no change to co_faker:
+
+```dart
+// A custom locale replaces the built-in locale of its code: merge it over the
+// built-in one to keep that locale's names, cities, and so on.
+final spanish = const CoFakerLocale(
+  code: 'es',
+  l10n: CoL10nBundle(
+    language: 'es',
+    texts: {
+      // The keys of the English bundle, with as many texts as English has.
+      'dental.dentalProcedure': [
+        'Limpieza dental',
+        'Ejemplo de endodoncia',
+        'Ejemplo de restauración con resina',
+        'Ejemplo de plan de corona',
+      ],
+      // `{n}` is filled in by the generator.
+      'workplace.sprintName': ['Sprint {n}'],
+    },
+  ),
+).merge(CoFakerLocales.resolve('es'));
+
+final faker = CoFaker(
+  locale: 'es',
+  seed: 7,
+  locales: {'es': spanish},
+  domains: CoFakerDomains.all,
+);
+faker.l10n.pick('dental.dentalProcedure'); // Limpieza dental
+faker.l10n.format('workplace.sprintName', {'n': 2}); // Sprint 2
+faker.schema.record(
+  {'procedure': 'String', 'material': 'String'},
+  roles: {
+    'procedure': 'dental.dentalProcedure',
+    'material': 'dental.dentalMaterial',
+  },
+); // {procedure: Limpieza dental, material: Composite resin (example)}
+```
+
+- A key is `<pack>.<role>` (`dental.dentalProcedure`) or
+  `<generator>.<name>` (`fx.currencyName.USD`); `CoL10nRegistry.english.texts`
+  lists them all. A bundle may translate only some keys: the rest read English.
+- A key keeps the number of texts it has in English, so the same seed picks the
+  same entry in every language. Another length throws a `StateError` when the
+  key is read; `CoL10nRegistry.validate(bundle)` checks a bundle in your tests.
+- Traditional Chinese (`zh_TW`, `zh_HK`, `zh_MO`, `zh-Hant`) and a language
+  without a bundle read English: Traditional readers are never handed
+  Simplified text.
+
 ### Countries: GDP top 10
 
 National locales cover the ten largest economies by nominal GDP (World Bank,
@@ -572,10 +630,13 @@ Each language is generated with the national locale of its main country:
   locale (`ja_jp`), not by the language code, so register an override under
   `CoFakerLanguage.locale`. `CoFaker(locale: 'ja', locales: {'ja': ...})`
   still works as before.
-- **Domain data follows `CoFakerLanguage.domain`.** The domain packs,
-  `faker.clinic`, and `faker.saas` are English in a language whose `domain` is
-  `false`, while the basic modules (names, addresses, phone numbers, and so
-  on) already speak the language.
+- **Domain text follows `CoFakerLanguage.domain`.** The domain packs and the
+  dedicated generators are English in a language whose `domain` is `false`,
+  while the basic modules (names, addresses, phone numbers, and so on) already
+  speak the language. `domain` is computed from the bundle registry: a language
+  has domain text when its bundle is not empty. `faker.clinic` and
+  `faker.saas` follow their own language data (see "Language data" above) and
+  are English until it is filled in.
 
 `CoFaker(locale: 'ja')` is not `CoFaker.forLanguage('ja')`. A bare language
 code selects the language-only data the language has always had, a few names,

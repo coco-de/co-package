@@ -13,12 +13,13 @@ class CoFxDomain extends CoFakerDomain {
   @override
   String get name => 'fx';
 
-  static const _branches = <(String, String, String)>[
-    ('airport', '가람환전 공항 T1(가상)', 'Demo airport T1 exchange'),
-    ('downtown', '가람환전 솔빛점(가상)', 'Demo Solbit exchange'),
-    ('airport', '가람환전 공항 T2(가상)', 'Demo airport T2 exchange'),
-    ('downtown', '가람환전 가람점(가상)', 'Demo Garam exchange'),
-    ('downtown', '가람환전 물푸레점(가상)', 'Demo Mulpare exchange'),
+  /// The kind of each branch; its name is `fx.branchName` in the same order.
+  static const _branchKinds = <String>[
+    'airport',
+    'downtown',
+    'airport',
+    'downtown',
+    'downtown',
   ];
 
   static CoFakeFxCurrency _currency(CoFaker f, CoDomainRoleContext c) =>
@@ -55,13 +56,9 @@ class CoFxDomain extends CoFakerDomain {
     'maskedAccount': authoredRole((f, _) => CoFakerFx(f).maskedAccount()),
     'referenceNo': codeRole('NR', dated: true),
     'krwAmount': intRole(10000, 5000000, step: 1000),
-    'branchName': authoredRole(
-      (f, c) =>
-          localized(f, _branches[c.index % 5].$2, _branches[c.index % 5].$3),
-      coherent: true,
-    ),
+    'branchName': indexedTextRole('fx.branchName', rows: _branchKinds.length),
     'branchKind': authoredRole(
-      (f, c) => _branches[c.index % 5].$1,
+      (f, c) => _branchKinds[c.index % _branchKinds.length],
       coherent: true,
     ),
     'ticketNo': codeRole('A', width: 3),
@@ -71,15 +68,8 @@ class CoFxDomain extends CoFakerDomain {
       description: 'Masked name only, never a passport number',
     ),
     'orderNo': codeRole('GR', dated: true),
-    'couponName': textRole(
-      ['USD 80% 우대(예시)', 'JPY 70% 우대(예시)', '첫 환전 우대(예시)'],
-      [
-        'USD 80% spread discount (example)',
-        'JPY 70% spread discount (example)',
-        'First exchange discount (example)',
-      ],
-    ),
-    'tierName': textRole(['브론즈', '실버', '골드'], ['Bronze', 'Silver', 'Gold']),
+    'couponName': textRole('fx.couponName'),
+    'tierName': textRole('fx.tierName'),
     'unitAmount': authoredRole(
       (f, c) => _currency(f, c).unitAmount,
       type: 'int',
