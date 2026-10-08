@@ -152,7 +152,13 @@ void main() {
       ]);
       expect(CoTextScan.templateVariables(r'#{환자명}님, #{date}'), 2);
       expect(CoTextScan.unfilledPlaceholder('Hello {name}'), '{name}');
-      expect(CoTextScan.unfilledPlaceholder(r'Hello #{name}'), isNull);
+      // The marker of a notification template is output on purpose; anywhere
+      // else a field behind a number sign (`Laser #{numer}`) is a leak.
+      expect(
+        CoTextScan.unfilledPlaceholder(r'Hello #{name}', templates: true),
+        isNull,
+      );
+      expect(CoTextScan.unfilledPlaceholder(r'Laser #{numer}'), '{numer}');
       expect(CoTextScan.unfilledPlaceholder('{"a": 1}'), isNull);
     });
 
@@ -175,8 +181,11 @@ void main() {
       ]) {
         expect(CoTextScan.unfilledPlaceholder(leak), isNotNull, reason: leak);
       }
+      expect(
+        CoTextScan.unfilledPlaceholder('x #{番号} y', templates: true),
+        isNull,
+      );
       for (final fine in [
-        'x #{番号} y',
         '[{"date": "2026-01-15", "rate": 1.2}]',
         '{ "a": 1 }',
         '{}',
@@ -1312,6 +1321,34 @@ void main() {
       );
       expect(found.map((issue) => issue.where), contains('clinic.package'));
       expect(found.first.message, contains('{回数}'));
+    });
+
+    test('find a field behind a number sign that a generator left', () {
+      // `{kind} #{numer}` is a typo of `{number}`: the generator fills the
+      // English names, so the device is named `Laser #{numer}`. Only a
+      // notification template writes `#{variable}` on purpose.
+      final clinic = ja.clinic(
+        rewrite: (at, text) => at.slot == 'clinic.texts.deviceNameFormat'
+            ? '{kind} #{numer}'
+            : text,
+      );
+      final result = _generate(ja, ja.data(clinic: clinic));
+      final found = result.issues.where(
+        (issue) => issue.check == CoLanguageCheck.placeholder,
+      );
+      expect(found.map((issue) => issue.where), contains('clinic.device'));
+      expect(found.first.message, contains('{numer}'));
+      expect(
+        clinicCalls.where((call) => call.notificationTemplates),
+        isEmpty,
+        reason: 'only a saas call writes notification templates',
+      );
+      expect(
+        saasCalls
+            .where((call) => call.notificationTemplates)
+            .map((call) => call.name),
+        ['saas.messageTemplate'],
+      );
     });
 
     test('keep a character of two code units whole in what it reports', () {

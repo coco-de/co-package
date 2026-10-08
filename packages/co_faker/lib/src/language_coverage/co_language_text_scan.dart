@@ -142,11 +142,14 @@ abstract final class CoTextScan {
 
   /// The first field left in [text] that no generator filled, or `null`: a
   /// `{name}` in any writing system, with or without spaces inside the
-  /// braces, in ASCII or full-width braces. A `#{variable}` of a notification
-  /// template is output on purpose and does not count.
-  static String? unfilledPlaceholder(String text) {
-    final cleaned = text.replaceAll(_templateVariable, '');
-    return _looseField.firstMatch(cleaned)?.group(0);
+  /// braces, in ASCII or full-width braces.
+  ///
+  /// A `#{variable}` counts too (`Laser #{numer}`: a field behind a number
+  /// sign), except in a notification template ([templates]), which writes its
+  /// variables on purpose.
+  static String? unfilledPlaceholder(String text, {bool templates = false}) {
+    final source = templates ? text.replaceAll(_templateVariable, '') : text;
+    return _looseField.firstMatch(source)?.group(0);
   }
 
   /// The part of [text] around the UTF-16 position [index], on one line:

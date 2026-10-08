@@ -19,7 +19,12 @@ typedef CoLanguageRun = Object? Function(CoFaker faker);
 /// language, for the generation checks of the language coverage gate.
 class CoLanguageCall {
   /// Creates a call named [name], which is `<generator>.<member>`.
-  const CoLanguageCall(this.name, this.run, {this.hangulReason});
+  const CoLanguageCall(
+    this.name,
+    this.run, {
+    this.hangulReason,
+    this.notificationTemplates = false,
+  });
 
   /// The name: the generator and the member it calls (`clinic.payment`).
   /// A call that exercises one member in several ways adds a variant after a
@@ -35,6 +40,11 @@ class CoLanguageCall {
   /// A call that says so is not checked for Hangul. Only calls whose output
   /// is independent of the locale by design may: see `clinic.inquiry`.
   final String? hangulReason;
+
+  /// Whether the output is a notification template, which keeps its
+  /// `#{variable}` markers on purpose (`saas.messageTemplate`). In any other
+  /// output a `#{name}` that is left over is a field that no generator filled.
+  final bool notificationTemplates;
 
   /// The member of the generator the call exercises: `payment` for
   /// `clinic.payment.method`.
@@ -813,6 +823,7 @@ final List<CoLanguageCall> saasCalls = <CoLanguageCall>[
       for (final spec in f.saas.data.messageTemplates)
         f.saas.messageTemplate(code: spec.code),
     ],
+    notificationTemplates: true,
   ),
   CoLanguageCall(
     'saas.messageLog',

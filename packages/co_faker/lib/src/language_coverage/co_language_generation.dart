@@ -172,7 +172,12 @@ class _Generation {
   }
 
   /// Reads one generated text for Hangul and for an unfilled placeholder.
-  void _scan(String where, String text, {String? hangulReason}) {
+  void _scan(
+    String where,
+    String text, {
+    String? hangulReason,
+    bool templates = false,
+  }) {
     _texts++;
     if (checkHangul && hangulReason == null) {
       final hangul = _firstHangul(text);
@@ -186,7 +191,7 @@ class _Generation {
         );
       }
     }
-    final unfilled = CoTextScan.unfilledPlaceholder(text);
+    final unfilled = CoTextScan.unfilledPlaceholder(text, templates: templates);
     if (unfilled != null) {
       final at = text.indexOf(unfilled);
       _report(
@@ -372,7 +377,12 @@ class _Generation {
       for (final seed in seeds) {
         try {
           final output = call.run(faker(seed, generationDomains));
-          _scan(call.name, _describe(output), hangulReason: call.hangulReason);
+          _scan(
+            call.name,
+            _describe(output),
+            hangulReason: call.hangulReason,
+            templates: call.notificationTemplates,
+          );
           final plain = _plainTexts(output);
           if (_wantsScript && plain != null) {
             _checkScript(
