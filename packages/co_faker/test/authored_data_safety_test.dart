@@ -123,6 +123,9 @@ void main() {
         'campaign.brandName',
         'brokerage.providerName',
         'remit.bankNameFictional',
+        // The two creator names of a language are a bundle key like the
+        // others, so a real artist's name there is caught like a real brand.
+        'fandom.creatorName',
       ];
       for (final locale in _scanned) {
         final f = _faker(locale: locale);
@@ -182,8 +185,19 @@ void main() {
       };
       expect(values, {'모래시계 정원', '하늘결'}, reason: locale);
     }
+    // The public constant of the pack is the same two names: nothing reads it
+    // any more, and a test is what keeps it from drifting from the bundles.
+    expect(CoFandomDomain.creatorNames, ['모래시계 정원', '하늘결']);
+    for (final code in ['ko', 'en']) {
+      expect(
+        CoL10nRegistry.bundleFor(code)!.texts['fandom.creatorName'],
+        CoFandomDomain.creatorNames,
+        reason: code,
+      );
+    }
     // A language that is localized writes two fictional names of its own, in
-    // the bundle, and the role cycles through exactly those two.
+    // the bundle, and the role cycles through exactly those two. They are not
+    // the Korean names, and the scan above holds them to the denied names.
     for (final language in CoFakerLanguages.all) {
       if (!language.domain || language.code == 'ko' || language.code == 'en') {
         continue;
@@ -197,12 +211,49 @@ void main() {
         reason: '${language.code} must write fandom.creatorName',
       );
       expect(names, hasLength(2), reason: language.code);
+      expect(names!.toSet(), hasLength(2), reason: language.code);
+      expect(
+        names.toSet().intersection(CoFandomDomain.creatorNames.toSet()),
+        isEmpty,
+        reason: '${language.code} writes names of its own, not the Korean ones',
+      );
       final values = {
         for (var i = 0; i < 20; i++)
           _value(_faker(locale: language.code), 'fandom.creatorName', i),
       };
-      expect(values, names!.toSet(), reason: language.code);
-      expect(values, hasLength(2), reason: language.code);
+      expect(values, names.toSet(), reason: language.code);
+    }
+  });
+
+  test('a bundle can write any creator name, and the scan finds a real one', () {
+    // The names are a bundle key, so a bundle (a language, or a custom locale)
+    // may write whatever it likes there: the denied-name scan is the safety
+    // net, and it reads this role like the other authored names.
+    final real = languageSafety['ko']!.deniedBrands.first;
+    final f = CoFaker(
+      locale: 'es',
+      seed: 436,
+      now: DateTime.utc(2026, 1, 15),
+      domains: CoFakerDomains.all,
+      locales: <String, CoFakerLocale>{
+        'es': CoFakerLocale(
+          code: 'es',
+          l10n: CoL10nBundle(
+            language: 'es',
+            texts: <String, List<String>>{
+              'fandom.creatorName': <String>[real, 'Nombre ficticio'],
+            },
+          ),
+        ),
+      },
+    );
+    final names = <String>{
+      for (var i = 0; i < 4; i++) _value(f, 'fandom.creatorName', i),
+    };
+    expect(names, {real, 'Nombre ficticio'});
+    expect(names.where(_deniedBrands.hasMatch), [real]);
+    for (final approved in CoFandomDomain.creatorNames) {
+      expect(_deniedBrands.hasMatch(approved), isFalse, reason: approved);
     }
   });
 

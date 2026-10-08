@@ -138,8 +138,8 @@ has no bundle.
 - A key has the same number of texts in every language, in the same order, so
   one seed picks the same entry whatever the language. Roles that follow the
   record index (the class, equipment, and room of one row) rely on that order.
-- A pack never branches on the locale. It reads the bundle with
-  `textRole(key)`, `indexedTextRole(key, rows: n)`, `taxonomyRole(key)`,
+- A pack never branches on the locale. It reads the bundle with `textRole(key)`,
+  `indexedTextRole(key, rows: n)`, `taxonomyRole(key, roots: n)`,
   `maskedNameRole()`, or `faker.l10n.format(key, args)`, and fills the
   placeholders (`{n}`) itself. A role that cycles a table of `n` rows (the
   codes and numbers that stay in the pack) states `n`, and an assertion fails
@@ -165,7 +165,11 @@ individual judgement, result promise or actionable legal/tax advice. Fandom
 creator names are exactly two approved fictional names: `모래시계 정원` and
 `하늘결` in Korean and English (and in a language without domain text, which
 reads English), and two fictional names of its own in a language that is
-localized (the key `fandom.creatorName`).
+localized (the key `fandom.creatorName`). The key is a bundle key like the
+others, so nothing but the safety scan stops a bundle from writing a real name
+there: the scan reads `fandom.creatorName` of every language with the denied
+names, and `CoFandomDomain.creatorNames` is kept equal to the Korean and
+English bundles by a test.
 
 Regression denylists cover a curated set of known medicine brands, works,
 organizations and result/advice claims **only in the newly authored data paths**.

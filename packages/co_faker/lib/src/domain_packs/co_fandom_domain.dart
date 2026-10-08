@@ -1,7 +1,8 @@
 import '../domain.dart';
 import 'authored_roles.dart';
 
-/// Fandom text restricted to the two explicitly approved fictional creators.
+/// Fandom text restricted to two explicitly approved fictional creators in each
+/// language.
 class CoFandomDomain extends CoFakerDomain {
   /// Creates this pack.
   const CoFandomDomain();
@@ -13,14 +14,17 @@ class CoFandomDomain extends CoFakerDomain {
   ///
   /// The role `creatorName` reads the key `fandom.creatorName` of the language
   /// bundle, so another language writes two fictional creator names of its own
-  /// there. This constant stays for code that already reads it.
+  /// there, which the safety scan of the tests holds to the list of denied real
+  /// names. This constant is no longer read by the role; a test keeps it equal
+  /// to the Korean and English bundles, and it stays for code that reads it.
   static const creatorNames = ['모래시계 정원', '하늘결'];
   @override
   Map<String, CoDomainRole> get roles => {
     'creatorName': authoredRole(
       (f, c) => indexedText(f, 'fandom.creatorName', c.index, rows: 2),
       description:
-          'One of the two approved fictional creator names, by record index',
+          'One of the two fictional creator names of the language, by record '
+          'index',
     ),
     'fanNickname': textRole('fandom.fanNickname'),
     'tierName': enumRole(['bronze', 'silver', 'gold', 'platinum']),
