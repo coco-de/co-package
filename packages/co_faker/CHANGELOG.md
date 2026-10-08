@@ -60,8 +60,10 @@
   language is finished. It compares the bundle, the clinic data and the SaaS
   data with English text by text (no Hangul in a language other than Korean,
   the writing system of Japanese, Chinese and Russian, few texts that read like
-  English, lists of the English length, no key left unregistered) and runs the
-  generators of the language for Hangul, unfilled placeholders and exceptions.
+  English, lists and maps of the English length and order, the `{name}` fields
+  of every text kept under their English names, `koreanValues: none`, no key
+  left unregistered) and runs the generators of the language for Hangul,
+  unfilled placeholders and exceptions.
   `dart run co_faker:coverage --languages [--format markdown|json]` prints the
   table of supported languages, computed from the registries, and
   `dart run co_faker:coverage --language <code> --strict` runs the gate and
@@ -84,9 +86,15 @@
   clinic and SaaS fallback test. `zh_TW`, `es`, and unsupported codes keep
   every key.
 - Behavior change: a locale code that only starts with `ko` and is not Korean
-  (`kok`, `ko.UTF-8`, `ko@euro`) reads English text in the domain packs. It was
-  Korean there while the generator, `faker.clinic` and `faker.saas` already read
-  English for it.
+  (`kok`, `kor`, `korean`, `ko1`, `ko.UTF-8`, `ko@euro`) reads English
+  everywhere now: the domain packs, the dedicated generators (`fx`, `remit`,
+  `vet`, `catalog`, `examPrep`, the helpdesk drafts), `faker.clinic` and
+  `faker.saas` give the English output. On 0.11.0 the packs and the generators
+  read Korean text for these codes, and `faker.clinic` and `faker.saas` read
+  English text with Korean-style values (a clinic name written without a space,
+  won-sized prices, Korean mobile numbers, road-name addresses, resident and
+  business registration numbers), because they tested the code with
+  `startsWith('ko')`. `ko`, `ko_KR`, `ko-KR` and `KO_kr` are Korean as before.
 - Behavior change: `faker.clinic` and `faker.saas` follow the data fields, not
   the locale code. A custom `ko*` data set that leaves the new fields empty gets
   the English scale and formats (the `legacy` values), and a custom `ko` locale
