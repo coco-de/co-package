@@ -469,6 +469,84 @@ for (final country in CoFakerCountries.gdpTop10) {
 Sources, the phone rationale per country, and the compatibility notes are in
 [docs/countries.md](docs/countries.md).
 
+## Language settings
+
+Hand an app's language setting to `CoFaker.forLanguage` and it picks the
+language and its locale. It reads a BCP-47 tag (`zh-Hans`, `pt-BR`), a POSIX
+locale name (`ja_JP.UTF-8`, `en_US@posix`), or what Flutter's
+`Locale.toLanguageTag()` returns, and ignores case, `-` versus `_`, the
+script subtag, the encoding, and the modifier. co_faker depends on neither
+Flutter nor co_demo_prefs; both only supply the string:
+
+```dart
+// A Flutter app: the locale of the running app, e.g. zh-Hans-CN.
+final locale = Localizations.localeOf(context);
+final faker = CoFaker.forLanguage(
+  locale.toLanguageTag(),
+  seed: 7,
+  now: DateTime.utc(2026),
+);
+faker.locale;            // zh_cn
+faker.language;          // zh
+faker.person.fullName(); // 马浩然
+
+// A demo built on co_demo_prefs: DemoLocale.tag is ko, en, zh-Hans, ja, ...
+final demo = CoFaker.forLanguage(demoLocale.tag, seed: 7);
+```
+
+Each language is generated with the national locale of its main country:
+
+| Setting | Locale | Country |
+|---|---|---|
+| `ko` | `ko` | none |
+| `en` | `en_us` | United States |
+| `zh`, `zh-Hans`, `zh-CN` | `zh_cn` | China |
+| `ja` | `ja_jp` | Japan |
+| `de` | `de_de` | Germany |
+| `fr` | `fr_fr` | France |
+| `ru` | `ru_ru` | Russia |
+| `it` | `it_it` | Italy |
+| `pt`, `pt-BR` | `pt_br` | Brazil |
+| `es` | `es` | none, basic modules only |
+
+- **Unsupported languages and Traditional Chinese get English.** `ar`, `und`,
+  `zh-Hant`, `zh_TW`, `zh_HK`, and `zh_MO` resolve to `en_us`; Traditional
+  readers are never handed Simplified text. `CoFakerLanguages.resolve(tag)`
+  reports it with `supported == false` and also returns the `language`, the
+  `locale`, and the `region` it read:
+
+  ```dart
+  final resolved = CoFakerLanguages.resolve('zh_TW');
+  resolved.supported; // false
+  resolved.locale;    // en_us
+  resolved.region;    // TW
+  ```
+
+- **The region is read, not used.** `en-GB` is English with the `en_us` data
+  and `pt-PT` is `pt_br`. Use `CoFaker.forCountry` to pick a country.
+- **`ko` and `es` have no national locale.** `faker.country` is `null`, and
+  `address.postalAddress()`, `locality()`, `region()`, `regionCode()`, and
+  `postalCodeFor()` throw a `StateError`, as they do for
+  `CoFaker(locale: 'ko')`. Check `faker.country` before calling them.
+- **Custom locales** passed to `forLanguage` are looked up by the resolved
+  locale (`ja_jp`), not by the language code, so register an override under
+  `CoFakerLanguage.locale`. `CoFaker(locale: 'ja', locales: {'ja': ...})`
+  still works as before.
+- **Domain data follows `CoFakerLanguage.domain`.** The domain packs,
+  `faker.clinic`, and `faker.saas` are English in a language whose `domain` is
+  `false`, while the basic modules (names, addresses, phone numbers, and so
+  on) already speak the language.
+
+`CoFaker(locale: 'ja')` is not `CoFaker.forLanguage('ja')`. A bare language
+code selects the language-only data the language has always had, a few names,
+cities, and companies, and `faker.locale` stays `ja`. `forLanguage('ja')`
+selects the national locale `ja_jp`, with the same coherent addresses,
+fictional phone numbers, and currency-aware prices as
+`CoFaker.forCountry('JP')`. The constructor keeps its output, so existing
+fixtures keep their values; use `forLanguage` when the language comes from a
+setting. `faker.language` names the language of either generator (`ja` for
+`ja` and for `ja_jp`).
+
 ## Template Sugar
 
 ```dart
