@@ -39,7 +39,8 @@ class CoFakerLanguage {
   ///
   /// It is the national locale of the language's main country, so the
   /// generator gets the same data as `CoFaker.forCountry`. A language without
-  /// a national locale (`ko`, `es`) keeps its language-only locale.
+  /// a national locale (`ko`, `es`) keeps its language-only locale, and its
+  /// generator has no `CoFaker.country`.
   final String locale;
 
   /// The script the language's generated text is written in.
@@ -54,9 +55,8 @@ class CoFakerLanguage {
   /// When `false`, the basic modules (person, address, internet, text, and so
   /// on) still speak the language and the domain data is English.
   ///
-  /// The answer comes from one lookup, not from a flag on each language, so
-  /// a language that gains domain data turns it on without an edit to the
-  /// registry in [CoFakerLanguages].
+  /// One lookup answers it for every language; no language carries a flag of
+  /// its own.
   bool get domain => _hasDomainData(code);
 
   @override
@@ -218,7 +218,9 @@ abstract final class CoFakerLanguages {
   /// (`.UTF-8`), and the modifier (`@posix`) are ignored; the language and
   /// the region are taken from what remains. `ko`, `ko_KR`, `ko-KR`,
   /// `zh-Hans`, `zh-Hans-CN`, `pt-BR`, `ja_JP.UTF-8`, `en_US@posix`, and
-  /// `ZH_cn` are all read by the same rule.
+  /// `ZH_cn` are all read by the same rule. The subtags of a BCP-47 extension
+  /// (`-u-`) or private use (`-x-`) carry no language, script, or region, and
+  /// are ignored too.
   ///
   /// A language outside [all], a tag without a language, and Traditional
   /// Chinese resolve to English with [CoFakerLanguageResolution.supported]
@@ -230,7 +232,12 @@ abstract final class CoFakerLanguages {
   static CoFakerLanguageResolution resolve(String tag) {
     final subtags = _subtags(tag);
     final code = subtags.isEmpty ? '' : subtags.first;
-    final rest = subtags.skip(1).toList();
+    final rest = subtags
+        .skip(1)
+        // A single character opens an extension (`-u-`) or private use
+        // (`-x-`): nothing after it names a script or a region.
+        .takeWhile((subtag) => subtag.length != 1)
+        .toList();
     final region = _region(rest);
     final language = _byCode(code);
     if (language == null || (code == 'zh' && !_isSimplifiedChinese(rest))) {
@@ -271,17 +278,14 @@ abstract final class CoFakerLanguages {
   /// shape of a region: two letters or three digits.
   static String? _region(List<String> subtags) {
     for (final subtag in subtags) {
-      // A single character opens an extension (`-u-`) or private use (`-x-`),
-      // whose subtags are not regions.
-      if (subtag.length == 1) return null;
       if (_regionShape.hasMatch(subtag)) return subtag.toUpperCase();
     }
     return null;
   }
 
-  /// The rule of `DemoLocale.parse` in co_demo_prefs: the script `Hans` is
-  /// Simplified whatever the region, otherwise `Hant` and the regions `TW`,
-  /// `HK`, and `MO` are Traditional.
+  /// The rule of `DemoLocale.parse` in co_demo_prefs, for the [subtags] after
+  /// `zh`: the script `Hans` is Simplified whatever the region, otherwise
+  /// `Hant` and the regions `TW`, `HK`, and `MO` are Traditional.
   static bool _isSimplifiedChinese(List<String> subtags) {
     if (subtags.contains('hans')) return true;
     return !subtags.any(_traditionalChinese.contains);
@@ -299,10 +303,10 @@ final RegExp _regionShape = RegExp(r'^(?:[a-z]{2}|[0-9]{3})$');
 /// language.
 ///
 /// This is the one place that answers it: [CoFakerLanguage.domain] reads
-/// nothing else, and no registry line carries a flag. Today the answer is
-/// fixed, because the Korean and English text is the only authored domain
-/// text. Story S2 (#59) replaces the body with a computation from the domain
-/// bundle registry, where a language has domain data when it has a non-empty
-/// bundle, so a language Story turns it on by adding its bundle and never
-/// edits this file.
+/// nothing else, and no registry line carries a flag. For now the answer is
+/// fixed, because Korean and English are the only languages with authored
+/// domain text. Story S2 of the language-support Epic replaces the body with
+/// a computation from the domain bundle registry (a language has domain data
+/// when it ships a non-empty bundle), so that a language Story turns it on by
+/// adding its bundle and never edits this file.
 bool _hasDomainData(String code) => code == 'ko' || code == 'en';

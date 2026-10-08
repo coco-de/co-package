@@ -524,6 +524,14 @@ Each language is generated with the national locale of its main country:
 
 - **The region is read, not used.** `en-GB` is English with the `en_us` data
   and `pt-PT` is `pt_br`. Use `CoFaker.forCountry` to pick a country.
+- **`ko` and `es` have no national locale.** `faker.country` is `null`, and
+  `address.postalAddress()`, `locality()`, `region()`, `regionCode()`, and
+  `postalCodeFor()` throw a `StateError`, as they do for
+  `CoFaker(locale: 'ko')`. Check `faker.country` before calling them.
+- **Custom locales** passed to `forLanguage` are looked up by the resolved
+  locale (`ja_jp`), not by the language code, so register an override under
+  `CoFakerLanguage.locale`. `CoFaker(locale: 'ja', locales: {'ja': ...})`
+  still works as before.
 - **Domain data follows `CoFakerLanguage.domain`.** The domain packs,
   `faker.clinic`, and `faker.saas` are English in a language whose `domain` is
   `false`, while the basic modules (names, addresses, phone numbers, and so

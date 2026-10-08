@@ -38,6 +38,11 @@ const List<_Setting> _supported = <_Setting>[
   (tag: 'it-IT', language: 'it', region: 'IT'),
   (tag: 'es', language: 'es', region: null),
   (tag: 'es-419', language: 'es', region: '419'),
+  // The subtags of an extension or private use name no script or region.
+  (tag: 'zh-CN-x-hk', language: 'zh', region: 'CN'),
+  (tag: 'zh-x-tw', language: 'zh', region: null),
+  (tag: 'zh-CN-u-rg-hkzzzz', language: 'zh', region: 'CN'),
+  (tag: 'ja-u-ca-japanese-x-us', language: 'ja', region: null),
 ];
 
 /// Settings that must resolve to English with `supported == false`.
@@ -75,6 +80,8 @@ const List<String> _traditional = <String>[
   'ZH_hk',
   'zh_TW.UTF-8',
   'zh_MO@modifier',
+  'zh-Hant-x-private',
+  'zh-TW-u-ca-roc',
 ];
 
 /// The supported language codes and the locale `forLanguage` builds each with.
@@ -430,6 +437,28 @@ void main() {
         _sample(CoFaker.forLanguage('ko_KR', seed: 5, now: _now)),
         _sample(CoFaker(locale: 'ko', seed: 5, now: _now)),
       );
+    });
+
+    test('gives the languages with a national locale postal addresses', () {
+      for (final code in _countries.keys) {
+        final faker = CoFaker.forLanguage(code, seed: 5);
+        final address = faker.address.postalAddress();
+        expect(address.formatted, isNotEmpty, reason: code);
+        expect(address.countryCode, _countries[code], reason: code);
+      }
+    });
+
+    test('leaves Korean and Spanish without national address data', () {
+      for (final code in const ['ko', 'es']) {
+        final faker = CoFaker.forLanguage(code);
+        expect(faker.country, isNull, reason: code);
+        expect(
+          () => faker.address.postalAddress(),
+          throwsStateError,
+          reason: code,
+        );
+        expect(() => faker.address.region(), throwsStateError, reason: code);
+      }
     });
 
     test('builds the same generator from every spelling', () {

@@ -121,8 +121,13 @@ class CoFaker {
   /// `en_US`, `zh` with `zh_CN`, `ja` with `ja_JP`, `de` with `de_DE`, `fr`
   /// with `fr_FR`, `ru` with `ru_RU`, `it` with `it_IT`, and `pt` with
   /// `pt_BR`. That is the data of [CoFaker.forCountry], whereas
-  /// `CoFaker(locale: 'ja')` selects the thinner language-only data. `ko` and
-  /// `es` have no national locale and keep their language-only locales.
+  /// `CoFaker(locale: 'ja')` selects the thinner language-only data.
+  ///
+  /// `ko` and `es` have no national locale and keep their language-only
+  /// locales. Their [country] is `null`, and the address methods that need a
+  /// national locale (`postalAddress`, `locality`, `region`, `regionCode`,
+  /// `postalCodeFor`) throw a [StateError], as they do for
+  /// `CoFaker(locale: 'ko')`.
   ///
   /// A language that is not supported, and Traditional Chinese (`zh-Hant`,
   /// `zh_TW`, `zh_HK`, `zh_MO`), get English (`en_US`): its readers are never
@@ -131,8 +136,11 @@ class CoFaker {
   ///
   /// [seed], [now], [locales], [random], and [domains] are passed to the
   /// [CoFaker] constructor unchanged. [locales] are looked up by the code of
-  /// the resolved locale (`ja_jp`), not by the tag or the language code, so
-  /// register an override under `CoFakerLanguage.locale`.
+  /// the resolved locale (`ja_jp`), not by the tag or the language code: a
+  /// custom locale registered as `ja` is shadowed by the built-in `ja_jp`, so
+  /// register an override under `CoFakerLanguage.locale`. The constructor
+  /// keeps its own rule, and `CoFaker(locale: 'ja', locales: {'ja': custom})`
+  /// still selects `custom`.
   ///
   /// ```dart
   /// final faker = CoFaker.forLanguage('zh-Hans-CN', seed: 7);
@@ -165,8 +173,9 @@ class CoFaker {
   ///
   /// It follows [locale] and nothing else, so `zh_tw`, which has always been
   /// served the Chinese data, reports `zh`. [CoFakerLanguages.resolve] is the
-  /// strict reader: it refuses Traditional Chinese and says whether a
-  /// language setting is supported.
+  /// strict reader: it refuses Traditional Chinese, so
+  /// `CoFakerLanguages.resolve(locale).supported` tells whether the locale
+  /// is a supported language.
   String get language => _languageCode(locale);
 
   /// The clock used by date generation.
