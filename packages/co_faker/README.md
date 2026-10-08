@@ -469,8 +469,9 @@ The domain packs and the dedicated generators (`fx`, `remit`, `vet`,
 `catalog`, `examPrep`, ...) read their labels, names, and sentences from a
 language bundle by key, `faker.l10n`, so a language is data and not code.
 Korean and English are built in, and every other language reads English until
-its bundle is filled in. A custom locale carries a bundle of its own, with no
-change to co_faker:
+its bundle is filled in. (`faker.clinic` and `faker.saas` have their own
+language data, described under "Language data" above.) A custom locale carries
+a bundle of its own, with no change to co_faker:
 
 ```dart
 const spanish = CoFakerLocale(
