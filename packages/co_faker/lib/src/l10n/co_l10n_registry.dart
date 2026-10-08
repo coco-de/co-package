@@ -20,8 +20,9 @@ import 'zh/zh_bundle.dart';
 ///
 /// The bundles are checked against the English one when the registry is first
 /// read: a key that English does not define, a list whose length differs from
-/// English's, or an empty text makes the first read throw a [StateError] that
-/// lists every problem, so a misaligned bundle cannot ship.
+/// English's, an empty text, or a template that lost all its placeholders makes
+/// the first read throw a [StateError] that lists every problem, so a
+/// misaligned bundle cannot ship.
 ///
 /// To add a language without changing co_faker, give a `CoFakerLocale` a
 /// bundle (`CoFakerLocale.l10n`) instead.
@@ -51,9 +52,11 @@ abstract final class CoL10nRegistry {
   /// is sound.
   ///
   /// A bundle is sound when every key is one of English's, every key has as
-  /// many texts as English's, and no text is empty. A language does not need
-  /// every key. Use it to test a bundle that is not registered, such as the
-  /// one a custom `CoFakerLocale` carries:
+  /// many texts as English's, no text is empty, and a text that has
+  /// placeholders in English has at least one in the translation (a template
+  /// without any writes the same text for every record). A language does not
+  /// need every key. Use it to test a bundle that is not registered, such as
+  /// the one a custom `CoFakerLocale` carries:
   ///
   /// ```dart
   /// expect(CoL10nRegistry.validate(spanishBundle), isEmpty);
@@ -82,6 +85,17 @@ abstract final class CoL10nRegistry {
           '$language: "$key" has ${texts.length} texts, English has '
           '${base.length}',
         );
+      } else {
+        for (var i = 0; i < texts.length; i++) {
+          final expected = CoL10nBundle.placeholdersOf(base[i]);
+          if (expected.isNotEmpty &&
+              CoL10nBundle.placeholdersOf(texts[i]).isEmpty) {
+            problems.add(
+              '$language: "$key" text $i has no placeholder, English has '
+              '${expected.map((name) => '{$name}').join(', ')}',
+            );
+          }
+        }
       }
     }
     return problems;

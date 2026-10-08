@@ -7,6 +7,12 @@ class CoContentDomain extends CoFakerDomain {
   const CoContentDomain();
   @override
   String get name => 'content';
+
+  /// The roots of the genre, audio genre, and topic taxonomies: each parent
+  /// role points at them and the matching `content.*Taxonomy` key names them.
+  static const _genreRoots = 5;
+  static const _audioGenreRoots = 2;
+  static const _topicRoots = 5;
   @override
   Map<String, CoDomainRole> get roles => {
     'seriesTitle': textRole('content.seriesTitle'),
@@ -23,12 +29,15 @@ class CoContentDomain extends CoFakerDomain {
     'newsletterName': textRole('content.newsletterName'),
     'articleHeadline': textRole('content.articleHeadline'),
     'topicName': textRole('content.topicName'),
-    'genreParent': parentRole(5),
-    'audioGenreParent': parentRole(2),
-    'topicParent': parentRole(5),
-    'genreTaxonomy': taxonomyRole('content.genreTaxonomy'),
-    'audioTaxonomy': taxonomyRole('content.audioTaxonomy'),
-    'topicTaxonomy': taxonomyRole('content.topicTaxonomy'),
+    'genreParent': parentRole(_genreRoots),
+    'audioGenreParent': parentRole(_audioGenreRoots),
+    'topicParent': parentRole(_topicRoots),
+    'genreTaxonomy': taxonomyRole('content.genreTaxonomy', roots: _genreRoots),
+    'audioTaxonomy': taxonomyRole(
+      'content.audioTaxonomy',
+      roots: _audioGenreRoots,
+    ),
+    'topicTaxonomy': taxonomyRole('content.topicTaxonomy', roots: _topicRoots),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

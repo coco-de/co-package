@@ -9,6 +9,10 @@ class CoHelpdeskDomain extends CoFakerDomain {
   @override
   String get name => 'helpdesk';
 
+  /// The roots of the help-topic taxonomy: `topicParent` points at them and
+  /// `helpdesk.topicName` names them.
+  static const _topicRoots = 4;
+
   /// The category of each ticket; its subject and description are
   /// `helpdesk.ticketSubject` and `helpdesk.ticketDescription` in the same
   /// order.
@@ -41,8 +45,8 @@ class CoHelpdeskDomain extends CoFakerDomain {
     'aiDraftText': authoredRole(
       (f, c) => CoFakerHelpdesk(f).drafts()[c.index % 8]['templateBody'],
     ),
-    'topicParent': parentRole(4),
-    'topicName': taxonomyRole('helpdesk.topicName'),
+    'topicParent': parentRole(_topicRoots),
+    'topicName': taxonomyRole('helpdesk.topicName', roots: _topicRoots),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

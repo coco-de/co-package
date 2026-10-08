@@ -67,6 +67,16 @@ class CoL10nBundle {
   /// a non-empty string.
   final Map<String, List<String>> texts;
 
+  /// The pattern of a placeholder: `{name}`, a name of letters, digits, and
+  /// underscores that does not start with a digit.
+  static final RegExp placeholderPattern = RegExp(r'\{([A-Za-z_]\w*)\}');
+
+  /// The names of the placeholders in [text]: `{n}` and `{root}` for
+  /// `{root} · subtopic {n}`.
+  static Set<String> placeholdersOf(String text) => <String>{
+    for (final match in placeholderPattern.allMatches(text)) match.group(1)!,
+  };
+
   /// Whether the bundle has no text. An empty bundle is a placeholder for a
   /// language that has no authored domain text yet.
   bool get isEmpty => texts.isEmpty;

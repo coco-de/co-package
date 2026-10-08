@@ -7,6 +7,10 @@ class CoBrokerageDomain extends CoFakerDomain {
   const CoBrokerageDomain();
   @override
   String get name => 'brokerage';
+
+  /// The roots of the service-type taxonomy: `serviceParent` points at them
+  /// and `brokerage.serviceTypeName` names them.
+  static const _serviceRoots = 4;
   @override
   Map<String, CoDomainRole> get roles => {
     'projectTitle': textRole('brokerage.projectTitle'),
@@ -55,8 +59,11 @@ class CoBrokerageDomain extends CoFakerDomain {
     'qnaAnswerGeneric': textRole('brokerage.qnaAnswerGeneric'),
     'consultNoteGeneric': textRole('brokerage.consultNoteGeneric'),
     'officeName': textRole('brokerage.officeName'),
-    'serviceParent': parentRole(4),
-    'serviceTypeName': taxonomyRole('brokerage.serviceTypeName'),
+    'serviceParent': parentRole(_serviceRoots),
+    'serviceTypeName': taxonomyRole(
+      'brokerage.serviceTypeName',
+      roots: _serviceRoots,
+    ),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

@@ -630,11 +630,13 @@ Each language is generated with the national locale of its main country:
   locale (`ja_jp`), not by the language code, so register an override under
   `CoFakerLanguage.locale`. `CoFaker(locale: 'ja', locales: {'ja': ...})`
   still works as before.
-- **Domain data follows `CoFakerLanguage.domain`.** The domain packs,
-  `faker.clinic`, and `faker.saas` are English in a language whose `domain` is
-  `false`, while the basic modules (names, addresses, phone numbers, and so
-  on) already speak the language. `domain` is computed from the bundle
-  registry: a language has domain data when its bundle is not empty.
+- **Domain text follows `CoFakerLanguage.domain`.** The domain packs and the
+  dedicated generators are English in a language whose `domain` is `false`,
+  while the basic modules (names, addresses, phone numbers, and so on) already
+  speak the language. `domain` is computed from the bundle registry: a language
+  has domain text when its bundle is not empty. `faker.clinic` and
+  `faker.saas` follow their own language data (see "Language data" above) and
+  are English until it is filled in.
 
 `CoFaker(locale: 'ja')` is not `CoFaker.forLanguage('ja')`. A bare language
 code selects the language-only data the language has always had, a few names,

@@ -115,9 +115,19 @@ CoDomainRole parentRole(int rootCount) => authoredRole(
 /// their root's vocabulary instead of independently sampling unrelated labels.
 ///
 /// The root names are the texts of [key]; a child is named by the language's
-/// `common.taxonomyChild` template.
-CoDomainRole taxonomyRole(String key) => authoredRole((f, c) {
+/// `common.taxonomyChild` template. [roots] is the root count the paired
+/// [parentRole] was given: the key has one name for each root, and an assertion
+/// fails when it does not, because a child would then name a root that its
+/// `parentId` does not point to.
+CoDomainRole taxonomyRole(String key, {required int roots}) => authoredRole((
+  f,
+  c,
+) {
   final names = f.l10n.list(key);
+  assert(
+    names.length == roots,
+    'l10n key "$key" has ${names.length} names for a taxonomy of $roots roots',
+  );
   final rootCount = names.length;
   if (c.index < rootCount) {
     return names[c.index];

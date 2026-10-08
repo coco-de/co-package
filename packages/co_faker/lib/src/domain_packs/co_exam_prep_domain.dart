@@ -10,6 +10,10 @@ class CoExamPrepDomain extends CoFakerDomain {
   const CoExamPrepDomain();
   @override
   String get name => 'exam_prep';
+
+  /// The roots of the unit taxonomy: `unitParent` points at them and
+  /// `exam_prep.taxonomyName` names them.
+  static const _unitRoots = 4;
   static CoFakeExamQuestion _question(CoFaker f, CoDomainRoleContext c) =>
       CoFakerExamPrep(f.derive('exam/question')).question(index: c.index);
   @override
@@ -47,8 +51,8 @@ class CoExamPrepDomain extends CoFakerDomain {
     'studyTaskTitle': textRole('exam_prep.studyTaskTitle'),
     'nickname': firstNameRole(),
     'section': authoredRole((f, c) => _question(f, c).section, coherent: true),
-    'unitParent': parentRole(4),
-    'taxonomyName': taxonomyRole('exam_prep.taxonomyName'),
+    'unitParent': parentRole(_unitRoots),
+    'taxonomyName': taxonomyRole('exam_prep.taxonomyName', roots: _unitRoots),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

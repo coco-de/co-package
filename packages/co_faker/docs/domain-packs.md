@@ -130,8 +130,10 @@ The authored text of the packs and of the dedicated generators (`fx`, `remit`,
 bundles, not in the packs. A role reads its text by key through `faker.l10n`:
 `<pack>.<role>` (`dental.dentalProcedure`), or `<generator>.<name>`
 (`fx.currencyName.USD`) for the generators. Korean and English are built in
-(`lib/src/l10n/ko` and `en`); the other supported languages are registered with
-empty bundles and read English until their bundle is filled in.
+(`lib/src/l10n/ko` and `en`). Chinese, Japanese, German, French, Russian,
+Italian, and Portuguese are registered with empty bundles and read English
+until their bundle is filled in; Spanish supports the basic modules only and
+has no bundle.
 
 - A key has the same number of texts in every language, in the same order, so
   one seed picks the same entry whatever the language. Roles that follow the

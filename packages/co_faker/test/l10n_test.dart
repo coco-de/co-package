@@ -35,6 +35,28 @@ Map<String, CoFakerLocale> get _spanishLocales => const {
   'es': CoFakerLocale(code: 'es', l10n: _spanish),
 };
 
+/// The placeholders that the English and the Korean text `index` of [key] both
+/// use.
+Set<String> _structural(String key, int index) {
+  final ko = CoL10nRegistry.bundleFor('ko')!.texts[key];
+  return CoL10nBundle.placeholdersOf(
+    CoL10nRegistry.english.texts[key]![index],
+  ).intersection(
+    ko == null ? <String>{} : CoL10nBundle.placeholdersOf(ko[index]),
+  );
+}
+
+/// What a bundle's translations lose of the placeholders [_structural] names.
+List<String> _lostPlaceholders(CoL10nBundle bundle) => [
+  if (bundle.language != 'en' && bundle.language != 'ko')
+    for (final entry in bundle.texts.entries)
+      for (var i = 0; i < entry.value.length; i++)
+        if (!CoL10nBundle.placeholdersOf(
+          entry.value[i],
+        ).containsAll(_structural(entry.key, i)))
+          '${bundle.language} ${entry.key} text $i',
+];
+
 void main() {
   final english = CoL10nRegistry.english;
   final korean = CoL10nRegistry.bundleFor('ko')!;
@@ -98,10 +120,11 @@ void main() {
             'dental.dentalProcedure': ['one', 'two'],
             'dental.chairName': ['a', '', 'c'],
             'workplace.sprintName': [],
+            'dining.partyLabel': ['Mesa'],
           },
         ),
       );
-      expect(problems, hasLength(5));
+      expect(problems, hasLength(6));
       expect(
         problems,
         contains('xx: "dental.noSuchRole" is not a key of the English bundle'),
@@ -114,11 +137,48 @@ void main() {
         problems,
         contains('xx: "dental.chairName" has an empty text at index 1'),
       );
+      expect(
+        problems,
+        contains(
+          'xx: "dining.partyLabel" text 0 has no placeholder, English has {n}',
+        ),
+      );
       expect(problems, contains('xx: "workplace.sprintName" has no text'));
       expect(
         problems,
         contains('xx: "workplace.sprintName" has 0 texts, English has 1'),
       );
+    });
+
+    test('keeps the placeholders that English and Korean both use', () {
+      // `{n}` of a sprint, `{root}` and `{n}` of a taxonomy child, and so on:
+      // a placeholder that both reference languages use is structural, and a
+      // translation that drops or renames it writes the same text for every
+      // record or throws at first use.
+      var structural = 0;
+      for (final entry in english.texts.entries) {
+        for (var i = 0; i < entry.value.length; i++) {
+          structural += _structural(entry.key, i).length;
+        }
+      }
+      expect(structural, greaterThanOrEqualTo(8));
+      for (final bundle in CoL10nRegistry.bundles.values) {
+        expect(_lostPlaceholders(bundle), isEmpty, reason: bundle.language);
+      }
+      // The rule catches a dropped and a renamed placeholder.
+      final lost = _lostPlaceholders(
+        const CoL10nBundle(
+          language: 'xx',
+          texts: {
+            'workplace.sprintName': ['スプリント'],
+            'dining.partyLabel': ['{num}人'],
+            'common.taxonomyChild': ['{root}の{n}'],
+          },
+        ),
+      );
+      expect(lost, hasLength(2));
+      expect(lost.first, contains('workplace.sprintName'));
+      expect(lost.last, contains('dining.partyLabel'));
     });
 
     test('computes a language\'s domain flag from its bundle', () {
@@ -180,6 +240,39 @@ void main() {
       ]) {
         expect(_faker(code).l10n.language, 'en', reason: code);
       }
+    });
+
+    test('is the language of the locale data the constructor selected', () {
+      // A code the constructor does not know selects English data.
+      for (final code in ['ko.UTF-8', 'ko@euro', 'kok']) {
+        expect(_faker(code).l10n.language, 'en', reason: code);
+      }
+      // A custom locale registered under such a code is the data selected.
+      for (final code in ['ko.UTF-8', 'ko@euro']) {
+        final f = _faker(
+          code,
+          locales: {
+            code: CoFakerLocale(code: code, firstNames: ['Min']),
+          },
+        );
+        expect(f.l10n.language, 'ko', reason: code);
+      }
+      // Its code field need not repeat the key.
+      final renamed = _faker(
+        'ko-KR',
+        locales: const {
+          'ko-KR': CoFakerLocale(code: 'custom', firstNames: ['Min']),
+        },
+      );
+      expect(renamed.l10n.language, 'ko');
+      // Traditional Chinese reads English whatever data it selected.
+      final traditional = _faker(
+        'zh_TW',
+        locales: const {
+          'zh_TW': CoFakerLocale(code: 'zh_TW', firstNames: ['Min']),
+        },
+      );
+      expect(traditional.l10n.language, 'en');
     });
 
     test('is never Chinese for Traditional Chinese', () {

@@ -151,6 +151,26 @@ void main() {
     },
   );
 
+  test('a taxonomy role asserts that the bundle has a name per root', () {
+    // `helpdesk.topicName` names four roots in every language.
+    final f = _faker('en');
+    const context = (field: 'value', type: 'String', index: 0, entity: null);
+    expect(
+      taxonomyRole('helpdesk.topicName', roots: 4).generate(f, context),
+      'Account',
+    );
+    expect(
+      () => taxonomyRole('helpdesk.topicName', roots: 5).generate(f, context),
+      throwsA(
+        isA<AssertionError>().having(
+          (error) => error.message,
+          'message',
+          allOf(contains('helpdesk.topicName'), contains('4'), contains('5')),
+        ),
+      ),
+    );
+  });
+
   group('every role', () {
     test('generates text without a leftover placeholder in every language', () {
       final placeholder = RegExp(r'\{[A-Za-z_]\w*\}');
@@ -190,6 +210,22 @@ void main() {
       // domain packs alike: a code the constructor does not know (`ko.UTF-8`)
       // gets English from all three.
       final hangul = RegExp('[가-힣]');
+      void expectSameLanguage(CoFaker f, String reason) {
+        final korean = f.l10n.language == 'ko';
+        expect(hangul.hasMatch(f.clinic.clinicName()), korean, reason: reason);
+        expect(hangul.hasMatch(f.saas.plan().name), korean, reason: reason);
+      }
+
+      // A custom locale registered under such a code is its own data: the
+      // clinic and SaaS registries read its language, and so do the packs.
+      for (final code in ['ko.UTF-8', 'ko@euro']) {
+        final custom = {
+          code: CoFakerLocale(code: code, firstNames: const ['Min']),
+        };
+        final f = _faker(code, locales: custom);
+        expect(f.l10n.language, 'ko', reason: code);
+        expectSameLanguage(f, '$code (custom)');
+      }
       for (final code in [
         'ko',
         'ko_KR',
@@ -206,12 +242,7 @@ void main() {
         'zh_TW',
         'xx_YY',
       ]) {
-        final f = _faker(code);
-        expect(
-          f.l10n.language == 'ko',
-          hangul.hasMatch(f.clinic.clinicName()),
-          reason: code,
-        );
+        expectSameLanguage(_faker(code), code);
       }
     });
 

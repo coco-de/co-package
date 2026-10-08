@@ -10,6 +10,10 @@ class CoGroceryDomain extends CoFakerDomain {
   const CoGroceryDomain();
   @override
   String get name => 'grocery';
+
+  /// The roots of the category taxonomy: `categoryParent` points at them and
+  /// `grocery.categoryName` names them.
+  static const _categoryRoots = 7;
   static CoFakeCatalogItem _item(CoFaker f, CoDomainRoleContext c) =>
       CoFakerCatalog(
         f.derive('grocery/catalog'),
@@ -51,8 +55,8 @@ class CoGroceryDomain extends CoFakerDomain {
       type: 'int',
       coherent: true,
     ),
-    'categoryParent': parentRole(7),
-    'categoryName': taxonomyRole('grocery.categoryName'),
+    'categoryParent': parentRole(_categoryRoots),
+    'categoryName': taxonomyRole('grocery.categoryName', roots: _categoryRoots),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

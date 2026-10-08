@@ -51,13 +51,16 @@ class CoFakerLanguage {
   /// kana is what Chinese text lacks.
   final CoFakerScript script;
 
-  /// Whether the domain data is authored in this language: the domain packs,
-  /// the dedicated generators, `faker.clinic` and `faker.saas`.
+  /// Whether the domain packs and the dedicated generators have text authored
+  /// in this language.
   ///
   /// When `false`, the basic modules (person, address, internet, text, and so
-  /// on) still speak the language and the domain data is English.
+  /// on) still speak the language and the domain packs read English.
+  /// `faker.clinic` and `faker.saas` read their own language data
+  /// (`<language>_clinic.dart` and `<language>_saas.dart`), which this flag
+  /// does not cover: a language is localized when all three are filled.
   ///
-  /// It is computed from the bundle registry: a language has domain data when
+  /// It is computed from the bundle registry: a language has domain text when
   /// it ships a domain text bundle that is not empty (see [CoL10nRegistry]).
   /// No language carries a flag of its own, so filling a language's bundle is
   /// what turns it on.

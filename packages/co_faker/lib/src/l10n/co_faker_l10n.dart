@@ -1,5 +1,6 @@
 import '../co_faker.dart';
 import '../co_faker_languages.dart';
+import 'co_l10n_bundle.dart';
 import 'co_l10n_registry.dart';
 
 /// Computes the value of a template placeholder, and is called only when the
@@ -40,20 +41,46 @@ class CoFakerL10n {
 
   /// The language whose shipped bundle serves this generator before English.
   ///
-  /// It is `faker.language` when that language is supported and has domain
-  /// text (`ko`, `en`, and each language whose bundle has been filled), and
-  /// `en` otherwise: a language without a bundle, an unsupported or custom
+  /// It is the language of the locale data that the constructor selected, as
+  /// `CoFakerLanguages.resolve` reads it, when that language has domain text
+  /// (`ko`, `en`, and each language whose bundle has been filled), and `en`
+  /// otherwise. A code that the constructor does not know (`ko.UTF-8`)
+  /// selects English data and reads English text, while a custom locale
+  /// registered under that code reads its own language, as `faker.clinic` and
+  /// `faker.saas` do. A language without a bundle, an unsupported or custom
   /// code, and Traditional Chinese (`zh_TW`, `zh_HK`, `zh_MO`, `zh-Hant`),
-  /// whose readers are never handed Simplified text. A regional locale
-  /// (`ko_KR`) reads its language's bundle.
+  /// whose readers are never handed Simplified text, read English. A regional
+  /// locale (`ko_KR`) reads the bundle of its language.
   ///
   /// This is the language of the shipped bundle only: a custom locale's bundle
   /// answers first whatever [language] says.
-  late final String language = _bundleLanguage();
+  late final String language = _cachedLanguage();
+
+  /// Every view that `derive` and `localized` make has the locale of its
+  /// parent, so the language of a locale and its selected data is worked out
+  /// once.
+  static final Map<String, String> _languages = <String, String>{};
+  static const int _languageCacheSize = 256;
+
+  String _cachedLanguage() {
+    final key = '${faker.locale}|${faker.localeData.code}';
+    final known = _languages[key];
+    if (known != null) return known;
+    if (_languages.length >= _languageCacheSize) _languages.clear();
+    return _languages[key] = _bundleLanguage();
+  }
 
   String _bundleLanguage() {
-    if (!CoFakerLanguages.resolve(faker.locale).supported) return 'en';
-    final code = faker.language;
+    final byLocale = CoFakerLanguages.resolve(faker.locale);
+    // Traditional Chinese, an unsupported language, and a custom code never
+    // read the text of another language.
+    if (!byLocale.supported) return 'en';
+    // The locale data the constructor selected names its own language; a
+    // custom code that is not a language leaves the locale's.
+    final byData = CoFakerLanguages.resolve(faker.localeData.code);
+    final code = byData.supported
+        ? byData.language.code
+        : byLocale.language.code;
     return CoL10nRegistry.hasDomainData(code) ? code : 'en';
   }
 
@@ -130,7 +157,7 @@ class CoFakerL10n {
   /// Throws a [StateError] for a placeholder that [args] does not have or
   /// whose value is `null`, and for any error [text] reports.
   String format(String key, Map<String, Object?> args) {
-    return text(key).replaceAllMapped(_placeholder, (match) {
+    return text(key).replaceAllMapped(CoL10nBundle.placeholderPattern, (match) {
       final name = match.group(1)!;
       if (!args.containsKey(name)) {
         throw StateError(
@@ -158,5 +185,3 @@ class CoFakerL10n {
     }
   }
 }
-
-final RegExp _placeholder = RegExp(r'\{([A-Za-z_]\w*)\}');
