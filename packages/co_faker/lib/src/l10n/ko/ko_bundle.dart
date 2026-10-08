@@ -596,4 +596,33 @@ const CoL10nBundle koBundle = CoL10nBundle(
     ],
     'hospitality.folioItem': ['객실료(예시)', '룸서비스(예시)', '추가 옵션(예시)'],
   },
+  // The texts that Korean writes as English does: units, acronyms, the name of
+  // a programming language, and the Korean plate pattern that the English
+  // bundle keeps. The language coverage gate reads this list.
+  allowSameAsEnglish: <String, List<String>>{
+    // The weight and the volume of a grocery item are written alike.
+    'catalog.groceryUnit': ['*'],
+    // These unit labels have read in English since 0.10.0, and the output of
+    // Korean is kept byte for byte.
+    'catalog.commerceUnit': ['*'],
+    // Acronyms and file formats of the exam questions.
+    'exam_prep.correctChoice': ['WHERE', 'TCP', 'HTTP'],
+    'exam_prep.wrongChoice1': ['JPEG', 'PNG'],
+    'exam_prep.wrongChoice2': ['CSS', 'MP3'],
+    'exam_prep.wrongChoice3': ['SVG', 'TTF'],
+    // The name of a programming language.
+    'brokerage.skillTag': ['Dart'],
+    // The two approved fictional creators: English writes their Korean names.
+    'fandom.creatorName': ['*'],
+    // English keeps the Korean plate pattern, and Korean is where it belongs.
+    'logistics.vehiclePlate': ['*'],
+    // Units, acronyms, and names of the Korean clinic and SaaS data.
+    'clinic.procedures.unit': ['cc'],
+    'clinic.drugForms.unit': ['mg', 'g'],
+    'clinic.questions.options': ['SNS'],
+    'clinic.cardIssuers': ['BC'],
+    'clinic.texts.labels': ['HIFU', 'IPL'],
+    'clinic.ops.patientTags.label': ['VIP'],
+    'saas.labels': ['SMS', 'LMS', 'DUR'],
+  },
 );

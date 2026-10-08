@@ -68,6 +68,7 @@ export 'src/domain_packs/co_logistics_domain.dart';
 export 'src/domain_packs/co_hospitality_domain.dart';
 export 'src/korea.dart';
 export 'src/korean_values.dart';
+export 'src/language_coverage/co_language_coverage.dart';
 export 'src/l10n/co_faker_l10n.dart';
 export 'src/l10n/co_l10n_bundle.dart';
 export 'src/l10n/co_l10n_registry.dart';
