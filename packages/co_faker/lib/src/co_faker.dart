@@ -1,4 +1,5 @@
 import 'clinic.dart';
+import 'co_faker_languages.dart';
 import 'co_faker_locale.dart';
 import 'countries/co_faker_countries.dart';
 import 'countries/co_faker_country.dart';
@@ -47,6 +48,13 @@ class CoFaker {
   /// `fr`, and `de`, and national codes such as `en_US` or `ja-JP` for the
   /// countries in [CoFakerCountries]. A code first tries an exact custom or
   /// built-in locale, then falls back to the language, then English.
+  ///
+  /// The language codes that predate national locales (`en`, `ko`, `ja`,
+  /// `zh`, `es`, `fr`, `de`) keep their language-only data, which is thinner
+  /// than the data of a national locale such as `ja_JP`. To follow an app's
+  /// language setting, use [CoFaker.forLanguage] instead: it also reads tags
+  /// such as `zh-Hans` and `ja_JP.UTF-8`, and gives each language the data
+  /// of its national locale.
   CoFaker({
     String locale = 'en',
     int? seed,
@@ -103,8 +111,63 @@ class CoFaker {
     );
   }
 
+  /// Creates a generator for an app's language setting [tag], such as the
+  /// BCP-47 tag `zh-Hans` or `pt-BR`, the POSIX locale `ja_JP.UTF-8`, or the
+  /// output of Flutter's `Locale.toLanguageTag()`.
+  ///
+  /// [CoFakerLanguages.resolve] reads the tag: case, `-` versus `_`, the
+  /// script subtag, the encoding, and the modifier are ignored. The language
+  /// is then generated with the national locale of its country: `en` with
+  /// `en_US`, `zh` with `zh_CN`, `ja` with `ja_JP`, `de` with `de_DE`, `fr`
+  /// with `fr_FR`, `ru` with `ru_RU`, `it` with `it_IT`, and `pt` with
+  /// `pt_BR`. That is the data of [CoFaker.forCountry], whereas
+  /// `CoFaker(locale: 'ja')` selects the thinner language-only data. `ko` and
+  /// `es` have no national locale and keep their language-only locales.
+  ///
+  /// A language that is not supported, and Traditional Chinese (`zh-Hant`,
+  /// `zh_TW`, `zh_HK`, `zh_MO`), get English (`en_US`): its readers are never
+  /// handed Simplified text. `CoFakerLanguages.resolve(tag).supported` tells
+  /// whether a setting was honored.
+  ///
+  /// [seed], [now], [locales], [random], and [domains] are passed to the
+  /// [CoFaker] constructor unchanged. [locales] are looked up by the code of
+  /// the resolved locale (`ja_jp`), not by the tag or the language code, so
+  /// register an override under `CoFakerLanguage.locale`.
+  ///
+  /// ```dart
+  /// final faker = CoFaker.forLanguage('zh-Hans-CN', seed: 7);
+  /// faker.locale;   // zh_cn
+  /// faker.language; // zh
+  /// ```
+  factory CoFaker.forLanguage(
+    String tag, {
+    int? seed,
+    DateTime? now,
+    Map<String, CoFakerLocale> locales = const <String, CoFakerLocale>{},
+    CoRandom? random,
+    List<CoFakerDomain> domains = const <CoFakerDomain>[],
+  }) {
+    return CoFaker(
+      locale: CoFakerLanguages.resolve(tag).locale,
+      seed: seed,
+      now: now,
+      locales: locales,
+      random: random,
+      domains: domains,
+    );
+  }
+
   /// The normalized locale code selected for this generator.
   final String locale;
+
+  /// The language of [locale]: the code before its first `_`, such as `ja`
+  /// for `ja_jp` and `zh` for `zh_hans`.
+  ///
+  /// It follows [locale] and nothing else, so `zh_tw`, which has always been
+  /// served the Chinese data, reports `zh`. [CoFakerLanguages.resolve] is the
+  /// strict reader: it refuses Traditional Chinese and says whether a
+  /// language setting is supported.
+  String get language => _languageCode(locale);
 
   /// The clock used by date generation.
   final DateTime now;

@@ -9,6 +9,7 @@ export 'src/clinic_data.dart';
 export 'src/clinic_ops.dart';
 export 'src/clinic_texts.dart';
 export 'src/co_faker.dart';
+export 'src/co_faker_languages.dart';
 export 'src/co_faker_locale.dart';
 export 'src/co_faker_locales.dart';
 export 'src/countries/co_faker_countries.dart';
