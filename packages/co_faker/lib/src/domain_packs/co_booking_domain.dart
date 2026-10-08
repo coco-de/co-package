@@ -18,14 +18,7 @@ class CoBookingDomain extends CoFakerDomain {
     'reservationNo': codeRole('DEMO-RS', dated: true),
     'timeSlotLabel': authoredRole((f, c) => _slot(f, c).label, coherent: true),
     'slotLabel': authoredRole((f, c) => _slot(f, c).label, coherent: true),
-    'cancelReason': textRole(
-      ['일정 변경(예시)', '다른 시간 선택(예시)', '개인 사정(예시)'],
-      [
-        'Schedule changed (example)',
-        'Another time chosen (example)',
-        'Personal reason (example)',
-      ],
-    ),
+    'cancelReason': textRole('booking.cancelReason'),
     'startsAt': authoredRole(
       (f, c) => _slot(f, c).startsAt,
       type: 'DateTime',

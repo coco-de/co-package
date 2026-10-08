@@ -9,14 +9,7 @@ class CoGroupDealDomain extends CoFakerDomain {
   String get name => 'group_deal';
   @override
   Map<String, CoDomainRole> get roles => {
-    'dealTitle': textRole(
-      ['겨울 감귤 공동구매', '무선 이어폰 공동구매', '면 수건 세트 공동구매'],
-      [
-        'Winter citrus group deal',
-        'Wireless earphone group deal',
-        'Cotton towel group deal',
-      ],
-    ),
+    'dealTitle': textRole('group_deal.dealTitle'),
     'dealCategory': enumRole([
       'fresh',
       'pantry',
@@ -24,30 +17,15 @@ class CoGroupDealDomain extends CoFakerDomain {
       'digital',
       'beauty',
     ]),
-    'optionLabel': textRole(
-      ['일반 크기', '선물 포장', '기본 색상'],
-      ['Regular size', 'Gift wrapping', 'Standard color'],
-    ),
+    'optionLabel': textRole('group_deal.optionLabel'),
     'inviteCode': authoredRole(
       (f, _) =>
           'MOA-${f.random.string(4, alphabet: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789')}',
     ),
-    'rewardLabel': textRole(
-      ['참여 스탬프', '모의 적립 포인트', '배송 혜택'],
-      ['Participation stamp', 'Illustrative reward points', 'Shipping benefit'],
-    ),
-    'benefitTitle': textRole(
-      ['무료배송 예시 쿠폰', '다음 참여 예시 쿠폰'],
-      ['Example free shipping coupon', 'Example next deal coupon'],
-    ),
+    'rewardLabel': textRole('group_deal.rewardLabel'),
+    'benefitTitle': textRole('group_deal.benefitTitle'),
     'tierName': enumRole(['bronze', 'silver', 'gold']),
-    'settleNote': textRole(
-      ['성사한 참여 건을 집계한 예시입니다.', '취소한 참여 건은 집계에서 뺀 예시입니다.'],
-      [
-        'Example total of successful participations.',
-        'Example total excluding canceled participations.',
-      ],
-    ),
+    'settleNote': textRole('group_deal.settleNote'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

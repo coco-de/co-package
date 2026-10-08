@@ -29,48 +29,17 @@ class CoGroceryDomain extends CoFakerDomain {
       (f, c) => _item(f, c).unitLabel,
       coherent: true,
     ),
-    'originRegion': textRole(
-      ['솔빛 재배권역(가상)', '가람 생산권역(가상)', '들녘 재배권역(가상)'],
-      [
-        'Solbit growing zone (fictional)',
-        'Garam growing zone (fictional)',
-        'Field growing zone (fictional)',
-      ],
-    ),
-    'harvestNote': textRole(
-      ['수확일과 포장일은 예시입니다.', '신선도 표시는 가상 상품 설명입니다.'],
-      [
-        'Harvest and packing dates are illustrative.',
-        'Freshness text describes a fictional product.',
-      ],
-    ),
-    'deliveryZone': textRole(
-      ['솔빛 A권역(가상)', '가람 B권역(가상)', '들녘 C권역(가상)'],
-      ['Demo Solbit zone A', 'Demo Garam zone B', 'Demo Field zone C'],
-    ),
-    'slotLabel': textRole(
-      ['새벽 06:00~07:00', '저녁 18:00~20:00'],
-      ['Dawn 06:00–07:00', 'Evening 18:00–20:00'],
-    ),
-    'substitutionNote': textRole(
-      ['비슷한 중량의 품목으로 대체한 예시입니다.', '대체 없이 해당 줄을 환불한 예시입니다.'],
-      [
-        'Example replacement with a similar weight.',
-        'Example refund without substitution.',
-      ],
-    ),
+    'originRegion': textRole('grocery.originRegion'),
+    'harvestNote': textRole('grocery.harvestNote'),
+    'deliveryZone': textRole('grocery.deliveryZone'),
+    'slotLabel': textRole('grocery.slotLabel'),
+    'substitutionNote': textRole('grocery.substitutionNote'),
     'pickerName': firstNameRole(),
     'binLocation': authoredRole(
       (f, c) =>
           '${f.random.pick(['A', 'B', 'C'])}-${(1 + c.index % 12).toString().padLeft(2, '0')}-${1 + c.index % 4}',
     ),
-    'doorNote': textRole(
-      ['공동현관은 호출해 주세요.', '문 앞 보관 대신 직접 수령합니다.'],
-      [
-        'Please ring at the shared entrance.',
-        'Hand delivery instead of leaving at the door.',
-      ],
-    ),
+    'doorNote': textRole('grocery.doorNote'),
     'productCode': authoredRole((f, c) => _item(f, c).code, coherent: true),
     'price': authoredRole(
       (f, c) => _item(f, c).price,
@@ -83,18 +52,7 @@ class CoGroceryDomain extends CoFakerDomain {
       coherent: true,
     ),
     'categoryParent': parentRole(7),
-    'categoryName': taxonomyRole(
-      ['과일', '채소', '간편식', '곡물', '육류', '수산', '유제품'],
-      [
-        'Fruit',
-        'Vegetables',
-        'Prepared foods',
-        'Grain',
-        'Meat',
-        'Seafood',
-        'Dairy',
-      ],
-    ),
+    'categoryName': taxonomyRole('grocery.categoryName'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

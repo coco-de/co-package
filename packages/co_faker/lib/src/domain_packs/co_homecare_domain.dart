@@ -15,30 +15,8 @@ class CoHomecareDomain extends CoFakerDomain {
   @override
   Map<String, CoDomainRole> get roles => {
     'recipientName': maskedNameRole(),
-    'careGrade': textRole(
-      ['장기요양 1등급', '장기요양 2등급', '장기요양 3등급', '장기요양 4등급', '장기요양 5등급', '인지지원등급'],
-      [
-        'Care grade 1',
-        'Care grade 2',
-        'Care grade 3',
-        'Care grade 4',
-        'Care grade 5',
-        'Cognitive support grade',
-      ],
-    ),
-    'careTaskLabel': authoredRole(
-      (f, c) => (f.locale.startsWith('ko')
-          ? ['식사 돕기', '복약 확인', '위생 돕기', '이동 돕기', '배변 돕기', '말벗']
-          : [
-              'Meal assistance',
-              'Medication record check',
-              'Hygiene assistance',
-              'Mobility assistance',
-              'Toileting assistance',
-              'Conversation',
-            ])[c.index % 6],
-      coherent: true,
-    ),
+    'careGrade': textRole('homecare.careGrade'),
+    'careTaskLabel': indexedTextRole('homecare.careTaskLabel'),
     'careTaskKind': enumRole([
       'meal',
       'medication',

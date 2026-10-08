@@ -34,41 +34,11 @@ class CoVetDomain extends CoFakerDomain {
       type: 'double',
       coherent: true,
     ),
-    'vaccineName': textRole(
-      ['종합백신(예시)', '광견병 예방접종(예시)', '고양이 종합백신(예시)'],
-      [
-        'Combination vaccine (example)',
-        'Rabies vaccination (example)',
-        'Feline combination vaccine (example)',
-      ],
-    ),
-    'preventiveProduct': textRole(
-      ['심장사상충 예방용 예시제(가상)', '외부 기생충 예방용 예시제(가상)'],
-      [
-        'Heartworm preventive example (fictional)',
-        'External parasite preventive example (fictional)',
-      ],
-    ),
-    'vetDiagnosis': textRole(
-      ['피부 상태 관찰(예시)', '소화 상태 확인(예시)', '정기 건강 확인(예시)'],
-      [
-        'Skin observation (example)',
-        'Digestive observation (example)',
-        'Routine health observation (example)',
-      ],
-    ),
-    'vetDrug': textRole(
-      ['피부 관리 예시제(가상)', '소화 관리 예시제(가상)', '눈 관리 예시제(가상)'],
-      [
-        'Skin care example (fictional)',
-        'Digestive care example (fictional)',
-        'Eye care example (fictional)',
-      ],
-    ),
-    'clinicRoom': textRole(
-      ['동물 진료실 1', '동물 진료실 2', '예방접종실'],
-      ['Vet room 1', 'Vet room 2', 'Vaccination room'],
-    ),
+    'vaccineName': textRole('vet.vaccineName'),
+    'preventiveProduct': textRole('vet.preventiveProduct'),
+    'vetDiagnosis': textRole('vet.vetDiagnosis'),
+    'vetDrug': textRole('vet.vetDrug'),
+    'clinicRoom': textRole('vet.clinicRoom'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {

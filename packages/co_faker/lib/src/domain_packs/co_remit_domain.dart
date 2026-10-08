@@ -52,14 +52,7 @@ class CoRemitDomain extends CoFakerDomain {
       'medical_bill',
       'other',
     ]),
-    'flagRule': textRole(
-      ['1건 고액(데모 기준)', '추가 서류 확인(데모 기준)', '반복 요청 확인(데모 기준)'],
-      [
-        'Large transfer (demo rule)',
-        'Additional document check (demo rule)',
-        'Repeated request check (demo rule)',
-      ],
-    ),
+    'flagRule': textRole('remit.flagRule'),
     'accountMasked': authoredRole(
       (f, c) => _recipient(f, c).accountMasked,
       coherent: true,

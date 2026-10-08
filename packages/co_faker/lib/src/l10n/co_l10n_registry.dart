@@ -13,9 +13,10 @@ import 'zh/zh_bundle.dart';
 ///
 /// Korean and English carry the authored text of the domain packs and the
 /// dedicated generators. Chinese, Japanese, German, French, Russian, Italian,
-/// and Portuguese are registered with empty bundles: a language Story fills
-/// its own bundle file and never edits the registry. A language whose bundle
-/// is empty has no domain text yet, and its generators read English.
+/// and Portuguese are registered with empty bundles: localizing a language
+/// means filling its own bundle file, and the registry never changes. A
+/// language whose bundle is empty has no domain text yet, and its generators
+/// read English.
 ///
 /// The bundles are checked against the English one when the registry is first
 /// read: a key that English does not define, a list whose length differs from
@@ -88,8 +89,8 @@ abstract final class CoL10nRegistry {
 }
 
 /// Every language's bundle. Each language has its own entry, separated by a
-/// blank line, and a language Story edits only its bundle file, never this
-/// list.
+/// blank line, and localizing a language edits only its bundle file, never
+/// this list.
 const Map<String, CoL10nBundle> _registered = <String, CoL10nBundle>{
   'ko': koBundle,
 

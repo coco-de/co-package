@@ -1,4 +1,3 @@
-import '../co_faker.dart';
 import '../domain.dart';
 
 // New packs deliberately have no global/suffix field patterns. Entity mappings
@@ -7,7 +6,8 @@ import '../domain.dart';
 CoDomainRole authoredRole(
   CoDomainRoleGenerator generate, {
   String type = 'String',
-  String description = 'Authored fictional example; Korean or English fallback',
+  String description =
+      'Authored fictional example in the locale language; English fallback',
   bool coherent = false,
 }) => CoDomainRole(
   generate,
@@ -20,9 +20,17 @@ CoDomainRole authoredRole(
       : [type],
 );
 
-/// Picks from authored Korean/English text, never generic lorem.
-CoDomainRole textRole(List<String> ko, List<String> en) =>
-    authoredRole((f, _) => f.random.pick(f.locale.startsWith('ko') ? ko : en));
+/// Picks from the authored text of [key] in the generator's language, never
+/// generic lorem.
+///
+/// The key is `<pack>.<role>`: its texts live in the language bundles (see
+/// `CoL10nBundle`), so a language needs no change here.
+CoDomainRole textRole(String key) => authoredRole((f, _) => f.l10n.pick(key));
+
+/// Cycles through the authored text of [key] in record order without
+/// consuming random state, so roles that follow the same row agree.
+CoDomainRole indexedTextRole(String key) =>
+    authoredRole((f, c) => f.l10n.pickBalanced(key, c.index), coherent: true);
 
 /// Cycles enum codes in record order without consuming random state.
 CoDomainRole enumRole(List<String> values) => authoredRole(
@@ -49,10 +57,14 @@ CoDomainRole decimalRole(double min, double max, {int decimals = 1}) =>
 CoDomainRole firstNameRole() => authoredRole((f, _) => f.person.firstName());
 
 /// Produces a masked example rather than a complete identity.
+///
+/// The language's `common.maskedName` template chooses what is masked; only
+/// the name it uses is drawn.
 CoDomainRole maskedNameRole() => authoredRole(
-  (f, _) => f.locale.startsWith('ko')
-      ? '${f.person.lastName()}○○'
-      : '${f.person.firstName().substring(0, 1)}***',
+  (f, _) => f.l10n.format('common.maskedName', {
+    'lastName': () => f.person.lastName(),
+    'initial': () => f.person.firstName().substring(0, 1),
+  }),
   description: 'Masked fictional name; no complete identity',
 );
 
@@ -79,18 +91,20 @@ CoDomainRole parentRole(int rootCount) => authoredRole(
 
 /// Names the same two-level taxonomy as [parentRole], keeping children under
 /// their root's vocabulary instead of independently sampling unrelated labels.
-CoDomainRole taxonomyRole(List<String> ko, List<String> en) =>
-    authoredRole((f, c) {
-      final names = f.locale.startsWith('ko') ? ko : en;
-      final rootCount = names.length;
-      if (c.index < rootCount) {
-        return names[c.index];
-      }
-      final child = c.index - rootCount;
-      final root = names[child % rootCount];
-      final ordinal = 1 + child ~/ rootCount;
-      return localized(f, '$root · 세부 $ordinal', '$root · subtopic $ordinal');
-    }, coherent: true);
+///
+/// The root names are the texts of [key]; a child is named by the language's
+/// `common.taxonomyChild` template.
+CoDomainRole taxonomyRole(String key) => authoredRole((f, c) {
+  final names = f.l10n.list(key);
+  final rootCount = names.length;
+  if (c.index < rootCount) {
+    return names[c.index];
+  }
+  final child = c.index - rootCount;
+  final root = names[child % rootCount];
+  final ordinal = 1 + child ~/ rootCount;
+  return f.l10n.format('common.taxonomyChild', {'root': root, 'n': ordinal});
+}, coherent: true);
 
 /// Adds an integer primary key to primitive role fields.
 Map<String, String> roleFields(Map<String, String> roles) => {
@@ -102,7 +116,3 @@ Map<String, String> roleFields(Map<String, String> roles) => {
 Map<String, String> roleMapping(Iterable<String> fields) => {
   for (final field in fields) field: field,
 };
-
-/// Selects Korean or an English fallback without random draws.
-String localized(CoFaker f, String ko, String en) =>
-    f.locale.startsWith('ko') ? ko : en;

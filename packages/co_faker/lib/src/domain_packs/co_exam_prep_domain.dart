@@ -43,29 +43,12 @@ class CoExamPrepDomain extends CoFakerDomain {
       (f, c) => _question(f, c).difficulty,
       coherent: true,
     ),
-    'examPaperTitle': textRole(
-      ['1회 실전(가상)', '2회 실전(가상)', '단원 확인 시험(가상)'],
-      [
-        'Practice paper 1 (fictional)',
-        'Practice paper 2 (fictional)',
-        'Unit check paper (fictional)',
-      ],
-    ),
-    'studyTaskTitle': textRole(
-      ['전송 계층 10문항 풀기', '접근 제어 오답 복습', 'SQL 기초 확인'],
-      [
-        'Solve ten transport questions',
-        'Review access-control mistakes',
-        'Check SQL basics',
-      ],
-    ),
+    'examPaperTitle': textRole('exam_prep.examPaperTitle'),
+    'studyTaskTitle': textRole('exam_prep.studyTaskTitle'),
     'nickname': firstNameRole(),
     'section': authoredRole((f, c) => _question(f, c).section, coherent: true),
     'unitParent': parentRole(4),
-    'taxonomyName': taxonomyRole(
-      ['데이터베이스', '네트워크', '프로그래밍 기초', '정보보안'],
-      ['Database', 'Networking', 'Programming basics', 'Information security'],
-    ),
+    'taxonomyName': taxonomyRole('exam_prep.taxonomyName'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
