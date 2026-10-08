@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#58 작업내역 — 언어 설정 해석 (CoFakerLanguages · faker.language · CoFaker.forLanguage)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; --accent: #0969da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; --accent: #4493f8; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  main { max-width: 76ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 20px 0 4px; }
+  a { color: var(--accent); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  pre, code { background: var(--code); border-radius: 6px; }
+  code { padding: 1px 5px; font-size: 0.92em; }
+  pre { padding: 12px; overflow-x: auto; }
+  pre code { padding: 0; background: none; }
+  ul, ol { padding-left: 1.4em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 2px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>언어 설정 해석 — CoFakerLanguages · faker.language · CoFaker.forLanguage</h1>
+  <p class="muted">#58 (Epic #57 · S1) · <code>story/58-language-settings</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> 앱의 언어 설정(<code>zh-Hans</code> · <code>pt-BR</code> · <code>ja_JP.UTF-8</code> · Flutter <code>Locale.toLanguageTag()</code>)을 받아 지원 언어와 로케일을 정하는 단일 진입점을 추가했다. 기존 <code>CoFaker(locale:)</code> 의 해석은 한 줄도 바꾸지 않았다 — 새 해석은 <code>CoFakerLanguages.resolve</code> 와 <code>CoFaker.forLanguage</code> 에만 있다.</p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>파일</th><th class="num">+</th><th>역할</th></tr>
+    <tr><td><code>lib/src/co_faker_languages.dart</code> (신규)</td><td class="num">312</td><td><code>CoFakerLanguages</code>(레지스트리 + <code>resolve</code>) · <code>CoFakerLanguage</code> · <code>CoFakerLanguageResolution</code> · <code>CoFakerScript</code></td></tr>
+    <tr><td><code>lib/src/co_faker.dart</code></td><td class="num">72</td><td><code>CoFaker.forLanguage</code> 팩토리 · <code>CoFaker.language</code> 게터 · 생성자 dartdoc 에 forLanguage 안내 (동작 변경 없음)</td></tr>
+    <tr><td><code>lib/co_faker.dart</code></td><td class="num">1</td><td>신규 파일 export</td></tr>
+    <tr><td><code>test/co_faker_languages_test.dart</code> (신규)</td><td class="num">558</td><td>정규화 표 · 번체 거부 · forLanguage 매핑 · 결정성 · 생성자 불변</td></tr>
+    <tr><td><code>README.md</code></td><td class="num">78</td><td>"Language settings" 절</td></tr>
+  </table>
+  <p class="muted">합계 5개 파일, +1021 −0. 기존 파일에서 지운 줄이 없다 — <code>test/legacy_locale_stability_test.dart</code> 와 0.10.0 스냅샷 픽스처는 손대지 않았다. CHANGELOG 도 건드리지 않았다(S4 소관).</p>
+
+  <h3>커밋</h3>
+  <ul>
+    <li><code>feat(co_faker): ✨ 언어 설정 해석 — CoFakerLanguages · faker.language · CoFaker.forLanguage (#58)</code></li>
+    <li><code>test(co_faker): ✅ 언어 설정 해석 — 정규화 표 · forLanguage 매핑 · 번체 거부 · 결정성 (#58)</code></li>
+    <li><code>docs(co_faker): 📝 README 에 Language settings 절 추가 (#58)</code></li>
+    <li><code>fix(co_faker): 🐛 확장 · 사적 사용 서브태그를 간체/번체 판정에서 제외하고 문서를 다듬는다 (#58)</code> — 독립 리뷰 반영</li>
+    <li class="muted">이 문서를 담은 문서 커밋(작업 문서만 담음)은 목록에서 뺐다.</li>
+  </ul>
+
+  <h2>왜 이렇게 했나</h2>
+
+  <h3>1. 진입점을 둘로 나눴다 — 생성자는 그대로</h3>
+  <p><code>CoFaker(locale:)</code> 는 소문자화와 <code>-</code> → <code>_</code> 만 하고 언어는 첫 <code>_</code> 앞이다. 이 규칙을 더 똑똑하게 고치면(<code>.UTF-8</code> 제거, 스크립트 무시) 기존 사용처의 출력이 달라질 수 있다 — 특히 <code>zh_TW</code> 는 지금 중국어(간체) 데이터를 받고, <code>ja_JP.UTF-8</code> 는 <code>ja</code> 언어 전용 데이터로 폴백한다. 그래서 생성자는 건드리지 않고, 새 규칙은 <code>resolve</code>/<code>forLanguage</code> 에만 두었다. <code>faker.language</code> 도 생성자가 데이터 선택에 쓰는 것과 같은 규칙(<code>locale</code> 의 첫 <code>_</code> 앞)으로 파생한다.</p>
+  <p class="muted">버린 대안: 생성자 정규화 개선 — 바이트 동일 계약(#55)을 깰 위험이 있고, 이 Story 의 AC("생성자의 출력은 바뀌지 않는다")와 충돌한다.</p>
+
+  <h3>2. 언어 → 국가 로케일, 폴백은 <code>en_us</code></h3>
+  <p>이슈의 매핑 그대로 <code>ko→ko · en→en_us · zh→zh_cn · ja→ja_jp · de→de_de · fr→fr_fr · ru→ru_ru · it→it_it · pt→pt_br</code>. 지원 밖 언어와 번체는 영어 <em>언어</em>의 국가 로케일(<code>en_us</code>)로 폴백한다 — <code>forLanguage('en')</code> 과 같은 풍부한 데이터이고, 이 Story 의 존재 이유("얇은 언어 데이터가 아니라 국가 데이터")와 일관된다.</p>
+  <p class="muted">버린 대안: 폴백을 얇은 <code>en</code> 로케일로 — 영어 설정과 지원 밖 설정이 서로 다른 영어 데이터를 받게 된다.</p>
+
+  <h3>3. 번체 규칙은 co_demo_prefs 와 같게, 의존은 없이</h3>
+  <p><code>DemoLocale.parse</code> 와 같은 집합(<code>hant</code> · <code>tw</code> · <code>hk</code> · <code>mo</code> 이면 거부, 스크립트 <code>Hans</code> 면 지역과 무관하게 간체)을 co_faker 안에 같은 의미로 구현했다. co_faker 는 co_demo_prefs 에 의존하지 않는다 — 규칙만 맞췄다. 테스트가 데모 로케일 태그 10종(<code>ar</code> 제외)이 지원으로 읽히는지 확인한다. 한 곳만 다르다: BCP-47 확장(<code>-u-</code>)과 사적 사용(<code>-x-</code>) 뒤의 서브태그는 읽지 않는다(<code>zh-CN-x-hk</code> 가 번체로 거부되지 않게 — 리뷰 지적).</p>
+
+  <h3>4. <code>es</code> 는 지원 + 기본 모듈만</h3>
+  <p>이슈의 "기존 <code>es</code> 는 기본 모듈만 지원하는 언어로 등록"을 <code>supported == true</code> · <code>domain == false</code> · 로케일 <code>es</code>(국가 로케일이 없어 언어 전용 로케일 그대로)로 읽었다. 레지스트리에 있는 언어는 전부 "지원"이고, 도메인 데이터 유무는 <code>domain</code> 이 따로 말한다.</p>
+
+  <h3>5. 지역은 읽기만 한다</h3>
+  <p><code>resolve</code> 는 <code>region</code>(<code>CN</code> · <code>419</code> 등)을 보고하지만 로케일 선택에는 쓰지 않는다 — <code>en-GB</code> 는 <code>en_us</code>, <code>pt-PT</code> 는 <code>pt_br</code>. 이슈의 매핑이 언어 단위이고, S2 의 도메인 번들도 언어 키이며, 기존 <code>CoFaker(locale: 'pt_PT')</code> 도 이미 브라질 데이터이기 때문이다. 특정 국가가 필요하면 <code>CoFaker.forCountry</code> 가 있다. <code>region</code> 이 이미 노출돼 있어 나중에 지역 인식 선택을 API 변경 없이 얹을 수 있다.</p>
+
+  <h3>6. <code>domain</code> 은 한 곳의 조회 — S2 가 교체</h3>
+  <p><code>CoFakerLanguage.domain</code> 은 언어마다 달린 플래그가 아니라 파일 맨 아래 비공개 함수 <code>_hasDomainData(code)</code> 하나를 읽는다. 지금은 <code>ko</code> · <code>en</code> 만 true 이고, 그 함수의 주석에 "S2 가 도메인 번들 레지스트리 계산으로 교체한다"고 적어 두었다. 레지스트리 항목에는 <code>domain</code> 인자가 없으므로, 이후 언어 Story 가 레지스트리를 고칠 일이 없다. 테스트도 <code>ko</code>/<code>en</code> 은 true, <code>es</code> 는 false 만 단언하고 나머지 언어는 단언하지 않는다 — 언어 Story 가 도메인 데이터를 넣을 때 이 테스트가 깨지지 않게 하려는 것이다.</p>
+
+  <h3>7. 이슈가 이름을 주지 않은 타입</h3>
+  <p>이슈 본문은 <code>CoFakerLanguages</code> · <code>CoFaker.language</code> · <code>CoFaker.forLanguage</code> · <code>supported</code> · <code>domain</code> 만 정한다. 나머지는 <code>CoFakerCountries</code>/<code>CoFakerCountry</code> 규약에 맞춰 정했다: 레지스트리 항목 <code>CoFakerLanguage</code>(<code>code</code> · <code>locale</code> · <code>script</code> · <code>domain</code>), <code>resolve</code> 결과 <code>CoFakerLanguageResolution</code>(<code>language</code> · <code>supported</code> · <code>region</code> · <code>locale</code>), 문자 체계 <code>CoFakerScript</code>(<code>latin</code> · <code>han</code> · <code>kana</code> · <code>cyrillic</code> · <code>hangul</code>). 그 밖의 공개 멤버(<code>byCode</code> 같은 조회, 태그 파서)는 만들지 않았다.</p>
+
+  <h3>8. 사용자 지정 <code>locales</code></h3>
+  <p><code>forLanguage</code> 는 <code>locales</code> 를 생성자에 그대로 넘긴다. 따라서 해석된 로케일 코드(<code>ja_jp</code>)로 조회되고, 언어 코드(<code>ja</code>)로 등록한 사용자 로케일은 내장 국가 로케일에 가려진다 — dartdoc · README · 테스트에 적었다. <code>CoFaker(locale: 'ja', locales: {'ja': custom})</code> 는 전과 같이 동작한다.</p>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>lib/src/co_faker_languages.dart</code> 의 <code>CoFakerLanguages.resolve</code> 와 아래 비공개 헬퍼(<code>_subtags</code> · <code>_region</code> · <code>_isSimplifiedChinese</code>). 파일 끝의 <code>_hasDomainData</code> 가 S2 의 교체 지점이다.</li>
+    <li><code>lib/src/co_faker.dart</code> 의 <code>forLanguage</code> · <code>language</code>. 변경은 추가뿐이고 기존 코드 경로(생성자 · <code>_normalizeLocale</code> · <code>_languageCode</code>)는 그대로다.</li>
+    <li><code>test/co_faker_languages_test.dart</code> 위쪽의 표(<code>_supported</code> · <code>_traditional</code> · <code>_unsupported</code>)가 정규화 규칙의 명세다. "the CoFaker constructor" 그룹은 생성자가 변하지 않았음을 고정한다.</li>
+    <li><code>README.md</code> 의 "Language settings" 절. 예제 값(<code>马浩然</code>)은 seed 7 로 실제 실행해 확인했다.</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>109개 파일, 변경 0 (기준선 107개)</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>318개 통과 (기준선 284 + 신규 34), 0.10.0 스냅샷 15개 포함 · 스냅샷 파일 수정 없음</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported 유지</td></tr>
+    <tr><td>임의 입력 20만 개 (저장소 밖 스크래치)</td><td><code>resolve</code> · <code>forLanguage</code> 가 예외 없이, 레지스트리 밖 언어 없이, 미지원이면 영어로 동작</td></tr>
+    <tr><td>독립 코드 리뷰 (<code>code-review</code> high)</td><td>지적 8건 — 1건 코드 수정, 4건 문서 · 테스트 보강, 3건 사유와 함께 유지 (아래)</td></tr>
+  </table>
+
+  <h3>리뷰 지적과 처리</h3>
+  <table>
+    <tr><th>지적</th><th>처리</th></tr>
+    <tr><td><code>zh-CN-x-hk</code> 처럼 확장 · 사적 사용 서브태그의 <code>hk</code> 가 번체로 읽힌다 (<code>region</code> 과 불일치)</td><td><strong>수정.</strong> 첫 한 글자 서브태그 앞까지만 읽는다. 테스트 행 추가.</td></tr>
+    <tr><td><code>forLanguage('ko' · 'es')</code> 는 <code>postalAddress()</code> 등이 <code>StateError</code></td><td>AC 의 <code>ko→ko</code> 매핑과 #55 의 기존 동작의 결과라 코드는 유지. dartdoc · README 에 명시하고 테스트로 고정.</td></tr>
+    <tr><td><code>locales</code> 가 해석된 코드(<code>ja_jp</code>)로 조회돼 <code>ja</code> 키가 무시된다</td><td>설계대로 유지(생성자 동작을 그대로 쓴다). dartdoc · README 에 이전 안내와 등록 위치 명시, 테스트로 고정.</td></tr>
+    <tr><td><code>domain</code> 이 고정값인데 문서는 계산이라 단정하고, 주석이 이슈 번호를 가리킨다</td><td>지시대로 한 곳의 함수로 두되, 공개 문서에서 아직 없는 계산을 단정하는 문장과 이슈 번호를 제거. S2 교체 안내는 비공개 함수 주석에 둔다.</td></tr>
+    <tr><td>3글자 ISO 639-2/3 코드(<code>kor</code> · <code>jpn</code>)와 레거시 코드는 미지원</td><td>유지. AC 밖이고 <code>DemoLocale.parse</code> 도 같은 범위. 후속 후보.</td></tr>
+    <tr><td>지역을 읽고도 쓰지 않아 <code>pt-PT</code> 가 브라질 데이터</td><td>유지. 위 "왜 이렇게 했나 5". 문서에 명시.</td></tr>
+    <tr><td><code>CoFaker(locale: 'zh_TW').language</code> 는 <code>zh</code> 인데 <code>resolve</code> 는 미지원</td><td>AC 가 정한 동작(<code>language</code> 는 <code>locale</code> 에서 파생, <code>zh_TW</code> 출력 불변). <code>CoFakerLanguages.resolve(locale).supported</code> 로 확인하도록 dartdoc 에 명시.</td></tr>
+    <tr><td><code>CoFakerLanguageResolution</code> 에 <code>==</code>/<code>hashCode</code> 가 없다</td><td>유지. <code>CoFakerCountry</code> · <code>CoFakerLocale</code> 등 이 패키지의 데이터 타입과 같다.</td></tr>
+  </table>
+
+  <h2>범위 밖</h2>
+  <ul>
+    <li><strong>CHANGELOG</strong> — S4(#61) 소관이라 건드리지 않았다.</li>
+    <li><strong>도메인 번들 레지스트리</strong> — S2(#59). 이 Story 는 <code>domain</code> 의 자리만 열었다.</li>
+    <li><strong>clinic · saas 의 <code>_korean</code> 분기</strong> — S3(#60).</li>
+    <li><strong>지역 인식 로케일 선택</strong>(<code>en-GB</code> → <code>en_gb</code> 등) — 위 5번 참고. 후속에서 <code>region</code> 위에 얹을 수 있다.</li>
+    <li><strong>3글자 ISO 639-2 코드</strong>(<code>jpn</code> · <code>kor</code>) · 레거시 코드 — 지원 밖으로 읽는다.</li>
+    <li><strong>번체 중국어 · 스페인어/아랍어 도메인 데이터</strong> — Epic 제외 항목.</li>
+  </ul>
+
+  <h2>후속 Story 가 알아야 할 것</h2>
+  <ul>
+    <li><code>faker.language</code> 는 <code>locale</code> 에서만 파생되므로 <code>CoFaker(locale: 'zh_TW')</code> 는 <code>zh</code> 로 보고된다(데이터도 기존처럼 중국어). S2 가 <code>faker.language</code> 로 번들을 조회하면 이 코드들은 간체 도메인 문구를 받게 된다. "번체 독자에게 간체를 주지 않는다"를 도메인 문구에도 적용하려면 S2 에서 조회 전에 <code>CoFakerLanguages.resolve(faker.locale).supported</code> 를 확인하거나, 생성자의 <code>zh_TW</code> 출력 유지 계약과 어떻게 맞출지 정해야 한다.</li>
+    <li>생성자는 <code>ja_JP.UTF-8</code> 를 <code>ja_jp.utf_8</code> 로 두고 <code>ja</code> 언어 전용 데이터로 폴백한다(<code>ja.UTF-8</code> 처럼 <code>_</code> 가 없으면 영어, <code>faker.language</code> 는 <code>ja.utf</code>). 둘 다 기존 동작 그대로이고, <code>ja_JP.UTF-8</code> 쪽은 테스트로 고정했다.</li>
+    <li>S4 의 언어 커버리지 표는 <code>CoFakerLanguages.all</code>(10종)과 <code>CoFakerLanguage.domain</code> 을 읽으면 된다.</li>
+  </ul>
+</main></body></html>
