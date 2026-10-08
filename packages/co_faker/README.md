@@ -347,6 +347,46 @@ are locale independent and match typical enum names; `faker.clinic.label` and
 other locales fall back to English; a custom locale can supply its own
 `CoFakerClinicData` / `CoFakerSaasData`.
 
+### Language data: amounts and Korean-only values
+
+What differs by language is a field of the data, not a branch in the
+generators, so a language is added with data alone:
+
+- `currency` (`CoCurrencyFormat`) writes amounts: `$1,234` for English, `1,234`
+  for Korean, and with a pattern, separators, and fraction digits `¥1,234`,
+  `1.234,00 €`, `R$ 1.234,00`, or `1 234,00 ₽`. `faker.clinic.money(1234)` and
+  `faker.saas.money(1234)` write an amount the way the generated texts do.
+  Its code, symbol, and fraction digits should agree with the country data
+  (`CoFakerCountry.currencyCode`, `currencySymbol`, `currencyMinorUnits`).
+- `priceScale` (`CoClinicPriceScale`, `CoSaasPriceScale`) holds the rounding
+  units, the installment and split thresholds, the point unit, the VAT rate,
+  and the prepaid wallet amounts, in the currency of the data.
+- `clinicNameFormat` orders a clinic name; the texts that the generators
+  assemble (`회` or `x` of a package, the `님` of a mention, holiday names, date
+  labels, health messages, audit targets) are fields of `CoFakerClinicTexts`,
+  `CoFakerClinicOps`, and `CoFakerSaasOps`. A field that is missing falls back
+  to English.
+- `koreanValues` (`CoKoreanValues`) says which Korean-only values are
+  generated.
+
+Some concepts exist only in Korea: the resident registration number
+(주민등록번호, shown masked on a patient), the business registration number,
+card approval and cash receipt numbers, the public holiday calendar behind
+`closureNotice` (`CoFakerKorea.holidays`), and the national health insurance
+(`nhis`, `medicalAid1`, `medicalAid2`) and its insurers.
+
+| `koreanValues` | Used by | Generates |
+| --- | --- | --- |
+| `korean` | the Korean data | Korean phones, road-name addresses, and every Korean-only value |
+| `legacy` | the English data, and custom data that does not choose | the locale's phones and addresses, plus the Korean-only values English has always generated, so English output stays byte for byte stable |
+| `none` | the data of every other language | the locale's phones and, in a national locale, its postal addresses; a neutral masked ID (`maskedIdFormat`), business number (`businessNumberFormat`), and 6-digit authorization code; no cash receipt number and no public holidays |
+
+A language without data of its own gets the English data, and a code that is
+not a supported language (a custom code, or Traditional Chinese such as
+`zh_TW`) never receives another language's data. Maintainers add a language by
+filling `lib/src/l10n/<language>/<language>_clinic.dart` and
+`<language>_saas.dart`, which `lib/src/l10n/co_l10n_clinic.dart` already reads.
+
 ### Fake by construction
 
 Identity values look real but can never belong to a real person or company:
