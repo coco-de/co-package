@@ -3,10 +3,27 @@ import 'dart:io';
 
 import 'package:co_faker/co_faker.dart';
 
-/// Prints a Markdown or JSON coverage report for a planned entity list.
+const String _usage = '''
+Usage:
+  dart run co_faker:coverage [--input plan.json] [--format markdown|json] [--strict]
+      Reports which fields of a planned entity list the domain packs cover.
+  dart run co_faker:coverage --languages [--format markdown|json]
+      Prints the table of supported languages: what each has, computed from
+      the registries.
+  dart run co_faker:coverage --language <code> [--strict] [--format markdown|json]
+      Runs the language gate on one language (ko, en, zh, ja, de, fr, ru, it,
+      pt): the texts are written in the language (no Hangul, its writing
+      system, few texts like English), every list lines up with English, and
+      nothing is left unregistered. --strict exits with 1 when it fails.
+''';
+
+/// Prints a Markdown or JSON coverage report: for a planned entity list, for
+/// the supported languages, or for the gate of one language.
 Future<void> main(List<String> args) async {
   try {
     String? inputPath;
+    String? language;
+    var languages = false;
     var format = 'markdown';
     var strict = false;
     for (var i = 0; i < args.length; i++) {
@@ -23,11 +40,15 @@ Future<void> main(List<String> args) async {
           format = args[i];
         case '--strict':
           strict = true;
+        case '--languages':
+          languages = true;
+        case '--language':
+          if (++i >= args.length) {
+            throw const FormatException('--language needs a language code');
+          }
+          language = args[i];
         case '--help':
-          stdout.writeln(
-            'Usage: dart run co_faker:coverage [--input plan.json] '
-            '[--format markdown|json] [--strict]',
-          );
+          stdout.write(_usage);
           return;
         default:
           throw FormatException('Unknown option: ${args[i]}');
@@ -35,6 +56,29 @@ Future<void> main(List<String> args) async {
     }
     if (format != 'markdown' && format != 'json') {
       throw FormatException('Unknown format: $format');
+    }
+    if (languages || language != null) {
+      if (languages && language != null) {
+        throw const FormatException(
+          '--languages and --language are separate reports: pick one',
+        );
+      }
+      if (inputPath != null) {
+        throw const FormatException(
+          '--input is for the entity plan, not for --language and --languages',
+        );
+      }
+      if (languages) {
+        if (strict) {
+          throw const FormatException(
+            '--strict needs --language: it decides the gate of one language',
+          );
+        }
+        _languages(format);
+      } else {
+        _language(language!, format, strict);
+      }
+      return;
     }
     final source = inputPath == null
         ? await stdin.transform(utf8.decoder).join()
@@ -69,6 +113,36 @@ Future<void> main(List<String> args) async {
     stderr.writeln('coverage: $error');
     exitCode = 2;
   }
+}
+
+/// Prints the table of supported languages.
+void _languages(String format) {
+  final rows = CoLanguageCoverage.support();
+  stdout.writeln(
+    format == 'json'
+        ? const JsonEncoder.withIndent(
+            '  ',
+          ).convert(<Object?>[for (final row in rows) row.toJson()])
+        : CoLanguageCoverage.supportMarkdown(rows),
+  );
+}
+
+/// Runs the gate on one language and prints its report.
+void _language(String tag, String format, bool strict) {
+  final resolved = CoFakerLanguages.resolve(tag);
+  if (!resolved.supported) {
+    throw FormatException(
+      'Unknown language: $tag; supported: '
+      '${CoFakerLanguages.all.map((language) => language.code).join(', ')}',
+    );
+  }
+  final report = CoLanguageCoverage().checkRegistered(resolved.language.code);
+  stdout.writeln(
+    format == 'json'
+        ? const JsonEncoder.withIndent('  ').convert(report.toJson())
+        : report.toMarkdown(),
+  );
+  if (strict && !report.passed) exitCode = 1;
 }
 
 List<CoFakerDomain> _domainList(Object? value) {
