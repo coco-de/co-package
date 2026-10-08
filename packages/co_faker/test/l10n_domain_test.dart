@@ -51,13 +51,12 @@ Map<String, CoFakerLocale> _withBundle(
   CoL10nBundle bundle,
 ) => {code: CoFakerLocale(code: code, l10n: bundle).merge(builtin)};
 
-Iterable<File> _sources({bool includeBundles = false}) => Directory('lib/src')
+/// The Dart sources under `lib/src`, except the bundles and the l10n module.
+Iterable<File> _sources() => Directory('lib/src')
     .listSync(recursive: true)
     .whereType<File>()
     .where(
-      (file) =>
-          file.path.endsWith('.dart') &&
-          (includeBundles || !file.path.contains('/l10n/')),
+      (file) => file.path.endsWith('.dart') && !file.path.contains('/l10n/'),
     );
 
 void main() {
@@ -232,16 +231,15 @@ void main() {
     });
 
     test('the templates of the shared and the daycare roles', () {
-      final f = _faker('en', locales: locales);
-      final plain = _faker('en');
-      final guardian = f.schema.record(
+      Object? guardian(CoFaker f) => f.schema.record(
         {'value': 'String'},
         roles: {'value': 'daycare.guardianLabel'},
       )['value'];
       expect(
-        guardian,
-        'ES:${plain.schema.record({'value': 'String'}, roles: {'value': 'daycare.guardianLabel'})['value']}',
+        guardian(_faker('en', locales: locales)),
+        'ES:${guardian(_faker('en'))}',
       );
+      final f = _faker('en', locales: locales);
       final taxonomy = f.schema.entities('grocery.produce_category', 9);
       expect(
         taxonomy.skip(7).map((row) => row['name']),
@@ -274,7 +272,7 @@ void main() {
       );
     });
 
-    test('and a template chooses which names a masked name draws', () {
+    test('a masked name, drawing only the names its template names', () {
       const bundle = CoL10nBundle(
         language: 'xx',
         texts: {
@@ -294,7 +292,7 @@ void main() {
       expect(value, '${stream.person.lastName()}-${stream.person.firstName()}');
     });
 
-    test('and the shipped Korean text answers where it has no bundle', () {
+    test('a partial Korean bundle, leaving the rest to the shipped text', () {
       // A partial custom bundle for Korean translates only its keys.
       final f = _faker(
         'ko',
