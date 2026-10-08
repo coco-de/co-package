@@ -10,6 +10,7 @@ workspace:
   - packages/co_arc
   - packages/co_bdd # co-test-gen 저장소에서 이관·개명 (구 co_test_gen)
   - packages/co_demo_prefs
+  - packages/co_demo_world
   - packages/co_faker
   - packages/co_golden
   - packages/co_golden_gallery
