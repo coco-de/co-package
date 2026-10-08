@@ -63,6 +63,10 @@ jobs:
       - name: co_faker web determinism (chrome · dart2js)
         working-directory: packages/co_faker
         run: dart test -p chrome test/random_source_platform_test.dart
+      # 데모 세계의 업무 · 표시 데이터가 웹과 VM 에서 같은지 (co_demo_world 전체를 chrome 에서도).
+      - name: co_demo_world web determinism (chrome · dart2js)
+        working-directory: packages/co_demo_world
+        run: dart test -p chrome
       - run: melos run test:flutter
 
   # packages/xterm3 — klc/xterm3 포크(AGPL-3.0). 워크스페이스 비회원이라 melos 잡이
