@@ -93,13 +93,16 @@ class SampleLanguage {
   /// language that has no Korean-only value.
   ///
   /// A test breaks the sample with the named arguments: [cardIssuers],
-  /// [diagnoses], and [packageNameFormat] replace those fields, [dropTexts]
-  /// and [dropOps] leave the texts or the operations texts out, and [rewrite]
-  /// changes a text after the sample has written it.
+  /// [diagnoses], [staffRoles], [packageNameFormat], and [koreanValues]
+  /// replace those fields, [dropTexts] and [dropOps] leave the texts or the
+  /// operations texts out, and [rewrite] changes a text after the sample has
+  /// written it.
   CoFakerClinicData clinic({
     List<String>? cardIssuers,
     List<CoDiagnosisSpec>? diagnoses,
+    Map<String, String>? staffRoles,
     String? packageNameFormat,
+    CoKoreanValues koreanValues = CoKoreanValues.none,
     bool dropTexts = false,
     bool dropOps = false,
     CoTextVisitor? rewrite,
@@ -114,7 +117,7 @@ class SampleLanguage {
     return CoFakerClinicData(
       specialties: mapped.specialties,
       clinicNamePrefixes: mapped.clinicNamePrefixes,
-      staffRoles: mapped.staffRoles,
+      staffRoles: staffRoles ?? mapped.staffRoles,
       visitPurposes: mapped.visitPurposes,
       procedures: mapped.procedures,
       diagnoses: diagnoses ?? mapped.diagnoses,
@@ -132,16 +135,21 @@ class SampleLanguage {
       texts: dropTexts ? null : mapped.texts,
       ops: dropOps ? null : mapped.ops,
       clinicNameFormat: '{prefix}{suffix}',
-      koreanValues: CoKoreanValues.none,
+      koreanValues: koreanValues,
       maskedIdFormat: '########',
       addressLineFormat: '{line1}, {city}',
     );
   }
 
   /// The SaaS data: every English text rewritten, with the values of a
-  /// language that has no Korean-only value. [dropOps] leaves the operations
-  /// texts out, and [rewrite] changes a text after the sample has written it.
-  CoFakerSaasData saas({bool dropOps = false, CoTextVisitor? rewrite}) {
+  /// language that has no Korean-only value ([koreanValues] changes that).
+  /// [dropOps] leaves the operations texts out, and [rewrite] changes a text
+  /// after the sample has written it.
+  CoFakerSaasData saas({
+    CoKoreanValues koreanValues = CoKoreanValues.none,
+    bool dropOps = false,
+    CoTextVisitor? rewrite,
+  }) {
     final mapped = CoLanguageTexts.mapSaas(CoFakerSaasData.english, (
       at,
       english,
@@ -156,7 +164,7 @@ class SampleLanguage {
       failureReasons: mapped.failureReasons,
       labels: mapped.labels,
       ops: dropOps ? null : mapped.ops,
-      koreanValues: CoKoreanValues.none,
+      koreanValues: koreanValues,
       businessNumberFormat: '##########',
     );
   }

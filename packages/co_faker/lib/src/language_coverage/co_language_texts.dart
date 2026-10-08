@@ -514,7 +514,13 @@ abstract final class CoLanguageTexts {
       },
       insurers: t.list('insurers', d.insurers),
       teamNotes: t.list('teamNotes', d.teamNotes),
-      deviceNameFormat: t.one('deviceNameFormat', d.deviceNameFormat),
+      // A pattern: English writes a number sign before the field
+      // (`{kind} #{number}`), which is not a notification variable.
+      deviceNameFormat: t.one(
+        'deviceNameFormat',
+        d.deviceNameFormat,
+        kind: CoTextKind.format,
+      ),
       labels: t.map('labels', d.labels),
       staffMentionFormat: t.one('staffMentionFormat', d.staffMentionFormat),
       nameMentionFormat: t.one('nameMentionFormat', d.nameMentionFormat),

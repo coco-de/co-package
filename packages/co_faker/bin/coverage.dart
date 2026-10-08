@@ -68,6 +68,7 @@ Future<void> main(List<String> args) async {
           '--input is for the entity plan, not for --language and --languages',
         );
       }
+      if (!_bundlesLoad()) return;
       if (languages) {
         if (strict) {
           throw const FormatException(
@@ -112,12 +113,22 @@ Future<void> main(List<String> args) async {
   } on FileSystemException catch (error) {
     stderr.writeln('coverage: $error');
     exitCode = 2;
+  }
+}
+
+/// Loads the domain text bundles, which are checked against English when they
+/// load: a bundle that is misaligned makes the load fail with the whole list
+/// of what is wrong. Prints the list and answers `false`, with the exit code
+/// of a gate that failed; any other error of the tool is not caught, so that a
+/// failed language and a broken tool are not the same exit code.
+bool _bundlesLoad() {
+  try {
+    CoL10nRegistry.bundleFor('en');
+    return true;
   } on StateError catch (error) {
-    // The domain text bundles are checked against English when they load, and
-    // a bundle that is misaligned makes the load fail with the whole list of
-    // what is wrong: print it, and fail.
     stderr.writeln('coverage: ${error.message}');
     exitCode = 1;
+    return false;
   }
 }
 

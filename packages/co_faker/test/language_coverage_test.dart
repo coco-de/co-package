@@ -66,6 +66,25 @@ CoL10nBundle _bundle(
 CoLanguageReport _data(CoLanguageData data) =>
     CoLanguageCoverage().check(data, generate: false);
 
+/// Whether every surrogate of [text] has its pair: the text is valid Unicode.
+bool _wellFormed(String text) {
+  final units = text.codeUnits;
+  for (var i = 0; i < units.length; i++) {
+    final unit = units[i];
+    if (unit >= 0xD800 && unit <= 0xDBFF) {
+      final paired =
+          i + 1 < units.length &&
+          units[i + 1] >= 0xDC00 &&
+          units[i + 1] <= 0xDFFF;
+      if (!paired) return false;
+      i++;
+    } else if (unit >= 0xDC00 && unit <= 0xDFFF) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// The places of the issues of [check] in [report].
 List<String> _where(CoLanguageReport report, CoLanguageCheck check) => <String>[
   for (final issue in report.issuesOf(check)) issue.where,
@@ -123,12 +142,91 @@ void main() {
     });
 
     test('reads placeholders and the variables of a template', () {
-      expect(CoTextScan.placeholders('{a} and {b_1}'), {'a', 'b_1'});
-      expect(CoTextScan.placeholders(r'#{환자명}님, #{date}'), isEmpty);
+      expect(CoTextScan.fieldNames('{a} and {b_1}'), ['a', 'b_1']);
+      expect(CoTextScan.fieldNames('{n} of {n}'), ['n', 'n']);
+      expect(CoTextScan.fieldNames(r'#{환자명}님, #{date}'), isEmpty);
+      expect(CoTextScan.fieldNames(r'{kind} #{number}'), ['kind']);
+      expect(CoTextScan.fieldNames(r'{kind} #{number}', templates: true), [
+        'kind',
+        'number',
+      ]);
       expect(CoTextScan.templateVariables(r'#{환자명}님, #{date}'), 2);
       expect(CoTextScan.unfilledPlaceholder('Hello {name}'), '{name}');
       expect(CoTextScan.unfilledPlaceholder(r'Hello #{name}'), isNull);
       expect(CoTextScan.unfilledPlaceholder('{"a": 1}'), isNull);
+    });
+
+    test('reads a field whose name is in any writing system', () {
+      // A translation that renames a field leaves it in the output: every
+      // spelling of a field that a generator would not fill is found.
+      expect(CoTextScan.fieldNames('{回数}回, {имя}, {mês}'), [
+        '回数',
+        'имя',
+        'mês',
+      ]);
+      expect(CoTextScan.fieldNames('{0} {1}'), ['0', '1']);
+      for (final leak in [
+        'x {回数} y',
+        'x {имя} y',
+        'x { n } y',
+        'x {n } y',
+        'x ｛n｝ y',
+        'x {0} y',
+      ]) {
+        expect(CoTextScan.unfilledPlaceholder(leak), isNotNull, reason: leak);
+      }
+      for (final fine in [
+        'x #{番号} y',
+        '[{"date": "2026-01-15", "rate": 1.2}]',
+        '{ "a": 1 }',
+        '{}',
+        'plain',
+      ]) {
+        expect(CoTextScan.unfilledPlaceholder(fine), isNull, reason: fine);
+      }
+      expect(CoTextScan.hasLetters('{回数}'), isFalse);
+      expect(CoTextScan.hasLetters('{回数}回'), isTrue);
+    });
+
+    test('knows the Hangul and han that the first tables left out', () {
+      // Half-width and circled Hangul, and the han characters of Extension G.
+      expect(CoTextScan.hasHangul('ﾡﾢ'), isTrue);
+      expect(CoTextScan.hasHangul('㉠'), isTrue);
+      expect(CoTextScan.hasHangul('㈀'), isTrue);
+      expect(CoTextScan.hasHangul('①②'), isFalse);
+      expect(CoTextScan.hasScript('\u{30000}', CoFakerScript.han), isTrue);
+      expect(CoTextScan.hasKana('アイウ'), isTrue);
+      expect(CoTextScan.hasKana('\u{1B001}'), isTrue);
+      expect(CoTextScan.hasKana('皮膚科'), isFalse);
+    });
+
+    test('cuts a text without cutting a character in half', () {
+      // The tooth emoji takes two UTF-16 code units: a cut between them would
+      // leave half of it, and a report in JSON would not be valid Unicode.
+      final text = '🦷' * 40;
+      for (final length in [47, 48, 49]) {
+        final cut = CoTextScan.cut(text, length);
+        expect(cut.length, anyOf(length, length - 1));
+        expect(
+          cut.codeUnits.where((unit) => unit >= 0xD800 && unit <= 0xDBFF),
+          hasLength(cut.length ~/ 2),
+        );
+        expect(
+          CoTextScan.excerpt(text, length: length).runes.toList().last,
+          0x2026,
+        );
+      }
+      for (var index = 20; index < 30; index++) {
+        final around = CoTextScan.around(text, index);
+        expect(around, isNot(startsWith('\uDDB7')));
+        expect(
+          around.runes.every((rune) => rune == 0x1F9B7),
+          isTrue,
+          reason: 'around $index: ${around.codeUnits}',
+        );
+      }
+      expect(CoTextScan.cut('短い', 10), '短い');
+      expect(CoTextScan.around('a\nb', 1), 'a b');
     });
   });
 
@@ -365,6 +463,49 @@ void main() {
       );
     });
 
+    test('(b) tell Japanese from Chinese by the kana', () {
+      // Han characters alone are Chinese, and a kana is not Chinese: a
+      // language is not the other one with its name changed.
+      const zh = SampleLanguage('zh');
+      final chinese = zh.data();
+      final asJapanese = CoLanguageData(
+        language: 'ja',
+        bundle: CoL10nBundle(language: 'ja', texts: chinese.bundle.texts),
+        clinic: chinese.clinic,
+        saas: chinese.saas,
+      );
+      final noKana = _data(asJapanese).issuesOf(CoLanguageCheck.script);
+      expect(noKana.single.where, 'all texts');
+      expect(noKana.single.message, contains('have a kana'));
+      expect(noKana.single.message, contains('han characters alone'));
+      final japanese = ja.data();
+      final asChinese = CoLanguageData(
+        language: 'zh',
+        bundle: CoL10nBundle(language: 'zh', texts: japanese.bundle.texts),
+        clinic: japanese.clinic,
+        saas: japanese.saas,
+      );
+      expect(
+        _data(
+          asChinese,
+        ).issuesOf(CoLanguageCheck.script).map((issue) => issue.message),
+        contains(contains('which only Japanese writes')),
+      );
+      // A Japanese text with han characters and a few without a kana is fine.
+      final mixed = _bundle(ja, (texts) {
+        var n = 0;
+        for (final list in texts.values) {
+          for (var i = 0; i < list.length; i++) {
+            if (n++ % 3 == 0) list[i] = '皮膚科';
+          }
+        }
+      });
+      expect(
+        _data(ja.data(bundle: mixed)).issuesOf(CoLanguageCheck.script),
+        isEmpty,
+      );
+    });
+
     test('(c) count the texts that equal English and keep a limit', () {
       final english = CoL10nRegistry.english.texts;
       final few = _bundle(ja, (texts) {
@@ -421,6 +562,58 @@ void main() {
       expect(
         german.stats['sameAsEnglishRatio'],
         allOf(greaterThan(0.05), lessThan(0.10)),
+      );
+    });
+
+    test('(c) keep the allowances to a few texts', () {
+      // A list that allows every slot would pass a bundle that is English
+      // throughout: it is for the units, acronyms, and names.
+      final english = CoL10nRegistry.english.texts;
+      final bundle = _bundle(
+        de,
+        (texts) {
+          for (final key in english.keys) {
+            texts[key] = <String>[...english[key]!];
+          }
+        },
+        allow: <String, List<String>>{
+          for (final key in english.keys) key: const <String>['*'],
+        },
+      );
+      final report = _data(de.data(bundle: bundle));
+      expect(report.passed, isFalse);
+      final capped = report
+          .issuesOf(CoLanguageCheck.allowance)
+          .where((issue) => issue.where == 'allowSameAsEnglish');
+      expect(capped.single.message, contains('at most 10.0%'));
+      expect(report.stats['sameAsEnglish'], 0);
+      expect(report.stats['allowedSameAsEnglish'], greaterThan(700));
+    });
+
+    test('(c) report an allowance of Korean that no text needs', () {
+      // The Korean clinic and SaaS data are read for their writing system, and
+      // an entry that no text of them needs is as stale as any other.
+      final ko = CoLanguageData.registered('ko');
+      final bundle = CoL10nBundle(
+        language: 'ko',
+        texts: ko.bundle.texts,
+        allowSameAsEnglish: <String, List<String>>{
+          ...ko.bundle.allowSameAsEnglish,
+          'clinic.diagnoses.name': const <String>['*'],
+          'saas.plans.name': const <String>['*'],
+        },
+      );
+      final report = _data(
+        CoLanguageData(
+          language: 'ko',
+          bundle: bundle,
+          clinic: ko.clinic,
+          saas: ko.saas,
+        ),
+      );
+      expect(
+        _where(report, CoLanguageCheck.allowance),
+        unorderedEquals(<String>['clinic.diagnoses.name', 'saas.plans.name']),
       );
     });
 
@@ -541,6 +734,51 @@ void main() {
       expect(issue.message, contains('does not have: extra'));
     });
 
+    test('(d) reject a map whose keys are in another order', () {
+      // A generator that picks one entry takes it by position, so the same
+      // seed picks another entry in a language that lists the keys in
+      // another order.
+      final roles = ja.clinic().staffRoles;
+      final reversed = <String, String>{
+        for (final key in roles.keys.toList().reversed) key: roles[key]!,
+      };
+      final report = _data(ja.data(clinic: ja.clinic(staffRoles: reversed)));
+      final issue = report.issuesOf(CoLanguageCheck.length).single;
+      expect(issue.where, 'clinic.staffRoles');
+      expect(issue.message, contains('another order than English'));
+      expect(issue.message, contains('(director, doctor, counselor'));
+      expect(_data(ja.data()).issuesOf(CoLanguageCheck.length), isEmpty);
+    });
+
+    test('reject data that keeps the Korean values outside Korean', () {
+      // `legacy` is what a data set that does not choose gets, and it keeps
+      // the Korean phone numbers, addresses, and registration numbers, which
+      // hold no Hangul and no other check sees.
+      final report = _data(
+        ja.data(
+          clinic: ja.clinic(koreanValues: CoKoreanValues.legacy),
+          saas: ja.saas(koreanValues: CoKoreanValues.korean),
+        ),
+      );
+      expect(_where(report, CoLanguageCheck.invariant), [
+        'clinic.koreanValues',
+        'saas.koreanValues',
+      ]);
+      expect(
+        report.issuesOf(CoLanguageCheck.invariant).first.message,
+        contains('CoKoreanValues.none'),
+      );
+      expect(_data(ja.data()).issuesOf(CoLanguageCheck.invariant), isEmpty);
+      // Korean and English keep theirs by design.
+      expect(CoFakerClinicData.korean.koreanValues, CoKoreanValues.korean);
+      expect(
+        CoLanguageCoverage()
+            .checkRegistered('ko')
+            .issuesOf(CoLanguageCheck.invariant),
+        isEmpty,
+      );
+    });
+
     test('(e) list the keys and the data sets that are not registered', () {
       final bundle = _bundle(ja, (texts) {
         texts.remove('dental.dentalProcedure');
@@ -619,6 +857,208 @@ void main() {
       );
     });
 
+    test(
+      'reject a translation that drops, renames, repeats, or adds a field',
+      () {
+        // A generator fills the English names only: a field that is renamed
+        // stays in the output as written, and one that is dropped loses its
+        // value. Each text below keeps one field, so the weaker rule (at least
+        // one) would pass all of them.
+        final bundle = _bundle(ja, (texts) {
+          texts['common.taxonomyChild']![0] = '{root}の小項目'; // drops {n}
+          texts['fitness.className']![0] = '{分類} {level}'; // renames {category}
+          texts['workplace.sprintName']![0] = 'スプリント{n}{n}'; // repeats {n}
+          texts['logistics.vehiclePlate']![0] = '{n}{m}{x}'; // adds {x}
+        });
+        final report = _data(ja.data(bundle: bundle));
+        final issues = <String, String>{
+          for (final issue in report.issuesOf(CoLanguageCheck.placeholder))
+            issue.where: issue.message,
+        };
+        expect(
+          issues.keys,
+          unorderedEquals(<String>[
+            'common.taxonomyChild[0]',
+            'fitness.className[0]',
+            'workplace.sprintName[0]',
+            'logistics.vehiclePlate[0]',
+          ]),
+        );
+        expect(
+          issues['common.taxonomyChild[0]'],
+          'lacks {n}, which English has',
+        );
+        expect(
+          issues['fitness.className[0]'],
+          allOf(contains('lacks {category}'), contains('has {分類}')),
+        );
+        expect(
+          issues['workplace.sprintName[0]'],
+          contains('has {n}, which English does not have'),
+        );
+        expect(
+          issues['logistics.vehiclePlate[0]'],
+          contains('has {x}, which English does not have'),
+        );
+        // The same fields in another order are the same fields.
+        final reordered = _bundle(ja, (texts) {
+          texts['fitness.className']![0] = '{level}の{category}';
+          texts['logistics.vehiclePlate']![0] = '{m}・{n}';
+        });
+        expect(_data(ja.data(bundle: reordered)).passed, isTrue);
+      },
+    );
+
+    test('read a field that a translation spaced or wrote in full-width', () {
+      final bundle = _bundle(ja, (texts) {
+        texts['workplace.sprintName']![0] = 'スプリント{ n }';
+        texts['common.taxonomyChild']![0] = '｛root｝ · ｛n｝';
+      });
+      final report = _data(ja.data(bundle: bundle));
+      expect(
+        _where(report, CoLanguageCheck.placeholder),
+        unorderedEquals(<String>[
+          'common.taxonomyChild[0]',
+          'workplace.sprintName[0]',
+        ]),
+      );
+    });
+
+    test('hold the patterns to their fields, a number sign included', () {
+      final clinic = ja.clinic(
+        rewrite: (at, text) => switch (at.slot) {
+          'clinic.ops.dateRangeFormat' => '{from}', // drops {to}
+          'clinic.packageNameFormat' => '{名前} x{sessions}', // renames {name}
+          // The English pattern writes a number sign before the field.
+          'clinic.texts.deviceNameFormat' => '{kind} #{numer}',
+          _ => text,
+        },
+      );
+      final report = _data(ja.data(clinic: clinic));
+      expect(
+        _where(report, CoLanguageCheck.placeholder),
+        unorderedEquals(<String>[
+          'clinic.ops.dateRangeFormat[0]',
+          'clinic.packageNameFormat[0]',
+          'clinic.texts.deviceNameFormat[0]',
+        ]),
+      );
+      // The way each language writes the number of a device keeps the two
+      // fields and asks for no number sign: none of them is rejected.
+      const natural = <String, String>{
+        'ja': '{kind} {number}号機',
+        'zh': '{kind}{number}号',
+        'de': '{kind} Nr. {number}',
+        'fr': '{kind} n° {number}',
+        'ru': '{kind} №{number}',
+        'it': '{kind} n. {number}',
+        'pt': '{kind} nº {number}',
+      };
+      for (final entry in natural.entries) {
+        final sample = SampleLanguage(entry.key);
+        final fine = sample.clinic(
+          rewrite: (at, text) =>
+              at.slot == 'clinic.texts.deviceNameFormat' ? entry.value : text,
+        );
+        expect(
+          _data(sample.data(clinic: fine)).issues,
+          isEmpty,
+          reason: '${entry.key}: ${entry.value}',
+        );
+      }
+      // The fields may come in another order.
+      final reordered = ja.clinic(
+        rewrite: (at, text) => at.slot == 'clinic.texts.deviceNameFormat'
+            ? '{number}号機の{kind}'
+            : text,
+      );
+      expect(_data(ja.data(clinic: reordered)).issues, isEmpty);
+    });
+
+    test(
+      'count the variables of a template, and let a language rename them',
+      () {
+        final saas = ja.saas(
+          rewrite: (at, text) => switch ((at.slot, at.row)) {
+            // Renamed variables: a notification template of another language
+            // names its variables in its own words.
+            ('saas.messageTemplates.body', '0') =>
+              'こんにちは #{お客様}、#{日時} #{医院} のご予約です',
+            // One variable lost.
+            ('saas.messageTemplates.body', '1') => 'こんにちは #{お客様}',
+            _ => text,
+          },
+        );
+        final report = _data(ja.data(saas: saas));
+        final issue = report.issuesOf(CoLanguageCheck.placeholder).single;
+        expect(issue.where, 'saas.messageTemplates.body[1]');
+        expect(issue.message, contains('has 1 #{variable} markers'));
+      },
+    );
+
+    test('let a template choose among the names that a generator offers', () {
+      // English keeps the initial of a masked name, Korean the surname, and a
+      // new language writes the first given name of a daycare template.
+      final fine = _bundle(ja, (texts) {
+        texts['common.maskedName']![0] = '{lastName}＊＊';
+        texts['daycare.guardianLabel']![0] = '{name1}さんの保護者';
+        texts['daycare.teacherName']![0] = '{name1}先生';
+      });
+      expect(
+        _data(ja.data(bundle: fine)).issuesOf(CoLanguageCheck.placeholder),
+        isEmpty,
+      );
+      final broken = _bundle(ja, (texts) {
+        texts['common.maskedName']![0] = '{middleName}＊＊';
+        texts['daycare.guardianLabel']![0] = '{name1}{name2}さんの保護者';
+        texts['daycare.teacherName']![0] = '先生';
+      });
+      expect(
+        _where(_data(ja.data(bundle: broken)), CoLanguageCheck.placeholder),
+        unorderedEquals(<String>[
+          'common.maskedName[0]',
+          'daycare.guardianLabel[0]',
+          'daycare.teacherName[0]',
+        ]),
+      );
+    });
+
+    test('offer the names that the Korean and English texts use', () {
+      // The table of offered names is a fact about the generators: the
+      // shipped English and Korean texts of those keys use names from it.
+      final english = CoL10nRegistry.english.texts;
+      final korean = CoL10nRegistry.bundleFor('ko')!.texts;
+      const offered = <String, Set<String>>{
+        'common.maskedName': {'lastName', 'firstName', 'initial'},
+        'daycare.guardianLabel': {'name1', 'name2'},
+        'daycare.teacherName': {'name1', 'name2'},
+      };
+      for (final entry in offered.entries) {
+        for (final texts in [english, korean]) {
+          for (final text in texts[entry.key]!) {
+            expect(
+              CoTextScan.fieldNames(text).toSet().difference(entry.value),
+              isEmpty,
+              reason: '${entry.key}: $text',
+            );
+          }
+        }
+      }
+      // Every other key of the Korean bundle keeps the English fields: the
+      // gate asks for the same of every language, and Korean is the one that
+      // already exists.
+      for (final entry in english.entries) {
+        if (offered.containsKey(entry.key)) continue;
+        for (var i = 0; i < entry.value.length; i++) {
+          expect(
+            CoTextScan.fieldNames(korean[entry.key]![i])..sort(),
+            CoTextScan.fieldNames(entry.value[i])..sort(),
+            reason: '${entry.key}[$i]',
+          );
+        }
+      }
+    });
+
     test('reject exam questions that lost their pairs', () {
       // The explanation of a question contains its correct choice, and the
       // four choices of a question differ: the generator shuffles the choices
@@ -637,6 +1077,28 @@ void main() {
         ]),
       );
       expect(_data(ja.data()).issuesOf(CoLanguageCheck.invariant), isEmpty);
+    });
+
+    test('ask the explanation for its choice whatever the case', () {
+      // A choice that opens a sentence is written in the case of the
+      // sentence: `Clé primaire` in `La clé primaire identifie…`.
+      const fr = SampleLanguage('fr');
+      final sentence = _bundle(fr, (texts) {
+        texts['exam_prep.correctChoice']![0] = 'Clé primaire';
+        texts['exam_prep.explanation']![0] =
+            'La clé primaire identifie chaque ligne.';
+      });
+      expect(
+        _data(fr.data(bundle: sentence)).issuesOf(CoLanguageCheck.invariant),
+        isEmpty,
+      );
+      final other = _bundle(fr, (texts) {
+        texts['exam_prep.correctChoice']![0] = 'Clé primaire';
+        texts['exam_prep.explanation']![0] = 'Chaque ligne a un identifiant.';
+      });
+      expect(_where(_data(fr.data(bundle: other)), CoLanguageCheck.invariant), [
+        'exam_prep.explanation[0]',
+      ]);
     });
 
     test(
@@ -750,6 +1212,25 @@ void main() {
       );
     });
 
+    test('read a language setting the way CoFaker.forLanguage reads it', () {
+      // `ko-KR` and `KO` are Korean for an app, so they are Korean for the
+      // gate: not a language without data.
+      for (final tag in ['ko', 'KO', 'ko-KR', 'ko_KR', 'ko_KR.UTF-8']) {
+        final data = CoLanguageData.registered(tag);
+        expect(data.language, 'ko', reason: tag);
+        expect(data.level, CoLanguageLevel.localized, reason: tag);
+        expect(_data(data).passed, isTrue, reason: tag);
+      }
+      expect(CoLanguageData.registered('en_US.UTF-8').language, 'en');
+      expect(CoLanguageData.registered('JA').language, 'ja');
+      // A code that no supported language owns is looked up as it is.
+      for (final tag in ['xx', 'zh_TW', 'nl']) {
+        final data = CoLanguageData.registered(tag);
+        expect(data.language, tag);
+        expect(data.level, CoLanguageLevel.base, reason: tag);
+      }
+    });
+
     test('compute the table of languages from the registries', () {
       final rows = CoLanguageCoverage.support();
       expect(
@@ -815,6 +1296,41 @@ void main() {
       );
       expect(found.map((issue) => issue.where), contains('clinic.package'));
       expect(found.first.message, contains('{unfilled}'));
+    });
+
+    test('find a field whose name a translation changed', () {
+      // The data layer says which text; a generator that fills the English
+      // names only leaves the renamed one in what it writes.
+      final clinic = ja.clinic(packageNameFormat: '{name} ×{回数}');
+      final data = ja.data(clinic: clinic);
+      expect(_where(_data(data), CoLanguageCheck.placeholder), [
+        'clinic.packageNameFormat[0]',
+      ]);
+      final result = _generate(ja, data);
+      final found = result.issues.where(
+        (issue) => issue.check == CoLanguageCheck.placeholder,
+      );
+      expect(found.map((issue) => issue.where), contains('clinic.package'));
+      expect(found.first.message, contains('{回数}'));
+    });
+
+    test('keep a character of two code units whole in what it reports', () {
+      // A cut inside the pair of a tooth emoji (or of a rare han character)
+      // would leave half of it, which a report in JSON cannot hold.
+      final bundle = _bundle(ja, (texts) {
+        texts['dental.dentalProcedure'] = <String>[
+          for (final _ in texts['dental.dentalProcedure']!) '${'🦷' * 12}x치과',
+        ];
+      });
+      final result = _generate(ja, ja.data(bundle: bundle));
+      final values = <String>[
+        for (final issue in result.issues)
+          if (issue.value != null) issue.value!,
+      ];
+      expect(values, isNotEmpty);
+      for (final value in values) {
+        expect(_wellFormed(value), isTrue, reason: value.codeUnits.join(','));
+      }
     });
 
     test('leave a template variable of a notification alone', () {

@@ -188,27 +188,22 @@ class _Generation {
     }
     final unfilled = CoTextScan.unfilledPlaceholder(text);
     if (unfilled != null) {
+      final at = text.indexOf(unfilled);
       _report(
         CoLanguageCheck.placeholder,
         where,
         'the generated text still has the placeholder $unfilled: the '
         'template uses a name that the generator does not fill',
-        value: _around(text, text.indexOf(unfilled)),
+        value: CoTextScan.around(text, at < 0 ? 0 : at),
       );
     }
   }
 
   static String? _firstHangul(String text) {
     for (var i = 0; i < text.length; i++) {
-      if (CoTextScan.hasHangul(text[i])) return _around(text, i);
+      if (CoTextScan.hasHangul(text[i])) return CoTextScan.around(text, i);
     }
     return null;
-  }
-
-  static String _around(String text, int index) {
-    final start = index < 24 ? 0 : index - 24;
-    final end = index + 24 > text.length ? text.length : index + 24;
-    return text.substring(start, end).replaceAll('\n', ' ');
   }
 
   /// The strings of [value]: every string, flattened.
@@ -397,6 +392,6 @@ class _Generation {
 
   static String _brief(Object error) {
     final text = '$error'.split('\n').first;
-    return text.length <= 160 ? text : '${text.substring(0, 160)}…';
+    return text.length <= 160 ? text : '${CoTextScan.cut(text, 160)}…';
   }
 }
