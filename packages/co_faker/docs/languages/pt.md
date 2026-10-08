@@ -21,7 +21,9 @@ One row for each term that the texts use for the same thing, in English. A term
 has one translation, and it is the only one that the texts of the language
 write; the forbidden forms are the spellings that must not appear anywhere in
 them (another variant, an English loanword, a term of another region). The
-rationale says why. Separate forbidden forms with `;`.
+rationale says why. Separate forbidden forms with `;` or the full-width
+`；`, and write each form in backticks if you like (a comma does not
+separate them).
 
 | Source term (English) | Translation | Forbidden forms | Rationale |
 | --- | --- | --- | --- |

@@ -63,9 +63,12 @@ void main() {
           if (language.code != 'ko' && language.code != 'en')
             '${language.code}.md',
       };
+      // Markdown files only: a file that an editor or the system leaves
+      // beside them (`.DS_Store`) is not a language file.
       final files = <String>{
         for (final entity in directory.listSync())
-          if (entity is File) entity.uri.pathSegments.last,
+          if (entity is File && entity.path.endsWith('.md'))
+            entity.uri.pathSegments.last,
       };
       expect(files.difference(known), isEmpty, reason: 'unknown language file');
       for (final code in languages) {
@@ -141,6 +144,54 @@ void main() {
       expect(patient.rationale, 'The notice register.');
       expect(doc.glossary.last.forbidden, isEmpty);
       expect(glossaryProblems(doc), isEmpty);
+    });
+
+    test('reads the forbidden forms however an author writes the list', () {
+      // Each form in backticks or in none, after `;` or the full-width `；`
+      // that a Japanese or Chinese keyboard types.
+      for (final cell in <String>[
+        '患者さん; 病人',
+        '`患者さん`; `病人`',
+        '患者さん；病人',
+        '`患者さん`；`病人`',
+        ' 患者さん ；  `病人`; ',
+      ]) {
+        final doc = parseLanguageDoc(_valid.replaceFirst('患者さん; 病人', cell));
+        expect(doc.errors, isEmpty, reason: cell);
+        expect(doc.glossary.first.forbidden, ['患者さん', '病人'], reason: cell);
+      }
+      for (final none in <String>['-', '—', '`-`', '']) {
+        final doc = parseLanguageDoc(_valid.replaceFirst('患者さん; 病人', none));
+        expect(doc.errors, isEmpty, reason: none);
+        expect(doc.glossary.first.forbidden, isEmpty, reason: none);
+      }
+      // A cell written that way is enforced: the forms are found in a text.
+      final doc = parseLanguageDoc(
+        _valid.replaceFirst('患者さん; 病人', '`患者さん`；`病人`'),
+      );
+      expect(
+        forbiddenInTexts(doc, <({String where, String text})>[
+          (where: 'fx.tierName[0]', text: '患者さん が来ました'),
+          (where: 'fx.tierName[1]', text: '病人が来ました'),
+        ]),
+        hasLength(2),
+      );
+    });
+
+    test('rejects a forbidden cell that it cannot read', () {
+      // A form that no text could contain is an error, not a rule that
+      // silently never fires.
+      for (final cell in <String>[
+        '`患者さん`; `病人',
+        '患者さん`; 病人',
+        '患者さん、病人',
+        '患者さん, 病人',
+        '患者さん，病人',
+      ]) {
+        final doc = parseLanguageDoc(_valid.replaceFirst('患者さん; 病人', cell));
+        expect(doc.errors, hasLength(1), reason: cell);
+        expect(doc.errors.single, contains('forbidden form'), reason: cell);
+      }
     });
 
     test('rejects a file without a status line, or with two', () {

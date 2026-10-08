@@ -60,6 +60,39 @@ String _cell(String text) {
   return trimmed;
 }
 
+/// The forbidden forms that a cell lists: spellings separated by `;` or by the
+/// full-width `；` that East Asian input types, each of them in a pair of
+/// backticks or in none. `-` (or `—`) says there is none.
+///
+/// A cell that cannot be read as a list of forms is an error that says why,
+/// not a form that no text contains: a backtick without its pair, or a comma
+/// (`、` and `，` too), which is a separator of another list style.
+List<String> _forbiddenForms(String cell, int line, List<String> errors) {
+  final trimmed = cell.trim();
+  if (const <String>{'-', '—', '`-`', '`—`'}.contains(trimmed)) {
+    return const <String>[];
+  }
+  final forms = <String>[];
+  for (final part in trimmed.split(RegExp('[;；]'))) {
+    final form = _cell(part);
+    if (form.isEmpty) continue;
+    if (form.contains('`')) {
+      errors.add(
+        'line $line: the forbidden form "$form" has a backtick without its '
+        'pair: write each form in a pair of backticks, or in none',
+      );
+    } else if (RegExp('[,、，]').hasMatch(form)) {
+      errors.add(
+        'line $line: the forbidden form "$form" has a comma: separate the '
+        'forms with ";" or "；"',
+      );
+    } else {
+      forms.add(form);
+    }
+  }
+  return forms;
+}
+
 /// The cells of a table row, or `null` when it is not a row.
 List<String>? _cells(String line) {
   final row = line.trim();
@@ -126,7 +159,6 @@ LanguageDoc parseLanguageDoc(String markdown) {
     }
     final source = _cell(cells[0]);
     final translation = _cell(cells[1]);
-    final forbiddenCell = _cell(cells[2]);
     final rationale = _cell(cells[3]);
     for (final entry in <String, String>{
       'term': source,
@@ -141,12 +173,7 @@ LanguageDoc parseLanguageDoc(String markdown) {
       GlossaryEntry(
         source: source,
         translation: translation,
-        forbidden: forbiddenCell == '-' || forbiddenCell == '—'
-            ? const <String>[]
-            : <String>[
-                for (final form in forbiddenCell.split(';'))
-                  if (_cell(form).isNotEmpty) _cell(form),
-              ],
+        forbidden: _forbiddenForms(cells[2], number, errors),
         rationale: rationale,
         line: number,
       ),
