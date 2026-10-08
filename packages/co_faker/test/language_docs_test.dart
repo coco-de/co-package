@@ -55,7 +55,7 @@ void main() {
   ];
 
   group('the language files', () {
-    test('are a README and one file for each language that is localized', () {
+    test('are a README and one file for each registered language', () {
       expect(File('docs/languages/README.md').existsSync(), isTrue);
       final known = <String>{
         'README.md',

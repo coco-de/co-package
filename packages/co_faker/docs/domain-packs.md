@@ -150,6 +150,10 @@ has no bundle.
   `test/l10n_domain_test.dart` fails for a key that no pack reads and for a key
   a pack reads that no bundle has.
 - A custom locale adds a language with `CoFakerLocale.l10n`; see the README.
+- A language is finished when `dart run co_faker:coverage --language <code>
+  --strict` passes: its texts are written in the language, line up with
+  English, and leave no key a stub. `docs/languages/README.md` describes the
+  gate and the files a language fills.
 
 ## Authored-data restrictions
 
@@ -158,11 +162,18 @@ Daycare names are two-character given names in Korean; recipients/guests are
 masked. Medicine labels are unbranded fictional examples, not recommendations.
 Consultation text is limited to general example information and gives no
 individual judgement, result promise or actionable legal/tax advice. Fandom
-creator names are exactly `모래시계 정원` and `하늘결` in every locale.
+creator names are exactly two approved fictional names: `모래시계 정원` and
+`하늘결` in Korean and English (and in a language without domain text, which
+reads English), and two fictional names of its own in a language that is
+localized (the key `fandom.creatorName`).
 
 Regression denylists cover a curated set of known medicine brands, works,
 organizations and result/advice claims **only in the newly authored data paths**.
-They are not a claim that every name or trademark worldwide was screened.
+They are not a claim that every name or trademark worldwide was screened. Each
+language declares its own conventions in `test/language_safety/<language>.dart`
+(how a fictional name is marked, how general-information text begins, the
+phrases that promise a result, and the spellings of the denied brands in its
+writing system), and the scan reads every language that has domain text.
 Imagery uses the existing offline data-URI generator; app-specific webp/media
 bundles are mapped by the recipe, with no external image request.
 

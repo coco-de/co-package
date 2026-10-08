@@ -81,9 +81,6 @@ class CoTextSlot {
     }
     cells[cell] = text;
   }
-
-  /// The row [index] as a readable position: `[3]` or `[nurse]`.
-  String describeRow(String row) => '[$row]';
 }
 
 /// Every [CoTextSlot] of a data set, by name, in data order.
