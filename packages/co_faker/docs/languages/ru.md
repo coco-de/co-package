@@ -2,7 +2,7 @@
 
 status: planned
 
-русский. The national locale is `ru_RU`.
+Native name: русский. National locale: `ru_RU`.
 
 The status line above is read by the tests of the package:
 

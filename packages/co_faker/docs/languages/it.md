@@ -2,7 +2,7 @@
 
 status: planned
 
-italiano. The national locale is `it_IT`.
+Native name: italiano. National locale: `it_IT`.
 
 The status line above is read by the tests of the package:
 

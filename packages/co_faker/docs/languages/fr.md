@@ -2,7 +2,7 @@
 
 status: planned
 
-français. The national locale is `fr_FR`.
+Native name: français. National locale: `fr_FR`.
 
 The status line above is read by the tests of the package:
 

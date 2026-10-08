@@ -2,7 +2,7 @@
 
 status: planned
 
-日本語. The national locale is `ja_JP`.
+Native name: 日本語. National locale: `ja_JP`.
 
 The status line above is read by the tests of the package:
 

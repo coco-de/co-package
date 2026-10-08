@@ -2,7 +2,7 @@
 
 status: planned
 
-简体中文. The national locale is `zh_CN`. Simplified Chinese only. Traditional Chinese (`zh_TW`, `zh_HK`, `zh_MO`, `zh-Hant`) is not supported and reads English.
+Native name: 简体中文. National locale: `zh_CN`. Simplified Chinese only. Traditional Chinese (`zh_TW`, `zh_HK`, `zh_MO`, `zh-Hant`) is not supported and reads English.
 
 The status line above is read by the tests of the package:
 

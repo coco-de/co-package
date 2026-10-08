@@ -2,7 +2,7 @@
 
 status: planned
 
-português. The national locale is `pt_BR`. Brazilian Portuguese (`pt_BR`).
+Native name: português. National locale: `pt_BR`. Brazilian Portuguese (`pt_BR`).
 
 The status line above is read by the tests of the package:
 

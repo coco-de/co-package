@@ -648,6 +648,40 @@ fixtures keep their values; use `forLanguage` when the language comes from a
 setting. `faker.language` names the language of either generator (`ja` for
 `ja` and for `ja_jp`).
 
+## Language coverage
+
+`dart run co_faker:coverage` also reports on the languages. The table of what
+each language has (its writing system, whether the basic modules have its names
+and addresses, how many keys of the domain text bundle it has written, whether
+its clinic and SaaS data are written, and its level: `base`, `planned`,
+`partial`, or `localized`) is computed from the registries, so there is no
+table to keep up to date:
+
+```bash
+dart run co_faker:coverage --languages                  # a Markdown table
+dart run co_faker:coverage --languages --format json    # for tools
+```
+
+`--language <code>` runs the gate that decides whether a language is finished.
+It reads the bundle, the clinic data, and the SaaS data of the language,
+compares them with English text by text, and runs every generator of the
+language. Without `--strict` it prints the report; with `--strict` it exits with
+1 when something is wrong, which is what a pull request check wants:
+
+```bash
+dart run co_faker:coverage --language ja --strict
+dart run co_faker:coverage --language ja --format json
+```
+
+It fails on Hangul in a language other than Korean, on text without the writing
+system of Japanese, Chinese, or Russian, on texts that read like the English
+ones (a unit or an acronym that is the same on purpose goes in
+`CoL10nBundle.allowSameAsEnglish`), on a list that is not as long as the English
+one, on a key that is still a stub, and on a generator that leaves a
+placeholder unfilled or throws. A language that has no data yet is `planned`
+and fails with that message. See `docs/languages/README.md` for the gate, the
+files a language fills, and the glossary of each language.
+
 ## Template Sugar
 
 ```dart

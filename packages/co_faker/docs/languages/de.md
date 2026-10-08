@@ -2,7 +2,7 @@
 
 status: planned
 
-Deutsch. The national locale is `de_DE`.
+Native name: Deutsch. National locale: `de_DE`.
 
 The status line above is read by the tests of the package:
 
