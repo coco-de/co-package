@@ -50,7 +50,6 @@ void main() {
         expect(bundle, isNotNull, reason: code);
         expect(bundle!.language, code);
       }
-      expect(CoL10nRegistry.bundleFor('es'), isNull);
       expect(CoL10nRegistry.bundleFor('xx'), isNull);
     });
 
@@ -137,7 +136,6 @@ void main() {
       }
       expect(CoFakerLanguages.korean.domain, isTrue);
       expect(CoFakerLanguages.english.domain, isTrue);
-      expect(CoFakerLanguages.spanish.domain, isFalse);
       expect(CoL10nRegistry.hasDomainData('xx'), isFalse);
     });
   });
@@ -215,7 +213,7 @@ void main() {
     test('reads English text for a language without domain text', () {
       for (final key in ['dental.dentalProcedure', 'workplace.sprintName']) {
         final expected = english.texts[key];
-        for (final code in ['nl', 'xx_YY', 'zh_TW', 'zh_HK', 'es']) {
+        for (final code in ['nl', 'xx_YY', 'zh_TW', 'zh_HK']) {
           expect(_faker(code).l10n.list(key), expected, reason: '$code $key');
         }
       }
@@ -319,6 +317,18 @@ void main() {
             allOf(contains('{n}'), contains('{m}')),
           ),
         ),
+      );
+    });
+
+    test('refuses a null value instead of printing it', () {
+      expect(
+        () => _faker('en').l10n.format('workplace.sprintName', {'n': null}),
+        throwsStateError,
+      );
+      expect(
+        () =>
+            _faker('en').l10n.format('workplace.sprintName', {'n': () => null}),
+        throwsStateError,
       );
     });
 

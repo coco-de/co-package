@@ -63,6 +63,7 @@ CoDomainRole firstNameRole() => authoredRole((f, _) => f.person.firstName());
 CoDomainRole maskedNameRole() => authoredRole(
   (f, _) => f.l10n.format('common.maskedName', {
     'lastName': () => f.person.lastName(),
+    'firstName': () => f.person.firstName(),
     'initial': () => f.person.firstName().substring(0, 1),
   }),
   description: 'Masked fictional name; no complete identity',

@@ -274,6 +274,26 @@ void main() {
       );
     });
 
+    test('and a template chooses which names a masked name draws', () {
+      const bundle = CoL10nBundle(
+        language: 'xx',
+        texts: {
+          'common.maskedName': ['{lastName}-{firstName}'],
+        },
+      );
+      final custom = _faker(
+        'en',
+        locales: _withBundle('en', CoFakerLocales.english, bundle),
+      );
+      final value = custom.schema.record(
+        {'name': 'String'},
+        roles: {'name': 'homecare.recipientName'},
+      )['name'];
+      // The names are drawn in the order the template names them.
+      final stream = _faker('en').derive('schema/0/name');
+      expect(value, '${stream.person.lastName()}-${stream.person.firstName()}');
+    });
+
     test('and the shipped Korean text answers where it has no bundle', () {
       // A partial custom bundle for Korean translates only its keys.
       final f = _faker(

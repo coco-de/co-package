@@ -9,9 +9,9 @@ const CoL10nBundle koBundle = CoL10nBundle(
   language: 'ko',
   texts: <String, List<String>>{
     // common
-    // A masked name. {lastName} is a family name and {initial} the first letter
-    // of a given name; only the placeholders a template contains are drawn, so a
-    // language chooses which name it masks.
+    // A masked name. {lastName} is a family name, {firstName} a given name, and
+    // {initial} the first letter of a given name; only the placeholders a
+    // template contains are drawn, so a language chooses which name it masks.
     'common.maskedName': ['{lastName}○○'],
     // The name of a child under a taxonomy root: {root} is the root name and {n}
     // the child number.
@@ -289,6 +289,8 @@ const CoL10nBundle koBundle = CoL10nBundle(
       '배경 채우기',
       '검사 생략',
     ],
+    // Each explanation contains the text of its correct choice, and the four
+    // choices of a question are different from one another: tests check both.
     'exam_prep.explanation': [
       '기본 키는 표의 각 행을 구분하는 식별자입니다.',
       'WHERE 절은 조회할 행의 조건을 표현합니다.',

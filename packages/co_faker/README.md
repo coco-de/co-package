@@ -509,17 +509,14 @@ faker.schema.record(
 ```
 
 - A key is `<pack>.<role>` (`dental.dentalProcedure`) or
-  `<generator>.<name>` (`fx.currencyName.USD`). Every key is listed in
-  `CoL10nRegistry.english.texts`.
-- A bundle may translate only some keys. A key it does not have reads the
-  shipped bundle of the language, then English.
-- A key keeps the number of texts it has in English, so the same seed picks
-  the same entry in every language. A list of another length throws a
-  `StateError` when it is read; `CoL10nRegistry.validate(bundle)` lists the
-  problems of a bundle, for a test of your own.
+  `<generator>.<name>` (`fx.currencyName.USD`); `CoL10nRegistry.english.texts`
+  lists them all. A bundle may translate only some keys: the rest read English.
+- A key keeps the number of texts it has in English, so the same seed picks the
+  same entry in every language. Another length throws a `StateError` when the
+  key is read; `CoL10nRegistry.validate(bundle)` checks a bundle in your tests.
 - Traditional Chinese (`zh_TW`, `zh_HK`, `zh_MO`, `zh-Hant`) and a language
-  without a bundle read English: nobody is handed text in a language they did
-  not ask for.
+  without a bundle read English: Traditional readers are never handed
+  Simplified text.
 
 ### Countries: GDP top 10
 

@@ -127,8 +127,8 @@ class CoFakerL10n {
   ///
   /// The Korean template (`{lastName}○○`) draws a family name and the English
   /// one (`{initial}***`) draws a given name, and neither draws the other.
-  /// Throws a [StateError] for a placeholder that [args] does not have, and
-  /// for any error [text] reports.
+  /// Throws a [StateError] for a placeholder that [args] does not have or
+  /// whose value is `null`, and for any error [text] reports.
   String format(String key, Map<String, Object?> args) {
     return text(key).replaceAllMapped(_placeholder, (match) {
       final name = match.group(1)!;
@@ -139,7 +139,11 @@ class CoFakerL10n {
         );
       }
       final value = args[name];
-      return '${value is CoL10nLazyArg ? value() : value}';
+      final resolved = value is CoL10nLazyArg ? value() : value;
+      if (resolved == null) {
+        throw StateError('l10n text "$key": the value of {$name} is null.');
+      }
+      return '$resolved';
     });
   }
 

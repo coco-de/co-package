@@ -6,16 +6,17 @@ import '../co_l10n_bundle.dart';
 /// English is the reference of every language. A key is `<pack>.<role>` (or
 /// `<generator>.<name>`), and its value is the list of texts the key can show;
 /// a key with one sentence is a list of one, and `{name}` marks a placeholder the
-/// generator fills in. Another language keeps the same number of texts for a
-/// key, in the same order, so one seed picks the same entry in each language,
-/// and it may leave a key out to fall back to English. See [CoL10nBundle].
+/// generator fills in; a comment above a key names its placeholders. Another
+/// language keeps the same number of texts for a key, in the same order, so one
+/// seed picks the same entry in each language, and it may leave a key out to fall
+/// back to English. See [CoL10nBundle].
 const CoL10nBundle enBundle = CoL10nBundle(
   language: 'en',
   texts: <String, List<String>>{
     // common
-    // A masked name. {lastName} is a family name and {initial} the first letter
-    // of a given name; only the placeholders a template contains are drawn, so a
-    // language chooses which name it masks.
+    // A masked name. {lastName} is a family name, {firstName} a given name, and
+    // {initial} the first letter of a given name; only the placeholders a
+    // template contains are drawn, so a language chooses which name it masks.
     'common.maskedName': ['{initial}***'],
     // The name of a child under a taxonomy root: {root} is the root name and {n}
     // the child number.
@@ -483,6 +484,8 @@ const CoL10nBundle enBundle = CoL10nBundle(
       'Background fill',
       'Skipped checks',
     ],
+    // Each explanation contains the text of its correct choice, and the four
+    // choices of a question are different from one another: tests check both.
     'exam_prep.explanation': [
       'A Primary key identifies each row in a table.',
       'The WHERE clause expresses a condition for selected rows.',
