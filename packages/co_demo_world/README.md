@@ -98,7 +98,7 @@ DemoEmbedSync(allowLocalhost: kDebugMode).start((prefs) {
 - Keys use the entity **id**, never its list position.
 - The language is not part of the derivation key: where co_faker's word lists
   are aligned across languages, the same record comes out translated
-  (나비 ↔ Butterfly).
+  (나비 ↔ Butterfly ↔ ちょうちょ).
 - VM, dart2js and dart2wasm produce the same values (`platform_parity_test`).
   This relies on co_faker's platform-independent `deriveSeed` (co-package#69).
 
@@ -114,18 +114,22 @@ says why.
 Requesting a locale proves nothing — co_faker silently falls back to English
 for data it does not have. `DemoLocaleSupport.evaluate` measures the fields a
 demo actually consumes in all eleven languages and `markdownTable` renders the
-support table each demo keeps in its repository. Measured with co_faker 0.11.0:
+support table each demo keeps in its repository. Measured with co_faker after
+co-package#57 (the domain data of zh · ja · de · fr · ru · it · pt):
 
 | field | ko | en | zh-Hans | ja | de | fr | es | pt | it | ru | ar |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | `person.fullName` | native | native | native | native | native | native | native | native | native | native | en-fallback |
 | `address.city` | native | native | native | native | native | native | native | native | native | native | en-fallback |
 | `text.sentence` | native | native | native | native | native | native | native | native | native | native | en-fallback |
-| domain packs (`vet.pet().name`, `catalog.item().name`, …) | native | native | en-fallback | en-fallback | en-fallback | en-fallback | en-fallback | en-fallback | en-fallback | en-fallback | en-fallback |
+| domain packs (`vet.pet().name`, `catalog.item().name`, …) | native | native | native | native | partial | partial | en-fallback | native | partial | native | en-fallback |
 
-Domain-pack languages come with co-package#57 (zh · de · ja · fr · ru · it · pt)
-and co-package#71 (es · ar). Bumping the co_faker ref improves demos without
-code changes; their support tables show it.
+Domain-pack languages came with co-package#57 (zh · de · ja · fr · ru · it · pt)
+and come with co-package#71 (es · ar). The domain-packs row is the `pet.name`
+of the sample world. `partial` means that some of the sampled values are the
+same word as in English: a third of the sampled pet names are `Tofu`, a loanword
+that de, fr and it keep. Bumping the co_faker ref improves demos without code
+changes; their support tables show it.
 
 ## Installing
 

@@ -53,8 +53,8 @@ void main() {
       '두부',
       '박채은',
     ]);
-    // The ko/en domain lists are aligned: the same record comes out
-    // translated (나비 ↔ Butterfly, 두부 ↔ Tofu).
+    // The domain lists of the languages are aligned: the same record comes out
+    // translated (나비 ↔ Butterfly ↔ ちょうちょ, 두부 ↔ Tofu ↔ とうふ).
     expect(projected(DemoLocale.en), [
       'Butterfly',
       'Alexander White',
@@ -64,11 +64,11 @@ void main() {
       'William Williams',
     ]);
     expect(projected(DemoLocale.ja), [
-      'Butterfly',
+      'ちょうちょ',
       '中村 颯',
       '横浜市西区',
       '記録習慣記録絵地域設計。',
-      'Tofu',
+      'とうふ',
       '山崎 大翔',
     ]);
   });
