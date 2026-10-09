@@ -36,7 +36,8 @@ enum CoLanguageCheck {
   /// (c) Too many texts read exactly like the English ones.
   sameAsEnglish('(c) same as English'),
 
-  /// (d) A list does not have the length of the English list.
+  /// (d) A list does not have the length of the English list, or a map does
+  /// not have the keys of the English map in the same order.
   length('(d) list length'),
 
   /// (e) A key or a data set is not registered: English is used instead.
@@ -48,18 +49,23 @@ enum CoLanguageCheck {
   /// A code that has to be the English one is not.
   code('code'),
 
-  /// A placeholder is lost, or one is left unfilled in generated text.
+  /// A translation does not keep the `{name}` fields of its English text
+  /// (one is lost, renamed, repeated, or added), or a field is left unfilled
+  /// in generated text.
   placeholder('placeholder'),
 
   /// A text is empty.
   empty('empty text'),
 
-  /// Texts that belong together no longer do: the explanation of an exam
-  /// question does not contain its correct choice, or two choices of a
-  /// question are the same.
-  invariant('paired texts'),
+  /// A rule of the data that no other check expresses is broken: the
+  /// explanation of an exam question does not contain its correct choice, two
+  /// choices of a question are the same, or the clinic or SaaS data of a
+  /// language other than Korean and English keeps the Korean values
+  /// (`koreanValues` is not `CoKoreanValues.none`).
+  invariant('data rules'),
 
-  /// An `allowSameAsEnglish` entry is wrong or no longer needed.
+  /// An `allowSameAsEnglish` entry is wrong or no longer needed, or the list
+  /// covers too many texts.
   allowance('allowSameAsEnglish'),
 
   /// A generator threw.

@@ -93,15 +93,16 @@ class SampleLanguage {
   /// language that has no Korean-only value.
   ///
   /// A test breaks the sample with the named arguments: [cardIssuers],
-  /// [diagnoses], [staffRoles], [packageNameFormat], and [koreanValues]
-  /// replace those fields, [dropTexts] and [dropOps] leave the texts or the
-  /// operations texts out, and [rewrite] changes a text after the sample has
-  /// written it.
+  /// [diagnoses], [staffRoles], [packageNameFormat], [addressLineFormat], and
+  /// [koreanValues] replace those fields, [dropTexts] and [dropOps] leave the
+  /// texts or the operations texts out, and [rewrite] changes a text after the
+  /// sample has written it.
   CoFakerClinicData clinic({
     List<String>? cardIssuers,
     List<CoDiagnosisSpec>? diagnoses,
     Map<String, String>? staffRoles,
     String? packageNameFormat,
+    String addressLineFormat = '{line1}, {city}',
     CoKoreanValues koreanValues = CoKoreanValues.none,
     bool dropTexts = false,
     bool dropOps = false,
@@ -137,7 +138,7 @@ class SampleLanguage {
       clinicNameFormat: '{prefix}{suffix}',
       koreanValues: koreanValues,
       maskedIdFormat: '########',
-      addressLineFormat: '{line1}, {city}',
+      addressLineFormat: addressLineFormat,
     );
   }
 

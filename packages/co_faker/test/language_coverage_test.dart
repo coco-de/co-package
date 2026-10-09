@@ -547,6 +547,31 @@ void main() {
       expect(same[1].message, contains('allow it'));
     });
 
+    test('(c) read a text that only its case or spaces change as English', () {
+      // The English bundle, lower-cased, with a no-break space, and with
+      // typographic quotes, is English still: nothing was translated.
+      final english = CoL10nRegistry.english.texts;
+      final bundle = _bundle(de, (texts) {
+        var n = 0;
+        for (final key in english.keys) {
+          for (var i = 0; i < english[key]!.length; i++) {
+            final text = english[key]![i];
+            texts[key]![i] = switch (n++ % 4) {
+              0 => text.toLowerCase(),
+              1 => '$text ',
+              2 => text.replaceAll(' ', ' ').replaceAll("'", '’'),
+              _ => texts[key]![i],
+            };
+          }
+        }
+      });
+      final report = _data(de.data(bundle: bundle));
+      final same = report.issuesOf(CoLanguageCheck.sameAsEnglish);
+      expect(same.first.where, 'all texts');
+      expect(same.first.message, contains('the limit is 10.0%'));
+      expect(report.stats['sameAsEnglishRatio'], greaterThan(0.3));
+    });
+
     test('(c) allow Latin-script languages more words that equal English', () {
       // About 7% of the texts kept: past the limit of Japanese, within the
       // limit of German, which shares many words with English.
@@ -1028,6 +1053,63 @@ void main() {
             : text,
       );
       expect(_data(ja.data(clinic: reordered)).issues, isEmpty);
+    });
+
+    test('let a pattern use the fields that its generator offers besides', () {
+      // The address line of a patient has the region of the place, and a date
+      // has its weekday; English uses neither, and a language may.
+      CoLanguageReport address(String format) =>
+          _data(ja.data(clinic: ja.clinic(addressLineFormat: format)));
+      CoLanguageReport date(String format) => _data(
+        ja.data(
+          clinic: ja.clinic(
+            rewrite: (at, written) =>
+                at.slot == 'clinic.ops.dateFormat' ? format : written,
+          ),
+        ),
+      );
+      for (final fine in [
+        '{region}{city}{line1}',
+        '{line1}, {city}, {regionCode}',
+        '{line1}, {city}',
+      ]) {
+        expect(address(fine).issues, isEmpty, reason: fine);
+      }
+      expect(date('{month}月{day}日({weekday})').issues, isEmpty);
+      // The English fields stay required, and no other name is offered.
+      expect(_where(address('{region}{line1}'), CoLanguageCheck.placeholder), [
+        'clinic.addressLineFormat[0]',
+      ]);
+      expect(
+        address(
+          '{line1}, {city}, {postal}',
+        ).issuesOf(CoLanguageCheck.placeholder).single.message,
+        contains('has {postal}'),
+      );
+      expect(
+        date(
+          '{year}/{month}/{day}',
+        ).issuesOf(CoLanguageCheck.placeholder).single.message,
+        contains('has {year}'),
+      );
+      // The Korean particles of a closure notice are not offered to another
+      // language: they write Hangul.
+      expect(
+        _where(
+          _data(
+            ja.data(
+              clinic: ja.clinic(
+                rewrite: (at, written) =>
+                    at.slot == 'clinic.ops.closure' && at.row == 'other'
+                    ? '{clinic}{eun} {dates} {reason}{ro} {reopen}'
+                    : written,
+              ),
+            ),
+          ),
+          CoLanguageCheck.placeholder,
+        ),
+        ['clinic.ops.closure[other]'],
+      );
     });
 
     test(

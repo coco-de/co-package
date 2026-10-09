@@ -423,6 +423,16 @@ const Map<String, Set<String>> _offeredFields = <String, Set<String>>{
   'daycare.teacherName': <String>{'name1', 'name2'},
 };
 
+/// The patterns whose generator offers fields that the English pattern does
+/// not use, and that a language may write besides the English ones: the
+/// address line of a patient has the region of the place too (Japanese and
+/// Chinese write `{region}{city}{line1}`), and a date may carry its weekday
+/// (`{month}月{day}日({weekday})`). The English fields stay required.
+const Map<String, Set<String>> _extraFields = <String, Set<String>>{
+  'clinic.addressLineFormat': <String>{'region', 'regionCode'},
+  'clinic.ops.dateFormat': <String>{'weekday'},
+};
+
 /// The data layer of the gate: it compares the texts of a language with the
 /// English ones, slot by slot.
 class _DataLayer {
@@ -788,10 +798,13 @@ class _DataLayer {
     }
     _checkPlaceholders(where, slot, english, text);
     var allowed = false;
+    // A text that differs from the English one by its case, its spaces, or the
+    // shape of its quotes reads like it: it was not translated.
+    final same = _fold(text) == _fold(english);
     if (CoTextScan.hasLetters(english)) {
       _translatable++;
       _slotTranslatable[slot.name] = (_slotTranslatable[slot.name] ?? 0) + 1;
-      if (text == english) {
+      if (same) {
         if (_allows(slot.name, text)) {
           allowed = true;
           _allowedSame++;
@@ -803,8 +816,21 @@ class _DataLayer {
     }
     // A text that equals English is reported by (c), once; it is not also a
     // text without the writing system.
-    _checkScript(slot.name, where, text, allowed: allowed || text == english);
+    _checkScript(slot.name, where, text, allowed: allowed || same);
   }
+
+  static final RegExp _blanks = RegExp(r'\s+');
+
+  /// [text] as the comparison with English reads it: one space for any run of
+  /// white space (a no-break space too), straight quotes, and no case.
+  static String _fold(String text) => text
+      .trim()
+      .replaceAll(_blanks, ' ')
+      .replaceAll('’', "'")
+      .replaceAll('‘', "'")
+      .replaceAll('“', '"')
+      .replaceAll('”', '"')
+      .toLowerCase();
 
   /// A translation keeps the `{name}` fields of its English text, each as often
   /// as English has it and under the English name, in any order: a generator
@@ -827,10 +853,14 @@ class _DataLayer {
       for (final name in CoTextScan.fieldNames(source, templates: inPattern))
         choice != null && choice.contains(name) ? choice.join('|') : name,
     ];
+    final extra = _extraFields[slot.name];
     final wanted = names(english);
     final got = names(text);
     final lost = _without(wanted, got);
-    final unknown = _without(got, wanted);
+    final unknown = <String>[
+      for (final name in _without(got, wanted))
+        if (extra == null || !extra.contains(name)) name,
+    ];
     if (lost.isNotEmpty || unknown.isNotEmpty) {
       String fields(List<String> names) =>
           names.map((name) => '{$name}').join(', ');
