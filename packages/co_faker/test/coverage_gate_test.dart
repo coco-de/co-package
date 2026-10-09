@@ -141,16 +141,23 @@ void main() {
       expect(report['reference'], isTrue);
     });
 
+    // A supported language whose data is not written yet, while one is left.
+    final pending = <String>[
+      for (final language in CoFakerLanguages.all)
+        if (CoLanguageData.registered(language.code).level ==
+            CoLanguageLevel.planned)
+          language.code,
+    ];
     test('--language --strict fails a language without data', () async {
-      // Spanish is a base language for good: it has no domain data to fill.
+      final code = pending.last;
       final results = await Future.wait(<Future<ProcessResult>>[
-        _coverage(<String>['--language', 'es', '--strict']),
-        _coverage(<String>['--language', 'es']),
-        _coverage(<String>['--language', 'es', '--strict', '--format', 'json']),
+        _coverage(<String>['--language', code, '--strict']),
+        _coverage(<String>['--language', code]),
+        _coverage(<String>['--language', code, '--strict', '--format', 'json']),
       ]);
       final strict = results[0];
       expect(strict.exitCode, 1);
-      expect(strict.stdout, contains('base'));
+      expect(strict.stdout, contains('planned'));
       expect(strict.stdout, contains('Result: **FAIL**'));
       // Without --strict the report is information and the exit code is 0.
       final info = results[1];
@@ -161,11 +168,11 @@ void main() {
       expect(json.exitCode, 1);
       final report = jsonDecode(json.stdout as String) as Map<String, Object?>;
       expect(report['passed'], isFalse);
-      expect(report['level'], 'base');
+      expect(report['level'], 'planned');
       final issues = (report['issues']! as List).cast<Map<String, Object?>>();
       expect(issues.single['check'], 'planned');
-      expect(issues.single['where'], 'es');
-    });
+      expect(issues.single['where'], code);
+    }, skip: pending.isEmpty ? 'every supported language is localized' : false);
 
     test('rejects what it cannot read with exit code 2', () async {
       final invalid = <List<String>>[

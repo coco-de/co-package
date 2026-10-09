@@ -3,32 +3,42 @@ import 'package:test/test.dart';
 
 void main() {
   group('CoFakerCountries', () {
-    test('ranks every supported country by GDP, Brazil last', () {
-      expect(CoFakerCountries.all.map((c) => c.code), [
-        'US',
-        'CN',
-        'DE',
-        'JP',
-        'GB',
-        'IN',
-        'FR',
-        'RU',
-        'IT',
-        'CA',
-        'BR',
-      ]);
-      expect(
-        CoFakerCountries.all.map((c) => c.gdpRank),
-        List<int>.generate(11, (i) => i + 1),
-      );
-      expect(CoFakerCountries.gdpTop10, hasLength(10));
-      expect(CoFakerCountries.gdpTop10, CoFakerCountries.all.take(10));
-      expect(
-        CoFakerCountries.gdpTop10,
-        isNot(contains(CoFakerCountries.brazil)),
-      );
-      expect(CoFakerCountries.gdpSource, contains('2025'));
-    });
+    test(
+      'ranks every supported country by GDP, then the language countries',
+      () {
+        expect(CoFakerCountries.all.map((c) => c.code), [
+          'US',
+          'CN',
+          'DE',
+          'JP',
+          'GB',
+          'IN',
+          'FR',
+          'RU',
+          'IT',
+          'CA',
+          'BR',
+          'ES',
+          'SA',
+        ]);
+        expect(CoFakerCountries.all.map((c) => c.gdpRank), [
+          ...List<int>.generate(11, (i) => i + 1),
+          12,
+          19,
+        ]);
+        expect(CoFakerCountries.languageCountries, [
+          CoFakerCountries.spain,
+          CoFakerCountries.saudiArabia,
+        ]);
+        expect(CoFakerCountries.gdpTop10, hasLength(10));
+        expect(CoFakerCountries.gdpTop10, CoFakerCountries.all.take(10));
+        expect(
+          CoFakerCountries.gdpTop10,
+          isNot(contains(CoFakerCountries.brazil)),
+        );
+        expect(CoFakerCountries.gdpSource, contains('2025'));
+      },
+    );
 
     test('carries consistent ISO, locale, calling and currency codes', () {
       final codes = <String>{};
@@ -91,7 +101,7 @@ void main() {
           isA<ArgumentError>().having(
             (error) => '${error.message}',
             'message',
-            contains('US, CN, DE, JP, GB, IN, FR, RU, IT, CA, BR'),
+            contains('US, CN, DE, JP, GB, IN, FR, RU, IT, CA, BR, ES, SA'),
           ),
         ),
       );
@@ -102,6 +112,8 @@ void main() {
       expect(CoFaker(locale: 'pt').country, CoFakerCountries.brazil);
       expect(CoFaker(locale: 'pt_PT').country, CoFakerCountries.brazil);
       expect(CoFaker(locale: 'ru').country, CoFakerCountries.russia);
+      expect(CoFaker(locale: 'ar').country, CoFakerCountries.saudiArabia);
+      expect(CoFaker(locale: 'ar_EG').country, CoFakerCountries.saudiArabia);
     });
 
     test('earlier language codes stay language-only', () {

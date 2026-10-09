@@ -12,7 +12,7 @@ Usage:
       the registries.
   dart run co_faker:coverage --language <code> [--strict] [--format markdown|json]
       Runs the language gate on one language (ko, en, zh, ja, de, fr, ru, it,
-      pt): the texts are written in the language (no Hangul, its writing
+      pt, es, ar): the texts are written in the language (no Hangul, its writing
       system, few texts like English), every list lines up with English, and
       nothing is left unregistered. --strict exits with 1 when it fails.
 ''';

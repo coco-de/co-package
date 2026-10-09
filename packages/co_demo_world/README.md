@@ -106,8 +106,8 @@ DemoEmbedSync(allowLocalhost: kDebugMode).start((prefs) {
 
 `DemoFakerLocales.table` maps the eleven UI languages of co_demo_prefs to
 co_faker locales: `ko`→`ko`, `en`→`en_US`, `zh-Hans`→`zh_CN`, `ja`→`ja_JP`,
-`de`→`de_DE`, `fr`→`fr_FR`, `es`→`es`, `pt`→`pt_BR`, `it`→`it_IT`,
-`ru`→`ru_RU`, `ar`→`ar`. `DemoFakerLocales.resolve(tag)` never throws: a
+`de`→`de_DE`, `fr`→`fr_FR`, `es`→`es_ES`, `pt`→`pt_BR`, `it`→`it_IT`,
+`ru`→`ru_RU`, `ar`→`ar_SA`. `DemoFakerLocales.resolve(tag)` never throws: a
 missing, unsupported or Traditional Chinese tag resolves to the fallback and
 says why.
 
@@ -115,17 +115,20 @@ Requesting a locale proves nothing — co_faker silently falls back to English
 for data it does not have. `DemoLocaleSupport.evaluate` measures the fields a
 demo actually consumes in all eleven languages and `markdownTable` renders the
 support table each demo keeps in its repository. Measured with co_faker after
-co-package#57 (the domain data of zh · ja · de · fr · ru · it · pt):
+co-package#57 (the domain data of zh · ja · de · fr · ru · it · pt) and the
+Spanish and Arabic national locales of co-package#71:
 
 | field | ko | en | zh-Hans | ja | de | fr | es | pt | it | ru | ar |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `person.fullName` | native | native | native | native | native | native | native | native | native | native | en-fallback |
-| `address.city` | native | native | native | native | native | native | native | native | native | native | en-fallback |
-| `text.sentence` | native | native | native | native | native | native | native | native | native | native | en-fallback |
+| `person.fullName` | native | native | native | native | native | native | native | native | native | native | native |
+| `address.city` | native | native | native | native | native | native | native | native | native | native | native |
+| `text.sentence` | native | native | native | native | native | native | native | native | native | native | native |
 | domain packs (`vet.pet().name`, `catalog.item().name`, …) | native | native | native | native | partial | partial | en-fallback | native | partial | native | en-fallback |
 
 Domain-pack languages came with co-package#57 (zh · de · ja · fr · ru · it · pt)
-and come with co-package#71 (es · ar). The domain-packs row is the `pet.name`
+and come with co-package#71 (es · ar): the basic modules of es and ar are
+native now, and their domain data follows. Arabic text is right to left and
+keeps the digits 0–9. The domain-packs row is the `pet.name`
 of the sample world. `partial` means that some of the sampled values are the
 same word as in English: a third of the sampled pet names are `Tofu`, a loanword
 that de, fr and it keep. Bumping the co_faker ref improves demos without code

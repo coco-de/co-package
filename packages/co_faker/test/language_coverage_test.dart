@@ -1382,8 +1382,7 @@ void main() {
         expect(row.bundleKeyTotal, CoL10nRegistry.english.texts.length);
         expect(row.bundleKeys, data.bundle.texts.length, reason: row.code);
       }
-      final es = rows.singleWhere((row) => row.code == 'es');
-      expect(es.level, CoLanguageLevel.base);
+      expect(rows.map((row) => row.code), containsAll(<String>['es', 'ar']));
       final markdown = CoLanguageCoverage.supportMarkdown(rows);
       expect(markdown.split('\n'), hasLength(rows.length + 2));
       expect(markdown, contains('| `ko` Korean | hangul | ✓ | ✓ | '));

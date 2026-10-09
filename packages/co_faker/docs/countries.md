@@ -40,11 +40,17 @@ values, last updated on 2026-07-13, from
 | 9 | Italy | `it_IT` | EUR | 2,552 |
 | 10 | Canada | `en_CA` | CAD | 2,320 |
 | 11 | Brazil | `pt_BR` | BRL | 2,280 |
+| 12 | Spain | `es_ES` | EUR | 1,906 |
+| 19 | Saudi Arabia | `ar_SA` | SAR | 1,277 |
 
 Ranks 9 to 11 are within a few percent of each other and differ between
 sources and editions. The IMF's 2026 projections put Brazil in the top ten
 and Canada or Russia outside it. `CoFakerCountries.all` therefore includes
 Brazil, so "the GDP top ten" is covered whichever source a reader has in mind.
+Spain and Saudi Arabia (`CoFakerCountries.languageCountries`) are not in the
+top ten: they carry the national locales of Spanish and Arabic, two of the
+eleven languages of the demo apps (co-package#71). Their ranks are from the
+same edition (checked on 2026-10-09).
 The ranking is a snapshot in the source code. A later edition is a source
 change, not something fetched at runtime.
 
@@ -67,6 +73,8 @@ both notations.
 | IT | `30# ### ####` | No reserved range. Mobile numbers start with 3, but no number type uses `30`. |
 | RU | `8 (5##) ###-##-##` | No reserved range. Zone 5 is unused in the Russian numbering plan. |
 | BR | `(20) 9####-####` and `(30)` to `(80)` | No reserved range. These area codes (DDD) are not assigned to any region. |
+| ES | `75# ### ###`, `77#`, `79#`, `840`, `870`, `890`, `940`, `970`, `990` | No reserved range. Mobile numbers start with 6 or 71–74; these prefixes are unassigned (libphonenumber 9.0.41). |
+| SA | `052 ### ####`, `012 0## ####`, `013 0##`, `014 0##`, `017 0##` | No reserved range. No operator uses `052`, and these landline codes have no subscriber number starting with 0 (libphonenumber 9.0.41). |
 
 `test/national_locales_test.dart` checks every generated number against these
 rules. The rules are written there from the sources, separately from the
@@ -99,6 +107,8 @@ dart run tool/national_phone_formats.dart | python3 tool/verify_phone_formats.py
   - Japan: `〒100-0011 東京都千代田区本町2丁目3-15`
   - Russia: `630099, г. Новосибирск, ул. Ленина, д. 12`
   - Brazil: `Rua das Flores, 123 - Recife - PE, 50123-456`
+  - Spain: `Calle Mayor, 12, 28013 Madrid`
+  - Saudi Arabia: `8228 شارع التحلية، جدة 21452` (right to left, digits 0–9)
 - **Names.**
   - Given names come in gendered lists of 20 or more per sex.
   - Russian family names agree with the sex: `Иванова` for a woman. `fullName()`
@@ -108,6 +118,7 @@ dart run tool/national_phone_formats.dart | python3 tool/verify_phone_formats.py
   - Chinese and Japanese names use an authored romanization: `佐藤` → `sato`,
     `浩然` → `haoran`.
   - Cyrillic is transliterated letter by letter: `Фёдоров` → `fyodorov`.
+  - Arabic names use an authored romanization: `الغامدي` → `alghamdi`.
   - Latin diacritics are folded, and German umlauts become `ae`, `oe` and `ue`.
 - **Text.**
   - Chinese and Japanese join words without spaces and end sentences with `。`.
@@ -133,9 +144,11 @@ dart run tool/national_phone_formats.dart | python3 tool/verify_phone_formats.py
   generator surface with a snapshot recorded by 0.10.0.
 - Regional codes that now have a national locale resolve to it instead of
   their language: `en_US`, `zh_CN`, `de_DE`, `ja_JP`, `en_GB`, `en_IN`,
-  `fr_FR`, `ru_RU`, `it_IT`, `en_CA`, `pt_BR`. Language codes that had no data
-  and fell back to English now resolve to a national locale: `it` and `ru` to
-  their country, `pt` to Brazil.
+  `fr_FR`, `ru_RU`, `it_IT`, `en_CA`, `pt_BR`, `es_ES`, `ar_SA`. Language
+  codes that had no data and fell back to English now resolve to a national
+  locale: `it` and `ru` to their country, `pt` to Brazil, `ar` to Saudi Arabia.
+  The bare `es` keeps its language-only data; `CoFaker.forLanguage('es')`
+  builds `es_ES`.
 - Locale lookup now uses the normalized code, as documented. Before this
   change a custom locale registered as `ko-KR` was never found.
 - The national-only APIs throw a `StateError` on a language-only locale:

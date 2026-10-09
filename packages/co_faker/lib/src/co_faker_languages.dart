@@ -20,6 +20,9 @@ enum CoFakerScript {
 
   /// Hangul syllables: Korean.
   hangul,
+
+  /// Arabic letters, written right to left: Arabic.
+  arabic,
 }
 
 /// A language co_faker can generate data for.
@@ -41,7 +44,7 @@ class CoFakerLanguage {
   ///
   /// It is the national locale of the language's main country, so the
   /// generator gets the same data as `CoFaker.forCountry`. A language without
-  /// a national locale (`ko`, `es`) keeps its language-only locale, and its
+  /// a national locale (`ko`) keeps its language-only locale, and its
   /// generator has no `CoFaker.country`.
   final String locale;
 
@@ -196,16 +199,26 @@ abstract final class CoFakerLanguages {
     script: CoFakerScript.latin,
   );
 
-  /// Spanish (`es`). It supports the basic modules only: its data is the
-  /// language-only locale and its domain data is English.
+  /// Spanish (`es`), generated with the national locale of Spain.
+  ///
+  /// `CoFaker(locale: 'es')` keeps the language-only data it has always had;
+  /// the language and `CoFaker.forLanguage('es')` use `es_ES`.
   static const CoFakerLanguage spanish = CoFakerLanguage(
     code: 'es',
-    locale: 'es',
+    locale: 'es_es',
     script: CoFakerScript.latin,
   );
 
+  /// Arabic (`ar`), generated with the national locale of Saudi Arabia. Its
+  /// text is written right to left, and its numbers keep the digits 0 to 9.
+  static const CoFakerLanguage arabic = CoFakerLanguage(
+    code: 'ar',
+    locale: 'ar_sa',
+    script: CoFakerScript.arabic,
+  );
+
   /// Every supported language: Korean, English, then the languages of the
-  /// other large economies, and Spanish.
+  /// other large economies, Spanish, and Arabic.
   static const List<CoFakerLanguage> all = <CoFakerLanguage>[
     korean,
     english,
@@ -217,6 +230,7 @@ abstract final class CoFakerLanguages {
     italian,
     portuguese,
     spanish,
+    arabic,
   ];
 
   /// Resolves a language setting [tag] to a supported language.

@@ -47,6 +47,15 @@ abstract final class CoTextScan {
   ];
 
   /// Cyrillic letters and their supplements.
+  /// Arabic, Arabic Supplement, Arabic Extended-A, and the presentation forms.
+  static const List<_Range> _arabic = <_Range>[
+    (0x0600, 0x06FF),
+    (0x0750, 0x077F),
+    (0x08A0, 0x08FF),
+    (0xFB50, 0xFDFF),
+    (0xFE70, 0xFEFF),
+  ];
+
   static const List<_Range> _cyrillic = <_Range>[
     (0x0400, 0x052F),
     (0x1C80, 0x1C8F),
@@ -117,6 +126,7 @@ abstract final class CoTextScan {
       CoFakerScript.kana => _has(text, _kana) || _has(text, _han),
       CoFakerScript.cyrillic => _has(text, _cyrillic),
       CoFakerScript.hangul => _has(text, _hangul),
+      CoFakerScript.arabic => _has(text, _arabic),
     };
   }
 

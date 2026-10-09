@@ -38,6 +38,11 @@ const List<_Setting> _supported = <_Setting>[
   (tag: 'it-IT', language: 'it', region: 'IT'),
   (tag: 'es', language: 'es', region: null),
   (tag: 'es-419', language: 'es', region: '419'),
+  (tag: 'es_ES.UTF-8', language: 'es', region: 'ES'),
+  (tag: 'ar', language: 'ar', region: null),
+  (tag: 'ar-SA', language: 'ar', region: 'SA'),
+  (tag: 'ar-EG', language: 'ar', region: 'EG'),
+  (tag: 'ar_SA.UTF-8', language: 'ar', region: 'SA'),
   // The subtags of an extension or private use name no script or region.
   (tag: 'zh-CN-x-hk', language: 'zh', region: 'CN'),
   (tag: 'zh-x-tw', language: 'zh', region: null),
@@ -47,8 +52,6 @@ const List<_Setting> _supported = <_Setting>[
 
 /// Settings that must resolve to English with `supported == false`.
 const List<String> _unsupported = <String>[
-  'ar',
-  'ar-EG',
   'hi',
   'hi_IN',
   'vi',
@@ -95,6 +98,8 @@ const Map<String, String> _locales = <String, String>{
   'ru': 'ru_ru',
   'it': 'it_it',
   'pt': 'pt_br',
+  'es': 'es_es',
+  'ar': 'ar_sa',
 };
 
 /// The country whose generator `forLanguage` must reproduce, per language.
@@ -107,6 +112,8 @@ const Map<String, String> _countries = <String, String>{
   'ru': 'RU',
   'it': 'IT',
   'pt': 'BR',
+  'es': 'ES',
+  'ar': 'SA',
 };
 
 final DateTime _now = DateTime.utc(2026, 1, 15);
@@ -138,14 +145,12 @@ void main() {
         'it',
         'pt',
         'es',
+        'ar',
       ]);
-      expect(
-        {
-          for (final language in CoFakerLanguages.all)
-            language.code: language.locale,
-        },
-        {..._locales, 'es': 'es'},
-      );
+      expect({
+        for (final language in CoFakerLanguages.all)
+          language.code: language.locale,
+      }, _locales);
       expect(
         {
           for (final language in CoFakerLanguages.all)
@@ -162,9 +167,10 @@ void main() {
           'it': CoFakerScript.latin,
           'pt': CoFakerScript.latin,
           'es': CoFakerScript.latin,
+          'ar': CoFakerScript.arabic,
         },
       );
-      expect(CoFakerScript.values, hasLength(5));
+      expect(CoFakerScript.values, hasLength(6));
     });
 
     test('names a built-in locale of its own language for every entry', () {
@@ -188,12 +194,11 @@ void main() {
     });
 
     test('computes domain support instead of flagging each language', () {
-      // Korean and English carry the authored domain data. Spanish supports
-      // the basic modules only. The other languages are not asserted: their
-      // domain data arrives language by language.
+      // Korean and English carry the authored domain data. The other
+      // languages are not asserted: their domain data arrives language by
+      // language.
       expect(CoFakerLanguages.korean.domain, isTrue);
       expect(CoFakerLanguages.english.domain, isTrue);
-      expect(CoFakerLanguages.spanish.domain, isFalse);
       expect(
         CoFakerLanguages.all.where((language) => language.domain),
         containsAll(<CoFakerLanguage>[
@@ -210,7 +215,7 @@ void main() {
         'CoFakerLanguageResolution(ja, supported)',
       );
       expect(
-        CoFakerLanguages.resolve('ar').toString(),
+        CoFakerLanguages.resolve('hi').toString(),
         'CoFakerLanguageResolution(en, unsupported)',
       );
     });
@@ -239,7 +244,7 @@ void main() {
       expect(readings, {'ko/KR'});
     });
 
-    test('accepts the tag of every demo locale but Arabic', () {
+    test('accepts the tag of every demo locale', () {
       // The tags of co_demo_prefs' DemoLocale.
       for (final tag in const [
         'ko',
@@ -252,10 +257,10 @@ void main() {
         'pt',
         'it',
         'ru',
+        'ar',
       ]) {
         expect(CoFakerLanguages.resolve(tag).supported, isTrue, reason: tag);
       }
-      expect(CoFakerLanguages.resolve('ar').supported, isFalse);
     });
 
     test('does not mistake a script or an extension for a region', () {
@@ -302,7 +307,7 @@ void main() {
     });
 
     test('still reports the region of an unsupported setting', () {
-      expect(CoFakerLanguages.resolve('ar-EG').region, 'EG');
+      expect(CoFakerLanguages.resolve('nl-BE').region, 'BE');
       expect(CoFakerLanguages.resolve('hi_IN').region, 'IN');
     });
 
@@ -311,6 +316,8 @@ void main() {
       expect(CoFakerLanguages.resolve('en-CA').locale, 'en_us');
       expect(CoFakerLanguages.resolve('pt-PT').locale, 'pt_br');
       expect(CoFakerLanguages.resolve('fr-CA').locale, 'fr_fr');
+      expect(CoFakerLanguages.resolve('es-MX').locale, 'es_es');
+      expect(CoFakerLanguages.resolve('ar-EG').locale, 'ar_sa');
     });
   });
 
@@ -407,13 +414,25 @@ void main() {
       }
     });
 
-    test('keeps Spanish on its language-only locale', () {
+    test('builds Spanish with Spain, while CoFaker keeps the bare es', () {
       final faker = CoFaker.forLanguage('es-MX', seed: 3, now: _now);
-      expect(faker.locale, 'es');
-      expect(faker.country, isNull);
+      expect(faker.locale, 'es_es');
+      expect(faker.country, CoFakerCountries.spain);
+      final bare = CoFaker(locale: 'es', seed: 3, now: _now);
+      expect(bare.country, isNull);
+      expect(bare.localeData.code, 'es');
+    });
+
+    test('builds Arabic with Saudi Arabia instead of English', () {
+      final faker = CoFaker.forLanguage('ar', seed: 3, now: _now);
+      expect(faker.locale, 'ar_sa');
+      expect(faker.country, CoFakerCountries.saudiArabia);
+      expect(CoFaker(locale: 'ar').country, CoFakerCountries.saudiArabia);
       expect(
-        _sample(faker),
-        _sample(CoFaker(locale: 'es', seed: 3, now: _now)),
+        faker.person.fullName(),
+        matches(
+          RegExp(r'^\p{Script=Arabic}+ \p{Script=Arabic}+$', unicode: true),
+        ),
       );
     });
 
@@ -448,8 +467,8 @@ void main() {
       }
     });
 
-    test('leaves Korean and Spanish without national address data', () {
-      for (final code in const ['ko', 'es']) {
+    test('leaves Korean without national address data', () {
+      for (final code in const ['ko']) {
         final faker = CoFaker.forLanguage(code);
         expect(faker.country, isNull, reason: code);
         expect(
@@ -483,7 +502,7 @@ void main() {
 
     test('falls back to English for an unsupported language', () {
       final english = _sample(CoFaker.forLanguage('en', seed: 5, now: _now));
-      for (final tag in const ['ar', 'ar-EG', 'hi', 'xx', 'und', '']) {
+      for (final tag in const ['nl', 'hi', 'xx', 'und', '']) {
         final faker = CoFaker.forLanguage(tag, seed: 5, now: _now);
         expect(faker.locale, 'en_us', reason: '"$tag"');
         expect(faker.language, 'en', reason: '"$tag"');

@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 /// - GB: Ofcom "Telephone numbers for use in TV and radio drama".
 /// - DE: Bundesnetzagentur Mitteilung 148/2021 ("Drama Numbers").
 /// - FR: ARCEP décision 2018-0881, blocks for audiovisual productions.
-/// - JP, CN, IN, IT, RU, BR: no reserved range; prefixes that no number
+/// - JP, CN, IN, IT, RU, BR, ES, SA: no reserved range; prefixes that no number
 ///   type uses (checked with Google libphonenumber, see docs/countries.md).
 final Map<String, List<RegExp>> _fictionalPhones = <String, List<RegExp>>{
   'US': [RegExp(r'^\(\d{3}\) 555-01\d{2}$')],
@@ -42,6 +42,11 @@ final Map<String, List<RegExp>> _fictionalPhones = <String, List<RegExp>>{
   'IT': [RegExp(r'^30\d \d{3} \d{4}$')],
   'RU': [RegExp(r'^8 \(5\d{2}\) \d{3}-\d{2}-\d{2}$')],
   'BR': [RegExp(r'^\((20|30|40|50|60|70|80)\) 9\d{4}-\d{4}$')],
+  'ES': [
+    RegExp(r'^7[579]\d \d{3} \d{3}$'),
+    RegExp(r'^(840|870|890|940|970|990) \d{3} \d{3}$'),
+  ],
+  'SA': [RegExp(r'^052 \d{3} \d{4}$'), RegExp(r'^01[2347] 0\d{2} \d{4}$')],
 };
 
 /// National trunk prefix dropped in international notation.
@@ -53,6 +58,7 @@ const Map<String, String> _trunk = <String, String>{
   'CN': '0',
   'IN': '0',
   'RU': '8',
+  'SA': '0',
 };
 
 final Map<String, RegExp> _postalCodes = <String, RegExp>{
@@ -69,6 +75,8 @@ final Map<String, RegExp> _postalCodes = <String, RegExp>{
   'JP': RegExp(r'^\d{3}-\d{4}$'),
   'CN': RegExp(r'^\d{6}$'),
   'RU': RegExp(r'^\d{6}$'),
+  'ES': RegExp(r'^\d{5}$'),
+  'SA': RegExp(r'^[1-9]\d{4}$'),
 };
 
 final RegExp _latinName = RegExp(r"^[\p{Script=Latin} .'-]+$", unicode: true);
@@ -80,9 +88,10 @@ final Map<String, RegExp> _nameScripts = <String, RegExp>{
     unicode: true,
   ),
   'RU': RegExp(r'^\p{Script=Cyrillic}+ \p{Script=Cyrillic}+$', unicode: true),
+  'SA': RegExp(r'^\p{Script=Arabic}+ \p{Script=Arabic}+$', unicode: true),
 };
 
-/// Well-known brands of the eleven economies and global ones. A bounded
+/// Well-known brands of the supported countries and global ones. A bounded
 /// regression for authored company names, not a trademark search.
 final RegExp _brands = RegExp(
   r'apple|google|amazon|microsoft|walmart|tesla|coca|starbucks|toyota|sony|'
@@ -93,7 +102,9 @@ final RegExp _brands = RegExp(
   r'peugeot|michelin|danone|gazprom|yandex|сбер|sber|лукойл|lukoil|ferrari|'
   r'fiat|gucci|prada|\beni\b|barilla|petrobras|itaú|bradesco|natura|embraer|'
   r'shopify|bombardier|hortons|barclays|hsbc|tesco|vodafone|unilever|'
-  r'rolls|northwind|contoso',
+  r'rolls|northwind|contoso|inditex|\bzara\b|santander|telef[oó]nica|'
+  r'iberdrola|repsol|mercadona|bbva|aramco|أرامكو|sabic|سابك|almarai|'
+  r'المراعي|mobily|موبايلي|\bstc\b|jarir|جرير',
   caseSensitive: false,
 );
 

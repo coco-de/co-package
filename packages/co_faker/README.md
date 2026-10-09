@@ -568,8 +568,11 @@ for (final country in CoFakerCountries.gdpTop10) {
 - Emails, URLs, and usernames are romanized (`Müller` → `mueller`,
   `佐藤` → `sato`, `Иванова` → `ivanova`) on reserved example domains.
 - The earlier language codes (`en`, `ko`, `ja`, `zh`, `es`, `fr`, `de`) keep
-  their output. `it`, `pt`, and `ru` previously fell back to English and now
-  resolve to Italy, Brazil, and Russia.
+  their output. `it`, `pt`, `ru`, and `ar` previously fell back to English and
+  now resolve to Italy, Brazil, Russia, and Saudi Arabia.
+- Spain (`es_ES`) and Saudi Arabia (`ar_SA`) carry the national locales of the
+  demo languages Spanish and Arabic. Arabic text is right to left and keeps
+  the digits 0 to 9.
 
 Sources, the phone rationale per country, and the compatibility notes are in
 [docs/countries.md](docs/countries.md).
@@ -612,9 +615,10 @@ Each language is generated with the national locale of its main country:
 | `ru` | `ru_ru` | Russia |
 | `it` | `it_it` | Italy |
 | `pt`, `pt-BR` | `pt_br` | Brazil |
-| `es` | `es` | none, basic modules only |
+| `es`, `es-ES`, `es-MX` | `es_es` | Spain |
+| `ar`, `ar-SA`, `ar-EG` | `ar_sa` | Saudi Arabia |
 
-- **Unsupported languages and Traditional Chinese get English.** `ar`, `und`,
+- **Unsupported languages and Traditional Chinese get English.** `hi`, `und`,
   `zh-Hant`, `zh_TW`, `zh_HK`, and `zh_MO` resolve to `en_us`; Traditional
   readers are never handed Simplified text. `CoFakerLanguages.resolve(tag)`
   reports it with `supported == false` and also returns the `language`, the
@@ -629,7 +633,7 @@ Each language is generated with the national locale of its main country:
 
 - **The region is read, not used.** `en-GB` is English with the `en_us` data
   and `pt-PT` is `pt_br`. Use `CoFaker.forCountry` to pick a country.
-- **`ko` and `es` have no national locale.** `faker.country` is `null`, and
+- **`ko` has no national locale.** `faker.country` is `null`, and
   `address.postalAddress()`, `locality()`, `region()`, `regionCode()`, and
   `postalCodeFor()` throw a `StateError`, as they do for
   `CoFaker(locale: 'ko')`. Check `faker.country` before calling them.

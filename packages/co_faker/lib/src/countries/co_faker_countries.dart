@@ -7,6 +7,10 @@ import 'co_faker_country.dart';
 /// [canada], and inside the IMF's 2026 top ten, so sources disagree on ranks
 /// nine to eleven. Use [all] to cover every source's top ten.
 ///
+/// [spain] and [saudiArabia] are not in the top ten: they are the countries of
+/// the languages Spanish and Arabic, which demo apps offer besides the
+/// languages of the largest economies. They are listed in [languageCountries].
+///
 /// ```dart
 /// final faker = CoFaker.forCountry('JP', seed: 7);
 /// for (final country in CoFakerCountries.gdpTop10) {
@@ -174,6 +178,35 @@ abstract final class CoFakerCountries {
     gdpRank: 11,
   );
 
+  /// Spain (`es_ES`), the country of Spanish. See the class documentation.
+  static const CoFakerCountry spain = CoFakerCountry(
+    code: 'ES',
+    alpha3: 'ESP',
+    locale: 'es_ES',
+    name: 'Spain',
+    nativeName: 'España',
+    callingCode: '+34',
+    currencyCode: 'EUR',
+    currencySymbol: '€',
+    currencyMinorUnits: 2,
+    gdpRank: 12,
+  );
+
+  /// Saudi Arabia (`ar_SA`), the country of Arabic. See the class
+  /// documentation.
+  static const CoFakerCountry saudiArabia = CoFakerCountry(
+    code: 'SA',
+    alpha3: 'SAU',
+    locale: 'ar_SA',
+    name: 'Saudi Arabia',
+    nativeName: 'المملكة العربية السعودية',
+    callingCode: '+966',
+    currencyCode: 'SAR',
+    currencySymbol: 'ر.س',
+    currencyMinorUnits: 2,
+    gdpRank: 19,
+  );
+
   /// The ten largest economies by nominal GDP in [gdpSource], largest first.
   static const List<CoFakerCountry> gdpTop10 = <CoFakerCountry>[
     unitedStates,
@@ -188,9 +221,20 @@ abstract final class CoFakerCountries {
     canada,
   ];
 
-  /// Every supported country by [CoFakerCountry.gdpRank]: [gdpTop10] then
-  /// [brazil].
-  static const List<CoFakerCountry> all = <CoFakerCountry>[...gdpTop10, brazil];
+  /// The countries outside the GDP ranking that carry the national locale of
+  /// a demo language: [spain] for Spanish and [saudiArabia] for Arabic.
+  static const List<CoFakerCountry> languageCountries = <CoFakerCountry>[
+    spain,
+    saudiArabia,
+  ];
+
+  /// Every supported country by [CoFakerCountry.gdpRank]: [gdpTop10], then
+  /// [brazil], then [languageCountries].
+  static const List<CoFakerCountry> all = <CoFakerCountry>[
+    ...gdpTop10,
+    brazil,
+    ...languageCountries,
+  ];
 
   /// Finds a country by ISO 3166-1 alpha-2 or alpha-3 code, ignoring case.
   ///

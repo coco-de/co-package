@@ -31,8 +31,11 @@ const CoL10nBundle _spanish = CoL10nBundle(
   },
 );
 
+/// The custom Spanish locale under the bare code and under `es_es`, the
+/// locale that `CoFaker.forLanguage('es')` builds.
 Map<String, CoFakerLocale> get _spanishLocales => const {
   'es': CoFakerLocale(code: 'es', l10n: _spanish),
+  'es_es': CoFakerLocale(code: 'es_es', l10n: _spanish),
 };
 
 /// The placeholders that the English and the Korean text `index` of [key] both

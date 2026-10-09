@@ -8,16 +8,11 @@ import 'demo_locale_resolution_reason.dart';
 ///
 /// The table is written out rather than derived from the tag, because the
 /// richest co_faker data for a language lives under a national code
-/// (`ja_JP` has 40 given names, the legacy `ja` has 7) and some languages have
-/// no co_faker data yet.
+/// (`ja_JP` has 40 given names, the legacy `ja` has 7).
 abstract final class DemoFakerLocales {
-  /// UI language → co_faker locale.
-  ///
-  /// * `es` maps to the legacy `es` data until co_faker ships a Spanish
-  ///   national locale (co-package#71).
-  /// * `ar` has no co_faker data yet (co-package#71); co_faker generates its
-  ///   display data in English. [resolve] reports this as
-  ///   [DemoLocaleResolution.dataFallsBackToEnglish].
+  /// UI language → co_faker locale: the national locale of each language,
+  /// the same locale `CoFaker.forLanguage` builds (`es` → Spain, `ar` → Saudi
+  /// Arabia, co-package#71). Korean keeps the language-only `ko`.
   static const Map<DemoLocale, String> table = <DemoLocale, String>{
     DemoLocale.ko: 'ko',
     DemoLocale.en: 'en_US',
@@ -25,11 +20,11 @@ abstract final class DemoFakerLocales {
     DemoLocale.ja: 'ja_JP',
     DemoLocale.de: 'de_DE',
     DemoLocale.fr: 'fr_FR',
-    DemoLocale.es: 'es',
+    DemoLocale.es: 'es_ES',
     DemoLocale.pt: 'pt_BR',
     DemoLocale.it: 'it_IT',
     DemoLocale.ru: 'ru_RU',
-    DemoLocale.ar: 'ar',
+    DemoLocale.ar: 'ar_SA',
   };
 
   /// The co_faker locale for [locale].
