@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#65 작업내역 — 프랑스어 도메인 목데이터 현지화 (fr · fr_FR)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", "Hiragino Sans", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  code { background: var(--code); border-radius: 6px; padding: 1px 5px; font-size: 0.92em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>프랑스어 도메인 목데이터 현지화 — 도메인 팩 27종 · 전용 생성기 · clinic · saas</h1>
+  <p class="muted">#65 (Epic #57 · S8) · <code>story/65-fr-localization</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> <code>CoFaker.forLanguage('fr')</code> · <code>CoFaker(locale: 'fr')</code> · 국가 로케일 <code>fr_FR</code> 가 도메인 팩 · 전용 생성기 · clinic · saas 를 모두 프랑스어로 낸다. 코드 · 레지스트리 · 공유 테스트는 건드리지 않고 이 언어의 데이터 파일(번들 · clinic · saas), 용어집 문서, 안전 선언, 새 테스트만 채웠다.</p>
+    <p><strong>번역 초안 — 원어민 검토 권장.</strong> AI 가 쓴 초안이다. 검토가 필요한 곳: 의료 용어(<code>acte</code> 대 <code>soin</code> 등), 동의서 · 면책 문구(변호사 검토 없음), 금융 용어(환전 <code>marge</code> 등), 직함의 남성형 표기, 가상 표기 <code>(fictif)</code> 의 성 일치, <code>Enseignant(e) {name1}</code> · <code>{name1} (responsable légal)</code> 처럼 성 · 수 일치를 피한 템플릿, 가상 지명 · 창작자 이름(<code>Clairval</code> · <code>Rivebleue</code> · <code>Jardin du Sablier</code> …), 필라테스 · 어린이집 용어, 번호판 패턴 <code>42●● AB 17</code>, 알림 템플릿, 그리고 <code>vous</code> 존댓말이 모든 환자 · 고객 문구에서 일관되는지. 항목별 체크리스트는 <code>docs/languages/fr.md</code> 의 "Native-speaker review checklist" 에 있다.</p>
+    <p class="muted">이 문서는 작업 워커가 마무리 단계에서 중단된 뒤 오케스트레이터가 커밋 기록과 로컬 실행 결과로 확정했다. 아래 숫자는 모두 이 브랜치에서 직접 실행한 값이다.</p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>파일</th><th class="num">+ / −</th></tr>
+    <tr><td><code>docs/languages/fr.md</code></td><td class="num">163 / 18</td></tr>
+    <tr><td><code>lib/src/l10n/fr/fr_bundle.dart</code></td><td class="num">1265 / 11</td></tr>
+    <tr><td><code>lib/src/l10n/fr/fr_clinic.dart</code></td><td class="num">719 / 11</td></tr>
+    <tr><td><code>lib/src/l10n/fr/fr_saas.dart</code></td><td class="num">430 / 12</td></tr>
+    <tr><td><code>test/language_safety/fr.dart</code></td><td class="num">55 / 14</td></tr>
+    <tr><td><code>test/languages/fr_localization_test.dart</code></td><td class="num">1133 / 0</td></tr>
+  </table>
+  <p class="muted">6개 파일 +3,765 −66 (이 문서 제외). 이 Story 가 소유한 파일뿐이고 기존 테스트 파일 수정은 0건이다. 커밋 8건 + 이 문서 커밋.</p>
+  <ul>
+    <li><code>505140f3</code> feat(co_faker): ✨ 프랑스어 도메인 번들 1/3 — 공통 · 환전 · 동물병원 · 식료품 · 어린이집</li>
+    <li><code>c7bb8a19</code> feat(co_faker): ✨ 프랑스어 도메인 번들 2/2 — 시험 · 인사 · 콘텐츠 · 중개 · 물류 · 숙박 키와 영어 동일 허용 목록</li>
+    <li><code>f884f532</code> feat(co_faker): ✨ 프랑스어 clinic 데이터 — 유로 금액 · 서식 · 진료 문구</li>
+    <li><code>e3f4a3d4</code> feat(co_faker): ✨ 프랑스어 saas 데이터 — 요금제 · 알림 템플릿 · 운영 콘솔 문구</li>
+    <li><code>42a3d889</code> docs(co_faker): 📝 프랑스어 용어집 · 서식 · 검토 체크리스트와 안전 선언</li>
+    <li><code>876491fc</code> test(co_faker): ✅ 프랑스어 현지화 테스트 — 영어와 같은 레코드 · 세 진입점 · 서식 · 유로 규모</li>
+    <li><code>5f4a54dd</code> refactor(co_faker): ♻️ 프랑스어 데이터의 비분리 공백을 이스케이프로 쓴다</li>
+    <li><code>9542c341</code> test(co_faker): ✅ 프랑스어 번역 쌍 검증 — 같은 위치의 항목이 같은 뜻인지 손으로 확인한 표</li>
+  </ul>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>docs/languages/fr.md</code> — 번역 판단의 요약: 용어집(금지 표기와 근거), 서식 칸, 원어민 검토 체크리스트, 알려진 한계.</li>
+    <li><code>lib/src/l10n/fr/fr_clinic.dart</code> · <code>fr_saas.dart</code> — 위쪽 dartdoc 과 <code>currency</code> · <code>priceScale</code> · 서식 필드.</li>
+    <li><code>fr_bundle.dart</code> — 키 순서가 <code>en_bundle.dart</code> 와 같고, 맨 아래 <code>allowSameAsEnglish</code> 가 영어와 같은 것을 허용하는 전부다.</li>
+    <li><code>test/language_safety/fr.dart</code> — 가상 표기 · 일반 정보 문구의 시작 · 결과 약속 문구 · 실존 브랜드 표기 거부 목록.</li>
+    <li><code>test/languages/fr_localization_test.dart</code> — 인덱스 정렬 · 세 진입점 · 서식 · 통화 규모 · 안전.</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>173개 파일, 변경 0</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>631개 통과 (기준선 583)</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported, unsupported 0</td></tr>
+    <tr><td><code>dart run co_faker:coverage --language fr --strict</code></td><td>PASS · <code>localized</code> · 번들 242/242 · 문구 1,350(번역 대상 1,343) · 영어와 같음 0 · 허용 66 · 영어와 같음 0 · 허용 66건(번역 대상 1,343의 약 4.9%) · 생성 16,182 텍스트 / 675 호출</td></tr>
+    <tr><td>독립 코드 리뷰</td><td>하지 않았다 — 브리핑이 코드 변경 없는 데이터 번역이라 생략하게 했고, 게이트 · 출력 눈검수 · 테스트가 대신한다</td></tr>
+  </table>
+
+  <h2>알려진 한계 · 범위 밖</h2>
+  <ul>
+    <li>한국식 숫자 형식(<code>clinic.approvalNo</code> · <code>saas.recipient</code> · <code>rrnMasked</code> · <code>businessNumber</code>)과 <code>korea</code> 팩이 켜졌을 때 entity 의 <code>phone</code> · <code>address1</code>, <code>CoClinicHours</code> 기본값, <code>clinic.inquiry()</code> 는 언어 파일로 못 바꾼다(전문은 <code>docs/languages/fr.md</code> "Known limits").</li>
+    <li>공유 파일(CHANGELOG · README · 레지스트리 · 게이트)은 고치지 않았다.</li>
+  </ul>
+</main></body>
+</html>
