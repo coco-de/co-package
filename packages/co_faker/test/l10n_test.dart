@@ -232,15 +232,7 @@ void main() {
     });
 
     test('is English for unsupported and custom codes', () {
-      for (final code in [
-        'ar',
-        'nl',
-        'und',
-        'xx_YY',
-        'acme',
-        'kok',
-        'ja.UTF-8',
-      ]) {
+      for (final code in ['nl', 'und', 'xx_YY', 'acme', 'kok', 'ja.UTF-8']) {
         expect(_faker(code).l10n.language, 'en', reason: code);
       }
     });
@@ -479,7 +471,12 @@ void main() {
     });
 
     test('and a key it lacks falls back to English, key by key', () {
-      final f = _faker('es', locales: _spanishLocales);
+      // Dutch has no shipped bundle, so the shipped text of a lacking key is
+      // English.
+      final f = _faker(
+        'nl',
+        locales: const {'nl': CoFakerLocale(code: 'nl', l10n: _spanish)},
+      );
       expect(
         f.l10n.list('dental.dentalMaterial'),
         english.texts['dental.dentalMaterial'],
@@ -568,12 +565,12 @@ void main() {
 
     test('and a list that is not as long as English\'s is refused', () {
       final f = _faker(
-        'es',
+        'nl',
         locales: const {
-          'es': CoFakerLocale(
-            code: 'es',
+          'nl': CoFakerLocale(
+            code: 'nl',
             l10n: CoL10nBundle(
-              language: 'es',
+              language: 'nl',
               texts: {
                 'dental.dentalProcedure': ['Limpieza dental'],
               },
