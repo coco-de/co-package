@@ -1,5 +1,14 @@
 ## Unreleased
 
+- Localize the domain mock data in Arabic (`ar`, co-package#71): the domain
+  text bundle (242 keys), the clinic data, and the SaaS data, in Modern
+  Standard Arabic as written in Saudi Arabia, right to left with the digits
+  0–9, SAR (`1,234.00 ر.س`) and 15 % VAT. The same seed picks the translation
+  of the same record. `dart run co_faker:coverage --language ar --strict`
+  passes. The translation is an AI draft for native review
+  (`docs/languages/ar.md`).
+- Behavior change: the clinic, SaaS, and domain pack output of `ar`, `ar_SA`,
+  and `forLanguage('ar')` changes from English to Arabic.
 - Localize the domain mock data in Spanish (`es`, co-package#71): the domain
   text bundle (242 keys), the clinic data, and the SaaS data, in Peninsular
   Spanish with EUR (`1.234,00 €`) and 21 % IVA. The same seed picks the
