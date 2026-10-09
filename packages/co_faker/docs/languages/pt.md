@@ -39,7 +39,9 @@ separate them).
 | Appointment, booking (a visit to the clinic or a service) | agendamento | compromisso | The booked visit of a patient or a customer: `Agendamento confirmado`, `Encontrar meu agendamento`. |
 | Booking, reservation (a space, a table, or a stay) | reserva | booking | A space, a table, a stay, or a class is `reservado`; a visit to a physician is an `agendamento`. |
 | Consultation | consulta | consultation | The visit of a patient to a physician, and the word of a status (`Consulta`). |
+| Walk-in (a visit with no booking) | sem hora marcada | sem agendamento; walk-in | The Brazilian idiom for a visit that has no booked time. |
 | Follow-up visit | consulta de retorno | consulta de seguimento; follow-up | `Retorno` is the Brazilian word for a return visit; `seguimento` is European. |
+| Scaling (dental cleaning) | limpeza dental | raspagem; profilaxia | The word a patient says for a routine cleaning. `Raspagem` is the periodontal procedure, which a reviewer may prefer. |
 | Procedure (medical) | procedimento | - | What a physician performs; a `tratamento` is a course of care and a `cuidado` is a care of the skin. |
 | Treatment | tratamento | - | The visit purpose and the course of care of a skin condition. |
 | Care (of the skin) | cuidado | - | A facial or a soothing care that a care professional does. |
@@ -54,7 +56,7 @@ separate them).
 | Aesthetician | esteticista | estetista | The role label; the word is epicene. |
 | Front desk | recepção | receção | The staff role, the sender line, and the room; `receção` is the European spelling. |
 | Care coordinator | coordenador(a) de cuidados | coordenador/a | The role label of the person who follows a patient across the visit. |
-| Guardian | responsável | tutor; guardião; encarregado de educação | One term for the daycare, the consent text, and the relation label. `Tutor` is a guardianship ordered by a court; `encarregado de educação` is the European school term. |
+| Guardian | responsável | guardião; encarregado de educação | One term for the daycare, the consent text, and the relation label. A `tutor` has a guardianship ordered by a court, and `encarregado de educação` is the European school term. |
 | Teacher | professor(a) | professor/a | The name that follows is drawn without a sex, so both genders are written. |
 | Insurance claim | guia de cobrança | sinistro; claim | The document that asks a health plan to pay for a procedure; `sinistro` is the claim of an accident. |
 | Health plan | plano de saúde | seguro de saúde; seguro nacional | The coverage that most patients of the data have. The national scheme of Korea has no Brazilian equivalent, and no public institution is named. |
@@ -73,7 +75,7 @@ separate them).
 | Support (customer support) | suporte | - | The team, the role, and the department. |
 | Autopay | cobrança automática | autopay; débito automático | The payment that a card makes by itself each month. |
 | Delivery | entrega | delivery | The same word for a delivery and a shipping benefit. |
-| Hub (logistics) | centro de distribuição | hub | The place where parcels are sorted and sent on. |
+| Hub (logistics) | centro de distribuição | - | The place where parcels are sorted and sent on; the English word is not used for it. |
 | Cargo owner (shipper) | embarcador | expedidor | The freight term for the party that ships the goods. |
 | Carrier (transport company) | transportadora | carrier | The company that transports the goods. |
 | Carrier (mobile network) | operadora | - | The telephone company that delivers a message. |
@@ -100,9 +102,9 @@ separate them).
 | Billing (a topic of support) | cobrança | billing | The topic of the payments and the invoices of a customer. |
 | Top-up (of a balance or credits) | recarga | top-up | The credit that a customer buys and adds to a balance. |
 | Message credit | crédito de mensagens | - | A unit that a customer buys and spends: message credits and quote credits. |
-| Plan (Starter) | Inicial | starter | The first plan: `Inicial`, `Padrão`, `Profissional`, `Empresarial`. |
-| Plan (Standard) | Padrão | standard | The second plan. |
-| Plan (Enterprise) | Empresarial | enterprise | The fourth plan. |
+| Plan (Starter) | Inicial | - | The first plan: `Inicial`, `Padrão`, `Profissional`, `Empresarial`. |
+| Plan (Standard) | Padrão | - | The second plan. |
+| Plan (Enterprise) | Empresarial | - | The fourth plan. |
 | Outage | interrupção | outage; queda de serviço | The incident kind and the status of a service. |
 | Sign-in | login | iniciar sessão; início de sessão | `Início de sessão` is the European phrase. |
 | Sign-up, registration of an account | cadastro | registo | `Registo` is the European spelling of `registro`. |
@@ -123,13 +125,13 @@ One line for each topic: how the language writes it, with an example.
 
 | Topic | Convention |
 | --- | --- |
-| Currency and amounts (`R$ 1.234,56`) | `R$ 1.234,56`: the symbol first, a no-break space (U+00A0) after it, a dot between thousands, and a comma before the two centavos. `CoCurrencyFormat(code: 'BRL', symbol: r'R$', pattern: '{symbol}\u00A0{amount}', groupSeparator: '.', decimalSeparator: ',', fractionDigits: 2)`. A negative amount is `-R$ 80,00`. The price bands are in reais at about four and a half times the dollar bands (a first consultation R$ 400 to 900, a picosecond laser session R$ 900 to 2.200) and the units are those of a Brazilian price tag: R$ 10 for a price, R$ 50 for a package and a prepaid step, R$ 5 for a discount, a point, and a share of a split payment. A card payment in installments (`parcelado`) starts at R$ 600, and a split payment at R$ 250. The tax of an invoice is the 5% that is the highest rate of the ISS, the municipal tax on services (the municipalities charge from 2% to 5%). |
+| Currency and amounts (`R$ 1.234,56`) | `R$ 1.234,56`: the symbol first, a no-break space (U+00A0) after it, a dot between thousands, and a comma before the two centavos. `CoCurrencyFormat(code: 'BRL', symbol: r'R$', pattern: '{symbol}\u00A0{amount}', groupSeparator: '.', decimalSeparator: ',', fractionDigits: 2)`. A negative amount is `-R$ 80,00`. The price bands are in reais at three to five times the dollar bands (a first consultation R$ 400 to 900, a picosecond laser session R$ 900 to 2.200) and the units are those of a Brazilian price tag: R$ 10 for a price, R$ 50 for a package and a prepaid step, R$ 5 for a discount, a point, and a share of a split payment. A card payment in installments (`parcelado`) starts at R$ 600, and a split payment at R$ 250. The tax of an invoice is the 5% that is the highest rate of the ISS, the municipal tax on services (the municipalities charge from 2% to 5%). |
 | Dates and times | A date in prose is `8 de outubro de 2026` and its numeric form is `08/10/2026`, with the day first. A closure notice writes `quinta-feira (8/10)` (`{weekday} ({day}/{month})`) and a range `de quarta-feira (25/11) a quinta-feira (26/11)`; the names of the weekdays are lower case. The clock has 24 hours, written `18h` (`18h30` with minutes): a range of hours is `8h às 21h`, and a delivery slot `Noite, 18h às 20h`. |
 | Numbers: separators and units | A decimal comma and a dot between thousands (`1.000`). A no-break space between a number and its unit (`500 g`, `10 mg`, `2 mL`, `360 ml`, `48 mm`); the percent sign follows the number with no space (`10%`). `nº` (with the masculine ordinal sign) stands for a number and is followed by a no-break space (`Fototerapia LED nº 2`); `n.º` is European. |
 | Punctuation and quotation marks | No space before `:`, `;`, `?`, and `!`. A quotation is written in curly double quotation marks (`Aviso “{target}” publicado.`), never in straight ones or in guillemets. A fictional name ends with `(fictício)` and a sample label with `(exemplo)`. A list of two roles of a person uses `·` (`@Ana Souza · Enfermeiro(a)`). |
 | Register: `você`, `o senhor`, or `tu` | `você` in every text that speaks to a patient or a customer (`Você pode voltar ao trabalho logo em seguida.`). A notice or an instruction says `Por favor,` and the imperative of `você` (`devolva`, `confira`, `preencha`), which is the form of the subjunctive; a first-person line of a customer says `gostaria de` or `poderia` (`Poderia enviar as instruções de acesso?`). No text says `tu`, `teu`, or `vós`. |
 | Gender and plural in a template that a value fills | A template avoids the agreement: `Mesa para {n}` (no plural), `{category}, nível {level}` (the level follows `nível`, which is masculine), `Responsável por {name1}`, `Professor(a) {name1}` (the name is drawn without a sex), `Agendamentos realizados: {n}` (the count follows the label), and `{n} linha(s)`. A status label is in the masculine, like a role title, or a verb (`Chegou`, `Faltou`). |
-| Contractions with a value that a template fills | No template puts `de`, `do`, `da`, `dos`, `das`, `em`, `no`, `na`, `nos`, `nas`, `a`, `ao`, `à`, `por`, `pelo`, or `pela` right before a value that is not a number, because the contraction with the article (`de` + `a` = `da`, `em` + `o` = `no`) depends on the gender of the value. A value stands first in the sentence (`{target}: cadastro aprovado.`), after a colon (`Motivo: {reason}`), after `para` or `por` (which never contract with a name), or in parentheses. A number (`{n}`, `{sessions}`, a price) may follow `de` and `por`, and a date label follows `para`. The fixed fictional names that follow `de` are the names of places (`Corrida matinal de Luzvale`), written by hand and not by a template. |
+| Contractions with a value that a template fills | No template puts `de`, `do`, `da`, `dos`, `das`, `em`, `no`, `na`, `nos`, `nas`, `a`, `ao`, `à`, `por`, `pelo`, or `pela` right before a value that is not a number or the given name of a person, because the contraction with the article (`de` + `a` = `da`, `em` + `o` = `no`) depends on the gender of the value. A value stands first in the sentence (`{target}: cadastro aprovado.`), after a colon (`Motivo: {reason}`), after `para` or `por` (which never contract with a name), or in parentheses. A number (`{n}`, `{sessions}`, a price) may follow `de` and `por`, and a date label follows `para`. The fixed fictional names that follow `de` are the names of places (`Corrida matinal de Luzvale`), written by hand and not by a template. |
 | The marker of a fictional name and of a sample | `(fictício)` after a fictional name and `(exemplo)` after a sample label: one marker for each, whatever the gender of the noun. A sentence says `fictício` or `fictícia`, and an English text that begins with `Example` begins with `Exemplo de`. |
 | A clinic name | The kind of place first, then the name: `Clínica de Pediatria Ipê`, `Clínica Médica de Demonstração` (`clinicNameFormat: '{suffix} {prefix}'`). Internal medicine is `Clínica Médica`, as in Brazil. |
 | An address, a phone, and an ID | A street line and the city and state: `Rua das Flores, 123 - São Paulo - SP`, a postal code `01234-567`, a phone `(11) 91234-5678`. The ID of a patient is masked as a CPF (`***.123.456-**`) and the business number of a tenant is shaped as a CNPJ (`12.345.678/0001-90`). Both are random digits, and the CNPJ branch is random, so a number is very unlikely to be a registered one. |
@@ -198,6 +200,7 @@ and every text that the author is not sure about.
 - [ ] Amounts, dates, and numbers follow the conventions above.
 - [ ] A template stays grammatical with every value that fills it.
 - [ ] Medical terms: `procedimento` against `tratamento` and `cuidado`;
+      `Limpeza dental` for scaling (a dentist may write `raspagem`);
       `orientação` for counseling (a reviewer may prefer `consulta de
       avaliação`, which aesthetic clinics use); `Cloasma` for the ICD-10 name
       of `Chloasma` (people say `melasma`); the findings and plans of the SOAP
@@ -240,6 +243,11 @@ and every text that the author is not sure about.
 - [ ] The plate pattern `●●C-1007`, and the notification templates, whose
       variables are `#{nome}`, `#{clinica}`, `#{data_hora}`, `#{hora}`, and
       `#{link}`.
-- [ ] `Mudança de pequeno porte`, `Compra coletiva`, `Simulado`, `Raspagem`, and
-      the regional words that the texts choose (`interfone`, `portaria`,
-      `cardápio`, `plantão`).
+- [ ] Names that the author chose by meaning and not by the sound: the pet
+      names (`Pudim` for `Tofu`, `Cevada` for `Barley`), the currency names
+      (`Dong vietnamita`, which some sources write `dongue`, and `Bangcoc`), the
+      groceries (`Sassami de frango`, `Cavalinha congelada`), and the fan
+      nicknames (`Brotinho`, `Feijão Lunar`).
+- [ ] `Mudança de pequeno porte`, `Compra coletiva`, `Simulado`, `Percurso de
+      caminhada`, `Sem hora marcada`, and the regional words that the texts
+      choose (`interfone`, `portaria`, `cardápio`, `plantão`).
