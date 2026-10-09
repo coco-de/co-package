@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#67 작업내역 — 이탈리아어 도메인 목데이터 현지화 (it · it_IT)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 20px 0 4px; }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  code { background: var(--code); border-radius: 6px; padding: 1px 5px; font-size: 0.92em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>이탈리아어 도메인 목데이터 현지화 — 도메인 팩 27종 · 전용 생성기 · clinic · saas</h1>
+  <p class="muted">#67 (Epic #57) · <code>story/67-it-localization</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> <code>CoFaker.forLanguage('it')</code> · <code>CoFaker(locale: 'it')</code> · 국가 로케일 <code>it_IT</code> 가 도메인 팩 · 전용 생성기 · clinic · saas 를 모두 이탈리아어로 낸다. 코드 · 레지스트리 · 공유 테스트는 건드리지 않고 데이터 셋(번들 · clinic · saas)과 언어 문서 · 안전 선언 · 새 테스트만 채웠다. 같은 seed 면 영어 · 한국어와 같은 레코드의 번역이고, 완료 게이트 <code>coverage --language it --strict</code> 를 통과한다.</p>
+    <p><strong>번역 초안 — 원어민 검토 권장.</strong> AI 가 쓴 초안이다. 검토가 필요한 곳: 의료 · 청구 용어(<code>visita</code>/<code>procedura</code>/<code>trattamento</code>/<code>terapia</code>/<code>cura</code> 구분, <code>Copertura sanitaria pubblica</code>, <code>Esenzione ticket</code>, <code>tariffario di riferimento</code>, <code>margine</code>), 동의서 · 개인정보 문구, 격식 <code>Lei</code> 와 직원 사이 메모, 값이 채우는 템플릿, 직원 역할 라벨(<code>Direzione sanitaria</code> 등 기능 라벨), 가상 이름 · 약 이름. 항목별 체크리스트는 <code>docs/languages/it.md</code>.</p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>파일</th><th class="num">+ / −</th><th>내용</th></tr>
+    <tr><td><code>lib/src/l10n/it/it_bundle.dart</code></td><td class="num">1,263 / 11</td><td>번들 242키 · 762문구(영어와 같은 키 · 개수 · 순서)와 <code>allowSameAsEnglish</code> 60건(단위 · 약어 · 카드 브랜드 · <code>Wi-Fi</code> · 차용어, 번역 대상의 4.5%)</td></tr>
+    <tr><td><code>it_clinic.dart</code></td><td class="num">746 / 11</td><td>clinic data · texts · ops 를 영어 데이터와 같은 길이로. EUR · 가격대 · 유로 규모 · <code>koreanValues: none</code> · 코드피스칼레 모양 ID 마스크</td></tr>
+    <tr><td><code>it_saas.dart</code></td><td class="num">435 / 12</td><td>요금제 · 알림 템플릿 · 운영 콘솔 문구. EUR · VAT 22% · 선불 지갑 · 11자리 사업자 번호 · <code>masterCheckDetail</code> <code>Righe non conformi: {n}</code></td></tr>
+    <tr><td><code>docs/languages/it.md</code></td><td class="num">207 / 18</td><td><code>localized</code> · 용어집 61행 · 서식 칸 · 영어와의 차이 · 알려진 한계 · 원어민 검토 체크리스트</td></tr>
+    <tr><td><code>test/language_safety/it.dart</code></td><td class="num">83 / 14</td><td>안전 선언 4가지(가상 표기 · 일반 정보 시작 · 결과 약속 · 실존 브랜드 거부 43건)</td></tr>
+    <tr><td><code>test/languages/it_localization_test.dart</code> (신규)</td><td class="num">1,280 / 0</td><td>테스트 51건</td></tr>
+  </table>
+  <p class="muted">6개 파일 +4,014 −66 (이 문서 제외), 이 Story 가 소유한 파일뿐이다. 기존 테스트 수정 0건. 커밋 7건 + 이 문서 커밋.</p>
+  <ul>
+    <li>용어집 · 서식 먼저: <code>f3c7af77</code> · 번들: <code>723531bc</code> · <code>a3e5379b</code>(+ 안전 선언) · clinic: <code>f95b244f</code> · saas + 상태 <code>localized</code>: <code>f2705937</code> (이 셋이 모두 채워진 시점부터 게이트 통과)</li>
+    <li>테스트 + 역할 라벨 중립화: <code>36296a62</code> · 체크리스트 · 영어와의 차이 · 문구 다듬기: <code>35d5d97a</code></li>
+  </ul>
+
+  <h2>왜 이렇게 했나</h2>
+  <h3>1. 정렬이 계약이다</h3>
+  <p>한 곳도 순서를 바꾸지 않았다. 영어가 한국어 음차로 쓴 가상 이름(Solbit · Garam · Mulpare · Solnae · Field)은 같은 자리에 같은 한 가지 이탈리아어 가상 지명(<code>Aurelvia</code> · <code>Rivosereno</code> · <code>Fraxinia</code> · <code>Pinelume</code> · <code>Pianalba</code>)으로 옮겨 번들 전체에서 일관되고, 모두 <code>(di fantasia)</code> 나 <code>Città di fantasia</code> 가 붙는다. 표기는 두 가지뿐이다: 가상 <code>(di fantasia)</code>(성 · 수와 무관한 하나의 꼬리표), 예시 <code>(esempio)</code>.</p>
+  <h3>2. 격식 · 표기 · 값 앞의 문법 (AC)</h3>
+  <p>환자 · 고객 문구는 <code>Lei</code>(대문자 대명사 <code>La</code> · <code>Le</code> · <code>Sua</code>)이고, 특정인에게 말하지 않는 안내는 <code>si prega di</code> + 부정사, 상담원 초안은 <code>Lei</code> 명령형, 콘솔 동작 라벨은 명사형이다. 금액 <code>1.234,56 €</code>(NBSP), 날짜 <code>mercoledì 25/11</code>·구간 <code>da … a …</code>, 24시간제, 어포스트로피 <code>’</code>, 인용 <code>«…»</code>. 값이 들어가는 템플릿은 관사 · 축약 전치사(<code>del</code> · <code>al</code> · <code>nel</code> · <code>dell’</code>)를 값 앞에 두지 않는 구조다(<code>Tavolo per {n}</code> · <code>{category}, livello {level}</code> · <code>{name1} (genitore o tutore)</code> · <code>Nuovi pazienti registrati: {n}</code> · 알림 템플릿 변수는 콜론 · 쉼표 · 괄호 뒤).</p>
+  <h3>3. 유로 규모</h3>
+  <p>시술 가격대는 영어 달러 대역의 약 0.9배를 5 단위로(초진 80~180 · 피코 150~400 · HIFU 800~2,500 · 증명서 15~40), 반올림은 시술 5 · 패키지 10 · 할인 · 분할 · 포인트 1, 분할 결제 문턱 300 €. SaaS 월 요금은 69 · 139 · 249 · 479 €, VAT 22%, 선불 지갑 충전 50~2,000 €. 한국 전용 값은 없다.</p>
+  <h3>4. 직원 역할은 기능 라벨로</h3>
+  <p>생성기가 직원의 성을 무작위로(여성 70%) 뽑고 역할 라벨은 이름에 맞출 수 없어, 처음에 쓴 남성형 직함(<code>Direttore sanitario</code> · <code>Infermiere</code>)이 <code>Camilla Marino (Direttore sanitario)</code> 처럼 어긋났다. 눈검수에서 발견해 <code>Direzione sanitaria</code> · <code>Personale infermieristico</code> · <code>Personale socio-sanitario</code> · <code>Coordinamento assistenza</code> 와 남녀 공통 명사(<code>Estetista</code> · <code>Consulente per i pazienti</code> · <code>Medico</code>)로 바꿨다.</p>
+  <h3>5. 지어낸 이름은 웹 검색으로 확인했다</h3>
+  <p>영어의 약 이름 줄기 중 <code>Dioclin</code> 은 실존 여드름 젤 <code>Duoclin</code> 과 한 글자 차이, <code>Lumisol</code> 은 실존 피부 젤 이름이라 그대로 쓰지 않고 새 줄기 8개(<code>Pelnovax</code> · <code>Cutarel</code> · <code>Lenidar</code> · <code>Ravexil</code> · <code>Belvanex</code> · <code>Corelmin</code> · <code>Velanor</code> · <code>Cheravil</code>)를 검색으로 골랐다. 가상 지명도 <code>Rivachiara</code> 가 실존 숙박 시설 이름이라 버렸다. 검색은 가능한 범위의 확인이므로 약사 · 원어민 확인을 체크리스트에 남겼다.</p>
+  <h3>6. 게이트와 공유 테스트가 다른 곳</h3>
+  <p>게이트의 시험 문제 불변식은 해설이 정답을 담는지를 <strong>대소문자 무시</strong>로 보지만 공유 <code>domain_helpers_test.dart</code> 는 <strong>같은 대소문자</strong>를 요구한다. 그래서 해설은 정답 선택지로 시작한다(<code>Funzione di hash: calcola …</code>). 다른 언어 Story 도 같은 점에 걸린다.</p>
+  <h3>7. 테스트가 막는 것</h3>
+  <p>인덱스 정렬 검사만으로는 두 번역이 뒤바뀌어도 통과한다. 그래서 영어 문구와 번역의 짝 77쌍을 <strong>같은 위치</strong>에 있는지로 확인하는 앵커 시험(<code>_anchors</code>)을 두었다. 변이 시험 — 뒤바뀐 번역 · 값 앞 관사 · 축약 안 한 전치사 · 한국식 ID 마스크 · 잘못된 VAT — 을 하나씩 넣어 각각 테스트가 잡는 것을 확인했다.</p>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>docs/languages/it.md</code> — 용어집(금지 표기와 근거) · 서식 칸 · 영어와의 차이 · 원어민 검토 체크리스트.</li>
+    <li><code>it_clinic.dart</code> · <code>it_saas.dart</code> 의 위쪽 dartdoc 과 <code>currency</code> · <code>priceScale</code> · 가격대 · 서식 필드.</li>
+    <li><code>it_bundle.dart</code> — 키 순서가 <code>en_bundle.dart</code> 와 같다. 맨 아래 <code>allowSameAsEnglish</code> 가 영어와 같은 것을 허용하는 전부다.</li>
+    <li><code>test/language_safety/it.dart</code> — 가상 표기 · 일반 정보 시작 · 결과 약속 문구 · 실존 브랜드 거부 목록.</li>
+    <li><code>test/languages/it_localization_test.dart</code> — <code>_anchors</code> · 세 진입점과 대조군 <code>nl</code> · 서식 · 유로 규모 · 한국 전용 값 부재.</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>176개 파일, 변경 0 (기준선 175 + 새 테스트 1)</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>737개 통과, 약 17초. 기준선 687 → 737 은 +51 −1 이다. +51 은 새 테스트 파일, −1 은 <code>clinic_saas_stability_test</code> 의 <code>it_IT</code> 케이스로 현지화된 언어가 범위 밖이 되는 S4 의 레지스트리 기반 분리 때문</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported, unsupported 0</td></tr>
+    <tr><td><code>dart run co_faker:coverage --language it --strict</code></td><td>PASS · <code>localized</code> · 번들 242/242 · 문구 1,350(번역 대상 1,343) · 영어와 같음 0 · 허용 60 · 생성 16,182 텍스트 / 675 호출</td></tr>
+    <tr><td>출력 눈검수 (같은 seed 의 en · ko · it)</td><td>팩 30종의 role 전부를 레코드 3개씩(clinic · saas · korea 와 도메인 27종: fx · remit · vet · commerce · grocery · booking · dental · homecare · travel_wallet · b2b_trade · group_deal · fitness · space_rental · dining · daycare · exam_prep · hrd · neighborhood · meetup · fandom · content · helpdesk · campaign · workplace · brokerage · logistics · hospitality; <code>korea</code> 팩은 한국 값을 이름으로 요구해 의미 검수에서 제외), 엔티티 레코드 2개씩, <code>faker.clinic</code> · <code>faker.saas</code> 공개 호출 결과 200여 줄(이름 · 금액 · 상담 대본 · 폐쇄 안내 · 알림 템플릿 · 감사 로그 등)을 위에서 아래로 읽어 의미 정렬 · 잔류 · 미치환 · 서식을 확인. 미치환은 알림 템플릿의 의도된 <code>#{변수}</code> 뿐</td></tr>
+    <tr><td>독립 코드 리뷰</td><td>하지 않았다 — 브리핑이 코드 변경 없는 데이터 번역이라 생략하게 했고, 위 게이트와 눈검수 · 변이 시험이 대신한다</td></tr>
+  </table>
+
+  <h2>알려진 한계 · 범위 밖</h2>
+  <ul>
+    <li>한국식 숫자 형식(<code>clinic.approvalNo</code> · <code>saas.recipient</code> · entity 의 <code>rrnMasked</code> · <code>businessNumber</code>)과, <code>korea</code> 팩이 켜졌을 때 entity 의 <code>phone</code> · <code>address1</code> 은 모든 언어에 한국식이다. 한글이 없어 게이트가 못 보고 언어 파일로 못 고친다(S3 소관).</li>
+    <li><code>CoClinicHours</code> 기본값은 한국 피부과 영업시간이고 <code>clinic.inquiry()</code> 는 로케일과 무관하다. 생성기는 소수를 점으로(<code>36.8 °C</code>), 네 자리 개수를 구분 없이 쓴다.</li>
+    <li>이탈리아어는 <code>it</code> 도 국가 로케일이라 세 진입점의 환자 주소 · 전화가 같다(프랑스어 문서와 다른 점). 네 자리 금액을 <code>1.234,56 €</code> 로 쓰는 것은 AC 를 따른 것이고 일부 스타일 가이드는 구분 없이 쓴다.</li>
+    <li>가격대 · 요금제는 이탈리아 미용 클리닉을 가정한 추정치다. 직원 사이 메모도 <code>Lei</code> 로 통일했다(원어민이 <code>tu</code> 를 선호할 수 있다). CHANGELOG · README · 공유 파일은 고치지 않았다.</li>
+  </ul>
+
+  <h2>후속 Story 가 알아야 할 것</h2>
+  <ul>
+    <li>시험 문제 해설은 정답 선택지와 같은 대소문자로 시작해야 공유 테스트를 통과한다(게이트는 대소문자를 무시한다).</li>
+    <li>도구 주의: 파일 쓰기 도구가 <code>U+00A0</code> 같은 이스케이프를 실제 문자로 바꾼다. 데이터 파일의 줄바꿈 없는 공백은 보이지 않는 문자라, 쓴 뒤 이스케이프로 되돌리고 테스트(<code>writes a no-break space as an escape</code>)로 확인했다.</li>
+    <li>실존 제품과 겹치는 이름은 웹 검색으로 가려낼 수 있다: 영어의 약 이름 줄기 일부가 실존 약과 한 글자 차이였다.</li>
+  </ul>
+</main></body>
+</html>
