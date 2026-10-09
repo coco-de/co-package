@@ -2,8 +2,12 @@ import '../clinic_data.dart';
 import '../co_faker_languages.dart';
 import '../co_faker_locale.dart';
 import '../saas_data.dart';
+import 'ar/ar_clinic.dart';
+import 'ar/ar_saas.dart';
 import 'de/de_clinic.dart';
 import 'de/de_saas.dart';
+import 'es/es_clinic.dart';
+import 'es/es_saas.dart';
 import 'fr/fr_clinic.dart';
 import 'fr/fr_saas.dart';
 import 'it/it_clinic.dart';
@@ -61,6 +65,10 @@ abstract final class CoL10nClinic {
         'it': (clinic: itClinic, saas: itSaas),
 
         'pt': (clinic: ptClinic, saas: ptSaas),
+
+        'es': (clinic: esClinic, saas: esSaas),
+
+        'ar': (clinic: arClinic, saas: arSaas),
       };
 
   /// The clinic data registered for [language] (`ja`), or `null`.

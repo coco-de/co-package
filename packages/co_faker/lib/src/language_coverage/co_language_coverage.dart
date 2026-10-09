@@ -403,7 +403,8 @@ class CoLanguageCoverage {
     'ru': 'Russian',
     'it': 'Italian',
     'pt': 'Portuguese (Brazil)',
-    'es': 'Spanish',
+    'es': 'Spanish (Spain)',
+    'ar': 'Arabic (Saudi Arabia)',
   };
 }
 
@@ -1114,5 +1115,6 @@ class _DataLayer {
     CoFakerScript.cyrillic => 'Cyrillic letter',
     CoFakerScript.hangul => 'Hangul',
     CoFakerScript.latin => 'Latin letter',
+    CoFakerScript.arabic => 'Arabic letter',
   };
 }

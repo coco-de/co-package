@@ -16,6 +16,8 @@ void main() {
       expect(DemoFakerLocales.fakerLocaleOf(DemoLocale.pt), 'pt_BR');
       expect(DemoFakerLocales.fakerLocaleOf(DemoLocale.it), 'it_IT');
       expect(DemoFakerLocales.fakerLocaleOf(DemoLocale.ru), 'ru_RU');
+      expect(DemoFakerLocales.fakerLocaleOf(DemoLocale.es), 'es_ES');
+      expect(DemoFakerLocales.fakerLocaleOf(DemoLocale.ar), 'ar_SA');
       expect(DemoFakerLocales.fakerLocaleOf(DemoLocale.ko), 'ko');
     });
 
@@ -25,10 +27,11 @@ void main() {
           if (DemoFakerLocales.resolve(locale.tag).dataFallsBackToEnglish)
             locale,
       ];
-      // co-package#71 adds Arabic; until then its display data is English.
-      expect(english, [DemoLocale.ar]);
-      expect(DemoFakerLocales.fakerDataLocaleOf(DemoLocale.ar), 'en');
-      expect(DemoFakerLocales.fakerDataLocaleOf(DemoLocale.es), 'es');
+      // co-package#71 gave Spanish and Arabic national locales: no UI
+      // language is served in English any more.
+      expect(english, isEmpty);
+      expect(DemoFakerLocales.fakerDataLocaleOf(DemoLocale.ar), 'ar_SA');
+      expect(DemoFakerLocales.fakerDataLocaleOf(DemoLocale.es), 'es_ES');
     });
   });
 

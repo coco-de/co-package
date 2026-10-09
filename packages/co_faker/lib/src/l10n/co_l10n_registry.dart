@@ -1,6 +1,8 @@
+import 'ar/ar_bundle.dart';
 import 'co_l10n_bundle.dart';
 import 'de/de_bundle.dart';
 import 'en/en_bundle.dart';
+import 'es/es_bundle.dart';
 import 'fr/fr_bundle.dart';
 import 'it/it_bundle.dart';
 import 'ja/ja_bundle.dart';
@@ -13,7 +15,7 @@ import 'zh/zh_bundle.dart';
 ///
 /// Korean and English carry the authored text of the domain packs and the
 /// dedicated generators. Chinese, Japanese, German, French, Russian, Italian,
-/// and Portuguese are registered with empty bundles: localizing a language
+/// Portuguese, Spanish, and Arabic were registered with empty bundles: localizing a language
 /// means filling its own bundle file, and the registry never changes. A
 /// language whose bundle is empty has no domain text yet, and its generators
 /// read English.
@@ -123,6 +125,10 @@ const Map<String, CoL10nBundle> _registered = <String, CoL10nBundle>{
   'it': itBundle,
 
   'pt': ptBundle,
+
+  'es': esBundle,
+
+  'ar': arBundle,
 };
 
 /// The registered bundles after the load-time check; Dart initializes it on

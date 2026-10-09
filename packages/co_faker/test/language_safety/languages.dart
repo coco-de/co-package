@@ -1,5 +1,7 @@
+import 'ar.dart';
 import 'de.dart';
 import 'en.dart';
+import 'es.dart';
 import 'fr.dart';
 import 'it.dart';
 import 'ja.dart';
@@ -31,4 +33,8 @@ const Map<String, LanguageSafety> languageSafety = <String, LanguageSafety>{
   'it': itSafety,
 
   'pt': ptSafety,
+
+  'es': esSafety,
+
+  'ar': arSafety,
 };

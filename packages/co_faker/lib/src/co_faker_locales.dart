@@ -8,8 +8,8 @@ import 'saas_data.dart';
 /// The language codes `en`, `ko`, `ja`, `zh`, `es`, `fr` and `de` keep the
 /// data they had before national locales existed, so their output never
 /// changes. National locales (`en_us`, `ja_jp`, ...) are richer; the
-/// languages that had no data before, `it`, `pt` and `ru`, resolve to the
-/// national locales of Italy, Brazil and Russia.
+/// languages that had no data before, `it`, `pt`, `ru` and `ar`, resolve to
+/// the national locales of Italy, Brazil, Russia and Saudi Arabia.
 abstract final class CoFakerLocales {
   /// All built-in locales keyed by normalized locale code.
   static const Map<String, CoFakerLocale> all = <String, CoFakerLocale>{
@@ -23,6 +23,7 @@ abstract final class CoFakerLocales {
     'it': CoFakerNationalLocales.italy,
     'pt': CoFakerNationalLocales.brazil,
     'ru': CoFakerNationalLocales.russia,
+    'ar': CoFakerNationalLocales.saudiArabia,
     'en_us': CoFakerNationalLocales.unitedStates,
     'zh_cn': CoFakerNationalLocales.china,
     'de_de': CoFakerNationalLocales.germany,
@@ -34,6 +35,8 @@ abstract final class CoFakerLocales {
     'it_it': CoFakerNationalLocales.italy,
     'en_ca': CoFakerNationalLocales.canada,
     'pt_br': CoFakerNationalLocales.brazil,
+    'es_es': CoFakerNationalLocales.spain,
+    'ar_sa': CoFakerNationalLocales.saudiArabia,
   };
 
   /// Normalizes a locale code the way `CoFaker` does: `ja-JP` becomes

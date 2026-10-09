@@ -1,5 +1,16 @@
 ## Unreleased
 
+- Add the national locales of Spain (`es_ES`) and Saudi Arabia (`ar_SA`) for
+  the demo languages Spanish and Arabic (co-package#71): gendered names,
+  coherent city, region and postal codes, national address order, fictional
+  phone numbers (prefixes that libphonenumber rejects), romanized Arabic
+  usernames, and EUR / SAR. Arabic is right to left and keeps the digits 0–9.
+- `CoFakerLanguages` supports Arabic (`ar`, `CoFakerScript.arabic`), and
+  Spanish is generated with `es_ES`. `es` and `ar` are registered with empty
+  domain stubs (`planned`) until their domain data lands.
+- Behavior change: `CoFaker.forLanguage('es')` builds `es_ES` instead of the
+  bare `es`, and `CoFaker(locale: 'ar')` and `forLanguage('ar')` give Arabic
+  data instead of English. `CoFaker(locale: 'es')` keeps its output.
 - Add national locales for the ten largest economies by GDP (World Bank 2025)
   plus Brazil: `en_US`, `zh_CN`, `de_DE`, `ja_JP`, `en_GB`, `en_IN`,
   `fr_FR`, `ru_RU`, `it_IT`, `en_CA`, `pt_BR`. They carry gendered names

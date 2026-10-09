@@ -1,0 +1,52 @@
+# Arabic (Saudi Arabia) (`ar`)
+
+status: planned
+
+العربية. The national locale is `ar_SA`. Modern Standard Arabic as written in Saudi Arabia (`ar_SA`), right to left, with the digits 0 to 9.
+
+The status line above is read by the tests of the package:
+
+- `planned`: the language has no data yet. Its domain text bundle, clinic data,
+  and SaaS data are empty stubs, and the language reads English.
+- `localized`: all three are written. Change the line to `localized` in the same
+  pull request that writes them: the tests compare it with the registries.
+
+Everything below is for the Story that localizes the language, and the
+translation is a draft until a native speaker has reviewed it. See
+[README.md](README.md) for the work, the gate, and the format of this file.
+
+## Glossary
+
+One row for each term that the texts use for the same thing, in English. A term
+has one translation, and it is the only one that the texts of the language
+write; the forbidden forms are the spellings that must not appear anywhere in
+them (another variant, an English loanword, a term of another region). The
+rationale says why. Separate forbidden forms with `;`.
+
+| Source term (English) | Translation | Forbidden forms | Rationale |
+| --- | --- | --- | --- |
+
+## Format conventions
+
+One line for each topic: how the language writes it, with an example.
+
+| Topic | Convention |
+| --- | --- |
+| Currency and amounts (`1,234.00 ر.س`) | |
+| Dates and times (Gregorian calendar) | |
+| Numbers: digits 0–9, separators, and units | |
+| Punctuation (`،` `؛` `؟`) and direction (right to left) | |
+| Register: formal address | |
+| Gender and number in a template that a value fills | |
+| Latin codes and units inside right-to-left text | |
+
+## Native-speaker review checklist
+
+Fill in what a reviewer has to look at: the terms that are medical, legal, or
+financial, the register of a patient notice, the templates that a value fills,
+and every text that the author is not sure about.
+
+- [ ] The glossary terms read as a native speaker of the language writes them.
+- [ ] The register is the same in every patient and customer text.
+- [ ] Amounts, dates, and numbers follow the conventions above.
+- [ ] A template stays grammatical with every value that fills it.

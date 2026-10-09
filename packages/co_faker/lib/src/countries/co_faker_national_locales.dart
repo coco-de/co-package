@@ -8,6 +8,8 @@ import 'data/india.dart';
 import 'data/italy.dart';
 import 'data/japan.dart';
 import 'data/russia.dart';
+import 'data/saudi_arabia.dart';
+import 'data/spain.dart';
 import 'data/united_kingdom.dart';
 import 'data/united_states.dart';
 
@@ -50,6 +52,12 @@ abstract final class CoFakerNationalLocales {
   /// Brazil (`pt_BR`).
   static const CoFakerLocale brazil = brazilLocale;
 
+  /// Spain (`es_ES`).
+  static const CoFakerLocale spain = spainLocale;
+
+  /// Saudi Arabia (`ar_SA`).
+  static const CoFakerLocale saudiArabia = saudiArabiaLocale;
+
   /// National locales keyed by ISO 3166-1 alpha-2 country code.
   static const Map<String, CoFakerLocale> byCountry = <String, CoFakerLocale>{
     'US': unitedStates,
@@ -63,5 +71,7 @@ abstract final class CoFakerNationalLocales {
     'IT': italy,
     'CA': canada,
     'BR': brazil,
+    'ES': spain,
+    'SA': saudiArabia,
   };
 }
