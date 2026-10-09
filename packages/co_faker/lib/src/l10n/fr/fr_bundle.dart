@@ -1252,5 +1252,12 @@ const CoL10nBundle frBundle = CoL10nBundle(
     'clinic.texts.labels': ['Parent', 'HIFU', 'RF', 'IPL', 'Patient'],
     'clinic.ops.patientTags.label': ['VIP', 'Lifting'],
     'clinic.ops.labels': ['Points'],
+    // The SaaS data. The names of two plans, the message channels that are
+    // named by their acronym, the word `maintenance`, and the kind of record
+    // `patient`, which are the same words in both languages.
+    'saas.plans.name': ['Standard', 'Pro'],
+    'saas.labels': ['SMS', 'LMS', 'Maintenance'],
+    'saas.ops.labels': ['Maintenance'],
+    'saas.ops.auditRecords': ['patient'],
   },
 );
