@@ -105,13 +105,29 @@ class CoRandom {
 
   /// Combines [seed] and [key] into a stable, non-negative seed using the
   /// FNV-1a hash.
+  ///
+  /// The result is the same on the VM and on the web (dart2js · dart2wasm).
   static core.int deriveSeed(core.int seed, String key) {
     var hash = 0x811c9dc5;
     for (final code in '$seed|$key'.codeUnits) {
       hash ^= code;
-      hash = (hash * 0x01000193) & 0xffffffff;
+      hash = _multiplyFnvPrime(hash);
     }
     return hash & 0x7fffffff;
+  }
+
+  /// `(value * 0x01000193) mod 2^32` without leaving the exact integer range
+  /// of a JavaScript double (2^53).
+  ///
+  /// A plain `value * 0x01000193` reaches about 2^57 for a 32-bit [value],
+  /// which the VM computes exactly but the web rounds. Multiplying the low and
+  /// high 16-bit halves separately keeps every partial product below 2^42 and
+  /// gives the same 32-bit result on every platform.
+  static core.int _multiplyFnvPrime(core.int value) {
+    const prime = 0x01000193;
+    final low = (value & 0xffff) * prime;
+    final high = (((value >> 16) & 0xffff) * prime) & 0xffff;
+    return (low + (high << 16)) & 0xffffffff;
   }
 
   static const String _lettersAndDigits =

@@ -59,6 +59,14 @@ jobs:
       - run: melos run format
       - run: melos run analyze
       - run: melos run test:dart
+      # 파생 seed 가 VM 과 웹에서 같은지 — 웹으로 배포한 데모와 VM 에서 찍은 골든이 같은 목데이터를 보여야 한다 (#69).
+      - name: co_faker web determinism (chrome · dart2js)
+        working-directory: packages/co_faker
+        run: dart test -p chrome test/random_source_platform_test.dart
+      # 데모 세계의 업무 · 표시 데이터가 웹과 VM 에서 같은지 (co_demo_world 전체를 chrome 에서도).
+      - name: co_demo_world web determinism (chrome · dart2js)
+        working-directory: packages/co_demo_world
+        run: dart test -p chrome
       - run: melos run test:flutter
 
   # packages/xterm3 — klc/xterm3 포크(AGPL-3.0). 워크스페이스 비회원이라 melos 잡이
@@ -81,6 +89,28 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze --fatal-infos
       - run: flutter test
+
+  # MIT xterm2 포크 — 비회원 패키지의 공개 API·IME 대역·회귀를 독립 검증한다.
+  # 원천 Mac 전용 골든은 테스트의 기존 플랫폼 조건을 유지한다.
+  xterm2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/xterm2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get --no-example
+      - name: 변경된 입력 경로와 IME 시험 포맷
+        run: |
+          dart format --output=none --set-exit-if-changed lib/src/terminal_view.dart lib/src/ui/custom_text_edit.dart test/src/ui/ime
+      - run: flutter analyze --no-pub lib test/src/ui/ime
+      - run: flutter test --no-pub --exclude-tags platform-golden
 
   # co_arc 러너 스크립트/워크플로우 문법 검증
   lint-runner-infra:

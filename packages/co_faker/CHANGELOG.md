@@ -103,6 +103,13 @@
   and every code that is not a supported language read English domain data. They
   are never handed Simplified Chinese.
 
+## [0.11.1](https://github.com/coco-de/co-package/compare/co_faker-v0.11.0...co_faker-v0.11.1) (2026-10-08)
+
+
+### 버그 수정
+
+* **co_faker:** 🐛 deriveSeed 가 웹(dart2js · dart2wasm)에서도 VM 과 같은 값을 낸다 ([#69](https://github.com/coco-de/co-package/issues/69)) ([#73](https://github.com/coco-de/co-package/issues/73)) ([24736be](https://github.com/coco-de/co-package/commit/24736bea717cc6edbd5102c22d0e522e5ede87ec))
+
 ## [0.11.0](https://github.com/coco-de/co-package/compare/co_faker-v0.10.0...co_faker-v0.11.0) (2026-10-04)
 
 

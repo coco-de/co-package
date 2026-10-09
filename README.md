@@ -8,11 +8,13 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | --- | --- |
 | [`co_arc`](packages/co_arc/README.md) | Cocode Actions Runner Cluster — self-hosted 러너 관리 TUI(`coarc`), 등록 스크립트, ARC 설정, 재사용 CI 워크플로우. |
 | [`co_faker`](packages/co_faker/README.md) | Pure Dart, deterministic, multilingual fake data generation. |
+| [`co_demo_world`](packages/co_demo_world/README.md) | Deterministic demo worlds: business data fixed, co_faker display text re-projected per UI language, user edits kept across a live language switch. |
 | [`co_golden`](packages/co_golden/README.md) | Golden matrix testing for Flutter — devices × themes × locales, strict layout diagnostics, Slang locale binding, JSON run manifests. |
 | [`co_golden_gallery`](packages/co_golden_gallery/README.md) | Single-file HTML gallery for co_golden captures and golden PNG trees; images local, copied, or served from a bucket. |
 | [`open_epub_engine`](packages/open_epub_engine/README.md) | Pure Dart EPUB 2/3 parser, object model, and CFI locator engine. |
 | [`open_epub`](packages/open_epub/README.md) | Customizable EPUB reader widget for Flutter (reflowable + fixed layout). |
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
+| [`xterm2`](packages/xterm2/FORK.md) | MIT terminal emulator from `leynier/xterm2@6775995f`, with Cocode's clean-room desktop IME composition fixes. Independent package and CI job. |
 | [`xterm3`](packages/xterm3/FORK.md) | [klc/xterm3](https://github.com/klc/xterm3) 6.3.4 포크 — 데스크톱 입력기(한글 두벌식 등) 조합 수정. **AGPL-3.0**, 워크스페이스 비회원(자체 CI 잡). |
 
 ## Live examples
@@ -83,6 +85,8 @@ shared instructions and generated graph format consistent.
 ## License
 
 BSD-3-Clause (Cocode Inc.)
+
+`packages/xterm2` follows its upstream MIT license (© 2020 xuty; package `LICENSE`).
 
 예외: `packages/xterm3` 는 업스트림 라이선스 AGPL-3.0-or-later 를 따른다
 (패키지 안의 `LICENSE` · `LICENSE.MIT` · `NOTICE`).
