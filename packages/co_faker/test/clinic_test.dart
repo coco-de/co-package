@@ -183,7 +183,9 @@ void main() {
     });
 
     test('other locales fall back to English clinic data', () {
-      final faker = CoFaker(locale: 'fr', seed: 1, now: now);
+      // `nl` stands for a language that has no clinic data and never will: a
+      // language of the Epic (`fr`) gets its own data when it is localized.
+      final faker = CoFaker(locale: 'nl', seed: 1, now: now);
       expect(faker.clinic.data, same(CoFakerClinicData.english));
       expect(faker.clinic.label('nhis'), 'National insurance');
       expect(faker.clinic.patient().name, isNotEmpty);

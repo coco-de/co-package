@@ -1,5 +1,4 @@
 import '../co_faker.dart';
-import 'authored_roles.dart';
 import 'co_fake_remit_recipient.dart';
 import 'co_fake_remittance.dart';
 import 'co_faker_fx.dart';
@@ -42,12 +41,15 @@ class CoFakerRemit {
     'rejected',
     'canceled',
   ];
+
+  /// Currency and rate of each corridor; the country name is
+  /// `remit.countryName.<code>` in the language bundles.
   static const _corridors = {
-    'VN': ('베트남', 'Vietnam', 'VND', 17.85),
-    'PH': ('필리핀', 'Philippines', 'PHP', 0.0394),
-    'NP': ('네팔', 'Nepal', 'NPR', 0.0926),
-    'US': ('미국', 'United States', 'USD', 0.0007),
-    'CN': ('중국', 'China', 'CNY', 0.0049),
+    'VN': ('VND', 17.85),
+    'PH': ('PHP', 0.0394),
+    'NP': ('NPR', 0.0926),
+    'US': ('USD', 0.0007),
+    'CN': ('CNY', 0.0049),
   };
 
   /// Produces a matching country/currency with a masked name and account.
@@ -73,14 +75,10 @@ class CoFakerRemit {
       name:
           '${faker.random.string(1, alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')}*** ${faker.random.string(1, alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')}. ${faker.random.string(1, alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')}.',
       countryCode: country,
-      countryName: localized(faker, corridor.$1, corridor.$2),
-      currencyCode: corridor.$3,
+      countryName: faker.l10n.text('remit.countryName.$country'),
+      currencyCode: corridor.$1,
       payoutMethod: payout,
-      bankName: localized(
-        faker,
-        '누리파트너은행(가상)',
-        'Nuri partner bank (fictional)',
-      ),
+      bankName: faker.l10n.text('remit.bankName'),
       accountMasked: CoFakerFx(faker).maskedAccount(),
     );
   }
@@ -97,7 +95,7 @@ class CoFakerRemit {
     }
     final receiver = recipient ?? this.recipient(index: index);
     final corridor = _corridors[receiver.countryCode];
-    if (corridor == null || corridor.$3 != receiver.currencyCode) {
+    if (corridor == null || corridor.$1 != receiver.currencyCode) {
       throw ArgumentError.value(
         receiver.countryCode,
         'recipient',
@@ -122,8 +120,8 @@ class CoFakerRemit {
       recipient: receiver,
       sendAmount: amount,
       feeAmount: 5000,
-      appliedRate: corridor.$4,
-      receiveAmount: double.parse((amount * corridor.$4).toStringAsFixed(2)),
+      appliedRate: corridor.$2,
+      receiveAmount: double.parse((amount * corridor.$2).toStringAsFixed(2)),
       purpose: faker.random.pick(purposes),
       fundSource: faker.random.pick(fundSources),
       status: stage,

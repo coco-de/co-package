@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#57 상세 기획 — GDP 상위 10개국 언어 지원 · 도메인 목데이터 현지화</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa;
+    --accent: #0969da; --bad: #cf222e; --good: #1a7f37; --warn: #9a6700; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23;
+      --accent: #4493f8; --bad: #ff7b72; --good: #3fb950; --warn: #d29922; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 36px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.05rem; margin: 22px 0 4px; }
+  a { color: var(--accent); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 10px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; font-size: .92rem; }
+  th { background: var(--code); }
+  pre, code { background: var(--code); border-radius: 6px; font-size: .88rem; }
+  code { padding: 1px 5px; }
+  pre { padding: 12px; overflow-x: auto; }
+  pre code { padding: 0; background: none; }
+  img, svg { max-width: 100%; height: auto; }
+  .muted { color: var(--muted); }
+  .bad { color: var(--bad); font-weight: 600; }
+  .good { color: var(--good); font-weight: 600; }
+  .warn { color: var(--warn); }
+  .callout { border-left: 4px solid var(--accent); background: var(--code); padding: 8px 14px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+  ul { padding-left: 1.3em; }
+  li { margin: 3px 0; }
+  .box { fill: var(--code); stroke: var(--line); stroke-width: 1.2; }
+  .box.p0 { stroke: var(--accent); stroke-width: 1.8; }
+  .lbl { fill: var(--fg); font: 600 12px system-ui, sans-serif; }
+  .sub { fill: var(--muted); font: 11px system-ui, sans-serif; }
+  .edge { stroke: var(--muted); stroke-width: 1.3; fill: none; }
+  .arrow { fill: var(--muted); }
+</style>
+</head>
+<body><main>
+
+<h1>GDP 상위 10개국 언어 지원 — 도메인 목데이터 현지화</h1>
+<p class="muted">Epic <a href="https://github.com/coco-de/co-package/issues/57">#57</a> · 하위 Story #58 ~ #68 · 대상 패키지 <code>packages/co_faker</code> (순수 Dart)</p>
+
+<h2>1. 한눈에</h2>
+<ul>
+  <li><b>무엇</b> — 앱의 언어 설정(<code>zh-Hans</code> · <code>pt-BR</code> · <code>ja_JP.UTF-8</code> …)을 co_faker 에 넘기면 영어 · 중국어 · 독일어 · 일본어 · 프랑스어 · 러시아어 · 이탈리아어 · 포르투갈어로 이름 · 주소뿐 아니라 <b>도메인 팩 27종 · clinic · saas</b> 목데이터까지 그 언어로 생성한다.</li>
+  <li><b>왜</b> — #55 가 기본 모듈(사람 · 주소 · 전화 · 통화)을 국가별로 풀었지만 도메인 데이터는 한국어/영어 이분법이다. 데모 36종이 11개 언어 UI 로 열려도 목데이터의 도메인 문구는 영어(금액은 <code>$</code>)로 나온다.</li>
+  <li><b>어떻게</b> — (1) 언어 설정 해석 기반 → (2) 도메인 저작 데이터를 언어 키 조회로 이관 + clinic · saas 의 금액 · 서식 · 문구를 언어별 데이터 필드로 → (3) 언어 커버리지 게이트 → (4) 언어별 현지화 7건(병렬).</li>
+</ul>
+<table>
+  <tr><th>항목</th><th>수치</th><th>근거</th></tr>
+  <tr><td>대상 언어</td><td>en(이미 있음) + zh · de · ja · fr · ru · it · pt = 신규 7</td><td>#55 의 11개국(GDP 상위 10 + 브라질)의 언어</td></tr>
+  <tr><td>ko/en 이분법 호출처</td><td>도메인 팩 · 전용 생성기 약 200곳 + clinic · saas <code>_korean</code> 30곳</td><td><code>graft grep</code> 실측 — <code>textRole</code> 180 · <code>taxonomyRole</code> 7 · <code>localized</code> 11 · 직접 분기 6 (+ 헬퍼 본문 4)</td></tr>
+  <tr><td>현지화 분량 / 언어</td><td>한국어 저작 문자열 약 1,600개 (× 7 언어 ≈ 11,000)</td><td>도메인 팩 약 740 · clinic 약 630 · saas 약 230 (기본 로케일 394 · <code>korea.dart</code> 105 · <code>modules.dart</code> 30 제외)</td></tr>
+  <tr><td>Story Point</td><td>125</td><td>5 + 13 + 8 + 8 + 13 × 7</td></tr>
+</table>
+
+<h2>2. 지금 어떻게 나오나 (실측)</h2>
+<p>co_faker 0.11.0 (<code>e1492864</code>), <code>CoFaker(locale: 언어, seed: 7, now: 2026-01-15, domains: CoFakerDomains.all)</code> 로 같은 호출을 언어만 바꿔 실행한 결과다. 사람 · 도시는 현지어인데 <b>도메인 값은 영어</b>다.</p>
+<table>
+  <tr><th>언어</th><th>사람 · 도시 (기본 모듈)</th><th>클리닉 · 치과 (도메인)</th><th>상담 금액 문장 (clinic)</th></tr>
+  <tr><td><code>ko</code></td><td>송서연 · 제주</td><td>새봄이비인후과의원 · 스케일링</td><td>견적 805,000 (원 규모)</td></tr>
+  <tr><td><code>en</code></td><td>Avery Parker · Seattle</td><td>Maple Pediatrics · Scaling</td><td>It is $1,120 per session, or $2,180 for a 3-session package.</td></tr>
+  <tr><td><code>ja</code></td><td>伊藤 湊 · 福岡</td><td class="bad">Maple Pediatrics · Scaling</td><td class="bad">It is $1,120 per session …</td></tr>
+  <tr><td><code>zh</code></td><td>陈娜 · 杭州</td><td class="bad">Maple Pediatrics · Scaling</td><td class="bad">It is $1,120 per session …</td></tr>
+  <tr><td><code>de</code></td><td>Lena Wagner · München</td><td class="bad">Maple Pediatrics · Scaling</td><td class="bad">It is $1,120 per session …</td></tr>
+  <tr><td><code>fr</code></td><td>Chloé Moreau · Marseille</td><td class="bad">Maple Pediatrics · Scaling</td><td class="bad">It is $1,120 per session …</td></tr>
+  <tr><td><code>ru</code></td><td>Евгения Фёдорова · Челябинск</td><td class="bad">Maple Internal Medicine · Scaling</td><td class="bad">It is $1,480 per session …</td></tr>
+  <tr><td><code>it</code></td><td>Alessandro Rizzo · Napoli</td><td class="bad">Maple Pediatrics · Scaling</td><td class="bad">It is $1,120 per session …</td></tr>
+  <tr><td><code>pt</code></td><td>Heitor Fernandes · Belo Horizonte</td><td class="bad">Maple Pediatrics · Scaling</td><td class="bad">It is $1,120 per session …</td></tr>
+</table>
+<p class="muted">재현: 위 인자로 <code>f.person.fullName()</code> · <code>f.address.city()</code> · <code>f.clinic.clinicName()</code> · <code>f.schema.record({...}, roles: {'procedure': 'dental.dentalProcedure'})</code> · <code>f.clinic.counselSession(topic: 'lifting')</code>. 이 Epic 이 끝나면 같은 호출이 각 언어의 문구 · 통화로 나와야 한다(완료 기준).</p>
+
+<h2>3. 원인</h2>
+<table>
+  <tr><th>위치</th><th>형태</th><th>규모</th></tr>
+  <tr><td><code>domain_packs/authored_roles.dart:25·53·84·108</code></td><td>헬퍼 본문이 <code>f.locale.startsWith('ko') ? ko : en</code></td><td>호출처 <code>textRole</code> 180 · <code>taxonomyRole</code> 7 · <code>localized</code> 11</td></tr>
+  <tr><td><code>co_faker_fx.dart:47</code> · <code>co_faker_vet.dart:61·68</code> · <code>co_faker_exam_prep.dart:163</code> · <code>co_homecare_domain.dart:30</code> · <code>co_workplace_domain.dart:120</code></td><td>직접 분기</td><td>6곳</td></tr>
+  <tr><td><code>clinic.dart:323</code> · <code>saas.dart:296</code></td><td><code>bool get _korean</code> — 금액 규모 · 서식 · 전화 · 주소 · 문구가 한국어/영어 두 갈래</td><td>21 + 11 곳</td></tr>
+  <tr><td><code>clinic.dart:2012-2019</code></td><td><code>_money</code> 가 <code>$</code> 를 고정</td><td>한국어가 아니면 전부 USD 서식</td></tr>
+  <tr><td><code>clinic.dart:809</code></td><td>영어 경로에서도 <code>faker.korea.cardApprovalNumber()</code> 호출</td><td>한국 전용 값이 비한국어에 섞임</td></tr>
+</table>
+<p>한편 <b>목록 길이는 이미 정렬</b>돼 있다 — <code>textRole</code> · <code>taxonomyRole</code> 의 ko/en 187쌍은 전부 길이가 같다(실측). 같은 seed 면 언어만 바뀐 같은 레코드가 나온다는 뜻이고, 이 성질을 새 언어도 지켜야 한다.</p>
+
+<h2>4. 범위와 "언어 지원"의 정의</h2>
+<h3>포함</h3>
+<ul>
+  <li>언어 설정 해석 — <code>CoFakerLanguages</code> · <code>faker.language</code> · <code>CoFaker.forLanguage</code></li>
+  <li>도메인 저작 데이터의 언어 키 이관 (ko · en 출력 바이트 동일)</li>
+  <li>clinic · saas 의 금액 · 서식 · 인라인 문구를 언어별 데이터 필드로</li>
+  <li>언어 커버리지 점검 · 안전 스캔 일반화 · 0.10.0 스냅샷 범위 분리</li>
+  <li>zh · de · ja · fr · ru · it · pt 현지화 7건</li>
+</ul>
+<h3>제외 (후속)</h3>
+<ul>
+  <li>스페인어(es) · 아랍어(ar) — 데모 11개 언어에는 있으나 GDP 10개국 밖. 설계는 데이터 추가만으로 가능하게 한다.</li>
+  <li>힌디어(<code>en_IN</code> 은 영어 유지) · 번체 중국어(<code>zh-Hant</code> · <code>zh_TW</code> · <code>zh_HK</code> · <code>zh_MO</code> — 간체를 주지 않는다, co_demo_prefs 정책과 동일)</li>
+  <li><code>faker.korea</code> 모듈 · 런타임 번역 · 외부 데모 앱 연동(릴리스 뒤 소비 저장소의 co_faker ref 갱신은 별도 작업)</li>
+</ul>
+<div class="callout"><b>언어 L 이 "지원"된다</b>는 것 = <code>CoFaker(locale: 'L')</code> 과 <code>CoFaker.forLanguage('L')</code> 모두에서 도메인 팩 27종 · 전용 생성기 · clinic · saas 의 문구에 한국어/영어 잔류가 0 이고, 금액이 L 의 통화 규모 · 서식을 따르며, 같은 seed 로 영어와 비교하면 같은 레코드의 번역이고, 언어 커버리지 게이트(<code>dart run co_faker:coverage --language L --strict</code>)와 안전 스캔을 통과하는 것.</div>
+
+<h2>5. 설계 결정</h2>
+<h3>5.1 언어 설정 해석 (S1 · #58)</h3>
+<ul>
+  <li><code>CoFakerLanguages.resolve(tag)</code> 는 대소문자 · <code>-</code>/<code>_</code> · 스크립트 · <code>.인코딩</code> · <code>@modifier</code> 를 무시하고 언어와 지역을 뽑는다. <code>faker.language</code> 는 정규화된 언어 코드(<code>ja_jp</code> → <code>ja</code>).</li>
+  <li><code>CoFaker.forLanguage(tag)</code> 는 언어를 그 언어의 국가 로케일로 만든다: ko→<code>ko</code> · en→<code>en_us</code> · zh→<code>zh_cn</code> · ja→<code>ja_jp</code> · de→<code>de_de</code> · fr→<code>fr_fr</code> · ru→<code>ru_ru</code> · it→<code>it_it</code> · pt→<code>pt_br</code>. 앱의 "언어 설정"에는 이 진입점을 쓴다 — 언어 코드만 넘기는 <code>CoFaker(locale: 'ja')</code> 는 #55 의 풍부한 국가 데이터가 아니라 0.10.0 의 얇은 언어 데이터를 받기 때문이다.</li>
+  <li>기존 <code>CoFaker(locale: …)</code> 의 기본 모듈 출력은 바이트 동일 — 0.10.0 스냅샷 회귀가 수정 없이 통과해야 한다. 번체 코드는 <code>resolve</code>/<code>forLanguage</code> 에서만 거부하고(영어 폴백), 기존 <code>zh_TW</code> 출력은 유지한다.</li>
+</ul>
+<h3>5.2 도메인 저작 데이터의 언어 키 이관 (S2 · #59)</h3>
+<ul>
+  <li>조회 순서: <code>faker.language</code> → <code>en</code>. <code>ko</code> 는 <code>ko</code>. 지원 밖 언어와 커스텀 로케일은 영어(기존 영어 폴백 회귀 유지).</li>
+  <li>번들은 <b>언어별 파일</b>(<code>lib/src/l10n/{lang}/…</code>)이다. <code>ko</code> · <code>en</code> 은 기존 문구를 옮기고, 나머지 7개 언어는 <b>빈 스텁을 레지스트리에 미리 등록</b>한다 — 언어 Story 7건이 병렬로 진행돼도 서로 같은 줄을 고치지 않는다.</li>
+  <li>도메인 지원 여부(<code>domain</code>)는 번들 레지스트리에서 <b>계산</b>한다. 수동 플래그가 없어야 언어 Story 가 레지스트리 · 테스트를 건드리지 않는다.</li>
+  <li>커스텀 로케일이 도메인 문구를 주입하는 확장 지점이 있어 es · ar · hi 같은 후속 언어를 코드 변경 없이 추가할 수 있다.</li>
+  <li>안전망: 이관 <b>전에</b> ko · en 의 도메인 출력 전수 덤프를 픽스처로 고정하고 이관 후에도 바이트 동일을 증명한다(<code>CoFakerDomains.all</code> 의 모든 role × seed 3종 × 레코드 인덱스, 전용 생성기 공개 메서드).</li>
+</ul>
+<h3>5.3 clinic · saas 의 금액 · 서식 · 문구를 데이터 필드로 (S3 · #60)</h3>
+<ul>
+  <li>금액 규모 계수 · 반올림 단위 · 할부 기준 · 포인트 단위 · 통화 서식 · 인라인 문구(<code>회</code>/<code>x</code> · <code>님</code> · 휴일 · 상태 메시지 · <code>saas.dart:935~1148</code>)를 <code>CoFakerClinicData</code> · <code>CoFakerClinicOps</code> · <code>CoFakerClinicTexts</code> · <code>CoFakerSaasData</code> · <code>CoFakerSaasOps</code> 의 필드로 옮긴다.</li>
+  <li><b>영어 데이터 = 현재 영어 동작(USD · <code>$</code>), 한국어 데이터 = 현재 한국어 동작(KRW)</b> 을 필드 값으로 표현한다. 데이터가 없는 언어는 영어 데이터로 폴백하므로 <b>기존 모든 로케일 코드의 출력이 바뀌지 않는다</b>(0.10.0 스냅샷 수정 없이 통과).</li>
+  <li>새 언어 데이터는 한국 전용 값(<code>faker.korea.*</code> — 카드 승인번호 · 현금영수증 · 도로명 주소)을 쓰지 않는다. 영어의 기존 출력은 바이트 동일 보존을 위해 데이터 플래그로 유지한다.</li>
+  <li>새 언어 데이터는 영어 데이터(범용 피부과 · 미용 클리닉 픽스처)의 구조를 따른다. 한국 전용(NHIS · KCD · 주민번호)은 가져오지 않는다. 코드값(<code>CONS01</code> · <code>nhis</code> · <code>waiting</code>)은 로케일 독립이다.</li>
+</ul>
+<h3>5.4 커버리지 게이트 (S4 · #61)</h3>
+<ul>
+  <li>언어 L 의 모든 팩 role · 전용 생성기 · clinic · saas 문구를 생성해 검사한다: (a) 한글 누출 0 (L≠ko) (b) ja · zh · ru 는 해당 문자 체계 포함 (c) 영어 목록과 항목별 동일 비율이 임계 이하(차용어 · 고유명사는 허용 목록) (d) 목록 길이가 영어와 같음 (e) 미등록 키 보고.</li>
+  <li>안전 스캔: <code>authored_data_safety_test</code> 의 <code>['ko', 'en']</code> 고정을 지원 언어 전체로 — 가상 표기(<code>(가상)</code>/<code>(fictional)</code>)의 언어별 규약과 브랜드 거부 목록의 언어별 표기. 새 언어 데이터는 자동으로 검사 대상이 된다.</li>
+  <li>0.10.0 스냅샷은 기본 모듈 키는 모든 stable 코드에서 계속 바이트 동일, 도메인 키(<code>clinic.*</code> · <code>schema.patient</code> · <code>schema.invoice</code>)는 도메인 현지화가 아직 없는 언어에만 적용한다. 현지화 여부는 레지스트리에서 읽는다.</li>
+  <li>언어별 문서 틀 <code>docs/languages/{lang}.md</code>(용어집 · 검토 체크리스트) — 언어 Story 는 자기 파일만 고친다.</li>
+</ul>
+<h3>5.5 호환성 — 무엇이 언제 바뀌나</h3>
+<table>
+  <tr><th>코드</th><th>지금</th><th>해당 언어 Story 머지 후</th></tr>
+  <tr><td><code>ko</code> · <code>en</code></td><td>—</td><td class="good">변화 없음 (바이트 동일)</td></tr>
+  <tr><td><code>zh</code> <code>de</code> <code>ja</code> <code>fr</code> <code>ru</code> <code>it</code> <code>pt</code> + 지역형(<code>ja_JP</code> 등)</td><td>기본 모듈은 현지어, 도메인은 영어</td><td>도메인(팩 · clinic · saas)도 현지어, 금액은 해당 통화 — <b>의도된 동작 변경</b> (CHANGELOG 에 기록)</td></tr>
+  <tr><td><code>es</code> · 지원 밖 · 커스텀 로케일</td><td>도메인은 영어 폴백</td><td class="good">변화 없음 (후속)</td></tr>
+</table>
+
+<h2>6. 의존 그래프와 실행 순서</h2>
+<svg viewBox="0 0 760 296" role="img" aria-label="Story 의존 그래프: S1 이 S2 와 S3 의 선행, 둘이 S4 의 선행, S4 가 언어별 Story 7건의 선행">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+  <path class="edge" marker-end="url(#ar)" d="M120 150 L170 92"/>
+  <path class="edge" marker-end="url(#ar)" d="M120 150 L170 208"/>
+  <path class="edge" marker-end="url(#ar)" d="M290 92 L340 150"/>
+  <path class="edge" marker-end="url(#ar)" d="M290 208 L340 150"/>
+  <path class="edge" marker-end="url(#ar)" d="M450 150 L520 28"/>
+  <path class="edge" marker-end="url(#ar)" d="M450 150 L520 66"/>
+  <path class="edge" marker-end="url(#ar)" d="M450 150 L520 104"/>
+  <path class="edge" marker-end="url(#ar)" d="M450 150 L520 142"/>
+  <path class="edge" marker-end="url(#ar)" d="M450 150 L520 180"/>
+  <path class="edge" marker-end="url(#ar)" d="M450 150 L520 218"/>
+  <path class="edge" marker-end="url(#ar)" d="M450 150 L520 256"/>
+  <rect class="box p0" x="10" y="128" width="110" height="44" rx="6"/>
+  <text class="lbl" x="22" y="147">S1 · #58</text><text class="sub" x="22" y="162">언어 설정 해석</text>
+  <rect class="box p0" x="170" y="70" width="120" height="44" rx="6"/>
+  <text class="lbl" x="182" y="89">S2 · #59</text><text class="sub" x="182" y="104">언어 키 이관</text>
+  <rect class="box p0" x="170" y="186" width="120" height="44" rx="6"/>
+  <text class="lbl" x="182" y="205">S3 · #60</text><text class="sub" x="182" y="220">clinic · saas 로케일화</text>
+  <rect class="box p0" x="340" y="128" width="110" height="44" rx="6"/>
+  <text class="lbl" x="352" y="147">S4 · #61</text><text class="sub" x="352" y="162">커버리지 게이트</text>
+  <rect class="box" x="520" y="14" width="150" height="28" rx="6"/><text class="lbl" x="530" y="32">S5 · #62 중국어 zh</text>
+  <rect class="box" x="520" y="52" width="150" height="28" rx="6"/><text class="lbl" x="530" y="70">S6 · #63 독일어 de</text>
+  <rect class="box" x="520" y="90" width="150" height="28" rx="6"/><text class="lbl" x="530" y="108">S7 · #64 일본어 ja</text>
+  <rect class="box" x="520" y="128" width="150" height="28" rx="6"/><text class="lbl" x="530" y="146">S8 · #65 프랑스어 fr</text>
+  <rect class="box" x="520" y="166" width="150" height="28" rx="6"/><text class="lbl" x="530" y="184">S9 · #66 러시아어 ru</text>
+  <rect class="box" x="520" y="204" width="150" height="28" rx="6"/><text class="lbl" x="530" y="222">S10 · #67 이탈리아어 it</text>
+  <rect class="box" x="520" y="242" width="150" height="28" rx="6"/><text class="lbl" x="530" y="260">S11 · #68 포르투갈어 pt</text>
+</svg>
+<p>파란 테두리 = P0(다른 Story 가 의존). S2 와 S3 은 파일이 겹치지 않아(<code>domain_packs/</code> · 전용 생성기 vs <code>clinic*.dart</code> · <code>saas*.dart</code>) 병렬 후보다. 언어별 7건은 서로 독립이고 각자 자기 <code>l10n/{lang}</code> 파일만 고친다. 같은 층의 우선순위는 GDP 순위(zh 2 · de 3 · ja 4 · fr 7 · ru 8 · it 9 · pt 11)를 따른다.</p>
+
+<h2>7. 언어별 주의점</h2>
+<table>
+  <tr><th>언어</th><th>국가 로케일 · 통화</th><th>서식 · 문체</th><th>흔한 함정</th></tr>
+  <tr><td>zh</td><td><code>zh_CN</code> · CNY ¥</td><td><code>¥1,234.00</code> · <code>2026年10月8日</code> · 전각 구두점 · 높임 <code>您</code></td><td>번체 혼입 · 한국/대만 용어 혼입</td></tr>
+  <tr><td>de</td><td><code>de_DE</code> · EUR €</td><td><code>1.234,56 €</code> · <code>08.10.2026</code> · Sie</td><td>명사 대문자 · 성(性) 표기 정책 · 관사/형용사 어미</td></tr>
+  <tr><td>ja</td><td><code>ja_JP</code> · JPY ¥ (소수 없음)</td><td><code>¥1,200</code> · <code>10月8日</code> · です・ます · 조수사</td><td>반각 가타카나 · 한자/가나 표기 흔들림</td></tr>
+  <tr><td>fr</td><td><code>fr_FR</code> · EUR €</td><td><code>1 234,56 €</code> · <code>8 octobre 2026</code> · vous</td><td>비분리 공백 · 축약/엘리전(<code>du</code> · <code>au</code> · <code>l'</code>)</td></tr>
+  <tr><td>ru</td><td><code>ru_RU</code> · RUB ₽</td><td><code>1 234,56 ₽</code> · <code>08.10.2026</code> · Вы</td><td>수 일치 3형태(1 · 2–4 · 5+) · 성/격 · <code>ё</code> 정책</td></tr>
+  <tr><td>it</td><td><code>it_IT</code> · EUR €</td><td><code>1.234,56 €</code> · <code>8 ottobre 2026</code> · Lei</td><td>전치사 결합(<code>del</code> · <code>al</code> · <code>nel</code>) · 성/수 일치</td></tr>
+  <tr><td>pt</td><td><code>pt_BR</code> · BRL R$</td><td><code>R$ 1.234,56</code> · <code>08/10/2026</code> · você</td><td>포르투갈 용어/철자 혼입 · pt-BR 정서법</td></tr>
+</table>
+
+<h2>8. 리스크와 완화</h2>
+<table>
+  <tr><th>리스크</th><th>완화</th></tr>
+  <tr><td>7개 언어 도메인 용어 번역의 품질 · 일관성 — 번역은 <b>AI 초안</b>이며 원어민 검수가 없다</td><td>언어별 용어집(<code>docs/languages/{lang}.md</code>)과 일관성 검사, 커버리지 게이트(S4), 원어민 검토 체크리스트. 원어민 검수는 머지 게이트가 아니라 권장 사항이고 PR 설명에 명시한다. 품질 문제는 후속 fix 로 받는다.</td></tr>
+  <tr><td>하위호환 — #55 가 "기존 로케일 출력은 0.10.0 과 바이트 동일"을 약속했다</td><td>기본 모듈 출력은 스냅샷으로 고정. 도메인 출력은 해당 언어 Story 머지 때에만 바뀌고, 스냅샷 범위를 레지스트리 기반으로 분리하며, CHANGELOG 에 의도된 동작 변경으로 기록한다. S3 은 데이터가 없는 언어의 출력을 바꾸지 않는다.</td></tr>
+  <tr><td>규모 · 병합 충돌 — 약 11,000 문자열, 한 Epic PR</td><td>언어별 파일 분리 + 레지스트리 스텁 사전 등록 + 문서 파일도 언어별. 각 Story 는 자기 파일만 수정. 중간 PR 은 로컬 게이트(format · analyze · test)로 검증하고 최종 Epic PR 에서 CI.</td></tr>
+</table>
+
+<h2>9. 검증</h2>
+<pre><code># 패키지 루트(저장소 루트에서 flutter pub get 으로 워크스페이스 해석 후)
+melos run format
+melos run analyze        # dart analyze --fatal-infos
+melos run test           # co_faker 포함 전체
+
+# packages/co_faker
+dart test
+dart run co_faker:coverage --languages              # 언어별 지원 수준 표 (S4)
+dart run co_faker:coverage --language ja --strict   # 언어 완료 게이트 (S4)
+dart run tool/prd_coverage.dart --summary           # 524/524 supported 유지</code></pre>
+<p class="muted">작업 환경 메모: 이 저장소의 통합 브랜치는 <code>main</code> 이다. 저장소 루트에서 <code>flutter pub get</code> 을 실행하면 도구가 여러 <code>analysis_options.yaml</code> 을 자동 수정하므로 변경이 작업과 무관하면 커밋하지 말고 되돌린다. <code>CoFaker(locale: …)</code> 를 실행하는 임시 스크립트는 저장소 밖에 두고 <code>dart --packages=&lt;루트&gt;/.dart_tool/package_config.json</code> 으로 돌린다.</p>
+
+<h2>10. 후속</h2>
+<ul>
+  <li>es · ar(RTL) · hi 등 — S2 의 확장 지점과 S4 의 게이트 위에 데이터만 추가한다.</li>
+  <li>릴리스(release-please 가 <code>feat</code> 로 minor 를 올린다) 뒤 소비 저장소의 co_faker git ref 갱신.</li>
+  <li>언어 설정과 <code>MockDataService.localesFor</code> 같은 소비 측 연결 — 이 Epic 의 범위 밖.</li>
+</ul>
+
+</main></body>
+</html>

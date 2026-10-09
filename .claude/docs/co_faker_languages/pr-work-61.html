@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#61 작업내역 — 언어 커버리지 점검 (언어 완료 게이트 · 안전 스캔 일반화 · 스냅샷 범위 분리)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 20px 0 4px; }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  code { background: var(--code); border-radius: 6px; padding: 1px 5px; font-size: 0.92em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>언어 커버리지 점검 — 언어 완료 게이트 · 안전 스캔 일반화 · 스냅샷 범위 분리</h1>
+  <p class="muted">#61 (Epic #57 · S4) · <code>story/61-language-coverage</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> 언어 Story 7건(zh · ja · de · fr · ru · it · pt)이 <strong>자기 언어 파일만 채워도</strong> 끝났는지 판정되고 공유 테스트는 한 줄도 고치지 않게 만들었다. 판정은 <code>dart run co_faker:coverage --language &lt;L&gt; --strict</code> 이고, 번들이 비어 있지 않은 모든 언어가 이 게이트를 통과해야 한다는 규칙을 <strong>커밋되는 테스트</strong>가 강제한다. 일곱 언어를 합성 데이터로 하나씩, 그리고 모두 채워 전체 스위트를 돌려 깨지는 공유 테스트를 찾아 레지스트리 기반으로 바꿨다.</p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>영역</th><th class="num">+ / −</th><th>내용</th></tr>
+    <tr><td><code>lib/src/language_coverage/</code> (신규 6)</td><td class="num">4,016 / 0</td><td>엔진: 슬롯 표와 순회기(<code>co_language_texts</code>), 데이터 층 비교와 허용 목록(<code>co_language_coverage</code>), 생성 층(<code>co_language_generation</code>)과 호출 표(<code>co_language_calls</code>), 보고서, 문자 체계 판정(<code>co_language_text_scan</code>)</td></tr>
+    <tr><td><code>bin/coverage.dart</code></td><td class="num">96 / 5</td><td><code>--languages</code> · <code>--language L [--strict]</code> · <code>--format markdown|json</code>. 기존 PRD 모드(<code>--input</code>)는 그대로</td></tr>
+    <tr><td><code>lib/</code> 나머지 14파일</td><td class="num">148 / 11</td><td><code>CoL10nBundle.allowSameAsEnglish</code> · ko 번들 허용 목록 · <code>fandom.creatorName</code> 번들 키 · <code>CoFakerSaasOps.masterCheckDetail</code> · 스텁 주석</td></tr>
+    <tr><td><code>test/</code> 26파일</td><td class="num">3,441 / 29</td><td>엔진 · 게이트 · 문서 · 안전 선언 · 공유 테스트의 레지스트리 기반 전환</td></tr>
+    <tr><td><code>docs/</code> · CHANGELOG · README</td><td class="num">754 / 4</td><td>언어 8문서(README + 스텁 7), 용어집 형식, Unreleased 와 동작 변경, 커버리지 CLI 절</td></tr>
+  </table>
+  <p class="muted">합계 58개 파일, +8,455 −49 (이 문서 제외). <code>lib/src/coverage.dart</code>(PRD 커버리지)와 레지스트리 · 픽스처는 손대지 않았다. 커밋 23건 + 이 문서 커밋.</p>
+  <ul>
+    <li>엔진 · CLI · 불변식: <code>e12022e0</code> <code>70275c23</code> <code>1dd9b290</code> <code>463edde0</code> · 생성 층 정리 <code>6a892414</code> · CLI 오류 <code>ca87dcef</code></li>
+    <li>공유 테스트 · 안전 스캔: <code>360c218c</code> <code>078f5c15</code> <code>59318341</code> · 창작자 이름 키 <code>f72bd3a8</code> <code>d51c37e5</code></li>
+    <li>문서: <code>80a3d1d4</code> <code>3a0274e3</code> <code>78b2016a</code> <code>2268724c</code> <code>b37fdd1e</code> <code>cc88238f</code></li>
+    <li>리뷰 후보 반영: <code>3fc7e3e7</code> (게이트 보강) · <code>e16229a8</code> (용어집 파서) · <code>cafd1dd3</code> (미치환 <code>#{}</code>) · <code>799e720e</code> (<code>masterChecks</code> · 레코드 잎) · <code>75d4958d</code> (더 내주는 필드) · <code>20f84ea5</code> (CLI 테스트 병렬)</li>
+  </ul>
+
+  <h2>왜 이렇게 했나</h2>
+  <h3>1. 두 층, 하나의 순회기</h3>
+  <p><strong>데이터 층</strong>은 번들 · clinic · saas 의 모든 문구를 영어와 <em>슬롯</em> 단위로 대응시켜 (a)~(e)와 코드값 · 필드 · 빈 문구 · 짝 불변식 · <code>koreanValues</code> 를 본다. <strong>생성 층</strong>은 29개 팩의 role · entity, 전용 생성기, <code>faker.clinic</code> · <code>faker.saas</code> 공개 멤버 약 170건을 seed 3종으로 호출해 한글 · 미치환 필드 · 예외 · 문자 체계를 보고, 레코드를 돌려주는 호출은 잎 문자열까지 읽는다. 순회기 하나(<code>CoLanguageTexts.mapClinic/mapSaas</code>)가 <em>읽기</em>와 <em>다시 쓰기</em>(합성 표본)를 모두 하므로 필드를 빠뜨리면 표본이 드러낸다.</p>
+  <h3>2. 임계값은 ko ↔ en 실측에서</h3>
+  <p>번역할 문구 757개 중 25개(3.3%)가 영어와 같다(단위 · 약어 · 이름 · 영어가 간직한 한국 번호판). 그래서 비라틴 5%, 라틴 문자 언어(de · fr · it · pt) 10%(어원이 같은 단어가 많음), 문자 체계 95%, 허용 목록은 문구의 10% 까지다(전부 <code>'*'</code> 로 허용해 통과하는 길을 막는다). 영어와 같은지는 대소문자 · 공백 · 따옴표 모양을 무시하고 본다.</p>
+  <h3>3. 자리표시자는 이름 · 횟수까지, 순서는 자유</h3>
+  <p>번역은 영어 문구의 <code>{name}</code> 을 같은 이름 · 같은 횟수로 지킨다(생성기는 영어 이름만 채우므로 이름을 바꾼 <code>{回数}</code> 는 출력에 남고 빠진 필드는 값을 잃는다). 예외는 사실로 표에 둔다: 생성기가 고르게 하는 세 키(<code>common.maskedName</code> · daycare 두 템플릿)와, 영어가 안 쓰는 필드를 생성기가 더 내주는 두 칸(<code>clinic.addressLineFormat</code> 의 <code>{region}</code> — 채움 시뮬레이션이 잡은 오탐 — · <code>clinic.ops.dateFormat</code> 의 <code>{weekday}</code>). <code>#{변수}</code> 는 알림 템플릿 표지라 개수만 맞추고, <code>deviceNameFormat</code> 의 <code>#</code> 은 형식의 일부다.</p>
+  <h3>4. ko · en 의 특수 처리</h3>
+  <p><strong>en</strong> 은 기준이라 비교 · 한글 검사를 하지 않는다(번호판 · 창작자 이름 · 한국 휴일명을 바이트 동일 계약으로 간직). <strong>ko</strong> 의 clinic · saas 는 한국 시장 데이터(시술 29 대 8)라 영어와 대응시키지 않고 문자 체계만 본다.</p>
+  <h3>5. 코드 경로가 만드는 누출</h3>
+  <p><code>fandom.creatorName</code> · <code>saas.masterChecks</code> 의 <code>N rows</code> 처럼 생성기 코드 안의 리터럴은 언어 파일로 고칠 수 없어 데이터 필드 · 번들 키로 옮겼다(ko · en 출력 바이트 동일, 스냅샷이 증명). <code>clinic.inquiry()</code> 는 설계상 로케일 독립, <code>korea</code> 팩 role 은 제외하고 entity 는 <code>korea</code> 팩 없이 돌린다. 합성 ja · zh · ru 출력을 전체 호출에서 훑어 ASCII 문구가 남는 곳을 모으니, 코드 안 산문 리터럴은 그 한 건뿐이었고 나머지는 코드값(기종 · 제조사 · 영어 진단명 · 버전 · UA · ID)이다.</p>
+  <h3>6. 공유 테스트는 "현지화 여부"를 레지스트리에서 읽는다</h3>
+  <p><code>domainLocalized(code)</code>: 지원 언어이고 ko · en 이 아니며 번들 · clinic · saas 중 하나라도 채워졌으면 true. 일부만 채운 상태를 실측했다(번들만: 변화 없음 · clinic만: saas 4/34 · saas만: clinic 2/89 호출이 바뀜). 게이트 테스트가 "셋 다 채움 아니면 셋 다 스텁"만 허용한다.</p>
+  <h3>7. 안전 규약과 용어집</h3>
+  <p>가상 표기 · 일반 정보 문구의 시작 · 결과 약속 문구 · 문자 체계별 실존 브랜드 표기는 <code>test/language_safety/&lt;lang&gt;.dart</code> 에서 언어 Story 가 선언하며, 비워 두면 <strong>실패</strong>한다. 창작자 이름도 같은 거부 목록으로 스캔한다. 용어집은 형식 · 중복 · 금지 표기 충돌 · 출현을 검사하고 구분자는 <code>;</code> 와 전각 <code>；</code>, 백틱은 형태마다 읽는다.</p>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>co_language_coverage.dart</code> 의 <code>_DataLayer</code> — (a)~(e) · 자리표시자 규칙 · 허용 목록. 위에 임계값 근거가 dartdoc 으로 있다.</li>
+    <li><code>co_language_texts.dart</code> — 슬롯 종류(<code>text</code> · <code>format</code> · <code>code</code> · <code>koreanOnly</code>)와 필드 목록.</li>
+    <li><code>co_language_generation.dart</code> + <code>co_language_calls.dart</code> — 호출 표와 예외(<code>hangulReason</code> · <code>englishReason</code>), 잎 읽기.</li>
+    <li><code>test/support/language_state.dart</code> · <code>legacy_locale_stability_test.dart</code> · <code>clinic_saas_stability_test.dart</code> — 스냅샷 범위 분리(픽스처는 수정 없음).</li>
+    <li><code>test/language_coverage_test.dart</code> · <code>test/coverage_gate_test.dart</code> — 양성 · 음성 표본, 언어 PR 이 그대로 게이트가 되는 규칙.</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>172개 파일, 변경 0 (기준선 148)</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>583개 통과 (기준선 453), 약 16초</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported, unsupported 0</td></tr>
+    <tr><td>게이트 CLI</td><td>ko · en PASS(종료 0, 엔진 약 0.75초) · 스텁 <code>planned</code>(종료 1) · 알 수 없는 언어(종료 2)</td></tr>
+    <tr><td><strong>채움 시뮬레이션</strong> (스크래치 복사본, 저장소에 합성 데이터 없음)</td><td>전: 일곱 모두 채우면 공유 테스트 20건 실패(zh 3 · de 4 · pt 3 · fr 5 · ru 1 · it 1 · ja 3). 후: 마지막 커밋 기준으로 다시 실행 — 언어 하나씩 일곱 번(581~582개)과 일곱 모두(574개) 0건 실패, 일곱 게이트 모두 PASS. 이 실행이 생성기가 더 내주는 필드의 오탐 한 건(<code>{region}</code>)을 잡아 고쳤다</td></tr>
+    <tr><td>변이 시험 6종</td><td>한글을 쓰는 생성기 · 상수로 되돌린 창작자 이름 · 호출 표에 없는 새 공개 멤버 · 순회기가 모르는 새 필드 · 미치환 자리표시자 · 되돌린 <code>N rows</code> 리터럴을 각각 테스트가 잡는다</td></tr>
+    <tr><td>실수 모사(합성 ja)</td><td>영어를 그대로 복사 1,988건 · 한국어를 그대로 복사 3,496건 · 절반만 번역 498건으로 실패, 각 2초 이내</td></tr>
+    <tr><td>독립 코드 리뷰 (<code>code-review</code>)</td><td>도중에 중단돼 취합 보고서가 없다. 완료된 하위 분석 16건(차분 회귀 1건은 미완료)이 낸 후보 88건(중복 포함)을 직접 읽어 이 Story 소관을 현재 상태에서 재현해 반영 20건(위 리뷰 후보 반영 커밋), 이미 수정 1건, 조치 불필요 2건으로 가렸고 Epic(S2 · S3) 코드 소관과 구조 제안은 최종 보고서에 목록으로 인계했다</td></tr>
+  </table>
+  <h3>깨졌던 공유 테스트(시뮬레이션 전 · 고친 곳)</h3>
+  <ul>
+    <li><code>legacy_locale_stability_test</code> + <code>support/locale_snapshot</code> · <code>clinic_saas_stability_test</code> — 범위를 레지스트리 기준으로 분리</li>
+    <li><code>saas_test</code> · <code>clinic_test</code> · <code>holidays_test</code> · <code>domain_helpers_test</code> — "데이터 없는 언어" 의 대역을 영원히 지원 밖인 <code>nl</code> 로. exam_prep 순회는 도메인 문구가 있는 모든 언어로</li>
+    <li><code>authored_data_safety_test</code> — AC 가 명시한 일반화</li>
+  </ul>
+
+  <h2>알려진 한계 · 범위 밖</h2>
+  <ul>
+    <li>생성기가 한국식 숫자 형식을 모든 언어에 쓰는 곳(<code>clinic.approvalNo</code> · <code>saas.recipient</code> · <code>rrnMasked</code> · <code>businessNumber</code>)은 Hangul 이 없어 게이트가 못 보고 언어 파일로 못 고친다 — Epic 의 공용 코드 소관(S3).</li>
+    <li><code>CoClinicHours</code> 기본값(한국 피부과 영업시간)은 숫자라 누출은 아니나 모든 언어에 같다. 영어 · 한국어 출력이 같은 코드 리터럴은 실제 게이트가 언어가 실리지 않은 것으로 본다(합성 표본의 엄격 읽기 테스트가 잡는다).</li>
+    <li>번들은 로드할 때 영어와 비교되어 하나라도 틀리면 모든 언어가 <code>StateError</code> 다(S2 설계). 실제 번역 · 품질 · 원어민 검토는 언어 Story 소관이다.</li>
+    <li>리뷰 후보 중 Epic(S2 · S3) 코드 소관 항목과 구조 개선 제안은 이 PR 에서 고치지 않았다 — 최종 보고서에 목록으로 인계했다.</li>
+  </ul>
+
+  <h2>후속 Story 가 알아야 할 것</h2>
+  <ul>
+    <li>번들은 <strong>242키 · 762문구</strong>다. 게이트: <code>dart run co_faker:coverage --language &lt;L&gt; --strict</code>, 읽는 법은 <code>docs/languages/README.md</code>.</li>
+    <li>채울 파일: 번들 · clinic · saas · <code>docs/languages/&lt;L&gt;.md</code> · <code>test/language_safety/&lt;L&gt;.dart</code>(4가지 선언) · 새 테스트 파일. 공유 파일(레지스트리 · 공유 테스트 · <code>lib/src/language_coverage/</code> · <code>test/language_safety/languages.dart</code> · CHANGELOG · README)은 고치지 않는다.</li>
+  </ul>
+</main></body>
+</html>

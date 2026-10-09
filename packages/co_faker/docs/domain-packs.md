@@ -123,6 +123,38 @@ foreign-key engine. Complete cross-record code references and fixed-tour graphs
 are recipe assembly. Typed remittance transfers explicitly take a recipient
 object to retain that association.
 
+## Language bundles
+
+The authored text of the packs and of the dedicated generators (`fx`, `remit`,
+`vet`, `catalog`, `examPrep`, and the helpdesk drafts) lives in language
+bundles, not in the packs. A role reads its text by key through `faker.l10n`:
+`<pack>.<role>` (`dental.dentalProcedure`), or `<generator>.<name>`
+(`fx.currencyName.USD`) for the generators. Korean and English are built in
+(`lib/src/l10n/ko` and `en`). Chinese, Japanese, German, French, Russian,
+Italian, and Portuguese are registered with empty bundles and read English
+until their bundle is filled in; Spanish supports the basic modules only and
+has no bundle.
+
+- A key has the same number of texts in every language, in the same order, so
+  one seed picks the same entry whatever the language. Roles that follow the
+  record index (the class, equipment, and room of one row) rely on that order.
+- A pack never branches on the locale. It reads the bundle with `textRole(key)`,
+  `indexedTextRole(key, rows: n)`, `taxonomyRole(key, roots: n)`,
+  `maskedNameRole()`, or `faker.l10n.format(key, args)`, and fills the
+  placeholders (`{n}`) itself. A role that cycles a table of `n` rows (the
+  codes and numbers that stay in the pack) states `n`, and an assertion fails
+  when the bundle has another number of texts for it.
+- What is not text stays in the pack: codes (`enumRole`), numbers, prices,
+  dates, and identifiers do not depend on the language.
+- A new role adds its key to the English bundle and the Korean one;
+  `test/l10n_domain_test.dart` fails for a key that no pack reads and for a key
+  a pack reads that no bundle has.
+- A custom locale adds a language with `CoFakerLocale.l10n`; see the README.
+- A language is finished when `dart run co_faker:coverage --language <code>
+  --strict` passes: its texts are written in the language, line up with
+  English, and leave no key a stub. `docs/languages/README.md` describes the
+  gate and the files a language fills.
+
 ## Authored-data restrictions
 
 New organization/place/works labels are explicitly fictional or generic.
@@ -130,11 +162,22 @@ Daycare names are two-character given names in Korean; recipients/guests are
 masked. Medicine labels are unbranded fictional examples, not recommendations.
 Consultation text is limited to general example information and gives no
 individual judgement, result promise or actionable legal/tax advice. Fandom
-creator names are exactly `모래시계 정원` and `하늘결` in every locale.
+creator names are exactly two approved fictional names: `모래시계 정원` and
+`하늘결` in Korean and English (and in a language without domain text, which
+reads English), and two fictional names of its own in a language that is
+localized (the key `fandom.creatorName`). The key is a bundle key like the
+others, so nothing but the safety scan stops a bundle from writing a real name
+there: the scan reads `fandom.creatorName` of every language with the denied
+names, and `CoFandomDomain.creatorNames` is kept equal to the Korean and
+English bundles by a test.
 
 Regression denylists cover a curated set of known medicine brands, works,
 organizations and result/advice claims **only in the newly authored data paths**.
-They are not a claim that every name or trademark worldwide was screened.
+They are not a claim that every name or trademark worldwide was screened. Each
+language declares its own conventions in `test/language_safety/<language>.dart`
+(how a fictional name is marked, how general-information text begins, the
+phrases that promise a result, and the spellings of the denied brands in its
+writing system), and the scan reads every language that has domain text.
 Imagery uses the existing offline data-URI generator; app-specific webp/media
 bundles are mapped by the recipe, with no external image request.
 

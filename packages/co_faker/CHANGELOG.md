@@ -31,6 +31,91 @@
 - Add an independent source/role inventory and coverage CLI, plus regression
   checks for numeric/enum bounds, relationships, UTC dates, field stability,
   English fallback and scoped authored-data restrictions.
+- Add language settings: `CoFakerLanguages` (`all`, `resolve`),
+  `CoFakerLanguage`, `CoFakerLanguageResolution`, `CoFaker.forLanguage` and
+  `faker.language`. A BCP-47 tag, a POSIX locale name, or Flutter's
+  `Locale.toLanguageTag()` resolves to one of the supported languages (`ko`,
+  `en`, `zh`, `ja`, `de`, `fr`, `ru`, `it`, `pt`, `es`) and the national locale
+  of its main country. Traditional Chinese and unsupported languages resolve
+  to English with `supported == false`.
+- Add domain text bundles: `CoL10nBundle`, `CoL10nRegistry`, `faker.l10n`
+  (`CoFakerL10n`) and `CoFakerLocale.l10n`. The 27 domain packs and the
+  dedicated generators (`fx`, `remit`, `vet`, `booking`, `catalog`, `examPrep`,
+  the helpdesk drafts) read their labels, names and sentences by key from the
+  bundle of the language of the generator, so a language is data, not code. A
+  bundle has the keys of the English one (242) with as many texts as English
+  has, so the same seed picks the same record in every language.
+  `CoFakerLanguage.domain` is computed from the registry. Korean and English
+  output is byte for byte what it was.
+- Add language data for `faker.clinic` and `faker.saas`: `CoFakerClinicData`
+  gains `currency` (`CoCurrencyFormat`), `priceScale` (`CoClinicPriceScale`),
+  `clinicNameFormat`, `maskedIdFormat`, `addressLineFormat` and `koreanValues`
+  (`CoKoreanValues`); `CoFakerSaasData` gains `currency`, `priceScale`
+  (`CoSaasPriceScale`), `businessNumberFormat` and `koreanValues`. The texts
+  that the generators used to assemble inline (honorifics, holiday names, date
+  labels, health messages) are fields of the data too. Add `clinic.money` and
+  `saas.money`. A registry holds the data of each language; the Korean and
+  English output is unchanged.
+- Add the language coverage gate: `CoLanguageCoverage` decides whether a
+  language is finished. It compares the bundle, the clinic data and the SaaS
+  data with English text by text (no Hangul in a language other than Korean,
+  the writing system of Japanese, Chinese and Russian, few texts that read like
+  English, lists and maps of the English length and order, the `{name}` fields
+  of every text kept under their English names, `koreanValues: none`, no key
+  left unregistered) and runs the generators of the language for Hangul,
+  unfilled placeholders and exceptions.
+  `dart run co_faker:coverage --languages [--format markdown|json]` prints the
+  table of supported languages, computed from the registries, and
+  `dart run co_faker:coverage --language <code> --strict` runs the gate and
+  exits with 1 when it fails. `CoL10nBundle.allowSameAsEnglish` lists the texts
+  that equal English on purpose (units, acronyms, names). `docs/languages/`
+  holds one file for each language, with a glossary, and a test checks that no
+  term has two translations and that no forbidden form is written.
+- Add the bundle key `fandom.creatorName`: the two approved creator names of
+  the `fandom` pack were a constant that no language could change. Korean and
+  English keep their names, and another language writes names of its own.
+  `CoFandomDomain.creatorNames` stays.
+- Add domain data for Chinese (Simplified, `zh`), Japanese (`ja`), German
+  (`de`), French (`fr`), Russian (`ru`), Italian (`it`), and Portuguese
+  (Brazil, `pt`): the domain text bundle (242 keys), the clinic data, and the
+  SaaS data of each language. `CoFaker.forLanguage('<code>')`,
+  `CoFaker(locale: '<code>')`, and the national locale (`zh_CN`, `ja_JP`,
+  `de_DE`, `fr_FR`, `ru_RU`, `it_IT`, `pt_BR`) now generate the domain packs,
+  the dedicated generators, `faker.clinic`, and `faker.saas` in that language,
+  with the currency (CNY, JPY, EUR, RUB, BRL), the number and date formats, and
+  the register of the language, fictional names, and no Korean-only values. The
+  same seed picks the same record as in English and Korean. Every language
+  passes `dart run co_faker:coverage --language <code> --strict`, and
+  `docs/languages/<code>.md` holds its glossary and a native-speaker review
+  checklist. These translations are AI drafts that no native speaker has
+  reviewed yet.
+- Behavior change: when a language gets domain data (its bundle, clinic data
+  and SaaS data), its `clinic`, `saas` and domain pack output reads the language
+  instead of English. The basic modules (names, addresses, internet, text) do
+  not change: they keep their 0.10.0 output for every locale code, guarded by
+  the snapshot regression test. That test pins the domain keys of the snapshot
+  (`clinic.*`, `schema.patient`, `schema.invoice`) only for the codes whose
+  language has no domain data yet, as the registries say, because those keys
+  change on purpose when a language is localized; the same goes for the
+  clinic and SaaS fallback test. `zh_TW`, `es`, and unsupported codes keep
+  every key.
+- Behavior change: a locale code that only starts with `ko` and is not Korean
+  (`kok`, `kor`, `korean`, `ko1`, `ko.UTF-8`, `ko@euro`) reads English
+  everywhere now: the domain packs, the dedicated generators (`fx`, `remit`,
+  `vet`, `catalog`, `examPrep`, the helpdesk drafts), `faker.clinic` and
+  `faker.saas` give the English output. On 0.11.0 the packs and the generators
+  read Korean text for these codes, and `faker.clinic` and `faker.saas` read
+  English text with Korean-style values (a clinic name written without a space,
+  won-sized prices, Korean mobile numbers, road-name addresses, resident and
+  business registration numbers), because they tested the code with
+  `startsWith('ko')`. `ko`, `ko_KR`, `ko-KR` and `KO_kr` are Korean as before.
+- Behavior change: `faker.clinic` and `faker.saas` follow the data fields, not
+  the locale code. A custom `ko*` data set that leaves the new fields empty gets
+  the English scale and formats (the `legacy` values), and a custom `ko` locale
+  that gives no clinic or SaaS data gets the built-in Korean data.
+- Behavior change: Traditional Chinese (`zh_TW`, `zh_HK`, `zh_MO`, `zh-Hant`)
+  and every code that is not a supported language read English domain data. They
+  are never handed Simplified Chinese.
 
 ## [0.11.1](https://github.com/coco-de/co-package/compare/co_faker-v0.11.0...co_faker-v0.11.1) (2026-10-08)
 

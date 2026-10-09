@@ -11,6 +11,9 @@ depend on Flutter.
 - Batch and schema helpers for creating typed or map-based fixture data.
 - Built-in English, Korean, Japanese, Chinese, Spanish, French, and German
   data with language fallback.
+- Domain packs, `faker.clinic`, and `faker.saas` in Korean, English, Chinese
+  (Simplified), Japanese, German, French, Russian, Italian, and Portuguese
+  (Brazil), chosen by an app's language setting with `CoFaker.forLanguage`.
 - National locales for the ten largest economies by GDP, plus Brazil: names,
   coherent addresses, fictional phone numbers, and currencies per country.
 - Partial custom locales can override only the data a project needs.
@@ -347,6 +350,46 @@ are locale independent and match typical enum names; `faker.clinic.label` and
 other locales fall back to English; a custom locale can supply its own
 `CoFakerClinicData` / `CoFakerSaasData`.
 
+### Language data: amounts and Korean-only values
+
+What differs by language is a field of the data, not a branch in the
+generators, so a language is added with data alone:
+
+- `currency` (`CoCurrencyFormat`) writes amounts: `$1,234` for English, `1,234`
+  for Korean, and with a pattern, separators, and fraction digits `¥1,234`,
+  `1.234,00 €`, `R$ 1.234,00`, or `1 234,00 ₽`. `faker.clinic.money(1234)` and
+  `faker.saas.money(1234)` write an amount the way the generated texts do.
+  Its code, symbol, and fraction digits should agree with the country data
+  (`CoFakerCountry.currencyCode`, `currencySymbol`, `currencyMinorUnits`).
+- `priceScale` (`CoClinicPriceScale`, `CoSaasPriceScale`) holds the rounding
+  units, the installment and split thresholds, the point unit, the VAT rate,
+  and the prepaid wallet amounts, in the currency of the data.
+- `clinicNameFormat` orders a clinic name; the texts that the generators
+  assemble (`회` or `x` of a package, the `님` of a mention, holiday names, date
+  labels, health messages, audit targets) are fields of `CoFakerClinicTexts`,
+  `CoFakerClinicOps`, and `CoFakerSaasOps`. A field that is missing falls back
+  to English.
+- `koreanValues` (`CoKoreanValues`) says which Korean-only values are
+  generated.
+
+Some concepts exist only in Korea: the resident registration number
+(주민등록번호, shown masked on a patient), the business registration number,
+card approval and cash receipt numbers, the public holiday calendar behind
+`closureNotice` (`CoFakerKorea.holidays`), and the national health insurance
+(`nhis`, `medicalAid1`, `medicalAid2`) and its insurers.
+
+| `koreanValues` | Used by | Generates |
+| --- | --- | --- |
+| `korean` | the Korean data | Korean phones, road-name addresses, and every Korean-only value |
+| `legacy` | the English data, and custom data that does not choose | the locale's phones and addresses, plus the Korean-only values English has always generated, so English output stays byte for byte stable |
+| `none` | the data of every other language | the locale's phones and, in a national locale, its postal addresses (`addressLineFormat`); a neutral masked ID (`maskedIdFormat`), business number (`businessNumberFormat`), and 6-digit authorization code; no cash receipt number and no public holidays |
+
+A language without data of its own gets the English data, and a code that is
+not a supported language (a custom code, or Traditional Chinese such as
+`zh_TW`) never receives another language's data. Maintainers add a language by
+filling `lib/src/l10n/<language>/<language>_clinic.dart` and
+`<language>_saas.dart`, which `lib/src/l10n/co_l10n_clinic.dart` already reads.
+
 ### Fake by construction
 
 Identity values look real but can never belong to a real person or company:
@@ -423,6 +466,68 @@ final custom = CoFaker(
 Missing lists use English data. The locale data is immutable by convention and
 can be shared between generators.
 
+### Domain text in your language
+
+The domain packs and the dedicated generators (`fx`, `remit`, `vet`,
+`catalog`, `examPrep`, ...) read their labels, names, and sentences from a
+language bundle by key, `faker.l10n`, so a language is data and not code.
+Korean, English, Chinese (Simplified), Japanese, German, French, Russian,
+Italian, and Portuguese (Brazil) are built in, and every other language reads
+English until its bundle is filled in. The translations of the languages other
+than Korean and English are AI drafts that no native speaker has reviewed yet:
+each `docs/languages/<code>.md` carries a glossary and a review checklist.
+(`faker.clinic` and `faker.saas` have their own language data, described under
+"Language data" above.) A custom locale carries
+a bundle of its own, with no change to co_faker:
+
+```dart
+// A custom locale replaces the built-in locale of its code: merge it over the
+// built-in one to keep that locale's names, cities, and so on.
+final spanish = const CoFakerLocale(
+  code: 'es',
+  l10n: CoL10nBundle(
+    language: 'es',
+    texts: {
+      // The keys of the English bundle, with as many texts as English has.
+      'dental.dentalProcedure': [
+        'Limpieza dental',
+        'Ejemplo de endodoncia',
+        'Ejemplo de restauración con resina',
+        'Ejemplo de plan de corona',
+      ],
+      // `{n}` is filled in by the generator.
+      'workplace.sprintName': ['Sprint {n}'],
+    },
+  ),
+).merge(CoFakerLocales.resolve('es'));
+
+final faker = CoFaker(
+  locale: 'es',
+  seed: 7,
+  locales: {'es': spanish},
+  domains: CoFakerDomains.all,
+);
+faker.l10n.pick('dental.dentalProcedure'); // Limpieza dental
+faker.l10n.format('workplace.sprintName', {'n': 2}); // Sprint 2
+faker.schema.record(
+  {'procedure': 'String', 'material': 'String'},
+  roles: {
+    'procedure': 'dental.dentalProcedure',
+    'material': 'dental.dentalMaterial',
+  },
+); // {procedure: Limpieza dental, material: Composite resin (example)}
+```
+
+- A key is `<pack>.<role>` (`dental.dentalProcedure`) or
+  `<generator>.<name>` (`fx.currencyName.USD`); `CoL10nRegistry.english.texts`
+  lists them all. A bundle may translate only some keys: the rest read English.
+- A key keeps the number of texts it has in English, so the same seed picks the
+  same entry in every language. Another length throws a `StateError` when the
+  key is read; `CoL10nRegistry.validate(bundle)` checks a bundle in your tests.
+- Traditional Chinese (`zh_TW`, `zh_HK`, `zh_MO`, `zh-Hant`) and a language
+  without a bundle read English: Traditional readers are never handed
+  Simplified text.
+
 ### Countries: GDP top 10
 
 National locales cover the ten largest economies by nominal GDP (World Bank,
@@ -468,6 +573,124 @@ for (final country in CoFakerCountries.gdpTop10) {
 
 Sources, the phone rationale per country, and the compatibility notes are in
 [docs/countries.md](docs/countries.md).
+
+## Language settings
+
+Hand an app's language setting to `CoFaker.forLanguage` and it picks the
+language and its locale. It reads a BCP-47 tag (`zh-Hans`, `pt-BR`), a POSIX
+locale name (`ja_JP.UTF-8`, `en_US@posix`), or what Flutter's
+`Locale.toLanguageTag()` returns, and ignores case, `-` versus `_`, the
+script subtag, the encoding, and the modifier. co_faker depends on neither
+Flutter nor co_demo_prefs; both only supply the string:
+
+```dart
+// A Flutter app: the locale of the running app, e.g. zh-Hans-CN.
+final locale = Localizations.localeOf(context);
+final faker = CoFaker.forLanguage(
+  locale.toLanguageTag(),
+  seed: 7,
+  now: DateTime.utc(2026),
+);
+faker.locale;            // zh_cn
+faker.language;          // zh
+faker.person.fullName(); // 马浩然
+
+// A demo built on co_demo_prefs: DemoLocale.tag is ko, en, zh-Hans, ja, ...
+final demo = CoFaker.forLanguage(demoLocale.tag, seed: 7);
+```
+
+Each language is generated with the national locale of its main country:
+
+| Setting | Locale | Country |
+|---|---|---|
+| `ko` | `ko` | none |
+| `en` | `en_us` | United States |
+| `zh`, `zh-Hans`, `zh-CN` | `zh_cn` | China |
+| `ja` | `ja_jp` | Japan |
+| `de` | `de_de` | Germany |
+| `fr` | `fr_fr` | France |
+| `ru` | `ru_ru` | Russia |
+| `it` | `it_it` | Italy |
+| `pt`, `pt-BR` | `pt_br` | Brazil |
+| `es` | `es` | none, basic modules only |
+
+- **Unsupported languages and Traditional Chinese get English.** `ar`, `und`,
+  `zh-Hant`, `zh_TW`, `zh_HK`, and `zh_MO` resolve to `en_us`; Traditional
+  readers are never handed Simplified text. `CoFakerLanguages.resolve(tag)`
+  reports it with `supported == false` and also returns the `language`, the
+  `locale`, and the `region` it read:
+
+  ```dart
+  final resolved = CoFakerLanguages.resolve('zh_TW');
+  resolved.supported; // false
+  resolved.locale;    // en_us
+  resolved.region;    // TW
+  ```
+
+- **The region is read, not used.** `en-GB` is English with the `en_us` data
+  and `pt-PT` is `pt_br`. Use `CoFaker.forCountry` to pick a country.
+- **`ko` and `es` have no national locale.** `faker.country` is `null`, and
+  `address.postalAddress()`, `locality()`, `region()`, `regionCode()`, and
+  `postalCodeFor()` throw a `StateError`, as they do for
+  `CoFaker(locale: 'ko')`. Check `faker.country` before calling them.
+- **Custom locales** passed to `forLanguage` are looked up by the resolved
+  locale (`ja_jp`), not by the language code, so register an override under
+  `CoFakerLanguage.locale`. `CoFaker(locale: 'ja', locales: {'ja': ...})`
+  still works as before.
+- **Domain text follows `CoFakerLanguage.domain`.** The domain packs and the
+  dedicated generators are English in a language whose `domain` is `false`,
+  while the basic modules (names, addresses, phone numbers, and so on) already
+  speak the language. `domain` is computed from the bundle registry: a language
+  has domain text when its bundle is not empty. `faker.clinic` and
+  `faker.saas` follow their own language data (see "Language data" above) and
+  are English until it is filled in.
+
+`CoFaker(locale: 'ja')` is not `CoFaker.forLanguage('ja')`. A bare language
+code selects the language-only data the language has always had, a few names,
+cities, and companies, and `faker.locale` stays `ja`. `forLanguage('ja')`
+selects the national locale `ja_jp`, with the same coherent addresses,
+fictional phone numbers, and currency-aware prices as
+`CoFaker.forCountry('JP')`. The constructor keeps its output, so existing
+fixtures keep their values; use `forLanguage` when the language comes from a
+setting. `faker.language` names the language of either generator (`ja` for
+`ja` and for `ja_jp`).
+
+## Language coverage
+
+`dart run co_faker:coverage` also reports on the languages. The table of what
+each language has (its writing system, whether the basic modules have its names
+and addresses, how many keys of the domain text bundle it has written, whether
+its clinic and SaaS data are written, and its level: `base`, `planned`,
+`partial`, or `localized`) is computed from the registries, so there is no
+table to keep up to date:
+
+```bash
+dart run co_faker:coverage --languages                  # a Markdown table
+dart run co_faker:coverage --languages --format json    # for tools
+```
+
+`--language <code>` runs the gate that decides whether a language is finished.
+It reads the bundle, the clinic data, and the SaaS data of the language,
+compares them with English text by text, and runs every generator of the
+language. Without `--strict` it prints the report; with `--strict` it exits with
+1 when something is wrong, which is what a pull request check wants:
+
+```bash
+dart run co_faker:coverage --language ja --strict
+dart run co_faker:coverage --language ja --format json
+```
+
+It fails on Hangul in a language other than Korean, on text without the writing
+system of Japanese (kana), Chinese, or Russian, on texts that read like the
+English ones (a unit or an acronym that is the same on purpose goes in
+`CoL10nBundle.allowSameAsEnglish`, a short list), on a list that is not as long
+as the English one or a map whose keys are in another order, on a translation
+that loses, renames, or repeats a `{name}` field of its English text, on clinic
+or SaaS data that does not say `koreanValues: CoKoreanValues.none`, on a key
+that is still a stub, and on a generator that leaves a placeholder unfilled or
+throws. A language that has no data yet is `planned` and fails with that
+message. See `docs/languages/README.md` for the gate, how to read its report,
+the files a language fills, and the glossary of each language.
 
 ## Template Sugar
 

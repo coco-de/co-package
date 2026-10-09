@@ -5,13 +5,17 @@ import 'clinic_ops.dart';
 import 'clinic_texts.dart';
 import 'co_faker.dart';
 import 'korea.dart';
+import 'korean_values.dart';
 import 'modules.dart';
 import 'signature.dart';
 
 /// A patient profile for EMR fixtures.
 ///
-/// [rrnMasked] is always a masked, Korean-format fake number
-/// (`YYMMDD-G******`); see [CoFakerKorea.rrn].
+/// [rrnMasked] is a masked national ID number. Korean data and English data
+/// (which has always carried one) generate a masked, Korean-format fake
+/// resident registration number (`YYMMDD-G******`, see [CoFakerKorea.rrn]);
+/// data whose [CoFakerClinicData.koreanValues] is [CoKoreanValues.none]
+/// follows its [CoFakerClinicData.maskedIdFormat] instead.
 typedef CoFakePatient = ({
   String name,
   CoSex sex,
@@ -93,6 +97,12 @@ typedef CoFakeSoap = ({
 /// [method] is one of `card`, `cash`, `transfer`, or `prepaid`. Card
 /// payments carry [cardIssuer], [installmentMonths], and [approvalNo]; cash
 /// payments may carry a masked [cashReceiptNo].
+///
+/// Korean data and English data (which has always carried them) generate a
+/// Korean 8-digit card approval number and a masked cash receipt number
+/// (현금영수증). Data whose [CoFakerClinicData.koreanValues] is
+/// [CoKoreanValues.none] generates a plain 6-digit authorization code and no
+/// cash receipt number.
 typedef CoFakePayment = ({
   String method,
   String methodLabel,
@@ -307,9 +317,21 @@ class CoClinicHours {
 /// appointment slots, visit flow, and payments.
 ///
 /// Texts come from [CoFakerClinicData] of the current locale (Korean and
-/// English are built in; other locales fall back to English). Codes such as
-/// `nhis`, `waiting`, `noShow`, and `prepaid` are locale independent and
-/// match the enum names an EMR typically uses; `label(code)` localizes them.
+/// English are built in; a language without data of its own falls back to
+/// English). The same data decides the currency format and price scale of
+/// amounts, the clinic name order, and whether Korean-only values are
+/// generated, so a language is added by data alone. Codes such as `nhis`,
+/// `waiting`, `noShow`, and `prepaid` are locale independent and match the
+/// enum names an EMR typically uses; `label(code)` localizes them.
+///
+/// Some concepts exist only in Korea: the resident registration number, card
+/// approval and cash receipt numbers, the public holiday calendar
+/// ([CoFakerKorea.holidays]) behind [closureNotice], and the national health
+/// insurance (`nhis`, `medicalAid1`, `medicalAid2`) and its insurers. Korean
+/// data generates them all and English data keeps the ones it has always
+/// generated; data of any other language ([CoKoreanValues.none]) never
+/// generates a Korean-only value, and its labels for the insurance codes come
+/// from its own data or fall back to the English ones.
 class CoFakerClinic {
   /// Creates a clinic generator backed by [faker].
   CoFakerClinic(this.faker);
@@ -320,7 +342,9 @@ class CoFakerClinic {
   /// The clinic data of the current locale.
   CoFakerClinicData get data => faker.localeData.clinic!;
 
-  bool get _korean => faker.locale.startsWith('ko');
+  CoClinicPriceScale get _scale => data.priceScale;
+
+  CoKoreanValues get _values => data.koreanValues;
 
   /// The longer clinic texts of the current locale.
   CoFakerClinicTexts get texts => data.texts ?? CoFakerClinicTexts.english;
@@ -353,9 +377,9 @@ class CoFakerClinic {
       matching.isEmpty ? data.specialties : matching,
     );
     final prefix = faker.random.pick(data.clinicNamePrefixes);
-    return _korean
-        ? '$prefix${spec.clinicSuffix}'
-        : '$prefix ${spec.clinicSuffix}';
+    return data.clinicNameFormat
+        .replaceAll('{prefix}', prefix)
+        .replaceAll('{suffix}', spec.clinicSuffix);
   }
 
   /// Staff role codes: `director`, `doctor`, `counselor`, `coordinator`,
@@ -425,11 +449,21 @@ class CoFakerClinic {
     final String postal;
     final String line1;
     final String line2;
-    if (_korean) {
+    if (_values == CoKoreanValues.korean) {
       final address = faker.korea.roadAddress();
       postal = address.postalCode;
       line1 = address.line1;
       line2 = address.line2;
+    } else if (_values == CoKoreanValues.none && faker.country != null) {
+      // A national locale: the city, region and postal code agree.
+      final address = faker.address.postalAddress();
+      postal = address.postalCode;
+      line1 = data.addressLineFormat
+          .replaceAll('{line1}', address.line1)
+          .replaceAll('{city}', address.city)
+          .replaceAll('{region}', address.region)
+          .replaceAll('{regionCode}', address.regionCode);
+      line2 = '';
     } else {
       postal = faker.address.postalCode();
       line1 = faker.address.streetAddress();
@@ -445,7 +479,7 @@ class CoFakerClinic {
       sex: resolvedSex,
       birthDate: birth,
       age: _ageOn(birth, faker.now),
-      rrnMasked: faker.korea.rrn(birthDate: birth, sex: resolvedSex),
+      rrnMasked: _maskedId(birth, resolvedSex),
       phone: _phone(),
       email: hasEmail
           ? faker.internet.email(firstName: first, lastName: last)
@@ -486,6 +520,11 @@ class CoFakerClinic {
 
   /// Generates an insurance type: `nhis` (national health insurance, 80%),
   /// `medicalAid1` (3%), `medicalAid2` (2%), or `uninsured` (15%).
+  ///
+  /// The codes are the categories of Korean health insurance (건강보험,
+  /// 의료급여) and stay the same in every language; the labels come from the
+  /// data of the language, so other languages read a neutral name such as
+  /// `National insurance` through the English fallback.
   ({String code, String label}) insuranceType() {
     final code = _weighted(const <(String, int)>[
       ('nhis', 80),
@@ -545,8 +584,9 @@ class CoFakerClinic {
   /// The procedure catalog of the current locale.
   List<CoProcedureSpec> get procedures => data.procedures;
 
-  /// Generates a procedure priced within its band, rounded to 1,000 won
-  /// (or 5 dollars). [code] selects a specific catalog entry.
+  /// Generates a procedure priced within its band, rounded to
+  /// [CoClinicPriceScale.priceRounding] (1,000 won, or 5 dollars). [code]
+  /// selects a specific catalog entry.
   CoFakeProcedure procedure({String? code, String? category}) {
     var candidates = data.procedures;
     if (code != null) {
@@ -578,7 +618,7 @@ class CoFakerClinic {
     final discount = faker.random.int(min: 60, max: 85) / 100;
     final price = _roundTo(
       (line.price * sessions * discount).round(),
-      _korean ? 10000 : 10,
+      _scale.packageRounding,
     );
     return (
       name: data.packageNameFormat
@@ -610,11 +650,10 @@ class CoFakerClinic {
     );
   }
 
-  /// Generates a prepaid balance (선수금) rounded to 10,000 won.
+  /// Generates a prepaid balance (선수금): up to a hundred times
+  /// [CoClinicPriceScale.prepaidStep] (10,000 won, or 10 dollars).
   int prepaidBalance() {
-    return _korean
-        ? faker.random.int(max: 100) * 10000
-        : faker.random.int(max: 100) * 10;
+    return faker.random.int(max: 100) * _scale.prepaidStep;
   }
 
   /// Generates a diagnosis from an illustrative subset of public ICD-10 /
@@ -784,6 +823,11 @@ class CoFakerClinic {
     ]);
   }
 
+  /// Writes [amount] in the currency of the current data, the way the texts
+  /// of the generators do: `$1,234` for English, `1,234` for Korean
+  /// ([CoFakerClinicData.currency]).
+  String money(num amount) => data.currency.format(amount);
+
   /// Generates one payment of [amount]. [method] forces `card`, `cash`,
   /// `transfer`, or `prepaid`; otherwise card is the most common.
   CoFakePayment payment({required int amount, String? method}) {
@@ -802,13 +846,13 @@ class CoFakerClinic {
       amount: amount,
       cardIssuer: card ? faker.random.pick(data.cardIssuers) : null,
       installmentMonths: card
-          ? (amount >= (_korean ? 500000 : 500)
+          ? (amount >= _scale.installmentMinimum
                 ? faker.random.pick(const <int>[0, 0, 2, 3, 6])
                 : 0)
           : null,
-      approvalNo: card ? faker.korea.cardApprovalNumber() : null,
+      approvalNo: card ? _approvalNo() : null,
       cashReceiptNo: resolved == 'cash' || resolved == 'transfer'
-          ? CoFakerKorea.maskPhone(_phone())
+          ? _cashReceiptNo()
           : null,
     );
   }
@@ -816,11 +860,11 @@ class CoFakerClinic {
   /// Splits [amount] into one to three payments, for example part prepaid
   /// balance and the rest by card. The amounts always add up to [amount].
   List<CoFakePayment> splitPayment({required int amount}) {
-    final parts = amount < (_korean ? 50000 : 50)
+    final parts = amount < _scale.splitMinimum
         ? 1
         : _weighted(const <(int, int)>[(1, 75), (2, 20), (3, 5)]);
     if (parts == 1) return <CoFakePayment>[payment(amount: amount)];
-    final unit = _korean ? 1000 : 1;
+    final unit = _scale.splitRounding;
     final result = <CoFakePayment>[];
     var remaining = amount;
     for (var i = 0; i < parts - 1; i++) {
@@ -900,21 +944,21 @@ class CoFakerClinic {
     final script = texts.counselScript;
     final matching = data.procedures.where((p) => p.code == spec.procedureCode);
     final price = matching.isEmpty
-        ? _price(50000, 300000)
+        ? _price(_scale.quoteMin, _scale.quoteMax)
         : procedure(code: spec.procedureCode).price;
     final packagePrice = _roundTo(
       (price * spec.sessions * faker.random.int(min: 65, max: 85) / 100)
           .round(),
-      _korean ? 10000 : 10,
+      _scale.packageRounding,
     );
     final answers = <String, String>{
       'pain': spec.pain,
       'interval': spec.interval,
       'downtime': spec.downtime,
       'price': script.priceAnswer
-          .replaceAll('{price}', _money(price))
+          .replaceAll('{price}', money(price))
           .replaceAll('{sessions}', '${spec.sessions}')
-          .replaceAll('{packagePrice}', _money(packagePrice)),
+          .replaceAll('{packagePrice}', money(packagePrice)),
     };
     final asked = <String>[...answers.keys.where((k) => k != 'price')];
     final questions = <String>[
@@ -953,9 +997,9 @@ class CoFakerClinic {
       turns: turns,
       summary: script.summary
           .replaceAll('{procedure}', spec.procedure)
-          .replaceAll('{price}', _money(price))
+          .replaceAll('{price}', money(price))
           .replaceAll('{sessions}', '${spec.sessions}')
-          .replaceAll('{packagePrice}', _money(packagePrice))
+          .replaceAll('{packagePrice}', money(packagePrice))
           .replaceAll('{outcome}', booked ? script.booked : script.pending),
       quotedPrice: price,
       packagePrice: packagePrice,
@@ -1155,10 +1199,9 @@ class CoFakerClinic {
       final staffMember = staff();
       author = faker.person.fullName();
       mentioned = staffMember.name;
-      final title = _korean
-          ? '${staffMember.roleLabel}님'
-          : staffMember.roleLabel;
-      mention = '@$mentioned $title';
+      mention = texts.staffMentionFormat
+          .replaceAll('{name}', mentioned)
+          .replaceAll('{role}', staffMember.roleLabel);
     } else {
       final authorPool = authors ?? mentions!;
       final mentionPool = mentions ?? authors!;
@@ -1168,7 +1211,7 @@ class CoFakerClinic {
       author = faker.random.pick(authorPool);
       final others = mentionPool.where((n) => n != author).toList();
       mentioned = faker.random.pick(others.isEmpty ? mentionPool : others);
-      mention = _korean ? '@$mentioned님' : '@$mentioned';
+      mention = texts.nameMentionFormat.replaceAll('{name}', mentioned);
     }
     return (
       text: template
@@ -1226,6 +1269,12 @@ class CoFakerClinic {
   /// (for example all three days of Chuseok plus a substitute holiday) and
   /// names it; otherwise it gives a reason such as a conference. Sundays
   /// are skipped when computing the reopening day.
+  ///
+  /// The holiday calendar is Korean. Korean data and English data (which has
+  /// always used it) read it, with [CoFakerClinicOps.holidayNames] naming the
+  /// two big stretches; data whose [CoFakerClinicData.koreanValues] is
+  /// [CoKoreanValues.none] has no public holidays, so its notices always give
+  /// a reason. Dates are written with [CoFakerClinicOps.dateFormat].
   ({DateTime from, DateTime to, String? holiday, String title, String body})
   closureNotice({required DateTime date, String? clinicName}) {
     final texts = ops.closure.isEmpty
@@ -1236,7 +1285,8 @@ class CoFakerClinic {
         : ops.closureReasons;
     final day = DateTime.utc(date.year, date.month, date.day);
     final (first, last) = CoFakerKorea.holidayYears;
-    final inRange = day.year >= first && day.year <= last;
+    final inRange =
+        _values != CoKoreanValues.none && day.year >= first && day.year <= last;
     final all = inRange
         ? <CoKoreanHoliday>[
             ...CoFakerKorea.holidays(year: day.year),
@@ -1262,11 +1312,10 @@ class CoFakerClinic {
         (h) => !h.date.isBefore(from) && !h.date.isAfter(to) && !h.substitute,
         orElse: () => hits.first,
       );
-      holiday = main.block == 'seollal'
-          ? (_korean ? '설 연휴' : 'Lunar New Year')
-          : main.block == 'chuseok'
-          ? (_korean ? '추석 연휴' : 'Chuseok')
-          : main.name;
+      holiday =
+          ops.holidayNames[main.block] ??
+          CoFakerClinicOps.english.holidayNames[main.block] ??
+          main.name;
     }
     var reopen = to.add(const Duration(days: 1));
     while (reopen.weekday == DateTime.sunday || closed.contains(reopen)) {
@@ -1275,7 +1324,9 @@ class CoFakerClinic {
     final clinic = clinicName ?? this.clinicName();
     final dates = from == to
         ? _dateLabel(from)
-        : '${_dateLabel(from)}~${_dateLabel(to)}';
+        : ops.dateRangeFormat
+              .replaceAll('{from}', _dateLabel(from))
+              .replaceAll('{to}', _dateLabel(to));
     final reason = holiday == null ? faker.random.pick(reasons) : '';
     final body = (holiday == null ? texts['other']! : texts['holiday']!)
         .replaceAll('{eun}', _particle(clinic, '은', '는'))
@@ -1310,9 +1361,13 @@ class CoFakerClinic {
   }
 
   String _dateLabel(DateTime d) {
-    if (!_korean) return '${d.month}/${d.day}';
-    const days = <String>['월', '화', '수', '목', '금', '토', '일'];
-    return '${d.month}월 ${d.day}일(${days[d.weekday - 1]})';
+    final weekdays = ops.weekdayNames.length == 7
+        ? ops.weekdayNames
+        : CoFakerClinicOps.english.weekdayNames;
+    return ops.dateFormat
+        .replaceAll('{month}', '${d.month}')
+        .replaceAll('{day}', '${d.day}')
+        .replaceAll('{weekday}', weekdays[d.weekday - 1]);
   }
 
   /// Family relation codes: `self`, `spouse`, `parent`, `child`,
@@ -1838,9 +1893,9 @@ class CoFakerClinic {
     if (labels == null || labels.isEmpty) {
       throw ArgumentError.value(kind, 'kind');
     }
-    final unit = _korean ? 1000 : 1;
+    final unit = _scale.adjustmentUnit;
     final amount = switch (resolved) {
-      'rounding' => subtotal % (_korean ? 1000 : 1),
+      'rounding' => subtotal % unit,
       'point' => _roundTo(faker.random.int(min: 1, max: 30) * unit, unit),
       _ => _roundTo(subtotal * faker.random.int(min: 5, max: 20) ~/ 100, unit),
     };
@@ -1891,7 +1946,7 @@ class CoFakerClinic {
         ]);
     final text = ops.pointReasons[resolved];
     if (text == null) throw ArgumentError.value(reason, 'reason');
-    final value = faker.random.int(min: 1, max: 50) * (_korean ? 100 : 1);
+    final value = faker.random.int(min: 1, max: 50) * _scale.pointUnit;
     final negative = const <String>{
       'use',
       'expire',
@@ -1906,8 +1961,15 @@ class CoFakerClinic {
     final pool = [...data.procedures.where((p) => p.taxable)];
     final parts = <String>[
       for (var i = 0; i < 2 + faker.random.int(max: 1); i++)
-        '${pool.removeAt(faker.random.int(max: pool.length - 1)).name} '
-            '${faker.random.pick(const <int>[3, 5, 10])}${_korean ? '회' : 'x'}',
+        ops.compoundItemFormat
+            .replaceAll(
+              '{name}',
+              pool.removeAt(faker.random.int(max: pool.length - 1)).name,
+            )
+            .replaceAll(
+              '{sessions}',
+              '${faker.random.pick(const <int>[3, 5, 10])}',
+            ),
     ];
     return '${parts.join(' + ')} + ${ops.packageBonus}';
   }
@@ -2009,16 +2071,6 @@ class CoFakerClinic {
 
   static double _sin(double x) => math.sin(x);
 
-  String _money(int value) {
-    final digits = value.toString();
-    final buffer = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
-      buffer.write(digits[i]);
-    }
-    return _korean ? buffer.toString() : '\$$buffer';
-  }
-
   static const String _serialAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
   /// Invented device vendors; not real manufacturers.
@@ -2033,11 +2085,28 @@ class CoFakerClinic {
     'Tessarin',
   ];
 
-  String _phone() =>
-      _korean ? faker.korea.mobilePhone() : faker.internet.phoneNumber();
+  String _phone() => _values == CoKoreanValues.korean
+      ? faker.korea.mobilePhone()
+      : faker.internet.phoneNumber();
+
+  /// The masked ID number of a patient: a resident registration number for
+  /// Korean and legacy data, the `maskedIdFormat` of the data otherwise.
+  String _maskedId(DateTime birth, CoSex sex) => _values == CoKoreanValues.none
+      ? faker.random.digits(data.maskedIdFormat)
+      : faker.korea.rrn(birthDate: birth, sex: sex);
+
+  /// A card approval number: 8 digits for Korean and legacy data, a plain
+  /// 6-digit authorization code otherwise.
+  String _approvalNo() => _values == CoKoreanValues.none
+      ? faker.random.digits('######')
+      : faker.korea.cardApprovalNumber();
+
+  /// A masked cash receipt number for Korean and legacy data, none otherwise.
+  String? _cashReceiptNo() =>
+      _values == CoKoreanValues.none ? null : CoFakerKorea.maskPhone(_phone());
 
   int _price(int min, int max) {
-    final unit = _korean ? 1000 : 5;
+    final unit = _scale.priceRounding;
     final value = faker.random.int(min: min, max: max);
     final rounded = _roundTo(value, unit);
     return rounded < min ? min : rounded;

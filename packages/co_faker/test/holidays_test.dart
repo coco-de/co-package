@@ -138,7 +138,9 @@ void main() {
       );
       expect(faker.clinic.vitalsNote(vitals: high), contains('152/96'));
       expect(
-        CoFaker(locale: 'fr', seed: 1).clinic.vitalsNote(vitals: base),
+        // `nl`: a language with no clinic data of its own reads English. A
+        // language of the Epic (`fr`) writes its own notes once localized.
+        CoFaker(locale: 'nl', seed: 1).clinic.vitalsNote(vitals: base),
         startsWith('Vitals stable'),
       );
     });

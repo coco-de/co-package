@@ -1,0 +1,3860 @@
+{
+  "seeds": [
+    7,
+    20261005,
+    436
+  ],
+  "repeats": 3,
+  "fallbackSeed": 20261005,
+  "locales": {
+    "ko": {
+      "clinic.label": {
+        "digests": [
+          "ab9a2b49189b1431",
+          "ab9a2b49189b1431",
+          "ab9a2b49189b1431"
+        ],
+        "sample": "[건강보험, 의료급여 1종, 비급여, 노쇼, 선수금, 배우자, 피코 레이저, 긍정, 진행중, does-not-exist]"
+      },
+      "clinic.specialty": {
+        "digests": [
+          "ef98955d163bf955",
+          "998f2dc52c8fe745",
+          "020229e3151bf64f"
+        ],
+        "sample": "정형외과"
+      },
+      "clinic.clinicName": {
+        "digests": [
+          "707b4824bce76a52",
+          "52a30e0ad2a6e438",
+          "572554ec7a69fb06"
+        ],
+        "sample": "[라온정형외과의원, 라온안과의원, 다온의원, 고운의원]"
+      },
+      "clinic.clinicName.specialty": {
+        "digests": [
+          "70fb400a4665acb6",
+          "85107a9a4b626166",
+          "80d9e0c9543043a1"
+        ],
+        "sample": "[라온피부과의원, 라온성형외과의원, 다온의원, 고운내과의원, 미소정형외과의원, 온담이비인후과의원, 결안과의원, 맑은소아청소년과의원, 봄날이비인후과의원]"
+      },
+      "clinic.staffRoles": {
+        "digests": [
+          "5d73aa98340036f2",
+          "5d73aa98340036f2",
+          "5d73aa98340036f2"
+        ],
+        "sample": "[director, doctor, counselor, coordinator, nurse, nurseAide, skincare, desk]"
+      },
+      "clinic.staffRole": {
+        "digests": [
+          "9050784f8f8071e3",
+          "3c7c1b5ea9959c56",
+          "bdd3c4060cd32e7e"
+        ],
+        "sample": "[(code: nurse, label: 간호사), (code: nurseAide, label: 간호조무사), (code: skincare, label: 피부관리사), (code: nurseAide, label: 간호조무사)]"
+      },
+      "clinic.staff": {
+        "digests": [
+          "bfb9edc23b8a7008",
+          "a119e192a7524414",
+          "af02eb6e9c703f64"
+        ],
+        "sample": "[(email: sua.cho@demo.clinic, name: 조수아, phone: 010-0821-1034, role: nurse, roleLabel: 간호사), (email: eunseo.bae@demo.clinic, name: 배은서, phone: 010-0497-8453, ro..."
+      },
+      "clinic.staff.role": {
+        "digests": [
+          "4cf8b96982ccac25",
+          "1df8461622c9b5a8",
+          "35f3a24f31e967f3"
+        ],
+        "sample": "[(email: chaewon.lim@example.test, name: 임채원, phone: 010-0682-1103, role: counselor, roleLabel: 상담실장), (email: seohyeon.shin@demo.clinic, name: 신서현, phone: 010-..."
+      },
+      "clinic.patient": {
+        "digests": [
+          "76d925df3b60891b",
+          "bf622c9f0b680733",
+          "6eff5ed6dc367f74"
+        ],
+        "sample": "[(address1: 제주특별자치도 제주시 연북로 299, address2: 111동 1006호, age: 54, birthDate: 1971-12-21 00:00:00.000Z, channel: blogSearch, channelLabel: 블로그 검색, chartNo: 7486, e..."
+      },
+      "clinic.patient.options": {
+        "digests": [
+          "8cc16ef504a4ce19",
+          "4f169258d08a9c28",
+          "887e50ddbd76c5ed"
+        ],
+        "sample": "[(address1: 경기도 수원시 영통구 봉영로 184, address2: 114동 2401호, age: 35, birthDate: 1991-06-29 00:00:00.000Z, channel: event, channelLabel: 이벤트, chartNo: 7241, email: ju..."
+      },
+      "clinic.chartNumber": {
+        "digests": [
+          "a71082bc88239ef0",
+          "a71082bc88239ef0",
+          "a71082bc88239ef0"
+        ],
+        "sample": "[123, 000123, 2026-00123]"
+      },
+      "clinic.insuranceType": {
+        "digests": [
+          "908e77a39c7b921f",
+          "1d40cf99509e43e1",
+          "5e678b21d5a0ec89"
+        ],
+        "sample": "[(code: nhis, label: 건강보험), (code: nhis, label: 건강보험), (code: nhis, label: 건강보험), (code: nhis, label: 건강보험), (code: nhis, label: 건강보험), (code: nhis, label: 건강보험..."
+      },
+      "clinic.visitPurpose": {
+        "digests": [
+          "359ec0760f3cb9c4",
+          "ce2661a37608e8ef",
+          "6024bc56ab8187f8"
+        ],
+        "sample": "[(detail: 시술 상담, detailId: 7, purpose: 상담, purposeId: 1), (detail: 여드름, detailId: 12, purpose: 진료, purposeId: 3), (detail: 점·사마귀, detailId: 14, purpose: 진료, pur..."
+      },
+      "clinic.visitPurposeTree": {
+        "digests": [
+          "e761819aced8e2ac",
+          "e761819aced8e2ac",
+          "e761819aced8e2ac"
+        ],
+        "sample": "[(color: #EC4899, id: 1, name: 상담, parentId: null), (color: #F59E0B, id: 2, name: 시술, parentId: null), (color: #10B981, id: 3, name: 진료, parentId: null), (color..."
+      },
+      "clinic.procedures": {
+        "digests": [
+          "1ea96aa208f47e7e",
+          "1ea96aa208f47e7e",
+          "1ea96aa208f47e7e"
+        ],
+        "sample": "[CONS01, CONS02, BTX-F, BTX-G, BTX-J, BTX-S, FIL-N, FIL-L, LT-01, LT-02, IPL-01, CO2-01, HIFU-300, RF-300, LIFT-01, SB-PN, SB-HA, CTR-01, ACN-01, ACN-02, ACN-03..."
+      },
+      "clinic.procedure": {
+        "digests": [
+          "f6a2cbec9ef8ffc2",
+          "6b106c1b09d39687",
+          "1f9b2de6064aace0"
+        ],
+        "sample": "[(category: 스킨부스터/주사, code: SB-PN, name: PN 스킨부스터 2cc, price: 299000, taxable: true, unit: 회), (category: 스킨부스터/주사, code: SB-PN, name: PN 스킨부스터 2cc, price: 2630..."
+      },
+      "clinic.procedure.code": {
+        "digests": [
+          "659aad165a4a5a58",
+          "8191ca6b6198524f",
+          "bc9f1440e8fd5e76"
+        ],
+        "sample": "[(category: 진찰/진찰료, code: CONS01, name: 비급여 초진 진찰료, price: 16000, taxable: false, unit: 회), (category: 진찰/진찰료, code: CONS02, name: 비급여 재진 진찰료, price: 11000, tax..."
+      },
+      "clinic.procedure.category": {
+        "digests": [
+          "e8d735b7a0c5e4a3",
+          "23e1d73cb87934d4",
+          "5321f9f5a516e865"
+        ],
+        "sample": "[(category: 진찰/진찰료, code: CONS01, name: 비급여 초진 진찰료, price: 16000, taxable: false, unit: 회), (category: 제증명/확인서, code: DOC-03, name: 진료확인서, price: 3000, taxable:..."
+      },
+      "clinic.package": {
+        "digests": [
+          "64e7c5d5eb964d21",
+          "1a8e330a27e6ad3c",
+          "062712592a9a8485"
+        ],
+        "sample": "[(name: PN 스킨부스터 2cc 5회, price: 1180000, procedureCode: SB-PN, sessions: 5, validDays: 180), (name: 진정관리 (LED + 모델링팩) 5회, price: 170000, procedureCode: CARE-01,..."
+      },
+      "clinic.package.code": {
+        "digests": [
+          "b6b3ce9aba6f4656",
+          "80645226d56fc10a",
+          "eb6eecb5a429f549"
+        ],
+        "sample": "[(name: 비급여 초진 진찰료 5회, price: 60000, procedureCode: CONS01, sessions: 5, validDays: 180), (name: 비급여 재진 진찰료 5회, price: 30000, procedureCode: CONS02, sessions: 5..."
+      },
+      "clinic.packageBalance": {
+        "digests": [
+          "dc69b48cc80a5eb0",
+          "59de5e34973f8514",
+          "191c1dccd774d08c"
+        ],
+        "sample": "[(expiresAt: 2027-02-16 00:00:00.000Z, name: PN 스킨부스터 2cc 5회, procedureCode: SB-PN, purchasedAt: 2026-08-20 00:00:00.000Z, remainingSessions: 1, totalSessions: ..."
+      },
+      "clinic.prepaidBalance": {
+        "digests": [
+          "1cc8d1a1a767ef1d",
+          "8b265bf2736666a8",
+          "d3676af0fc540932"
+        ],
+        "sample": "[150000, 920000, 570000, 390000, 430000, 660000]"
+      },
+      "clinic.diagnosis": {
+        "digests": [
+          "e0b8a415362453b1",
+          "d84f9e2b38acbbb7",
+          "23a77585ca361d05"
+        ],
+        "sample": "[(code: L63.9, name: 상세불명의 원형탈모증, nameEn: Alopecia areata, unspecified), (code: L82, name: 지루각화증, nameEn: Seborrhoeic keratosis), (code: L85.3, name: 피부건조증, nam..."
+      },
+      "clinic.drugName": {
+        "digests": [
+          "5a16dc5afcd7ba10",
+          "bbca81bd166f7fcd",
+          "7ca1c299a74de971"
+        ],
+        "sample": "[나비록스연고 20g, 테라클캡슐 50mg, 포비렌캡슐 100mg, 하이드라엘크림 30g]"
+      },
+      "clinic.prescription": {
+        "digests": [
+          "4ef0e95b5cdef2af",
+          "a5671f2b6f97933f",
+          "ea67d24ee4bc7130"
+        ],
+        "sample": "[(days: 3, name: 세라톤크림 15g, quantity: 9, usage: 1일 1회 취침 전), (days: 7, name: 클라리덤캡슐 10mg, quantity: 21, usage: 1일 2회 아침·저녁 식후 30분), (days: 28, name: 포비렌크림 30g, ..."
+      },
+      "clinic.chartMemo": {
+        "digests": [
+          "4cccde098a6ae2d5",
+          "0439745c8b2feb6c",
+          "48eee05d84c956c1"
+        ],
+        "sample": "[시술 부위 24시간 세안·화장 자제 안내함., 보호자 동반 내원., 진정관리 LED 15분 + 모델링팩 진행.]"
+      },
+      "clinic.soap": {
+        "digests": [
+          "5aa1422880f378b8",
+          "07e2c69ce3b1781e",
+          "a822ec9d884f6769"
+        ],
+        "sample": "[(assessment: 상세불명의 원형탈모증 (L63.9), objective: 코·볼 모공 확장 관찰, plan: 경과 관찰, 악화 시 내원, subjective: 턱선 처짐 개선 상담 원함), (assessment: 보통여드름 (L70.0), objective: 코·볼 모공 확장 ..."
+      },
+      "clinic.questionnaire": {
+        "digests": [
+          "7aea39348f793fb8",
+          "625a7f15ead83e01",
+          "9b04f01251e8657e"
+        ],
+        "sample": "[[(answer: 없음, question: 약물 알레르기가 있나요?), (answer: 항응고제, question: 현재 복용 중인 약이 있나요?), (answer: 아니오, question: 임신 또는 수유 중인가요?), (answer: 모름, question: 켈로이드 체질인가요?..."
+      },
+      "clinic.businessSlots": {
+        "digests": [
+          "81407455497a6229",
+          "81407455497a6229",
+          "81407455497a6229"
+        ],
+        "sample": "[[2026-10-01 10:00:00.000Z, 2026-10-01 10:30:00.000Z, 2026-10-01 11:00:00.000Z, 2026-10-01 11:30:00.000Z, 2026-10-01 12:00:00.000Z, 2026-10-01 12:30:00.000Z, 20..."
+      },
+      "clinic.appointmentSlot": {
+        "digests": [
+          "b8558cc7c813829b",
+          "3566f6d0b9a9eabe",
+          "32a4d3179bd0ae03"
+        ],
+        "sample": "[2026-10-15 12:30:00.000Z, 2026-10-13 12:30:00.000Z, 2026-10-13 16:00:00.000Z, 2026-10-16 16:30:00.000Z, 2026-10-10 11:30:00.000Z, 2026-10-19 15:00:00.000Z, 202..."
+      },
+      "clinic.visitStages": {
+        "digests": [
+          "1abd4607f299191b",
+          "1abd4607f299191b",
+          "1abd4607f299191b"
+        ],
+        "sample": "[reception, waiting, consultation, counseling, procedure, care, payment, done]"
+      },
+      "clinic.visitFlow": {
+        "digests": [
+          "2759fb5b4d330c67",
+          "7ff8a748894b6470",
+          "df02801bb29119d7"
+        ],
+        "sample": "[[reception, waiting, counseling, consultation, payment, done], [reception, waiting, consultation, payment, done], [reception, waiting, counseling, consultation..."
+      },
+      "clinic.visitStage": {
+        "digests": [
+          "af7fcfa65fb5e216",
+          "a1b57e5e8fef84b8",
+          "ef98faea1092de08"
+        ],
+        "sample": "[waiting, consultation, payment, counseling, waiting, procedure, procedure, care]"
+      },
+      "clinic.reservationStatus": {
+        "digests": [
+          "bf34dbf60ba6e3d6",
+          "0552b04893d58a1e",
+          "f4cfc20e5c0afd1a"
+        ],
+        "sample": "[reserved, reserved, confirmed, confirmed, reserved, confirmed, completed, completed, completed, completed, completed, cancelled, completed]"
+      },
+      "clinic.payment": {
+        "digests": [
+          "40b30bd7d0f4ee1b",
+          "c14b323ca72f2d50",
+          "0f37747954c1f5ed"
+        ],
+        "sample": "[(amount: 20, approvalNo: 89682110, cardIssuer: 롯데, cashReceiptNo: null, installmentMonths: 0, method: card, methodLabel: 카드), (amount: 400, approvalNo: 4830549..."
+      },
+      "clinic.payment.method": {
+        "digests": [
+          "1b28f59aa11f1170",
+          "d43d1b6d23b4530d",
+          "5d53580f503f1a5b"
+        ],
+        "sample": "[(amount: 400, approvalNo: 78968211, cardIssuer: 하나, cashReceiptNo: null, installmentMonths: 0, method: card, methodLabel: 카드), (amount: 600000, approvalNo: 448..."
+      },
+      "clinic.splitPayment": {
+        "digests": [
+          "e346643e3fe3a8b4",
+          "1a34e09fd16575db",
+          "5a5c238b361ded6f"
+        ],
+        "sample": "[[(amount: 20, approvalNo: 89682110, cardIssuer: 롯데, cashReceiptNo: null, installmentMonths: 0, method: card, methodLabel: 카드)], [(amount: 400, approvalNo: 4830..."
+      },
+      "clinic.consentKinds": {
+        "digests": [
+          "171fd0bbced5da2f",
+          "171fd0bbced5da2f",
+          "171fd0bbced5da2f"
+        ],
+        "sample": "[procedure, privacy, photo, marketing, anesthesia]"
+      },
+      "clinic.consentForm": {
+        "digests": [
+          "bdd399f5fa42f699",
+          "a158a61e3ae73d04",
+          "b85ea05238d91442"
+        ],
+        "sample": "[(clauses: [본인은 시술의 목적·방법·예상 효과에 대해 설명을 들었습니다., 시술 후 붉은기·부기·멍·일시적 색소침착 등이 나타날 수 있음을 안내받았습니다., 효과에는 개인차가 있으며 결과를 보장하지 않음을 이해합니다., 복용 중인 약·알레르기·임신 여부를 사실대로 알렸습니다...."
+      },
+      "clinic.feedback": {
+        "digests": [
+          "2b8d5f811a3b5b45",
+          "f8a0ea3c253da944",
+          "c2bbd21cd8031c32"
+        ],
+        "sample": "[(comment: 시술 후 관리 안내 문자가 도움이 됐어요., score: 5, sentiment: positive), (comment: 원장님이 꼼꼼하게 설명해 주셔서 안심됐어요., score: 5, sentiment: positive), (comment: 대기실이 붐벼서 조금 기다..."
+      },
+      "clinic.counselTopics": {
+        "digests": [
+          "04a718d0cb6f1efc",
+          "04a718d0cb6f1efc",
+          "04a718d0cb6f1efc"
+        ],
+        "sample": "[toning, lifting, botox, acne, booster]"
+      },
+      "clinic.counselSession": {
+        "digests": [
+          "d740226fc1195f43",
+          "259dde5a3b0ce2b6",
+          "fcd1b02b48de743f"
+        ],
+        "sample": "[(booked: false, packagePrice: 920000, procedure: 피코 레이저 토닝, procedureCode: LT-01, quotedPrice: 124000, sessions: 10, summary: 피코 레이저 토닝 권유 — 1회 124,000원, 10회 패..."
+      },
+      "clinic.inquiryLanguages": {
+        "digests": [
+          "0a0449aef498a518",
+          "0a0449aef498a518",
+          "0a0449aef498a518"
+        ],
+        "sample": "[ko, en, ja, zh, vi]"
+      },
+      "clinic.inquiry": {
+        "digests": [
+          "3c07ab0db23072f5",
+          "578eee2af6d060c0",
+          "7e7123faa2828fa0"
+        ],
+        "sample": "[(channel: kakao, handle: @seoyun_1034, language: ko, turns: [(at: 0:00:00.000000, language: ko, speaker: patient, text: 외국어가 가능한 직원이 있나요?, translation: null), ..."
+      },
+      "clinic.messengerHandle": {
+        "digests": [
+          "c05dad31e74b6f81",
+          "5581252f1d1a6a23",
+          "4a5e5aa13c3bda79"
+        ],
+        "sample": "[@seoyeon_7896, @jihu_2110, @olivia_4483, @ren_5497, @yuxin_4532, @minhanh_6196, @sumin_6678, @olivia_2204, @aoi_2880, @lina_7733, @ngoc_6971, wxid_minseo3806, ..."
+      },
+      "clinic.insurerName": {
+        "digests": [
+          "d3ab9ccd3c2c3bd5",
+          "9d13e94934c58dd9",
+          "02427558018ae388"
+        ],
+        "sample": "[하늘결손해보험, 미래든생명, 새빛화재, 바른누리생명]"
+      },
+      "clinic.integrationServices": {
+        "digests": [
+          "fef3ad533e5d777f",
+          "fef3ad533e5d777f",
+          "fef3ad533e5d777f"
+        ],
+        "sample": "[eligibility, dur, insuranceClaim, ePrescription, identityQr]"
+      },
+      "clinic.integrationResult": {
+        "digests": [
+          "3761c08d8b462281",
+          "fb0eaf338bf19477",
+          "030fd89594e6d419"
+        ],
+        "sample": "[(code: OK, message: 건강보험 자격 확인 — 직장가입자, ok: true, service: eligibility), (code: OK, message: DUR 점검 완료 — 금기 없음, ok: true, service: dur), (code: OK, message: DU..."
+      },
+      "clinic.deviceKinds": {
+        "digests": [
+          "9e48f65e3f0b5a4c",
+          "9e48f65e3f0b5a4c",
+          "9e48f65e3f0b5a4c"
+        ],
+        "sample": "[picoLaser, hifu, rf, ipl, ledTherapy, skinAnalyzer, photoCamera, labelPrinter, cardTerminal, signaturePad, kiosk, bridgePc]"
+      },
+      "clinic.device": {
+        "digests": [
+          "50e67308fcd93bbe",
+          "30fbe58df5d9f3d1",
+          "5417bbf58e6a0c3d"
+        ],
+        "sample": "[(kind: ledTherapy, kindLabel: LED 관리기, model: KEL-L780 II, name: LED 관리기 1호기, serial: SN-8LZ5-WZY2, vendor: Kellbrio), (kind: picoLaser, kindLabel: 피코 레이저, mod..."
+      },
+      "clinic.teamNote": {
+        "digests": [
+          "f6b5d9b62e1da982",
+          "17afbd525b43c720",
+          "137f7afaab908a02"
+        ],
+        "sample": "[(author: 배서연, mentions: [오아린], text: 인계: 장지원님 마취크림 도포 완료. @오아린 간호조무사님 시술 들어가시면 됩니다.), (author: 허수민, mentions: [문하은], text: @문하은 간호사님, 허시은님 회차권 1회 남았습니다. 재구매 안내..."
+      },
+      "clinic.staffNotice": {
+        "digests": [
+          "75008dc12865a429",
+          "1448a87f7d9faeeb",
+          "a54fba764bddf21e"
+        ],
+        "sample": "[(body: 10% 초과 할인은 상담실장 승인 후 적용합니다. 수납 화면에서 승인 요청을 보내 주세요., kind: policy, title: 할인 승인 기준 변경), (body: 아나필락시스 대응 절차와 응급 키트 위치를 함께 점검합니다. 금요일 진료 종료 후 30분 소요됩니다., ..."
+      },
+      "clinic.vitalsNote": {
+        "digests": [
+          "ea808cf255e14be4",
+          "841d9241c79dd0fd",
+          "80ba11e21a25b714"
+        ],
+        "sample": "[활력징후 안정적 (BP 118/76mmHg, P 72회/분, SpO2 98%, BT 36.6°C)., 혈압 152/96mmHg로 높아 10분 안정 후 재측정 예정., 체온 38.1°C 미열 — 시술 연기 여부 원장님 확인 필요., SpO2 92%로 낮아 재측정, 호흡 곤란 증상은 없음..."
+      },
+      "clinic.closureNotice": {
+        "digests": [
+          "095e8f9df4138ef5",
+          "7974889c0b48774e",
+          "213d7c07ca3acc7b"
+        ],
+        "sample": "[(body: 라온정형외과의원은 9월 24일(목)~9월 27일(일) 추석 연휴로 휴진합니다. 9월 28일(월)부터 정상 진료합니다., from: 2026-09-24 00:00:00.000Z, holiday: 추석 연휴, title: 9월 24일(목)~9월 27일(일) 휴진 안내, to:..."
+      },
+      "clinic.relations": {
+        "digests": [
+          "a718001a62299872",
+          "a718001a62299872",
+          "a718001a62299872"
+        ],
+        "sample": "[self, spouse, parent, child, sibling, grandparent, grandchild, legalGuardian, other]"
+      },
+      "clinic.familyRelation": {
+        "digests": [
+          "667114258af4e0cd",
+          "f6c570761de5adb4",
+          "c1a7cc252246d9f5"
+        ],
+        "sample": "[(code: legalGuardian, label: 법정대리인), (code: other, label: 기타), (code: grandparent, label: 조부모), (code: self, label: 본인)]"
+      },
+      "clinic.guardian": {
+        "digests": [
+          "cf0d19176d2c2e5b",
+          "64b54d70b56002b6",
+          "fdb0710e58ad6658"
+        ],
+        "sample": "[(name: 조준우, phone: 010-0821-1034, relation: spouse, relationLabel: 배우자, sex: CoSex.male), (name: 배은서, phone: 010-0497-8453, relation: parent, relationLabel: 부모..."
+      },
+      "clinic.patientTag": {
+        "digests": [
+          "cdcc00c20f07c282",
+          "c38a6e2e48b41052",
+          "5d4a5e2ec9550eb8"
+        ],
+        "sample": "[(code: caution, color: #EF4444, label: 주의환자), (code: package, color: #8B5CF6, label: 회차권 보유), (code: toning, color: #EC4899, label: 토닝), (code: package, color:..."
+      },
+      "clinic.patientTags": {
+        "digests": [
+          "b7f9b4ad09116925",
+          "94794d36511292c8",
+          "5120ea69b2a9ca2d"
+        ],
+        "sample": "[[(code: package, color: #8B5CF6, label: 회차권 보유)], [(code: package, color: #8B5CF6, label: 회차권 보유), (code: toning, color: #EC4899, label: 토닝)], []]"
+      },
+      "clinic.acquisitionChannel": {
+        "digests": [
+          "2a245a73d8e10537",
+          "22b47824ce40c7d6",
+          "457f7372ff3215fe"
+        ],
+        "sample": "[(code: instagramAd, color: #E1306C, label: 인스타그램 광고), (code: blogSearch, color: #7C3AED, label: 블로그 검색), (code: event, color: #F59E0B, label: 이벤트), (code: inst..."
+      },
+      "clinic.specialNote": {
+        "digests": [
+          "f86b3dd4796d7c06",
+          "9f40c95fd959a13b",
+          "cf421cd276ea9ecc"
+        ],
+        "sample": "[임신 가능성 있음 — 시술 전 확인, 금속 알러지, 통증에 예민함 — 마취크림 충분히, 금속 알러지]"
+      },
+      "clinic.maskName": {
+        "digests": [
+          "000bc1049aa4a8d8",
+          "000bc1049aa4a8d8",
+          "000bc1049aa4a8d8"
+        ],
+        "sample": "[A, A*, A*c, A****f, 김*늘, 남**수, 佐**子]"
+      },
+      "clinic.maskedName": {
+        "digests": [
+          "f49f3e11e490f661",
+          "c866e2c43253060e",
+          "92a93a094f4020e1"
+        ],
+        "sample": "[송*연, 임*원, 장*원, 오*우]"
+      },
+      "clinic.consentHistoryKinds": {
+        "digests": [
+          "d11fe0b36974185f",
+          "d11fe0b36974185f",
+          "d11fe0b36974185f"
+        ],
+        "sample": "[privacyRequired, marketingOptional, sensitiveInfo, photoUse, thirdParty, aiRecording, nightAdvertising]"
+      },
+      "clinic.termsVersion": {
+        "digests": [
+          "a35bbbce88e9861e",
+          "677170b49cccc5f8",
+          "a68d7c2990deed11"
+        ],
+        "sample": "[(change: 야간 광고성 정보 수신 동의 항목을 분리했습니다., effectiveFrom: 2026-08-01 00:00:00.000Z, version: v1.7), (change: 야간 광고성 정보 수신 동의 항목을 분리했습니다., effectiveFrom: 2026-05-01 ..."
+      },
+      "clinic.consentHistory": {
+        "digests": [
+          "b0ecc9c14ab92465",
+          "458af96dc01aac11",
+          "36dc9d264e7afb5c"
+        ],
+        "sample": "[[(action: agreed, actionLabel: 동의, at: 2026-05-24 22:27:33.846Z, channel: desk, channelLabel: 데스크, kind: privacyRequired, kindLabel: 개인정보 필수, termsVersion: v3...."
+      },
+      "clinic.consentDispatch": {
+        "digests": [
+          "be467a28c003dfe2",
+          "616a8f0cff434c5a",
+          "445ae6c2c3131dfa"
+        ],
+        "sample": "[(message: 전자서명이 완료되었습니다., status: signed), (message: 알림톡으로 서명 요청을 보냈습니다., status: sent), (message: 환자가 서명 요청을 열람했습니다., status: opened), (message: 전자서명이 완료되었습니다..."
+      },
+      "clinic.palette": {
+        "digests": [
+          "ce98f8130098cd67",
+          "ce98f8130098cd67",
+          "ce98f8130098cd67"
+        ],
+        "sample": "[#4F46E5, #0EA5E9, #EC4899, #F59E0B, #10B981, #8B5CF6, #EF4444, #14B8A6, #F97316, #64748B, #84CC16, #06B6D4]"
+      },
+      "clinic.color": {
+        "digests": [
+          "a66d542f62723ce3",
+          "4679e6e16a5201c1",
+          "3de55ac8267760c0"
+        ],
+        "sample": "[#10B981, #F59E0B, #F59E0B]"
+      },
+      "clinic.rooms": {
+        "digests": [
+          "48d480ef0e2956e3",
+          "b1a165f57cdc5645",
+          "9330b27b976e669f"
+        ],
+        "sample": "[[(color: #4F46E5, id: 1, kind: counseling, kindLabel: 상담, name: 상담실1, staffName: 송서연, staffRole: counselor), (color: #0EA5E9, id: 2, kind: consultation, kindLa..."
+      },
+      "clinic.queueStatuses": {
+        "digests": [
+          "419260ca787d654c",
+          "419260ca787d654c",
+          "419260ca787d654c"
+        ],
+        "sample": "[requested, waiting, priority, inProgress]"
+      },
+      "clinic.queueBoard": {
+        "digests": [
+          "cb1627436c665bcf",
+          "b3d195e7b4fe701b",
+          "d997bc67d9c2519b"
+        ],
+        "sample": "[[(entries: [(checkedInAt: 2026-10-05 08:53:00.000Z, order: 1, patientName: 남지원, purpose: 시술 상담, status: inProgress, statusLabel: 진행중)], roomId: 1, roomKind: co..."
+      },
+      "clinic.receptionSource": {
+        "digests": [
+          "a622a5784a3854c8",
+          "f76db5d065b02f9c",
+          "d9f5fa0ee164e99e"
+        ],
+        "sample": "[(code: tablet, label: 태블릿), (code: desk, label: 데스크), (code: kiosk, label: 접수 키오스크), (code: desk, label: 데스크), (code: tablet, label: 태블릿), (code: desk, label: ..."
+      },
+      "clinic.kioskPurpose": {
+        "digests": [
+          "275b118ac992e47c",
+          "727a80d0a9752fec",
+          "b30e6675876c430d"
+        ],
+        "sample": "[(code: checkin, label: 진료 접수), (code: reservation, label: 예약 확인), (code: payment, label: 수납), (code: reservation, label: 예약 확인)]"
+      },
+      "clinic.vitals": {
+        "digests": [
+          "f3afe6ab4c06e1df",
+          "ec78d2ffa4c4fe4b",
+          "696809cdc34c6185"
+        ],
+        "sample": "[(bmi: 20.3, diastolic: 68, glucose: 86, heightCm: 177.7, pulse: 84, spo2: 95, systolic: 112, temperature: 37.1, weightKg: 64.1), (bmi: 14.5, diastolic: 65, glu..."
+      },
+      "clinic.faceRegions": {
+        "digests": [
+          "b45793bd42d6e36d",
+          "b45793bd42d6e36d",
+          "b45793bd42d6e36d"
+        ],
+        "sample": "{forehead: (0.5, 0.22), glabella: (0.5, 0.36), leftEye: (0.36, 0.42), rightEye: (0.64, 0.42), leftCheek: (0.32, 0.58), rightCheek: (0.68, 0.58), nose: (0.5, 0.5..."
+      },
+      "clinic.faceFrontRegions": {
+        "digests": [
+          "55f95802fdd5c2b8",
+          "55f95802fdd5c2b8",
+          "55f95802fdd5c2b8"
+        ],
+        "sample": "{forehead: (bottom: 0.3, left: 0.3, right: 0.7, top: 0.15), glabella: (bottom: 0.38, left: 0.45, right: 0.55, top: 0.31), leftEye: (bottom: 0.44, left: 0.3, rig..."
+      },
+      "clinic.canvasMarks": {
+        "digests": [
+          "b5f41e44af1fdbe4",
+          "c232401d462bcdbd",
+          "3adf5d64017ba0ec"
+        ],
+        "sample": "[[(color: #E11D48, points: [(p: 0.6, t: 1791190800000, x: 0.7513, y: 0.8), (p: 0.6, t: 1791190800014, x: 0.7492, y: 0.8132), (p: 0.6, t: 1791190800027, x: 0.741..."
+      },
+      "clinic.adjustment": {
+        "digests": [
+          "acf76df3d1e0d9e7",
+          "e5d17fdfea71cfab",
+          "30a079b1e0eadf49"
+        ],
+        "sample": "[(amount: 0, kind: discount, kindLabel: 할인, label: 직원가족 20% 할인), (amount: -1000, kind: discount, kindLabel: 할인, label: 직원가족 20% 할인), (amount: -9000, kind: disco..."
+      },
+      "clinic.cardDecline": {
+        "digests": [
+          "06bc7798488d39e4",
+          "5792aff95a063e11",
+          "6a554fb46a4494e4"
+        ],
+        "sample": "[(code: LIMIT_EXCEEDED, reason: 카드 한도 초과, responseCode: 61), (code: INSUFFICIENT_FUNDS, reason: 잔액 부족, responseCode: 51), (code: CARD_EXPIRED, reason: 카드 유효기간 만..."
+      },
+      "clinic.paymentMessage": {
+        "digests": [
+          "554d825312a62077",
+          "15f20fe09f7f8980",
+          "43260b6bd7a9a23f"
+        ],
+        "sample": "[카드 승인이 완료되었습니다., 현금영수증이 발행되었습니다., 부분 취소가 완료되었습니다., 선수금에서 차감했습니다., 카드 승인이 거절되었습니다 — 카드 한도 초과]"
+      },
+      "clinic.pointTransaction": {
+        "digests": [
+          "4884af6da8d9a5a9",
+          "bcbd93fad905b2a6",
+          "a83370337435a887"
+        ],
+        "sample": "[(amount: 3800, label: 결제 금액 3% 적립, reason: earn), (amount: 5000, label: 리뷰 작성 보너스, reason: bonus), (amount: 900, label: 결제 금액 3% 적립, reason: earn), (amount: -2..."
+      },
+      "clinic.compoundPackageName": {
+        "digests": [
+          "af109dcce7c51de2",
+          "6f9fd94bd2531257",
+          "44b6a60d658681a9"
+        ],
+        "sample": "[고주파 리프팅 300샷 10회 + 피코 레이저 토닝 10회 + 재생 크림 50ml 증정, 주름 보톡스 이마 10회 + 윤곽 주사 3회 + 재생 크림 50ml 증정, 진정관리 (LED + 모델링팩) 5회 + 점 제거 (CO2, 개당) 3회 + 재생 크림 50ml 증정, IPL 광치료 얼..."
+      },
+      "clinic.visitHeatmap": {
+        "digests": [
+          "3c8be4e071c4cea0",
+          "ee85aab82c6c49de",
+          "fea905f4a1fc9414"
+        ],
+        "sample": "[[(count: 4, hour: 10, weekday: 1), (count: 9, hour: 11, weekday: 1), (count: 5, hour: 12, weekday: 1), (count: 1, hour: 13, weekday: 1), (count: 7, hour: 14, w..."
+      },
+      "clinic.task": {
+        "digests": [
+          "18582011894ae6f1",
+          "e11430375c21886b",
+          "d97581b5e3b016e5"
+        ],
+        "sample": "[(assigneeRole: 간호사, done: false, dueAt: 2026-10-05 14:30:00.000Z, memo: 완료 후 사진 첨부 부탁드려요., title: 대기실 태블릿 충전), (assigneeRole: 상담실장, done: false, dueAt: 2026-10..."
+      },
+      "clinic.counselEvidence": {
+        "digests": [
+          "f783a92630372516",
+          "f778556a93f89cb6",
+          "a29c11a39ba15c27"
+        ],
+        "sample": "[(kind: guideline, kindLabel: 진료 지침, rule: 임신 가능성 있으면 레이저 시술 보류), (kind: preference, kindLabel: 환자 선호, rule: 다운타임 최소 희망 시 비침습 시술 우선), (kind: priceRule, kindLabe..."
+      },
+      "clinic.counselFailure": {
+        "digests": [
+          "48c286e9e6a502d9",
+          "1289d9bd5da87559",
+          "84646e9540632381"
+        ],
+        "sample": "[(code: CONSENT_MISSING, message: 녹음 동의가 없어 AI 상담을 시작할 수 없습니다.), (code: TOO_SHORT, message: 녹취가 너무 짧아 요약할 수 없습니다 (30초 미만).), (code: MODEL_TIMEOUT, message: 요약 생..."
+      },
+      "clinic.claimIssue": {
+        "digests": [
+          "0a6eeaf946f3e721",
+          "637c0c3dc599c685",
+          "e2279e153edbf4a1"
+        ],
+        "sample": "[(diagnosisCode: Z41.1, feeCode: CONS01, message: 미용 목적 상병에는 급여 진찰료를 청구할 수 없습니다., ruleId: R-DX-001, severity: error), (diagnosisCode: B07, feeCode: WART-01, mes..."
+      },
+      "clinic.crmSendFailure": {
+        "digests": [
+          "50c0b16fcd2087d3",
+          "4a5996f56711166d",
+          "618664b3c4443277"
+        ],
+        "sample": "[(code: DUPLICATE_LIMIT, reason: 동일 캠페인 중복 발송 제한), (code: NO_CREDIT, reason: 크레딧 부족), (code: OPTED_OUT, reason: 수신 거부 번호), (code: INVALID_NUMBER, reason: 수신 번호 ..."
+      },
+      "saas.label": {
+        "digests": [
+          "413c8033a233862f",
+          "413c8033a233862f",
+          "413c8033a233862f"
+        ],
+        "sample": "[결제 연체, 주민번호 열람, 대체 발송, 충전, 가상계좌, 발송 실패, 고시 반영, does-not-exist]"
+      },
+      "saas.tenant": {
+        "digests": [
+          "70f1b594b6ef7604",
+          "3cffae0326158b6f",
+          "674c15f345513cff"
+        ],
+        "sample": "[(address: 서울특별시 송파구 백제고분로 150 108동 2204호, businessNumber: 324-61-96663, code: CLN-SFJ7V6, createdAt: 2025-03-05 00:00:00.000Z, name: 하늘빛정형외과의원, ownerName: 남윤서,..."
+      },
+      "saas.plan": {
+        "digests": [
+          "7578c35b60f9bc5f",
+          "85d906f36b1d73b7",
+          "9102f3b1bdc029e1"
+        ],
+        "sample": "[(code: starter, messageCredits: 500, monthlyPrice: 99000, name: 스타터, seats: 3), (code: standard, messageCredits: 2000, monthlyPrice: 199000, name: 스탠다드, seats:..."
+      },
+      "saas.subscriptionStatus": {
+        "digests": [
+          "6a696a90cde071ac",
+          "ac7aed06fc965e3a",
+          "cb383b7e881b8dc0"
+        ],
+        "sample": "[active, active, trialing, active, active, active, active, trialing, active, active]"
+      },
+      "saas.subscription": {
+        "digests": [
+          "cf81d0cc2a31e7ee",
+          "2cd5144e0758ffac",
+          "5beb0e29499f8541"
+        ],
+        "sample": "[(cancelledAt: null, currentPeriodEnd: 2026-11-01 00:00:00.000Z, currentPeriodStart: 2026-10-01 00:00:00.000Z, planCode: starter, planName: 스타터, seats: 1, start..."
+      },
+      "saas.invoice": {
+        "digests": [
+          "4a71648d1debe7fd",
+          "01487c20585b5a14",
+          "fd0cfd100bd4e778"
+        ],
+        "sample": "[(dueAt: 2026-11-11 00:00:00.000Z, failureCode: null, failureReason: null, issuedAt: 2026-11-01 00:00:00.000Z, number: INV-202610-789682, paidAt: null, periodEn..."
+      },
+      "saas.invoices": {
+        "digests": [
+          "a3ce0f0defcb0a0d",
+          "2cce624557823299",
+          "5b2b1bd373a2f137"
+        ],
+        "sample": "[[(dueAt: 2026-10-11 00:00:00.000Z, failureCode: null, failureReason: null, issuedAt: 2026-10-01 00:00:00.000Z, number: INV-2026-09-0004, paidAt: null, periodEn..."
+      },
+      "saas.autopayFailureCodes": {
+        "digests": [
+          "d7afbe566f23a236",
+          "d7afbe566f23a236",
+          "d7afbe566f23a236"
+        ],
+        "sample": "[LIMIT_EXCEEDED, CARD_EXPIRED, INSUFFICIENT_FUNDS, CARD_LOST, CARD_SUSPENDED, ISSUER_TIMEOUT]"
+      },
+      "saas.autopayFailure": {
+        "digests": [
+          "903710dbce0dac77",
+          "7aa08301d24e2c5d",
+          "44aaaa2c17ed41a6"
+        ],
+        "sample": "[(code: LIMIT_EXCEEDED, reason: 카드 한도 초과), (code: INSUFFICIENT_FUNDS, reason: 잔액 부족), (code: CARD_EXPIRED, reason: 카드 유효기간 만료), (code: INSUFFICIENT_FUNDS, reaso..."
+      },
+      "saas.prepaidBonusTiers": {
+        "digests": [
+          "73fd1b01378eacdd",
+          "73fd1b01378eacdd",
+          "73fd1b01378eacdd"
+        ],
+        "sample": "[(100000, 10), (300000, 15), (500000, 20), (1000000, 25), (3000000, 35), (5000000, 45), (10000000, 55), (15000000, 60)]"
+      },
+      "saas.prepaidBonus": {
+        "digests": [
+          "09d4951bd72016af",
+          "09d4951bd72016af",
+          "09d4951bd72016af"
+        ],
+        "sample": "[0, 10000, 45000, 250000, 9000000, 24000000]"
+      },
+      "saas.prepaidLedger": {
+        "digests": [
+          "48c54104f07e4e9e",
+          "b785ea06bbf7f126",
+          "9d34ec1322a7b217"
+        ],
+        "sample": "[[(amount: 5000000, at: 2026-08-16 20:40:00.000Z, balanceAfter: 7250000, bonus: 2250000, kind: topUp, kindLabel: 충전, method: transfer, methodLabel: 계좌이체), (amou..."
+      },
+      "saas.operatorRoles": {
+        "digests": [
+          "bfb86747e8e06ba3",
+          "bfb86747e8e06ba3",
+          "bfb86747e8e06ba3"
+        ],
+        "sample": "[owner, admin, billing, support, viewer]"
+      },
+      "saas.operator": {
+        "digests": [
+          "58ffaefd7fad0271",
+          "d598ca76f4a100cc",
+          "849d695aabe5e40a"
+        ],
+        "sample": "[(allowedIps: [203.0.113.224/27], email: juwon.jang@ops.example.com, lastLoginAt: 2026-09-22 23:17:02.423Z, name: 장주원, role: admin, roleLabel: 관리자, status: acti..."
+      },
+      "saas.operatorActions": {
+        "digests": [
+          "875588e5d1928f09",
+          "875588e5d1928f09",
+          "875588e5d1928f09"
+        ],
+        "sample": "[tenant.approve, tenant.suspend, tenant.resume, plan.change, invoice.issue, invoice.refund, credit.grant, template.approve, template.reject, senderNumber.approv..."
+      },
+      "saas.operatorEvent": {
+        "digests": [
+          "13e987fb34a3a65f",
+          "4a46cd6d7c3a0855",
+          "ab5cb009d2b407a9"
+        ],
+        "sample": "[(action: master.publish, actionLabel: 청구 마스터 배포, at: 2026-09-12 20:51:03.227Z, id: 8d3c43d2-c459-4e82-ad0b-6426fea68a7b, ip: 192.0.2.92, operatorName: 문유준, ope..."
+      },
+      "saas.masterChanges": {
+        "digests": [
+          "15d8c824711b4d9a",
+          "b5332a070fb83573",
+          "1ce64e90ea2132d2"
+        ],
+        "sample": "[[(change: updated, changeLabel: 변경, code: EX-F8968, kind: fee, name: 초진 진찰료, newPrice: 19080, oldPrice: 18000), (change: updated, changeLabel: 변경, code: EX-F10..."
+      },
+      "saas.masterChecks": {
+        "digests": [
+          "209a410132c90171",
+          "097bd32b2599adaf",
+          "c2bd1eef6569bc2b"
+        ],
+        "sample": "[[(code: DUPLICATE_CODE, detail: 3 rows, label: 코드 중복 없음, passed: false), (code: NEGATIVE_PRICE, detail: null, label: 단가 음수·0원 없음, passed: true), (code: EFFECTI..."
+      },
+      "saas.integrationSnapshot": {
+        "digests": [
+          "6cc35a759477db35",
+          "cdc9100584568b91",
+          "d80b796f9d66f6ab"
+        ],
+        "sample": "[[(avgLatencyMs: 136, calls24h: 10095, lastIncidentAt: 2026-09-24 06:34:00.000Z, service: eligibility, serviceLabel: 자격조회, status: up, statusLabel: 정상, successR..."
+      },
+      "saas.incidents": {
+        "digests": [
+          "99d6de31ec13c45d",
+          "ad16520fec30658b",
+          "0cb9ba4c58835db8"
+        ],
+        "sample": "[[(endedAt: 2026-09-25 09:58:09.278Z, kind: degraded, kindLabel: 지연, resolved: true, service: ePrescription, startedAt: 2026-09-25 08:40:09.278Z, title: 전자처방 응답..."
+      },
+      "saas.opsAlert": {
+        "digests": [
+          "25db61ab7084bc97",
+          "c6f3c07277d837d0",
+          "2adc9891c8d6bdd1"
+        ],
+        "sample": "[(at: 2026-10-05 05:43:00.000Z, code: CERT_EXPIRING, level: warning, levelLabel: 경고, message: 공동인증서 만료가 30일 이내인 의원이 2곳 있습니다.), (at: 2026-10-04 11:51:00.000Z, co..."
+      },
+      "saas.announcement": {
+        "digests": [
+          "6e9aec461b5ec694",
+          "c74f69f27b27a5da",
+          "18e476cbcf502f1f"
+        ],
+        "sample": "[(audience: allTenants, audienceLabel: 전체 의원, channels: [inApp, email], items: [알림톡 발송 실패 시 문자로 자동 대체 발송합니다., 수납 화면에서 선수금 차감과 분할 결제를 함께 처리합니다., 예약 화면에서 대기 순번을 바..."
+      },
+      "saas.tenantActivity": {
+        "digests": [
+          "7c4bd602d7fb39b6",
+          "3b76e19b175fe7ef",
+          "b31d8deee92276ce"
+        ],
+        "sample": "[(at: 2026-10-04 19:54:00.000Z, tenant: 라온정형외과의원, text: 동의서 70건 전자서명), (at: 2026-10-04 19:49:00.000Z, tenant: Example Tenant, text: 동의서 203건 전자서명), (at: 2026-10..."
+      },
+      "saas.creditLedger": {
+        "digests": [
+          "9821a6e6252454be",
+          "5d741a59cd4f6665",
+          "e902d2f4bd3e8490"
+        ],
+        "sample": "[[(at: 2026-09-05 20:40:00.000Z, balanceAfter: 1000, delta: 1000, reason: purchase, reasonLabel: 충전), (at: 2026-09-08 22:06:00.000Z, balanceAfter: 788, delta: -..."
+      },
+      "saas.senderNumber": {
+        "digests": [
+          "2353646fe365ae6b",
+          "6f875c74404d5f3a",
+          "714236fcb61e0d20"
+        ],
+        "sample": "[(label: 데스크, number: 042-089-6821, registeredAt: 2026-03-19 00:00:00.000Z, status: approved, statusLabel: 승인), (label: 데스크, number: 02-083-0549, registeredAt: ..."
+      },
+      "saas.messageTemplate": {
+        "digests": [
+          "1ca817900c6faa98",
+          "90a27d1d6ca21fb9",
+          "3b8f70774ee57a5b"
+        ],
+        "sample": "[(advertising: false, body: #{환자명}님, #{예약일시} #{병원명} 예약이 완료되었습니다."
+      },
+      "saas.messageLog": {
+        "digests": [
+          "0a12d5fb4f806f1f",
+          "3010c8f22811b5e8",
+          "9fc139598e2bafed"
+        ],
+        "sample": "[(channel: alimtalk, credits: 1, failureCode: null, failureReason: null, id: 768a5058-d3c4-43d2-8459-e82ad0b6426f, recipient: 010-****-2110, requestedAt: 2026-1..."
+      },
+      "saas.masterVersion": {
+        "digests": [
+          "3369a8aa4cbffe2a",
+          "652cbc45bcd2c219",
+          "5a35ef26c83a05ce"
+        ],
+        "sample": "[(effectiveFrom: 2026-10-01 00:00:00.000Z, kind: fee, kindLabel: 수가, publishedAt: 2026-09-14 00:00:00.000Z, rowCount: 9933, status: current, statusLabel: 적용 중, ..."
+      },
+      "saas.services": {
+        "digests": [
+          "ba9f907005ad27b4",
+          "ba9f907005ad27b4",
+          "ba9f907005ad27b4"
+        ],
+        "sample": "[eligibility, dur, ePrescription, insuranceClaim, identityQr, alimtalkGateway, payment]"
+      },
+      "saas.healthCheck": {
+        "digests": [
+          "d006fec2b731bd4c",
+          "8fee4d6425312042",
+          "114335a410f586ee"
+        ],
+        "sample": "[(checkedAt: 2026-10-05 08:56:56.000Z, latencyMs: 113, message: null, service: ePrescription, serviceLabel: 전자처방, status: up, statusLabel: 정상), (checkedAt: 2026..."
+      },
+      "saas.auditActions": {
+        "digests": [
+          "d3f1ecf177cb4f85",
+          "d3f1ecf177cb4f85",
+          "d3f1ecf177cb4f85"
+        ],
+        "sample": "[login, loginFailed, view, revealRrn, create, update, delete, print, exportData, send, roleChange]"
+      },
+      "saas.auditEvent": {
+        "digests": [
+          "c31548b059ec0fa8",
+          "26df3bc4f6adc436",
+          "c0b26100dd2e606e"
+        ],
+        "sample": "[(action: view, actionLabel: 조회, actorName: 서서진, actorRole: 간호조무사, at: 2026-09-17 06:46:31.663Z, id: 2ea7b476-8a50-458d-bc43-d2c459e82ad0, ip: 192.0.2.157, targ..."
+      },
+      "saas.notice": {
+        "digests": [
+          "e663eb863fd35f5c",
+          "ec88b70f78cebcab",
+          "6d6c0078f41ba39e"
+        ],
+        "sample": "[(body: 이번 달 수가·약가 마스터가 반영되었습니다. 청구 전 변경 내역을 확인해 주세요., category: notice, categoryLabel: 공지, pinned: false, publishedAt: 2026-09-16 00:00:00.000Z, title: 청구 마스터 ..."
+      },
+      "saas.timeSeries": {
+        "digests": [
+          "4a08489c87fb49a2",
+          "284da1ea327feab8",
+          "652b38af06745533"
+        ],
+        "sample": "[[(date: 2026-09-06 00:00:00.000Z, value: 72), (date: 2026-09-07 00:00:00.000Z, value: 109), (date: 2026-09-08 00:00:00.000Z, value: 104), (date: 2026-09-09 00:..."
+      }
+    },
+    "en": {
+      "clinic.label": {
+        "digests": [
+          "52665acc09268224",
+          "52665acc09268224",
+          "52665acc09268224"
+        ],
+        "sample": "[National insurance, Medical aid (type 1), Self-pay, No-show, Prepaid balance, Spouse, Pico laser, Positive, In progress, does-not-exist]"
+      },
+      "clinic.specialty": {
+        "digests": [
+          "161619e90b612ab1",
+          "d44c1511d2dd8419",
+          "cac032972e2c0293"
+        ],
+        "sample": "Dermatology"
+      },
+      "clinic.clinicName": {
+        "digests": [
+          "0875921c82afa4d2",
+          "85d1fe4e902bef28",
+          "944971e4fe6a1610"
+        ],
+        "sample": "[Sample Dermatology Clinic, Sample Internal Medicine, Demo Plastic Surgery, Northgate Family Clinic]"
+      },
+      "clinic.clinicName.specialty": {
+        "digests": [
+          "b1e4638d6d6ffd8d",
+          "95ad9f1a4473f300",
+          "9a3a868921c50299"
+        ],
+        "sample": "[Sample Dermatology Clinic, Sample Plastic Surgery, Demo Family Clinic, Northgate Internal Medicine, Evergreen Pediatrics, Demo Internal Medicine]"
+      },
+      "clinic.staffRoles": {
+        "digests": [
+          "5d73aa98340036f2",
+          "5d73aa98340036f2",
+          "5d73aa98340036f2"
+        ],
+        "sample": "[director, doctor, counselor, coordinator, nurse, nurseAide, skincare, desk]"
+      },
+      "clinic.staffRole": {
+        "digests": [
+          "375aa4e83683c8cc",
+          "ff700fe23b77e21c",
+          "6357d233e286ab47"
+        ],
+        "sample": "[(code: nurse, label: Registered Nurse), (code: nurseAide, label: Nurse Assistant), (code: skincare, label: Aesthetician), (code: nurseAide, label: Nurse Assist..."
+      },
+      "clinic.staff": {
+        "digests": [
+          "07d4b92b9cdfd6c7",
+          "3ad68f39224d8875",
+          "2694a47c9b578556"
+        ],
+        "sample": "[(email: mia.morgan@demo.clinic, name: Mia Morgan, phone: +1 (211) 555-0103, role: nurse, roleLabel: Registered Nurse), (email: mia.anderson@demo.clinic, name: ..."
+      },
+      "clinic.staff.role": {
+        "digests": [
+          "40f9951fe34a975b",
+          "4c4eef1438b4e40c",
+          "da1c079ef3ad7762"
+        ],
+        "sample": "[(email: grace.wilson@example.test, name: Grace Wilson, phone: +1 (821) 555-0110, role: counselor, roleLabel: Patient Counselor), (email: mason.reed@demo.clinic..."
+      },
+      "clinic.patient": {
+        "digests": [
+          "393d479c0a7f3dc4",
+          "f20125c8c0f242c0",
+          "d3c6249e4d97ad0a"
+        ],
+        "sample": "[(address1: 3209 Market Street, Denver, address2: , age: 54, birthDate: 1971-12-21 00:00:00.000Z, channel: walkIn, channelLabel: Walk-in, chartNo: 17020, email:..."
+      },
+      "clinic.patient.options": {
+        "digests": [
+          "bb626229b1636741",
+          "7ea89663475ec70f",
+          "0f7c13069ea35750"
+        ],
+        "sample": "[(address1: 7283 Cedar Lane, Denver, address2: , age: 35, birthDate: 1991-06-29 00:00:00.000Z, channel: search, channelLabel: Search, chartNo: 19822, email: lia..."
+      },
+      "clinic.chartNumber": {
+        "digests": [
+          "a71082bc88239ef0",
+          "a71082bc88239ef0",
+          "a71082bc88239ef0"
+        ],
+        "sample": "[123, 000123, 2026-00123]"
+      },
+      "clinic.insuranceType": {
+        "digests": [
+          "622c83bcac0757cc",
+          "a8f4f36902e08c99",
+          "0cbf3f5bf649082f"
+        ],
+        "sample": "[(code: nhis, label: National insurance), (code: nhis, label: National insurance), (code: nhis, label: National insurance), (code: nhis, label: National insuran..."
+      },
+      "clinic.visitPurpose": {
+        "digests": [
+          "3b024bf977948cad",
+          "af3548e26dad54ae",
+          "7a2e9a0b85b62e8f"
+        ],
+        "sample": "[(detail: Follow-up consultation, detailId: 6, purpose: Consultation, purposeId: 1), (detail: Acne, detailId: 10, purpose: Treatment, purposeId: 3), (detail: Wa..."
+      },
+      "clinic.visitPurposeTree": {
+        "digests": [
+          "919505098cc86549",
+          "919505098cc86549",
+          "919505098cc86549"
+        ],
+        "sample": "[(color: #EC4899, id: 1, name: Consultation, parentId: null), (color: #F59E0B, id: 2, name: Procedure, parentId: null), (color: #10B981, id: 3, name: Treatment,..."
+      },
+      "clinic.procedures": {
+        "digests": [
+          "65c37bafdb9c374b",
+          "65c37bafdb9c374b",
+          "65c37bafdb9c374b"
+        ],
+        "sample": "[CONS01, BTX-F, FIL-L, LT-01, HIFU-300, ACN-01, CARE-01, DOC-01]"
+      },
+      "clinic.procedure": {
+        "digests": [
+          "fb231e22c59399d0",
+          "d597001572facb55",
+          "dd1a99eb4c56274f"
+        ],
+        "sample": "[(category: Lifting/HIFU, code: HIFU-300, name: Focused ultrasound lift 300 lines, price: 1250, taxable: true, unit: session), (category: Care/Soothing, code: C..."
+      },
+      "clinic.procedure.code": {
+        "digests": [
+          "5781248a988f8352",
+          "198ae98fcfe06133",
+          "4c2fe57b91cf951f"
+        ],
+        "sample": "[(category: Visit/Fee, code: CONS01, name: New patient visit, price: 145, taxable: false, unit: visit), (category: Neurotoxin/Wrinkles, code: BTX-F, name: Foreh..."
+      },
+      "clinic.procedure.category": {
+        "digests": [
+          "8d309aa0e491070c",
+          "6ae8a310193a3e9c",
+          "f6b88978a9bd64ac"
+        ],
+        "sample": "[(category: Visit/Fee, code: CONS01, name: New patient visit, price: 145, taxable: false, unit: visit), (category: Documents, code: DOC-01, name: Medical certif..."
+      },
+      "clinic.package": {
+        "digests": [
+          "fd1e13f4a9e270b6",
+          "4ea3a44843bbe688",
+          "6ea076a9d1aacc69"
+        ],
+        "sample": "[(name: Focused ultrasound lift 300 lines x5, price: 4940, procedureCode: HIFU-300, sessions: 5, validDays: 180), (name: Hyaluronic filler lips 1 ml x5, price: ..."
+      },
+      "clinic.package.code": {
+        "digests": [
+          "0e2121f9f9c6d2b1",
+          "4f62f95fd93a0583",
+          "846991b490b46dd6"
+        ],
+        "sample": "[(name: New patient visit x5, price: 570, procedureCode: CONS01, sessions: 5, validDays: 180), (name: Forehead neurotoxin x5, price: 1790, procedureCode: BTX-F,..."
+      },
+      "clinic.packageBalance": {
+        "digests": [
+          "c022d2a3aa9a6007",
+          "a5200b268e26a450",
+          "746f3ee4dfd31d7a"
+        ],
+        "sample": "[(expiresAt: 2027-02-16 00:00:00.000Z, name: Focused ultrasound lift 300 lines x5, procedureCode: HIFU-300, purchasedAt: 2026-08-20 00:00:00.000Z, remainingSess..."
+      },
+      "clinic.prepaidBalance": {
+        "digests": [
+          "05407ad1c3528545",
+          "e5fe69d2781959e0",
+          "151e107663434388"
+        ],
+        "sample": "[150, 920, 570, 390, 430, 660]"
+      },
+      "clinic.diagnosis": {
+        "digests": [
+          "e72bfdead5126c00",
+          "fdb86abe6bf031e0",
+          "851e422b713c880f"
+        ],
+        "sample": "[(code: L30.9, name: Dermatitis, unspecified, nameEn: Dermatitis, unspecified), (code: L71.9, name: Rosacea, unspecified, nameEn: Rosacea, unspecified), (code: ..."
+      },
+      "clinic.drugName": {
+        "digests": [
+          "55b9c78241fcf396",
+          "fd99034d702105fd",
+          "fb07710042d66054"
+        ],
+        "sample": "[Navirox capsule 100mg, Seraton ointment 15g, Keraphen cream 30g, Navirox cream 15g]"
+      },
+      "clinic.prescription": {
+        "digests": [
+          "6aaedb1a569d94d0",
+          "a6598b197436e7bd",
+          "54bdae7fbcd1dd7b"
+        ],
+        "sample": "[(days: 3, name: Seraton ointment 30g, quantity: 9, usage: Apply a thin layer twice daily), (days: 7, name: Acrozine cream 15g, quantity: 21, usage: Apply once ..."
+      },
+      "clinic.chartMemo": {
+        "digests": [
+          "bddcaa25b2a36571",
+          "a65e3ea54893dc31",
+          "b8dab11150eb5ddd"
+        ],
+        "sample": "[Advised no makeup for 24 hours., Before photos taken., Package pricing explained; patient will decide later.]"
+      },
+      "clinic.soap": {
+        "digests": [
+          "638b733323a74b77",
+          "5176348d0f9db6a1",
+          "7665dfa89eec9e4a"
+        ],
+        "sample": "[(assessment: Dermatitis, unspecified (L30.9), objective: Moderate lower-face laxity, plan: Observe, return if worse, subjective: Concerned about forehead lines..."
+      },
+      "clinic.questionnaire": {
+        "digests": [
+          "c00c43ea099fd9f8",
+          "c5e99fe9538bdf8d",
+          "b22564f1e61c9f29"
+        ],
+        "sample": "[[(answer: None, question: Do you have any drug allergies?), (answer: Acne medication, question: Are you taking any medication?), (answer: No, question: Are you..."
+      },
+      "clinic.businessSlots": {
+        "digests": [
+          "81407455497a6229",
+          "81407455497a6229",
+          "81407455497a6229"
+        ],
+        "sample": "[[2026-10-01 10:00:00.000Z, 2026-10-01 10:30:00.000Z, 2026-10-01 11:00:00.000Z, 2026-10-01 11:30:00.000Z, 2026-10-01 12:00:00.000Z, 2026-10-01 12:30:00.000Z, 20..."
+      },
+      "clinic.appointmentSlot": {
+        "digests": [
+          "b8558cc7c813829b",
+          "3566f6d0b9a9eabe",
+          "32a4d3179bd0ae03"
+        ],
+        "sample": "[2026-10-15 12:30:00.000Z, 2026-10-13 12:30:00.000Z, 2026-10-13 16:00:00.000Z, 2026-10-16 16:30:00.000Z, 2026-10-10 11:30:00.000Z, 2026-10-19 15:00:00.000Z, 202..."
+      },
+      "clinic.visitStages": {
+        "digests": [
+          "1abd4607f299191b",
+          "1abd4607f299191b",
+          "1abd4607f299191b"
+        ],
+        "sample": "[reception, waiting, consultation, counseling, procedure, care, payment, done]"
+      },
+      "clinic.visitFlow": {
+        "digests": [
+          "2759fb5b4d330c67",
+          "7ff8a748894b6470",
+          "df02801bb29119d7"
+        ],
+        "sample": "[[reception, waiting, counseling, consultation, payment, done], [reception, waiting, consultation, payment, done], [reception, waiting, counseling, consultation..."
+      },
+      "clinic.visitStage": {
+        "digests": [
+          "af7fcfa65fb5e216",
+          "a1b57e5e8fef84b8",
+          "ef98faea1092de08"
+        ],
+        "sample": "[waiting, consultation, payment, counseling, waiting, procedure, procedure, care]"
+      },
+      "clinic.reservationStatus": {
+        "digests": [
+          "bf34dbf60ba6e3d6",
+          "0552b04893d58a1e",
+          "f4cfc20e5c0afd1a"
+        ],
+        "sample": "[reserved, reserved, confirmed, confirmed, reserved, confirmed, completed, completed, completed, completed, completed, cancelled, completed]"
+      },
+      "clinic.payment": {
+        "digests": [
+          "d9e350ed086cc96d",
+          "26004584543b5ecc",
+          "3fd533c039507f9e"
+        ],
+        "sample": "[(amount: 20, approvalNo: 89682110, cardIssuer: Mastercard, cashReceiptNo: null, installmentMonths: 0, method: card, methodLabel: Card), (amount: 400, approvalN..."
+      },
+      "clinic.payment.method": {
+        "digests": [
+          "b0e766bae475dc1c",
+          "fed1b6b7d47b697b",
+          "40a97e09a6f03bf5"
+        ],
+        "sample": "[(amount: 400, approvalNo: 78968211, cardIssuer: Visa, cashReceiptNo: null, installmentMonths: 0, method: card, methodLabel: Card), (amount: 600000, approvalNo:..."
+      },
+      "clinic.splitPayment": {
+        "digests": [
+          "fd3d8a3e93eb54e2",
+          "930b237ccd608c30",
+          "0623580ac5be837a"
+        ],
+        "sample": "[[(amount: 20, approvalNo: 89682110, cardIssuer: Mastercard, cashReceiptNo: null, installmentMonths: 0, method: card, methodLabel: Card)], [(amount: 400, approv..."
+      },
+      "clinic.consentKinds": {
+        "digests": [
+          "133b7c0285e7f5e6",
+          "133b7c0285e7f5e6",
+          "133b7c0285e7f5e6"
+        ],
+        "sample": "[procedure, privacy, photo]"
+      },
+      "clinic.consentForm": {
+        "digests": [
+          "b783392ae24243c6",
+          "a445107828ebdf6c",
+          "5bcfc65595d91be5"
+        ],
+        "sample": "[(clauses: [Collected: name, date of birth, contact details, medical records., Purpose: treatment, appointment reminders, billing., I may refuse, but online boo..."
+      },
+      "clinic.feedback": {
+        "digests": [
+          "be9a5413694b5be7",
+          "d9b510d661011ec0",
+          "8ab9a8b8152ae806"
+        ],
+        "sample": "[(comment: My skin tone improved after three sessions., score: 5, sentiment: positive), (comment: The doctor explained everything carefully., score: 5, sentimen..."
+      },
+      "clinic.counselTopics": {
+        "digests": [
+          "578650b76e3793eb",
+          "578650b76e3793eb",
+          "578650b76e3793eb"
+        ],
+        "sample": "[toning, lifting]"
+      },
+      "clinic.counselSession": {
+        "digests": [
+          "17706a3e30bcaab6",
+          "6ef035a967f4800d",
+          "95a0cd2036b6eb6c"
+        ],
+        "sample": "[(booked: false, packagePrice: 3480, procedure: picosecond laser toning, procedureCode: LT-01, quotedPrice: 470, sessions: 10, summary: Recommended picosecond l..."
+      },
+      "clinic.inquiryLanguages": {
+        "digests": [
+          "0a0449aef498a518",
+          "0a0449aef498a518",
+          "0a0449aef498a518"
+        ],
+        "sample": "[ko, en, ja, zh, vi]"
+      },
+      "clinic.inquiry": {
+        "digests": [
+          "e9fb74ab46f585ef",
+          "ab138edd6e013c49",
+          "28cc2e17ffb6c263"
+        ],
+        "sample": "[(channel: kakao, handle: @charlie_1034, language: ko, turns: [(at: 0:00:00.000000, language: ko, speaker: patient, text: 외국어가 가능한 직원이 있나요?, translation: null),..."
+      },
+      "clinic.messengerHandle": {
+        "digests": [
+          "10fa469efee24014",
+          "f91a1279dce5608d",
+          "6faffed2e99027e6"
+        ],
+        "sample": "[@avery_7896, @olivia_2110, @olivia_4483, @ren_5497, @yuxin_4532, @minhanh_6196, @taylor_6678, @olivia_2204, @aoi_2880, @lina_7733, @ngoc_6971, wxid_riley3806, ..."
+      },
+      "clinic.insurerName": {
+        "digests": [
+          "e543651950183105",
+          "8cce848efc085c7a",
+          "8aae130c9f8c8626"
+        ],
+        "sample": "[Northwind Mutual, Harborview Life, Summitline Assurance, Harborview Life]"
+      },
+      "clinic.integrationServices": {
+        "digests": [
+          "fef3ad533e5d777f",
+          "fef3ad533e5d777f",
+          "fef3ad533e5d777f"
+        ],
+        "sample": "[eligibility, dur, insuranceClaim, ePrescription, identityQr]"
+      },
+      "clinic.integrationResult": {
+        "digests": [
+          "4791c456e25e28f4",
+          "5552ebffe257ed5b",
+          "97efe5299fbadca1"
+        ],
+        "sample": "[(code: OK, message: Coverage verified, ok: true, service: eligibility), (code: OK, message: No interactions found, ok: true, service: dur), (code: OK, message:..."
+      },
+      "clinic.deviceKinds": {
+        "digests": [
+          "9e48f65e3f0b5a4c",
+          "9e48f65e3f0b5a4c",
+          "9e48f65e3f0b5a4c"
+        ],
+        "sample": "[picoLaser, hifu, rf, ipl, ledTherapy, skinAnalyzer, photoCamera, labelPrinter, cardTerminal, signaturePad, kiosk, bridgePc]"
+      },
+      "clinic.device": {
+        "digests": [
+          "931c3149e0c36bcd",
+          "0ac700304d2a509e",
+          "eb76707cfd2d1ac0"
+        ],
+        "sample": "[(kind: ledTherapy, kindLabel: LED therapy, model: KEL-L780 II, name: LED therapy #1, serial: SN-8LZ5-WZY2, vendor: Kellbrio), (kind: picoLaser, kindLabel: Pico..."
+      },
+      "clinic.teamNote": {
+        "digests": [
+          "e79f5bed0d84726d",
+          "440673510e56d609",
+          "7fe7debd2ce29515"
+        ],
+        "sample": "[(author: Jordan Anderson, mentions: [Olivia Bennett], text: @Olivia Bennett Nurse Assistant, please lower the laser setting one step for Mason Reed.), (author:..."
+      },
+      "clinic.staffNotice": {
+        "digests": [
+          "3c3e18fe192e538c",
+          "ea5356a3f4ab96d7",
+          "799b85f2cd1dd43c"
+        ],
+        "sample": "[(body: Full ID numbers can only be revealed with a reason; access is reviewed monthly., kind: policy, title: ID number access review), (body: Training on the n..."
+      },
+      "clinic.vitalsNote": {
+        "digests": [
+          "c6209a38bd886882",
+          "483cc73da983a809",
+          "3a85ed2c58da5b96"
+        ],
+        "sample": "[Vitals stable (BP 118/76 mmHg, HR 72, SpO2 98%, T 36.6°C)., BP 152/96 mmHg is high; recheck after 10 minutes of rest., Low-grade fever 38.1°C; doctor to decide..."
+      },
+      "clinic.closureNotice": {
+        "digests": [
+          "fad9831f2b9c7433",
+          "710c4bfd9f4d2651",
+          "6a504587a2b2f973"
+        ],
+        "sample": "[(body: Sample Dermatology Clinic is closed 9/24~9/27 for Chuseok. Regular hours resume 9/28., from: 2026-09-24 00:00:00.000Z, holiday: Chuseok, title: Closed 9..."
+      },
+      "clinic.relations": {
+        "digests": [
+          "a718001a62299872",
+          "a718001a62299872",
+          "a718001a62299872"
+        ],
+        "sample": "[self, spouse, parent, child, sibling, grandparent, grandchild, legalGuardian, other]"
+      },
+      "clinic.familyRelation": {
+        "digests": [
+          "9209b1abe78dd92f",
+          "3545e4812551c779",
+          "3cd722fd5c9bbb5d"
+        ],
+        "sample": "[(code: legalGuardian, label: Legal guardian), (code: other, label: Other), (code: grandparent, label: Grandparent), (code: self, label: Self)]"
+      },
+      "clinic.guardian": {
+        "digests": [
+          "972eb6e7d3ea1f4b",
+          "eb6891ce7a389aba",
+          "668be97711094233"
+        ],
+        "sample": "[(name: Lucas Morgan, phone: +1 (211) 555-0103, relation: spouse, relationLabel: Spouse, sex: CoSex.male), (name: Mia Anderson, phone: +1 (497) 555-0184, relati..."
+      },
+      "clinic.patientTag": {
+        "digests": [
+          "1753013cbe9461d6",
+          "0dc7b0e577cf7ead",
+          "b3a0feeb22e561f7"
+        ],
+        "sample": "[(code: vip, color: #F59E0B, label: VIP), (code: referral, color: #10B981, label: Referral), (code: caution, color: #EF4444, label: Caution), (code: package, co..."
+      },
+      "clinic.patientTags": {
+        "digests": [
+          "f9237e77ee3e8e63",
+          "5c46138b3bac8987",
+          "5c16508902c5118d"
+        ],
+        "sample": "[[(code: referral, color: #10B981, label: Referral)], [(code: package, color: #8B5CF6, label: Package holder), (code: referral, color: #10B981, label: Referral)..."
+      },
+      "clinic.acquisitionChannel": {
+        "digests": [
+          "1ad844b1602717b1",
+          "706d515c70d481fc",
+          "a514d318ea45b494"
+        ],
+        "sample": "[(code: onlineBooking, color: #03C75A, label: Online booking), (code: instagramAd, color: #E1306C, label: Instagram ad), (code: search, color: #7C3AED, label: S..."
+      },
+      "clinic.specialNote": {
+        "digests": [
+          "33adf3f3914f8f6f",
+          "0e9f639811674fd2",
+          "42fc6e78dcb7814e"
+        ],
+        "sample": "[Lidocaine allergy, Keloid-prone: lower laser settings, On blood thinners: check before procedures, Keloid-prone: lower laser settings]"
+      },
+      "clinic.maskName": {
+        "digests": [
+          "000bc1049aa4a8d8",
+          "000bc1049aa4a8d8",
+          "000bc1049aa4a8d8"
+        ],
+        "sample": "[A, A*, A*c, A****f, 김*늘, 남**수, 佐**子]"
+      },
+      "clinic.maskedName": {
+        "digests": [
+          "45b162f3ff93bc1f",
+          "f535e3cc86e6abcc",
+          "2ad3102080f01d40"
+        ],
+        "sample": "[A**********r, O***********n, T*********d, H************t]"
+      },
+      "clinic.consentHistoryKinds": {
+        "digests": [
+          "d11fe0b36974185f",
+          "d11fe0b36974185f",
+          "d11fe0b36974185f"
+        ],
+        "sample": "[privacyRequired, marketingOptional, sensitiveInfo, photoUse, thirdParty, aiRecording, nightAdvertising]"
+      },
+      "clinic.termsVersion": {
+        "digests": [
+          "78966e46cff1f6ec",
+          "27ecd5840f866106",
+          "1ad124b111322a7d"
+        ],
+        "sample": "[(change: Stated the 90-day retention of AI counseling recordings., effectiveFrom: 2026-08-01 00:00:00.000Z, version: v1.7), (change: Stated the 90-day retentio..."
+      },
+      "clinic.consentHistory": {
+        "digests": [
+          "66e847d60bf1ad24",
+          "14f0a23ce1c40bc6",
+          "1b074e68b17ce798"
+        ],
+        "sample": "[[(action: agreed, actionLabel: Agreed, at: 2026-05-24 22:27:33.846Z, channel: desk, channelLabel: Desk, kind: privacyRequired, kindLabel: Privacy (required), t..."
+      },
+      "clinic.consentDispatch": {
+        "digests": [
+          "dcff4bc302554857",
+          "c868aa0964bb821d",
+          "c68572ce01be3588"
+        ],
+        "sample": "[(message: Signed electronically., status: signed), (message: Signature request sent., status: sent), (message: The patient opened the request., status: opened)..."
+      },
+      "clinic.palette": {
+        "digests": [
+          "ce98f8130098cd67",
+          "ce98f8130098cd67",
+          "ce98f8130098cd67"
+        ],
+        "sample": "[#4F46E5, #0EA5E9, #EC4899, #F59E0B, #10B981, #8B5CF6, #EF4444, #14B8A6, #F97316, #64748B, #84CC16, #06B6D4]"
+      },
+      "clinic.color": {
+        "digests": [
+          "a66d542f62723ce3",
+          "4679e6e16a5201c1",
+          "3de55ac8267760c0"
+        ],
+        "sample": "[#10B981, #F59E0B, #F59E0B]"
+      },
+      "clinic.rooms": {
+        "digests": [
+          "6389fbca1aa523c2",
+          "8459a9b925a0de29",
+          "0fd40bda7793a810"
+        ],
+        "sample": "[[(color: #4F46E5, id: 1, kind: counseling, kindLabel: Counseling, name: Counseling 1, staffName: Avery Parker, staffRole: counselor), (color: #0EA5E9, id: 2, k..."
+      },
+      "clinic.queueStatuses": {
+        "digests": [
+          "419260ca787d654c",
+          "419260ca787d654c",
+          "419260ca787d654c"
+        ],
+        "sample": "[requested, waiting, priority, inProgress]"
+      },
+      "clinic.queueBoard": {
+        "digests": [
+          "71d7a970d6c6d91e",
+          "422a05ed717ae639",
+          "d67d5a45fad34f35"
+        ],
+        "sample": "[[(entries: [], roomId: 1, roomKind: counseling, roomName: Counseling 1), (entries: [(checkedInAt: 2026-10-05 08:53:00.000Z, order: 1, patientName: Mason Reed, ..."
+      },
+      "clinic.receptionSource": {
+        "digests": [
+          "e2b44bd7bc7437ab",
+          "a59538ff1d3a8433",
+          "f2b90d4b243370cf"
+        ],
+        "sample": "[(code: tablet, label: Tablet), (code: desk, label: Desk), (code: kiosk, label: Check-in kiosk), (code: desk, label: Desk), (code: tablet, label: Tablet), (code..."
+      },
+      "clinic.kioskPurpose": {
+        "digests": [
+          "81fd0ad43123a4f0",
+          "ca777ded0eb1f0a9",
+          "b03db09e26617176"
+        ],
+        "sample": "[(code: checkin, label: Check in), (code: reservation, label: Find my booking), (code: payment, label: Pay), (code: reservation, label: Find my booking)]"
+      },
+      "clinic.vitals": {
+        "digests": [
+          "f3afe6ab4c06e1df",
+          "ec78d2ffa4c4fe4b",
+          "696809cdc34c6185"
+        ],
+        "sample": "[(bmi: 20.3, diastolic: 68, glucose: 86, heightCm: 177.7, pulse: 84, spo2: 95, systolic: 112, temperature: 37.1, weightKg: 64.1), (bmi: 14.5, diastolic: 65, glu..."
+      },
+      "clinic.faceRegions": {
+        "digests": [
+          "b45793bd42d6e36d",
+          "b45793bd42d6e36d",
+          "b45793bd42d6e36d"
+        ],
+        "sample": "{forehead: (0.5, 0.22), glabella: (0.5, 0.36), leftEye: (0.36, 0.42), rightEye: (0.64, 0.42), leftCheek: (0.32, 0.58), rightCheek: (0.68, 0.58), nose: (0.5, 0.5..."
+      },
+      "clinic.faceFrontRegions": {
+        "digests": [
+          "55f95802fdd5c2b8",
+          "55f95802fdd5c2b8",
+          "55f95802fdd5c2b8"
+        ],
+        "sample": "{forehead: (bottom: 0.3, left: 0.3, right: 0.7, top: 0.15), glabella: (bottom: 0.38, left: 0.45, right: 0.55, top: 0.31), leftEye: (bottom: 0.44, left: 0.3, rig..."
+      },
+      "clinic.canvasMarks": {
+        "digests": [
+          "b5f41e44af1fdbe4",
+          "c232401d462bcdbd",
+          "3adf5d64017ba0ec"
+        ],
+        "sample": "[[(color: #E11D48, points: [(p: 0.6, t: 1791190800000, x: 0.7513, y: 0.8), (p: 0.6, t: 1791190800014, x: 0.7492, y: 0.8132), (p: 0.6, t: 1791190800027, x: 0.741..."
+      },
+      "clinic.adjustment": {
+        "digests": [
+          "60e0afa86fd9d478",
+          "99e6eabad619e184",
+          "cf17896070ca6cd4"
+        ],
+        "sample": "[(amount: -20, kind: discount, kindLabel: Discount, label: Staff family 20%), (amount: -522, kind: discount, kindLabel: Discount, label: Staff family 20%), (amo..."
+      },
+      "clinic.cardDecline": {
+        "digests": [
+          "6b4e58cc47fedbc4",
+          "11f8e78779a14c53",
+          "aace1ad77462b94b"
+        ],
+        "sample": "[(code: LIMIT_EXCEEDED, reason: Card limit exceeded, responseCode: 61), (code: INSUFFICIENT_FUNDS, reason: Insufficient funds, responseCode: 51), (code: CARD_EX..."
+      },
+      "clinic.paymentMessage": {
+        "digests": [
+          "db3f276cd08645b4",
+          "8ebda5dd540c2d21",
+          "d7dc8f1226d3f6e6"
+        ],
+        "sample": "[Card approved., Cash receipt issued., Partially cancelled., Charged to the prepaid balance., Card declined: Card limit exceeded]"
+      },
+      "clinic.pointTransaction": {
+        "digests": [
+          "208e858b9074312f",
+          "f12db5f974025eb1",
+          "128e0258d03cdcb4"
+        ],
+        "sample": "[(amount: 38, label: 3% of payment earned, reason: earn), (amount: 50, label: Review bonus, reason: bonus), (amount: 9, label: 3% of payment earned, reason: ear..."
+      },
+      "clinic.compoundPackageName": {
+        "digests": [
+          "f2f2508de2dfbdc5",
+          "72d00558e03490de",
+          "1e3ed7153af0d335"
+        ],
+        "sample": "[Picosecond laser toning 10x + Focused ultrasound lift 300 lines 10x + free recovery cream, Hyaluronic filler lips 1 ml 10x + Focused ultrasound lift 300 lines ..."
+      },
+      "clinic.visitHeatmap": {
+        "digests": [
+          "3c8be4e071c4cea0",
+          "ee85aab82c6c49de",
+          "fea905f4a1fc9414"
+        ],
+        "sample": "[[(count: 4, hour: 10, weekday: 1), (count: 9, hour: 11, weekday: 1), (count: 5, hour: 12, weekday: 1), (count: 1, hour: 13, weekday: 1), (count: 7, hour: 14, w..."
+      },
+      "clinic.task": {
+        "digests": [
+          "77a8ec0e90e78fd4",
+          "1537ad4c6850b3b0",
+          "ad7a21d90f15c95d"
+        ],
+        "sample": "[(assigneeRole: Registered Nurse, done: false, dueAt: 2026-10-05 14:30:00.000Z, memo: Please finish before 3 PM., title: Order supplies), (assigneeRole: Patient..."
+      },
+      "clinic.counselEvidence": {
+        "digests": [
+          "ded14a8c00a0d5a8",
+          "0bf9d648957563c4",
+          "abc13145d4cabbad"
+        ],
+        "sample": "[(kind: priceRule, kindLabel: Pricing rule, rule: Suggest owned packages before single sessions), (kind: contraindication, kindLabel: Contraindication, rule: Sk..."
+      },
+      "clinic.counselFailure": {
+        "digests": [
+          "d379b8c0148e9876",
+          "0d3f5b3ccc9f4774",
+          "59d9a709356f35b1"
+        ],
+        "sample": "[(code: CONSENT_MISSING, message: No recording consent; AI counseling cannot start.), (code: STT_FAILED, message: Speech recognition failed. Check the microphon..."
+      },
+      "clinic.claimIssue": {
+        "digests": [
+          "7a8207e8329f04f0",
+          "c40d6d80e7a11c1c",
+          "e226859f1dae47e3"
+        ],
+        "sample": "[(diagnosisCode: Z41.1, feeCode: CONS01, message: Cosmetic diagnoses cannot bill an insured visit fee., ruleId: R-DX-001, severity: error), (diagnosisCode: L20...."
+      },
+      "clinic.crmSendFailure": {
+        "digests": [
+          "f868c6690dfd2989",
+          "f75424543e66beee",
+          "3734b64a7956e420"
+        ],
+        "sample": "[(code: NIGHT_AD_NO_CONSENT, reason: No consent for night-time advertising), (code: MARKETING_NO_CONSENT, reason: No marketing consent), (code: OPTED_OUT, reaso..."
+      },
+      "saas.label": {
+        "digests": [
+          "f292b1ac2fcc5c44",
+          "f292b1ac2fcc5c44",
+          "f292b1ac2fcc5c44"
+        ],
+        "sample": "[Past due, Reveal ID number, Sent via fallback, Top-up, Virtual account, Failed, Regulatory update, does-not-exist]"
+      },
+      "saas.tenant": {
+        "digests": [
+          "fd9d72e330e75c7f",
+          "3bf8ed4ad82779ae",
+          "c5d636073ebd765b"
+        ],
+        "sample": "[(address: 8019 Oak Avenue, Toronto, businessNumber: 978-45-32462, code: CLN-ZY24FS, createdAt: 2026-07-08 00:00:00.000Z, name: Clearview Dermatology Clinic, ow..."
+      },
+      "saas.plan": {
+        "digests": [
+          "5a06d310f91fbc6e",
+          "a4c41a1df3190fcd",
+          "79968ca283e2fc28"
+        ],
+        "sample": "[(code: starter, messageCredits: 500, monthlyPrice: 79, name: Starter, seats: 3), (code: standard, messageCredits: 2000, monthlyPrice: 159, name: Standard, seat..."
+      },
+      "saas.subscriptionStatus": {
+        "digests": [
+          "6a696a90cde071ac",
+          "ac7aed06fc965e3a",
+          "cb383b7e881b8dc0"
+        ],
+        "sample": "[active, active, trialing, active, active, active, active, trialing, active, active]"
+      },
+      "saas.subscription": {
+        "digests": [
+          "9a50f1f13cc7094d",
+          "f053ea2945788e9d",
+          "7187e1549a9cded6"
+        ],
+        "sample": "[(cancelledAt: null, currentPeriodEnd: 2026-11-01 00:00:00.000Z, currentPeriodStart: 2026-10-01 00:00:00.000Z, planCode: starter, planName: Starter, seats: 1, s..."
+      },
+      "saas.invoice": {
+        "digests": [
+          "626c9e93f8449467",
+          "07f68589529f3939",
+          "1b1ee6c75b84b9b3"
+        ],
+        "sample": "[(dueAt: 2026-11-11 00:00:00.000Z, failureCode: null, failureReason: null, issuedAt: 2026-11-01 00:00:00.000Z, number: INV-202610-789682, paidAt: null, periodEn..."
+      },
+      "saas.invoices": {
+        "digests": [
+          "9c33ac3abd9af392",
+          "420961fb07c8a7ff",
+          "fa3409028cc60fc2"
+        ],
+        "sample": "[[(dueAt: 2026-10-11 00:00:00.000Z, failureCode: null, failureReason: null, issuedAt: 2026-10-01 00:00:00.000Z, number: INV-2026-09-0004, paidAt: null, periodEn..."
+      },
+      "saas.autopayFailureCodes": {
+        "digests": [
+          "d7afbe566f23a236",
+          "d7afbe566f23a236",
+          "d7afbe566f23a236"
+        ],
+        "sample": "[LIMIT_EXCEEDED, CARD_EXPIRED, INSUFFICIENT_FUNDS, CARD_LOST, CARD_SUSPENDED, ISSUER_TIMEOUT]"
+      },
+      "saas.autopayFailure": {
+        "digests": [
+          "2524afa6512504b0",
+          "f82dc42067bac6ac",
+          "0d125d05e178f765"
+        ],
+        "sample": "[(code: LIMIT_EXCEEDED, reason: Card limit exceeded), (code: INSUFFICIENT_FUNDS, reason: Insufficient funds), (code: CARD_EXPIRED, reason: Card expired), (code:..."
+      },
+      "saas.prepaidBonusTiers": {
+        "digests": [
+          "73fd1b01378eacdd",
+          "73fd1b01378eacdd",
+          "73fd1b01378eacdd"
+        ],
+        "sample": "[(100000, 10), (300000, 15), (500000, 20), (1000000, 25), (3000000, 35), (5000000, 45), (10000000, 55), (15000000, 60)]"
+      },
+      "saas.prepaidBonus": {
+        "digests": [
+          "09d4951bd72016af",
+          "09d4951bd72016af",
+          "09d4951bd72016af"
+        ],
+        "sample": "[0, 10000, 45000, 250000, 9000000, 24000000]"
+      },
+      "saas.prepaidLedger": {
+        "digests": [
+          "301b43ce96f03ca4",
+          "4bb42a7c2c9fa4b0",
+          "edc3b34643b7f1f0"
+        ],
+        "sample": "[[(amount: 5000000, at: 2026-08-16 20:40:00.000Z, balanceAfter: 7250000, bonus: 2250000, kind: topUp, kindLabel: Top-up, method: transfer, methodLabel: Bank tra..."
+      },
+      "saas.operatorRoles": {
+        "digests": [
+          "bfb86747e8e06ba3",
+          "bfb86747e8e06ba3",
+          "bfb86747e8e06ba3"
+        ],
+        "sample": "[owner, admin, billing, support, viewer]"
+      },
+      "saas.operator": {
+        "digests": [
+          "6277575fd760c963",
+          "cd805211d824a6e1",
+          "471839f861db7e1a"
+        ],
+        "sample": "[(allowedIps: [203.0.113.224/27], email: liam.reed@ops.example.com, lastLoginAt: 2026-09-22 23:17:02.423Z, name: Liam Reed, role: admin, roleLabel: Admin, statu..."
+      },
+      "saas.operatorActions": {
+        "digests": [
+          "875588e5d1928f09",
+          "875588e5d1928f09",
+          "875588e5d1928f09"
+        ],
+        "sample": "[tenant.approve, tenant.suspend, tenant.resume, plan.change, invoice.issue, invoice.refund, credit.grant, template.approve, template.reject, senderNumber.approv..."
+      },
+      "saas.operatorEvent": {
+        "digests": [
+          "7e75d4e2b032d930",
+          "f48a5ceb07a369c7",
+          "d73b595adea823a2"
+        ],
+        "sample": "[(action: master.publish, actionLabel: Publish claim master, at: 2026-09-12 20:51:03.227Z, id: 8d3c43d2-c459-4e82-ad0b-6426fea68a7b, ip: 192.0.2.92, operatorNam..."
+      },
+      "saas.masterChanges": {
+        "digests": [
+          "04393d8d61d3cf35",
+          "472143cdc3e27d29",
+          "37f6f0479b0e92db"
+        ],
+        "sample": "[[(change: updated, changeLabel: Updated, code: EX-F8968, kind: fee, name: New patient visit, newPrice: 19080, oldPrice: 18000), (change: updated, changeLabel: ..."
+      },
+      "saas.masterChecks": {
+        "digests": [
+          "ab31f0dbe4035977",
+          "78dbb3fda2473675",
+          "b7b23b118d1c348d"
+        ],
+        "sample": "[[(code: DUPLICATE_CODE, detail: 3 rows, label: No duplicate codes, passed: false), (code: NEGATIVE_PRICE, detail: null, label: No zero or negative prices, pass..."
+      },
+      "saas.integrationSnapshot": {
+        "digests": [
+          "90933f2966b43711",
+          "a7364e0f074ebbcb",
+          "b052cc7f6c82be9b"
+        ],
+        "sample": "[[(avgLatencyMs: 136, calls24h: 10095, lastIncidentAt: 2026-09-24 06:34:00.000Z, service: eligibility, serviceLabel: Eligibility check, status: up, statusLabel:..."
+      },
+      "saas.incidents": {
+        "digests": [
+          "1ba5c079c0465fd5",
+          "59c7ef9249b7162a",
+          "1ab161ce456e2e54"
+        ],
+        "sample": "[[(endedAt: 2026-09-25 09:58:09.278Z, kind: degraded, kindLabel: Degraded, resolved: true, service: ePrescription, startedAt: 2026-09-25 08:40:09.278Z, title: E..."
+      },
+      "saas.opsAlert": {
+        "digests": [
+          "789d70dd41c6c5ed",
+          "105aab6eef616560",
+          "3f765a5cc89d3e44"
+        ],
+        "sample": "[(at: 2026-10-05 05:43:00.000Z, code: SYNC_DELAY, level: warning, levelLabel: Warning, message: 3 clinics have offline sync delayed by over 15 minutes.), (at: 2..."
+      },
+      "saas.announcement": {
+        "digests": [
+          "d7f49d91b6f804dd",
+          "f643ceef8c60df13",
+          "f68f2165fa6ad9dd"
+        ],
+        "sample": "[(audience: allTenants, audienceLabel: All clinics, channels: [inApp, email], items: [Failed notifications fall back to SMS automatically., Mention teammates wi..."
+      },
+      "saas.tenantActivity": {
+        "digests": [
+          "8094aa475cf822c3",
+          "7149948574ce3451",
+          "c1897be2841233a0"
+        ],
+        "sample": "[(at: 2026-10-04 19:54:00.000Z, tenant: Sample Dermatology Clinic, text: 70 appointments booked), (at: 2026-10-04 19:49:00.000Z, tenant: Example Tenant, text: 2..."
+      },
+      "saas.creditLedger": {
+        "digests": [
+          "1959807116023391",
+          "39a6b3f7c485ead3",
+          "d2ac89511f1a6ba5"
+        ],
+        "sample": "[[(at: 2026-09-05 20:40:00.000Z, balanceAfter: 1000, delta: 1000, reason: purchase, reasonLabel: Purchase), (at: 2026-09-08 22:06:00.000Z, balanceAfter: 788, de..."
+      },
+      "saas.senderNumber": {
+        "digests": [
+          "450b5f8653f3967c",
+          "f73b19d0903107b0",
+          "5ec8895dd0802edd"
+        ],
+        "sample": "[(label: Front desk, number: +1 (896) 555-0182, registeredAt: 2026-07-25 00:00:00.000Z, status: approved, statusLabel: Approved), (label: Main line, number: +1 ..."
+      },
+      "saas.messageTemplate": {
+        "digests": [
+          "561e2739eabb9235",
+          "0db567acaa2c14aa",
+          "171b41c93b46ddc9"
+        ],
+        "sample": "[(advertising: false, body: Hi #{name}, how was your visit to #{clinic}? #{link}, channel: alimtalk, code: SURVEY, name: Satisfaction survey, rejectReason: null..."
+      },
+      "saas.messageLog": {
+        "digests": [
+          "91adc45d1104ee15",
+          "1e6e0f962cd62614",
+          "e42cbf691690e581"
+        ],
+        "sample": "[(channel: alimtalk, credits: 1, failureCode: null, failureReason: null, id: 4768a505-8d3c-443d-ac45-9e82ad0b6426, recipient: +1 (682) 555-0111, requestedAt: 20..."
+      },
+      "saas.masterVersion": {
+        "digests": [
+          "cf269dd88ccec67c",
+          "17ded6cb06a2cea7",
+          "29360179429635ad"
+        ],
+        "sample": "[(effectiveFrom: 2026-10-01 00:00:00.000Z, kind: fee, kindLabel: Fee schedule, publishedAt: 2026-09-14 00:00:00.000Z, rowCount: 9933, status: current, statusLab..."
+      },
+      "saas.services": {
+        "digests": [
+          "ba9f907005ad27b4",
+          "ba9f907005ad27b4",
+          "ba9f907005ad27b4"
+        ],
+        "sample": "[eligibility, dur, ePrescription, insuranceClaim, identityQr, alimtalkGateway, payment]"
+      },
+      "saas.healthCheck": {
+        "digests": [
+          "5c473e1f893e036b",
+          "53a464f98bcbece9",
+          "020787b9ddd15bbd"
+        ],
+        "sample": "[(checkedAt: 2026-10-05 08:56:56.000Z, latencyMs: 113, message: null, service: ePrescription, serviceLabel: E-prescription, status: up, statusLabel: Operational..."
+      },
+      "saas.auditActions": {
+        "digests": [
+          "d3f1ecf177cb4f85",
+          "d3f1ecf177cb4f85",
+          "d3f1ecf177cb4f85"
+        ],
+        "sample": "[login, loginFailed, view, revealRrn, create, update, delete, print, exportData, send, roleChange]"
+      },
+      "saas.auditEvent": {
+        "digests": [
+          "2cde2ae6e9366de4",
+          "73818d0e60eedf1e",
+          "563c4b42accef416"
+        ],
+        "sample": "[(action: view, actionLabel: View, actorName: Riley Carter, actorRole: Nurse Assistant, at: 2026-09-17 06:46:31.663Z, id: 2ea7b476-8a50-458d-bc43-d2c459e82ad0, ..."
+      },
+      "saas.notice": {
+        "digests": [
+          "5c2a2d1d717467b5",
+          "d76cbbf5613d1b11",
+          "1a90f0fd9c7900a9"
+        ],
+        "sample": "[(body: The service will be unavailable from 2 AM to 4 AM for maintenance., category: maintenance, categoryLabel: Maintenance, pinned: false, publishedAt: 2026-..."
+      },
+      "saas.timeSeries": {
+        "digests": [
+          "4a08489c87fb49a2",
+          "284da1ea327feab8",
+          "652b38af06745533"
+        ],
+        "sample": "[[(date: 2026-09-06 00:00:00.000Z, value: 72), (date: 2026-09-07 00:00:00.000Z, value: 109), (date: 2026-09-08 00:00:00.000Z, value: 104), (date: 2026-09-09 00:..."
+      }
+    }
+  },
+  "fallbacks": {
+    "ko_KR": {
+      "clinic.label": "ab9a2b49189b1431",
+      "clinic.specialty": "998f2dc52c8fe745",
+      "clinic.clinicName": "52a30e0ad2a6e438",
+      "clinic.clinicName.specialty": "85107a9a4b626166",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "3c7c1b5ea9959c56",
+      "clinic.staff": "a119e192a7524414",
+      "clinic.staff.role": "1df8461622c9b5a8",
+      "clinic.patient": "bf622c9f0b680733",
+      "clinic.patient.options": "4f169258d08a9c28",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "1d40cf99509e43e1",
+      "clinic.visitPurpose": "ce2661a37608e8ef",
+      "clinic.visitPurposeTree": "e761819aced8e2ac",
+      "clinic.procedures": "1ea96aa208f47e7e",
+      "clinic.procedure": "6b106c1b09d39687",
+      "clinic.procedure.code": "8191ca6b6198524f",
+      "clinic.procedure.category": "23e1d73cb87934d4",
+      "clinic.package": "1a8e330a27e6ad3c",
+      "clinic.package.code": "80645226d56fc10a",
+      "clinic.packageBalance": "59de5e34973f8514",
+      "clinic.prepaidBalance": "8b265bf2736666a8",
+      "clinic.diagnosis": "d84f9e2b38acbbb7",
+      "clinic.drugName": "bbca81bd166f7fcd",
+      "clinic.prescription": "a5671f2b6f97933f",
+      "clinic.chartMemo": "0439745c8b2feb6c",
+      "clinic.soap": "07e2c69ce3b1781e",
+      "clinic.questionnaire": "625a7f15ead83e01",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "c14b323ca72f2d50",
+      "clinic.payment.method": "d43d1b6d23b4530d",
+      "clinic.splitPayment": "1a34e09fd16575db",
+      "clinic.consentKinds": "171fd0bbced5da2f",
+      "clinic.consentForm": "a158a61e3ae73d04",
+      "clinic.feedback": "f8a0ea3c253da944",
+      "clinic.counselTopics": "04a718d0cb6f1efc",
+      "clinic.counselSession": "259dde5a3b0ce2b6",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "578eee2af6d060c0",
+      "clinic.messengerHandle": "5581252f1d1a6a23",
+      "clinic.insurerName": "9d13e94934c58dd9",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "fb0eaf338bf19477",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "30fbe58df5d9f3d1",
+      "clinic.teamNote": "17afbd525b43c720",
+      "clinic.staffNotice": "1448a87f7d9faeeb",
+      "clinic.vitalsNote": "841d9241c79dd0fd",
+      "clinic.closureNotice": "7974889c0b48774e",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "f6c570761de5adb4",
+      "clinic.guardian": "64b54d70b56002b6",
+      "clinic.patientTag": "c38a6e2e48b41052",
+      "clinic.patientTags": "94794d36511292c8",
+      "clinic.acquisitionChannel": "22b47824ce40c7d6",
+      "clinic.specialNote": "9f40c95fd959a13b",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "c866e2c43253060e",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "677170b49cccc5f8",
+      "clinic.consentHistory": "458af96dc01aac11",
+      "clinic.consentDispatch": "616a8f0cff434c5a",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "b1a165f57cdc5645",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "b3d195e7b4fe701b",
+      "clinic.receptionSource": "f76db5d065b02f9c",
+      "clinic.kioskPurpose": "727a80d0a9752fec",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "e5d17fdfea71cfab",
+      "clinic.cardDecline": "5792aff95a063e11",
+      "clinic.paymentMessage": "15f20fe09f7f8980",
+      "clinic.pointTransaction": "bcbd93fad905b2a6",
+      "clinic.compoundPackageName": "6f9fd94bd2531257",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "e11430375c21886b",
+      "clinic.counselEvidence": "f778556a93f89cb6",
+      "clinic.counselFailure": "1289d9bd5da87559",
+      "clinic.claimIssue": "637c0c3dc599c685",
+      "clinic.crmSendFailure": "4a5996f56711166d",
+      "saas.label": "413c8033a233862f",
+      "saas.tenant": "3cffae0326158b6f",
+      "saas.plan": "85d906f36b1d73b7",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "2cd5144e0758ffac",
+      "saas.invoice": "01487c20585b5a14",
+      "saas.invoices": "2cce624557823299",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "7aa08301d24e2c5d",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "b785ea06bbf7f126",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "d598ca76f4a100cc",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "4a46cd6d7c3a0855",
+      "saas.masterChanges": "b5332a070fb83573",
+      "saas.masterChecks": "097bd32b2599adaf",
+      "saas.integrationSnapshot": "cdc9100584568b91",
+      "saas.incidents": "ad16520fec30658b",
+      "saas.opsAlert": "c6f3c07277d837d0",
+      "saas.announcement": "c74f69f27b27a5da",
+      "saas.tenantActivity": "3b76e19b175fe7ef",
+      "saas.creditLedger": "5d741a59cd4f6665",
+      "saas.senderNumber": "6f875c74404d5f3a",
+      "saas.messageTemplate": "90a27d1d6ca21fb9",
+      "saas.messageLog": "3010c8f22811b5e8",
+      "saas.masterVersion": "652cbc45bcd2c219",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "8fee4d6425312042",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "26df3bc4f6adc436",
+      "saas.notice": "ec88b70f78cebcab",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "en_US": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "f0a752872351321b",
+      "clinic.staff.role": "88d89c5680941976",
+      "clinic.patient": "de73bfdf4fe71a83",
+      "clinic.patient.options": "f6eb3bde823d7dde",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "b59a818e80063ae8",
+      "clinic.payment.method": "e6951355646ab2b5",
+      "clinic.splitPayment": "3f784baad0ced670",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "c7aad760a5db5bbe",
+      "clinic.messengerHandle": "b9e5374ba0907097",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "c4dc072ca9994a3c",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "ba3a3222a667d7d4",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "207bb4c5113ecae1",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "b5fed9c56063607d",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "d44099c1a8d7f0d5",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "5c3d1f7fee947fcb",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "c1232151ad6bebb1",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "b78895bc5a2dafba",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "6f7ca4d8865ff5ae",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "a64adde2bef7a056",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "5cf79e884f712404",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "en_GB": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "a57c6ea7aadfbef3",
+      "clinic.staff.role": "8170b6b7e9fe8f33",
+      "clinic.patient": "bae6251d015a3181",
+      "clinic.patient.options": "fa8ed392849e8bde",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "3fb7c73bc77a3e97",
+      "clinic.payment.method": "2aa61493bcd3e977",
+      "clinic.splitPayment": "3995ac3005bd9702",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "cfa2ed4b6db01c3f",
+      "clinic.messengerHandle": "4aefe97d6ce5cbe5",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "07714006d24e007e",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "8ee4ffaabf0b1a40",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "eaf2bdc72d7da2ab",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "5bef7ef9d26f5c35",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "e093e099b708412d",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "71880429341bafa1",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "426bf3570e4f08cb",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "7107f58364d649bf",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "f4f0345b91c57a8f",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "dddc58041a74ba2c",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "6aedb8bd470602b1",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "ja": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "73de620243c9b810",
+      "clinic.staff.role": "dcd4eafa0fcfbe70",
+      "clinic.patient": "e56823a89d31d7de",
+      "clinic.patient.options": "d26c04ae95278452",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "ce3dda0548047841",
+      "clinic.payment.method": "73d7d258763f0272",
+      "clinic.splitPayment": "787bc6bbb0e2e2b7",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "8a7f8835d9221471",
+      "clinic.messengerHandle": "56948251e091038d",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "0c8e39dc772a88a6",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "50ff5da366c4710f",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "f21e59f72d8c003b",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "4241b024ce65153e",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "88e0216a8908d1c2",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "97db3bc7410e6bd3",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "fc31beeca4924cde",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "f393b16dc9d64d4d",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "50b9dc7f8c7127bb",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "612ccb0bb400ce87",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "31ff4beb8434914f",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "ja_JP": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "693773e112db531d",
+      "clinic.staff.role": "8f21fe865262f58a",
+      "clinic.patient": "5d29d631cc3a7b75",
+      "clinic.patient.options": "ef6efb07adc84f7b",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "c8aaa4f3b4abb767",
+      "clinic.payment.method": "a4f6de343fcdfbc6",
+      "clinic.splitPayment": "edf60c1c87262f00",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "8a7f8835d9221471",
+      "clinic.messengerHandle": "56948251e091038d",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "d91ad85532b1c0dd",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "ef5c71acc226a778",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "1b56f211a7a7d28d",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "b23d0610d9975ccc",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "79163618328116d6",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "5c649866fb3de66a",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "18b10574ded9f888",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "de0b93b06c6449f8",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "086cb8fd5fdf8465",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "6b03165835ee9a64",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "ec5476bf61b6b703",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "zh": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "76302d4ad8bf0216",
+      "clinic.staff.role": "c88d0795bc4d6105",
+      "clinic.patient": "82975d957dc60bd5",
+      "clinic.patient.options": "3cb33a4e3f72f9ec",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "c701daa65fcdd4fc",
+      "clinic.payment.method": "2c7aec5b3336ea4f",
+      "clinic.splitPayment": "fcea3ba1d292f9f9",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "8a7f8835d9221471",
+      "clinic.messengerHandle": "56948251e091038d",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "ac72fd7cac464c98",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "ab1cbf824d9c8f44",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "563165591e8b1f1d",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "46564e6adceecc04",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "a3dd772d89ecc9b5",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "5d241564f8358082",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "0256fa0a133247c4",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "4daafcd96fd377fd",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "d37016c893695992",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "4fb4c9e795b3e45b",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "8c3555147d8a1d5c",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "zh_CN": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "b6ee03b90c55c171",
+      "clinic.staff.role": "a5cd17b244df2a44",
+      "clinic.patient": "7d9624d73f71f533",
+      "clinic.patient.options": "6f1a5c46294aa8f2",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "7d06d027fda85563",
+      "clinic.payment.method": "db91c1bceef4fd72",
+      "clinic.splitPayment": "ed1207362f3ceb22",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "8a7f8835d9221471",
+      "clinic.messengerHandle": "56948251e091038d",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "8608bf50044b6dea",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "00a0b2c72caabefb",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "c2a748d9ee9d76ed",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "675319f7b4df28cb",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "1cd75839baa6d595",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "39d4180f4db8389b",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "1ab8d930e2d5bf36",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "c553b097641107db",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "48cf6d5a8930ceba",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "2118eeff380768c3",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "ffd976fc68bc3094",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "zh_TW": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "76302d4ad8bf0216",
+      "clinic.staff.role": "c88d0795bc4d6105",
+      "clinic.patient": "82975d957dc60bd5",
+      "clinic.patient.options": "3cb33a4e3f72f9ec",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "c701daa65fcdd4fc",
+      "clinic.payment.method": "2c7aec5b3336ea4f",
+      "clinic.splitPayment": "fcea3ba1d292f9f9",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "8a7f8835d9221471",
+      "clinic.messengerHandle": "56948251e091038d",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "ac72fd7cac464c98",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "ab1cbf824d9c8f44",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "563165591e8b1f1d",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "46564e6adceecc04",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "a3dd772d89ecc9b5",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "5d241564f8358082",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "0256fa0a133247c4",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "4daafcd96fd377fd",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "d37016c893695992",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "4fb4c9e795b3e45b",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "8c3555147d8a1d5c",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "de_DE": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "71439ab099c57b36",
+      "clinic.staff.role": "17912e8a0cba44c6",
+      "clinic.patient": "0daacb5d6becfc21",
+      "clinic.patient.options": "c26c028eb2ba71ec",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "d9abd55bcf241217",
+      "clinic.payment.method": "511944c65c0ca42c",
+      "clinic.splitPayment": "2b1edfc5a752edc9",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "d29d91cecc8cc9ee",
+      "clinic.messengerHandle": "73a208700d5b0086",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "0a359985347a6a51",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "9459594b51a63747",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "b4464d8d6ee91cd1",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "b566070a40af431e",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "3b7cd792c17f5242",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "218d210c78baa1ca",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "8ac7fabdf2489579",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "7958e4dcfa1d6f88",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "33fa76d517e8b7ad",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "f22a125a7f54dc2c",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "4b9a8b11a5c64df1",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "fr_FR": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "d7047a23cab1b127",
+      "clinic.staff.role": "330cdc80afc7cf24",
+      "clinic.patient": "c1fb6df5c93bb1cd",
+      "clinic.patient.options": "9418756522a5e231",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "d508bca6fd84b292",
+      "clinic.payment.method": "604f852d80b8d5cd",
+      "clinic.splitPayment": "793800063c3b6c3a",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "a55e38aaeee9ff34",
+      "clinic.messengerHandle": "4945dfd73bbc40ab",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "388e1bc2e8a95cde",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "361e6d8b9c45110f",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "d1471bf761b8b9e3",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "7e9f34fa55b25008",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "6fdeb286c59f8ae8",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "8d076ae2931eef92",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "31af394f3f3b6573",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "8d1d49fcfefdfdb8",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "77177d24018255d2",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "fa4c7b2fc6e3d983",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "f8bfbeb1ac256359",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "ru_RU": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "ec56bc5f7f64f913",
+      "clinic.staff.role": "8339a9b043c67c8c",
+      "clinic.patient": "b28ff02e600f050e",
+      "clinic.patient.options": "16fdb8d8c3eddfc0",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "e60b9cfbd00cf95f",
+      "clinic.payment.method": "d7bd56f65225adc8",
+      "clinic.splitPayment": "888371a26330333a",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "8a7f8835d9221471",
+      "clinic.messengerHandle": "56948251e091038d",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "0e52c8a0a7aeb1c0",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "f306d1e8b3c58fd6",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "011f832692f8b3c8",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "adefbe8d3fbf71cd",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "a1460339e21a1639",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "83027b92eff636f4",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "b0f15d273ffb690b",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "93c0efe221f5c9ec",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "7b2b0952e97f00a2",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "8d4da4e59b9078a5",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "186895975ae3cc5b",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "it_IT": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "53e0c009a40658d9",
+      "clinic.staff.role": "9c010af03635439c",
+      "clinic.patient": "d3bb3323ce100b7f",
+      "clinic.patient.options": "767dd8e811cc51b6",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "7994ce41decff17d",
+      "clinic.payment.method": "c0e23275baef5c81",
+      "clinic.splitPayment": "4c45201879ee8894",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "d40109311abb0dc1",
+      "clinic.messengerHandle": "fc6d1df221930b38",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "cfcd947420d436d4",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "a6b5b40f8d32f41b",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "24ace8c2fe41ae32",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "9d3846695866aa29",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "ed39a22ca2104fe4",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "f1aa040b72b1f187",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "7d273b6d409c326d",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "a8e1f85814e1269c",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "55ca845f8ce9807b",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "ac96de7bb760129f",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "90c7e0fe79696fe6",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "pt_BR": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "77506ff54b16d451",
+      "clinic.staff.role": "89c4f5609f96c7c6",
+      "clinic.patient": "c958559f70178bfb",
+      "clinic.patient.options": "bb1332b73ed8efcb",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "b0ff2c8f4f4cd55b",
+      "clinic.payment.method": "0277cc1b5c4191ff",
+      "clinic.splitPayment": "9dc0921e276c01a6",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "50117597c45673db",
+      "clinic.messengerHandle": "044223930784167f",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "b74cad9e4fe790f0",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "b83d6cbfc4d304eb",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "e590ea0bfd5db817",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "8e0f8ab14b4513e9",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "43d05fef2639325b",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "bf64fe2347141bdf",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "b104e4bf56520a9b",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "e3fc46f06e74b14e",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "056cc0e8bbaf2810",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "ce1c7882bc587b72",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "c21b19219adbe8b9",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "es": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "3b0de18c75e6934c",
+      "clinic.staff.role": "41543556e7dd7f46",
+      "clinic.patient": "b7e562564bd4fe64",
+      "clinic.patient.options": "3009ec291743ad29",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "6653884e6713e8a6",
+      "clinic.payment.method": "e41427a45bbd2e8a",
+      "clinic.splitPayment": "103d5201409ffbb5",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "75098ed5e4a831f9",
+      "clinic.messengerHandle": "913f940d2ce9c921",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "16af0b8aa009d270",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "da6f77aa24bf8780",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "45957899dd9ec125",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "2a7add477aa52903",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "f76ba63e9007dec0",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "c1af42e9abdc097d",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "a42643c7c1c0d1f3",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "25ab10bca7bf267c",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "9a9efce81c4ed9d0",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "966089e7745d3473",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "ae6ff569dc25d059",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    },
+    "xx_YY": {
+      "clinic.label": "52665acc09268224",
+      "clinic.specialty": "d44c1511d2dd8419",
+      "clinic.clinicName": "85d1fe4e902bef28",
+      "clinic.clinicName.specialty": "95ad9f1a4473f300",
+      "clinic.staffRoles": "5d73aa98340036f2",
+      "clinic.staffRole": "ff700fe23b77e21c",
+      "clinic.staff": "3ad68f39224d8875",
+      "clinic.staff.role": "4c4eef1438b4e40c",
+      "clinic.patient": "f20125c8c0f242c0",
+      "clinic.patient.options": "7ea89663475ec70f",
+      "clinic.chartNumber": "a71082bc88239ef0",
+      "clinic.insuranceType": "a8f4f36902e08c99",
+      "clinic.visitPurpose": "af3548e26dad54ae",
+      "clinic.visitPurposeTree": "919505098cc86549",
+      "clinic.procedures": "65c37bafdb9c374b",
+      "clinic.procedure": "d597001572facb55",
+      "clinic.procedure.code": "198ae98fcfe06133",
+      "clinic.procedure.category": "6ae8a310193a3e9c",
+      "clinic.package": "4ea3a44843bbe688",
+      "clinic.package.code": "4f62f95fd93a0583",
+      "clinic.packageBalance": "a5200b268e26a450",
+      "clinic.prepaidBalance": "e5fe69d2781959e0",
+      "clinic.diagnosis": "fdb86abe6bf031e0",
+      "clinic.drugName": "fd99034d702105fd",
+      "clinic.prescription": "a6598b197436e7bd",
+      "clinic.chartMemo": "a65e3ea54893dc31",
+      "clinic.soap": "5176348d0f9db6a1",
+      "clinic.questionnaire": "c5e99fe9538bdf8d",
+      "clinic.businessSlots": "81407455497a6229",
+      "clinic.appointmentSlot": "3566f6d0b9a9eabe",
+      "clinic.visitStages": "1abd4607f299191b",
+      "clinic.visitFlow": "7ff8a748894b6470",
+      "clinic.visitStage": "a1b57e5e8fef84b8",
+      "clinic.reservationStatus": "0552b04893d58a1e",
+      "clinic.payment": "26004584543b5ecc",
+      "clinic.payment.method": "fed1b6b7d47b697b",
+      "clinic.splitPayment": "930b237ccd608c30",
+      "clinic.consentKinds": "133b7c0285e7f5e6",
+      "clinic.consentForm": "a445107828ebdf6c",
+      "clinic.feedback": "d9b510d661011ec0",
+      "clinic.counselTopics": "578650b76e3793eb",
+      "clinic.counselSession": "6ef035a967f4800d",
+      "clinic.inquiryLanguages": "0a0449aef498a518",
+      "clinic.inquiry": "ab138edd6e013c49",
+      "clinic.messengerHandle": "f91a1279dce5608d",
+      "clinic.insurerName": "8cce848efc085c7a",
+      "clinic.integrationServices": "fef3ad533e5d777f",
+      "clinic.integrationResult": "5552ebffe257ed5b",
+      "clinic.deviceKinds": "9e48f65e3f0b5a4c",
+      "clinic.device": "0ac700304d2a509e",
+      "clinic.teamNote": "440673510e56d609",
+      "clinic.staffNotice": "ea5356a3f4ab96d7",
+      "clinic.vitalsNote": "483cc73da983a809",
+      "clinic.closureNotice": "710c4bfd9f4d2651",
+      "clinic.relations": "a718001a62299872",
+      "clinic.familyRelation": "3545e4812551c779",
+      "clinic.guardian": "eb6891ce7a389aba",
+      "clinic.patientTag": "0dc7b0e577cf7ead",
+      "clinic.patientTags": "5c46138b3bac8987",
+      "clinic.acquisitionChannel": "706d515c70d481fc",
+      "clinic.specialNote": "0e9f639811674fd2",
+      "clinic.maskName": "000bc1049aa4a8d8",
+      "clinic.maskedName": "f535e3cc86e6abcc",
+      "clinic.consentHistoryKinds": "d11fe0b36974185f",
+      "clinic.termsVersion": "27ecd5840f866106",
+      "clinic.consentHistory": "14f0a23ce1c40bc6",
+      "clinic.consentDispatch": "c868aa0964bb821d",
+      "clinic.palette": "ce98f8130098cd67",
+      "clinic.color": "4679e6e16a5201c1",
+      "clinic.rooms": "8459a9b925a0de29",
+      "clinic.queueStatuses": "419260ca787d654c",
+      "clinic.queueBoard": "422a05ed717ae639",
+      "clinic.receptionSource": "a59538ff1d3a8433",
+      "clinic.kioskPurpose": "ca777ded0eb1f0a9",
+      "clinic.vitals": "ec78d2ffa4c4fe4b",
+      "clinic.faceRegions": "b45793bd42d6e36d",
+      "clinic.faceFrontRegions": "55f95802fdd5c2b8",
+      "clinic.canvasMarks": "c232401d462bcdbd",
+      "clinic.adjustment": "99e6eabad619e184",
+      "clinic.cardDecline": "11f8e78779a14c53",
+      "clinic.paymentMessage": "8ebda5dd540c2d21",
+      "clinic.pointTransaction": "f12db5f974025eb1",
+      "clinic.compoundPackageName": "72d00558e03490de",
+      "clinic.visitHeatmap": "ee85aab82c6c49de",
+      "clinic.task": "1537ad4c6850b3b0",
+      "clinic.counselEvidence": "0bf9d648957563c4",
+      "clinic.counselFailure": "0d3f5b3ccc9f4774",
+      "clinic.claimIssue": "c40d6d80e7a11c1c",
+      "clinic.crmSendFailure": "f75424543e66beee",
+      "saas.label": "f292b1ac2fcc5c44",
+      "saas.tenant": "3bf8ed4ad82779ae",
+      "saas.plan": "a4c41a1df3190fcd",
+      "saas.subscriptionStatus": "ac7aed06fc965e3a",
+      "saas.subscription": "f053ea2945788e9d",
+      "saas.invoice": "07f68589529f3939",
+      "saas.invoices": "420961fb07c8a7ff",
+      "saas.autopayFailureCodes": "d7afbe566f23a236",
+      "saas.autopayFailure": "f82dc42067bac6ac",
+      "saas.prepaidBonusTiers": "73fd1b01378eacdd",
+      "saas.prepaidBonus": "09d4951bd72016af",
+      "saas.prepaidLedger": "4bb42a7c2c9fa4b0",
+      "saas.operatorRoles": "bfb86747e8e06ba3",
+      "saas.operator": "cd805211d824a6e1",
+      "saas.operatorActions": "875588e5d1928f09",
+      "saas.operatorEvent": "f48a5ceb07a369c7",
+      "saas.masterChanges": "472143cdc3e27d29",
+      "saas.masterChecks": "78dbb3fda2473675",
+      "saas.integrationSnapshot": "a7364e0f074ebbcb",
+      "saas.incidents": "59c7ef9249b7162a",
+      "saas.opsAlert": "105aab6eef616560",
+      "saas.announcement": "f643ceef8c60df13",
+      "saas.tenantActivity": "7149948574ce3451",
+      "saas.creditLedger": "39a6b3f7c485ead3",
+      "saas.senderNumber": "f73b19d0903107b0",
+      "saas.messageTemplate": "0db567acaa2c14aa",
+      "saas.messageLog": "1e6e0f962cd62614",
+      "saas.masterVersion": "17ded6cb06a2cea7",
+      "saas.services": "ba9f907005ad27b4",
+      "saas.healthCheck": "53a464f98bcbece9",
+      "saas.auditActions": "d3f1ecf177cb4f85",
+      "saas.auditEvent": "73818d0e60eedf1e",
+      "saas.notice": "d76cbbf5613d1b11",
+      "saas.timeSeries": "284da1ea327feab8"
+    }
+  }
+}

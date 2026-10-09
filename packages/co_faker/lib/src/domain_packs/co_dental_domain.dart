@@ -15,19 +15,8 @@ class CoDentalDomain extends CoFakerDomain {
       type: 'String',
       description: 'FDI adult tooth: quadrant 1..4, position 1..8',
     ),
-    'dentalProcedure': textRole(
-      ['스케일링', '근관 치료(예시)', '레진 수복(예시)', '크라운 계획(예시)'],
-      [
-        'Scaling',
-        'Root canal example',
-        'Resin restoration example',
-        'Crown planning example',
-      ],
-    ),
-    'dentalMaterial': textRole(
-      ['복합 레진(예시)', '지르코니아(예시)', '세라믹(예시)'],
-      ['Composite resin (example)', 'Zirconia (example)', 'Ceramic (example)'],
-    ),
+    'dentalProcedure': textRole('dental.dentalProcedure'),
+    'dentalMaterial': textRole('dental.dentalMaterial'),
     'imageKind': enumRole([
       'panorama',
       'periapical',
@@ -39,17 +28,8 @@ class CoDentalDomain extends CoFakerDomain {
       type: 'int',
       description: 'Recall interval in months: 3, 6, 12',
     ),
-    'chairName': textRole(
-      ['치과 체어 1', '치과 체어 2', '치과 체어 3'],
-      ['Dental chair 1', 'Dental chair 2', 'Dental chair 3'],
-    ),
-    'hygieneNote': textRole(
-      ['양치 방법 설명을 기록한 예시입니다.', '구강 위생 확인 내용을 기록한 예시입니다.'],
-      [
-        'Example record of brushing explanation.',
-        'Example record of oral hygiene observation.',
-      ],
-    ),
+    'chairName': textRole('dental.chairName'),
+    'hygieneNote': textRole('dental.hygieneNote'),
     'treatmentStage': enumRole(['planned', 'in_progress', 'done']),
   };
   @override
