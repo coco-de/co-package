@@ -71,7 +71,6 @@ const LanguageSafety ptSafety = LanguageSafety(
     'Globoplay',
     'iFood',
     'PicPay',
-    'Unimed',
     'Hapvida',
     'SulAmérica',
     'Doctoralia',

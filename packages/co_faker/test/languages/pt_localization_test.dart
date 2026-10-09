@@ -394,6 +394,16 @@ void main() {
           f.clinic.closureNotice(date: DateTime.utc(2026, 11, 13)).body,
       };
       expect(notices, hasLength(1), reason: '$notices');
+      // The gate runs `forLanguage` only, so the other ways in are held to the
+      // same patient, with the same Brazilian phone, postal code, and address.
+      final patients = <String>{
+        for (final f in fakers) '${f.clinic.patient()}',
+      };
+      expect(patients, hasLength(1), reason: '$patients');
+      final patient = fakers.first.clinic.patient();
+      expect(patient.phone, matches(RegExp(r'^\(\d{2}\) 9\d{4}-\d{4}$')));
+      expect(patient.postalCode, matches(RegExp(r'^\d{5}-\d{3}$')));
+      expect(patient.address1, matches(RegExp(r'^.+, \d+ - .+ - [A-Z]{2}$')));
     });
 
     test('are the Portuguese data and not the English one', () {

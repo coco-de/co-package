@@ -322,7 +322,7 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
         'não use como termo de consentimento real.',
     feedback: <String, List<String>>{
       'positive': <String>[
-        'Explicaram tudo com muito cuidado.',
+        'O médico explicou tudo com muito cuidado.',
         'Pouca espera e uma equipe simpática.',
         'O tom da minha pele melhorou depois de três sessões.',
       ],

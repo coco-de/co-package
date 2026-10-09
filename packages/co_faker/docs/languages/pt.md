@@ -173,10 +173,12 @@ What the gate cannot see, and the generators write the same in every language:
 - `clinic.inquiry()` and `messengerHandle()` do not follow the locale: they are
   threads of a Korean inbox, written in Korean, English, Japanese, Chinese, and
   Vietnamese, and never in Portuguese.
-- The gate runs `CoFaker.forLanguage('pt')`. `CoFaker(locale: 'pt')` reads the
-  same Portuguese data, and `CoFaker.forLanguage` and `locale: 'pt'` both give a
-  Brazilian patient; only the national locale `pt_BR` has the postal address
-  of a Brazilian city and state.
+- The gate runs `CoFaker.forLanguage('pt')`. `CoFaker(locale: 'pt')`,
+  `locale: 'pt_BR'`, and `forLanguage('pt-BR')` read the same data and give the
+  same patient, with the phone, the postal code, and the address of a Brazilian
+  city and state (`test/languages/pt_localization_test.dart` holds them to
+  it). The European tags (`pt-PT`, `pt_PT`) read the same Brazilian data: the
+  package has no European Portuguese.
 - A generator writes a number as a plain number, so a temperature or a
   decimal that a vitals note carries has a point and not a comma (`36.4 °C`).
 - A date label (`quinta-feira (8/10)`) has the day and the month without a
