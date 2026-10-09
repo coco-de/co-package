@@ -226,6 +226,7 @@ abstract final class CoLanguageTexts {
     'healthMessages',
     'auditTargets',
     'auditRecords',
+    'masterCheckDetail',
   };
 
   /// The slots of [bundle]: one per key, one row per text.
@@ -795,6 +796,7 @@ abstract final class CoLanguageTexts {
       healthMessages: o.map('healthMessages', d.healthMessages),
       auditTargets: o.map('auditTargets', d.auditTargets),
       auditRecords: o.list('auditRecords', d.auditRecords),
+      masterCheckDetail: o.one('masterCheckDetail', d.masterCheckDetail),
     );
   }
 }

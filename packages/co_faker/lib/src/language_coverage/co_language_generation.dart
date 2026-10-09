@@ -205,10 +205,8 @@ class _Generation {
   }
 
   static String? _firstHangul(String text) {
-    for (var i = 0; i < text.length; i++) {
-      if (CoTextScan.hasHangul(text[i])) return CoTextScan.around(text, i);
-    }
-    return null;
+    final at = CoTextScan.firstHangul(text);
+    return at < 0 ? null : CoTextScan.around(text, at);
   }
 
   /// The strings of [value]: every string, flattened.
@@ -229,8 +227,8 @@ class _Generation {
   }
 
   /// The texts of [value] when it is plain text: a string, or a list of
-  /// them. Anything else (a record with codes and labels) is not read for its
-  /// writing system, because its codes are English by design.
+  /// them. Anything else (a record with codes and labels) is read leaf by
+  /// leaf: see [_leaves].
   static List<String>? _plainTexts(Object? value) {
     if (value is String) return <String>[value];
     if (value is Iterable<Object?> && value.every((item) => item is String)) {
@@ -239,41 +237,88 @@ class _Generation {
     return null;
   }
 
+  static final RegExp _printedField = RegExp(r'(^|[(\[{]|, )[A-Za-z_]\w*: ');
+  static final RegExp _printedList = RegExp(r'^\s*\[(.*)\][\s,)}]*$');
+  static final RegExp _leafEdges = RegExp(r'^[\s(\[{]+|[\s,)\]}]+$');
+  static final RegExp _space = RegExp(r'\s');
+  static final RegExp _word = RegExp(r'\p{L}{2,}', unicode: true);
+
+  /// The strings that [value] holds, one for each leaf, in order: the strings
+  /// of lists and maps, and the fields of a record. A record cannot be taken
+  /// apart in any other way than by how it prints (`(code: DUP, label: ...)`),
+  /// so its fields are read from there.
+  static List<String> _leaves(Object? value) {
+    return switch (value) {
+      null => const <String>[],
+      final String text => <String>[text],
+      num() || bool() || DateTime() || Enum() => const <String>[],
+      final Map<Object?, Object?> map => <String>[
+        for (final entry in map.entries) ...<String>[
+          ..._leaves(entry.key),
+          ..._leaves(entry.value),
+        ],
+      ],
+      final Iterable<Object?> list => <String>[
+        for (final item in list) ..._leaves(item),
+      ],
+      _ => <String>[
+        for (final part in '$value'.replaceAll(_printedField, '\n').split('\n'))
+          // A list prints as `[a, b]`: its items are leaves of their own.
+          for (final leaf
+              in _printedList.firstMatch(part)?.group(1)?.split(', ') ??
+                  <String>[part])
+            if (leaf.replaceAll(_leafEdges, '').isNotEmpty)
+              leaf.replaceAll(_leafEdges, ''),
+      ],
+    };
+  }
+
   /// A text whose writing system the gate reads: it has words, and it is not
   /// a single ASCII token such as an email address, a code, or a handle, nor a
-  /// masked name (`K*** L.`), whose letters are random initials.
+  /// masked name (`K*** L.`), whose letters are random initials. An ASCII text
+  /// of several words needs a word of two letters, so that a time stamp
+  /// (`2026-01-15 09:00:00.000Z`) is not read as prose.
   static bool _isProse(String text) {
     if (!CoTextScan.hasLetters(text) || text.contains('***')) return false;
     final ascii = text.codeUnits.every((unit) => unit < 128);
-    return !(ascii && !RegExp(r'\s').hasMatch(text));
+    return !ascii || (_space.hasMatch(text) && _word.hasMatch(text));
   }
 
-  /// Counts how many of [texts] have the writing system of the language,
-  /// comparing each with the English and Korean text at the same place. The
-  /// verdict comes once every seed has run: see [_scriptIssues].
-  void _checkScript(
+  /// Counts how many of the prose texts of [texts] have the writing system of
+  /// the language. A text that has it is a hit. A text that lacks it is a
+  /// miss, unless it reads the same in English and Korean, which makes it a
+  /// code or a literal that carries no language: [independence] answers
+  /// whether a text does, and is asked only when a text lacks the writing
+  /// system (so that English and Korean are generated only when needed), and
+  /// not at all with [strictProse]. It answers `null` when it cannot judge.
+  /// The verdict comes once every seed has run: see [_scriptIssues].
+  void _tally(
     String where,
     List<String> texts,
-    List<String>? english,
-    List<String>? korean,
+    bool Function(String text, int index)? Function() independence,
   ) {
-    if (!_wantsScript || english == null || korean == null) return;
+    if (!_wantsScript) return;
     var total = 0;
     var hit = 0;
-    String? miss;
+    final lacking = <int>[];
     for (var i = 0; i < texts.length; i++) {
       final text = texts[i];
-      final languageIndependent =
-          !strictProse &&
-          i < english.length &&
-          i < korean.length &&
-          english[i] == korean[i];
-      if (languageIndependent || !_isProse(text)) continue;
-      total++;
+      if (!_isProse(text)) continue;
       if (CoTextScan.hasScript(text, script)) {
+        total++;
         hit++;
       } else {
-        miss ??= text;
+        lacking.add(i);
+      }
+    }
+    String? miss;
+    if (lacking.isNotEmpty) {
+      final independent = strictProse ? null : independence();
+      if (!strictProse && independent == null) return;
+      for (final i in lacking) {
+        if (independent != null && independent(texts[i], i)) continue;
+        total++;
+        miss ??= texts[i];
       }
     }
     final known = _scriptCounts[where];
@@ -284,12 +329,44 @@ class _Generation {
     );
   }
 
+  /// [_tally] for texts that stand in a list: one reads the same in English
+  /// and Korean when the texts at its place there are equal.
+  void _checkScript(
+    String where,
+    List<String> texts,
+    List<String>? Function() english,
+    List<String>? Function() korean,
+  ) => _tally(where, texts, () {
+    final en = english();
+    // The Korean generator is the one that runs: nothing to generate twice.
+    final ko = language == 'ko' ? texts : korean();
+    if (en == null || ko == null) return null;
+    return (text, index) =>
+        index < en.length && index < ko.length && en[index] == ko[index];
+  });
+
+  /// [_tally] for the leaves of a record: they do not stand at the same place
+  /// in every language when a field is empty in one, so a leaf reads the same
+  /// in English and Korean when both outputs have it.
+  void _checkLeaves(
+    String where,
+    List<String> leaves,
+    List<String> Function() english,
+    List<String> Function() korean,
+  ) => _tally(where, leaves, () {
+    final en = english().toSet();
+    final ko = language == 'ko' ? leaves.toSet() : korean().toSet();
+    return (text, index) => en.contains(text) && ko.contains(text);
+  });
+
   /// One issue for each generator whose texts lack the writing system, over
-  /// all the seeds together.
+  /// all the seeds together. With [strictProse] every text is rewritten, so a
+  /// single text without it is a generator that writes words of its own.
   Iterable<CoLanguageIssue> _scriptIssues() sync* {
+    final limit = strictProse ? 1.0 : minScript;
     for (final entry in _scriptCounts.entries) {
       final count = entry.value;
-      if (count.total > 0 && count.hit / count.total < minScript) {
+      if (count.total > 0 && count.hit / count.total < limit) {
         yield CoLanguageIssue(
           CoLanguageCheck.script,
           entry.key,
@@ -322,14 +399,12 @@ class _Generation {
             for (final text in texts) {
               _scan(where, text);
             }
-            if (_wantsScript) {
-              _checkScript(
-                where,
-                texts,
-                outputs(_reference('en', seed)),
-                outputs(_reference('ko', seed)),
-              );
-            }
+            _checkScript(
+              where,
+              texts,
+              () => outputs(_reference('en', seed)),
+              () => outputs(_reference('ko', seed)),
+            );
           } catch (error) {
             _report(CoLanguageCheck.error, where, _brief(error));
             break;
@@ -383,13 +458,25 @@ class _Generation {
             hangulReason: call.hangulReason,
             templates: call.notificationTemplates,
           );
+          if (call.hangulReason != null || call.englishReason != null) {
+            // Written in the language of the person it is for, or made of
+            // codes and names of its own: not read for a writing system.
+            continue;
+          }
           final plain = _plainTexts(output);
-          if (_wantsScript && plain != null) {
+          if (plain != null) {
             _checkScript(
               call.name,
               plain,
-              _plainTexts(call.run(_reference('en', seed))),
-              _plainTexts(call.run(_reference('ko', seed))),
+              () => _plainTexts(call.run(_reference('en', seed))),
+              () => _plainTexts(call.run(_reference('ko', seed))),
+            );
+          } else {
+            _checkLeaves(
+              call.name,
+              _leaves(output),
+              () => _leaves(call.run(_reference('en', seed))),
+              () => _leaves(call.run(_reference('ko', seed))),
             );
           }
         } catch (error) {

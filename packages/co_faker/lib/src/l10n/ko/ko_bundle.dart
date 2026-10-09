@@ -624,5 +624,7 @@ const CoL10nBundle koBundle = CoL10nBundle(
     'clinic.texts.labels': ['HIFU', 'IPL'],
     'clinic.ops.patientTags.label': ['VIP'],
     'saas.labels': ['SMS', 'LMS', 'DUR'],
+    // The detail of a failed claim master check has always read `5 rows`.
+    'saas.ops.masterCheckDetail': ['{n} rows'],
   },
 );

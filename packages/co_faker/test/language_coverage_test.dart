@@ -626,6 +626,52 @@ void main() {
       );
     });
 
+    test(
+      '(c) take the detail of a failed claim master check from the data',
+      () {
+        // `faker.saas.masterChecks()` wrote `5 rows` in every language: the
+        // English word was in the generator, so no language could write it.
+        Set<String> details(CoFaker Function(int seed) faker) => <String>{
+          for (var seed = 1; seed <= 40; seed++)
+            for (final check in faker(seed).saas.masterChecks())
+              if (check.detail != null) check.detail!,
+        };
+        for (final locale in ['en', 'ko']) {
+          expect(
+            details(
+              (seed) => CoFaker(
+                locale: locale,
+                seed: seed,
+                now: DateTime.utc(2026, 1, 15),
+              ),
+            ),
+            everyElement(matches(RegExp(r'^\d{1,2} rows$'))),
+            reason: locale,
+          );
+        }
+        expect(CoFakerSaasOps.english.masterCheckDetail, '{n} rows');
+        expect(CoFakerSaasOps.korean.masterCheckDetail, '{n} rows');
+        final written = ja.saas(
+          rewrite: (at, text) =>
+              at.slot == 'saas.ops.masterCheckDetail' ? '{n}行' : text,
+        );
+        final factory = ja.faker(ja.data(saas: written));
+        final japanese = details((seed) => factory(seed, CoFakerDomains.all));
+        expect(japanese, isNotEmpty);
+        expect(japanese, everyElement(matches(RegExp(r'^\d{1,2}行$'))));
+        expect(_data(ja.data(saas: written)).issues, isEmpty);
+        // Left in English, the detail is a slot that is English throughout.
+        final left = ja.saas(
+          rewrite: (at, text) =>
+              at.slot == 'saas.ops.masterCheckDetail' ? '{n} rows' : text,
+        );
+        expect(
+          _where(_data(ja.data(saas: left)), CoLanguageCheck.sameAsEnglish),
+          ['saas.ops.masterCheckDetail'],
+        );
+      },
+    );
+
     test('(c) reject a slot that is English throughout', () {
       final english = CoL10nRegistry.english.texts;
       final bundle = _bundle(ja, (texts) {
@@ -1305,6 +1351,38 @@ void main() {
       );
       expect(found.map((issue) => issue.where), contains('clinic.package'));
       expect(found.first.message, contains('{unfilled}'));
+    });
+
+    test('find English words in the record that a generator returns', () {
+      // A record holds codes and labels, so its leaves are read one by one:
+      // the detail of a master check left in English is `4 rows` in it. Only
+      // the strict reading, of a sample whose every text is rewritten, holds
+      // it to the writing system. The real reading leaves out what English
+      // and Korean write alike, and the data check (c) finds the text.
+      final left = ja.saas(
+        rewrite: (at, text) =>
+            at.slot == 'saas.ops.masterCheckDetail' ? '{n} rows' : text,
+      );
+      final data = ja.data(saas: left);
+      const seeds = <int>[7, 436, 20261005];
+      final strict = _generate(ja, data, seeds: seeds, strictProse: true);
+      final leaks = strict.issues.where(
+        (issue) => issue.check == CoLanguageCheck.script,
+      );
+      expect(leaks.map((issue) => issue.where), ['saas.masterChecks']);
+      expect(leaks.single.value, matches(RegExp(r'^\d+ rows$')));
+      final real = _generate(ja, data, seeds: seeds);
+      expect(real.issues, isEmpty);
+      // The calls that are made of codes and names say so, and say why.
+      for (final name in [
+        'clinic.device',
+        'clinic.diagnosis',
+        'saas.auditEvent',
+      ]) {
+        final call = allLanguageCalls.singleWhere((call) => call.name == name);
+        expect(call.englishReason, isNotNull, reason: name);
+        expect(call.hangulReason, isNull, reason: name);
+      }
     });
 
     test('find a field whose name a translation changed', () {

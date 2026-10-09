@@ -23,6 +23,7 @@ class CoLanguageCall {
     this.name,
     this.run, {
     this.hangulReason,
+    this.englishReason,
     this.notificationTemplates = false,
   });
 
@@ -40,6 +41,16 @@ class CoLanguageCall {
   /// A call that says so is not checked for Hangul. Only calls whose output
   /// is independent of the locale by design may: see `clinic.inquiry`.
   final String? hangulReason;
+
+  /// Why the output holds English words in any language, or `null` when it
+  /// does not: it is made of codes and names that no language translates (the
+  /// fictional brands and model codes of a device, the English name of a
+  /// diagnosis, a user agent).
+  ///
+  /// A call that says so is not read for the writing system of the language.
+  /// Any other call whose output holds English words that equal neither the
+  /// English nor the Korean output is held to it.
+  final String? englishReason;
 
   /// Whether the output is a notification template, which keeps its
   /// `#{variable}` markers on purpose (`saas.messageTemplate`). In any other
@@ -234,6 +245,9 @@ final List<CoLanguageCall> clinicCalls = <CoLanguageCall>[
   CoLanguageCall(
     'clinic.diagnosis',
     (f) => [for (var i = 0; i < 4; i++) f.clinic.diagnosis()],
+    englishReason:
+        'A diagnosis carries its English name (`nameEn`) next to the name of '
+        'the language: the English name is a code.',
   ),
   CoLanguageCall(
     'clinic.drugName',
@@ -415,6 +429,9 @@ final List<CoLanguageCall> clinicCalls = <CoLanguageCall>[
       for (final kind in CoFakerClinic.deviceKinds)
         f.clinic.device(kind: kind, number: 2),
     ],
+    englishReason:
+        'The brand (`Lumenixa`) and the model code (`LUM-R910 Pro`) of a '
+        'device are fictional names that no language translates.',
   ),
   CoLanguageCall('clinic.teamNote', (f) {
     final names = <String>[for (var i = 0; i < 3; i++) f.person.fullName()];
@@ -857,6 +874,9 @@ final List<CoLanguageCall> saasCalls = <CoLanguageCall>[
       for (var i = 0; i < 80; i++) f.saas.auditEvent(),
       f.saas.auditEvent(days: 3),
     ],
+    englishReason:
+        'An audit event carries the user agent of the browser '
+        '(`Chrome/140.0 Safari/537.36`), a technical string.',
   ),
   CoLanguageCall(
     'saas.notice',

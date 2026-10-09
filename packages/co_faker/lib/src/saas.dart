@@ -746,7 +746,12 @@ class CoFakerSaas {
       code: code,
       label: label,
       passed: passed,
-      detail: passed ? null : '${faker.random.int(min: 1, max: 12)} rows',
+      detail: passed
+          ? null
+          : ops.masterCheckDetail.replaceAll(
+              '{n}',
+              '${faker.random.int(min: 1, max: 12)}',
+            ),
     );
   }
 

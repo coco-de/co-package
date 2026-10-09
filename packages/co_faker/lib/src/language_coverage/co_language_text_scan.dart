@@ -88,6 +88,19 @@ abstract final class CoTextScan {
   /// Whether [text] has a Hangul character.
   static bool hasHangul(String text) => _has(text, _hangul);
 
+  /// The UTF-16 position of the first Hangul character of [text], or `-1`.
+  /// Every Hangul character is one code unit, so the text is read once, with
+  /// no string made for each character.
+  static int firstHangul(String text) {
+    for (var i = 0; i < text.length; i++) {
+      final unit = text.codeUnitAt(i);
+      for (final range in _hangul) {
+        if (unit >= range.$1 && unit <= range.$2) return i;
+      }
+    }
+    return -1;
+  }
+
   /// Whether [text] has a hiragana or katakana character, which only
   /// Japanese writes.
   static bool hasKana(String text) => _has(text, _kana);
