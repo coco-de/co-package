@@ -51,7 +51,7 @@ separate them).
 | Invoice | fattura | invoice | The document that asks a customer to pay. |
 | Refund | rimborso | refund | The same word for a refund of a payment and for the reimbursement of a claim. |
 | Insurance claim | richiesta di rimborso | claim | A request for payment sent to an insurer. |
-| Coupon | buono sconto | coupon | One word for every coupon of a campaign, a visit, or a delivery. |
+| Coupon | buono | coupon | One word for every coupon of a campaign, a visit, a deal, or a delivery (`Buono di compleanno`, `buono per spedizione gratuita`). |
 | Subscription plan | piano | - | The offer a customer subscribes to: `Base`, `Standard`, `Pro`, `Aziendale`. |
 | Subscription | abbonamento | - | The contract of a plan, and the pass of a studio. |
 | Tenant (customer of the vendor) | struttura | locatario | The clinic that holds an account of the software. `locatario` is the tenant of a flat. |
