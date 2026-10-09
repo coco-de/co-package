@@ -153,6 +153,13 @@
   and every code that is not a supported language read English domain data. They
   are never handed Simplified Chinese.
 
+## [0.13.0](https://github.com/coco-de/co-package/compare/co_faker-v0.12.0...co_faker-v0.13.0) (2026-10-09)
+
+
+### 기능
+
+* **co_faker:** ✨ 데모 W1 레시피 필드 34종 지원 — 도메인 역할 · 11개 언어 표시 텍스트 ([#78](https://github.com/coco-de/co-package/issues/78)) ([#94](https://github.com/coco-de/co-package/issues/94)) ([ae036e1](https://github.com/coco-de/co-package/commit/ae036e1ec28f1d6c25cd4c24ee5797b962e7403c))
+
 ## [0.12.0](https://github.com/coco-de/co-package/compare/co_faker-v0.11.1...co_faker-v0.12.0) (2026-10-09)
 
 
