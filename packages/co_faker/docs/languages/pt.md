@@ -109,6 +109,11 @@ separate them).
 | Sign-in | login | iniciar sessão; início de sessão | `Início de sessão` is the European phrase. |
 | Sign-up, registration of an account | cadastro | registo | `Registo` is the European spelling of `registro`. |
 | Record (a row of data) | registro | registo | The Brazilian spelling. |
+| Currency exchange | câmbio | troca de moeda; exchange | The word of a bureau (`Casa de câmbio`) and of an operation (`operação de câmbio`); the English word is not used. |
+| Money transfer | transferência | remessa; envio de dinheiro | The word for a transfer of money (`Transferência de valor alto`); with `bancária` it is also a payment method. |
+| Episode | episódio | capítulo | An episode of a series or of an audio work; a `capítulo` is a chapter of a book, which the texts do not name. |
+| Audiobook | audiolivro | livro de áudio; livro falado; audiobook | One word, as the Brazilian publishers write it. |
+| Publisher | editora | publisher; publicadora | The company that publishes a work (`Editora Farol de Papel`). |
 | Fictional drug stems of the English data | Brolivex, Quenadil, Tarmovin, Selquira, Pimorel, Corvelin, Olvetrix, Avelmora | Adermex; Lumisol; Keraphen; Dioclin; Navirox; Seraton; Minobel; Acrozine | The stems are invented names that were each searched for and not found as a medicine; `Lumisol` of the English data is the name of a marketed product, so it is not used. |
 | Solbit (fictional district) | Luzvale | Solbit | The fictional places of Portuguese are invented names that sound Brazilian, not the Korean ones of the English data. |
 | Garam (fictional district) | Ribazul | Garam | A fictional place; it follows `bairro`, `zona`, or `de`. |
