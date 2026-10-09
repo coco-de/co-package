@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#62 작업내역 — 중국어(간체) 도메인 목데이터 현지화 (zh · zh_CN)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", "Hiragino Sans", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  code { background: var(--code); border-radius: 6px; padding: 1px 5px; font-size: 0.92em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>중국어(간체) 도메인 목데이터 현지화 — 도메인 팩 27종 · 전용 생성기 · clinic · saas</h1>
+  <p class="muted">#62 (Epic #57 · S5) · <code>story/62-zh-localization</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> <code>CoFaker.forLanguage('zh')</code> · <code>CoFaker(locale: 'zh')</code> · 국가 로케일 <code>zh_CN</code> 가 도메인 팩 · 전용 생성기 · clinic · saas 를 모두 중국어(간체)로 낸다. 코드 · 레지스트리 · 공유 테스트는 건드리지 않고 이 언어의 데이터 파일(번들 · clinic · saas), 용어집 문서, 안전 선언, 새 테스트만 채웠다.</p>
+    <p><strong>번역 초안 — 원어민 검토 권장.</strong> AI 가 쓴 초안이다. 검토가 필요한 곳: 의료 시술 · 진단명(<code>皮秒激光嫩肤</code> · <code>聚焦超声提拉300线</code> · <code>寻常痤疮</code> …)과 지어낸 약 이름 줄기 8개가 시판 제품명이 아닌지, 동의서 문구(변호사 검토 없음), 방문요양 등급(<code>护理等级1级</code>~<code>5级</code>), 청구 · 금융 용어(<code>医保申报</code> · <code>申报主数据</code> · <code>账单</code> · <code>储值余额</code> · <code>抹零</code>), SaaS 청구서의 6% 부가세와 18자리 사업자 번호 형태, 할인 표기(<code>8折</code> · <code>9折</code>), 가상 지명 · 은행 · 보험사 · 창작자 이름, 번호판 패턴 <code>沪A·{n}●●{m}</code>, 그리고 작성자가 확신하지 못한 낱말(<code>核心床普拉提</code> · <code>垫上普拉提</code> · <code>冲刺</code> 대 <code>迭代</code> · <code>待办池</code> 등)과 값이 채우는 템플릿(<code>{name1}家长</code> · <code>{n}位用餐</code> · 휴진 안내). 항목별 체크리스트는 <code>docs/languages/zh.md</code> 의 "Native-speaker review checklist" 에 있다.</p>
+    <p class="muted">이 문서는 작업 워커가 마무리 단계에서 중단된 뒤 오케스트레이터가 커밋 기록과 로컬 실행 결과로 확정했다. 아래 숫자는 모두 이 브랜치에서 직접 실행한 값이다.</p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>파일</th><th class="num">+ / −</th></tr>
+    <tr><td><code>docs/languages/zh.md</code></td><td class="num">178 / 8</td></tr>
+    <tr><td><code>lib/src/l10n/zh/zh_bundle.dart</code></td><td class="num">538 / 12</td></tr>
+    <tr><td><code>lib/src/l10n/zh/zh_clinic.dart</code></td><td class="num">526 / 10</td></tr>
+    <tr><td><code>lib/src/l10n/zh/zh_saas.dart</code></td><td class="num">295 / 11</td></tr>
+    <tr><td><code>test/language_safety/zh.dart</code></td><td class="num">62 / 14</td></tr>
+    <tr><td><code>test/languages/zh_localization_test.dart</code></td><td class="num">941 / 0</td></tr>
+  </table>
+  <p class="muted">6개 파일 +2,540 −55 (이 문서 제외). 이 Story 가 소유한 파일뿐이고 기존 테스트 파일 수정은 0건이다. 커밋 9건 + 이 문서 커밋.</p>
+  <ul>
+    <li><code>a0b2d623</code> docs(co_faker): 📝 중국어(간체) 용어집 초안 — 본토 표준 용어와 금지 표기</li>
+    <li><code>0d98279b</code> feat(co_faker): ✨ 중국어(간체) 도메인 번들 1/3 — common · fx · remit · vet · 생활 · 시험 준비 키</li>
+    <li><code>0417ecaf</code> feat(co_faker): ✨ 중국어(간체) 도메인 번들 2/2 — hrd ~ hospitality 키와 영어 동일 허용 목록</li>
+    <li><code>eff1f7de</code> feat(co_faker): ✨ 중국어(간체) clinic 데이터 — CNY 서식 · 가격 규모 · 현지 문구</li>
+    <li><code>9d8b6899</code> feat(co_faker): ✨ 중국어(간체) saas 데이터 · 안전 선언 · 상태 localized</li>
+    <li><code>9b1ef656</code> fix(co_faker): 🐛 중국어(간체) 출력 눈검수 반영 — 패키지 · 복합 항목 서식과 호텔 문구</li>
+    <li><code>f4536ae4</code> test(co_faker): ✅ 중국어(간체) 현지화 테스트 — 인덱스 정렬 · 진입점 · 서식 · CNY 규모 · 안전</li>
+    <li><code>e835658d</code> docs(co_faker): 📝 중국어(간체) 용어집 · 서식 · 원어민 검토 체크리스트 · 알려진 한계 확정</li>
+    <li><code>34b495d6</code> fix(co_faker): 🐛 중국어(간체) 문구 두 곳 다듬기 — 소모임 소개의 중복 표현 · 개인정보 동의 항목명</li>
+  </ul>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>docs/languages/zh.md</code> — 번역 판단의 요약: 용어집(금지 표기와 근거), 서식 칸, 원어민 검토 체크리스트, 알려진 한계.</li>
+    <li><code>lib/src/l10n/zh/zh_clinic.dart</code> · <code>zh_saas.dart</code> — 위쪽 dartdoc 과 <code>currency</code> · <code>priceScale</code> · 서식 필드.</li>
+    <li><code>zh_bundle.dart</code> — 키 순서가 <code>en_bundle.dart</code> 와 같고, 맨 아래 <code>allowSameAsEnglish</code> 가 영어와 같은 것을 허용하는 전부다.</li>
+    <li><code>test/language_safety/zh.dart</code> — 가상 표기 · 일반 정보 문구의 시작 · 결과 약속 문구 · 실존 브랜드 표기 거부 목록.</li>
+    <li><code>test/languages/zh_localization_test.dart</code> — 인덱스 정렬 · 세 진입점 · 서식 · 통화 규모 · 안전.</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>173개 파일, 변경 0</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>615개 통과 (기준선 583)</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported, unsupported 0</td></tr>
+    <tr><td><code>dart run co_faker:coverage --language zh --strict</code></td><td>PASS · <code>localized</code> · 번들 242/242 · 문구 1,350(번역 대상 1,343) · 영어와 같음 0 · 허용 24 · 문자 체계 비율 1(간체 한자) · 가나 없음 · 생성 16,182 텍스트 / 675 호출</td></tr>
+    <tr><td>독립 코드 리뷰</td><td>하지 않았다 — 브리핑이 코드 변경 없는 데이터 번역이라 생략하게 했고, 게이트 · 출력 눈검수 · 테스트가 대신한다</td></tr>
+  </table>
+
+  <h2>알려진 한계 · 범위 밖</h2>
+  <ul>
+    <li>한국식 숫자 형식(<code>clinic.approvalNo</code> · <code>saas.recipient</code> · <code>rrnMasked</code> · <code>businessNumber</code>)과 <code>korea</code> 팩이 켜졌을 때 entity 의 <code>phone</code> · <code>address1</code>, <code>CoClinicHours</code> 기본값(한국 피부과 영업시간), <code>clinic.inquiry()</code> 는 언어 파일로 못 바꾼다(전문은 <code>docs/languages/zh.md</code> "What the gate does not cover").</li>
+    <li>공유 파일(CHANGELOG · README · 레지스트리 · 게이트)은 고치지 않았다.</li>
+  </ul>
+</main></body>
+</html>
