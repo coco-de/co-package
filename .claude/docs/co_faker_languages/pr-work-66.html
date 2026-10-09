@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#66 작업내역 — 러시아어 도메인 목데이터 현지화 (ru · ru_RU)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 20px 0 4px; }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  code { background: var(--code); border-radius: 6px; padding: 1px 5px; font-size: 0.92em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>러시아어 도메인 목데이터 현지화 — 도메인 팩 27종 · 전용 생성기 · clinic · saas</h1>
+  <p class="muted">#66 (Epic #57) · <code>story/66-ru-localization</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> <code>CoFaker.forLanguage('ru')</code> · <code>CoFaker(locale: 'ru')</code> · 국가 로케일 <code>ru_RU</code> 가 도메인 팩 · 전용 생성기 · clinic · saas 를 러시아어로 낸다. 코드 · 레지스트리 · 공유 테스트는 건드리지 않고 데이터 셋(번들 · clinic · saas)과 언어 문서 · 안전 선언 · 새 테스트만 채웠다. 같은 seed 면 영어 · 한국어와 같은 레코드의 번역이고, 완료 게이트 <code>coverage --language ru --strict</code> 를 통과한다.</p>
+    <p><strong>번역 초안 — 원어민 검토 권장.</strong> AI 가 쓴 초안이다. 검토가 필요한 곳: 의료 용어(<code>приём</code> · <code>консультация</code> · <code>консультирование</code> 세 단어, <code>Обязательное медицинское страхование</code> · <code>Льготное обслуживание</code> 가 대신하는 한국 보험 · 의료급여, МКБ-10 진단명), 법률 문구(<code>Согласие на обработку персональных данных</code>), 금융 용어(<code>спред</code> · <code>заявка на возмещение</code> · <code>кредит</code> 가 대출로 읽힐 위험), 값이 채우는 템플릿(<code>Гостей: {n}</code> · <code>{target}: …</code>), 가상 이름. 항목별 체크리스트는 <code>docs/languages/ru.md</code>.</p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>파일</th><th class="num">+ / −</th><th>내용</th></tr>
+    <tr><td><code>lib/src/l10n/ru/ru_bundle.dart</code></td><td class="num">1,230 / 11</td><td>번들 242키 · 762문구(영어와 같은 키 · 개수 · 순서)와 <code>allowSameAsEnglish</code> 20건(약어 · 파일 형식 · 카드망 · <code>Wi-Fi</code>, 번역 대상의 1.5%)</td></tr>
+    <tr><td><code>ru_clinic.dart</code></td><td class="num">736 / 11</td><td>clinic data · texts · ops 를 영어 데이터와 같은 길이로. RUB · 루블 가격대와 반올림 단위 · <code>koreanValues: none</code></td></tr>
+    <tr><td><code>ru_saas.dart</code></td><td class="num">434 / 12</td><td>요금제 4 900 ~ 34 900 ₽ · 알림 템플릿 · 운영 콘솔 문구 · 부가세 22% · 선불 지갑 · 10자리 사업자 번호 · <code>masterCheckDetail</code> <code>Строк: {n}</code></td></tr>
+    <tr><td><code>docs/languages/ru.md</code></td><td class="num">214 / 18</td><td><code>localized</code> · 용어집 72행 · 서식 칸 · 영어 데이터와의 차이 · 알려진 한계 · 원어민 검토 체크리스트</td></tr>
+    <tr><td><code>test/language_safety/ru.dart</code></td><td class="num">77 / 13</td><td>안전 선언 4가지(키릴 실존 브랜드 표기 37개)</td></tr>
+    <tr><td><code>test/languages/ru_localization_test.dart</code> (신규)</td><td class="num">1,503 / 0</td><td>테스트 37건</td></tr>
+  </table>
+  <p class="muted">6개 파일 +4,194 −65 (이 문서 제외), 이 Story 가 소유한 파일뿐이다. 기존 테스트 수정 0건. 커밋 7건 + 이 문서 커밋.</p>
+  <ul>
+    <li>데이터: <code>12bdc9f4</code> 번들 · <code>9a41836c</code> clinic · <code>1b5f45ec</code> saas (이 셋이 모두 채워진 시점부터 게이트 통과) · <code>d6891cf7</code> 해시 문제 직역투 수정</li>
+    <li>문서 · 테스트: <code>6411e671</code> 용어집 · 서식 · 한계 · 검토 체크리스트 + 안전 선언 · <code>7b3dc584</code> 비분리 공백을 이스케이프로 · <code>2348ac6d</code> 현지화 테스트</li>
+  </ul>
+
+  <h2>왜 이렇게 했나</h2>
+  <h3>1. 정렬이 계약이고, 가상 표기는 한 가지다</h3>
+  <p>한 곳도 순서를 바꾸지 않았다. 가상 표기는 불변 태그 <code>(вымышленное название)</code> 하나다. 형용사 <code>вымышленный/-ая/-ое</code> 는 앞 명사의 성에 맞춰야 해 한 문자열로 못 검사하는데, <code>название</code>(중성)이 수식하는 것은 앞 명사가 아니라 이름이라 어떤 성의 명사 뒤에도 문법이 맞는다. 예시는 <code>(пример)</code>, 데모는 <code>(демо)</code> · <code>(демо-правило)</code>. 영어가 한국어 음차로 쓴 가상 이름(Solbit · Garam · Mulpare · Solnae)은 같은 한 가지 러시아어 가상 지명(<code>«Светлоборье»</code> · <code>«Ясноречье»</code> · <code>«Ясеневая Заводь»</code> · <code>«Сосноручье»</code>)으로 옮겼고, 겹꺾쇠 안의 고정 이름이라 격 변화가 없다.</p>
+  <h3>2. 수 · 격 · 성 일치 (AC)</h3>
+  <p>값이 채우는 템플릿은 어떤 값이 와도 깨지지 않게 썼다. 개수는 라벨 뒤(<code>Гостей: {n}</code> · <code>Заявок отправлено: {n}</code> · <code>Подтема {n}</code>)나 부호(<code>×5</code>)로 두어 명사가 수에 맞출 일이 없고, 이름 · 클리닉 · 서비스는 문장 맨 앞의 콜론(<code>{target}: …</code>), 괄호(<code>{name1} (законный представитель)</code>), 어느 이름에도 맞는 칭호(<code>Воспитатель {name1}</code>) 앞뒤에 둔다. 고정 숫자는 3형태를 손으로 썼다(<code>1 год</code> · <code>2 года</code> · <code>5 лет</code>, <code>10 занятий</code>, <code>у 3 клиник</code>, <code>по 7 счетам</code>). 환자 · 고객의 1인칭은 성이 드러나는 과거형 대신 현재 · 미래형(<code>Хочу присоединиться…</code>)이나 동사 없는 문장이고, 칭호는 양성형(<code>Медсестра / медбрат</code>)이다. 격식은 <code>вы</code> 와 <code>Пожалуйста,</code> + 복수 명령형 한 가지, <code>ё</code> 는 항상 쓴다(기본 모듈의 러시아어 데이터도 <code>Артём</code> · <code>Фёдоров</code>).</p>
+  <h3>3. 루블 규모</h3>
+  <p>금액은 <code>1 234,56 ₽</code>(천 단위와 기호 앞 비분리 공백, 쉼표 소수 2자리). 시술 가격대는 달러 값을 곱한 것이 아니라 러시아 민간 클리닉 시세(초진 3 000 ~ 8 000 · 피코토닝 6 000 ~ 18 000 · HIFU 30 000 ~ 110 000 ₽)이고, 반올림은 시술 100 · 회수권 500 · 선불 1 000 · 할인 · 분할 100 · 포인트 10, 할부는 30 000 ₽ 부터다. <strong>부가세율은 S3 후보(0.20)가 아니라 0.22</strong> 다 — 2026-01-01 부터 연방법 425-ФЗ 로 22% 가 적용된다(웹 검색으로 확인, 연방세무서 안내). 한국 전용 값은 없다(<code>koreanValues: none</code>, 마스킹 ID 는 СНИЛС 모양, 주소는 도시부터).</p>
+  <h3>4. 약 이름 · 안전</h3>
+  <p>지어낸 약 이름 줄기 8개를 웹 검색으로 실존 제품과 겹치는지 확인했고, <code>Керафен</code> 이 영어권 보조제 <code>Kerafen</code> 과 겹쳐 <code>Кераплен</code> 으로 바꿨다(나머지 7개는 일치 없음, 비슷한 이름만 있음). 보툴리눔 제제는 상표 <code>Ботокс</code> 를 피해 <code>Ботулотоксин</code>, <code>Instagram ad</code> 는 <code>Реклама в соцсетях</code>. 카드망 4번째 자리 <code>Discover</code> 는 <code>Мир</code> 다.</p>
+  <h3>5. 테스트가 막는 것</h3>
+  <p>인덱스 정렬 검사만으로는 두 번역이 뒤바뀌어도 통과하므로 영어 문구와 러시아어 번역의 짝 100여 쌍을 <strong>같은 위치</strong>인지로 확인한다(<code>_anchors</code>). 변이 시험 13종(뒤바뀐 번역 · 개수 앞 명사 · 직선 따옴표 · <code>ё</code> 누락 · 다른 가상 표기 · <code>ты</code> 형 · 1인칭 과거 · 일반 공백 · 부가세 · 연령 형태 · 전치사 · 퍼센트 공백)을 하나씩 넣어 각각 테스트가 잡는 것을 확인했다. 대조군은 영원히 지원 밖인 <code>nl</code> 이다.</p>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>docs/languages/ru.md</code> — 번역 판단의 요약: 용어집(금지 표기와 근거), 서식 칸(금액 · 날짜 · 수 일치 · <code>ё</code>), 알려진 한계, 원어민 검토 체크리스트.</li>
+    <li><code>ru_clinic.dart</code> · <code>ru_saas.dart</code> 의 위쪽 dartdoc 과 <code>currency</code> · <code>priceScale</code> · 가격대 · 서식 필드.</li>
+    <li><code>ru_bundle.dart</code> — 키 순서가 <code>en_bundle.dart</code> 와 같다. 맨 아래 <code>allowSameAsEnglish</code> 가 영어와 같은 것을 허용하는 전부다.</li>
+    <li><code>test/language_safety/ru.dart</code> — 가상 표기 · 일반 정보 문구의 시작 · 결과 약속 문구 · 실존 브랜드 표기 거부 목록.</li>
+    <li><code>test/languages/ru_localization_test.dart</code> — <code>_anchors</code> · 세 진입점 · 키릴 서식 · 수 일치 · 루블 규모 · 한국 전용 값 부재.</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td>기준선 (Epic 팁 <code>0cea774a</code>, S1 ~ S4 + ja · zh · fr)</td><td>포맷 175파일 · 분석 0건 · 테스트 687 통과</td></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>176개 파일, 변경 0 (기준선 175 + 새 테스트 1)</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>723개 통과, 약 18초 (기준선 687 + 새 테스트 37 − 1. −1 은 <code>clinic_saas_stability_test</code> 의 <code>ru_RU</code> 케이스로, 현지화된 언어가 범위 밖이 되는 S4 의 레지스트리 기반 분리 때문이다. 기존 테스트 파일 수정 0건)</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported, unsupported 0</td></tr>
+    <tr><td><code>dart run co_faker:coverage --language ru --strict</code></td><td>PASS · <code>localized</code> · 번들 242/242 · 문구 1,350(번역 대상 1,343) · 영어와 같음 0 · 허용 20 · 문자 체계 100% · 생성 16,182 텍스트 / 675 호출</td></tr>
+    <tr><td>출력 눈검수 (같은 seed 의 en ↔ ru)</td><td>팩 29종의 role 을 레코드 2개씩(clinic · saas · fx · remit · vet · commerce · grocery · booking · dental · homecare · travel_wallet · b2b_trade · group_deal · fitness · space_rental · dining · daycare · exam_prep · hrd · neighborhood · meetup · fandom · content · helpdesk · campaign · workplace · brokerage · logistics · hospitality), <code>korea</code> 팩은 한국 값을 이름으로 요구해 제외. 전용 생성기와 <code>faker.clinic</code> · <code>faker.saas</code> 공개 호출 146건, 엔티티 레코드를 읽고 의미 정렬 · 잔류 · 미치환 · 서식을 확인했다. 긴 문장 · 짧은 문구 전수를 다시 읽고 어색한 직역 1곳(해시)을 고쳤고, 기계 점검(혼합 문자 · 공백 · 구두점 · 하이픈 대시)은 0건</td></tr>
+    <tr><td>넓은 seed 점검</td><td>40개 seed × 모든 role · 호출: 텍스트 139,920건에서 예외 · 미치환 · 한글 0건</td></tr>
+    <tr><td>독립 코드 리뷰</td><td>하지 않았다 — 브리핑이 코드 변경 없는 데이터 번역이라 생략하게 했고, 위 게이트와 눈검수 · 변이 시험이 대신한다</td></tr>
+  </table>
+
+  <h2>알려진 한계 · 범위 밖</h2>
+  <ul>
+    <li><strong>여성에게 남성형 성(姓)</strong>: <code>ru_RU</code> 에서 <code>clinic.patient()</code> · <code>staff()</code> · <code>saas.operator()</code> 는 이름과 성을 따로 뽑아 여성 이름에 남성형 성을 붙인다(<code>Анна Кузнецов</code>, 300건 중 해당 전부). 0.11.0 부터의 동작이고 언어 데이터로 못 고친다. 역할 <code>clinic.patientName</code> · <code>guardian()</code> · <code>tenant().ownerName</code> · <code>person.fullName()</code> 은 맞는다.</li>
+    <li>한국식 숫자 형식(<code>clinic.approvalNo</code> · <code>saas.recipient</code> · <code>rrnMasked</code> · <code>businessNumber</code>)과, <code>korea</code> 팩이 켜졌을 때 entity 의 <code>phone</code> · <code>address1</code> 은 모든 언어에 한국식이다(S3 소관). <code>CoClinicHours</code> 기본값은 한국 피부과 영업시간이고 <code>clinic.inquiry()</code> 는 로케일과 무관하다.</li>
+    <li>생성기가 숫자를 그대로 써서 체온은 <code>36.6 °C</code>(소수점), 혈당은 <code>мг/дл</code> 이고, 날짜 라벨은 0 을 채우지 않으며(<code>25.9 (пт)</code>) 월 이름이 없다. <code>CoFaker(locale: 'ru')</code> 는 국가가 없어 환자 주소가 기본 모듈의 일반 주소다. 정적 <code>CoFakerSaas.prepaidBonusTiers</code> 는 모든 언어에 한국 구간이다.</li>
+    <li>가격대 · 요금제 가격은 러시아 민간 클리닉을 가정한 추정치이고, 이름이 실존 지명과 우연히 겹칠 가능성은 원어민 확인 대상이다. CHANGELOG · README · 공유 파일은 고치지 않았다. 게이트 규칙이 정당한 번역을 막은 곳은 없어 게이트 이의는 보내지 않았다.</li>
+  </ul>
+
+  <h2>후속 Story 가 알아야 할 것</h2>
+  <ul>
+    <li>파일 쓰기 도구가 소스의 <code> </code> 를 실제 비분리 공백 문자로 바꿔 쓰는 일이 있었다(커밋 전 63곳). 이스케이프를 확인하고, 필요하면 스크립트로 되돌린다.</li>
+    <li>용어집 금지 표기는 부분 문자열이라 활용형이 걸린다(<code>счёт</code> 의 복수 <code>счетам</code>, <code>черновик</code>). <code>ё</code> 검사는 단어 앞 패턴으로 쓰고 <code>е</code> 로 쓰는 형태를 예외로 둔다.</li>
+    <li>이름을 뽑는 호출은 국가 로케일에 따라 난수를 다르게 써서, 같은 생성기에서 영어와 번갈아 호출하면 이후 정렬이 어긋난다. 테스트에서는 호출마다 생성기를 새로 만든다.</li>
+  </ul>
+</main></body>
+</html>
