@@ -269,8 +269,8 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Versandvorteil',
     ],
     'group_deal.benefitTitle': [
-      'Beispiel-Gutschein für kostenlosen Versand',
-      'Beispiel-Gutschein für die nächste Sammelbestellung',
+      'Beispielgutschein für kostenlosen Versand',
+      'Beispielgutschein für die nächste Sammelbestellung',
     ],
     'group_deal.settleNote': [
       'Beispielsumme der erfolgreichen Teilnahmen.',
@@ -842,7 +842,7 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Prüfen Sie den Einladungsstatus in den Kontoeinstellungen. Dieser simulierte KI-Entwurf muss vom Support-Team geprüft werden.',
       'Notieren Sie die Anmeldemethode zusammen mit dem Beispielfehler. Dieser simulierte KI-Entwurf ändert nichts am Konto.',
       'Prüfen Sie Zeitraum und Positionen der Beispielrechnung. Dieser simulierte KI-Entwurf beschreibt fiktive Preise.',
-      'Halten Sie die Beispiel-Rechnungsnummer in der Supportnotiz fest. Dieser simulierte KI-Entwurf ist keine echte Zahlungsmitteilung.',
+      'Halten Sie die Beispielrechnungsnummer in der Supportnotiz fest. Dieser simulierte KI-Entwurf ist keine echte Zahlungsmitteilung.',
       'Prüfen Sie den für den Export gewählten Zeitraum und das Format. Dieser simulierte KI-Entwurf hält einen Beispielfehler ohne personenbezogene Daten fest.',
       'Prüfen Sie Spaltennamen und Dateistatus in der Beispiel-CSV. Dieser simulierte KI-Entwurf muss vom Support-Team geprüft werden.',
       'Notieren Sie den Beispielstatus der Anbindung und den Zeitpunkt der Prüfung. Dieser simulierte KI-Entwurf führt keine externen Aufrufe aus.',
@@ -941,7 +941,7 @@ const CoL10nBundle deBundle = CoL10nBundle(
     'workplace.rejectReasonText': [
       'Beispielbeleg fehlt',
       'Zuordnung der Position muss geprüft werden',
-      'Beispiel-Richtliniengrenze muss geprüft werden',
+      'Beispielgrenze der Richtlinie muss geprüft werden',
     ],
 
     // brokerage
@@ -1076,9 +1076,9 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Zustellung nicht erfolgt',
     ],
     'logistics.carrierLabel': [
-      'Beispiel-Zustelldienst A (fiktiv)',
-      'Beispiel-Zustelldienst B (fiktiv)',
-      'Beispiel-Spedition C (fiktiv)',
+      'Beispielzustelldienst A (fiktiv)',
+      'Beispielzustelldienst B (fiktiv)',
+      'Beispielspedition C (fiktiv)',
     ],
     'logistics.freightType': [
       'Verpackungsmaterial',
@@ -1138,13 +1138,13 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Wochentags-Angebotszeitraum (Beispiel)',
     ],
     'hospitality.ratePlan': [
-      'Beispiel-Standardtarif',
+      'Standard-Beispieltarif',
       'Beispieltarif mit Frühstück',
       'Beispieltarif für Wochentage',
     ],
     'hospitality.houseRule': [
       'Bitte halten Sie die Gemeinschaftsbereiche nachts ruhig.',
-      'Bitte beachten Sie die Beispiel-Checkliste zur Abreise.',
+      'Bitte beachten Sie die Beispielcheckliste zur Abreise.',
     ],
     'hospitality.reviewSnippet': [
       'Die Hinweise zum Beispielzimmer waren gut lesbar.',

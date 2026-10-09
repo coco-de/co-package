@@ -268,7 +268,7 @@ const CoFakerSaasData deSaas = CoFakerSaasData(
       ],
       'drug': <CoMasterRowSpec>[
         (name: 'Lumisan Tabletten 10 mg', price: 6),
-        (name: 'Kerafon Salbe 15 g', price: 7),
+        (name: 'Zeravil Salbe 15 g', price: 7),
       ],
       'material': <CoMasterRowSpec>[
         (name: 'Sterile Mullkompressen (10 Stück)', price: 4),

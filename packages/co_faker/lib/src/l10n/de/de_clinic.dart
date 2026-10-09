@@ -152,9 +152,9 @@ const CoFakerClinicData deClinic = CoFakerClinicData(
   drugStems: <String>[
     'Adermix',
     'Lumisan',
-    'Kerafon',
-    'Diaklon',
-    'Naviron',
+    'Zeravil',
+    'Orvelan',
+    'Brelvano',
     'Seratan',
     'Minobar',
     'Akrozan',
@@ -411,7 +411,7 @@ const CoFakerClinicData deClinic = CoFakerClinicData(
       'Klarbach Gesundheit',
     ],
     teamNotes: <String>[
-      '{mention}, bitte die Laser-Einstellung für {patient} um eine Stufe senken.',
+      '{mention}, bitte die Lasereinstellung für {patient} um eine Stufe senken.',
       'Übergabe: Bei {patient} ist die Betäubungscreme aufgetragen. {mention}, es kann losgehen.',
       '{mention}, {patient} hat noch eine Sitzung im Paket.',
       'Bei {patient} fehlt die Unterschrift der Erziehungsberechtigten. {mention}, bitte prüfen.',
@@ -526,7 +526,7 @@ const CoFakerClinicData deClinic = CoFakerClinicData(
       'declined': 'Karte abgelehnt: {reason}',
     },
     tasks: <String>[
-      'Bestand der Laser-Aufsätze prüfen',
+      'Bestand der Laseraufsätze prüfen',
       'Verbrauchsmaterial bestellen',
       'Tagesabschluss',
       'Kühlschranktemperatur dokumentieren',

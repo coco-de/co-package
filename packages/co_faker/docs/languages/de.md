@@ -91,7 +91,7 @@ One line for each topic: how the language writes it, with an example.
 | Punctuation and quotation marks | The quotation marks are `„…“`. The en dash with spaces separates (`Praxis Ahorn – Dermatologie`, `{from} – {to}`); a time range has none (`08:00–21:00 Uhr`). The fictional marker and the example marker are in parentheses at the end of a label. |
 | Register: `Sie` or `du` | `Sie` for every patient, customer, and colleague; the capitalized `Sie` and `Ihr`. No `du`. |
 | Gender, case, and plural in a template that a value fills | Neutral wording first, the gender colon only where a person noun is needed (see the glossary). A template puts the value where no article, case, or plural follows: `Tisch für {n}`, `Zeilen: {n}`, `Neu registrierte Patient:innen: {n}`, `{sessions}er-Paket`, `Erziehungsberechtigte von {name1}`, `Erzieher:in {name1}` (the two daycare templates use `{name1}`). A date label never follows a preposition: `Geschlossen {dates}`. |
-| Compound words: the spelling to use | Written together (`Zahnsteinentfernung`, `Kundenservice`). A hyphen joins an acronym, a number, or a loanword to a noun (`LED-Therapie`, `Beispiel-CSV-Export`, `Pikosekundenlaser-Toning`, `E-Rezept`, `E-Mail`). Every noun starts with a capital letter; `Praxis` is written in front of a practice name (`Praxis {prefix} – {suffix}`). |
+| Compound words: the spelling to use | Written together (`Zahnsteinentfernung`, `Kundenservice`, `Lasereinstellung`, `Beispielgutschein`). A hyphen joins an acronym, a number, or a loanword to a noun (`LED-Therapie`, `Beispiel-CSV-Export`, `Pikosekundenlaser-Toning`, `E-Rezept`, `E-Mail`). Every noun starts with a capital letter; `Praxis` is written in front of a practice name (`Praxis {prefix} – {suffix}`). |
 
 ## Native-speaker review checklist
 
@@ -135,7 +135,7 @@ and every text that the author is not sure about.
       Nord`), the insurers (`Nordhafen Versicherung`, `Hafenblick Leben`,
       `Gipfellinie Assekuranz`, `Klarbach Gesundheit`), the creators
       (`Sanduhrgarten`, `Himmelsfaden`), and the drug stems (`Adermix`,
-      `Lumisan`, `Kerafon`, `Diaklon`, `Naviron`, `Seratan`, `Minobar`,
+      `Lumisan`, `Zeravil`, `Orvelan`, `Brelvano`, `Seratan`, `Minobar`,
       `Akrozan`) must not be a real organization, person, or product.
 - [ ] The exam questions (`exam_prep`): `Stapelspeicher`, `Wegewahl`,
       `Prinzip der minimalen Rechte`, and `Hashfunktion` are the terms of a
