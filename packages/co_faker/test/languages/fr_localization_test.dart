@@ -335,8 +335,10 @@ void main() {
         expect(_value(f, 'dental.dentalProcedure', 0), isNot('Scaling'));
         expect(f.clinic.money(1234), isNot(contains(r'$')));
       }
-      // A language that is not French keeps its own data.
-      expect(_faker('de').clinic.data, same(CoFakerClinicData.english));
+      // A language that has no data of its own and never will (Dutch is not
+      // supported) keeps the English data. A supported language is no control:
+      // it gains data of its own when its Story lands.
+      expect(_faker('nl').clinic.data, same(CoFakerClinicData.english));
     });
   });
 
