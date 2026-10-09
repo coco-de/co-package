@@ -66,6 +66,200 @@ List<String> _matching(
 ];
 
 /// The vowels that make `le`, `la`, `de`, and `que` elide.
+/// Entries of the bundle that a reader checked by hand: the English text, and
+/// the French text that stands at the same position of the same key. They are
+/// the evidence that the lists are translations entry by entry and not only
+/// lists of the same length: a swapped or a shifted entry fails here, where
+/// the check by position alone would still pass.
+final List<(String, String, String)> _pairs = <(String, String, String)>[
+  ('fx.currencyName.USD', 'US dollar', 'Dollar américain'),
+  ('fx.currencyName.NPR', 'Nepalese rupee', 'Roupie népalaise'),
+  (
+    'fx.branchName',
+    'Demo airport T1 exchange',
+    'Bureau de change démo, aéroport T1',
+  ),
+  ('fx.branchName', 'Demo Mulpare exchange', 'Bureau de change démo, Frênaie'),
+  ('fx.tierName', 'Silver', 'Argent'),
+  ('fx.tierName', 'Gold', 'Or'),
+  ('remit.countryName.VN', 'Vietnam', 'Viêt Nam'),
+  ('remit.countryName.US', 'United States', 'États-Unis'),
+  ('vet.petName', 'Cloud', 'Nuage'),
+  ('vet.breed.dog', 'Maltese', 'Bichon maltais'),
+  ('vet.breed.dog', 'Poodle', 'Caniche'),
+  ('vet.breed.dog', 'Mixed dog', 'Chien croisé'),
+  ('vet.breed.cat', 'Mixed cat', 'Chat croisé'),
+  ('vet.coatColor', 'White', 'Blanc'),
+  ('vet.coatColor', 'Gray', 'Gris'),
+  ('vet.clinicRoom', 'Vaccination room', 'Salle de vaccination'),
+  ('grocery.categoryName', 'Fruit', 'Fruits'),
+  ('grocery.categoryName', 'Seafood', 'Produits de la mer'),
+  ('grocery.categoryName', 'Dairy', 'Produits laitiers'),
+  ('catalog.groceryName', 'Strawberries', 'Fraises'),
+  ('catalog.groceryName', 'Milk', 'Lait'),
+  ('catalog.commerceName', 'Ceramic cup', 'Tasse en céramique'),
+  ('dental.dentalProcedure', 'Scaling', 'Détartrage'),
+  (
+    'dental.dentalProcedure',
+    'Root canal example',
+    'Exemple de traitement de canal',
+  ),
+  (
+    'dental.dentalProcedure',
+    'Resin restoration example',
+    'Exemple de restauration en résine',
+  ),
+  (
+    'dental.dentalProcedure',
+    'Crown planning example',
+    'Exemple de planification de couronne',
+  ),
+  ('dental.dentalMaterial', 'Zirconia (example)', 'Zircone (exemple)'),
+  ('homecare.careGrade', 'Care grade 5', 'Niveau de prise en charge 5'),
+  (
+    'homecare.careGrade',
+    'Cognitive support grade',
+    'Niveau d’accompagnement cognitif',
+  ),
+  ('homecare.careTaskLabel', 'Meal assistance', 'Aide au repas'),
+  ('travel_wallet.cityName', 'Hanoi', 'Hanoï'),
+  ('travel_wallet.tripName', 'Bangkok weekend', 'Week-end à Bangkok'),
+  (
+    'b2b_trade.holdReason',
+    'Delivery date check (example)',
+    'Vérification de la date de livraison (exemple)',
+  ),
+  (
+    'group_deal.dealTitle',
+    'Cotton towel group deal',
+    'Achat groupé de serviettes en coton',
+  ),
+  ('fitness.classLevelLabel', 'beginner', 'débutant'),
+  ('fitness.classLevelLabel', 'advanced', 'avancé'),
+  ('fitness.classCategoryLabel', 'Mat', 'Tapis'),
+  ('fitness.classCategoryLabel', 'Reformer', 'Reformer'),
+  ('fitness.classCategoryLabel', 'Chair', 'Chaise'),
+  ('fitness.classCategoryLabel', 'Yoga', 'Yoga'),
+  ('space_rental.amenity', 'Water dispenser', 'Fontaine à eau'),
+  ('dining.menuName', 'Tomato pasta', 'Pâtes à la tomate'),
+  ('dining.menuName', 'Warm tea', 'Thé chaud'),
+  ('daycare.className', 'Sun class', 'Classe du Soleil'),
+  ('daycare.className', 'Star class', 'Classe des Étoiles'),
+  ('daycare.ageLabel', 'Age 1', '1 an'),
+  ('daycare.ageLabel', 'Age 5', '5 ans'),
+  ('daycare.snackMenu', 'Plain yogurt', 'Yaourt nature'),
+  ('daycare.allergenLabel', 'Egg', 'Œuf'),
+  ('daycare.allergenLabel', 'Wheat', 'Blé'),
+  ('exam_prep.subjectName', 'Networking', 'Réseaux'),
+  ('exam_prep.unitName', 'Routing', 'Routage'),
+  ('exam_prep.correctChoice', 'Primary key', 'Clé primaire'),
+  ('exam_prep.correctChoice', 'WHERE', 'WHERE'),
+  ('exam_prep.correctChoice', 'TCP', 'TCP'),
+  ('exam_prep.correctChoice', 'Router', 'Routeur'),
+  ('exam_prep.correctChoice', 'HTTP', 'HTTP'),
+  ('exam_prep.correctChoice', 'Variable', 'Variable'),
+  ('exam_prep.correctChoice', 'Stack', 'Pile'),
+  ('exam_prep.correctChoice', 'Hash function', 'Fonction de hachage'),
+  ('exam_prep.correctChoice', 'Least privilege', 'Moindre privilège'),
+  ('exam_prep.wrongChoice1', 'Speaker', 'Haut-parleur'),
+  ('exam_prep.wrongChoice2', 'Keyboard', 'Clavier'),
+  ('exam_prep.wrongChoice3', 'Monitor', 'Écran'),
+  (
+    'exam_prep.questionStem',
+    'Which key distinguishes rows in a table?',
+    'Quelle clé permet de distinguer les lignes d’une table$_nbsp?',
+  ),
+  (
+    'exam_prep.questionStem',
+    'Which SQL clause selects rows by a condition?',
+    'Quelle clause SQL permet de sélectionner des lignes selon une condition$_nbsp?',
+  ),
+  (
+    'exam_prep.questionStem',
+    'Which transport protocol handles ordering and retransmission?',
+    'Quel protocole de transport gère l’ordre et la retransmission des données$_nbsp?',
+  ),
+  (
+    'exam_prep.questionStem',
+    'Which device selects the next packet route?',
+    'Quel équipement choisit le prochain chemin d’un paquet$_nbsp?',
+  ),
+  (
+    'exam_prep.questionStem',
+    'Which protocol expresses web requests and responses?',
+    'Quel protocole sert à exprimer les requêtes et les réponses web$_nbsp?',
+  ),
+  (
+    'exam_prep.questionStem',
+    'What stores a value under a program name?',
+    'Qu’est-ce qui permet de stocker une valeur sous un nom dans un programme$_nbsp?',
+  ),
+  (
+    'exam_prep.questionStem',
+    'Which structure removes the last inserted value first?',
+    'Quelle structure retire en premier la dernière valeur insérée$_nbsp?',
+  ),
+  (
+    'exam_prep.questionStem',
+    'What computes a fixed-length summary of an input?',
+    'Qu’est-ce qui calcule une empreinte de longueur fixe à partir d’une entrée$_nbsp?',
+  ),
+  (
+    'exam_prep.questionStem',
+    'Which principle grants only the permissions needed for a task?',
+    'Quel principe n’accorde que les droits nécessaires à une tâche$_nbsp?',
+  ),
+  ('hrd.departmentName', 'Sales', 'Ventes'),
+  ('hrd.departmentName', 'Production', 'Fabrication'),
+  ('hrd.departmentName', 'Research', 'Recherche'),
+  ('hrd.departmentName', 'Support', 'Support client'),
+  ('hrd.departmentName', 'Administration', 'Gestion administrative'),
+  ('hrd.departmentName', 'Logistics', 'Logistique'),
+  ('hrd.jobTitle', 'Team lead', 'Chef d’équipe'),
+  ('hrd.courseKind', 'Mandatory', 'Obligatoire'),
+  ('neighborhood.keyword', 'local news', 'actualités locales'),
+  ('meetup.interestTag', 'Running', 'Course à pied'),
+  ('meetup.interestTag', 'Hiking', 'Randonnée'),
+  (
+    'meetup.cadenceLabel',
+    'Alternate Sundays 10:00',
+    'Un dimanche sur deux à 10${_nbsp}h',
+  ),
+  ('content.genreName', 'Everyday life', 'Vie quotidienne'),
+  ('content.genreName', 'Essay', 'Essai'),
+  ('content.audioTaxonomy', 'Audiobook', 'Livre audio'),
+  ('helpdesk.topicName', 'Billing', 'Facturation'),
+  ('helpdesk.topicName', 'Integration', 'Intégration'),
+  (
+    'campaign.failReason',
+    'No marketing consent (example)',
+    'Aucun consentement marketing (exemple)',
+  ),
+  ('workplace.department', 'Design team', 'Équipe design'),
+  ('workplace.department', 'HR team', 'Ressources humaines'),
+  ('workplace.shiftName', 'Weekend duty', 'Permanence du week-end'),
+  ('workplace.accountName', 'Travel (example)', 'Déplacements (exemple)'),
+  ('brokerage.serviceTypeName', 'Cleaning', 'Nettoyage'),
+  ('brokerage.serviceTypeName', 'Lessons', 'Cours'),
+  ('brokerage.serviceCategory', 'Home service', 'Services à domicile'),
+  ('brokerage.milestoneLabel', 'Handoff record', 'Compte rendu de passation'),
+  ('logistics.scanEvent', 'Hub arrival', 'Arrivée à la plateforme'),
+  ('logistics.scanEvent', 'Delivery not completed', 'Livraison non effectuée'),
+  ('logistics.freightType', 'Packaging', 'Emballages'),
+  ('logistics.freightType', 'Household goods', 'Articles ménagers'),
+  ('logistics.itemName', 'Brown rice 2kg', 'Riz complet 2${_nbsp}kg'),
+  ('hospitality.hkCheckItem', 'Change bedding', 'Changer la literie'),
+  ('hospitality.hkCheckItem', 'Check minibar', 'Vérifier le minibar'),
+  ('hospitality.lostItemName', 'Blue umbrella', 'Parapluie bleu'),
+  ('hospitality.lostItemName', 'Water bottle', 'Bouteille d’eau'),
+  ('hospitality.amenityName', 'Toothbrush', 'Brosse à dents'),
+  (
+    'hospitality.folioItem',
+    'Room service (example)',
+    'Service en chambre (exemple)',
+  ),
+];
+
 const String _vowel = 'aeiouàâäéèêëîïôöùûüœAEIOUÀÂÄÉÈÊËÎÏÔÖÙÛÜŒ';
 
 /// What an elision may stand before: a vowel, a mute `h` (`l’hygiène`), and
@@ -230,6 +424,143 @@ void main() {
           frQuestion.explanation,
           contains(frQuestion.choices[frQuestion.answerKeys.single - 1]),
         );
+      }
+    });
+
+    test(
+      'the entry of French at the place of an English entry translates it',
+      () {
+        for (final (key, en, fr) in _pairs) {
+          final enList = english.texts[key];
+          final frList = bundle.texts[key];
+          expect(enList, isNotNull, reason: key);
+          final at = enList!.indexOf(en);
+          expect(at, isNonNegative, reason: '$key has no "$en" in English');
+          expect(frList![at], fr, reason: '$key[$at] translates "$en"');
+        }
+        expect(
+          _pairs.map((pair) => pair.$1).toSet(),
+          hasLength(greaterThan(55)),
+        );
+      },
+    );
+
+    test('the clinic and SaaS data translate the entry of the same code', () {
+      final en = CoFakerClinicData.english;
+      expect(
+        {for (final p in clinicData.procedures) p.code: p.name},
+        {
+          'CONS01': 'Première consultation',
+          'BTX-F': 'Toxine botulique front',
+          'FIL-L': 'Acide hyaluronique lèvres 1${_nbsp}ml',
+          'LT-01': 'Laser picoseconde, uniformisation du teint',
+          'HIFU-300': 'Lifting par ultrasons focalisés, 300 lignes',
+          'ACN-01': 'Extraction des comédons',
+          'CARE-01': 'Soin apaisant du visage par LED',
+          'DOC-01': 'Certificat médical',
+        },
+      );
+      expect(
+        {for (final d in clinicData.diagnoses) d.code: d.name},
+        {
+          'L70.0': 'Acné vulgaire',
+          'L81.1': 'Mélasma',
+          'B07': 'Verrues virales',
+          'L20.9': 'Dermatite atopique, sans précision',
+          'L30.9': 'Dermatite, sans précision',
+          'L71.9': 'Rosacée, sans précision',
+        },
+      );
+      expect(
+        [for (final s in en.specialties) s.name],
+        [
+          'Dermatology',
+          'Plastic Surgery',
+          'Family Medicine',
+          'Internal Medicine',
+          'Pediatrics',
+        ],
+      );
+      expect(
+        [for (final s in clinicData.specialties) s.name],
+        [
+          'Dermatologie',
+          'Chirurgie plastique',
+          'Médecine générale',
+          'Médecine interne',
+          'Pédiatrie',
+        ],
+      );
+      expect(
+        [for (final v in clinicData.visitPurposes) v.name],
+        ['Consultation', 'Acte', 'Traitement', 'Soin'],
+      );
+      expect(
+        [for (final v in en.visitPurposes) v.name],
+        ['Consultation', 'Procedure', 'Treatment', 'Care'],
+      );
+      expect(
+        clinicData.staffRoles,
+        containsPair('nurse', 'Infirmier diplômé d’État'),
+      );
+      expect(clinicData.staffRoles, containsPair('doctor', 'Médecin'));
+      expect(clinicData.staffRoles, containsPair('desk', 'Accueil'));
+      expect(
+        clinicData.labels,
+        containsPair('uninsured', 'À la charge du patient'),
+      );
+      expect(clinicData.labels, containsPair('noShow', 'Absent'));
+      expect(clinicData.labels, containsPair('transfer', 'Virement bancaire'));
+      expect(
+        {for (final p in saasData.plans) p.code: p.name},
+        {
+          'starter': 'Essentiel',
+          'standard': 'Standard',
+          'pro': 'Pro',
+          'enterprise': 'Entreprise',
+        },
+      );
+      expect(
+        {for (final t in saasData.messageTemplates) t.code: t.name},
+        {
+          'RSV_CREATED': 'Rendez-vous réservé',
+          'RSV_CANCELLED': 'Rendez-vous annulé',
+          'RSV_REMIND_D1': 'Rappel',
+          'QUESTIONNAIRE': 'Questionnaire avant la visite',
+          'SURVEY': 'Enquête de satisfaction',
+          'AD_EVENT': 'Promotion (publicité)',
+        },
+      );
+      expect(
+        [for (final n in saasData.notices) (n.category, n.title)],
+        [
+          ('maintenance', 'Maintenance programmée'),
+          ('release', 'Nouvelles fonctionnalités disponibles'),
+          ('notice', 'Mise à jour des tarifs'),
+          ('notice', 'Notifications retardées'),
+        ],
+      );
+    });
+
+    test('a French text keeps the figures of its English text', () {
+      // The figures of the alerts, the claim-check ROW_DELTA, the consent
+      // clauses, and the prices of the plans are the English ones.
+      final enOps = CoFakerSaasOps.english;
+      final frOps = saasData.ops!;
+      for (var i = 0; i < enOps.alerts.length; i++) {
+        expect(frOps.alerts[i].code, enOps.alerts[i].code);
+        expect(
+          RegExp(r'\d+').allMatches(frOps.alerts[i].message).map((m) => m[0]),
+          RegExp(r'\d+').allMatches(enOps.alerts[i].message).map((m) => m[0]),
+          reason: frOps.alerts[i].code,
+        );
+      }
+      expect(
+        RegExp(r'\d+').firstMatch(frOps.masterChecks['ROW_DELTA']!)![0],
+        '5',
+      );
+      for (final key in <String>['exam_prep.explanation']) {
+        expect(bundle.texts[key], hasLength(english.texts[key]!.length));
       }
     });
 

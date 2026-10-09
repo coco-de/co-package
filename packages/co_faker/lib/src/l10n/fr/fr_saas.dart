@@ -15,8 +15,10 @@ import '../../saas_ops.dart';
 /// - the amounts are euros written `1 234,56 €`, the plans cost euros, and the
 ///   VAT of an invoice is the 20% that France applies to a software service;
 /// - a notification template writes its variables in French
-///   (`#{nom}`, `#{clinique}`), and no variable follows a preposition, because
-///   the value decides the elision and the contraction;
+///   (`#{nom}`, `#{clinique}`), and no variable follows `de`, `du`, or `d’`,
+///   because the value decides the elision and the contraction; `à` and the
+///   `le` before a date (`le #{date_heure}`, which starts with a digit or a
+///   weekday) do not change;
 /// - a title that a name or a service fills (`{target}`, `{service}`) puts the
 ///   name first and a colon after it, so that it needs no `de` or `d’`;
 /// - a count is written after its label (`Rendez-vous réservés : {n}`), which
@@ -55,8 +57,9 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
       messageCredits: 20000,
     ),
   ],
-  // The variables are French and stand alone (after a colon, a comma, or a
-  // parenthesis), because the template is not filled by the generator.
+  // The variables are French and stand after a colon, a comma, a parenthesis,
+  // `à`, or the `le` of a date, because the template is not filled by the
+  // generator: the application that sends it fills them.
   messageTemplates: <CoMessageTemplateSpec>[
     (
       code: 'RSV_CREATED',
