@@ -62,7 +62,7 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
       code: 'RSV_CREATED',
       name: 'Rendez-vous réservé',
       body:
-          'Bonjour #{nom}, votre rendez-vous est réservé : #{clinique}, le '
+          'Bonjour #{nom}, votre rendez-vous est réservé\u00A0: #{clinique}, le '
           '#{date_heure}.',
     ),
     (
@@ -75,28 +75,28 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
     (
       code: 'RSV_REMIND_D1',
       name: 'Rappel',
-      body: 'Bonjour #{nom}, à demain à #{heure} : #{clinique}.',
+      body: 'Bonjour #{nom}, à demain à #{heure}\u00A0: #{clinique}.',
     ),
     (
       code: 'QUESTIONNAIRE',
       name: 'Questionnaire avant la visite',
       body:
           'Bonjour #{nom}, merci de remplir le questionnaire avant votre '
-          'visite : #{lien}',
+          'visite\u00A0: #{lien}',
     ),
     (
       code: 'SURVEY',
       name: 'Enquête de satisfaction',
       body:
           'Bonjour #{nom}, comment s’est passée votre visite '
-          '(#{clinique}) ? #{lien}',
+          '(#{clinique})\u00A0? #{lien}',
     ),
     (
       code: 'AD_EVENT',
       name: 'Promotion (publicité)',
       body:
-          '[Pub] Offre du mois #{clinique} : 10 séances de laser en '
-          'promotion. Désabonnement : #{lien}',
+          '[Pub] Offre du mois #{clinique}\u00A0: 10 séances de laser en '
+          'promotion. Désabonnement\u00A0: #{lien}',
     ),
   ],
   notices: <CoNoticeSpec>[
@@ -104,7 +104,7 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
       category: 'maintenance',
       title: 'Maintenance programmée',
       body:
-          'Le service sera indisponible de 2 h à 4 h du matin pour '
+          'Le service sera indisponible de 2\u00A0h à 4\u00A0h du matin pour '
           'maintenance.',
     ),
     (
@@ -204,43 +204,44 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
     operatorActions: <String, CoOperatorActionSpec>{
       'tenant.approve': (
         label: 'Approuver l’établissement',
-        summary: '{target} : inscription approuvée.',
+        summary: '{target}\u00A0: inscription approuvée.',
       ),
       'tenant.suspend': (
         label: 'Suspendre l’établissement',
-        summary: '{target} : suspension pour retard de paiement.',
+        summary: '{target}\u00A0: suspension pour retard de paiement.',
       ),
       'tenant.resume': (
         label: 'Réactiver l’établissement',
-        summary: '{target} : levée de la suspension.',
+        summary: '{target}\u00A0: levée de la suspension.',
       ),
       'plan.change': (
         label: 'Changer de formule',
-        summary: '{target} : passage de la formule Standard à la formule Pro.',
+        summary:
+            '{target}\u00A0: passage de la formule Standard à la formule Pro.',
       ),
       'invoice.issue': (
         label: 'Émettre une facture',
-        summary: '{target} : facture mensuelle émise.',
+        summary: '{target}\u00A0: facture mensuelle émise.',
       ),
       'invoice.refund': (
         label: 'Rembourser une facture',
-        summary: '{target} : remboursement partiel d’une facture.',
+        summary: '{target}\u00A0: remboursement partiel d’une facture.',
       ),
       'credit.grant': (
         label: 'Accorder des crédits',
-        summary: '{target} : 1 000 crédits de messages accordés.',
+        summary: '{target}\u00A0: 1\u202F000 crédits de messages accordés.',
       ),
       'template.approve': (
         label: 'Approuver un modèle',
-        summary: '{target} : modèle approuvé.',
+        summary: '{target}\u00A0: modèle approuvé.',
       ),
       'template.reject': (
         label: 'Rejeter un modèle',
-        summary: '{target} : modèle publicitaire rejeté.',
+        summary: '{target}\u00A0: modèle publicitaire rejeté.',
       ),
       'senderNumber.approve': (
         label: 'Approuver un numéro d’expéditeur',
-        summary: '{target} : numéro d’expéditeur approuvé.',
+        summary: '{target}\u00A0: numéro d’expéditeur approuvé.',
       ),
       'master.publish': (
         label: 'Publier le référentiel de facturation',
@@ -248,7 +249,7 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
       ),
       'notice.publish': (
         label: 'Publier un avis',
-        summary: 'Avis « {target} » publié.',
+        summary: 'Avis «\u00A0{target}\u00A0» publié.',
       ),
       'operator.invite': (
         label: 'Inviter un opérateur',
@@ -256,11 +257,12 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
       ),
       'operator.roleChange': (
         label: 'Modifier le rôle d’un opérateur',
-        summary: 'Rôle modifié pour {target} : administrateur.',
+        summary: 'Rôle modifié pour {target}\u00A0: administrateur.',
       ),
       'impersonate.start': (
         label: 'Se connecter en tant qu’établissement',
-        summary: '{target} : connexion à sa place pour analyser un incident.',
+        summary:
+            '{target}\u00A0: connexion à sa place pour analyser un incident.',
       ),
     },
     operatorRoles: <String, String>{
@@ -286,12 +288,12 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
         (name: 'Cryothérapie (une zone)', price: 35),
       ],
       'drug': <CoMasterRowSpec>[
-        (name: 'Lumisol comprimé 10 mg', price: 4),
-        (name: 'Keraphen pommade 15 g', price: 9),
+        (name: 'Lumisol comprimé 10\u00A0mg', price: 4),
+        (name: 'Keraphen pommade 15\u00A0g', price: 9),
       ],
       'material': <CoMasterRowSpec>[
         (name: 'Compresses stériles (10)', price: 5),
-        (name: 'Seringue 1 ml', price: 1),
+        (name: 'Seringue 1\u00A0ml', price: 1),
       ],
       'diagnosis': <CoMasterRowSpec>[
         (name: 'Acné vulgaire', price: null),
@@ -303,22 +305,22 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
       'NEGATIVE_PRICE': 'Aucun prix nul ou négatif',
       'EFFECTIVE_DATE': 'Dates d’effet dans l’ordre',
       'REQUIRED_COLUMNS': 'Aucune colonne obligatoire manquante',
-      'ROW_DELTA': 'Nombre de lignes à 5 % près de la version précédente',
+      'ROW_DELTA': 'Nombre de lignes à 5\u00A0% près de la version précédente',
       'REMOVED_IN_USE':
           'Les codes supprimés ne sont pas utilisés par des demandes en cours',
     },
     // The service comes first, then a colon, so that no `de` stands before it.
     incidentTitles: <String, String>{
-      'outage': '{service} : panne',
-      'degraded': '{service} : réponses lentes',
-      'maintenance': '{service} : maintenance programmée',
+      'outage': '{service}\u00A0: panne',
+      'degraded': '{service}\u00A0: réponses lentes',
+      'maintenance': '{service}\u00A0: maintenance programmée',
     },
     alerts: <CoOpsAlertSpec>[
       (
         level: 'warning',
         code: 'SYNC_DELAY',
         message:
-            '3 établissements ont une synchronisation hors ligne en retard de plus de 15 minutes.',
+            '3 établissements ont une synchronisation hors ligne en retard de plus de 15\u00A0minutes.',
       ),
       (
         level: 'critical',
@@ -351,14 +353,14 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
     regulationTitle: 'Mises à jour réglementaires {month}',
     // The count follows its label, so that one or many needs no agreement.
     tenantActivities: <String>[
-      'Nouveaux patients enregistrés : {n}',
-      'Demandes de remboursement envoyées : {n}',
-      'Notifications envoyées : {n}',
-      'Rendez-vous réservés : {n}',
-      'Comptes du personnel ajoutés : {n}',
+      'Nouveaux patients enregistrés\u00A0: {n}',
+      'Demandes de remboursement envoyées\u00A0: {n}',
+      'Notifications envoyées\u00A0: {n}',
+      'Rendez-vous réservés\u00A0: {n}',
+      'Comptes du personnel ajoutés\u00A0: {n}',
     ],
     templateRejectReason:
-        'Contient de la publicité ; envoyez-le comme message marketing.',
+        'Contient de la publicité\u00A0; envoyez-le comme message marketing.',
     labels: <String, String>{
       'active': 'Actif',
       'invited': 'Invité',
@@ -407,8 +409,8 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
   currency: CoCurrencyFormat(
     code: 'EUR',
     symbol: '€',
-    pattern: '{amount} {symbol}',
-    groupSeparator: ' ',
+    pattern: '{amount}\u00A0{symbol}',
+    groupSeparator: '\u202F',
     decimalSeparator: ',',
     fractionDigits: 2,
   ),
@@ -427,5 +429,5 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
   ),
   koreanValues: CoKoreanValues.none,
   // Nine digits in groups of three, as a French company number is written.
-  businessNumberFormat: '### ### ###',
+  businessNumberFormat: '###\u00A0###\u00A0###',
 );

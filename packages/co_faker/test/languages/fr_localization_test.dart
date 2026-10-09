@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:co_faker/co_faker.dart';
 import 'package:co_faker/src/l10n/co_l10n_clinic.dart';
 import 'package:co_faker/src/language_coverage/co_language_texts.dart';
@@ -259,6 +261,18 @@ void main() {
   group('the typography of French', () {
     test('has texts to check', () {
       expect(texts.length, greaterThan(1300));
+    });
+
+    test('writes a no-break space as an escape in its source files', () {
+      // A literal no-break space is a character that no reviewer can see, so
+      // the data files write `U+00A0` and `U+202F`, and the tests above read
+      // what the escapes make.
+      for (final name in <String>['bundle', 'clinic', 'saas']) {
+        final source = File('lib/src/l10n/fr/fr_$name.dart').readAsStringSync();
+        expect(source, isNot(contains(_nbsp)), reason: 'fr_$name.dart');
+        expect(source, isNot(contains(_nnbsp)), reason: 'fr_$name.dart');
+        expect(source, contains(r'\u00A0'), reason: 'fr_$name.dart');
+      }
     });
 
     test('writes the apostrophe as ’ and never as a straight quote', () {

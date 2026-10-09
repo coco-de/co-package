@@ -11,8 +11,8 @@ import '../co_l10n_bundle.dart';
 ///   particular uses `merci de` and the infinitive;
 /// - a fictional name ends with `(fictif)` and a sample label with
 ///   `(exemple)`, and nothing else marks a text as fictional;
-/// - a no-break space (` `) stands before `:`, `;`, `?`, `!`, `%`, a unit,
-///   and inside `«` `»`, and a narrow one (` `) between thousands;
+/// - a no-break space (`U+00A0`) stands before `:`, `;`, `?`, `!`, `%`, a unit,
+///   and inside `«` `»`, and a narrow one (`U+202F`) between thousands;
 /// - the apostrophe is `’`;
 /// - a template that a value fills never puts `de`, `à`, `le`, or `la` right
 ///   before the value, because the elision (`d’Inès`) and the contraction
@@ -44,8 +44,8 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Bureau de change démo, Frênaie',
     ],
     'fx.couponName': [
-      'Remise de 80 % sur la marge USD (exemple)',
-      'Remise de 70 % sur la marge JPY (exemple)',
+      'Remise de 80\u00A0% sur la marge USD (exemple)',
+      'Remise de 70\u00A0% sur la marge JPY (exemple)',
       'Remise sur le premier change (exemple)',
     ],
     'fx.tierName': ['Bronze', 'Argent', 'Or'],
@@ -112,7 +112,10 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Rivebleue, zone B (démo)',
       'Plaine, zone C (démo)',
     ],
-    'grocery.slotLabel': ['Aube, de 6 h à 7 h', 'Soir, de 18 h à 20 h'],
+    'grocery.slotLabel': [
+      'Aube, de 6\u00A0h à 7\u00A0h',
+      'Soir, de 18\u00A0h à 20\u00A0h',
+    ],
     'grocery.substitutionNote': [
       'Exemple de remplacement par un produit de poids similaire.',
       'Exemple de remboursement sans remplacement.',
@@ -144,13 +147,13 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Lait',
     ],
     'catalog.groceryUnit': [
-      '500 g',
-      '200 g',
-      '1 kg',
-      '2 kg',
-      '500 g',
-      '600 g',
-      '1 L',
+      '500\u00A0g',
+      '200\u00A0g',
+      '1\u00A0kg',
+      '2\u00A0kg',
+      '500\u00A0g',
+      '600\u00A0g',
+      '1\u00A0L',
     ],
     'catalog.commerceName': [
       'Écouteurs sans fil',
@@ -164,7 +167,7 @@ const CoL10nBundle frBundle = CoL10nBundle(
       '1 boîte',
       '3 pièces',
       '1 pièce',
-      '200 g',
+      '200\u00A0g',
     ],
 
     // booking
@@ -239,8 +242,8 @@ const CoL10nBundle frBundle = CoL10nBundle(
     ],
     // Same order as the wholesale items in CoB2bTradeDomain: CUP, FRZ, PKG, HYG.
     'b2b_trade.itemSpec': [
-      'Gobelets en carton 35 cl, lot de 1 000',
-      'Pommes de terre surgelées, 10 kg',
+      'Gobelets en carton 35\u00A0cl, lot de 1\u202F000',
+      'Pommes de terre surgelées, 10\u00A0kg',
       'Sacs en papier, lot de 100',
       'Lingettes hygiéniques non parfumées, lot de 20',
     ],
@@ -340,8 +343,8 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Répétition de groupe',
     ],
     'space_rental.guestMessage': [
-      'Pourrais-je savoir comment utiliser le matériel ?',
-      'Pourriez-vous m’envoyer les instructions d’accès ?',
+      'Pourrais-je savoir comment utiliser le matériel\u00A0?',
+      'Pourriez-vous m’envoyer les instructions d’accès\u00A0?',
     ],
     'space_rental.hostReply': [
       'Merci de consulter le guide du matériel sur la page de réservation.',
@@ -425,9 +428,9 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Topique hydratant (fictif)',
     ],
     'daycare.dosageLabel': [
-      'Exemple saisi par le responsable légal : 2 mL',
-      'Exemple saisi par le responsable légal : 3 mL',
-      'Exemple saisi par le responsable légal : faible quantité',
+      'Exemple saisi par le responsable légal\u00A0: 2\u00A0mL',
+      'Exemple saisi par le responsable légal\u00A0: 3\u00A0mL',
+      'Exemple saisi par le responsable légal\u00A0: faible quantité',
     ],
     'daycare.noticeTitle': [
       'Avis sur les jeux d’hiver (exemple)',
@@ -459,15 +462,15 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Contrôle d’accès',
     ],
     'exam_prep.questionStem': [
-      'Quelle clé permet de distinguer les lignes d’une table ?',
-      'Quelle clause SQL permet de sélectionner des lignes selon une condition ?',
-      'Quel protocole de transport gère l’ordre et la retransmission des données ?',
-      'Quel équipement choisit le prochain chemin d’un paquet ?',
-      'Quel protocole sert à exprimer les requêtes et les réponses web ?',
-      'Qu’est-ce qui permet de stocker une valeur sous un nom dans un programme ?',
-      'Quelle structure retire en premier la dernière valeur insérée ?',
-      'Qu’est-ce qui calcule une empreinte de longueur fixe à partir d’une entrée ?',
-      'Quel principe n’accorde que les droits nécessaires à une tâche ?',
+      'Quelle clé permet de distinguer les lignes d’une table\u00A0?',
+      'Quelle clause SQL permet de sélectionner des lignes selon une condition\u00A0?',
+      'Quel protocole de transport gère l’ordre et la retransmission des données\u00A0?',
+      'Quel équipement choisit le prochain chemin d’un paquet\u00A0?',
+      'Quel protocole sert à exprimer les requêtes et les réponses web\u00A0?',
+      'Qu’est-ce qui permet de stocker une valeur sous un nom dans un programme\u00A0?',
+      'Quelle structure retire en premier la dernière valeur insérée\u00A0?',
+      'Qu’est-ce qui calcule une empreinte de longueur fixe à partir d’une entrée\u00A0?',
+      'Quel principe n’accorde que les droits nécessaires à une tâche\u00A0?',
     ],
     // Every question has four choices, and the first one is the correct answer:
     // the generator shuffles them.
@@ -606,7 +609,7 @@ const CoL10nBundle frBundle = CoL10nBundle(
     ],
     'neighborhood.postBody': [
       'Actualité fictive du quartier. Les détails figurent dans cette publication.',
-      'Exemple de publication pour les voisins ; aucun numéro de téléphone ni adresse réelle n’est indiqué.',
+      'Exemple de publication pour les voisins\u00A0; aucun numéro de téléphone ni adresse réelle n’est indiqué.',
     ],
     'neighborhood.commentBody': [
       'Merci d’avoir partagé cette nouvelle.',
@@ -619,9 +622,9 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Petite bibliothèque Frênaie (fictif)',
     ],
     'neighborhood.openHours': [
-      'De 8 h à 21 h',
-      'De 9 h à 18 h',
-      'De 10 h à 20 h',
+      'De 8\u00A0h à 21\u00A0h',
+      'De 9\u00A0h à 18\u00A0h',
+      'De 10\u00A0h à 20\u00A0h',
     ],
     'neighborhood.bannedWord': [
       'publicité-exemple',
@@ -678,9 +681,9 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Merci de prévenir le groupe en cas d’annulation.',
     ],
     'meetup.cadenceLabel': [
-      'Chaque samedi à 7 h',
-      'Un dimanche sur deux à 10 h',
-      'Premier samedi du mois à 14 h',
+      'Chaque samedi à 7\u00A0h',
+      'Un dimanche sur deux à 10\u00A0h',
+      'Premier samedi du mois à 14\u00A0h',
     ],
 
     // fandom
@@ -819,7 +822,7 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Un état d’erreur apparaît lors de l’exportation des données d’exemple au format CSV.',
       'Je souhaite vérifier la formulation de la page d’état de l’intégration fictive.',
       'L’écran d’exemple reste identique après avoir appuyé sur un bouton.',
-      'Où puis-je trouver la page d’aide du support fictif ?',
+      'Où puis-je trouver la page d’aide du support fictif\u00A0?',
     ],
     'helpdesk.macroName': [
       'Accusé de réception d’exemple',
@@ -865,8 +868,8 @@ const CoL10nBundle frBundle = CoL10nBundle(
       '(Pub) Exemple d’offre pour un produit fictif. Le désabonnement se trouve dans les réglages de démonstration.',
     ],
     'campaign.couponTitle': [
-      'Bon d’exemple de 20 % pour l’hiver',
-      'Bon d’exemple de 10 % pour une première visite',
+      'Bon d’exemple de 20\u00A0% pour l’hiver',
+      'Bon d’exemple de 10\u00A0% pour une première visite',
     ],
     'campaign.segmentName': [
       'Acheteurs d’exemple des 30 derniers jours',
@@ -1019,8 +1022,8 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Exemple d’explication d’une liste de documents',
     ],
     'brokerage.qnaQuestion': [
-      'Que signifie ce terme du dispositif ? (question fictive)',
-      'Quels champs figurent dans une fiche de consultation ? (question fictive)',
+      'Que signifie ce terme du dispositif\u00A0? (question fictive)',
+      'Quels champs figurent dans une fiche de consultation\u00A0? (question fictive)',
     ],
     // Every text starts with the general-information prefix of the language
     // (`test/language_safety/fr.dart`) and promises no result.
@@ -1029,8 +1032,8 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Information générale à titre d’exemple. Une fiche de consultation distingue les questions des documents de référence. Aucun résultat précis ni aucune marche à suivre n’est indiqué.',
     ],
     'brokerage.consultNoteGeneric': [
-      'Information générale, note d’exemple : sujet de la question et termes du dispositif présentés. La liste de documents se compose d’éléments explicatifs fictifs.',
-      'Information générale, note d’exemple : format de la fiche de consultation passé en revue. Aucune conclusion ni aucun conseil sur un cas particulier.',
+      'Information générale, note d’exemple\u00A0: sujet de la question et termes du dispositif présentés. La liste de documents se compose d’éléments explicatifs fictifs.',
+      'Information générale, note d’exemple\u00A0: format de la fiche de consultation passé en revue. Aucune conclusion ni aucun conseil sur un cas particulier.',
     ],
     'brokerage.officeName': [
       'Cabinet de consultation Clairval (fictif)',
@@ -1058,13 +1061,13 @@ const CoL10nBundle frBundle = CoL10nBundle(
     // department; the plate stays masked with `●●`.
     'logistics.vehiclePlate': ['{n}●● AB {m}'],
     'logistics.deliveryNote': [
-      'Pas de dépôt sans surveillance ; remise en main propre.',
+      'Pas de dépôt sans surveillance\u00A0; remise en main propre.',
       'Merci de sonner à l’entrée commune.',
       'Merci de passer par la loge du gardien.',
     ],
     'logistics.entranceHint': [
-      'Entrée commune n° •••• ; appeler la loge',
-      'Utiliser l’interphone de l’entrée ; aucun code affiché',
+      'Entrée commune n° ••••\u00A0; appeler la loge',
+      'Utiliser l’interphone de l’entrée\u00A0; aucun code affiché',
     ],
     'logistics.scanEvent': [
       'Arrivée à la plateforme',
@@ -1099,9 +1102,9 @@ const CoL10nBundle frBundle = CoL10nBundle(
     // TOWEL-COT-03, RICE-BRN-02.
     'logistics.itemName': [
       'Petite boîte en carton',
-      'Ruban adhésif d’emballage 48 mm',
+      'Ruban adhésif d’emballage 48\u00A0mm',
       'Serviettes en coton, 3 pièces',
-      'Riz complet 2 kg',
+      'Riz complet 2\u00A0kg',
     ],
     'logistics.ownerLabel': [
       'Chargeur A (fictif)',

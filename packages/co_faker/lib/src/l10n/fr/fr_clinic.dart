@@ -93,7 +93,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
     (
       code: 'FIL-L',
       category: 'Comblement/Zone',
-      name: 'Acide hyaluronique lèvres 1 ml',
+      name: 'Acide hyaluronique lèvres 1\u00A0ml',
       unit: 'ml',
       minPrice: 450,
       maxPrice: 800,
@@ -181,10 +181,10 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
   // A drug reads `Adermex comprimé 10 mg`: the form has its leading space and
   // the unit a no-break one.
   drugForms: <({String form, String unit, List<int> strengths})>[
-    (form: ' comprimé', unit: ' mg', strengths: <int>[5, 10, 20, 50]),
-    (form: ' gélule', unit: ' mg', strengths: <int>[25, 50, 100]),
-    (form: ' pommade', unit: ' g', strengths: <int>[15, 30]),
-    (form: ' crème', unit: ' g', strengths: <int>[15, 30]),
+    (form: ' comprimé', unit: '\u00A0mg', strengths: <int>[5, 10, 20, 50]),
+    (form: ' gélule', unit: '\u00A0mg', strengths: <int>[25, 50, 100]),
+    (form: ' pommade', unit: '\u00A0g', strengths: <int>[15, 30]),
+    (form: ' crème', unit: '\u00A0g', strengths: <int>[15, 30]),
   ],
   drugUsages: <String>[
     'Une fois par jour au coucher',
@@ -214,19 +214,19 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
     'Surveillance, revenir en cas d’aggravation',
   ],
   memos: <String>[
-    'Maquillage déconseillé pendant 24 heures.',
-    'Anesthésique local appliqué 30 minutes avant l’acte.',
+    'Maquillage déconseillé pendant 24\u00A0heures.',
+    'Anesthésique local appliqué 30\u00A0minutes avant l’acte.',
     'Photos avant l’acte prises.',
-    'Forfait expliqué ; le patient décidera plus tard.',
+    'Forfait expliqué\u00A0; le patient décidera plus tard.',
     'Prochain rendez-vous fixé dans deux semaines.',
   ],
   questions: <CoQuestionSpec>[
     (
-      question: 'Avez-vous des allergies médicamenteuses ?',
+      question: 'Avez-vous des allergies médicamenteuses\u00A0?',
       options: <String>['Aucune', 'Lidocaïne', 'Pénicilline', 'Je ne sais pas'],
     ),
     (
-      question: 'Prenez-vous des médicaments ?',
+      question: 'Prenez-vous des médicaments\u00A0?',
       options: <String>[
         'Aucun',
         'Anticoagulants',
@@ -235,11 +235,11 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       ],
     ),
     (
-      question: 'Êtes-vous enceinte ou allaitez-vous ?',
+      question: 'Êtes-vous enceinte ou allaitez-vous\u00A0?',
       options: <String>['Non', 'Enceinte', 'Allaitement', 'Sans objet'],
     ),
     (
-      question: 'Qu’aimeriez-vous améliorer en priorité ?',
+      question: 'Qu’aimeriez-vous améliorer en priorité\u00A0?',
       options: <String>['Taches pigmentaires', 'Acné', 'Rides', 'Fermeté'],
     ),
   ],
@@ -293,8 +293,8 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
         kind: 'privacy',
         title: 'Consentement relatif aux données personnelles',
         clauses: <String>[
-          'Données collectées : nom, date de naissance, coordonnées, dossier médical.',
-          'Finalités : soins, rappels de rendez-vous, facturation.',
+          'Données collectées\u00A0: nom, date de naissance, coordonnées, dossier médical.',
+          'Finalités\u00A0: soins, rappels de rendez-vous, facturation.',
           'Je peux refuser, mais la prise de rendez-vous en ligne peut alors être indisponible.',
         ],
       ),
@@ -308,7 +308,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       ),
     ],
     consentDisclaimer:
-        'Texte d’exemple pour démonstration uniquement. Non relu juridiquement ; '
+        'Texte d’exemple pour démonstration uniquement. Non relu juridiquement\u00A0; '
         'ne pas utiliser comme formulaire de consentement réel.',
     feedback: <String, List<String>>{
       'positive': <String>[
@@ -334,10 +334,10 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
         recommend:
             'Pour la pigmentation, je vous recommande le laser picoseconde.',
         pain:
-            'Cela pique un peu ; la plupart des personnes n’ont pas besoin d’anesthésie.',
+            'Cela pique un peu\u00A0; la plupart des personnes n’ont pas besoin d’anesthésie.',
         interval: 'Environ dix séances, espacées de deux semaines.',
         downtime:
-            'Quelques rougeurs pendant quelques heures ; vous pouvez vous laver le visage le jour même.',
+            'Quelques rougeurs pendant quelques heures\u00A0; vous pouvez vous laver le visage le jour même.',
         sessions: 10,
       ),
       (
@@ -355,12 +355,12 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       ),
     ],
     counselScript: (
-      greeting: 'Bonjour, qu’est-ce qui vous amène aujourd’hui ?',
+      greeting: 'Bonjour, qu’est-ce qui vous amène aujourd’hui\u00A0?',
       questions: <String, String>{
-        'pain': 'Est-ce que ça fait mal ?',
-        'interval': 'À quelle fréquence dois-je en faire ?',
-        'downtime': 'Puis-je aller travailler juste après ?',
-        'price': 'Combien cela coûte-t-il ?',
+        'pain': 'Est-ce que ça fait mal\u00A0?',
+        'interval': 'À quelle fréquence dois-je en faire\u00A0?',
+        'downtime': 'Puis-je aller travailler juste après\u00A0?',
+        'price': 'Combien cela coûte-t-il\u00A0?',
       },
       priceAnswer:
           'C’est {price} la séance, ou {packagePrice} pour un forfait de '
@@ -372,7 +372,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       bookNo: 'Je vais y réfléchir et je reviendrai vers vous.',
       bookNoReply: 'Bien sûr, n’hésitez pas à nous contacter à tout moment.',
       summary:
-          'Recommandation : {procedure}, {price} la séance, {packagePrice} '
+          'Recommandation\u00A0: {procedure}, {price} la séance, {packagePrice} '
           'pour {sessions} séances. {outcome}',
       booked: 'Rendez-vous pris.',
       pending: 'Décision en attente, à relancer plus tard.',
@@ -396,7 +396,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
         (code: 'ADJUSTED', message: 'Demande ajustée après examen', ok: false),
         (
           code: 'RETURNED',
-          message: 'Demande retournée : champs manquants',
+          message: 'Demande retournée\u00A0: champs manquants',
           ok: false,
         ),
       ],
@@ -420,13 +420,13 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
     // `pour` or `à`, or alone: no template needs `de` before a name.
     teamNotes: <String>[
       '{mention}, merci de baisser d’un cran le réglage du laser pour {patient}.',
-      'Passation : la crème anesthésiante est posée pour {patient}. '
+      'Passation\u00A0: la crème anesthésiante est posée pour {patient}. '
           '{mention}, c’est à vous dès que possible.',
       '{mention}, il reste une séance de forfait à {patient}.',
       'La signature d’un responsable légal est nécessaire pour {patient}. '
           '{mention}, merci de vérifier.',
     ],
-    deviceNameFormat: '{kind} n° {number}',
+    deviceNameFormat: '{kind} n°\u00A0{number}',
     staffMentionFormat: '@{name} ({role})',
     nameMentionFormat: '@{name}',
     labels: <String, String>{
@@ -481,8 +481,8 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
     ],
     specialNotes: <String>[
       'Allergie à la lidocaïne',
-      'Tendance aux chéloïdes : réduire l’intensité du laser',
-      'Sous anticoagulants : vérifier avant les actes',
+      'Tendance aux chéloïdes\u00A0: réduire l’intensité du laser',
+      'Sous anticoagulants\u00A0: vérifier avant les actes',
       'Allergie à la pénicilline',
     ],
     rooms: <CoRoomSpec>[
@@ -503,20 +503,20 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       'sent': 'Demande de signature envoyée.',
       'opened': 'Le patient a ouvert la demande.',
       'signed': 'Signé électroniquement.',
-      'expired': 'La demande a expiré (24 heures).',
-      'failed': 'Envoi de la demande impossible ; vérifiez le numéro.',
+      'expired': 'La demande a expiré (24\u00A0heures).',
+      'failed': 'Envoi de la demande impossible\u00A0; vérifiez le numéro.',
     },
     adjustments: <String, List<String>>{
       'discount': <String>[
-        'Remise patient fidèle 10 %',
-        'Remise famille du personnel 20 %',
+        'Remise patient fidèle 10\u00A0%',
+        'Remise famille du personnel 20\u00A0%',
       ],
-      'coupon': <String>['Bon première visite 20 %', 'Bon d’anniversaire'],
+      'coupon': <String>['Bon première visite 20\u00A0%', 'Bon d’anniversaire'],
       'point': <String>['Points utilisés'],
       'rounding': <String>['Arrondi'],
     },
     pointReasons: <String, String>{
-      'earn': '3 % du paiement crédités',
+      'earn': '3\u00A0% du paiement crédités',
       'use': 'Utilisés à l’encaissement',
       'bonus': 'Bonus pour un avis',
       'expire': 'Expirés',
@@ -528,7 +528,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       'cashReceipt': 'Reçu de paiement en espèces émis.',
       'partialCancel': 'Annulation partielle effectuée.',
       'prepaidUsed': 'Débité du solde prépayé.',
-      'declined': 'Carte refusée : {reason}',
+      'declined': 'Carte refusée\u00A0: {reason}',
     },
     tasks: <String>[
       'Vérifier le stock d’embouts laser',
@@ -537,7 +537,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       'Relever la température du réfrigérateur',
     ],
     taskMemos: <String>[
-      'À terminer avant 15 h.',
+      'À terminer avant 15\u00A0h.',
       'Commander immédiatement s’il en reste moins de 5.',
     ],
     kioskPurposes: <String, String>{
@@ -560,7 +560,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
     ],
     counselFailures: <String, String>{
       'CONSENT_MISSING':
-          'Pas de consentement à l’enregistrement ; le conseil par IA ne peut pas démarrer.',
+          'Pas de consentement à l’enregistrement\u00A0; le conseil par IA ne peut pas démarrer.',
       'STT_FAILED':
           'La reconnaissance vocale a échoué. Vérifiez le microphone.',
       'TOO_SHORT': 'L’enregistrement est trop court pour être résumé.',
@@ -596,34 +596,35 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
         (
           title: 'Formation au nouvel appareil laser',
           body:
-              'La formation au nouveau laser a lieu mercredi prochain à 18 h en salle de soins 1.',
+              'La formation au nouveau laser a lieu mercredi prochain à 18\u00A0h en salle de soins 1.',
         ),
       ],
       'policy': <({String title, String body})>[
         (
           title: 'Contrôle des accès aux numéros d’identification',
           body:
-              'Les numéros d’identification complets ne peuvent être affichés qu’avec un motif ; les accès sont contrôlés chaque mois.',
+              'Les numéros d’identification complets ne peuvent être affichés qu’avec un motif\u00A0; les accès sont contrôlés chaque mois.',
         ),
       ],
       'schedule': <({String title, String body})>[
         (
           title: 'Planning des jours fériés',
           body:
-              'La veille du jour férié, fermeture à 17 h. Consultez le planning partagé.',
+              'La veille du jour férié, fermeture à 17\u00A0h. Consultez le planning partagé.',
         ),
       ],
     },
     vitalsNotes: <String, String>{
       'normal':
-          'Constantes stables (TA {sys}/{dia} mmHg, FC {pulse}, SpO2 {spo2} %, T {temp} °C).',
+          'Constantes stables (TA {sys}/{dia}\u00A0mmHg, FC {pulse}, SpO2 {spo2}\u00A0%, T {temp}\u00A0°C).',
       'highBp':
-          'TA {sys}/{dia} mmHg élevée ; à recontrôler après 10 minutes de repos.',
+          'TA {sys}/{dia}\u00A0mmHg élevée\u00A0; à recontrôler après 10\u00A0minutes de repos.',
       'fever':
-          'Fébricule à {temp} °C ; le médecin décidera s’il faut reporter.',
-      'lowSpo2': 'SpO2 {spo2} % basse ; recontrôlée, pas de gêne respiratoire.',
+          'Fébricule à {temp}\u00A0°C\u00A0; le médecin décidera s’il faut reporter.',
+      'lowSpo2':
+          'SpO2 {spo2}\u00A0% basse\u00A0; recontrôlée, pas de gêne respiratoire.',
       'highGlucose':
-          'Glycémie {glucose} mg/dL élevée ; mesure postprandiale confirmée.',
+          'Glycémie {glucose}\u00A0mg/dL élevée\u00A0; mesure postprandiale confirmée.',
     },
     // A date reads `mercredi 25/11` and a range `du mercredi 25/11 au jeudi
     // 26/11`, so a notice needs neither `le` nor a preposition before it. The
@@ -632,10 +633,10 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
     closure: <String, String>{
       'title': 'Fermeture {dates}',
       'holiday':
-          '{clinic} : fermeture {dates} ({name}). Reprise normale des '
+          '{clinic}\u00A0: fermeture {dates} ({name}). Reprise normale des '
           'consultations {reopen}.',
       'other':
-          '{clinic} : fermeture {dates}. Motif : {reason}. Reprise '
+          '{clinic}\u00A0: fermeture {dates}. Motif\u00A0: {reason}. Reprise '
           'normale des consultations {reopen}.',
     },
     closureReasons: <String>[
@@ -695,8 +696,8 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
   currency: CoCurrencyFormat(
     code: 'EUR',
     symbol: '€',
-    pattern: '{amount} {symbol}',
-    groupSeparator: ' ',
+    pattern: '{amount}\u00A0{symbol}',
+    groupSeparator: '\u202F',
     decimalSeparator: ',',
     fractionDigits: 2,
   ),
@@ -719,6 +720,6 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
   clinicNameFormat: '{suffix} {prefix}',
   koreanValues: CoKoreanValues.none,
   // The shape of a French social security number, masked but for the key.
-  maskedIdFormat: '* ** ** ** *** *** ##',
+  maskedIdFormat: '*\u00A0**\u00A0**\u00A0**\u00A0***\u00A0***\u00A0##',
   addressLineFormat: '{line1}, {city}',
 );
