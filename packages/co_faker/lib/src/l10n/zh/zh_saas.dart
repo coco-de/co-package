@@ -191,8 +191,8 @@ const CoFakerSaasData zhSaas = CoFakerSaasData(
         (name: '冷冻治疗（单个部位）', price: 120),
       ],
       'drug': <CoMasterRowSpec>[
-        (name: '鲁米索片 10mg', price: 3),
-        (name: '克拉芬软膏 15g', price: 28),
+        (name: '鲁米索片10mg', price: 3),
+        (name: '克拉芬软膏15g', price: 28),
       ],
       'material': <CoMasterRowSpec>[
         (name: '无菌纱布（10片）', price: 6),

@@ -20,7 +20,8 @@ import '../../korean_values.dart';
 ///   masked ID number of a patient has the shape of a Chinese resident ID
 ///   (6 digits, 8 masked, 4 digits).
 /// - Dates are written `10月8日（周三）`, a range `10月8日至10月10日`, and a
-///   package is a `次卡` (`皮秒激光嫩肤10次卡`).
+///   package is a `次卡` (`皮秒激光嫩肤（10次卡）`; the sessions stand in
+///   parentheses, because a name may end in a number: `…1ml（5次卡）`).
 ///
 /// `zh`, `zh_CN`, `zh-Hans`, and `CoFaker.forLanguage('zh-Hans')` read it.
 /// `../co_l10n_clinic.dart` already points here: nothing else changes. The
@@ -208,7 +209,7 @@ const CoFakerClinicData zhClinic = CoFakerClinicData(
     'female': '女',
     'male': '男',
   },
-  packageNameFormat: '{name}{sessions}次卡',
+  packageNameFormat: '{name}（{sessions}次卡）',
   texts: CoFakerClinicTexts(
     consentForms: <CoConsentFormSpec>[
       (
@@ -476,7 +477,7 @@ const CoFakerClinicData zhClinic = CoFakerClinicData(
     dateFormat: '{month}月{day}日（{weekday}）',
     weekdayNames: <String>['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
     dateRangeFormat: '{from}至{to}',
-    compoundItemFormat: '{name}{sessions}次',
+    compoundItemFormat: '{name}×{sessions}次',
     labels: <String, String>{
       'requested': '申请中',
       'waiting': '候诊',

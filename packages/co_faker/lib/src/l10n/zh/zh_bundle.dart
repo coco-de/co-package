@@ -505,9 +505,9 @@ const CoL10nBundle zhBundle = CoL10nBundle(
       '家具损坏检查（示例）',
     ],
     'hospitality.lostItemName': ['蓝色雨伞', '灰色围巾', '一本书', '水杯'],
-    'hospitality.specialRequest': ['高楼层、无烟房（示例）', '要求加一个枕头（示例）', '要求安静客房（示例）'],
+    'hospitality.specialRequest': ['高楼层、无烟房（示例）', '额外枕头需求（示例）', '安静客房需求（示例）'],
     'hospitality.menuItem': ['裙带菜汤套餐', '蔬菜意面', '水果酸奶', '热茶'],
-    'hospitality.menuOption': ['少饭', '正常饭量', '加配菜（示例）', '去冰'],
+    'hospitality.menuOption': ['米饭少一点', '米饭正常', '加配菜（示例）', '去冰'],
     'hospitality.amenityName': ['毛巾', '饮用水', '牙刷', '枕头'],
     'hospitality.localSpot': ['早市汤铺（虚构）', '巷口咖啡馆（虚构）', '松光步道（虚构）'],
     'hospitality.conciergeReply': [
