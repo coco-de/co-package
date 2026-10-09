@@ -674,13 +674,16 @@ dart run co_faker:coverage --language ja --format json
 ```
 
 It fails on Hangul in a language other than Korean, on text without the writing
-system of Japanese, Chinese, or Russian, on texts that read like the English
-ones (a unit or an acronym that is the same on purpose goes in
-`CoL10nBundle.allowSameAsEnglish`), on a list that is not as long as the English
-one, on a key that is still a stub, and on a generator that leaves a
-placeholder unfilled or throws. A language that has no data yet is `planned`
-and fails with that message. See `docs/languages/README.md` for the gate, the
-files a language fills, and the glossary of each language.
+system of Japanese (kana), Chinese, or Russian, on texts that read like the
+English ones (a unit or an acronym that is the same on purpose goes in
+`CoL10nBundle.allowSameAsEnglish`, a short list), on a list that is not as long
+as the English one or a map whose keys are in another order, on a translation
+that loses, renames, or repeats a `{name}` field of its English text, on clinic
+or SaaS data that does not say `koreanValues: CoKoreanValues.none`, on a key
+that is still a stub, and on a generator that leaves a placeholder unfilled or
+throws. A language that has no data yet is `planned` and fails with that
+message. See `docs/languages/README.md` for the gate, how to read its report,
+the files a language fills, and the glossary of each language.
 
 ## Template Sugar
 

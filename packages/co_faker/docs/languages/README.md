@@ -46,24 +46,52 @@ gate. A language is finished when it passes. The checks:
 
 | Check | What fails |
 | --- | --- |
-| (a) Hangul | A language other than Korean has a Hangul character in a text, or a generator writes one. |
-| (b) Writing system | Japanese texts without kana or han, Chinese without han, Russian without Cyrillic (95% of the texts must have it). |
-| (c) Same as English | More than 5% of the texts (10% for German, French, Italian, and Portuguese, which share many words with English) read exactly like the English ones, or a whole list does. |
-| (d) List length | A list has another length than the English list: the same seed must pick the same record in every language, so a list keeps the English length and order. |
+| (a) Hangul | A language other than Korean has a Hangul character in a text (half-width and circled Hangul too), or a generator writes one. |
+| (b) Writing system | Japanese texts without kana or han, Chinese without han, Russian without Cyrillic (95% of the texts must have it). Han characters alone are Chinese: at least 20% of the Japanese texts have a kana, and at most 5% of the Chinese ones. |
+| (c) Same as English | More than 5% of the texts (10% for German, French, Italian, and Portuguese, which share many words with English) read exactly like the English ones, or a whole list does. `allowSameAsEnglish` may cover at most 10% of the texts. |
+| (d) List length | A list has another length than the English list, or a map has other keys, or the same keys in another order: the same seed must pick the same record in every language, and a generator picks an entry by its position, so a list and a map keep the English length and order. |
 | (e) Not registered | A key of the English bundle, or the clinic or SaaS data, is still a stub. English is used for it. |
 
-It also checks that a code (`CONS01`, `nhis`) is the English one, that a
-translation keeps the placeholders (`{n}`, `#{variable}`) of its English text,
-that no text is empty, and that the questions of `exam_prep` keep their
-pairs: the four choices differ, and the explanation contains the correct
-choice. The generators are held to the same rules on what they write: no
-Hangul, no placeholder left unfilled (`{n}`), no exception, and the writing
-system of the language.
+It also checks, for every text of the three data sets:
+
+- **fields.** A translation keeps the `{name}` fields of its English text: each
+  one, under the English name, as often as English has it, in any order. A
+  generator fills the English names only, so a renamed field (`{回数}`) stays in
+  the output as it is, and a dropped one loses its value. The same holds for a
+  pattern (`{month}/{day}`, `{kind} #{number}`); there a number sign before a
+  field is part of the pattern, and a language may write the number its own
+  way (`{kind} {number}号機`, `{kind} Nr. {number}`). A `#{variable}` of a
+  notification template is the one marker that a language may rename, as many
+  times as English has it. Three templates choose among the names that the
+  generator offers, so they take the names from this list instead:
+  `common.maskedName` (`{lastName}`, `{firstName}`, `{initial}`) and the two
+  daycare templates `daycare.guardianLabel` and `daycare.teacherName`
+  (`{name1}`, `{name2}`; write `{name1}`). Two patterns may use fields besides
+  the English ones, because their generator offers them: the address line of a
+  patient (`clinic.addressLineFormat`: `{region}` and `{regionCode}`, so that
+  Japanese and Chinese write `{region}{city}{line1}`) and the date format of
+  the clinic (`clinic.ops.dateFormat`: `{weekday}`).
+- **codes.** A code (`CONS01`, `nhis`) is the English one.
+- **empty text.** No text is empty.
+- **data rules.** The questions of `exam_prep` keep their pairs: the four
+  choices differ, and the explanation contains the correct choice, whatever
+  its case (`Clé primaire` in `La clé primaire identifie…`). The clinic data
+  and the SaaS data say `koreanValues: CoKoreanValues.none`, or the
+  generators keep writing Korean phone numbers, addresses, and registration
+  numbers, which hold no Hangul and no other check would see.
+
+The generators are held to the same rules on what they write: no Hangul, no
+placeholder left unfilled (`{n}`, and a `#{variable}` anywhere but in a
+notification template), no exception, and the writing system of the language
+for the texts that a role or a generator returns, and for each string of a
+record. A text that reads the same in English and Korean is a code or a
+literal that carries no language and is left out.
 
 A text that is the same as English on purpose (a unit, an acronym, a loanword,
 a proper name) is listed in `allowSameAsEnglish` of the bundle, with the name
 of its slot and its value, and an entry that no text needs any more is
-reported:
+reported. The list is short by design: it may cover 10% of the texts at most
+(Korean needs 3.3%), and a list that covers more leaves texts in English.
 
 ```dart
 const CoL10nBundle jaBundle = CoL10nBundle(
@@ -77,6 +105,31 @@ const CoL10nBundle jaBundle = CoL10nBundle(
 ```
 
 Do not list a text that can be translated.
+
+### Reading what the gate says
+
+The report lists every problem under the name of its check, and each line says
+where (a slot and a row such as `clinic.cardIssuers[3]`, or the generator that
+wrote the text such as `role dental.dentalProcedure` and `clinic.payment`), what
+is wrong, and the text at fault. `--format json` gives the same lines as
+`check`, `where`, `message`, and `value`, and `--strict` makes the exit code 1.
+`Notes` are texts worth a look that stay within a limit; they do not fail.
+
+| In the report | What to do |
+| --- | --- |
+| `planned` | The language has no data yet, or only some of the three data sets: write all three. |
+| `(a) Hangul` | A text still has Korean in it: translate it. Under `role ...` or a call name, a generator writes it: tell the maintainers, it is not a file of the language. |
+| `(b) writing system` | A text has no kana or han (Japanese), no han (Chinese), or no Cyrillic (Russian): it is English, or a Latin transcription. Japanese needs kana in a fifth of its texts, and Chinese almost none. |
+| `(c) same as English` | The texts listed read like English. Translate them; list a unit, an acronym, or a name in `allowSameAsEnglish` with the slot and the text, as the line says (`'slot': ['text']`). A slot where every text equals English is English throughout: translate it, or allow it with `'*'` if all of them are units, acronyms, or names. |
+| `(d) list length` | A list has another number of texts than English, or a map has other keys or the same keys in another order. Keep the English count and order. |
+| `(e) not registered` | A key, or the clinic or SaaS data, is still a stub: write it. |
+| `unknown key` | A key that English does not have: check the name. |
+| `code` | A code that has to be the English one is not: copy it. |
+| `placeholder` | A field is lost, renamed, repeated, or added (`lacks {n}`, `has {回数}`), or the `#{variable}` markers of a template are not as many as English has: keep the fields of the English text under their English names. Under a generator, a field was left unfilled. |
+| `empty text` | A text is empty. |
+| `data rules` | The explanation of an exam question lacks its correct choice, two choices are the same, or `koreanValues` is not `CoKoreanValues.none`. |
+| `allowSameAsEnglish` | An entry names no slot, allows a text that no text needs any more, or the list covers more than 10% of the texts: remove the entry, or translate. |
+| `generator error` | A generator threw with the data of the language: the data is incomplete or inconsistent (an empty list, a missing key). |
 
 ## Localizing a language
 
@@ -132,10 +185,16 @@ The glossary is a table with exactly these columns:
 | Patient | 患者 | 患者さん; 病人 | The notice register says 患者, never the English loanword. |
 ```
 
-One row for each term, with one translation. A test of the package reads every
-language file and fails when:
+One row for each term, with one translation. The forbidden forms are spellings
+separated by `;` or by the full-width `；` that a Japanese or Chinese keyboard
+types, each form written plainly or in a pair of backticks (`患者さん`；`病人`);
+`-` says there is none. A comma does not separate them. A test of the package
+reads every language file and fails when:
 
 - a row is not four cells, or has an empty term, translation, or rationale;
+- the forbidden forms of a row cannot be read: a backtick without its pair, or
+  a comma where a `;` belongs (a form that no text could contain would be a
+  rule that never fires);
 - a term appears twice (the same term must have one translation);
 - a forbidden form appears in the translation of the same row, or in the
   translation of another term (the texts could not avoid it);
@@ -170,4 +229,21 @@ of the generators are still Korean:
   not look for Hangul in English.
 - The gate cannot see a word that a generator writes in English when it equals
   the English and Korean text (a code or a token). It does see the texts that
-  differ between English and Korean, and the data of the language.
+  differ between English and Korean, and the data of the language. A test of
+  the package reads a sample whose every text is rewritten, and holds every
+  text to the writing system with nothing left out: it found the literal
+  `5 rows` of `saas.masterChecks()`, which is a field of the data now. What the
+  generators write in English by design is named in the call table with its
+  reason (`englishReason`): the brands and model codes of a device, the
+  English name of a diagnosis, a user agent.
+- Some values that the packs generate follow the Korean number formats in every
+  language, and hold no Hangul, so the gate does not see them, and a language
+  cannot change them with its own files: the roles `clinic.approvalNo` and
+  `saas.recipient`, and the fields `rrnMasked` of `clinic.patient` and
+  `businessNumber` of `saas.tenant` that `schema.entity` infers to the Korean
+  resident and business registration numbers. `faker.clinic` and `faker.saas`
+  follow `koreanValues`; these roles and entities do not yet.
+- The gate runs the generators of `CoFaker.forLanguage(code)`, which has the
+  national locale of the language; `CoFaker(locale: code)` reads the same data
+  but has no country, so the address of a patient is the one that the basic
+  modules write.
