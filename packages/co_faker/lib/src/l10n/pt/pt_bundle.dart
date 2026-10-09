@@ -537,5 +537,261 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Fundamentos de programação',
       'Segurança da informação',
     ],
+
+    // hrd
+    'hrd.departmentName': [
+      'Vendas',
+      'Produção',
+      'Pesquisa',
+      'Suporte',
+      'Administração',
+      'Logística',
+    ],
+    'hrd.jobTitle': ['Analista', 'Gerente', 'Líder de equipe'],
+    'hrd.courseTitle': [
+      'Tratamento de dados pessoais 2026 (fictício)',
+      'Trabalhando com segurança em equipe (fictício)',
+      'Organização de registros de trabalho (fictício)',
+    ],
+    'hrd.courseKind': ['Obrigatório', 'Profissional', 'Liderança'],
+    'hrd.lessonTitle': [
+      'Entender os princípios básicos',
+      'Analisar exemplos de trabalho',
+      'Conferir os registros',
+    ],
+    'hrd.chapterTitle': ['Introdução', 'Revisão de exemplos', 'Resumo'],
+    'hrd.nudgeTitle': [
+      'Lembrete de prazo do treinamento (exemplo)',
+      'Lembrete de aula incompleta (exemplo)',
+    ],
+    'hrd.exemptionReason': [
+      'Comprovante de conclusão externa (exemplo)',
+      'Verificação do período de licença (exemplo)',
+      'Verificação de treinamento alternativo (exemplo)',
+    ],
+    'hrd.classroomPlace': [
+      'Sala de treinamento Luzvale (fictício)',
+      'Sala de seminários Ribazul (fictício)',
+    ],
+
+    // neighborhood
+    'neighborhood.neighborhoodName': [
+      'Bairro Luzvale (fictício)',
+      'Bairro Ginkgo (fictício)',
+      'Bairro Jacarandal (fictício)',
+    ],
+    'neighborhood.districtName': [
+      'Cidade fictícia, bairro Ribazul',
+      'Cidade fictícia, bairro Solriacho',
+    ],
+    'neighborhood.nickname': [
+      'FeijãoLuzvale (fictício)',
+      'EstrelaJacarandal (fictício)',
+      'NuvemDaViela (fictício)',
+    ],
+    'neighborhood.postTitle': [
+      'Luva azul encontrada no parquinho (exemplo)',
+      'Vamos conhecer um caminho de passeio pelo bairro (exemplo)',
+      'Vamos compartilhar um vasinho de planta (exemplo)',
+    ],
+    'neighborhood.postBody': [
+      'Notícia fictícia do bairro. Os detalhes estão nesta publicação.',
+      'Publicação de exemplo para os vizinhos; não inclui número de telefone nem endereço real.',
+    ],
+    'neighborhood.commentBody': [
+      'Agradeço por compartilhar a novidade.',
+      'Vou conferir e responder na publicação.',
+      'Posso conferir à noite.',
+    ],
+    'neighborhood.placeName': [
+      'Padaria Luzvale (fictício)',
+      'Abrigo do parque Ribazul (fictício)',
+      'Pequena biblioteca Jacarandal (fictício)',
+    ],
+    'neighborhood.openHours': ['8h às 21h', '9h às 18h', '10h às 20h'],
+    'neighborhood.bannedWord': [
+      'propaganda-exemplo',
+      'ofensa-exemplo',
+      'palavra-bloqueada-exemplo',
+    ],
+    'neighborhood.keyword': [
+      'luva',
+      'passeio',
+      'compartilhamento',
+      'notícias locais',
+    ],
+
+    // meetup
+    'meetup.clubName': [
+      'Corrida matinal de Luzvale (fictício)',
+      'Clube de leitura de Ribazul (fictício)',
+      'Jogos de tabuleiro de Jacarandal (fictício)',
+    ],
+    'meetup.interestTag': [
+      'Corrida',
+      'Leitura',
+      'Jogos de tabuleiro',
+      'Fotografia',
+      'Culinária',
+      'Trilhas',
+    ],
+    'meetup.clubIntro': [
+      'Grupo fictício que acolhe vizinhos que participam pela primeira vez.',
+      'Grupo de exemplo para compartilhar pequenas atividades juntos.',
+    ],
+    'meetup.gatheringTitle': [
+      'Encontro da terceira semana de janeiro (fictício)',
+      'Conversa sobre livros no fim de semana (fictício)',
+      'Encontro de caminhada de inverno (fictício)',
+    ],
+    'meetup.venueName': [
+      'Entrada da trilha de Ribazul (fictício)',
+      'Sala de encontros de Luzvale (fictício)',
+      'Abrigo de Jacarandal (fictício)',
+    ],
+    'meetup.nickname': [
+      'FeijãoDaAurora (fictício)',
+      'NuvemDeLivros (fictício)',
+      'PequenaEstrela (fictício)',
+    ],
+    'meetup.duesItem': [
+      'Taxa do encontro (exemplo)',
+      'Bebidas divididas (exemplo)',
+      'Aluguel de equipamentos dividido (exemplo)',
+    ],
+    'meetup.joinAnswer': [
+      'Gostaria de participar das atividades a partir deste mês.',
+      'Posso participar nas manhãs de fim de semana.',
+    ],
+    'meetup.ruleText': [
+      'Por favor, respeite o tempo de todos.',
+      'Por favor, converse dentro do grupo sem divulgar dados de contato.',
+      'Por favor, avise o grupo ao cancelar.',
+    ],
+    'meetup.cadenceLabel': [
+      'Todos os sábados, às 7h',
+      'Domingos alternados, às 10h',
+      'Primeiro sábado de cada mês, às 14h',
+    ],
+
+    // fandom
+    // The two approved fictional creators of the fandom pack: Portuguese writes
+    // two names of its own, never the Korean ones.
+    'fandom.creatorName': ['Jardim da Ampulheta', 'Brisa de Linho'],
+    'fandom.fanNickname': [
+      'Estrelinha',
+      'Brotinho',
+      'Feijão Lunar',
+      'Gota de Luz',
+    ],
+    'fandom.benefitTitle': [
+      'Exemplo de imagem exclusiva para membros',
+      'Inscrição simulada em evento',
+      'Prévia antecipada de um clipe fictício',
+    ],
+    'fandom.postCaption': [
+      'Ilustração fictícia de um estúdio no inverno',
+      'Exemplo de publicação sobre o horário de ensaio',
+    ],
+    'fandom.clipTitle': [
+      'Ensaio de trinta segundos (fictício)',
+      'Saudação do estúdio (fictício)',
+      'Nota sonora de inverno (fictício)',
+    ],
+    'fandom.letterBody': [
+      'Gostei da publicação de exemplo de hoje e aguardo as próximas novidades.',
+      'A ilustração do estúdio no inverno me pareceu acolhedora. Envio meu apoio.',
+    ],
+    'fandom.eventTitle': [
+      'Encontro de fãs de inverno (fictício)',
+      'Evento de histórias do estúdio (fictício)',
+    ],
+    'fandom.agendaTitle': [
+      'Programação do pequeno teatro de inverno (fictício)',
+      'Conversa fictícia transmitida ao vivo',
+      'Cronograma de lançamento de novas publicações',
+    ],
+    'fandom.venueLabel': [
+      'Pequeno teatro de inverno (fictício)',
+      'Estúdio Luzvale (fictício)',
+      'Espaço on-line de exemplo',
+    ],
+
+    // content
+    'content.seriesTitle': [
+      'A ilha postal do farol de papel (fictício)',
+      'O pequeno mapa do lago das nuvens (fictício)',
+      'O jardim do relógio lento (fictício)',
+    ],
+    'content.penName': [
+      'Feijão das Palavras (fictício)',
+      'Estrela de Papel (fictício)',
+      'Pena de Nuvem (fictício)',
+    ],
+    'content.synopsisLine': [
+      'Personagens fictícios organizam cartas em uma pequena ilha.',
+      'Uma história fictícia sobre desenhar um lago que não está no mapa.',
+    ],
+    'content.genreName': [
+      'Fantasia',
+      'Cotidiano',
+      'Aventura',
+      'Histórias de ciência',
+      'Ensaio',
+    ],
+    'content.episodeTitle': [
+      'O primeiro barquinho de papel (fictício)',
+      'Um pequeno ponto no lago (fictício)',
+      'Uma tarde sem relógio (fictício)',
+    ],
+    'content.cutAltText': [
+      'Ilustração de um personagem fictício dobrando um barquinho de papel',
+      'Ilustração de dois personagens fictícios ao lado de um lago',
+    ],
+    'content.commentLine': [
+      'A cena do barquinho de papel ficou na minha memória.',
+      'Gostaria de ler o próximo episódio de exemplo.',
+    ],
+    'content.chapterParagraph': [
+      'Uma folha em branco repousava na caixa de correio da ilha. Uma criança a dobrou num barquinho com o formato do lago. Este parágrafo é um exemplo de demonstração fictício e original.',
+      'Havia um pequeno vaso ao lado do relógio lento. Em vez de dar um nome à planta, dois amigos desenharam as nuvens que tinham visto. Este é um parágrafo de exemplo fictício e original.',
+    ],
+    'content.publisherName': [
+      'Editora Farol de Papel (fictício)',
+      'Editora Lago das Nuvens (fictício)',
+    ],
+    'content.audioTitle': [
+      'Uma tarde dobrando barquinhos de papel (fictício)',
+      'Notas sonoras de um pequeno lago (fictício)',
+    ],
+    'content.newsletterName': [
+      'Notas semanais do Farol de Papel (fictício)',
+      'Cartinhas do Lago das Nuvens (fictício)',
+    ],
+    'content.articleHeadline': [
+      'Organizando anotações do dia a dia em pequenos grupos (fictício)',
+      'Registrando as cores de uma caminhada de inverno (fictício)',
+    ],
+    'content.topicName': [
+      'Anotações do dia a dia',
+      'Caminhadas de inverno',
+      'Pequena ciência',
+      'Hábitos de leitura',
+    ],
+    'content.genreTaxonomy': [
+      'Fantasia',
+      'Cotidiano',
+      'Aventura',
+      'Histórias de ciência',
+      'Ensaio',
+    ],
+    'content.audioTaxonomy': ['Audiolivro', 'Podcast'],
+    'content.topicTaxonomy': [
+      'Anotações do dia a dia',
+      'Caminhadas de inverno',
+      'Pequena ciência',
+      'Hábitos de leitura',
+      'Observações do cotidiano',
+    ],
   },
 );
