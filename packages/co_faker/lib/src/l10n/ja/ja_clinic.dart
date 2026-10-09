@@ -316,7 +316,7 @@ const CoFakerClinicData jaClinic = CoFakerClinicData(
       bookNo: '少し考えて、またご連絡します。',
       bookNoReply: 'かしこまりました。ご不明な点があれば、いつでもご連絡ください。',
       summary:
-          '{procedure}をご案内：1回{price}、{sessions}回券は{packagePrice}の見積もり。{outcome}',
+          '{procedure}をご案内しました。1回{price}、{sessions}回券は{packagePrice}のお見積もりです。{outcome}',
       booked: '予約を取りました。',
       pending: '返答は保留です。後日あらためてご連絡します。',
     ),

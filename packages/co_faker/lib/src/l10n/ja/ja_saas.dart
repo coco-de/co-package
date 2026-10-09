@@ -80,7 +80,8 @@ const CoFakerSaasData jaSaas = CoFakerSaasData(
     (
       code: 'AD_EVENT',
       name: 'キャンペーンのご案内（広告）',
-      body: '【広告】#{clinic} 今月のお得な情報：レーザートーニング10回券を特別価格でご案内します。配信停止：#{link}',
+      body:
+          '【広告】#{clinic} 今月のお得な情報：レーザートーニング10回券を特別価格でご案内します。配信停止はこちらから行えます：#{link}',
     ),
   ],
   notices: <CoNoticeSpec>[

@@ -123,7 +123,7 @@ One line for each topic: how the language writes it, with an example.
 | Dates and times (era, weekday) | `10月8日（木）`: the month and the day without a leading zero, and the weekday in full-width brackets (`月火水木金土日`). A range is `10月8日（木）〜10月10日（土）`. The year is Gregorian and never an era name. A time is `9:00` and a range `9:00〜18:00`; in a sentence an hour is `午後3時`. |
 | Numbers: separators and units | Digits are half-width ASCII with `,` between thousands (`1,000個入り`). A unit symbol follows the digits with no space (`10mg`, `37.5°C`, `2kg`); a product spec keeps the space before its piece count (`冷凍ポテト 10kg`, `紙袋 100枚入り`). |
 | Punctuation (full-width marks, brackets) | `。` ends a sentence and `、` separates; `？` is full-width, and a label has no end mark. Brackets are full-width: `（例）` for an example, `（架空）` for a fictional name, `「…」` for a quotation, `【広告】` for an advertisement. `：` is full-width, the middle dot is `・`, and a range is `〜`. Latin letters and digits stay half-width, with no space between Japanese and Latin letters. |
-| Register and honorifics (the style of a patient notice) | です・ます throughout. 様 follows a patient or a customer who is named or addressed (`{patient}様`, `{n}名様`), and さん follows a colleague (`@{name}さん`). The narration of a story paragraph is plain form (`content.chapterParagraph`), and a label or a list of findings is a noun phrase. |
+| Register and honorifics (the style of a patient notice) | です・ます throughout, the narration of a story paragraph included (`content.chapterParagraph`). 様 follows a patient or a customer who is named or addressed (`{patient}様`, `{n}名様`), and さん follows a colleague (`@{name}さん`). A label or a list of findings is a noun phrase. |
 | Counters | 回 for a time or a session (`3回`, `10回券`), 名 for a person in a notice (`3名様`), 件 for a record, a claim, or a notification (`7件`), 軒 for a clinic as a business, 枚 for a sheet or a towel, 個 for a piece, 通 for a certificate, and 部位 for a treated area. |
 | Katakana for loanwords: the spelling to use | Full-width katakana only, never half-width. A word that ends in `-er`, `-or`, or `-ar` keeps the long-vowel mark (`プリンター`, `ルーター`, `コーディネーター`, `オペレーター`, `カウンセラー`), as the cabinet notice on loanwords recommends. `ヴ` is not used (`バーベキュー`, `レビュー`). |
 
@@ -183,8 +183,9 @@ Register and templates:
   well with the three reasons and with a date such as `10月8日（木）〜10月10日（土）`.
 - [ ] The card decline message and the vital sign notes keep the unit and the
   number in a natural order (`血圧 {sys}/{dia}mmHgと高めのため`).
-- [ ] The story paragraphs are plain form (narration) while the rest is です・ます;
-  confirm that this is the register a Japanese reader expects.
+- [ ] The story paragraphs are narrated in です・ます like everything else, as in a
+  children's story; a reader may expect plain-form narration (`だ・である`) for
+  a story.
 
 Texts that the author is not sure about:
 

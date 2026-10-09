@@ -432,21 +432,33 @@ void main() {
       }
     });
 
-    test('is polite, です・ます, wherever a person reads it', () {
-      final polite = RegExp('(です|ます|ません|ました|でした|ください|ましょう|ませんか|ですか|ましたか)。\$');
+    test('is polite, です・ます, in every sentence, a story included', () {
+      // Every sentence of a text ends in a polite form, once a trailing link
+      // variable, `（例）`, or question mark is set aside.
+      final polite = RegExp(
+        r'(です|ます|ません|ました|でした|ください|ましょう|ますか|ませんか|ですか|ましたか|でしたか'
+        r'|こんにちは)$',
+      );
       var sentences = 0;
       for (final item in _texts) {
-        if (item.kind != CoTextKind.text || !item.text.endsWith('。')) continue;
-        // The narration of a story is plain form; everything else is polite.
-        if (item.where.startsWith('content.chapterParagraph')) continue;
-        final core = item.text.replaceAll(RegExp('（[^（）]*）(?=。\$)'), '');
-        expect(core, matches(polite), reason: '${item.where}: ${item.text}');
-        sentences++;
+        if (item.kind != CoTextKind.text) continue;
+        // A text that holds a full stop is a text of sentences; the question
+        // of a questionnaire is one sentence too.
+        if (!item.text.contains('。') && !item.text.endsWith('？')) continue;
+        for (final sentence in item.text.split('。')) {
+          // A field that a generator fills with a sentence of its own.
+          if (sentence.isEmpty || RegExp(r'^\{\w+\}$').hasMatch(sentence)) {
+            continue;
+          }
+          final core = sentence
+              .replaceAll(RegExp(r'[：\s]*#\{\w+\}$'), '')
+              .replaceAll(RegExp(r'（[^（）]*）$'), '')
+              .replaceAll(RegExp(r'？$'), '');
+          expect(core, matches(polite), reason: '${item.where}: ${item.text}');
+          sentences++;
+        }
       }
-      expect(sentences, greaterThan(150));
-      for (final text in _ja.texts['content.chapterParagraph']!) {
-        expect(text, endsWith('である。'));
-      }
+      expect(sentences, greaterThan(200));
     });
 
     test('writes the honorific, the counters, and the loanwords one way', () {

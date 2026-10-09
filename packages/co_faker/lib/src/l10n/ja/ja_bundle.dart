@@ -3,10 +3,9 @@ import '../co_l10n_bundle.dart';
 /// Japanese domain text: the Japanese counterpart of every English key, with
 /// the same number of texts in the same order.
 ///
-/// The register is です・ます for everything a patient, a customer, or a
-/// member reads, and the narration of a story paragraph is plain form. A
-/// fictional name carries `（架空）` and an example carries `（例）`, in
-/// full-width brackets. Digits are half-width, katakana is full-width, and a
+/// The register is です・ます throughout, the narration of a story paragraph
+/// included. A fictional name carries `（架空）` and an example carries `（例）`,
+/// in full-width brackets. Digits are half-width, katakana is full-width, and a
 /// counter is `回` for a time, `名` for a person, and `件` for a record.
 ///
 /// The translation is a draft written with an AI assistant: the terms that a
@@ -406,10 +405,9 @@ const CoL10nBundle jaBundle = CoL10nBundle(
     'content.episodeTitle': ['はじめての紙の舟（架空）', '池の小さな点（架空）', '時計のない午後（架空）'],
     'content.cutAltText': ['架空の人物が紙の舟を折るイラスト', '池のそばにいる架空の人物2人のイラスト'],
     'content.commentLine': ['紙の舟の場面が心に残りました。', '次の例のエピソードも読んでみたいです。'],
-    // Narration, so the paragraphs are in plain form, not です・ます.
     'content.chapterParagraph': [
-      '島の郵便受けには、白紙が一枚入っていた。子どもはその紙を半分に折り、池に似た小さな舟を作った。この段落はデモのために書き下ろした架空の文章である。',
-      'ゆっくり時計の隣には、小さな植木鉢があった。二人の友だちは、鉢に名前を付ける代わりに、その日に見た雲を絵に残した。この段落は書き下ろした架空の例文である。',
+      '島の郵便受けには、白紙が一枚入っていました。子どもはその紙を半分に折り、池に似た小さな舟を作りました。この段落はデモのために書き下ろした架空の文章です。',
+      'ゆっくり時計の隣には、小さな植木鉢がありました。二人の友だちは、鉢に名前を付ける代わりに、その日に見た雲を絵に残しました。この段落は書き下ろした架空の例文です。',
     ],
     'content.publisherName': ['紙の灯台出版（架空）', '雲の池出版（架空）'],
     'content.audioTitle': ['紙の舟を折る午後（架空）', '小さな池の音のメモ（架空）'],
