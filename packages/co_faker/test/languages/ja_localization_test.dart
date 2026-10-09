@@ -315,6 +315,19 @@ void main() {
         now: _now,
         domains: CoFakerDomains.all,
       ),
+      // The spellings that a setting of an operating system or a browser has.
+      "locale: 'JA'": () => CoFaker(
+        locale: 'JA',
+        seed: 7,
+        now: _now,
+        domains: CoFakerDomains.all,
+      ),
+      "locale: 'ja_JP.UTF-8'": () => CoFaker(
+        locale: 'ja_JP.UTF-8',
+        seed: 7,
+        now: _now,
+        domains: CoFakerDomains.all,
+      ),
     };
 
     test(
