@@ -155,6 +155,15 @@ What the gate does not see, and what no file of the language can change:
   `schema.entity` infers write Korean number formats in every language: they
   hold no Hangul. `faker.clinic` and `faker.saas` write a masked ID
   (`******1234`) and a business number (`DE123456789`) from the data of German.
+- With the `korea` pack registered (`CoFakerDomains.all` has it), a field such
+  as `phone`, `address1`, or `zipCode` of the entity `clinic.patient`, and the
+  phone of `saas.tenant`, is inferred to a Korean role and writes a Korean value,
+  Hangul included. The gate runs the entities without that pack, and
+  `faker.clinic.patient()` writes a German address and phone.
+- `logistics.timeWindow` writes `09:00~11:00` (a tilde, as Korean does) in every
+  language, and a number that a generator puts into a text uses a decimal point:
+  the vitals note reads `36.6 °C`, not `36,6 °C`. They are written in code, not
+  in the data of a language.
 - `CoClinicHours`, the default of `businessSlots`, `appointmentSlot`, and
   `visitHeatmap`, are the opening hours of a Korean dermatology clinic (closed
   on Sunday, a lunch break): numbers, not text, and the same in every language.

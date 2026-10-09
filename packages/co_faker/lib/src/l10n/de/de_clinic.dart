@@ -628,14 +628,16 @@ const CoFakerClinicData deClinic = CoFakerClinicData(
           'bestätigt.',
     },
     // A date label never follows a preposition, so a notice reads the same for
-    // one day (`Mi, 30.9.`) and for a range (`Mi, 30.9. – Fr, 2.10.`).
+    // one day (`Mi, 30.9.`) and for a range (`Mi, 30.9. – Fr, 2.10.`), and the
+    // label, which ends with a period, is never followed by another one: the
+    // reason goes in parentheses.
     closure: <String, String>{
       'title': 'Geschlossen: {dates}',
       'holiday':
-          '{clinic}: Geschlossen {dates} wegen {name}. Ab {reopen} sind wir '
+          '{clinic}: Geschlossen {dates} (Grund: {name}). Ab {reopen} sind wir '
           'wieder regulär für Sie da.',
       'other':
-          '{clinic}: Geschlossen {dates}. Grund: {reason}. Ab {reopen} sind '
+          '{clinic}: Geschlossen {dates} (Grund: {reason}). Ab {reopen} sind '
           'wir wieder regulär für Sie da.',
     },
     closureReasons: <String>[

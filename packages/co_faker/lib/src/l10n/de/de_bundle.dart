@@ -710,7 +710,7 @@ const CoL10nBundle deBundle = CoL10nBundle(
     ],
     'fandom.letterBody': [
       'Der heutige Beispielbeitrag hat mir gefallen. Ich freue mich auf die nächsten Neuigkeiten.',
-      'Die Illustration vom Winteratelier wirkte warm. Ich wünsche Ihnen viel Kraft.',
+      'Die Illustration vom Winteratelier wirkte warm. Ich schicke Ihnen aufmunternde Grüße.',
     ],
     'fandom.eventTitle': [
       'Winter-Fantreffen (fiktiv)',
