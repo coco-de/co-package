@@ -601,7 +601,7 @@ const CoL10nBundle frBundle = CoL10nBundle(
     ],
     'neighborhood.postTitle': [
       'Gant bleu trouvé sur l’aire de jeux (exemple)',
-      'À la découverte d’une balade dans le quartier (exemple)',
+      'Découvrons ensemble une balade dans le quartier (exemple)',
       'Partage d’une petite jardinière (exemple)',
     ],
     'neighborhood.postBody': [
@@ -645,7 +645,7 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Randonnée',
     ],
     'meetup.clubIntro': [
-      'Groupe fictif qui accueille les voisins qui participent pour la première fois.',
+      'Groupe fictif où les voisins sont accueillis dès leur première participation.',
       'Groupe d’exemple pour partager ensemble de petites activités.',
     ],
     'meetup.gatheringTitle': [

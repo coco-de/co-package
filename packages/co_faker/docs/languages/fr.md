@@ -76,6 +76,7 @@ separate them).
 | Cancellation | annulation | - | The act of cancelling an appointment, a booking, or a class. |
 | No-show | absent | no-show | A status that qualifies a `rendez-vous`, so it is written in the masculine. |
 | Check-in | enregistrement | check-in | The first stage of a visit, and the check-in on a kiosk or a tablet. |
+| Front desk | accueil | guichet | The staff role, the sender line, and the source of a check-in; a `guichet` is the window of a bank or a post office. |
 | Fictional | fictif | fictional; (fictive) | The marker is the one tag `(fictif)` after every fictional name, whatever the gender of the noun. A sentence agrees (`Ville fictive`). |
 | Example | exemple | example; sample | `(exemple)` after a sample label, `Exemple de …` where English begins with `Example`. |
 | Demo | démo (a label); de démonstration (a sentence) | demo | `démo` follows a noun or stands in parentheses; a sentence says `de démonstration`. |

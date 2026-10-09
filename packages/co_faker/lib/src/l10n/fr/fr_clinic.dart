@@ -665,7 +665,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       'online': 'En ligne',
       'app': 'Application',
       'kiosk': 'Borne',
-      'desk': 'Guichet',
+      'desk': 'Accueil',
       'paper': 'Papier',
       'privacyRequired': 'Données personnelles (obligatoire)',
       'marketingOptional': 'Marketing (facultatif)',
