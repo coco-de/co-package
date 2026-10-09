@@ -793,5 +793,441 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Hábitos de leitura',
       'Observações do cotidiano',
     ],
+
+    // helpdesk
+    // Same order as the ticket categories in CoHelpdeskDomain.
+    'helpdesk.ticketSubject': [
+      'Por favor, verifique o status do convite da equipe',
+      'Dúvida sobre os itens de uma fatura de exemplo',
+      'Erro de exemplo ao exportar CSV',
+      'Dúvida sobre o status da integração',
+      'Dúvida sobre o botão de uma tela de exemplo',
+      'Dúvida sobre onde encontrar a ajuda',
+    ],
+    'helpdesk.ticketDescription': [
+      'A conta de suporte fictícia mostra um convite pendente.',
+      'Gostaria de conferir os itens e o período da fatura fictícia.',
+      'Aparece uma mensagem de erro ao exportar os dados de exemplo para CSV.',
+      'Gostaria de conferir o texto da página de status da integração fictícia.',
+      'A tela de exemplo continua igual depois que aperto um botão.',
+      'Onde encontro a página de ajuda do suporte fictício?',
+    ],
+    'helpdesk.macroName': [
+      'Exemplo de confirmação de recebimento',
+      'Verificação de informações adicionais',
+      'Aviso de status do processamento',
+    ],
+    'helpdesk.helpArticleTitle': [
+      'Exemplo de guia de convites',
+      'Como ler uma fatura fictícia',
+      'Exportação de dados CSV de exemplo',
+    ],
+    'helpdesk.csatComment': [
+      'Conferi a explicação.',
+      'As instruções de exemplo foram fáceis de seguir.',
+      'Tenho mais detalhes para conferir.',
+    ],
+    // Same order as the draft categories in CoFakerHelpdesk.
+    'helpdesk.draftBody': [
+      'Confira o status do convite nas configurações da conta. Este rascunho de IA simulado precisa ser revisado por um atendente.',
+      'Registre juntos o método de login e o erro de exemplo. Este rascunho de IA simulado não faz nenhuma alteração na conta.',
+      'Confira o período e os itens da fatura de exemplo. Este rascunho de IA simulado descreve preços fictícios.',
+      'Registre o número da fatura de exemplo na nota de suporte. Este rascunho de IA simulado não é um aviso de pagamento real.',
+      'Confira o intervalo de datas e o formato selecionados para a exportação. Este rascunho de IA simulado registra um erro de exemplo sem dados pessoais.',
+      'Confira os nomes das colunas e o status do arquivo no CSV de exemplo. Este rascunho de IA simulado exige revisão de um atendente.',
+      'Registre o status de integração de exemplo e o horário da verificação. Este rascunho de IA simulado não faz chamadas externas.',
+      'Registre a tela e os passos para reproduzir o problema. Este rascunho de IA simulado não promete nenhum resultado.',
+    ],
+    'helpdesk.topicName': ['Conta', 'Cobrança', 'Dados', 'Integração'],
+
+    // campaign
+    'campaign.brandName': [
+      'Padaria Luz de Primavera (fictício)',
+      'Livraria Luar (fictício)',
+      'Café Jardim Verde (fictício)',
+    ],
+    'campaign.campaignTitle': [
+      'Exemplo de oferta de inverno',
+      'Exemplo de novidades para a primeira visita',
+      'Exemplo de novidades do fim de semana',
+    ],
+    'campaign.offerCopy': [
+      '(Publicidade) Exemplo de cupom para um cardápio de inverno fictício. Para não receber mais mensagens, veja as configurações da demonstração.',
+      '(Publicidade) Exemplo de oferta para um produto fictício. O cancelamento do recebimento está nas configurações da demonstração.',
+    ],
+    'campaign.couponTitle': [
+      'Cupom de exemplo de 20% para o inverno',
+      'Cupom de exemplo de 10% na primeira visita',
+    ],
+    'campaign.segmentName': [
+      'Compradores de exemplo dos últimos 30 dias',
+      'Grupo de exemplo que aceitou receber ofertas',
+      'Grupo de exemplo das novidades de fim de semana',
+    ],
+    'campaign.failReason': [
+      'Número do destinatário ausente (exemplo)',
+      'Sem consentimento para marketing (exemplo)',
+      'Sem consentimento para envio noturno (exemplo)',
+    ],
+
+    // workplace
+    'workplace.department': [
+      'Equipe de front-end',
+      'Equipe de back-end',
+      'Equipe de design',
+      'Suporte ao cliente',
+      'Recursos humanos',
+    ],
+    'workplace.position': ['Analista', 'Gerente', 'Líder de equipe'],
+    'workplace.workPlace': [
+      'Escritório Luzvale (fictício)',
+      'Centro de trabalho Ribazul (fictício)',
+      'Remoto',
+    ],
+    'workplace.shiftName': [
+      'Turno do dia',
+      'Turno da manhã',
+      'Plantão de fim de semana',
+    ],
+    'workplace.approvalComment': [
+      'Analisei o registro de exemplo anexado.',
+      'O motivo de exemplo precisa de mais esclarecimentos.',
+    ],
+    'workplace.projectName': [
+      'Renovação do portal do cliente (fictício)',
+      'Organização do wiki interno (fictício)',
+      'Exemplo de melhoria de acessibilidade',
+    ],
+    'workplace.workItemTitle': [
+      'Melhorar o texto do erro de login',
+      'Conferir a ordenação da tabela de exemplo',
+      'Organizar a exibição do status das notificações',
+    ],
+    'workplace.labelName': [
+      'Texto',
+      'Acessibilidade',
+      'Backlog',
+      'Precisa de verificação',
+    ],
+    'workplace.milestoneTitle': [
+      'Marco da primeira revisão',
+      'Tela de exemplo concluída',
+      'Verificação de regressão',
+    ],
+    'workplace.sprintName': ['Sprint {n}'],
+    'workplace.commentBody': [
+      'Deixo meu comentário depois de conferir a tela de exemplo.',
+      'Por favor, revise o texto antes da próxima tarefa.',
+    ],
+    'workplace.merchantName': [
+      'Restaurante Flor Silvestre (fictício)',
+      'Lanchonete da Viela (fictício)',
+      'Papelaria Luzvale (fictício)',
+    ],
+    'workplace.accountName': [
+      'Refeições (exemplo)',
+      'Transporte (exemplo)',
+      'Reuniões (exemplo)',
+      'Suprimentos (exemplo)',
+      'Viagens (exemplo)',
+      'Outros (exemplo)',
+    ],
+    'workplace.rejectReasonText': [
+      'Falta o comprovante de exemplo',
+      'A classificação do item precisa ser verificada',
+      'O limite da política de exemplo precisa ser verificado',
+    ],
+
+    // brokerage
+    'brokerage.projectTitle': [
+      'Exemplo de criação de portal do cliente',
+      'Renovação fictícia de uma tela de serviço',
+      'Exemplo de criação de tela de agendamento',
+    ],
+    'brokerage.serviceCategory': [
+      'Interface web',
+      'Interface de aplicativo',
+      'Design corporativo',
+      'Serviços residenciais',
+    ],
+    'brokerage.providerName': [
+      'Estúdio Sótão do Código (fictício)',
+      'Oficina de interfaces Luzvale (fictício)',
+      'Oficina doméstica Ribazul (fictício)',
+    ],
+    'brokerage.providerHeadline': [
+      'Parceiro fictício que apresenta telas de exemplo e registros de trabalho',
+      'Perfil de exemplo para analisar o escopo de um projeto fictício',
+    ],
+    'brokerage.skillTag': [
+      'Dart',
+      'Planejamento de interfaces',
+      'Organização de dados',
+      'Redação de textos',
+    ],
+    'brokerage.proposalMessage': [
+      'Preparei o escopo e os pontos de verificação do cronograma para o exemplo.',
+      'Proponho pontos de verificação para as etapas do projeto fictício.',
+    ],
+    'brokerage.portfolioTitle': [
+      'Exemplo fictício de portal do cliente',
+      'Registro de exemplo de tela de agendamento',
+      'Melhoria fictícia de uma tabela de trabalho',
+    ],
+    'brokerage.milestoneLabel': [
+      'Verificação do escopo',
+      'Verificação do rascunho das telas',
+      'Verificação de função de exemplo',
+      'Registro de entrega',
+    ],
+    'brokerage.homeServiceName': [
+      'Limpeza de ar-condicionado (exemplo)',
+      'Mudança de pequeno porte (exemplo)',
+      'Verificação de torneira (exemplo)',
+      'Aula de instrumento para iniciantes (exemplo)',
+    ],
+    'brokerage.requestAnswer': [
+      'Gostaria de confirmar o escopo antes da visita.',
+      'O horário de exemplo é uma manhã de fim de semana.',
+    ],
+    'brokerage.regionDong': [
+      'Cidade fictícia, bairro Luzvale',
+      'Cidade fictícia, bairro Ribazul',
+      'Cidade fictícia, bairro Jacarandal',
+    ],
+    'brokerage.reviewText': [
+      'Conferi o registro de trabalho de exemplo e as instruções.',
+      'As instruções de horário de exemplo foram fáceis de seguir.',
+    ],
+    'brokerage.creditLabel': [
+      'Crédito para envio de orçamento (exemplo)',
+      'Crédito de reembolso de orçamento não visualizado (exemplo)',
+      'Crédito de recarga (exemplo)',
+    ],
+    'brokerage.advisorTitle': [
+      'Especialista tributário fictício',
+      'Especialista jurídico fictício',
+      'Especialista trabalhista fictício',
+    ],
+    'brokerage.consultTopic': [
+      'Exemplo de explicação de terminologia',
+      'Exemplo de lista de verificação antes da consulta',
+      'Exemplo de explicação de lista de documentos',
+    ],
+    'brokerage.qnaQuestion': [
+      'O que significa este termo do sistema? (pergunta fictícia)',
+      'Quais campos aparecem em um registro de consulta? (pergunta fictícia)',
+    ],
+    // Every text starts with the general-information prefix of the language
+    // (`test/language_safety/pt.dart`) and promises no result.
+    'brokerage.qnaAnswerGeneric': [
+      'Informação geral de exemplo. Uma visão geral do sistema pode listar termos, abrangência e documentos. Não contém nenhum julgamento sobre um caso individual.',
+      'Informação geral de exemplo. Um registro de consulta separa as perguntas dos materiais de referência. Nenhum resultado específico nem linha de ação é indicado.',
+    ],
+    'brokerage.consultNoteGeneric': [
+      'Informação geral, nota de exemplo: apresentou o tema da pergunta e os termos do sistema. A lista de documentos é composta de itens explicativos fictícios.',
+      'Informação geral, nota de exemplo: revisou o formato do registro de consulta. Não há conclusão nem recomendação sobre um caso individual.',
+    ],
+    'brokerage.officeName': [
+      'Escritório de atendimento Luzvale (fictício)',
+      'Escritório de registros Ribazul (fictício)',
+    ],
+    'brokerage.serviceTypeName': ['Limpeza', 'Mudança', 'Conserto', 'Aulas'],
+
+    // logistics
+    'logistics.zoneName': [
+      'Zona 1 Solriacho (fictício)',
+      'Zona 2 Solriacho (fictício)',
+      'Zona Ribazul (fictício)',
+    ],
+    'logistics.hubName': [
+      'Centro de distribuição Luzvale (fictício)',
+      'Centro de distribuição Ribazul (fictício)',
+    ],
+    // A masked plate: {n} is a two-digit number and {m} the last two digits.
+    // The shape is the Brazilian plate (three letters, a hyphen, four digits),
+    // with `●●` hiding its first two letters.
+    'logistics.vehiclePlate': ['●●C-{n}{m}'],
+    'logistics.deliveryNote': [
+      'Não deixar na porta; entregar em mãos.',
+      'Por favor, chame pelo interfone na entrada do prédio.',
+      'Por favor, confirme na portaria.',
+    ],
+    'logistics.entranceHint': [
+      'Entrada do prédio nº ••••; chamar a portaria',
+      'Usar o interfone da entrada; nenhuma senha exibida',
+    ],
+    'logistics.scanEvent': [
+      'Chegada ao centro de distribuição',
+      'Carregamento para transferência',
+      'Saiu para entrega',
+      'Entrega concluída',
+      'Entrega não realizada',
+    ],
+    'logistics.carrierLabel': [
+      'Transportadora de exemplo A (fictício)',
+      'Transportadora de exemplo B (fictício)',
+      'Transportadora de cargas de exemplo C (fictício)',
+    ],
+    'logistics.freightType': [
+      'Embalagens',
+      'Insumos alimentícios',
+      'Materiais de construção',
+      'Componentes eletrônicos',
+      'Utilidades domésticas',
+    ],
+    'logistics.routeSummary': [
+      'Zona fictícia Luzvale → zona Ribazul',
+      'Zona fictícia Jacarandal → zona Solriacho',
+    ],
+    'logistics.fareItem': [
+      'Frete base (exemplo)',
+      'Adicional de plataforma elevatória (exemplo)',
+      'Manuseio manual (exemplo)',
+      'Tempo de espera (exemplo)',
+    ],
+    // Same order as the items in CoLogisticsDomain: BOX-S-200, TAPE-OPP-48,
+    // TOWEL-COT-03, RICE-BRN-02.
+    'logistics.itemName': [
+      'Caixa de papelão pequena',
+      'Fita de embalagem 48 mm',
+      'Toalhas de algodão, 3 unidades',
+      'Arroz integral 2 kg',
+    ],
+    'logistics.ownerLabel': [
+      'Embarcador A (fictício)',
+      'Embarcador B (fictício)',
+      'Embarcador C (fictício)',
+    ],
+
+    // hospitality
+    'hospitality.propertyName': [
+      'Refúgio Pinhalto (fictício)',
+      'Hotel de descanso Ribazul (fictício)',
+      'Pequena pousada Jacarandal (fictício)',
+    ],
+    'hospitality.siteName': [
+      'Unidade Brisa do Pinhal A (fictício)',
+      'Unidade Aroma do Pinhal B (fictício)',
+      'Unidade Cone do Pinhal C (fictício)',
+    ],
+    'hospitality.amenity': [
+      'Área de churrasqueira privativa',
+      'Chuveiros compartilhados',
+      'Wi-Fi',
+    ],
+    'hospitality.stayOption': [
+      'Kit de churrasqueira (exemplo)',
+      'Feixe de lenha (exemplo)',
+      'Check-in antecipado (exemplo)',
+    ],
+    'hospitality.seasonName': [
+      'Temporada regular',
+      'Alta temporada de feriados (exemplo)',
+      'Temporada promocional de dias de semana (exemplo)',
+    ],
+    'hospitality.ratePlan': [
+      'Tarifa padrão de exemplo',
+      'Tarifa de exemplo com café da manhã',
+      'Tarifa de exemplo para dias de semana',
+    ],
+    'hospitality.houseRule': [
+      'Por favor, mantenha silêncio nos espaços comuns à noite.',
+      'Por favor, confira a lista de verificação de saída de exemplo.',
+    ],
+    'hospitality.reviewSnippet': [
+      'As instruções de exemplo do quarto eram fáceis de ler.',
+      'As instruções da hospedagem fictícia estão organizadas.',
+    ],
+    'hospitality.hkCheckItem': [
+      'Trocar a roupa de cama',
+      'Limpar o banheiro',
+      'Conferir os itens de cortesia',
+      'Conferir o frigobar',
+    ],
+    'hospitality.maintenanceIssue': [
+      'Verificação de vazamento no banheiro (exemplo)',
+      'Pedido de inspeção da iluminação (exemplo)',
+      'Verificação do painel de climatização (exemplo)',
+      'Verificação de dano em móvel (exemplo)',
+    ],
+    'hospitality.lostItemName': [
+      'Guarda-chuva azul',
+      'Cachecol cinza',
+      'Um livro',
+      'Garrafa de água',
+    ],
+    'hospitality.specialRequest': [
+      'Andar alto, quarto para não fumantes (exemplo)',
+      'Pedido de travesseiro extra (exemplo)',
+      'Pedido de quarto silencioso (exemplo)',
+    ],
+    'hospitality.menuItem': [
+      'Refeição com sopa de algas',
+      'Massa com legumes',
+      'Iogurte com frutas',
+      'Chá quente',
+    ],
+    'hospitality.menuOption': [
+      'Menos arroz',
+      'Arroz normal',
+      'Acompanhamento extra (exemplo)',
+      'Sem gelo',
+    ],
+    'hospitality.amenityName': [
+      'Toalha',
+      'Água',
+      'Escova de dentes',
+      'Travesseiro',
+    ],
+    'hospitality.localSpot': [
+      'Casa de caldos da manhã (fictício)',
+      'Café da Viela (fictício)',
+      'Trilha de caminhada Luzvale (fictício)',
+    ],
+    'hospitality.conciergeReply': [
+      'As instruções da hospedagem fictícia aparecem nos detalhes da estadia.',
+      'O pedido foi anotado no registro de exemplo.',
+      'Os locais próximos são todos locais de demonstração fictícios.',
+    ],
+    'hospitality.folioItem': [
+      'Diária (exemplo)',
+      'Serviço de quarto (exemplo)',
+      'Opção extra (exemplo)',
+    ],
+  },
+  // The texts of Portuguese that read like the English ones on purpose: the
+  // names of currencies, countries, and cities that are spelled alike, acronyms
+  // and file formats, loanwords that Brazilian teams and studios keep in
+  // English (`Backlog`, `Sprint`, `Reformer`), the name of a dog breed and of
+  // a color that Portuguese borrows, and the Wi-Fi of an amenity. The language
+  // coverage gate reads this list.
+  allowSameAsEnglish: <String, List<String>>{
+    'fx.currencyName.EUR': ['Euro'],
+    'fx.tierName': ['Bronze'],
+    // The name of the country is spelled the same.
+    'remit.countryName.NP': ['Nepal'],
+    'remit.countryName.CN': ['China'],
+    'vet.breed.dog': ['Poodle'],
+    'vet.breed.small_mammal': ['Hamster'],
+    'vet.coatColor': ['Tricolor'],
+    'travel_wallet.cityName': ['Osaka'],
+    // The name of a Pilates apparatus.
+    'fitness.classCategoryLabel': ['Reformer'],
+    'fitness.equipment': ['Reformer'],
+    'space_rental.amenity': ['Wi-Fi'],
+    'hospitality.amenity': ['Wi-Fi'],
+    // Acronyms and file formats of the exam questions, and the word `monitor`,
+    // which is the same in both languages.
+    'exam_prep.correctChoice': ['WHERE', 'TCP', 'HTTP'],
+    'exam_prep.wrongChoice1': ['JPEG', 'PNG'],
+    'exam_prep.wrongChoice2': ['CSS', 'MP3'],
+    'exam_prep.wrongChoice3': ['SVG', 'TTF', 'Monitor'],
+    'content.audioTaxonomy': ['Podcast'],
+    // The name of a programming language.
+    'brokerage.skillTag': ['Dart'],
+    // Agile vocabulary that Brazilian teams keep in English.
+    'workplace.labelName': ['Backlog'],
+    'workplace.sprintName': ['Sprint {n}'],
   },
 );
