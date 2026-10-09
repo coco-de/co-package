@@ -11,6 +11,9 @@ depend on Flutter.
 - Batch and schema helpers for creating typed or map-based fixture data.
 - Built-in English, Korean, Japanese, Chinese, Spanish, French, and German
   data with language fallback.
+- Domain packs, `faker.clinic`, and `faker.saas` in Korean, English, Chinese
+  (Simplified), Japanese, German, French, Russian, Italian, and Portuguese
+  (Brazil), chosen by an app's language setting with `CoFaker.forLanguage`.
 - National locales for the ten largest economies by GDP, plus Brazil: names,
   coherent addresses, fictional phone numbers, and currencies per country.
 - Partial custom locales can override only the data a project needs.
@@ -468,9 +471,13 @@ can be shared between generators.
 The domain packs and the dedicated generators (`fx`, `remit`, `vet`,
 `catalog`, `examPrep`, ...) read their labels, names, and sentences from a
 language bundle by key, `faker.l10n`, so a language is data and not code.
-Korean and English are built in, and every other language reads English until
-its bundle is filled in. (`faker.clinic` and `faker.saas` have their own
-language data, described under "Language data" above.) A custom locale carries
+Korean, English, Chinese (Simplified), Japanese, German, French, Russian,
+Italian, and Portuguese (Brazil) are built in, and every other language reads
+English until its bundle is filled in. The translations of the languages other
+than Korean and English are AI drafts that no native speaker has reviewed yet:
+each `docs/languages/<code>.md` carries a glossary and a review checklist.
+(`faker.clinic` and `faker.saas` have their own language data, described under
+"Language data" above.) A custom locale carries
 a bundle of its own, with no change to co_faker:
 
 ```dart

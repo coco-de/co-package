@@ -75,6 +75,20 @@
   the `fandom` pack were a constant that no language could change. Korean and
   English keep their names, and another language writes names of its own.
   `CoFandomDomain.creatorNames` stays.
+- Add domain data for Chinese (Simplified, `zh`), Japanese (`ja`), German
+  (`de`), French (`fr`), Russian (`ru`), Italian (`it`), and Portuguese
+  (Brazil, `pt`): the domain text bundle (242 keys), the clinic data, and the
+  SaaS data of each language. `CoFaker.forLanguage('<code>')`,
+  `CoFaker(locale: '<code>')`, and the national locale (`zh_CN`, `ja_JP`,
+  `de_DE`, `fr_FR`, `ru_RU`, `it_IT`, `pt_BR`) now generate the domain packs,
+  the dedicated generators, `faker.clinic`, and `faker.saas` in that language,
+  with the currency (CNY, JPY, EUR, RUB, BRL), the number and date formats, and
+  the register of the language, fictional names, and no Korean-only values. The
+  same seed picks the same record as in English and Korean. Every language
+  passes `dart run co_faker:coverage --language <code> --strict`, and
+  `docs/languages/<code>.md` holds its glossary and a native-speaker review
+  checklist. These translations are AI drafts that no native speaker has
+  reviewed yet.
 - Behavior change: when a language gets domain data (its bundle, clinic data
   and SaaS data), its `clinic`, `saas` and domain pack output reads the language
   instead of English. The basic modules (names, addresses, internet, text) do

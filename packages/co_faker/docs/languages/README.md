@@ -4,7 +4,7 @@ co_faker writes the text of its domain mock data (the domain packs, the
 dedicated generators, `faker.clinic`, and `faker.saas`) in the languages of
 this directory. English is the reference that every language follows, and
 Korean is the language the data was first written in. Chinese, Japanese,
-German, French, Russian, Italian, and Portuguese are localized one language at
+German, French, Russian, Italian, and Portuguese were localized one language at
 a time, each in its own pull request.
 
 The names, addresses, and other basic data of a language are separate: they
@@ -169,6 +169,24 @@ native speaker has to review it. Write the terms that are medical, legal, or
 financial, and every text that you are not sure about, in the review checklist
 of the language file, and say in the pull request that the translation is a
 draft that needs a native speaker.
+
+What the first seven languages learned, so that the next one does not repeat it:
+
+- A test that needs a language with no data of its own as a control uses `nl`.
+  Dutch is not a supported language and never gets data, whereas a supported
+  language gains data when its Story lands: the French test that read German as
+  "the language that still reads English" failed the CI of the German Story.
+- A forbidden form of the glossary is matched as a substring, ignoring case, so
+  it also matches inside a longer word, an inflected form, or a `{field}` name.
+  Do not forbid a short word or an English field name.
+- The brand list of a safety declaration is applied to the texts of every
+  language. Keep it to brands in the writing system of its own language, and
+  never put a short common word in it.
+- Once a stub is filled, drop the `?` of its type (`const CoFakerClinicData`,
+  not `const CoFakerClinicData?`): the lint
+  `unnecessary_nullable_for_final_variable_declarations` flags the filled stub.
+- Keep a no-break space in the source as the escape `\u00A0`. A tool that
+  rewrites it into the literal character makes the data unreadable in a diff.
 
 ## The glossary and the status line
 
