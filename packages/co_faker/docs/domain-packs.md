@@ -123,6 +123,46 @@ foreign-key engine. Complete cross-record code references and fixed-tour graphs
 are recipe assembly. Typed remittance transfers explicitly take a recipient
 object to retain that association.
 
+## Demo W1 recipe fields
+
+The entities of the nine W1 demo recipes (coco-de/cocode#637) name 34 fields
+that no role covered (co-package#78). Each now resolves to a role through the
+`entityRoles` of its pack, without a global field pattern, so
+`CoFakerCoverage` (and `cob plan --entities`) reports them as `supported`.
+**A** is a business identifier: the same value in every language for the same
+seed and record index, drawn from a stream of its own and never from the
+display stream. **B** is display text in the language of the generator,
+from the bundle key of the role (11 languages, lists aligned with English).
+
+| Entity | Field | Role | Kind |
+| --- | --- | --- | --- |
+| instructor | specialty · career | `fitness.instructorSpecialty` · `fitness.instructorCareer` | B |
+| child | guardianContactMasked | `daycare.guardianContactMasked` (`***-****-1234`) | A |
+| medication_request | storage · symptom | `daycare.medicationStorage` · `daycare.symptom` | B |
+| medication_request, pickup_permit | guardianSignature | `daycare.guardianSignature` (`faker.signature` SVG data URI) | A |
+| pickup_permit | relation · contactLast4 | `daycare.pickupRelation` (`parent`, `grandparent`, `relative`, `other`) · `daycare.contactLast4` | A |
+| club_member · meetup_member | availableDays · interests | `meetup.availableDays` · `meetup.interestTag` | B |
+| series | section · releaseWeekday | `content.seriesSection` (B) · `content.releaseWeekday` (`mon`…`sun`, A) | B · A |
+| ticket · ticket_message · csat_response | ticketNo | `helpdesk.ticketNo` (`TK-yymmdd-0001`, one number per record index) | A |
+| ticket_message | visibility | `helpdesk.visibility` (`public`, `internal`) | A |
+| shift · approval_line · month_close_item | department · approverRole · section | `workplace.department` · `workplace.approverRole` · `workplace.closeSection` | B |
+| employee | extension | `workplace.extension` (four digits) | A |
+| provider_profile | skills | `brokerage.skillTag` | B |
+| load_item · parcel_scan | trackingNo | `logistics.trackingNo` | A |
+| load_item | recipientArea · shelfSlot | `logistics.recipientArea` (a city of the locale, B) · `logistics.shelfSlot` (`A-03-2`, A) | B · A |
+| delivery_proof | signatureData | `logistics.signatureData` (`faker.signature` SVG data URI) | A |
+| delivery_exception | detail | `logistics.exceptionDetail` | B |
+| courier | vehicleType · vehiclePlate | `logistics.vehicleType` (A) · `logistics.vehiclePlate` (masked, B) | A · B |
+| stay_booking | arrivalEta | `hospitality.arrivalEta` (`15:00`–`21:30`) | A |
+| stay_guide | bbqRule · wifiHint | `hospitality.bbqRule` · `hospitality.wifiHint` | B |
+| campsite_review | stayMonth | `hospitality.stayMonth` (`YYYY-MM` before the clock) | A |
+
+A masked contact keeps four fictional digits only, so it can never be a
+reachable number; a signature is generated strokes, not anyone's handwriting.
+`test/w1_recipe_fields_test.dart` checks the resolution, the determinism of
+every identifier across the eleven languages, and the alignment of every
+display text with English.
+
 ## Language bundles
 
 The authored text of the packs and of the dedicated generators (`fx`, `remit`,

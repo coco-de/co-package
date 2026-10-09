@@ -1,5 +1,13 @@
 ## Unreleased
 
+- Cover the 34 fields of the demo W1 recipes (co-package#78): new roles and
+  `entityRoles` in the fitness, daycare, meetup, content, helpdesk, workplace,
+  brokerage, logistics, and hospitality packs, so `CoFakerCoverage` reports
+  them as supported. Business identifiers (`ticketNo`, `trackingNo`,
+  `contactLast4`, `shelfSlot`, `extension`, `arrivalEta`, `stayMonth`,
+  signatures) are the same in every language; display texts come from ten new
+  bundle keys written in all eleven languages (AI draft, native review
+  pending). See `docs/domain-packs.md`.
 - Localize the domain mock data in Arabic (`ar`, co-package#71): the domain
   text bundle (242 keys), the clinic data, and the SaaS data, in Modern
   Standard Arabic as written in Saudi Arabia, right to left with the digits

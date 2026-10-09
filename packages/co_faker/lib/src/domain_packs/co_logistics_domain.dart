@@ -82,6 +82,19 @@ class CoLogisticsDomain extends CoFakerDomain {
     'palletId': codeRole('DEMO-PALLET'),
     'dockNo': authoredRole((f, c) => 'D${1 + c.index % 8}'),
     'ownerLabel': textRole('logistics.ownerLabel'),
+    // W1 recipe fields (co-package#78).
+    'recipientArea': authoredRole(
+      (f, _) => f.address.city(),
+      description: 'City of the recipient in the locale',
+    ),
+    'shelfSlot': authoredRole(
+      (f, c) =>
+          '${['A', 'B', 'C', 'D', 'E', 'F'][c.index % 6]}-'
+          '${(1 + c.index % 20).toString().padLeft(2, '0')}-${1 + c.index % 4}',
+      description: 'Shelf slot code: aisle, bay, level',
+    ),
+    'signatureData': signatureRole(),
+    'exceptionDetail': textRole('logistics.exceptionDetail'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
@@ -161,6 +174,15 @@ class CoLogisticsDomain extends CoFakerDomain {
       'ownerLabel': 'ownerLabel',
     },
     'outbound_order': {'waveNo': 'waveNo', 'carrierLabel': 'carrierLabel'},
+    'load_item': {
+      'trackingNo': 'trackingNo',
+      'recipientArea': 'recipientArea',
+      'shelfSlot': 'shelfSlot',
+    },
+    'parcel_scan': {'trackingNo': 'trackingNo'},
+    'delivery_proof': {'signatureData': 'signatureData'},
+    'delivery_exception': {'detail': 'exceptionDetail'},
+    'courier': {'vehicleType': 'vehicleType', 'vehiclePlate': 'vehiclePlate'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

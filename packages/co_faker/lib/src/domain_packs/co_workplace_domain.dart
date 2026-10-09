@@ -68,6 +68,13 @@ class CoWorkplaceDomain extends CoFakerDomain {
       rows: _accountCodes.length,
     ),
     'rejectReasonText': textRole('workplace.rejectReasonText'),
+    // W1 recipe fields (co-package#78).
+    'approverRole': textRole('workplace.approverRole'),
+    'closeSection': textRole('workplace.closeSection'),
+    'extension': authoredRole(
+      (f, c) => recordDigits(f, 'workplace.extension', c.index, 4, first: 1),
+      description: 'Fictional four-digit internal extension',
+    ),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
@@ -98,6 +105,7 @@ class CoWorkplaceDomain extends CoFakerDomain {
       'name': 'employeeName',
       'department': 'department',
       'position': 'position',
+      'extension': 'extension',
     },
     'work_item': {'title': 'workItemTitle'},
     'expense_line': {
@@ -106,6 +114,9 @@ class CoWorkplaceDomain extends CoFakerDomain {
       'accountName': 'accountName',
     },
     'work_day': {'status': 'attendanceStatus'},
+    'shift': {'department': 'department'},
+    'approval_line': {'approverRole': 'approverRole'},
+    'month_close_item': {'section': 'closeSection'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

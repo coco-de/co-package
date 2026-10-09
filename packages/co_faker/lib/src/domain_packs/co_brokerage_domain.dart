@@ -105,6 +105,7 @@ class CoBrokerageDomain extends CoFakerDomain {
     'provider_profile': {
       'name': 'providerName',
       'headline': 'providerHeadline',
+      'skills': 'skillTag',
     },
     'home_service_type': {
       'name': 'serviceTypeName',

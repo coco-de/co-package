@@ -16,7 +16,7 @@ translation is a draft until a native speaker has reviewed it. See
 [README.md](README.md) for the work, the gate, and the format of this file.
 
 The files of the language are `lib/src/l10n/zh/zh_bundle.dart` (the domain
-text, 242 keys), `zh_clinic.dart`, and `zh_saas.dart`; the safety declaration
+text, 252 keys), `zh_clinic.dart`, and `zh_saas.dart`; the safety declaration
 is `test/language_safety/zh.dart` and the tests that are particular to the
 language are `test/languages/zh_localization_test.dart`.
 

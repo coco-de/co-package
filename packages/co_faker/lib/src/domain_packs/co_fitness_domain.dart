@@ -51,6 +51,8 @@ class CoFitnessDomain extends CoFakerDomain {
     ),
     'cancelReason': textRole('fitness.cancelReason'),
     'noShowNote': textRole('fitness.noShowNote'),
+    // W1 recipe fields (co-package#78).
+    'instructorCareer': textRole('fitness.instructorCareer'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
@@ -86,6 +88,10 @@ class CoFitnessDomain extends CoFakerDomain {
     },
     'class_booking': {'passName': 'passName'},
     'membership_pass': {'passName': 'passName', 'validDays': 'passTerm'},
+    'instructor': {
+      'specialty': 'instructorSpecialty',
+      'career': 'instructorCareer',
+    },
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

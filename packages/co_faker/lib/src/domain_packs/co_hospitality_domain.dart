@@ -68,6 +68,19 @@ class CoHospitalityDomain extends CoFakerDomain {
     'localSpot': textRole('hospitality.localSpot'),
     'conciergeReply': textRole('hospitality.conciergeReply'),
     'folioItem': textRole('hospitality.folioItem'),
+    // W1 recipe fields (co-package#78).
+    'arrivalEta': authoredRole(
+      (f, c) =>
+          '${(15 + c.index % 7).toString().padLeft(2, '0')}:${c.index.isEven ? '00' : '30'}',
+      description: 'Expected arrival time, 15:00 to 21:30',
+    ),
+    'bbqRule': textRole('hospitality.bbqRule'),
+    'wifiHint': textRole('hospitality.wifiHint'),
+    'stayMonth': authoredRole((f, c) {
+      final now = f.now.toUtc();
+      final month = DateTime.utc(now.year, now.month - 1 - c.index % 12);
+      return '${month.year}-${month.month.toString().padLeft(2, '0')}';
+    }, description: 'Month of a past stay, YYYY-MM before the clock'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
@@ -102,7 +115,11 @@ class CoHospitalityDomain extends CoFakerDomain {
   @override
   Map<String, Map<String, String>> get entityRoles => const {
     'campsite': {'name': 'siteName', 'siteType': 'siteType'},
-    'stay_booking': {'bookingNo': 'bookingNo', 'guestName': 'guestName'},
+    'stay_booking': {
+      'bookingNo': 'bookingNo',
+      'guestName': 'guestName',
+      'arrivalEta': 'arrivalEta',
+    },
     'hotel_room': {
       'roomNo': 'roomNo',
       'roomType': 'roomType',
@@ -113,6 +130,8 @@ class CoHospitalityDomain extends CoFakerDomain {
       'requestType': 'requestType',
       'amenityName': 'amenityName',
     },
+    'stay_guide': {'bbqRule': 'bbqRule', 'wifiHint': 'wifiHint'},
+    'campsite_review': {'stayMonth': 'stayMonth'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

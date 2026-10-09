@@ -151,6 +151,13 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'fitness.equipment': ['普拉提垫', '核心床', '普拉提椅', '瑜伽砖'],
     'fitness.studioRoom': ['垫上教室', '核心床教室', '椅式教室', '瑜伽教室'],
     'fitness.instructorSpecialty': ['垫上教学', '核心床教学', '瑜伽教学'],
+    'fitness.instructorCareer': [
+      '垫上课教学经验5年',
+      '核心床教学经验3年',
+      '团体瑜伽教学经验8年',
+      '小团体训练教学经验2年',
+      '康复类课程教学经验6年',
+    ],
     'fitness.passName': ['垫上课10次卡（示例）', '核心床课20次卡（示例）', '月卡（示例）'],
     'fitness.cancelReason': ['日程有变', '课程时间调整'],
     'fitness.noShowNote': ['无到课确认的记录示例。', '开课后标记为缺席的示例。'],
@@ -190,6 +197,8 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'daycare.activityTitle': ['冬日雪地游戏', '制作纸房子', '彩色积木游戏'],
     'daycare.albumCaption': ['一起搭积木的虚构插画', '冬日游戏的虚构插画'],
     'daycare.drugLabel': ['退热糖浆（虚构）', '止咳糖浆（虚构）', '保湿外用药剂（虚构）'],
+    'daycare.medicationStorage': ['常温保存', '冷藏保存', '避光保存'],
+    'daycare.symptom': ['流鼻涕', '轻微咳嗽', '低烧', '皮疹', '肠胃不适'],
     'daycare.dosageLabel': ['家长填写示例：2mL', '家长填写示例：3mL', '家长填写示例：少量'],
     'daycare.noticeTitle': ['冬日游戏通知（示例）', '餐食调整通知（示例）', '安全检查通知（示例）'],
 
@@ -320,6 +329,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     // meetup
     'meetup.clubName': ['松光晨跑团（虚构）', '清澜读书会（虚构）', '白蜡桌游社（虚构）'],
     'meetup.interestTag': ['跑步', '阅读', '桌游', '摄影', '烹饪', '徒步'],
+    'meetup.availableDays': ['工作日晚上', '周末', '周二和周四', '周六上午', '每天都可以'],
     'meetup.clubIntro': ['欢迎第一次参加的邻居加入的虚构社群。', '一起分享小小活动的示例社群。'],
     'meetup.gatheringTitle': ['1月第三周聚会（虚构）', '周末读书聊天（虚构）', '冬日散步聚会（虚构）'],
     'meetup.venueName': ['清澜步道入口（虚构）', '松光小聚会室（虚构）', '白蜡休息亭（虚构）'],
@@ -350,6 +360,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'content.penName': ['字豆（虚构）', '纸星（虚构）', '云笔（虚构）'],
     'content.synopsisLine': ['虚构人物在小岛上整理信件的故事。', '一起画出地图上没有的池塘，这是一个虚构的故事。'],
     'content.genreName': ['奇幻', '日常', '冒险', '科学故事', '随笔'],
+    'content.seriesSection': ['每周连载', '新作', '已完结', '每日连载', '短篇'],
     'content.episodeTitle': ['第一只纸船（虚构）', '池塘上的一个小点（虚构）', '没有时钟的午后（虚构）'],
     'content.cutAltText': ['虚构人物折纸船的插画', '池塘边两位虚构人物的插画'],
     'content.commentLine': ['纸船那一幕让我印象很深。', '我想继续读下一个示例章节。'],
@@ -413,6 +424,8 @@ const CoL10nBundle zhBundle = CoL10nBundle(
 
     // workplace
     'workplace.department': ['前端团队', '后端团队', '设计团队', '客服', '人力资源团队'],
+    'workplace.approverRole': ['团队负责人', '部门负责人', '人力资源经理', '财务审核人', '高管'],
+    'workplace.closeSection': ['工资', '费用报销', '考勤', '福利', '应计费用'],
     'workplace.position': ['专员', '经理', '团队负责人'],
     'workplace.workPlace': ['松光办公室（虚构）', '清澜办公中心（虚构）', '远程办公'],
     'workplace.shiftName': ['白班', '早班', '周末值班'],
@@ -477,6 +490,13 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     // Chinese writes the pattern of a Chinese plate, with its middle masked.
     'logistics.vehiclePlate': ['沪A·{n}●●{m}'],
     'logistics.deliveryNote': ['请勿放置门口，需当面签收。', '请通过单元门禁呼叫。', '请先与门卫确认。'],
+    'logistics.exceptionDetail': [
+      '敲门无人应答，已留下通知单。',
+      '楼栋入口的门禁密码无法使用。',
+      '到达时箱子已有凹陷，已拍照留存。',
+      '收件人要求明天派送。',
+      '地址中没有房间号。',
+    ],
     'logistics.entranceHint': ['单元门#••••，请呼叫门卫室', '使用门口呼叫按钮，不显示密码'],
     'logistics.scanEvent': ['到达转运中心', '干线装车', '派送中', '派送完成', '派送未完成'],
     'logistics.carrierLabel': ['示例快递公司A（虚构）', '示例快递公司B（虚构）', '示例货运公司C（虚构）'],
@@ -496,6 +516,20 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'hospitality.seasonName': ['平季', '节假日旺季（示例）', '工作日特惠期（示例）'],
     'hospitality.ratePlan': ['标准示例房价', '含早示例房价', '工作日示例房价'],
     'hospitality.houseRule': ['夜间请保持公共区域安静。', '退房时请查看示例退房清单。'],
+    'hospitality.bbqRule': [
+      '烧烤炉开放时间为17:00至21:00。',
+      '请在办理入住时预约烧烤炉。',
+      '每个营位提供木炭和烤网。',
+      '离开前请将火完全熄灭。',
+      '客房露台禁止烧烤。',
+    ],
+    'hospitality.wifiHint': [
+      '无线网络名称和密码在门边的卡片上。',
+      '访客网络的密码请向前台咨询。',
+      '访客网络覆盖客房和休息厅。',
+      '22:00以后如信号中断，请重新连接。',
+      '密码每周一更换。',
+    ],
     'hospitality.reviewSnippet': ['示例客房说明一目了然。', '虚构住宿的使用说明整理得很清楚。'],
     'hospitality.hkCheckItem': ['更换床品', '清洁卫生间', '检查客用品', '检查迷你吧'],
     'hospitality.maintenanceIssue': [

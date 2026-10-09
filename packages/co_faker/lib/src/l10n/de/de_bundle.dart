@@ -305,6 +305,13 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Reformer-Unterricht',
       'Yogaunterricht',
     ],
+    'fitness.instructorCareer': [
+      '5 Jahre Unterricht auf der Matte',
+      '3 Jahre Unterricht am Reformer',
+      '8 Jahre Yoga in der Gruppe',
+      '2 Jahre Training in Kleingruppen',
+      '6 Jahre Reha-Training',
+    ],
     'fitness.passName': [
       '10er-Karte Mattenpilates (Beispiel)',
       '20er-Karte Reformer (Beispiel)',
@@ -423,6 +430,18 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Fiebersaft (fiktiv)',
       'Hustensaft (fiktiv)',
       'Pflegecreme (fiktiv)',
+    ],
+    'daycare.medicationStorage': [
+      'Bei Raumtemperatur lagern',
+      'Im Kühlschrank lagern',
+      'Vor Sonnenlicht schützen',
+    ],
+    'daycare.symptom': [
+      'Laufende Nase',
+      'Leichter Husten',
+      'Leicht erhöhte Temperatur',
+      'Hautausschlag',
+      'Magenbeschwerden',
     ],
     'daycare.dosageLabel': [
       'Angabe der Erziehungsberechtigten (Beispiel): 2 ml',
@@ -650,6 +669,13 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Kochen',
       'Wandern',
     ],
+    'meetup.availableDays': [
+      'Wochentags abends',
+      'Am Wochenende',
+      'Dienstag und Donnerstag',
+      'Samstagvormittag',
+      'Jeder Tag passt',
+    ],
     'meetup.clubIntro': [
       'Fiktive Gruppe, in der auch Erstteilnehmende aus der Nachbarschaft willkommen sind.',
       'Beispielgruppe, die kleine Aktivitäten gemeinsam unternimmt.',
@@ -748,6 +774,13 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Abenteuer',
       'Wissenschaftsgeschichten',
       'Essay',
+    ],
+    'content.seriesSection': [
+      'Wöchentlich',
+      'Neu',
+      'Abgeschlossen',
+      'Täglich',
+      'Kurzserien',
     ],
     'content.episodeTitle': [
       'Das erste Papierboot (fiktiv)',
@@ -887,6 +920,20 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Design-Team',
       'Kundensupport',
       'Personalabteilung',
+    ],
+    'workplace.approverRole': [
+      'Teamleitung',
+      'Abteilungsleitung',
+      'Personalleitung',
+      'Finanzprüfung',
+      'Geschäftsführung',
+    ],
+    'workplace.closeSection': [
+      'Gehaltsabrechnung',
+      'Spesen',
+      'Anwesenheit',
+      'Zusatzleistungen',
+      'Abgrenzungen',
     ],
     'workplace.position': ['Mitarbeiter:in', 'Manager:in', 'Teamleitung'],
     'workplace.workPlace': [
@@ -1064,6 +1111,13 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Bitte am Hauseingang klingeln.',
       'Bitte an der Pforte nachfragen.',
     ],
+    'logistics.exceptionDetail': [
+      'Niemand hat die Tür geöffnet; eine Benachrichtigung wurde hinterlassen.',
+      'Der Zugangscode am Hauseingang hat nicht funktioniert.',
+      'Der Karton war bei Ankunft eingedrückt; Fotos wurden gemacht.',
+      'Die empfangende Person bittet um Zustellung morgen.',
+      'In der Adresse fehlt die Wohnungsnummer.',
+    ],
     'logistics.entranceHint': [
       'Hauseingang, Code ••••; Pforte anrufen',
       'Klingel am Eingang benutzen; kein Passwort angezeigt',
@@ -1145,6 +1199,20 @@ const CoL10nBundle deBundle = CoL10nBundle(
     'hospitality.houseRule': [
       'Bitte halten Sie die Gemeinschaftsbereiche nachts ruhig.',
       'Bitte beachten Sie die Beispielcheckliste zur Abreise.',
+    ],
+    'hospitality.bbqRule': [
+      'Der Grill steht von 17:00 bis 21:00 Uhr zur Verfügung.',
+      'Bitte reservieren Sie den Grill bei der Anreise.',
+      'Holzkohle und Grillrost werden pro Stellplatz bereitgestellt.',
+      'Bitte löschen Sie das Feuer vollständig, bevor Sie gehen.',
+      'Auf der Terrasse der Zimmer ist Grillen nicht erlaubt.',
+    ],
+    'hospitality.wifiHint': [
+      'Netzwerkname und Passwort stehen auf der Karte neben der Tür.',
+      'Das Passwort für das Gäste-WLAN erhalten Sie am Empfang.',
+      'Das Gäste-WLAN reicht bis in die Zimmer und den Aufenthaltsraum.',
+      'Verbinden Sie sich nach 22:00 Uhr neu, falls das Signal abbricht.',
+      'Das Passwort ändert sich jeden Montag.',
     ],
     'hospitality.reviewSnippet': [
       'Die Hinweise zum Beispielzimmer waren gut lesbar.',

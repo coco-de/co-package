@@ -148,3 +148,34 @@ Map<String, String> roleFields(Map<String, String> roles) => {
 Map<String, String> roleMapping(Iterable<String> fields) => {
   for (final field in fields) field: field,
 };
+
+/// A handwritten-looking signature as an offline SVG `data:` URI, from the
+/// existing `faker.signature` generator.
+///
+/// The strokes come from a stream named after the entity, field, and record
+/// index, so a record keeps its signature in every language and however many
+/// values were drawn before. It is not anyone's handwriting.
+CoDomainRole signatureRole() => authoredRole(
+  (f, c) => f.signature.dataUri(
+    name: '${c.entity ?? 'record'}/${c.field}/${c.index}',
+  ),
+  description: 'Fictional signature strokes as an SVG data URI',
+);
+
+/// A business identifier written with digits that is the same in every
+/// language: [digits] digits of a stream named after [key] and the record
+/// index, never the display stream. [first] is the lowest first digit.
+String recordDigits(
+  CoFaker f,
+  String key,
+  int index,
+  int digits, {
+  int first = 0,
+}) {
+  final random = f.derive('id/$key/$index').random;
+  final buffer = StringBuffer('${random.int(min: first, max: 9)}');
+  for (var i = 1; i < digits; i++) {
+    buffer.write(random.int(min: 0, max: 9));
+  }
+  return buffer.toString();
+}
