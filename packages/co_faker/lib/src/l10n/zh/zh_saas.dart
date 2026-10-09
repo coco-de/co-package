@@ -132,7 +132,7 @@ const CoFakerSaasData zhSaas = CoFakerSaasData(
     'print': '打印',
     'exportData': '导出',
     'send': '发送',
-    'roleChange': '权限变更',
+    'roleChange': '角色变更',
     'notice': '公告',
     'maintenance': '维护',
     'release': '版本更新',
@@ -173,7 +173,7 @@ const CoFakerSaasData zhSaas = CoFakerSaasData(
       'owner': '所有者',
       'admin': '管理员',
       'billing': '计费',
-      'support': '客户支持',
+      'support': '客服',
       'viewer': '查看者',
     },
     autopayFailures: <String, String>{
@@ -273,7 +273,7 @@ const CoFakerSaasData zhSaas = CoFakerSaasData(
     auditTargets: <String, String>{
       'login': '账号',
       'loginFailed': '账号',
-      'roleChange': '员工权限',
+      'roleChange': '员工角色',
       'send': '通知',
     },
     auditRecords: <String>['患者', '病历', '账单', '预约'],

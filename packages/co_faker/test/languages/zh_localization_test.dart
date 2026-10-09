@@ -167,6 +167,56 @@ void main() {
       }
     });
 
+    test('keeps the numbers of the English texts, entry by entry', () {
+      // A text that has a number (a quantity, a rate, a year, a grade) has the
+      // same one in Chinese, so a list that is reordered against English is
+      // found where its entries differ by a number. A discount is written the
+      // Chinese way: 20% off is 8折.
+      const exempt = <String>{'campaign.couponTitle', 'clinic.ops.adjustments'};
+      final digits = RegExp(r'\d+');
+      // The digit of a term (SpO2) is not a quantity: Chinese writes 血氧.
+      List<String> numbers(String text) => <String>[
+        for (final match in digits.allMatches(
+          text.replaceAll(RegExp(r'#?\{[^{}]*\}|SpO2'), ''),
+        ))
+          match.group(0)!,
+      ];
+      final pairs = <(CoTextTable, CoTextTable)>[
+        (CoLanguageTexts.ofBundle(english), CoLanguageTexts.ofBundle(bundle)),
+        (
+          CoLanguageTexts.ofClinic(CoFakerClinicData.english),
+          CoLanguageTexts.ofClinic(clinic),
+        ),
+        (
+          CoLanguageTexts.ofSaas(CoFakerSaasData.english),
+          CoLanguageTexts.ofSaas(saas),
+        ),
+      ];
+      var compared = 0;
+      for (final (en, zh) in pairs) {
+        for (final slot in en.slots.values) {
+          if (slot.kind != CoTextKind.text || exempt.contains(slot.name)) {
+            continue;
+          }
+          for (final row in slot.rows) {
+            final enCells = slot.cellsOf(row)!;
+            final zhCells = zh[slot.name]!.cellsOf(row)!;
+            for (var c = 0; c < enCells.length; c++) {
+              final want = numbers(enCells[c]);
+              if (want.isEmpty) continue;
+              expect(
+                numbers(zhCells[c]),
+                want,
+                reason: '${slot.name}[$row][$c]: ${zhCells[c]}',
+              );
+              compared++;
+            }
+          }
+        }
+      }
+      expect(compared, greaterThan(60));
+    });
+
     test('keeps the codes, the order, and the lists of the clinic data', () {
       const en = CoFakerClinicData.english;
       expect(
@@ -233,8 +283,9 @@ void main() {
 
   group('the same seed picks the same record in English and Chinese', () {
     test('of every role of every domain pack', () {
-      final en = _roles(_faker('en'));
-      final zh = _roles(_faker('zh'));
+      // Sixty records of each role reach every entry of a short list.
+      final en = _roles(_faker('en'), records: 60);
+      final zh = _roles(_faker('zh'), records: 60);
       final chinese = bundle.texts;
       var compared = 0;
       for (final key in english.texts.keys) {
@@ -258,7 +309,7 @@ void main() {
           }
         }
       }
-      expect(compared, greaterThan(500));
+      expect(compared, greaterThan(8000));
     });
 
     test('of the catalog, the questions, and the exam choices', () {

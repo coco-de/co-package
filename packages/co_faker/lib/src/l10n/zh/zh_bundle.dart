@@ -70,7 +70,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     // grocery
     'grocery.originRegion': ['松光种植区（虚构）', '清澜种植区（虚构）', '田野种植区（虚构）'],
     'grocery.harvestNote': ['采收日期和包装日期仅为示例。', '新鲜度说明针对的是虚构商品。'],
-    'grocery.deliveryZone': ['演示松光A区', '演示清澜B区', '演示田野C区'],
+    'grocery.deliveryZone': ['演示松光A片区', '演示清澜B片区', '演示田野C片区'],
     'grocery.slotLabel': ['清晨06:00—07:00', '傍晚18:00—20:00'],
     'grocery.substitutionNote': ['以重量相近的商品替换的示例。', '不替换商品，直接退款的示例。'],
     'grocery.doorNote': ['请通过单元门禁呼叫。', '不放门口，请当面签收。'],
@@ -291,7 +291,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'exam_prep.taxonomyName': ['数据库', '计算机网络', '编程基础', '信息安全'],
 
     // hrd
-    'hrd.departmentName': ['销售部', '生产部', '研发部', '客户支持部', '行政部', '物流部'],
+    'hrd.departmentName': ['销售部', '生产部', '研发部', '客服部', '行政部', '物流部'],
     'hrd.jobTitle': ['专员', '经理', '团队负责人'],
     'hrd.courseTitle': ['个人信息处理规范2026（虚构）', '协同作业安全守则（虚构）', '工作记录整理（虚构）'],
     'hrd.courseKind': ['必修', '专业', '领导力'],
@@ -392,7 +392,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
       '请在账号设置中查看邀请状态。这是模拟的AI草稿，需由客服人员审核。',
       '请一并记录登录方式和示例报错信息。这是模拟的AI草稿，不会对账号做任何更改。',
       '请核对示例账单上的账期和明细。这是模拟的AI草稿，其中的价格均为虚构。',
-      '请在工单备注中记录示例账单编号。这是模拟的AI草稿，并非真实的付款通知。',
+      '请在工单备注中记录示例账单编号。这是模拟的AI草稿，并非真实的支付通知。',
       '请核对导出时选择的日期范围和格式。这是模拟的AI草稿，记录的示例报错不含个人信息。',
       '请核对示例CSV的列名和文件状态。这是模拟的AI草稿，需由客服人员审核。',
       '请记录示例集成状态和检查时间。这是模拟的AI草稿，不会发起任何外部调用。',
@@ -412,7 +412,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'campaign.failReason': ['缺少收件号码（示例）', '未同意接收营销信息（示例）', '未同意夜间接收（示例）'],
 
     // workplace
-    'workplace.department': ['前端团队', '后端团队', '设计团队', '客户支持', '人力资源团队'],
+    'workplace.department': ['前端团队', '后端团队', '设计团队', '客服', '人力资源团队'],
     'workplace.position': ['专员', '经理', '团队负责人'],
     'workplace.workPlace': ['松光办公室（虚构）', '清澜办公中心（虚构）', '远程办公'],
     'workplace.shiftName': ['白班', '早班', '周末值班'],
@@ -471,7 +471,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'brokerage.serviceTypeName': ['保洁', '搬家', '维修', '课程'],
 
     // logistics
-    'logistics.zoneName': ['松溪1区（虚构）', '松溪2区（虚构）', '清澜片区（虚构）'],
+    'logistics.zoneName': ['松溪1片区（虚构）', '松溪2片区（虚构）', '清澜片区（虚构）'],
     'logistics.hubName': ['松光转运中心（虚构）', '清澜转运中心（虚构）'],
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // Chinese writes the pattern of a Chinese plate, with its middle masked.
