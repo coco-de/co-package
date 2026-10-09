@@ -646,6 +646,11 @@ const CoL10nBundle enBundle = CoL10nBundle(
     ],
 
     // fandom
+    // The two approved fictional creators of the fandom pack. English writes
+    // them as Korean does, as it always has, so that the output of both
+    // languages stays byte for byte the same; another language writes two
+    // fictional creator names of its own.
+    'fandom.creatorName': ['모래시계 정원', '하늘결'],
     'fandom.fanNickname': ['Star', 'Sprout', 'MoonBean', 'LightDrop'],
     'fandom.benefitTitle': [
       'Example member-only picture',

@@ -121,18 +121,38 @@ void main() {
   test(
     'question helper and pipe adapter preserve the correct shuffled answer',
     () {
-      for (final locale in ['ko', 'en', 'pt']) {
+      // `nl` stands for a language without domain text, which reads English
+      // and never gets any. Every language that has domain text is read as
+      // well, so that the questions of a language that is localized keep their
+      // invariants: the four choices differ, and the explanation contains the
+      // correct choice.
+      final languages = <String>[
+        'nl',
+        for (final language in CoFakerLanguages.all)
+          if (language.domain) language.code,
+      ];
+      for (final locale in languages) {
         final f = _faker(locale: locale);
         final seen = <String>{};
         for (var i = 0; i < 120; i++) {
           final q = f.derive('question/$i').examPrep.question(index: i);
           seen.add(q.section);
           expect(q.choices, hasLength(4));
-          expect(q.choices.toSet(), hasLength(4));
+          expect(
+            q.choices.toSet(),
+            hasLength(4),
+            reason: '$locale: the four choices of a question must differ',
+          );
           expect(q.answerKeys, hasLength(1));
           expect(q.answerKeys.single, inInclusiveRange(1, 4));
           final correct = q.choices[q.answerKeys.single - 1];
-          expect(q.explanation, contains(correct));
+          expect(
+            q.explanation,
+            contains(correct),
+            reason:
+                '$locale: exam_prep.explanation must contain its correct '
+                'choice',
+          );
           expect(q.choiceSet.split('|'), hasLength(4));
           final row = f.schema.entity('exam_prep.question', index: i);
           final answer = int.parse(row['answerKeys'] as String);
@@ -292,9 +312,12 @@ void main() {
         expect(draft['isSimulated'], isTrue);
         expect(draft['sourceArticleCode'], matches(RegExp(r'^HA-\d{4}$')));
       }
+      // A language without domain text reads English. `nl` stands for one
+      // that never gets any: a language of the Epic (`pt`) writes its own
+      // drafts once it is localized.
       expect(
         CoFakerHelpdesk(_faker(locale: 'en')).drafts(),
-        CoFakerHelpdesk(_faker(locale: 'pt')).drafts(),
+        CoFakerHelpdesk(_faker(locale: 'nl')).drafts(),
       );
     },
   );

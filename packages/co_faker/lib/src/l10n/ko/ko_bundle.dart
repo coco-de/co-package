@@ -364,6 +364,8 @@ const CoL10nBundle koBundle = CoL10nBundle(
     'meetup.cadenceLabel': ['매주 토 07:00', '격주 일 10:00', '매월 첫째 토 14:00'],
 
     // fandom
+    // The two approved fictional creators of the fandom pack.
+    'fandom.creatorName': ['모래시계 정원', '하늘결'],
     'fandom.fanNickname': ['별님', '새싹', '달콩', '빛방울'],
     'fandom.benefitTitle': ['멤버 전용 예시 사진', '모의 이벤트 응모', '가상 클립 먼저 보기'],
     'fandom.postCaption': ['겨울 작업실을 그린 가상 일러스트', '연습 시간을 기록한 예시 게시물'],
@@ -593,5 +595,36 @@ const CoL10nBundle koBundle = CoL10nBundle(
       '주변 장소는 모두 데모용 가상 장소입니다.',
     ],
     'hospitality.folioItem': ['객실료(예시)', '룸서비스(예시)', '추가 옵션(예시)'],
+  },
+  // The texts that Korean writes as English does: units, acronyms, the name of
+  // a programming language, and the Korean plate pattern that the English
+  // bundle keeps. The language coverage gate reads this list.
+  allowSameAsEnglish: <String, List<String>>{
+    // The weight and the volume of a grocery item are written alike.
+    'catalog.groceryUnit': ['*'],
+    // These unit labels have read in English since 0.10.0, and the output of
+    // Korean is kept byte for byte.
+    'catalog.commerceUnit': ['*'],
+    // Acronyms and file formats of the exam questions.
+    'exam_prep.correctChoice': ['WHERE', 'TCP', 'HTTP'],
+    'exam_prep.wrongChoice1': ['JPEG', 'PNG'],
+    'exam_prep.wrongChoice2': ['CSS', 'MP3'],
+    'exam_prep.wrongChoice3': ['SVG', 'TTF'],
+    // The name of a programming language.
+    'brokerage.skillTag': ['Dart'],
+    // The two approved fictional creators: English writes their Korean names.
+    'fandom.creatorName': ['*'],
+    // English keeps the Korean plate pattern, and Korean is where it belongs.
+    'logistics.vehiclePlate': ['*'],
+    // Units, acronyms, and names of the Korean clinic and SaaS data.
+    'clinic.procedures.unit': ['cc'],
+    'clinic.drugForms.unit': ['mg', 'g'],
+    'clinic.questions.options': ['SNS'],
+    'clinic.cardIssuers': ['BC'],
+    'clinic.texts.labels': ['HIFU', 'IPL'],
+    'clinic.ops.patientTags.label': ['VIP'],
+    'saas.labels': ['SMS', 'LMS', 'DUR'],
+    // The detail of a failed claim master check has always read `5 rows`.
+    'saas.ops.masterCheckDetail': ['{n} rows'],
   },
 );

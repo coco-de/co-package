@@ -37,6 +37,7 @@ class CoFakerSaasOps {
     this.healthMessages = const <String, String>{},
     this.auditTargets = const <String, String>{},
     this.auditRecords = const <String>[],
+    this.masterCheckDetail = '{n} rows',
   });
 
   /// Operator actions keyed by console action key (`tenant.approve`, ...).
@@ -102,6 +103,11 @@ class CoFakerSaasOps {
   /// The kinds of record that the remaining audit actions act on; the target
   /// reads `patient #123`. Empty falls back to English.
   final List<String> auditRecords;
+
+  /// The detail of a claim master check that failed (`masterChecks`): `{n}` is
+  /// the number of rows that failed. English and Korean have always written
+  /// `{n} rows`, and Korean keeps it.
+  final String masterCheckDetail;
 
   /// Korean operations texts.
   static const CoFakerSaasOps korean = CoFakerSaasOps(
@@ -306,6 +312,8 @@ class CoFakerSaasOps {
       'send': '알림톡',
     },
     auditRecords: <String>['환자', '차트', '수납', '예약'],
+    // Korean has always written the English word here.
+    masterCheckDetail: '{n} rows',
   );
 
   /// English operations texts, the fallback for every other locale.
@@ -504,5 +512,6 @@ class CoFakerSaasOps {
       'send': 'notification',
     },
     auditRecords: <String>['patient', 'chart', 'invoice', 'reservation'],
+    masterCheckDetail: '{n} rows',
   );
 }

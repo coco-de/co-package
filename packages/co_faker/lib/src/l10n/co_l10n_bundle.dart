@@ -58,6 +58,7 @@ class CoL10nBundle {
   const CoL10nBundle({
     required this.language,
     this.texts = const <String, List<String>>{},
+    this.allowSameAsEnglish = const <String, List<String>>{},
   });
 
   /// Lower-case ISO 639-1 code of the language, such as `ja`.
@@ -66,6 +67,34 @@ class CoL10nBundle {
   /// The texts by key. Every list has at least one entry, and every entry is
   /// a non-empty string.
   final Map<String, List<String>> texts;
+
+  /// The texts of this language that are allowed to read exactly like the
+  /// English ones: loanwords, acronyms, units, and proper names that no
+  /// translation would change.
+  ///
+  /// The coverage gate (`dart run co_faker:coverage --language ja --strict`)
+  /// reports every text that equals the English text at the same place, since
+  /// that is how an untranslated text looks. A text that is the same on
+  /// purpose is listed here by the name of its slot and its value:
+  ///
+  /// ```dart
+  /// allowSameAsEnglish: {
+  ///   // Units are written the same way in Japanese.
+  ///   'catalog.groceryUnit': ['500g', '1kg'],
+  ///   // An acronym.
+  ///   'exam_prep.correctChoice': ['TCP'],
+  ///   // Every text of the slot is a unit symbol.
+  ///   'clinic.procedures.unit': ['*'],
+  /// }
+  /// ```
+  ///
+  /// A slot is a key of [texts] (`catalog.groceryUnit`) or the name of a
+  /// clinic or SaaS field (`clinic.cardIssuers`, `saas.plans.name`); the gate
+  /// prints the name of every slot with a text it finds equal. `*` allows
+  /// every text of a slot. An entry that no text uses any more is reported,
+  /// so the list never keeps a text that has since been translated. The
+  /// language owns this list, and it is not for texts that can be translated.
+  final Map<String, List<String>> allowSameAsEnglish;
 
   /// The pattern of a placeholder: `{name}`, a name of letters, digits, and
   /// underscores that does not start with a digit.
