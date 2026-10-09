@@ -1,6 +1,6 @@
 # Italian (`it`)
 
-status: planned
+status: localized
 
 Native name: italiano. National locale: `it_IT`. Currency: euro (`EUR`, `€`).
 

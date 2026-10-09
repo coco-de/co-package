@@ -514,18 +514,19 @@ const CoL10nBundle itBundle = CoL10nBundle(
     ],
     // Each explanation contains the text of its correct choice, and the four
     // choices of a question are different from one another: tests check both.
-    // The choice may stand in the case of the sentence (`La chiave primaria`),
-    // because the check ignores the case.
+    // The choice is written in the case of the list (`Chiave primaria`), as the
+    // term that opens a definition, because a test of the package compares the
+    // explanation and the choice with the same case.
     'exam_prep.explanation': [
-      'La chiave primaria identifica ogni riga di una tabella.',
-      'La clausola WHERE esprime una condizione per selezionare le righe.',
+      'Chiave primaria: identifica ogni riga di una tabella.',
+      'WHERE: questa clausola esprime una condizione per selezionare le righe.',
       'TCP gestisce l’ordinamento e la ritrasmissione di un flusso di byte.',
-      'Il router sceglie il percorso successivo in base all’indirizzo di destinazione.',
+      'Router: sceglie il percorso successivo in base all’indirizzo di destinazione.',
       'HTTP esprime le richieste e le risposte web.',
-      'Una variabile consente a un programma di fare riferimento a un valore tramite il suo nome.',
-      'Una pila rimuove per primo l’ultimo valore inserito.',
-      'Una funzione di hash calcola un’impronta di lunghezza fissa a partire da un input.',
-      'Il privilegio minimo concede solo i permessi necessari per un’attività.',
+      'Variabile: consente a un programma di fare riferimento a un valore tramite il suo nome.',
+      'Pila: rimuove per primo l’ultimo valore inserito.',
+      'Funzione di hash: calcola un’impronta di lunghezza fissa a partire da un input.',
+      'Privilegio minimo: concede solo i permessi necessari per un’attività.',
     ],
     'exam_prep.examPaperTitle': [
       'Simulazione d’esame 1 (di fantasia)',
@@ -1240,5 +1241,27 @@ const CoL10nBundle itBundle = CoL10nBundle(
     'brokerage.skillTag': ['Dart'],
     'workplace.labelName': ['Backlog'],
     'workplace.sprintName': ['Sprint {n}'],
+    // The clinic data. Words that Italian shares with English: the name of a
+    // clinic (`Demo`), a kind of care (`Laser`, `Lifting`, `Acne`), the unit
+    // `ml`, a dosage form (`capsule`), an answer (`No`), the card networks, the
+    // acronyms of the devices and of the tags, and the words of a screen
+    // (`Tablet`, `Online`, `App`).
+    'clinic.clinicNamePrefixes': ['Demo'],
+    'clinic.visitPurposes.details': ['Laser', 'Lifting', 'Acne'],
+    'clinic.procedures.unit': ['ml'],
+    'clinic.drugForms.form': [' capsule'],
+    // The units of a strength, which follow a space.
+    'clinic.drugForms.unit': ['*'],
+    'clinic.questions.options': ['No', 'Acne'],
+    'clinic.cardIssuers': ['Visa', 'Mastercard', 'Amex'],
+    'clinic.texts.labels': ['HIFU', 'RF', 'IPL'],
+    'clinic.ops.patientTags.label': ['VIP', 'Lifting'],
+    'clinic.ops.labels': ['Tablet', 'Online', 'App'],
+    // The SaaS data. The names of two plans, the message channels that are named
+    // by their acronym, and the word `account`, which are the same in both
+    // languages.
+    'saas.plans.name': ['Standard', 'Pro'],
+    'saas.labels': ['SMS', 'LMS'],
+    'saas.ops.auditTargets': ['account'],
   },
 );
