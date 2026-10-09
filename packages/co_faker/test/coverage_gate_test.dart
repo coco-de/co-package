@@ -95,9 +95,15 @@ void main() {
     });
   });
 
+  // Each test starts its processes together: a `dart run` compiles the tool
+  // before it runs, and they would otherwise wait for one another.
   group('dart run co_faker:coverage', () {
     test('--languages prints the table of languages', () async {
-      final result = await _coverage(<String>['--languages']);
+      final results = await Future.wait(<Future<ProcessResult>>[
+        _coverage(<String>['--languages']),
+        _coverage(<String>['--languages', '--format', 'json']),
+      ]);
+      final result = results[0];
       expect(result.exitCode, 0, reason: '${result.stderr}');
       final out = result.stdout as String;
       expect(out, startsWith('| Language | Script |'));
@@ -105,7 +111,7 @@ void main() {
         expect(out, contains('| `${language.code}` '));
       }
       expect(out, contains('| localized |'));
-      final json = await _coverage(<String>['--languages', '--format', 'json']);
+      final json = results[1];
       expect(json.exitCode, 0, reason: '${json.stderr}');
       final rows = (jsonDecode(json.stdout as String) as List)
           .cast<Map<String, Object?>>();
@@ -121,16 +127,14 @@ void main() {
     });
 
     test('--language --strict passes a finished language', () async {
-      final result = await _coverage(<String>['--language', 'ko', '--strict']);
+      final results = await Future.wait(<Future<ProcessResult>>[
+        _coverage(<String>['--language', 'ko', '--strict']),
+        _coverage(<String>['--language', 'en', '--strict', '--format', 'json']),
+      ]);
+      final result = results[0];
       expect(result.exitCode, 0, reason: '${result.stderr}${result.stdout}');
       expect(result.stdout, contains('Result: **PASS**'));
-      final json = await _coverage(<String>[
-        '--language',
-        'en',
-        '--strict',
-        '--format',
-        'json',
-      ]);
+      final json = results[1];
       expect(json.exitCode, 0, reason: '${json.stderr}');
       final report = jsonDecode(json.stdout as String) as Map<String, Object?>;
       expect(report['passed'], isTrue);
@@ -139,22 +143,21 @@ void main() {
 
     test('--language --strict fails a language without data', () async {
       // Spanish is a base language for good: it has no domain data to fill.
-      final strict = await _coverage(<String>['--language', 'es', '--strict']);
+      final results = await Future.wait(<Future<ProcessResult>>[
+        _coverage(<String>['--language', 'es', '--strict']),
+        _coverage(<String>['--language', 'es']),
+        _coverage(<String>['--language', 'es', '--strict', '--format', 'json']),
+      ]);
+      final strict = results[0];
       expect(strict.exitCode, 1);
       expect(strict.stdout, contains('base'));
       expect(strict.stdout, contains('Result: **FAIL**'));
       // Without --strict the report is information and the exit code is 0.
-      final info = await _coverage(<String>['--language', 'es']);
+      final info = results[1];
       expect(info.exitCode, 0);
       expect(info.stdout, contains('Result: **FAIL**'));
       // A tool reads the same verdict as JSON, issue by issue.
-      final json = await _coverage(<String>[
-        '--language',
-        'es',
-        '--strict',
-        '--format',
-        'json',
-      ]);
+      final json = results[2];
       expect(json.exitCode, 1);
       final report = jsonDecode(json.stdout as String) as Map<String, Object?>;
       expect(report['passed'], isFalse);
@@ -165,22 +168,23 @@ void main() {
     });
 
     test('rejects what it cannot read with exit code 2', () async {
-      final unknown = await _coverage(<String>['--language', 'xx']);
-      expect(unknown.exitCode, 2);
-      expect(unknown.stderr, contains('Unknown language: xx'));
-      // Traditional Chinese is not a supported language.
-      final traditional = await _coverage(<String>['--language', 'zh_TW']);
-      expect(traditional.exitCode, 2);
-      for (final args in <List<String>>[
+      final invalid = <List<String>>[
+        <String>['--language', 'xx'],
+        // Traditional Chinese is not a supported language.
+        <String>['--language', 'zh_TW'],
         <String>['--languages', '--strict'],
         <String>['--languages', '--language', 'ko'],
         <String>['--language', 'ko', '--input', 'plan.json'],
         <String>['--language'],
         <String>['--language', 'ko', '--format', 'xml'],
-      ]) {
-        final result = await _coverage(args);
-        expect(result.exitCode, 2, reason: args.join(' '));
+      ];
+      final results = await Future.wait(<Future<ProcessResult>>[
+        for (final args in invalid) _coverage(args),
+      ]);
+      for (var i = 0; i < invalid.length; i++) {
+        expect(results[i].exitCode, 2, reason: invalid[i].join(' '));
       }
+      expect(results[0].stderr, contains('Unknown language: xx'));
     });
-  });
+  }, timeout: const Timeout.factor(3));
 }
