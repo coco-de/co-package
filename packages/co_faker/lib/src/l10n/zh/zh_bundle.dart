@@ -320,7 +320,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     // meetup
     'meetup.clubName': ['松光晨跑团（虚构）', '清澜读书会（虚构）', '白蜡桌游社（虚构）'],
     'meetup.interestTag': ['跑步', '阅读', '桌游', '摄影', '烹饪', '徒步'],
-    'meetup.clubIntro': ['欢迎第一次参加的邻居一起加入的虚构社群。', '一起分享小小活动的示例社群。'],
+    'meetup.clubIntro': ['欢迎第一次参加的邻居加入的虚构社群。', '一起分享小小活动的示例社群。'],
     'meetup.gatheringTitle': ['1月第三周聚会（虚构）', '周末读书聊天（虚构）', '冬日散步聚会（虚构）'],
     'meetup.venueName': ['清澜步道入口（虚构）', '松光小聚会室（虚构）', '白蜡休息亭（虚构）'],
     'meetup.nickname': ['晨曦豆豆（虚构）', '书间云朵（虚构）', '小小星（虚构）'],

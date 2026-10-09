@@ -490,7 +490,7 @@ const CoFakerClinicData zhClinic = CoFakerClinicData(
       'kiosk': '自助机',
       'desk': '前台',
       'paper': '纸质',
-      'privacyRequired': '个人信息（必选）',
+      'privacyRequired': '个人信息处理（必选）',
       'marketingOptional': '营销信息（可选）',
       'sensitiveInfo': '敏感信息',
       'photoUse': '照片使用',
