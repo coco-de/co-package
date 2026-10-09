@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#64 작업내역 — 일본어 도메인 목데이터 현지화 (ja · ja_JP)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", "Hiragino Sans", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 20px 0 4px; }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  code { background: var(--code); border-radius: 6px; padding: 1px 5px; font-size: 0.92em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>일본어 도메인 목데이터 현지화 — 도메인 팩 27종 · 전용 생성기 · clinic · saas</h1>
+  <p class="muted">#64 (Epic #57 · S7) · <code>story/64-ja-localization</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> <code>CoFaker.forLanguage('ja')</code> · <code>CoFaker(locale: 'ja')</code> · 국가 로케일 <code>ja_JP</code> 가 도메인 팩 · 전용 생성기 · clinic · saas 를 모두 일본어로 낸다. 코드 · 레지스트리 · 공유 테스트는 건드리지 않고 데이터 셋(번들 · clinic · saas)과 언어 문서 · 안전 선언 · 새 테스트만 채웠다. 같은 seed 면 영어 · 한국어와 같은 레코드의 번역이고, 완료 게이트 <code>coverage --language ja --strict</code> 를 통과한다.</p>
+    <p><strong>번역 초안 — 원어민 검토 권장.</strong> AI 가 쓴 초안이다. 검토가 필요한 곳: 의료 · 청구 용어(<code>医療扶助</code> · <code>査定</code>/<code>返戻</code> · <code>公的医療保険</code> · <code>前受金</code>), 동의서 · 개인정보 문구, 값이 채우는 템플릿(<code>{patient}様</code> · <code>{n}名様</code>), 상표를 피한 표기(<code>ボツリヌストキシン</code> · <code>SNS広告</code>), 가상 이름. 항목별 체크리스트는 <code>docs/languages/ja.md</code>.</p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>파일</th><th class="num">+ / −</th><th>내용</th></tr>
+    <tr><td><code>lib/src/l10n/ja/ja_bundle.dart</code></td><td class="num">666 / 11</td><td>번들 242키 · 762문구(영어와 같은 키 · 개수 · 순서)와 <code>allowSameAsEnglish</code> 32건(단위 · 약어 · 카드 브랜드 · <code>Wi-Fi</code>, 번역 대상의 2.4%)</td></tr>
+    <tr><td><code>ja_clinic.dart</code></td><td class="num">572 / 11</td><td>clinic data · texts · ops 를 영어 데이터와 같은 길이로. JPY · 가격대 · 엔 규모 · <code>koreanValues: none</code></td></tr>
+    <tr><td><code>ja_saas.dart</code></td><td class="num">355 / 12</td><td>요금제 · 알림 템플릿 · 운영 콘솔 문구. JPY · 소비세 10% · 선불 지갑 · 13자리 사업자 번호 · <code>masterCheckDetail</code> <code>{n}行</code></td></tr>
+    <tr><td><code>docs/languages/ja.md</code></td><td class="num">192 / 11</td><td><code>localized</code> · 용어집 74개 · 서식 칸 · 원어민 검토 체크리스트 · 알려진 한계</td></tr>
+    <tr><td><code>test/language_safety/ja.dart</code></td><td class="num">61 / 13</td><td>안전 선언 4가지</td></tr>
+    <tr><td><code>test/languages/ja_localization_test.dart</code> (신규)</td><td class="num">1,005 / 0</td><td>테스트 26건</td></tr>
+  </table>
+  <p class="muted">6개 파일 +2,851 −58 (이 문서 제외), 이 Story 가 소유한 파일뿐이다. 기존 테스트 수정 0건. 커밋 8건 + 이 문서 커밋.</p>
+  <ul>
+    <li>데이터: <code>d1a7e538</code> 번들 · <code>b82ea3e8</code> clinic · <code>ae28757c</code> saas (이 셋이 모두 채워진 시점부터 게이트 통과) · <code>b1ea675a</code> 용어 표기 통일 · <code>50057c7e</code> 문체 한 가지로</li>
+    <li>문서 · 테스트: <code>eee0ccc5</code> 용어집 · 서식 · 검토 체크리스트 · <code>60762664</code> 안전 선언 + 현지화 테스트 · <code>e42bb78c</code> 로케일 표기 두 가지 추가</li>
+  </ul>
+
+  <h2>왜 이렇게 했나</h2>
+  <h3>1. 정렬이 계약이다</h3>
+  <p>한 곳도 순서를 바꾸지 않았다. 영어가 한국어 음차로 쓴 가상 이름(Solbit · Garam · Mulpare · Solnae · Ginkgo …)은 같은 자리에 같은 한 가지 일본어 가상 지명(<code>ひなたが丘</code> · <code>せせらぎ台</code> · <code>とねりこ町</code> · <code>松川町</code> · <code>いちょう町</code>)으로 옮겨 번들 전체에서 일관되고, 모두 <code>（架空）</code> 나 <code>架空市</code> 가 붙는다. 예시는 <code>（例）</code> 한 가지다.</p>
+  <h3>2. 표기 · 문체 · 서식 (AC)</h3>
+  <p>문체는 です・ます 한 가지이고 소설 단락의 서술도 포함한다(처음에는 평어체 <code>だ・である</code> 로 썼다가 AC 를 예외 없이 지키려 고쳤고, 테스트가 문장 단위로 확인한다). 숫자는 반각, 가타카나는 전각(반각 금지), 조수사는 <code>回</code> · <code>名</code> · <code>件</code>, 날짜는 <code>10月8日（木）</code>, 금액은 <code>¥1,200</code>. 한자 · 가나 흔들림은 용어집에서 한 가지로 정했다(<code>受付</code> · <code>見積もり</code> · <code>か月</code> · <code>取り扱い</code> · <code>ごはん</code> · <code>すべて</code> …).</p>
+  <h3>3. 엔 규모</h3>
+  <p>시술 가격대는 일본 미용 클리닉의 세금 포함 가격(초진 3,000~6,000 · 피코토닝 10,000~30,000 · HIFU 60,000~250,000 …), 반올림은 시술 500 · 회수권 1,000 · 할인 · 분할 · 포인트 10, SaaS 월 요금은 ¥9,800 · ¥19,800 · ¥34,800 · ¥69,800. 한국 전용 값은 없다(<code>koreanValues: none</code>).</p>
+  <h3>4. 영어 한 단어가 두 일을 가리키는 곳</h3>
+  <p><code>Consultation</code> 은 진료 단계의 <code>診察</code>, 방문 목적과 상담 대본의 <code>カウンセリング</code>, 세무 · 법률 상담의 <code>相談</code> 으로 나눴고 용어집에 행을 따로 둔다. <code>Package</code> 는 <code>回数券</code>(<code>コース</code> 금지), <code>Split payments</code> 는 <code>併用</code> 이다(<code>分割払い</code> 는 할부라 틀린 뜻). <code>Cancelled</code> 는 예약이면 <code>キャンセル</code>, 구독이면 <code>解約済み</code>.</p>
+  <h3>5. 안전 · 상표</h3>
+  <p>수의 · 어린이집의 약 이름에는 <code>（架空）</code> 를 달았고(clinic 의 약 이름 줄기는 영어처럼 지어낸 이름이다), 보툴리눔 제제는 상표를 피해 <code>ボツリヌストキシン</code>, <code>Instagram ad</code> 는 <code>SNS広告</code> 로 옮겼다. 카드 브랜드(<code>Visa</code> · <code>Mastercard</code> · <code>Amex</code>)는 영어 데이터와 같은 자리에 있고 <code>Discover</code> 자리는 <code>JCB</code> 다. 알림 템플릿의 <code>#{변수}</code> 는 영어 이름 · 개수를 지켰다.</p>
+  <h3>6. 테스트가 막는 것</h3>
+  <p>인덱스 정렬 검사만으로는 두 번역이 서로 뒤바뀌어도 통과한다(같은 목록을 읽고 비교하므로). 그래서 영어 문구와 일본어 번역의 짝 55쌍을 <strong>같은 위치</strong>에 있는지로 확인하는 앵커 시험을 두었다. 변이 시험 10종(뒤바뀐 번역 · 달러 규모 반올림 · 반각 괄호 · 반각 가타카나 · 평어체 문장 · <code>koreanValues</code> · 잃은 <code>#{변수}</code> · 날짜 서식 · 조수사 · 소비세율)을 하나씩 넣어 각각 테스트가 잡는 것을 확인했다.</p>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>docs/languages/ja.md</code> — 번역 판단의 요약: 용어집(금지 표기와 근거), 서식 칸, 원어민 검토 체크리스트.</li>
+    <li><code>ja_clinic.dart</code> · <code>ja_saas.dart</code> 의 위쪽 dartdoc 과 <code>currency</code> · <code>priceScale</code> · 가격대 · 서식 필드.</li>
+    <li><code>ja_bundle.dart</code> — 키 순서가 <code>en_bundle.dart</code> 와 같다. 맨 아래 <code>allowSameAsEnglish</code> 가 영어와 같은 것을 허용하는 전부다.</li>
+    <li><code>test/language_safety/ja.dart</code> — 가상 표기 · 일반 정보 문구의 시작 · 결과 약속 문구 · 실존 브랜드 표기 거부 목록.</li>
+    <li><code>test/languages/ja_localization_test.dart</code> — <code>_anchors</code>(위치 앵커) · 세 진입점 · 문체 · 엔 규모 · 한국 전용 값 부재.</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>173개 파일, 변경 0 (기준선 172 + 새 테스트 1)</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>607개 통과, 약 16초. 기준선 583 → 607 은 −2 + 26 이다. −2 는 <code>clinic_saas_stability_test</code> 의 <code>ja</code> · <code>ja_JP</code> 두 케이스로, 현지화된 언어가 범위 밖이 되는 S4 의 레지스트리 기반 분리 때문이다. +26 은 새 테스트 파일</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported, unsupported 0</td></tr>
+    <tr><td><code>dart run co_faker:coverage --language ja --strict</code></td><td>PASS · <code>localized</code> · 번들 242/242 · 문구 1,350(번역 대상 1,343) · 영어와 같음 0 · 허용 32 · 문자 체계 99.92% · 생성 16,182 텍스트 / 675 호출</td></tr>
+    <tr><td>출력 눈검수 (같은 seed 의 en · ko · ja)</td><td>팩 29종의 role 전부를 레코드 3개씩(clinic · saas · fx · remit · vet · commerce · grocery · booking · dental · homecare · travel_wallet · b2b_trade · group_deal · fitness · space_rental · dining · daycare · exam_prep · hrd · neighborhood · meetup · fandom · content · helpdesk · campaign · workplace · brokerage · logistics · hospitality), <code>korea</code> 팩은 한국 값을 이름으로 요구해 제외. 전용 생성기와 <code>faker.clinic</code> · <code>faker.saas</code> 공개 호출 146건을 en ↔ ja 로, 번역 쌍 1,359줄을 위에서 아래로 읽어 의미 정렬 · 잔류 · 미치환 · 서식을 확인</td></tr>
+    <tr><td>독립 코드 리뷰</td><td>하지 않았다 — 브리핑이 코드 변경 없는 데이터 번역이라 생략하게 했고, 위 게이트와 눈검수 · 변이 시험이 대신한다</td></tr>
+  </table>
+
+  <h2>알려진 한계 · 범위 밖</h2>
+  <ul>
+    <li>한국식 숫자 형식(<code>clinic.approvalNo</code> · <code>saas.recipient</code> · <code>rrnMasked</code> · <code>businessNumber</code>)과, <code>korea</code> 팩이 켜졌을 때 entity 의 <code>phone</code> · <code>address1</code> 은 모든 언어에 한국식이다. 한글이 없어 게이트가 못 보고 언어 파일로 못 고친다(S3 소관).</li>
+    <li><code>CoClinicHours</code> 기본값은 한국 피부과 영업시간이고 <code>clinic.inquiry()</code> 는 로케일과 무관하다. 생성기가 쓰는 ASCII 구두점(<code>尋常性ざ瘡 (L70.0)</code>)은 언어 파일로 못 바꾼다.</li>
+    <li><code>CoFaker(locale: 'ja')</code> 는 국가가 없어 환자 주소가 기본 모듈의 일반 주소다(<code>forLanguage</code> 와 <code>ja_JP</code> 는 <code>東京都…</code>). 도메인 데이터는 같다.</li>
+    <li>용어집의 금지 표기는 부분 문자열로 맞춰서, 번역의 앞부분인 변이형(<code>プリンタ</code> 대 <code>プリンター</code>)은 금지할 수 없다. 장음 표기는 서식 칸의 규약으로만 둔다.</li>
+    <li>가격대는 일본 미용 클리닉을 가정한 추정치라 원어민 검토 대상이다. CHANGELOG · README · 공유 파일은 고치지 않았다.</li>
+  </ul>
+
+  <h2>후속 Story 가 알아야 할 것</h2>
+  <ul>
+    <li>위치 앵커 시험(<code>_anchors</code>)은 언어마다 짝 수십 개로 옮겨 쓸 수 있다. 인덱스 정렬만으로는 잡히지 않는 뒤바뀐 번역을 잡는다.</li>
+    <li>한 영어 단어가 두 일을 가리키면 용어집 행을 둘로 나누고, 번역의 앞부분인 금지 표기는 쓰지 못한다는 점을 미리 본다.</li>
+  </ul>
+</main></body>
+</html>
