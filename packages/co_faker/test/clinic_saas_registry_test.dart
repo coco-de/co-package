@@ -308,7 +308,7 @@ void main() {
         'zh-Hant',
         'zh_HK',
         'zh_MO',
-        'ar',
+        'nl',
         'acme',
       ]) {
         final faker = CoFaker(locale: code, seed: 1);

@@ -123,12 +123,12 @@ Spanish and Arabic national locales of co-package#71:
 | `person.fullName` | native | native | native | native | native | native | native | native | native | native | native |
 | `address.city` | native | native | native | native | native | native | native | native | native | native | native |
 | `text.sentence` | native | native | native | native | native | native | native | native | native | native | native |
-| domain packs (`vet.pet().name`, `catalog.item().name`, …) | native | native | native | native | partial | partial | native | native | partial | native | en-fallback |
+| domain packs (`vet.pet().name`, `catalog.item().name`, …) | native | native | native | native | partial | partial | native | native | partial | native | native |
 
 Domain-pack languages came with co-package#57 (zh · de · ja · fr · ru · it · pt)
-and come with co-package#71 (es · ar): the basic modules of es and ar and the
-domain data of es are native, and the domain data of ar follows. Arabic text is right to left and
-keeps the digits 0–9. The domain-packs row is the `pet.name`
+and with co-package#71 (es · ar): all eleven languages now have native basic
+modules and domain data. Arabic text is right to left and keeps the digits
+0–9. The domain-packs row is the `pet.name`
 of the sample world. `partial` means that some of the sampled values are the
 same word as in English: a third of the sampled pet names are `Tofu`, a loanword
 that de, fr and it keep. Bumping the co_faker ref improves demos without code
