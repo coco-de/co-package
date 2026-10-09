@@ -285,12 +285,12 @@ const CoFakerSaasData ptSaas = CoFakerSaasData(
         (name: 'Crioterapia (uma região)', price: 140),
       ],
       'drug': <CoMasterRowSpec>[
-        (name: 'Quenadil comprimido 10 mg', price: 12),
-        (name: 'Tarmovin pomada 15 g', price: 38),
+        (name: 'Quenadil comprimido 10\u00A0mg', price: 12),
+        (name: 'Tarmovin pomada 15\u00A0g', price: 38),
       ],
       'material': <CoMasterRowSpec>[
         (name: 'Gaze estéril (10)', price: 8),
-        (name: 'Seringa de 1 ml', price: 2),
+        (name: 'Seringa de 1\u00A0ml', price: 2),
       ],
       'diagnosis': <CoMasterRowSpec>[
         (name: 'Acne vulgar', price: null),
@@ -407,7 +407,7 @@ const CoFakerSaasData ptSaas = CoFakerSaasData(
   currency: CoCurrencyFormat(
     code: 'BRL',
     symbol: r'R$',
-    pattern: '{symbol} {amount}',
+    pattern: '{symbol}\u00A0{amount}',
     groupSeparator: '.',
     decimalSeparator: ',',
     fractionDigits: 2,

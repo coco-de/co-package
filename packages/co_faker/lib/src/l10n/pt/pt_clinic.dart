@@ -15,9 +15,9 @@ import '../../korean_values.dart';
 ///
 /// - the amounts are reais written `R$ 1.234,56`: a no-break space after the
 ///   symbol, a dot between thousands, and a comma before the centavos. The
-///   price bands and the price scale are in reais, at about four and a half
-///   times the dollar prices of the English data, and the units are those of a
-///   Brazilian price tag (R$ 10 for a price, R$ 50 for a package);
+///   price bands and the price scale are in reais, at three to five times the
+///   dollar prices of the English data, and the units are those of a Brazilian
+///   price tag (R$ 10 for a price, R$ 50 for a package);
 /// - a clinic name is the kind of place first and the name after it
 ///   (`Clínica de Pediatria Ipê`), and a date is `quinta-feira (8/10)`;
 /// - the patient is addressed with `você`, and a text that a value fills never
@@ -77,8 +77,8 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
     ),
     (name: 'Cuidado', details: <String>['Cuidado facial', 'Cuidado calmante']),
   ],
-  // Prices are reais, the English bands at about four and a half times and
-  // rounded to a price a clinic would put on a tag.
+  // Prices are reais, the English bands at three to five times and rounded to
+  // a price a clinic would put on a tag.
   procedures: <CoProcedureSpec>[
     (
       code: 'CONS01',
@@ -101,7 +101,7 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
     (
       code: 'FIL-L',
       category: 'Preenchimento/Região',
-      name: 'Preenchimento labial com ácido hialurônico, 1 ml',
+      name: 'Preenchimento labial com ácido hialurônico, 1\u00A0ml',
       unit: 'ml',
       minPrice: 1800,
       maxPrice: 3500,
@@ -161,17 +161,17 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
     (code: 'B07', name: 'Verrugas virais', nameEn: 'Viral warts'),
     (
       code: 'L20.9',
-      name: 'Dermatite atópica não especificada',
+      name: 'Dermatite atópica, não especificada',
       nameEn: 'Atopic dermatitis, unspecified',
     ),
     (
       code: 'L30.9',
-      name: 'Dermatite não especificada',
+      name: 'Dermatite, não especificada',
       nameEn: 'Dermatitis, unspecified',
     ),
     (
       code: 'L71.9',
-      name: 'Rosácea não especificada',
+      name: 'Rosácea, não especificada',
       nameEn: 'Rosacea, unspecified',
     ),
   ],
@@ -190,10 +190,10 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
   // A drug reads `Brolivex comprimido 10 mg`: the form has its leading space
   // and the unit a no-break one.
   drugForms: <({String form, String unit, List<int> strengths})>[
-    (form: ' comprimido', unit: ' mg', strengths: <int>[5, 10, 20, 50]),
-    (form: ' cápsula', unit: ' mg', strengths: <int>[25, 50, 100]),
-    (form: ' pomada', unit: ' g', strengths: <int>[15, 30]),
-    (form: ' creme', unit: ' g', strengths: <int>[15, 30]),
+    (form: ' comprimido', unit: '\u00A0mg', strengths: <int>[5, 10, 20, 50]),
+    (form: ' cápsula', unit: '\u00A0mg', strengths: <int>[25, 50, 100]),
+    (form: ' pomada', unit: '\u00A0g', strengths: <int>[15, 30]),
+    (form: ' creme', unit: '\u00A0g', strengths: <int>[15, 30]),
   ],
   drugUsages: <String>[
     'Uma vez ao dia, ao deitar',
@@ -444,7 +444,7 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
       '{patient} precisa da assinatura de um responsável. {mention}, por '
           'favor, confira.',
     ],
-    deviceNameFormat: '{kind} nº {number}',
+    deviceNameFormat: '{kind} nº\u00A0{number}',
     staffMentionFormat: '@{name} · {role}',
     nameMentionFormat: '@{name}',
     labels: <String, String>{
@@ -484,14 +484,14 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
       (code: 'lifting', label: 'Lifting', color: '#6366F1'),
       (code: 'referral', label: 'Indicação', color: '#10B981'),
       (code: 'caution', label: 'Atenção', color: '#EF4444'),
-      (code: 'package', label: 'Com pacote', color: '#8B5CF6'),
+      (code: 'package', label: 'Paciente com pacote', color: '#8B5CF6'),
     ],
     acquisitionChannels: <CoColoredLabelSpec>[
       (code: 'onlineBooking', label: 'Agendamento on-line', color: '#03C75A'),
       (code: 'referral', label: 'Indicação', color: '#10B981'),
       (code: 'instagramAd', label: 'Anúncio em rede social', color: '#E1306C'),
       (code: 'search', label: 'Busca on-line', color: '#7C3AED'),
-      (code: 'walkIn', label: 'Sem agendamento', color: '#64748B'),
+      (code: 'walkIn', label: 'Sem hora marcada', color: '#64748B'),
     ],
     specialNotes: <String>[
       'Alergia à lidocaína',
@@ -635,14 +635,14 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
     },
     vitalsNotes: <String, String>{
       'normal':
-          'Sinais vitais estáveis (PA {sys}/{dia} mmHg, FC {pulse}, SpO2 {spo2}%, T {temp} °C).',
+          'Sinais vitais estáveis (PA {sys}/{dia}\u00A0mmHg, FC {pulse}, SpO2 {spo2}%, T {temp}\u00A0°C).',
       'highBp':
-          'PA {sys}/{dia} mmHg elevada; medir novamente após 10 minutos de repouso.',
+          'PA {sys}/{dia}\u00A0mmHg elevada; medir novamente após 10 minutos de repouso.',
       'fever':
-          'Febrícula de {temp} °C; a equipe médica decidirá se é necessário adiar.',
+          'Febrícula de {temp}\u00A0°C; a equipe médica decidirá se é necessário adiar.',
       'lowSpo2': 'SpO2 {spo2}% baixa; nova medição feita, sem falta de ar.',
       'highGlucose':
-          'Glicemia de {glucose} mg/dL elevada; leitura pós-prandial confirmada.',
+          'Glicemia de {glucose}\u00A0mg/dL elevada; leitura pós-prandial confirmada.',
     },
     // A date reads `quinta-feira (8/10)` and a range `de quarta-feira (25/11)
     // a quinta-feira (26/11)`, so that a notice needs no article or
@@ -715,7 +715,7 @@ const CoFakerClinicData ptClinic = CoFakerClinicData(
   currency: CoCurrencyFormat(
     code: 'BRL',
     symbol: r'R$',
-    pattern: '{symbol} {amount}',
+    pattern: '{symbol}\u00A0{amount}',
     groupSeparator: '.',
     decimalSeparator: ',',
     fractionDigits: 2,

@@ -16,7 +16,7 @@ import '../co_l10n_bundle.dart';
 /// - a fictional name ends with `(fictício)` and a sample label with
 ///   `(exemplo)`, and nothing else marks a text as fictional;
 /// - a time is written `18h` (24 hours), a unit follows its number after a
-///   no-break space (`U+00A0`: `2 mL`), and the percent sign follows the
+///   no-break space (`U+00A0`: `2\u00A0mL`), and the percent sign follows the
 ///   number with no space (`10%`);
 /// - a template that a value fills never puts `de`, `do`, `da`, `em`, `no`,
 ///   `na`, `a`, `ao`, or `por` right before the value, because the contraction
@@ -150,13 +150,13 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Leite',
     ],
     'catalog.groceryUnit': [
-      '500 g',
-      '200 g',
-      '1 kg',
-      '2 kg',
-      '500 g',
-      '600 g',
-      '1 L',
+      '500\u00A0g',
+      '200\u00A0g',
+      '1\u00A0kg',
+      '2\u00A0kg',
+      '500\u00A0g',
+      '600\u00A0g',
+      '1\u00A0L',
     ],
     'catalog.commerceName': [
       'Fones de ouvido sem fio',
@@ -165,7 +165,13 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Xícara de cerâmica',
       'Petisco de cereais',
     ],
-    'catalog.commerceUnit': ['1 par', '1 caixa', '3 peças', '1 peça', '200 g'],
+    'catalog.commerceUnit': [
+      '1 par',
+      '1 caixa',
+      '3 peças',
+      '1 peça',
+      '200\u00A0g',
+    ],
 
     // booking
     'booking.cancelReason': [
@@ -176,7 +182,7 @@ const CoL10nBundle ptBundle = CoL10nBundle(
 
     // dental
     'dental.dentalProcedure': [
-      'Raspagem',
+      'Limpeza dental',
       'Exemplo de tratamento de canal',
       'Exemplo de restauração em resina',
       'Exemplo de planejamento de coroa',
@@ -239,8 +245,8 @@ const CoL10nBundle ptBundle = CoL10nBundle(
     ],
     // Same order as the wholesale items in CoB2bTradeDomain: CUP, FRZ, PKG, HYG.
     'b2b_trade.itemSpec': [
-      'Copos de papel de 360 ml, 1.000 unidades',
-      'Batatas congeladas, 10 kg',
+      'Copos de papel de 360\u00A0ml, 1.000 unidades',
+      'Batatas congeladas, 10\u00A0kg',
       'Sacolas de papel, 100 unidades',
       'Toalhas de higiene sem perfume, 20 unidades',
     ],
@@ -300,7 +306,7 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Instrução de ioga',
     ],
     'fitness.passName': [
-      'Pacote de 10 aulas de solo (exemplo)',
+      'Pacote de 10 aulas de Pilates solo (exemplo)',
       'Pacote de 20 aulas de reformer (exemplo)',
       'Plano mensal (exemplo)',
     ],
@@ -418,8 +424,8 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Hidratante tópico (fictício)',
     ],
     'daycare.dosageLabel': [
-      'Exemplo preenchido pelo responsável: 2 mL',
-      'Exemplo preenchido pelo responsável: 3 mL',
+      'Exemplo preenchido pelo responsável: 2\u00A0mL',
+      'Exemplo preenchido pelo responsável: 3\u00A0mL',
       'Exemplo preenchido pelo responsável: pequena quantidade',
     ],
     'daycare.noticeTitle': [
@@ -594,7 +600,7 @@ const CoL10nBundle ptBundle = CoL10nBundle(
     ],
     'neighborhood.postTitle': [
       'Luva azul encontrada no parquinho (exemplo)',
-      'Vamos conhecer um caminho de passeio pelo bairro (exemplo)',
+      'Vamos descobrir um percurso de caminhada pelo bairro (exemplo)',
       'Vamos compartilhar um vasinho de planta (exemplo)',
     ],
     'neighborhood.postBody': [
@@ -1093,9 +1099,9 @@ const CoL10nBundle ptBundle = CoL10nBundle(
     // TOWEL-COT-03, RICE-BRN-02.
     'logistics.itemName': [
       'Caixa de papelão pequena',
-      'Fita de embalagem 48 mm',
+      'Fita de embalagem 48\u00A0mm',
       'Toalhas de algodão, 3 unidades',
-      'Arroz integral 2 kg',
+      'Arroz integral 2\u00A0kg',
     ],
     'logistics.ownerLabel': [
       'Embarcador A (fictício)',
@@ -1202,9 +1208,9 @@ const CoL10nBundle ptBundle = CoL10nBundle(
   // The texts of Portuguese that read like the English ones on purpose: the
   // names of currencies, countries, and cities that are spelled alike, acronyms
   // and file formats, loanwords that Brazilian teams and studios keep in
-  // English (`Backlog`, `Sprint`, `Reformer`), the name of a dog breed and of
-  // a color that Portuguese borrows, and the Wi-Fi of an amenity. The language
-  // coverage gate reads this list.
+  // English (`Backlog`, `Sprint`, `Reformer`), a dog breed (`Poodle`), a word
+  // that both languages spell alike (`Tricolor`, `Monitor`), and the Wi-Fi of an
+  // amenity. The language coverage gate reads this list.
   allowSameAsEnglish: <String, List<String>>{
     'fx.currencyName.EUR': ['Euro'],
     'fx.tierName': ['Bronze'],
