@@ -255,7 +255,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
     'reception': 'Enregistrement',
     'waiting': 'En attente',
     'consultation': 'Consultation',
-    'counseling': 'Entretien conseil',
+    'counseling': 'Conseil',
     'procedure': 'Acte',
     'care': 'Soin',
     'payment': 'Paiement',
@@ -318,7 +318,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       ],
       'neutral': <String>[
         'De bons résultats, mais un peu cher.',
-        'Le stationnement était peu pratique.',
+        'Le parking était peu pratique.',
       ],
       'negative': <String>[
         'J’ai attendu plus de 40 minutes après l’heure de mon rendez-vous.',
@@ -411,7 +411,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
     },
     // Invented names of insurers.
     insurers: <String>[
-      'Mutuelle Nordvent',
+      'Mutuelle Brisenord',
       'Vie Havrevue',
       'Assurances Cimeline',
       'Santé Ruisseclair',
@@ -437,7 +437,7 @@ const CoFakerClinicData frClinic = CoFakerClinicData(
       'sibling': 'Frère ou sœur',
       'grandparent': 'Grand-parent',
       'grandchild': 'Petit-enfant',
-      'legalGuardian': 'Représentant légal',
+      'legalGuardian': 'Responsable légal',
       'other': 'Autre',
       'picoLaser': 'Laser picoseconde',
       'hifu': 'HIFU',

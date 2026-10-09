@@ -517,16 +517,19 @@ const CoL10nBundle frBundle = CoL10nBundle(
     ],
     // Each explanation contains the text of its correct choice, and the four
     // choices of a question are different from one another: tests check both.
+    // The choice is written in the case of the list (`Clé primaire`), as the
+    // term that opens a definition, because a test of the package compares
+    // the explanation and the choice with the same case.
     'exam_prep.explanation': [
-      'Une clé primaire identifie chaque ligne d’une table.',
-      'La clause WHERE exprime une condition pour sélectionner des lignes.',
+      'Clé primaire\u00A0: elle identifie chaque ligne d’une table.',
+      'WHERE\u00A0: cette clause exprime une condition pour sélectionner des lignes.',
       'TCP gère l’ordre et la retransmission d’un flux d’octets.',
-      'Un routeur choisit le prochain chemin à partir de l’adresse de destination.',
+      'Routeur\u00A0: il choisit le prochain chemin à partir de l’adresse de destination.',
       'HTTP exprime les requêtes et les réponses web.',
-      'Une variable permet à un programme de désigner une valeur par son nom.',
-      'Une pile retire en premier la dernière valeur insérée.',
-      'Une fonction de hachage calcule une empreinte de longueur fixe à partir d’une entrée.',
-      'Le moindre privilège n’accorde que les droits nécessaires à une tâche.',
+      'Variable\u00A0: elle permet à un programme de désigner une valeur par son nom.',
+      'Pile\u00A0: elle retire en premier la dernière valeur insérée.',
+      'Fonction de hachage\u00A0: elle calcule une empreinte de longueur fixe à partir d’une entrée.',
+      'Moindre privilège\u00A0: ce principe n’accorde que les droits nécessaires à une tâche.',
     ],
     'exam_prep.examPaperTitle': [
       'Sujet d’entraînement 1 (fictif)',

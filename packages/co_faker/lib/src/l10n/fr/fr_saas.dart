@@ -267,7 +267,7 @@ const CoFakerSaasData frSaas = CoFakerSaasData(
       'owner': 'Propriétaire',
       'admin': 'Administrateur',
       'billing': 'Facturation',
-      'support': 'Assistance',
+      'support': 'Support client',
       'viewer': 'Lecteur',
     },
     autopayFailures: <String, String>{

@@ -1,17 +1,58 @@
 import 'language_safety.dart';
 
-/// French: not declared yet. The Story that localizes the language fills this
-/// in with the conventions of French (see `LanguageSafety`):
+/// French: a fictional name carries `(fictif)`, a sample label carries
+/// `(exemple)`, and consultation text starts with `Information générale`.
 ///
-/// - `fictionalMarker`: how French marks a fictional drug, product, or event
-///   name, as the drug and medicine roles write it;
-/// - `generalInfoPrefix`: how the general-information consultation texts begin;
-/// - `deniedPromises`: the phrases that promise a result or give advice, which
-///   a consultation example must not make;
-/// - `deniedBrands`: the spellings of real brands, works, companies, and
-///   medicines that differ from the Latin ones that English lists, which
-///   every language is scanned for already; it may stay empty.
-///
-/// While the bundle of the language is empty this stays empty. Once the
-/// bundle is filled, an empty declaration fails the safety scan.
-const LanguageSafety frSafety = LanguageSafety();
+/// The marker is the same masculine word after every name, whatever the
+/// gender of the noun before it, so that the scan can test for one string:
+/// it reads as the tag `(nom fictif)` and not as an adjective that agrees.
+/// The promises are the phrases in the register of the language (`vous`) that
+/// guarantee a result or tell a person what to do, which an example of a
+/// consultation must not write. The brands are the French spellings of
+/// medicines, works, and companies that the Latin ones of the English list do
+/// not cover (`Voltarène`, `Astérix`, `L’Oréal`).
+const LanguageSafety frSafety = LanguageSafety(
+  fictionalMarker: '(fictif)',
+  generalInfoPrefix: 'Information générale',
+  deniedPromises: <String>[
+    '100%',
+    '100 %',
+    'garanti',
+    'vous devez',
+    'vous devriez',
+    'vous gagnerez',
+    'vous allez gagner',
+    'je vous recommande',
+    'nous vous recommandons',
+    'sans aucun doute',
+    'à coup sûr',
+    'résultat assuré',
+    'obligatoirement',
+  ],
+  deniedBrands: <String>[
+    // Medicines.
+    'Doliprane',
+    'Efferalgan',
+    'Dafalgan',
+    'Spasfon',
+    'Smecta',
+    'Voltarène',
+    'Biafine',
+    'Nurofen',
+    // Works, companies, and services.
+    'Astérix',
+    'Asterix',
+    'Tintin',
+    'Le Petit Prince',
+    'Carrefour',
+    'Decathlon',
+    'Danone',
+    'Michelin',
+    'Renault',
+    'Peugeot',
+    'Citroën',
+    'Doctolib',
+    'L’Oréal',
+    "L'Oréal",
+  ],
+);
