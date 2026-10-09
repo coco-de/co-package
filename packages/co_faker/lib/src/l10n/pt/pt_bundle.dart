@@ -510,16 +510,19 @@ const CoL10nBundle ptBundle = CoL10nBundle(
     ],
     // Each explanation contains the text of its correct choice, and the four
     // choices of a question are different from one another: tests check both.
+    // A term that opens a definition is written in the case of the list
+    // (`Chave primária: ...`), because a test of the package compares the
+    // explanation and the choice with the same case.
     'exam_prep.explanation': [
-      'A chave primária identifica cada linha de uma tabela.',
+      'Chave primária: identifica cada linha de uma tabela.',
       'A cláusula WHERE expressa uma condição para selecionar linhas.',
       'O TCP cuida da ordenação e da retransmissão de um fluxo de bytes.',
-      'O roteador escolhe a próxima rota usando o endereço de destino.',
+      'Roteador: escolhe a próxima rota usando o endereço de destino.',
       'O HTTP expressa requisições e respostas da web.',
-      'A variável permite que um programa se refira a um valor pelo nome.',
-      'A pilha remove primeiro o último valor inserido.',
-      'A função de hash calcula um resumo de tamanho fixo a partir de uma entrada.',
-      'O privilégio mínimo concede apenas as permissões necessárias para uma tarefa.',
+      'Variável: permite que um programa se refira a um valor pelo nome.',
+      'Pilha: remove primeiro o último valor inserido.',
+      'Função de hash: calcula um resumo de tamanho fixo a partir de uma entrada.',
+      'Privilégio mínimo: concede apenas as permissões necessárias para uma tarefa.',
     ],
     'exam_prep.examPaperTitle': [
       'Simulado 1 (fictício)',
@@ -1229,5 +1232,19 @@ const CoL10nBundle ptBundle = CoL10nBundle(
     // Agile vocabulary that Brazilian teams keep in English.
     'workplace.labelName': ['Backlog'],
     'workplace.sprintName': ['Sprint {n}'],
+    // The clinic data. Words that Portuguese shares with English: a kind of
+    // procedure (`Laser`, `Lifting`), an answer (`Acne`), a unit, the card
+    // networks, and the acronyms of devices and tags.
+    'clinic.visitPurposes.details': ['Laser', 'Lifting', 'Acne'],
+    'clinic.procedures.unit': ['ml'],
+    // The units of a strength, which follow a no-break space.
+    'clinic.drugForms.unit': ['*'],
+    'clinic.questions.options': ['Acne'],
+    'clinic.cardIssuers': ['Visa', 'Mastercard', 'Amex'],
+    'clinic.texts.labels': ['HIFU', 'RF', 'IPL'],
+    'clinic.ops.patientTags.label': ['VIP', 'Lifting'],
+    'clinic.ops.labels': ['Tablet'],
+    // The SaaS data: the message channels that are named by their acronym.
+    'saas.labels': ['SMS', 'LMS'],
   },
 );
