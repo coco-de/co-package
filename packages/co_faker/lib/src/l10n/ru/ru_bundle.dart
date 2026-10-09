@@ -1217,6 +1217,12 @@ const CoL10nBundle ruBundle = CoL10nBundle(
     'exam_prep.wrongChoice1': ['JPEG', 'PNG'],
     'exam_prep.wrongChoice2': ['CSS', 'MP3'],
     'exam_prep.wrongChoice3': ['SVG', 'TTF'],
-    // @@ALLOW@@
+    // The clinic and SaaS data: the names of the card networks that Russian
+    // writes in Latin letters (the fourth is the domestic `Мир`), and the
+    // acronyms of a device, a tag, and a channel that no translation changes.
+    'clinic.cardIssuers': ['Visa', 'Mastercard', 'Amex'],
+    'clinic.texts.labels': ['HIFU', 'RF', 'IPL'],
+    'clinic.ops.patientTags.label': ['VIP'],
+    'saas.labels': ['SMS'],
   },
 );
