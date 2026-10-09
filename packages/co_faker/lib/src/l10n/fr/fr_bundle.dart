@@ -1237,5 +1237,20 @@ const CoL10nBundle frBundle = CoL10nBundle(
     // Agile vocabulary that French teams keep in English.
     'workplace.labelName': ['Backlog'],
     'workplace.sprintName': ['Sprint {n}'],
+    // The clinic data. Words that French shares with English: a kind of visit
+    // (`Consultation`, `Laser`, `Lifting`), a unit, a relation (`Parent`), a
+    // speaker (`Patient`), acronyms of devices and tags, and the card networks.
+    'clinic.visitPurposes.name': ['Consultation'],
+    'clinic.visitPurposes.details': ['Laser', 'Lifting'],
+    'clinic.procedures.unit': ['ml'],
+    // The stems are invented names that no translation would change.
+    'clinic.drugStems': ['*'],
+    // The units of a strength, which follow a no-break space.
+    'clinic.drugForms.unit': ['*'],
+    'clinic.cardIssuers': ['Visa', 'Mastercard', 'Amex'],
+    'clinic.labels': ['Consultation'],
+    'clinic.texts.labels': ['Parent', 'HIFU', 'RF', 'IPL', 'Patient'],
+    'clinic.ops.patientTags.label': ['VIP', 'Lifting'],
+    'clinic.ops.labels': ['Points'],
   },
 );
