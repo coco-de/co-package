@@ -1,18 +1,302 @@
+import '../../currency_format.dart';
+import '../../korean_values.dart';
 import '../../saas_data.dart';
+import '../../saas_ops.dart';
 
 /// Simplified Chinese (`zh`) SaaS data for `faker.saas`.
 ///
-/// `null` until its language Story fills it, and `faker.saas` then reads
-/// the English data. To fill it, replace `null` with a
-/// `const CoFakerSaasData` that follows `CoFakerSaasData.english`:
+/// The back office of a clinic software vendor in yuan, written like the
+/// English data: the lists have the length and the order of the English ones,
+/// the codes are the English ones, and no Korean-only value is generated
+/// ([CoKoreanValues.none]).
 ///
-/// - translate every list and text, `ops` included;
-/// - set `currency` and `priceScale` (the VAT rate and the prepaid wallet
-///   amounts) for CNY (¥, two minor units);
-/// - set `businessNumberFormat` for the shape of a tenant's business number;
-/// - set `koreanValues` to `CoKoreanValues.none`, so that no Korean-only value
-///   appears.
+/// - Amounts are written `¥1,234.00` (CNY, two decimals). The four plans are
+///   the editions 入门版, 标准版, 专业版, and 企业版 at ¥499, ¥999, ¥1,799, and
+///   ¥3,499 a month.
+/// - Invoices carry a 6% VAT, the rate on software and information technology
+///   services in China. The prepaid wallet is topped up with ¥500 to ¥20,000,
+///   and a larger top-up earns a larger bonus.
+/// - The business number of a tenant has the 18 characters of a unified
+///   social credit code (`91` and sixteen digits).
+/// - The `#{variable}` markers of a notification template are written in
+///   Chinese (`#{姓名}`), and the templates address a patient with `您`.
 ///
 /// `zh`, `zh_CN`, `zh-Hans`, and `CoFaker.forLanguage('zh-Hans')` read it.
-/// `../co_l10n_clinic.dart` already points here: nothing else changes.
-const CoFakerSaasData? zhSaas = null;
+/// `../co_l10n_clinic.dart` already points here: nothing else changes. The
+/// translation is a draft for a native speaker to review.
+const CoFakerSaasData zhSaas = CoFakerSaasData(
+  plans: <CoPlanSpec>[
+    (
+      code: 'starter',
+      name: '入门版',
+      monthlyPrice: 499,
+      seats: 3,
+      messageCredits: 500,
+    ),
+    (
+      code: 'standard',
+      name: '标准版',
+      monthlyPrice: 999,
+      seats: 10,
+      messageCredits: 2000,
+    ),
+    (
+      code: 'pro',
+      name: '专业版',
+      monthlyPrice: 1799,
+      seats: 25,
+      messageCredits: 5000,
+    ),
+    (
+      code: 'enterprise',
+      name: '企业版',
+      monthlyPrice: 3499,
+      seats: 100,
+      messageCredits: 20000,
+    ),
+  ],
+  messageTemplates: <CoMessageTemplateSpec>[
+    (
+      code: 'RSV_CREATED',
+      name: '预约成功',
+      body: '#{姓名}，您好！您在#{诊所}的预约已成功，就诊时间为#{日期时间}。',
+    ),
+    (code: 'RSV_CANCELLED', name: '预约取消', body: '#{姓名}，您好！您预约在#{日期时间}的就诊已取消。'),
+    (
+      code: 'RSV_REMIND_D1',
+      name: '就诊提醒',
+      body: '#{姓名}，您好！提醒您明天#{时间}在#{诊所}就诊，期待您的到来。',
+    ),
+    (code: 'QUESTIONNAIRE', name: '就诊前问卷', body: '#{姓名}，您好！请在就诊前填写问卷：#{链接}'),
+    (code: 'SURVEY', name: '满意度调查', body: '#{姓名}，您好！您在#{诊所}的就诊体验如何？欢迎填写：#{链接}'),
+    (
+      code: 'AD_EVENT',
+      name: '促销活动（广告）',
+      body: '（广告）#{诊所}本月优惠：激光嫩肤10次特惠。退订：#{链接}',
+    ),
+  ],
+  notices: <CoNoticeSpec>[
+    (category: 'maintenance', title: '定期维护通知', body: '服务将于凌晨2点至4点进行维护，期间无法使用。'),
+    (category: 'release', title: '新功能上线', body: '现在可以直接在预约页面查看候诊号。'),
+    (category: 'notice', title: '资费调整通知', body: '新套餐将从下一个账单日起生效。'),
+    (category: 'notice', title: '通知发送延迟', body: '部分通知发送延迟，将改为短信发送。'),
+  ],
+  failureReasons: <String, String>{
+    'INVALID_NUMBER': '收件号码无效',
+    'NOT_FRIEND': '收件人未使用该即时通讯应用',
+    'TEMPLATE_MISMATCH': '模板不匹配',
+    'NO_CREDIT': '额度不足',
+    'CARRIER_TIMEOUT': '运营商响应超时',
+    'OPTED_OUT': '收件人已退订',
+  },
+  labels: <String, String>{
+    'trialing': '试用中',
+    'active': '使用中',
+    'pastDue': '逾期未付',
+    'paused': '已暂停',
+    'cancelled': '已取消',
+    'draft': '草稿',
+    'open': '待支付',
+    'paid': '已支付',
+    'overdue': '已逾期',
+    'void': '已作废',
+    'refunded': '已退款',
+    'alimtalk': '通知消息',
+    'sms': '短信',
+    'lms': '长短信',
+    'queued': '排队中',
+    'sent': '已发送',
+    'failed': '发送失败',
+    'fallbackSent': '备用通道发送',
+    'approved': '已批准',
+    'reviewing': '审核中',
+    'rejected': '已拒绝',
+    'pending': '待审核',
+    'eligibility': '资格查询',
+    'dur': '用药审查',
+    'ePrescription': '电子处方',
+    'insuranceClaim': '医保申报',
+    'identityQr': '身份二维码',
+    'alimtalkGateway': '消息网关',
+    'payment': '支付网关',
+    'up': '运行正常',
+    'degraded': '性能下降',
+    'down': '故障',
+    'login': '登录',
+    'loginFailed': '登录失败',
+    'view': '查看',
+    'revealRrn': '显示完整证件号',
+    'create': '创建',
+    'update': '更新',
+    'delete': '删除',
+    'print': '打印',
+    'exportData': '导出',
+    'send': '发送',
+    'roleChange': '权限变更',
+    'notice': '公告',
+    'maintenance': '维护',
+    'release': '版本更新',
+    'fee': '收费标准',
+    'drug': '药品价格',
+    'material': '医用耗材',
+    'diagnosis': '诊断',
+    'current': '生效中',
+    'scheduled': '待生效',
+    'archived': '已归档',
+    'purchase': '购买',
+    'usage': '使用',
+    'refund': '退款',
+    'grant': '发放',
+  },
+  ops: CoFakerSaasOps(
+    operatorActions: <String, CoOperatorActionSpec>{
+      'tenant.approve': (label: '批准租户入驻', summary: '已批准{target}的入驻申请。'),
+      'tenant.suspend': (label: '暂停租户', summary: '已暂停{target}的使用（逾期未付）。'),
+      'tenant.resume': (label: '恢复租户', summary: '已解除{target}的暂停状态。'),
+      'plan.change': (label: '变更套餐', summary: '已将{target}从标准版升级为专业版。'),
+      'invoice.issue': (label: '出具账单', summary: '已出具{target}的月度账单。'),
+      'invoice.refund': (label: '账单退款', summary: '已对{target}的一张账单做部分退款。'),
+      'credit.grant': (label: '发放额度', summary: '已向{target}发放1,000条消息额度。'),
+      'template.approve': (label: '批准模板', summary: '已批准{target}的一个模板。'),
+      'template.reject': (label: '拒绝模板', summary: '已拒绝{target}的一个广告模板。'),
+      'senderNumber.approve': (label: '批准发送号码', summary: '已批准{target}的一个发送号码。'),
+      'master.publish': (label: '发布申报主数据', summary: '已发布新的申报主数据（{target}）。'),
+      'notice.publish': (label: '发布公告', summary: '已发布公告“{target}”。'),
+      'operator.invite': (label: '邀请运营人员', summary: '已邀请{target}成为运营人员。'),
+      'operator.roleChange': (
+        label: '变更运营人员角色',
+        summary: '已将{target}的角色变更为管理员。',
+      ),
+      'impersonate.start': (label: '模拟登录租户', summary: '为排查问题，已模拟登录{target}。'),
+    },
+    operatorRoles: <String, String>{
+      'owner': '所有者',
+      'admin': '管理员',
+      'billing': '计费',
+      'support': '客户支持',
+      'viewer': '查看者',
+    },
+    autopayFailures: <String, String>{
+      'LIMIT_EXCEEDED': '超出银行卡限额',
+      'CARD_EXPIRED': '银行卡已过期',
+      'INSUFFICIENT_FUNDS': '余额不足',
+      'CARD_LOST': '银行卡已挂失或被盗',
+      'CARD_SUSPENDED': '银行卡已被冻结',
+      'ISSUER_TIMEOUT': '发卡行响应超时',
+    },
+    masterRows: <String, List<CoMasterRowSpec>>{
+      'fee': <CoMasterRowSpec>[
+        (name: '初诊诊察费', price: 60),
+        (name: '复诊诊察费', price: 40),
+        (name: '冷冻治疗（单个部位）', price: 120),
+      ],
+      'drug': <CoMasterRowSpec>[
+        (name: '鲁米索片 10mg', price: 3),
+        (name: '克拉芬软膏 15g', price: 28),
+      ],
+      'material': <CoMasterRowSpec>[
+        (name: '无菌纱布（10片）', price: 6),
+        (name: '注射器1ml', price: 1),
+      ],
+      'diagnosis': <CoMasterRowSpec>[
+        (name: '寻常痤疮', price: null),
+        (name: '病毒性疣', price: null),
+      ],
+    },
+    masterChecks: <String, String>{
+      'DUPLICATE_CODE': '无重复编码',
+      'NEGATIVE_PRICE': '无零价或负价',
+      'EFFECTIVE_DATE': '生效日期顺序正确',
+      'REQUIRED_COLUMNS': '无缺失的必填列',
+      'ROW_DELTA': '行数与上一版本相比变动在5%以内',
+      'REMOVED_IN_USE': '已删除的编码未被进行中的申报使用',
+    },
+    incidentTitles: <String, String>{
+      'outage': '{service}故障',
+      'degraded': '{service}响应缓慢',
+      'maintenance': '{service}定期维护',
+    },
+    alerts: <CoOpsAlertSpec>[
+      (level: 'warning', code: 'SYNC_DELAY', message: '有3家诊所的离线同步延迟超过15分钟。'),
+      (level: 'critical', code: 'AUTOPAY_FAILED', message: '本月有7张账单自动扣款失败。'),
+      (level: 'warning', code: 'LOW_CREDIT', message: '有5家诊所的消息额度不足100条。'),
+      (level: 'info', code: 'BACKUP_DONE', message: '夜间备份已完成。'),
+    ],
+    releaseItems: <String>[
+      '在预约页面直接查看候诊号。',
+      '在同一页面处理分次支付和储值余额。',
+      '通知发送失败时自动改用短信发送。',
+      '在病历备注中用@提及同事。',
+    ],
+    regulationItems: <String>['已应用修订后的收费标准。', '已应用更新后的药品价格表。', '已更新诊断编码对照。'],
+    releaseTitle: 'EMR {version}版本说明',
+    regulationTitle: '{month}政策更新通知',
+    tenantActivities: <String>[
+      '新增登记患者{n}人',
+      '提交医保申报{n}笔',
+      '发送通知{n}条',
+      '新增预约{n}个',
+      '新增员工账号{n}个',
+    ],
+    templateRejectReason: '含有广告内容，请改用营销消息发送。',
+    labels: <String, String>{
+      'active': '正常',
+      'invited': '已邀请',
+      'suspended': '已停用',
+      'allTenants': '全部诊所',
+      'proAndAbove': '专业版及以上套餐',
+      'dermatology': '皮肤科诊所',
+      'inApp': '应用内',
+      'email': '电子邮件',
+      'alimtalk': '通知消息',
+      'outage': '故障',
+      'degraded': '性能下降',
+      'maintenance': '维护',
+      'info': '提示',
+      'warning': '警告',
+      'critical': '严重',
+      'topUp': '充值',
+      'usage': '使用',
+      'refund': '退款',
+      'card': '银行卡',
+      'transfer': '银行转账',
+      'virtualAccount': '虚拟账户',
+      'release': '版本更新',
+      'regulation': '政策更新',
+      'failed': '支付失败',
+      'added': '新增',
+      'updated': '已更新',
+      'removed': '已移除',
+    },
+    senderLabels: <String>['总机', '预约热线', '前台'],
+    healthMessages: <String, String>{'degraded': '响应缓慢', 'down': '连接超时'},
+    auditTargets: <String, String>{
+      'login': '账号',
+      'loginFailed': '账号',
+      'roleChange': '员工权限',
+      'send': '通知',
+    },
+    auditRecords: <String>['患者', '病历', '账单', '预约'],
+    masterCheckDetail: '{n}行',
+  ),
+  currency: CoCurrencyFormat(code: 'CNY', symbol: '¥', fractionDigits: 2),
+  priceScale: CoSaasPriceScale(
+    vatRate: 0.06,
+    prepaidTopUps: <int>[500, 1000, 2000, 5000, 10000, 20000],
+    prepaidBonusTiers: <(int, int)>[
+      (500, 10),
+      (1000, 15),
+      (2000, 20),
+      (5000, 25),
+      (10000, 35),
+      (20000, 45),
+    ],
+    prepaidLowBalance: 300,
+    prepaidUsageMin: 50,
+    prepaidUsageRounding: 10,
+    prepaidRefundMin: 10,
+    prepaidRefundRounding: 10,
+  ),
+  koreanValues: CoKoreanValues.none,
+  businessNumberFormat: '91################',
+);

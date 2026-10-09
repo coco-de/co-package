@@ -533,5 +533,9 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'exam_prep.wrongChoice3': ['SVG', 'TTF'],
     // The name of a programming language.
     'brokerage.skillTag': ['Dart'],
+    // Units and the abbreviation of the clinic data, written as English does.
+    'clinic.procedures.unit': ['ml'],
+    'clinic.drugForms.unit': ['mg', 'g'],
+    'clinic.ops.patientTags.label': ['VIP'],
   },
 );

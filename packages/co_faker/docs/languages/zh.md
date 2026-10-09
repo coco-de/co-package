@@ -1,6 +1,6 @@
 # Chinese (Simplified) (`zh`)
 
-status: planned
+status: localized
 
 Native name: 简体中文. National locale: `zh_CN`. Simplified Chinese only. Traditional Chinese (`zh_TW`, `zh_HK`, `zh_MO`, `zh-Hant`) is not supported and reads English.
 
