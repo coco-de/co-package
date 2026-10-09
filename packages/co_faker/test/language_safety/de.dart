@@ -1,17 +1,60 @@
 import 'language_safety.dart';
 
-/// German: not declared yet. The Story that localizes the language fills this
-/// in with the conventions of German (see `LanguageSafety`):
-///
-/// - `fictionalMarker`: how German marks a fictional drug, product, or event
-///   name, as the drug and medicine roles write it;
-/// - `generalInfoPrefix`: how the general-information consultation texts begin;
-/// - `deniedPromises`: the phrases that promise a result or give advice, which
-///   a consultation example must not make;
-/// - `deniedBrands`: the spellings of real brands, works, companies, and
-///   medicines that differ from the Latin ones that English lists, which
-///   every language is scanned for already; it may stay empty.
-///
-/// While the bundle of the language is empty this stays empty. Once the
-/// bundle is filled, an empty declaration fails the safety scan.
-const LanguageSafety deSafety = LanguageSafety();
+/// German: a fictional name carries `(fiktiv)`, and consultation text starts
+/// with `Allgemeine` (`Allgemeine Information als Beispiel.`, `Allgemeine
+/// Beispielnotiz:`). German writes in Latin letters, so the Latin spellings of
+/// the brands that English lists are scanned already; the list below adds the
+/// brands, works, and companies of the German market, which the texts of every
+/// language must not name either.
+const LanguageSafety deSafety = LanguageSafety(
+  fictionalMarker: '(fiktiv)',
+  generalInfoPrefix: 'Allgemeine',
+  deniedPromises: <String>[
+    '100%',
+    '100 %',
+    'garantiert',
+    'Erfolg ist sicher',
+    'ohne Risiko',
+    'Sie werden gewinnen',
+    'gewinnen Sie',
+    'Sie sollten',
+    'Sie müssen',
+    'ich empfehle',
+    'wir empfehlen',
+    'unbedingt',
+    'auf jeden Fall',
+  ],
+  deniedBrands: <String>[
+    // Medicines and veterinary products.
+    'Aspirin',
+    'Voltaren',
+    'Nurofen',
+    'Dolormin',
+    'Bepanthen',
+    'Ratiopharm',
+    'Hexal',
+    'Frontline',
+    'Advantix',
+    'Seresto',
+    'Drontal',
+    'Milbemax',
+    // Works, companies, and services.
+    'Der Herr der Ringe',
+    'Die unendliche Geschichte',
+    'Biene Maja',
+    'Sendung mit der Maus',
+    'Siemens',
+    'Volkswagen',
+    'Bosch',
+    'Lufthansa',
+    'Zalando',
+    'Lidl',
+    'Edeka',
+    'Rossmann',
+    'Deutsche Bank',
+    'Commerzbank',
+    'Sparkasse',
+    'Volksbank',
+    'Postbank',
+  ],
+);

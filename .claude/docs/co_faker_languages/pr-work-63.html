@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#63 작업내역 — 독일어 도메인 목데이터 현지화 (도메인 팩 · clinic · saas · de · de_DE)</title>
+<style>
+  :root { color-scheme: light dark;
+    --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  main { max-width: 78ch; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 20px 0 4px; }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  code { background: var(--code); border-radius: 6px; padding: 1px 5px; font-size: 0.92em; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; white-space: nowrap; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--code); }
+</style>
+</head>
+<body><main>
+  <h1>독일어 도메인 목데이터 현지화 — 도메인 팩 · clinic · saas</h1>
+  <p class="muted">#63 (Epic #57 · S6) · <code>story/63-de-localization</code> → <code>epic/57-co-faker-gdp-language-support</code> · <code>packages/co_faker</code> (순수 Dart)</p>
+  <div class="box">
+    <p><strong>한 줄 요약.</strong> <code>CoFaker.forLanguage('de')</code> · <code>CoFaker(locale: 'de')</code> · 국가 로케일 <code>de_DE</code> 가 도메인 팩 27종 · 전용 생성기 · clinic · saas 를 독일어로 낸다. S2 · S3 · S4 가 만든 구조에 <strong>데이터만</strong> 채웠다(번들 762 + clinic · saas 588 = 1,350문구). 코드 · 레지스트리 · 공유 테스트는 손대지 않았다. 같은 seed 면 영어 · 한국어와 같은 레코드의 번역이다. <strong>번역은 AI 초안이며 원어민 검토를 권장한다.</strong></p>
+  </div>
+
+  <h2>무엇을 바꿨나</h2>
+  <table>
+    <tr><th>파일</th><th class="num">+ / −</th><th>내용</th></tr>
+    <tr><td><code>lib/src/l10n/de/de_bundle.dart</code></td><td class="num">1,249 / 11</td><td>242키 · 762문구(영어와 같은 키 · 순서 · 길이) + <code>allowSameAsEnglish</code> 50건</td></tr>
+    <tr><td><code>de_clinic.dart</code> · <code>de_saas.dart</code></td><td class="num">1,105 / 21</td><td><code>const CoFakerClinicData deClinic</code> · <code>CoFakerSaasData deSaas</code> (유로 · 가격 규모 · 부가세 19% · <code>koreanValues: none</code>)</td></tr>
+    <tr><td><code>docs/languages/de.md</code></td><td class="num">132 / 10</td><td>상태 <code>localized</code>, 용어집 44행, 서식 규약, 원어민 검토 체크리스트, 알려진 한계</td></tr>
+    <tr><td><code>test/language_safety/de.dart</code></td><td class="num">58 / 15</td><td>가상 표기 <code>(fiktiv)</code> · 일반 정보 시작 <code>Allgemeine</code> · 약속 · 조언 문구 · 독일 시장 상표 거부 목록</td></tr>
+    <tr><td><code>test/languages/de_localization_test.dart</code> (신규)</td><td class="num">905 / 0</td><td>32개 테스트: 진입점 · 인덱스 + 의미 정렬 · 유로 · 한국 전용 값 없음 · 서식 · Sie · 템플릿</td></tr>
+  </table>
+  <p class="muted">6개 파일, +3,449 −57 (이 문서 제외). 커밋 7건 + 이 문서 커밋: <code>6eeb5db8</code> 번들 · <code>326b816b</code> clinic · <code>0188b538</code> saas · <code>a613c91f</code> 안전 · 용어집 · <code>61656bc2</code> 눈검수 수정 · <code>13b261ad</code> 테스트 · <code>ec29dde3</code> 약 이름 · 철자.</p>
+
+  <h2>왜 이렇게 했나</h2>
+  <h3>1. 높임은 Sie, 성 표기는 "중립" 하나로</h3>
+  <p>환자 · 고객 · 동료 문구 전부 <code>Sie</code>/<code>Ihr</code>. 성 표기 정책은 이슈가 고르라는 세 가지 중 <strong>중립 표기</strong>로 정했다: 중립 명사가 있으면 그것(<code>Pflegefachkraft</code> · <code>Ärztliche Leitung</code> · <code>Empfang</code> · <code>Teamleitung</code>), 합성어는 평범한 어간(<code>Patientenberatung</code>), 사람 명사를 피할 수 없을 때만 젠더 콜론 하나(<code>Patient:in</code>). 별 · 슬래시 · 괄호 · 이중형은 금지 표기로 강제한다. 데모 데이터라 정책을 바꾸려면 코드가 아니라 데이터를 바꾼다.</p>
+  <h3>2. 영어의 한국식 창작 지명은 독일어식 창작 지명으로</h3>
+  <p>영어 번들이 그대로 둔 <code>Solbit</code> · <code>Garam</code> · <code>Mulpare</code> 대신 <code>Tannenlicht</code> · <code>Flussau</code> · <code>Eschenhain</code> · <code>Tannenbach</code> · <code>Feldmark</code> 를 쓰고 모두 <code>(fiktiv)</code> 로 표시한다. 같은 지명이 팩 사이에 같은 이름으로 이어진다.</p>
+  <h3>3. 실존 브랜드 · 인물 · 제품을 넣지 않았다</h3>
+  <p>카드사는 <code>Visa</code> · <code>Mastercard</code> 대신 <code>Beispielbank Nord</code> 류, 보험사는 가상 이름 4곳, 유입 경로는 <code>instagramAd</code> 코드는 그대로 두고 라벨만 <code>Anzeige in sozialen Medien</code>. 가상 약 이름 줄기 8개와 보험사 4곳, 창작자 2명을 웹 검색으로 확인했고, 실존 제품과 한 글자 안팎으로 가까운 3개(<code>Kerafon</code> ~ <code>Kerafen</code> · <code>Diaklon</code> ~ <code>Diclon</code> · <code>Naviron</code> ~ <code>Navirel</code>)를 <code>Zeravil</code> · <code>Orvelan</code> · <code>Brelvano</code> 로 바꿨다.</p>
+  <h3>4. 금액 · 서식 · 날짜</h3>
+  <p><code>1.234,00 €</code> (기호는 줄바꿈 없는 공백 뒤). 가격은 €5 단위, 패키지 €10, 할부 €450부터, 부가세 19%, 선불 지갑 €100~2.500. 병원명은 <code>Praxis Ahorn – Dermatologie</code>. 날짜 라벨은 <code>Mi, 30.9.</code> 이고, 라벨이 마침표로 끝나 휴진 안내가 <code>25.9..</code> 로 나오던 것을 눈검수에서 잡아 사유를 괄호로 옮겼다(<code>Geschlossen {dates} (Grund: …)</code>). 숫자 · 단위 · <code>%</code> 사이는 공백, 따옴표는 „…“.</p>
+  <h3>5. 템플릿은 어떤 값이 와도 문법이 서게</h3>
+  <p><code>{n}</code> 은 끝에 둬 단복수를 피한다(<code>Tisch für {n}</code> · <code>Zeilen: {n}</code> · <code>…: {n}</code>). 회차는 <code>{sessions}er-Paket</code>, 관사 · 격이 붙는 자리에는 값을 두지 않는다. daycare 두 템플릿은 <code>{name1}</code>. 알림 템플릿의 <code>#{name}</code> 등은 식별자라 영어 이름을 그대로 둔다.</p>
+  <h3>6. 영어와 같은 문구는 50건, 전부 약어 · 단위 · 차용어 · 고유명사</h3>
+  <p>번역 대상 1,343문구의 3.7%(상한 10%). <code>Euro</code> · <code>Bronze</code> · 국가 · 도시 · <code>TCP</code> · <code>CSS</code> · <code>Sprint {n}</code> · <code> mg</code> · <code>HIFU</code> · <code>VIP</code> 등. 번역할 수 있는 것(<code>1 Box</code> → <code>1 Stück</code>)은 허용 목록에서 뺐다.</p>
+
+  <h2>리뷰 가이드 — 여기부터 보세요</h2>
+  <ol>
+    <li><code>docs/languages/de.md</code> — 용어집(정책 · 금지 표기) · 서식 규약 · <strong>원어민 검토 체크리스트</strong> · 알려진 한계.</li>
+    <li><code>de_clinic.dart</code> — <code>currency</code> · <code>priceScale</code> · <code>clinicNameFormat</code> · <code>closure</code> · <code>labels</code>(보험 · 방문 단계 라벨).</li>
+    <li><code>de_saas.dart</code> — 요금제 · 부가세 · 선불 지갑 · 알림 템플릿 · <code>masterRows</code>(가격은 묶음 단위).</li>
+    <li><code>de_bundle.dart</code> — 키 순서는 영어와 같다. 끝의 <code>allowSameAsEnglish</code> 와 가상 지명 · 시험 문항(<code>exam_prep</code>).</li>
+    <li><code>test/languages/de_localization_test.dart</code> — "영어 항목의 뜻 ↔ 같은 자리 독일어 항목의 뜻" 앵커(약 130개)와 서식 · 존칭 검사.</li>
+  </ol>
+
+  <h2>로컬 검증 결과</h2>
+  <p class="muted">PR 을 만들기 전에 확정된 사실만 적는다. CI 결과는 PR 체크가 정본이다.</p>
+  <table>
+    <tr><th>검사</th><th>결과</th></tr>
+    <tr><td><code>dart format --output=none --set-exit-if-changed .</code></td><td>173개 파일, 변경 0 (기준선 172)</td></tr>
+    <tr><td><code>dart analyze --fatal-infos</code></td><td>이슈 0건</td></tr>
+    <tr><td><code>dart test</code></td><td>614개 통과 (기준선 583). 공유 안정성 테스트가 레지스트리 기반이라 de 가 localized 가 되면 de 사례가 빠져 582, 새 테스트 32개가 더해진다(S4 시뮬레이션 581~582 와 같다)</td></tr>
+    <tr><td><code>dart run co_faker:coverage --language de --strict</code></td><td>PASS · <code>localized</code> · 번들 242/242 · 1,350문구 · 영어 동일 0(허용 50) · 생성 텍스트 16,182건 · 호출 675건</td></tr>
+    <tr><td><code>dart run tool/prd_coverage.dart --summary</code></td><td>524/524 supported, unsupported 0</td></tr>
+    <tr><td>병합 시험 (커밋하지 않고 되돌림)</td><td>Epic 팁(ja #82 · zh #83 포함)과 병합: 충돌 0, 포맷 · 분석 0건, 670개 통과, de · ja · zh 세 게이트 모두 PASS</td></tr>
+    <tr><td>출력 눈검수 (코드 리뷰 대체)</td><td>스크래치 샘플러로 같은 seed 의 영어 · 한국어 · 독일어를 나란히: 29개 팩 전부(<code>korea</code> 는 한국 값을 요구해 제외) · 엔티티 전 행 · 호출 표의 <code>clinic.</code> 89건 · <code>saas.</code> 35건 · fx · remit · vet · catalog · booking · helpdesk 호출 · 상담 대화 · 휴진 안내. 한글 · 영어 잔류 · 미치환 <code>{x}</code> · 의미 정렬을 확인했고 <strong>휴진 안내의 겹친 마침표</strong> · 팬레터의 위로 어감을 고쳤다. 1,359문구를 영어와 나란히 처음부터 끝까지 다시 읽어 합성어 철자(<code>Beispielgutschein</code> · <code>Lasereinstellung</code>)를 정리했다</td></tr>
+    <tr><td>변이 시험 3종</td><td>번들 두 항목 순서 교체 → 앵커 테스트가 잡음(인덱스 정렬 테스트만으로는 못 잡아 앵커를 추가했다) · <code>koreanValues: legacy</code> → 게이트 + 테스트 4건 · <code>80%</code> 붙여쓰기 → 서식 테스트</td></tr>
+    <tr><td>코드 리뷰</td><td>브리핑대로 <code>code-review</code> 는 돌리지 않았다(데이터만 바뀜). 위 눈검수 · 변이 시험 · 웹 검색 확인이 리뷰 게이트다</td></tr>
+  </table>
+
+  <h2>알려진 한계 · 범위 밖</h2>
+  <ul>
+    <li><code>clinic.approvalNo</code> · <code>saas.recipient</code> · <code>rrnMasked</code> · <code>businessNumber</code> 는 모든 언어에 한국식 숫자 형식을 낸다. <code>korea</code> 팩이 등록되면 <code>clinic.patient</code> 엔티티의 <code>phone</code> · 주소도 한국 역할로 추론된다. <code>CoClinicHours</code> 기본값은 한국 피부과 영업시간, <code>clinic.inquiry()</code> 는 로케일 독립이다.</li>
+    <li><code>logistics.timeWindow</code> 의 <code>09:00~11:00</code> 과 생성기가 넣는 소수점(<code>36.6 °C</code>)은 코드가 쓴다. 휴진 안내는 한국 공휴일 달력이 없어 항상 사유를 쓴다.</li>
+    <li><code>medicalAid1</code> · <code>medicalAid2</code> 는 한국 분류라 독일 대응이 없다(<code>Krankenhilfe</code>로 옮김). <code>homecare.careGrade</code> 의 여섯째 항목도 마찬가지다. 의료 · 법률 · 금융 용어는 체크리스트에 있다.</li>
+  </ul>
+
+  <h2>후속 Story 가 알아야 할 것</h2>
+  <ul>
+    <li>값이 널이 아니면 스텁의 <code>const CoFakerClinicData? x = …</code> 는 린트 <code>unnecessary_nullable_for_final_variable_declarations</code> 에 걸린다 — <code>?</code> 를 뗀다.</li>
+    <li>용어집 금지 표기는 <code>{field}</code> 이름과 부분 문자열까지 걸린다(<code>Clinic</code> ↔ <code>{clinic}</code> · <code>Ausfall</code> ↔ <code>ausfallen</code>). 짧은 단어와 영어 필드명은 금지 표기로 쓰지 않는다.</li>
+    <li>안전 선언의 거부 상표는 모든 언어 문구에 적용되는 합집합이다. 라틴 언어는 짧은 일반 단어를 넣지 않는다.</li>
+  </ul>
+</main></body>
+</html>
