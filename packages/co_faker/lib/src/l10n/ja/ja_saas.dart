@@ -261,7 +261,7 @@ const CoFakerSaasData jaSaas = CoFakerSaasData(
       (
         level: 'warning',
         code: 'SYNC_DELAY',
-        message: '3施設で、オフライン同期が15分以上遅れています。',
+        message: '3軒のクリニックで、オフライン同期が15分以上遅れています。',
       ),
       (
         level: 'critical',
@@ -271,7 +271,7 @@ const CoFakerSaasData jaSaas = CoFakerSaasData(
       (
         level: 'warning',
         code: 'LOW_CREDIT',
-        message: '5施設で、メッセージクレジットが100件を下回っています。',
+        message: '5軒のクリニックで、メッセージクレジットが100件を下回っています。',
       ),
       (level: 'info', code: 'BACKUP_DONE', message: '夜間バックアップが完了しました。'),
     ],

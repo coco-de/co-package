@@ -55,7 +55,7 @@ const CoFakerClinicData jaClinic = CoFakerClinicData(
   visitPurposes: <CoVisitPurposeSpec>[
     (name: 'カウンセリング', details: <String>['初回カウンセリング', '再カウンセリング']),
     (name: '施術', details: <String>['注入', 'レーザー', 'リフトアップ']),
-    (name: '診療', details: <String>['ニキビ', '皮膚疾患', 'いぼ']),
+    (name: '治療', details: <String>['ニキビ', '皮膚疾患', 'いぼ']),
     (name: 'ケア', details: <String>['スキンケア', '鎮静ケア']),
   ],
   procedures: <CoProcedureSpec>[
@@ -459,7 +459,7 @@ const CoFakerClinicData jaClinic = CoFakerClinicData(
     },
     evidence: <CoEvidenceSpec>[
       (kind: 'chartHistory', rule: '3か月以内に同じ施術を受けた履歴'),
-      (kind: 'priceRule', rule: '単回よりも保有中の回数券を優先して案内'),
+      (kind: 'priceRule', rule: '単発の施術より保有中の回数券を優先して案内'),
       (kind: 'contraindication', rule: 'リドカインアレルギーの場合は麻酔クリームを除外'),
     ],
     counselFailures: <String, String>{

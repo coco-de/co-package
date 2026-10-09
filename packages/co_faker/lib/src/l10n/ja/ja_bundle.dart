@@ -335,7 +335,7 @@ const CoL10nBundle jaBundle = CoL10nBundle(
     'neighborhood.nickname': ['ひなたまめ（架空）', 'とねりこぼし（架空）', 'ろじぐも（架空）'],
     'neighborhood.postTitle': [
       '公園で青い手袋を見つけました（例）',
-      '近所の散歩コースを一緒に探しませんか（例）',
+      '近所の散歩道を一緒に探しませんか（例）',
       '小さな植木鉢をおすそ分けします（例）',
     ],
     'neighborhood.postBody': [
