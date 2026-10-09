@@ -417,7 +417,7 @@ const CoFakerSaasData itSaas = CoFakerSaasData(
   currency: CoCurrencyFormat(
     code: 'EUR',
     symbol: '€',
-    pattern: '{amount} {symbol}',
+    pattern: '{amount}\u00A0{symbol}',
     groupSeparator: '.',
     decimalSeparator: ',',
     fractionDigits: 2,

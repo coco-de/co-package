@@ -48,15 +48,17 @@ const CoFakerClinicData itClinic = CoFakerClinicData(
     'Demo',
     'di Porta Nord',
   ],
-  // A role is a generic title, written in the masculine as a form does; the
-  // counselor and the aesthetician have a noun that is the same for both sexes.
+  // A role is a function or a noun that is the same for a woman and a man
+  // (`Estetista`, `Consulente`, `Medico`), and not a title in the masculine:
+  // the generator draws the sex of a staff member at random, and the label
+  // cannot agree with a name that it does not know.
   staffRoles: <String, String>{
-    'director': 'Direttore sanitario',
+    'director': 'Direzione sanitaria',
     'doctor': 'Medico',
     'counselor': 'Consulente per i pazienti',
-    'coordinator': 'Coordinatore dell’assistenza',
-    'nurse': 'Infermiere',
-    'nurseAide': 'Operatore socio-sanitario',
+    'coordinator': 'Coordinamento assistenza',
+    'nurse': 'Personale infermieristico',
+    'nurseAide': 'Personale socio-sanitario',
     'skincare': 'Estetista',
     'desk': 'Accoglienza',
   },
@@ -720,7 +722,7 @@ const CoFakerClinicData itClinic = CoFakerClinicData(
   currency: CoCurrencyFormat(
     code: 'EUR',
     symbol: '€',
-    pattern: '{amount} {symbol}',
+    pattern: '{amount}\u00A0{symbol}',
     groupSeparator: '.',
     decimalSeparator: ',',
     fractionDigits: 2,

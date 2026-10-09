@@ -68,10 +68,11 @@ separate them).
 | No-show | assente | no-show; no show | A status that qualifies an appointment or a class, so it is written in the masculine, which is the form of the singular for both genders. |
 | Check-in | accettazione | check-in | The first stage of a visit, and the check-in on a kiosk or a tablet. |
 | Front desk | accoglienza | reception | The staff role, the sender line, and the source of a check-in. |
-| Medical director | direttore sanitario | direttore medico | The title that Italian law gives to the head of a private clinic. |
-| Physician | medico | dottore | The title of the profession, written in the masculine. `dottore` is a title of any graduate. |
-| Registered nurse | infermiere | nurse | The title of the profession, written in the masculine as a role label of a form is. |
-| Nurse assistant | operatore socio-sanitario | assistente infermieristico | The title of the profession in the masculine. |
+| Medical director | direzione sanitaria | direttore medico | The function that Italian law gives to the head of a private clinic, written as a function and not as a title in the masculine. |
+| Physician | medico | dottore | The title of the profession, which is used for a woman and a man. `dottore` is a title of any graduate. |
+| Registered nurse | personale infermieristico | nurse | A function and not a title in the masculine or the feminine, because the sex of a staff member is drawn at random. |
+| Nurse assistant | personale socio-sanitario | assistente infermieristico | A function, as the label of the nurses is. |
+| Care coordinator | coordinamento assistenza | - | A function, as the label of the nurses is. |
 | Aesthetician | estetista | - | The profession of skin care; the noun is the same for a woman and a man. |
 | Guardian | genitore o tutore | - | One term for the daycare, the consent text, and the relation label. |
 | Legal guardian | tutore legale | rappresentante legale | A person appointed to act for a patient. |

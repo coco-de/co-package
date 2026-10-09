@@ -899,7 +899,7 @@ const CoL10nBundle itBundle = CoL10nBundle(
     'workplace.shiftName': [
       'Turno di giorno',
       'Turno del mattino',
-      'Reperibilità nel fine settimana',
+      'Turno nel fine settimana',
     ],
     'workplace.approvalComment': [
       'Ho esaminato la registrazione di esempio allegata.',
