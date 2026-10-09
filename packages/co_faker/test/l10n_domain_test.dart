@@ -373,14 +373,15 @@ void main() {
       // The names and cities are the built-in Spanish ones...
       expect(custom.person.fullName(), builtin.person.fullName());
       expect(custom.address.city(), builtin.address.city());
-      // ...and the domain text is the bundle's, with English for the rest.
+      // ...and the domain text is the bundle's, with the shipped Spanish
+      // text for the rest.
       expect(
         custom.l10n.list('dental.chairName'),
         bundle.texts['dental.chairName'],
       );
       expect(
         custom.l10n.list('dental.dentalMaterial'),
-        english.texts['dental.dentalMaterial'],
+        CoL10nRegistry.bundleFor('es')!.texts['dental.dentalMaterial'],
       );
       // A bare custom locale replaces the built-in one instead.
       final bare = _faker(

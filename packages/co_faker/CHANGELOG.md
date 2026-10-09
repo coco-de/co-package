@@ -1,5 +1,13 @@
 ## Unreleased
 
+- Localize the domain mock data in Spanish (`es`, co-package#71): the domain
+  text bundle (242 keys), the clinic data, and the SaaS data, in Peninsular
+  Spanish with EUR (`1.234,00 €`) and 21 % IVA. The same seed picks the
+  translation of the same record. `dart run co_faker:coverage --language es
+  --strict` passes. The translation is an AI draft for native review
+  (`docs/languages/es.md`).
+- Behavior change: the clinic, SaaS, and domain pack output of `es`, `es_ES`,
+  and `forLanguage('es')` changes from English to Spanish.
 - Add the national locales of Spain (`es_ES`) and Saudi Arabia (`ar_SA`) for
   the demo languages Spanish and Arabic (co-package#71): gendered names,
   coherent city, region and postal codes, national address order, fictional

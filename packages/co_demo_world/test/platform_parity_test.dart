@@ -54,7 +54,7 @@ void main() {
       '박채은',
     ]);
     // The domain lists of the languages are aligned: the same record comes out
-    // translated (나비 ↔ Butterfly ↔ ちょうちょ, 두부 ↔ Tofu ↔ とうふ).
+    // translated (나비 ↔ Butterfly ↔ ちょうちょ ↔ Mariposa, 두부 ↔ Tofu ↔ とうふ ↔ Flan).
     expect(projected(DemoLocale.en), [
       'Butterfly',
       'Alexander White',
@@ -70,6 +70,14 @@ void main() {
       '記録習慣記録絵地域設計。',
       'とうふ',
       '山崎 大翔',
+    ]);
+    expect(projected(DemoLocale.es), [
+      'Mariposa',
+      'Bruno Ramos',
+      'Sevilla',
+      'Ensayo saber red camino resultado enlace.',
+      'Flan',
+      'Álvaro González',
     ]);
   });
 }
