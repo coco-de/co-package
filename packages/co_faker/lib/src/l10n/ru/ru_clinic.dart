@@ -101,7 +101,7 @@ const CoFakerClinicData ruClinic = CoFakerClinicData(
     (
       code: 'FIL-L',
       category: 'Филлеры/Зона',
-      name: 'Гиалуроновый филлер, губы, 1 мл',
+      name: 'Гиалуроновый филлер, губы, 1\u00A0мл',
       unit: 'мл',
       minPrice: 20000,
       maxPrice: 45000,
@@ -189,10 +189,10 @@ const CoFakerClinicData ruClinic = CoFakerClinicData(
   // A drug reads `Адермекс, таблетки 10 мг`: the form has its comma and its
   // leading space, and the unit a no-break space.
   drugForms: <({String form, String unit, List<int> strengths})>[
-    (form: ', таблетки', unit: ' мг', strengths: <int>[5, 10, 20, 50]),
-    (form: ', капсулы', unit: ' мг', strengths: <int>[25, 50, 100]),
-    (form: ', мазь', unit: ' г', strengths: <int>[15, 30]),
-    (form: ', крем', unit: ' г', strengths: <int>[15, 30]),
+    (form: ', таблетки', unit: '\u00A0мг', strengths: <int>[5, 10, 20, 50]),
+    (form: ', капсулы', unit: '\u00A0мг', strengths: <int>[25, 50, 100]),
+    (form: ', мазь', unit: '\u00A0г', strengths: <int>[15, 30]),
+    (form: ', крем', unit: '\u00A0г', strengths: <int>[15, 30]),
   ],
   drugUsages: <String>[
     'Один раз в день перед сном',
@@ -222,8 +222,8 @@ const CoFakerClinicData ruClinic = CoFakerClinicData(
     'Наблюдение; при ухудшении обратиться повторно',
   ],
   memos: <String>[
-    'Рекомендовано не пользоваться макияжем 24 часа.',
-    'Местный анестетик нанесён за 30 минут до процедуры.',
+    'Рекомендовано не пользоваться макияжем 24\u00A0часа.',
+    'Местный анестетик нанесён за 30\u00A0минут до процедуры.',
     'Фото «до» сделаны.',
     'Условия курса объяснены; пациент примет решение позже.',
     'Следующий приём назначен через две недели.',
@@ -331,7 +331,7 @@ const CoFakerClinicData ruClinic = CoFakerClinicData(
         'Парковка была неудобной.',
       ],
       'negative': <String>[
-        'Пришлось ждать больше 40 минут после назначенного времени.',
+        'Пришлось ждать больше 40\u00A0минут после назначенного времени.',
         'Итоговая сумма отличалась от озвученной стоимости.',
       ],
     },
@@ -447,7 +447,7 @@ const CoFakerClinicData ruClinic = CoFakerClinicData(
           '{mention}, пожалуйста, проверьте.',
     ],
     // `Пикосекундный лазер № 2`: the number sign and a no-break space.
-    deviceNameFormat: '{kind} № {number}',
+    deviceNameFormat: '{kind} №\u00A0{number}',
     staffMentionFormat: '@{name} ({role})',
     nameMentionFormat: '@{name}',
     labels: <String, String>{
@@ -518,29 +518,29 @@ const CoFakerClinicData ruClinic = CoFakerClinicData(
     termsChanges: <String>[
       'Уточнён срок хранения данных.',
       'Сеть электронных рецептов добавлена в число получателей.',
-      'Указан срок хранения записей ИИ-консультирования — 90 дней.',
+      'Указан срок хранения записей ИИ-консультирования — 90\u00A0дней.',
     ],
     consentDispatch: <String, String>{
       'sent': 'Запрос на подпись отправлен.',
       'opened': 'Пациент открыл запрос.',
       'signed': 'Подписано электронно.',
-      'expired': 'Срок действия запроса истёк (24 часа).',
+      'expired': 'Срок действия запроса истёк (24\u00A0часа).',
       'failed': 'Не удалось отправить запрос; проверьте номер.',
     },
     adjustments: <String, List<String>>{
       'discount': <String>[
-        'Повторный пациент, 10 %',
-        'Члены семей сотрудников, 20 %',
+        'Повторный пациент, 10\u00A0%',
+        'Члены семей сотрудников, 20\u00A0%',
       ],
       'coupon': <String>[
-        'Купон на первый визит, 20 %',
+        'Купон на первый визит, 20\u00A0%',
         'Купон ко дню рождения',
       ],
       'point': <String>['Использованы баллы'],
       'rounding': <String>['Округление'],
     },
     pointReasons: <String, String>{
-      'earn': 'Начислено 3 % от суммы платежа',
+      'earn': 'Начислено 3\u00A0% от суммы платежа',
       'use': 'Списано при оплате',
       'bonus': 'Бонус за отзыв',
       'expire': 'Срок действия истёк',
@@ -640,14 +640,14 @@ const CoFakerClinicData ruClinic = CoFakerClinicData(
     },
     vitalsNotes: <String, String>{
       'normal':
-          'Витальные показатели стабильны (АД {sys}/{dia} мм рт. ст., ЧСС {pulse}, SpO2 {spo2} %, T {temp} °C).',
+          'Витальные показатели стабильны (АД {sys}/{dia}\u00A0мм\u00A0рт.\u00A0ст., ЧСС {pulse}, SpO2 {spo2}\u00A0%, T {temp}\u00A0°C).',
       'highBp':
-          'АД {sys}/{dia} мм рт. ст. повышено; повторить измерение после 10 минут покоя.',
+          'АД {sys}/{dia}\u00A0мм\u00A0рт.\u00A0ст. повышено; повторить измерение после 10\u00A0минут покоя.',
       'fever':
-          'Субфебрильная температура {temp} °C; врач решит, нужно ли отложить процедуру.',
-      'lowSpo2': 'SpO2 {spo2} % снижена; перепроверено, одышки нет.',
+          'Субфебрильная температура {temp}\u00A0°C; врач решит, нужно ли отложить процедуру.',
+      'lowSpo2': 'SpO2 {spo2}\u00A0% снижена; перепроверено, одышки нет.',
       'highGlucose':
-          'Глюкоза {glucose} мг/дл повышена; подтверждено, что измерение после еды.',
+          'Глюкоза {glucose}\u00A0мг/дл повышена; подтверждено, что измерение после еды.',
     },
     // A date reads `25.11 (ср)` and a range `с 25.11 (ср) по 26.11 (чт)`, so a
     // notice needs no preposition before it. The reason follows `Причина:`, and
@@ -710,8 +710,8 @@ const CoFakerClinicData ruClinic = CoFakerClinicData(
   currency: CoCurrencyFormat(
     code: 'RUB',
     symbol: '₽',
-    pattern: '{amount} {symbol}',
-    groupSeparator: ' ',
+    pattern: '{amount}\u00A0{symbol}',
+    groupSeparator: '\u00A0',
     decimalSeparator: ',',
     fractionDigits: 2,
   ),

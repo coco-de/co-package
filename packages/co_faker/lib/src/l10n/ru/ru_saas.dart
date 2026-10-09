@@ -227,7 +227,7 @@ const CoFakerSaasData ruSaas = CoFakerSaasData(
       ),
       'credit.grant': (
         label: 'Начислить кредиты',
-        summary: '{target}: начислено 1 000 кредитов на сообщения.',
+        summary: '{target}: начислено 1\u00A0000 кредитов на сообщения.',
       ),
       'template.approve': (
         label: 'Одобрить шаблон',
@@ -285,12 +285,12 @@ const CoFakerSaasData ruSaas = CoFakerSaasData(
         (name: 'Криотерапия (одна зона)', price: 1800),
       ],
       'drug': <CoMasterRowSpec>[
-        (name: 'Люмисол, таблетки 10 мг', price: 45),
-        (name: 'Кераплен, мазь 15 г', price: 380),
+        (name: 'Люмисол, таблетки 10\u00A0мг', price: 45),
+        (name: 'Кераплен, мазь 15\u00A0г', price: 380),
       ],
       'material': <CoMasterRowSpec>[
-        (name: 'Стерильные салфетки (10 шт.)', price: 90),
-        (name: 'Шприц 1 мл', price: 12),
+        (name: 'Стерильные салфетки (10\u00A0шт.)', price: 90),
+        (name: 'Шприц 1\u00A0мл', price: 12),
       ],
       'diagnosis': <CoMasterRowSpec>[
         (name: 'Акне вульгарное', price: null),
@@ -303,7 +303,7 @@ const CoFakerSaasData ruSaas = CoFakerSaasData(
       'EFFECTIVE_DATE': 'Даты вступления в силу идут по порядку',
       'REQUIRED_COLUMNS': 'Нет пропущенных обязательных столбцов',
       'ROW_DELTA':
-          'Число строк отличается от предыдущей версии не более чем на 5 %',
+          'Число строк отличается от предыдущей версии не более чем на 5\u00A0%',
       'REMOVED_IN_USE': 'Удалённые коды не используются в открытых заявках',
     },
     // The service comes first, then a colon, so that no case ending has to fit
@@ -320,7 +320,7 @@ const CoFakerSaasData ruSaas = CoFakerSaasData(
         level: 'warning',
         code: 'SYNC_DELAY',
         message:
-            'Офлайн-синхронизация задерживается более чем на 15 минут у 3 клиник.',
+            'Офлайн-синхронизация задерживается более чем на 15\u00A0минут у 3 клиник.',
       ),
       (
         level: 'critical',
@@ -411,8 +411,8 @@ const CoFakerSaasData ruSaas = CoFakerSaasData(
   currency: CoCurrencyFormat(
     code: 'RUB',
     symbol: '₽',
-    pattern: '{amount} {symbol}',
-    groupSeparator: ' ',
+    pattern: '{amount}\u00A0{symbol}',
+    groupSeparator: '\u00A0',
     decimalSeparator: ',',
     fractionDigits: 2,
   ),
