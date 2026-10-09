@@ -1236,5 +1236,14 @@ const CoL10nBundle deBundle = CoL10nBundle(
     'exam_prep.wrongChoice1': ['JPEG', 'PNG'],
     'exam_prep.wrongChoice2': ['CSS', 'MP3'],
     'exam_prep.wrongChoice3': ['SVG', 'TTF'],
+    // The clinic data: units, acronyms, and the words that German shares with
+    // English (a laser, a tablet, an app, a medicine).
+    'clinic.procedures.unit': ['ml'],
+    'clinic.drugForms.unit': [' mg', ' g'],
+    'clinic.visitPurposes.details': ['Laser'],
+    'clinic.questions.options': ['Penicillin'],
+    'clinic.texts.labels': ['HIFU', 'IPL', 'Neutral'],
+    'clinic.ops.patientTags.label': ['VIP'],
+    'clinic.ops.labels': ['Tablet', 'Online', 'App'],
   },
 );
