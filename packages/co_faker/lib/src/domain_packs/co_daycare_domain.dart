@@ -57,6 +57,19 @@ class CoDaycareDomain extends CoFakerDomain {
     'dosageLabel': textRole('daycare.dosageLabel'),
     'pickupRelation': enumRole(['parent', 'grandparent', 'relative', 'other']),
     'noticeTitle': textRole('daycare.noticeTitle'),
+    // W1 recipe fields (co-package#78).
+    'medicationStorage': textRole('daycare.medicationStorage'),
+    'symptom': textRole('daycare.symptom'),
+    'guardianSignature': signatureRole(),
+    'guardianContactMasked': authoredRole(
+      (f, c) =>
+          '***-****-${recordDigits(f, 'daycare.guardianContact', c.index, 4)}',
+      description: 'Masked contact: only four fictional digits, never a number',
+    ),
+    'contactLast4': authoredRole(
+      (f, c) => recordDigits(f, 'daycare.guardianContact', c.index, 4),
+      description: 'Last four digits of a fictional contact',
+    ),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
@@ -92,6 +105,7 @@ class CoDaycareDomain extends CoFakerDomain {
       'className': 'className',
       'ageLabel': 'ageLabel',
       'teacherName': 'teacherName',
+      'guardianContactMasked': 'guardianContactMasked',
     },
     'daily_note': {
       'mealLevel': 'mealLevel',
@@ -99,7 +113,18 @@ class CoDaycareDomain extends CoFakerDomain {
       'napMinutes': 'napMinutes',
       'bodyTemperature': 'bodyTemperature',
     },
-    'medication_request': {'drugLabel': 'drugLabel', 'dosage': 'dosageLabel'},
+    'medication_request': {
+      'drugLabel': 'drugLabel',
+      'dosage': 'dosageLabel',
+      'storage': 'medicationStorage',
+      'symptom': 'symptom',
+      'guardianSignature': 'guardianSignature',
+    },
+    'pickup_permit': {
+      'relation': 'pickupRelation',
+      'contactLast4': 'contactLast4',
+      'guardianSignature': 'guardianSignature',
+    },
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

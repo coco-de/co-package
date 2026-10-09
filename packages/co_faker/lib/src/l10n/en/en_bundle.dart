@@ -275,6 +275,13 @@ const CoL10nBundle enBundle = CoL10nBundle(
       'Reformer instruction',
       'Yoga instruction',
     ],
+    'fitness.instructorCareer': [
+      '5 years teaching mat classes',
+      '3 years on the reformer',
+      '8 years of group yoga',
+      '2 years of small-group training',
+      '6 years of rehab-focused sessions',
+    ],
     'fitness.passName': [
       '10 mat classes (example)',
       '20 reformer classes (example)',
@@ -392,6 +399,18 @@ const CoL10nBundle enBundle = CoL10nBundle(
       'Fever syrup (fictional)',
       'Cough syrup (fictional)',
       'Moisturizing topical (fictional)',
+    ],
+    'daycare.medicationStorage': [
+      'Room temperature',
+      'Refrigerate',
+      'Keep away from sunlight',
+    ],
+    'daycare.symptom': [
+      'Runny nose',
+      'Mild cough',
+      'Slight fever',
+      'Skin rash',
+      'Upset stomach',
     ],
     'daycare.dosageLabel': [
       'Guardian-authored example: 2mL',
@@ -606,6 +625,13 @@ const CoL10nBundle enBundle = CoL10nBundle(
       'Cooking',
       'Hiking',
     ],
+    'meetup.availableDays': [
+      'Weekday evenings',
+      'Weekends',
+      'Tuesday and Thursday',
+      'Saturday mornings',
+      'Any day',
+    ],
     'meetup.clubIntro': [
       'Fictional group welcoming first-time neighbors.',
       'Example group sharing small activities together.',
@@ -706,6 +732,13 @@ const CoL10nBundle enBundle = CoL10nBundle(
       'Adventure',
       'Science stories',
       'Essay',
+    ],
+    'content.seriesSection': [
+      'Weekly',
+      'New',
+      'Completed',
+      'Daily',
+      'Short series',
     ],
     'content.episodeTitle': [
       'The first paper boat (fictional)',
@@ -845,6 +878,20 @@ const CoL10nBundle enBundle = CoL10nBundle(
       'Design team',
       'Customer support',
       'HR team',
+    ],
+    'workplace.approverRole': [
+      'Team lead',
+      'Department head',
+      'HR manager',
+      'Finance reviewer',
+      'Executive',
+    ],
+    'workplace.closeSection': [
+      'Payroll',
+      'Expenses',
+      'Attendance',
+      'Benefits',
+      'Accruals',
     ],
     'workplace.position': ['Associate', 'Manager', 'Team lead'],
     'workplace.workPlace': [
@@ -1011,6 +1058,13 @@ const CoL10nBundle enBundle = CoL10nBundle(
       'Please ring at the shared entrance.',
       'Please check with the security desk.',
     ],
+    'logistics.exceptionDetail': [
+      'No one answered at the door; a notice was left.',
+      'The building entrance code did not work.',
+      'The box was dented on arrival; photos were taken.',
+      'The recipient asked to deliver tomorrow.',
+      'The address has no unit number.',
+    ],
     'logistics.entranceHint': [
       'Shared entrance #••••; call security desk',
       'Use the entrance call button; no password shown',
@@ -1092,6 +1146,20 @@ const CoL10nBundle enBundle = CoL10nBundle(
     'hospitality.houseRule': [
       'Please keep shared spaces quiet at night.',
       'Please review the example departure checklist.',
+    ],
+    'hospitality.bbqRule': [
+      'The grill is available from 17:00 to 21:00.',
+      'Please book the grill at check-in.',
+      'Charcoal and a grill net are provided per site.',
+      'Put out the fire completely before leaving.',
+      'No grilling on the deck of the rooms.',
+    ],
+    'hospitality.wifiHint': [
+      'The network name and password are on the card by the door.',
+      'Ask the front desk for the guest network password.',
+      'The guest network reaches the rooms and the lounge.',
+      'Reconnect after 22:00 if the signal drops.',
+      'The password changes every Monday.',
     ],
     'hospitality.reviewSnippet': [
       'The example room instructions were easy to read.',

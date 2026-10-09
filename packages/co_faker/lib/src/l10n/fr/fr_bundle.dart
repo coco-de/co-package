@@ -302,6 +302,13 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Cours de Reformer',
       'Cours de yoga',
     ],
+    'fitness.instructorCareer': [
+      '5 ans de cours sur tapis',
+      '3 ans de cours sur Reformer',
+      '8 ans de yoga en groupe',
+      '2 ans d’entraînement en petit groupe',
+      '6 ans de séances axées sur la rééducation',
+    ],
     'fitness.passName': [
       'Carte de 10 cours de tapis (exemple)',
       'Carte de 20 cours de Reformer (exemple)',
@@ -426,6 +433,18 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Sirop contre la fièvre (fictif)',
       'Sirop contre la toux (fictif)',
       'Topique hydratant (fictif)',
+    ],
+    'daycare.medicationStorage': [
+      'À température ambiante',
+      'Au réfrigérateur',
+      'À l’abri de la lumière du soleil',
+    ],
+    'daycare.symptom': [
+      'Nez qui coule',
+      'Toux légère',
+      'Légère fièvre',
+      'Éruption cutanée',
+      'Maux de ventre',
     ],
     'daycare.dosageLabel': [
       'Exemple saisi par le responsable légal\u00A0: 2\u00A0mL',
@@ -647,6 +666,13 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Cuisine',
       'Randonnée',
     ],
+    'meetup.availableDays': [
+      'En semaine, le soir',
+      'Le week-end',
+      'Mardi et jeudi',
+      'Samedi matin',
+      'N’importe quel jour',
+    ],
     'meetup.clubIntro': [
       'Groupe fictif où les voisins sont accueillis dès leur première participation.',
       'Groupe d’exemple pour partager ensemble de petites activités.',
@@ -750,6 +776,13 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Aventure',
       'Récits scientifiques',
       'Essai',
+    ],
+    'content.seriesSection': [
+      'Hebdomadaires',
+      'Nouveautés',
+      'Terminées',
+      'Quotidiennes',
+      'Séries courtes',
     ],
     'content.episodeTitle': [
       'Le premier bateau en papier (fictif)',
@@ -889,6 +922,20 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Équipe design',
       'Support client',
       'Ressources humaines',
+    ],
+    'workplace.approverRole': [
+      'Chef d’équipe',
+      'Responsable de service',
+      'Responsable RH',
+      'Contrôle financier',
+      'Direction générale',
+    ],
+    'workplace.closeSection': [
+      'Paie',
+      'Notes de frais',
+      'Temps de présence',
+      'Avantages sociaux',
+      'Charges à payer',
     ],
     'workplace.position': ['Collaborateur', 'Responsable', 'Chef d’équipe'],
     'workplace.workPlace': [
@@ -1065,6 +1112,13 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Merci de sonner à l’entrée commune.',
       'Merci de passer par la loge du gardien.',
     ],
+    'logistics.exceptionDetail': [
+      'Personne n’a répondu à la porte\u00A0; un avis de passage a été laissé.',
+      'Le code d’entrée de l’immeuble ne fonctionnait pas.',
+      'Le carton était cabossé à l’arrivée\u00A0; des photos ont été prises.',
+      'Le destinataire a demandé une livraison pour demain.',
+      'L’adresse ne comporte pas de numéro d’appartement.',
+    ],
     'logistics.entranceHint': [
       'Entrée commune n° ••••\u00A0; appeler la loge',
       'Utiliser l’interphone de l’entrée\u00A0; aucun code affiché',
@@ -1146,6 +1200,20 @@ const CoL10nBundle frBundle = CoL10nBundle(
     'hospitality.houseRule': [
       'Merci de respecter le calme dans les espaces communs la nuit.',
       'Merci de consulter la liste de contrôle de départ d’exemple.',
+    ],
+    'hospitality.bbqRule': [
+      'Le barbecue est disponible de 17\u00A0h à 21\u00A0h.',
+      'Merci de réserver le barbecue à l’arrivée.',
+      'Charbon et grille fournis pour chaque emplacement.',
+      'Merci d’éteindre complètement le feu avant de partir.',
+      'Barbecue interdit sur la terrasse des chambres.',
+    ],
+    'hospitality.wifiHint': [
+      'Le nom du réseau et le mot de passe figurent sur la carte près de la porte.',
+      'Demandez le mot de passe du réseau invités à l’accueil.',
+      'Le réseau invités couvre les chambres et le salon.',
+      'Reconnectez-vous après 22\u00A0h si le signal se coupe.',
+      'Le mot de passe change chaque lundi.',
     ],
     'hospitality.reviewSnippet': [
       'Les consignes d’exemple de la chambre étaient faciles à lire.',

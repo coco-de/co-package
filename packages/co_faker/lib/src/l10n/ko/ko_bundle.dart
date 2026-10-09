@@ -160,6 +160,13 @@ const CoL10nBundle koBundle = CoL10nBundle(
     'fitness.equipment': ['매트', '리포머', '체어', '요가 블록'],
     'fitness.studioRoom': ['매트룸', '리포머룸', '체어룸', '요가룸'],
     'fitness.instructorSpecialty': ['매트 수업', '리포머 수업', '요가 수업'],
+    'fitness.instructorCareer': [
+      '매트 수업 경력 5년',
+      '리포머 수업 경력 3년',
+      '그룹 요가 경력 8년',
+      '소그룹 트레이닝 경력 2년',
+      '재활 중심 수업 경력 6년',
+    ],
     'fitness.passName': ['매트 10회권(예시)', '리포머 20회권(예시)', '1개월 이용권(예시)'],
     'fitness.cancelReason': ['일정 변경', '수업 시간 변경'],
     'fitness.noShowNote': ['출석 확인이 없는 예시 기록입니다.', '시작 시각 이후 미출석으로 표시한 예시입니다.'],
@@ -202,6 +209,8 @@ const CoL10nBundle koBundle = CoL10nBundle(
     'daycare.activityTitle': ['겨울 눈놀이', '종이 집 만들기', '색깔 블록 놀이'],
     'daycare.albumCaption': ['친구와 블록을 쌓는 가상 일러스트', '겨울 놀이를 그린 가상 일러스트'],
     'daycare.drugLabel': ['해열용 시럽(가상)', '기침용 시럽(가상)', '보습용 외용제(가상)'],
+    'daycare.medicationStorage': ['실온 보관', '냉장 보관', '직사광선을 피해 보관'],
+    'daycare.symptom': ['콧물', '가벼운 기침', '미열', '피부 발진', '배탈'],
     'daycare.dosageLabel': [
       '보호자 작성 예시: 2mL',
       '보호자 작성 예시: 3mL',
@@ -347,6 +356,7 @@ const CoL10nBundle koBundle = CoL10nBundle(
     // meetup
     'meetup.clubName': ['솔빛 아침 러닝(가상)', '가람 책 모임(가상)', '물푸레 보드게임(가상)'],
     'meetup.interestTag': ['러닝', '독서', '보드게임', '사진', '요리', '등산'],
+    'meetup.availableDays': ['평일 저녁', '주말', '화요일과 목요일', '토요일 오전', '요일 무관'],
     'meetup.clubIntro': [
       '처음 참여하는 이웃도 함께하는 가상 모임입니다.',
       '작은 활동을 함께 나누는 예시 모임입니다.',
@@ -390,6 +400,7 @@ const CoL10nBundle koBundle = CoL10nBundle(
       '지도에 없는 연못을 함께 그려 보는 가상의 이야기입니다.',
     ],
     'content.genreName': ['판타지', '일상', '모험', '과학 이야기', '에세이'],
+    'content.seriesSection': ['주간 연재', '신작', '완결', '매일 연재', '단편'],
     'content.episodeTitle': ['첫 번째 종이 배(가상)', '연못의 작은 점(가상)', '시계 없는 오후(가상)'],
     'content.cutAltText': ['가상 인물이 종이 배를 접는 일러스트', '연못 옆 가상 인물 둘의 일러스트'],
     'content.commentLine': ['종이 배 장면이 기억에 남아요.', '다음 예시 회차도 읽어 보고 싶어요.'],
@@ -460,6 +471,8 @@ const CoL10nBundle koBundle = CoL10nBundle(
 
     // workplace
     'workplace.department': ['프런트엔드팀', '백엔드팀', '디자인팀', '고객지원팀', '인사팀'],
+    'workplace.approverRole': ['팀장', '부서장', '인사 담당자', '재무 검토자', '임원'],
+    'workplace.closeSection': ['급여', '경비', '근태', '복리후생', '미지급 비용'],
     'workplace.position': ['사원', '매니저', '팀장'],
     'workplace.workPlace': ['솔빛 사무실(가상)', '가람 업무센터(가상)', '재택'],
     'workplace.shiftName': ['주간 근무', '오전 근무', '주말 당직'],
@@ -541,6 +554,13 @@ const CoL10nBundle koBundle = CoL10nBundle(
       '공동현관에서 호출해 주세요.',
       '경비실 확인 후 전달해 주세요.',
     ],
+    'logistics.exceptionDetail': [
+      '문 앞에서 응답이 없어 안내문을 남겼습니다.',
+      '공동현관 출입 번호가 맞지 않았습니다.',
+      '도착 시 상자가 찌그러져 있어 사진을 남겼습니다.',
+      '받는 분이 내일 배송을 요청했습니다.',
+      '주소에 동·호수가 없습니다.',
+    ],
     'logistics.entranceHint': ['공동현관 #●●●● · 경비실 호출', '입구 호출 버튼 이용 · 비밀번호 없음'],
     'logistics.scanEvent': ['허브 입고', '간선 상차', '배송 출발', '배송 완료', '미배송'],
     'logistics.carrierLabel': ['예시 배송사 A(가상)', '예시 배송사 B(가상)', '예시 운송사 C(가상)'],
@@ -567,6 +587,20 @@ const CoL10nBundle koBundle = CoL10nBundle(
     'hospitality.houseRule': [
       '밤에는 공용 공간에서 조용히 이용해 주세요.',
       '퇴실할 때 예시 체크리스트를 확인해 주세요.',
+    ],
+    'hospitality.bbqRule': [
+      '바비큐 그릴은 17:00부터 21:00까지 이용할 수 있습니다.',
+      '체크인 때 그릴 이용을 예약해 주세요.',
+      '사이트마다 숯과 석쇠를 드립니다.',
+      '자리를 뜨기 전에 불을 완전히 꺼 주세요.',
+      '객실 데크에서는 바비큐를 할 수 없습니다.',
+    ],
+    'hospitality.wifiHint': [
+      '와이파이 이름과 비밀번호는 출입문 옆 안내 카드에 있습니다.',
+      '손님용 와이파이 비밀번호는 프런트에 문의해 주세요.',
+      '손님용 와이파이는 객실과 라운지에서 됩니다.',
+      '22:00 이후 신호가 끊기면 다시 연결해 주세요.',
+      '비밀번호는 매주 월요일에 바뀝니다.',
     ],
     'hospitality.reviewSnippet': [
       '예시 객실 안내를 편하게 확인했어요.',

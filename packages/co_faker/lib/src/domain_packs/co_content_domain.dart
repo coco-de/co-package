@@ -38,6 +38,17 @@ class CoContentDomain extends CoFakerDomain {
       roots: _audioGenreRoots,
     ),
     'topicTaxonomy': taxonomyRole('content.topicTaxonomy', roots: _topicRoots),
+    // W1 recipe fields (co-package#78).
+    'seriesSection': textRole('content.seriesSection'),
+    'releaseWeekday': enumRole([
+      'mon',
+      'tue',
+      'wed',
+      'thu',
+      'fri',
+      'sat',
+      'sun',
+    ]),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
@@ -72,6 +83,8 @@ class CoContentDomain extends CoFakerDomain {
       'authorName': 'penName',
       'synopsis': 'synopsisLine',
       'genre': 'genreName',
+      'section': 'seriesSection',
+      'releaseWeekday': 'releaseWeekday',
     },
     'episode': {'title': 'episodeTitle'},
     'audiobook': {'title': 'audioTitle', 'narratorName': 'narratorName'},

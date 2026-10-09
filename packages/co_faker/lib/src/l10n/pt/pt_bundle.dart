@@ -305,6 +305,13 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Instrução de reformer',
       'Instrução de ioga',
     ],
+    'fitness.instructorCareer': [
+      '5 anos dando aulas de Pilates solo',
+      '3 anos no reformer',
+      '8 anos de ioga em grupo',
+      '2 anos de treino em pequenos grupos',
+      '6 anos de sessões de reabilitação',
+    ],
     'fitness.passName': [
       'Pacote de 10 aulas de Pilates solo (exemplo)',
       'Pacote de 20 aulas de reformer (exemplo)',
@@ -422,6 +429,18 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Antitérmico líquido (fictício)',
       'Xarope para tosse (fictício)',
       'Hidratante tópico (fictício)',
+    ],
+    'daycare.medicationStorage': [
+      'Temperatura ambiente',
+      'Manter na geladeira',
+      'Proteger da luz do sol',
+    ],
+    'daycare.symptom': [
+      'Coriza',
+      'Tosse leve',
+      'Febre baixa',
+      'Manchas vermelhas na pele',
+      'Dor de barriga',
     ],
     'daycare.dosageLabel': [
       'Exemplo preenchido pelo responsável: 2\u00A0mL',
@@ -644,6 +663,13 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Culinária',
       'Trilhas',
     ],
+    'meetup.availableDays': [
+      'Noites de dias úteis',
+      'Fins de semana',
+      'Terça e quinta',
+      'Sábado de manhã',
+      'Qualquer dia',
+    ],
     'meetup.clubIntro': [
       'Grupo fictício que acolhe vizinhos que participam pela primeira vez.',
       'Grupo de exemplo para compartilhar pequenas atividades juntos.',
@@ -747,6 +773,13 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Aventura',
       'Histórias de ciência',
       'Ensaio',
+    ],
+    'content.seriesSection': [
+      'Semanais',
+      'Novidades',
+      'Concluídas',
+      'Diárias',
+      'Séries curtas',
     ],
     'content.episodeTitle': [
       'O primeiro barquinho de papel (fictício)',
@@ -886,6 +919,20 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Equipe de design',
       'Suporte ao cliente',
       'Recursos humanos',
+    ],
+    'workplace.approverRole': [
+      'Líder de equipe',
+      'Chefia do departamento',
+      'Gerência de RH',
+      'Revisão financeira',
+      'Diretoria',
+    ],
+    'workplace.closeSection': [
+      'Folha de pagamento',
+      'Despesas',
+      'Frequência',
+      'Benefícios',
+      'Provisões',
     ],
     'workplace.position': ['Analista', 'Gerente', 'Líder de equipe'],
     'workplace.workPlace': [
@@ -1062,6 +1109,13 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Por favor, chame pelo interfone na entrada do prédio.',
       'Por favor, confirme na portaria.',
     ],
+    'logistics.exceptionDetail': [
+      'Ninguém atendeu à porta; foi deixado um aviso.',
+      'A senha de entrada do prédio não funcionou.',
+      'A caixa chegou amassada; foram tiradas fotos.',
+      'O destinatário pediu a entrega para amanhã.',
+      'O endereço não tem número do apartamento.',
+    ],
     'logistics.entranceHint': [
       'Entrada do prédio nº ••••; chamar a portaria',
       'Usar o interfone da entrada; nenhuma senha exibida',
@@ -1143,6 +1197,20 @@ const CoL10nBundle ptBundle = CoL10nBundle(
     'hospitality.houseRule': [
       'Por favor, mantenha silêncio nos espaços comuns à noite.',
       'Por favor, confira a lista de verificação de saída de exemplo.',
+    ],
+    'hospitality.bbqRule': [
+      'A churrasqueira está disponível das 17h às 21h.',
+      'Por favor, reserve a churrasqueira na recepção ao chegar.',
+      'Carvão e grelha são fornecidos para cada área de camping.',
+      'Por favor, apague o fogo completamente antes de sair.',
+      'É proibido fazer churrasco na varanda dos quartos.',
+    ],
+    'hospitality.wifiHint': [
+      'O nome da rede e a senha estão no cartão ao lado da porta.',
+      'Por favor, peça a senha da rede de hóspedes na recepção.',
+      'A rede de hóspedes alcança os quartos e a sala de estar.',
+      'Se o sinal cair depois das 22h, conecte-se novamente.',
+      'A senha muda toda segunda-feira.',
     ],
     'hospitality.reviewSnippet': [
       'As instruções de exemplo do quarto eram fáceis de ler.',

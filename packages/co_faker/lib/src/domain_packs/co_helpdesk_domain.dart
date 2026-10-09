@@ -47,6 +47,10 @@ class CoHelpdeskDomain extends CoFakerDomain {
     ),
     'topicParent': parentRole(_topicRoots),
     'topicName': taxonomyRole('helpdesk.topicName', roots: _topicRoots),
+    // W1 recipe fields (co-package#78): one ticket number for the same
+    // record index, whichever entity carries it.
+    'ticketNo': codeRole('TK', dated: true),
+    'visibility': enumRole(['public', 'internal']),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
@@ -68,8 +72,11 @@ class CoHelpdeskDomain extends CoFakerDomain {
       'description': 'ticketDescription',
       'category': 'ticketCategory',
       'assigneeName': 'agentName',
+      'ticketNo': 'ticketNo',
     },
     'help_topic': {'name': 'topicName', 'parentId': 'topicParent'},
+    'ticket_message': {'ticketNo': 'ticketNo', 'visibility': 'visibility'},
+    'csat_response': {'ticketNo': 'ticketNo'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

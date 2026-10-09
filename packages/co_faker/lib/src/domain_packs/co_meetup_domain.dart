@@ -20,6 +20,8 @@ class CoMeetupDomain extends CoFakerDomain {
     'joinAnswer': textRole('meetup.joinAnswer'),
     'ruleText': textRole('meetup.ruleText'),
     'cadenceLabel': textRole('meetup.cadenceLabel'),
+    // W1 recipe fields (co-package#78).
+    'availableDays': textRole('meetup.availableDays'),
   };
   @override
   Map<String, Map<String, String>> get entities => const {
@@ -54,7 +56,8 @@ class CoMeetupDomain extends CoFakerDomain {
       'cadenceLabel': 'cadenceLabel',
     },
     'gathering': {'title': 'gatheringTitle', 'venueLabel': 'venueName'},
-    'club_member': {'memberName': 'nickname'},
+    'club_member': {'memberName': 'nickname', 'availableDays': 'availableDays'},
+    'meetup_member': {'interests': 'interestTag'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

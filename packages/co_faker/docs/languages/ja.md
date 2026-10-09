@@ -12,7 +12,7 @@ The status line above is read by the tests of the package:
   pull request that writes them: the tests compare it with the registries.
 
 Japanese is `localized`: the domain text bundle (`lib/src/l10n/ja/ja_bundle.dart`,
-242 keys), the clinic data (`ja_clinic.dart`), and the SaaS data (`ja_saas.dart`)
+252 keys), the clinic data (`ja_clinic.dart`), and the SaaS data (`ja_saas.dart`)
 are written, and `dart run co_faker:coverage --language ja --strict` passes.
 `CoFaker.forLanguage('ja')`, `CoFaker(locale: 'ja')`, and the national locale
 `ja_JP` read the same data.

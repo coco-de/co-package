@@ -299,6 +299,13 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Corsi di Reformer',
       'Corsi di yoga',
     ],
+    'fitness.instructorCareer': [
+      '5 anni di corsi di tappetino',
+      '3 anni di Reformer',
+      '8 anni di yoga di gruppo',
+      '2 anni di allenamento in piccoli gruppi',
+      '6 anni di sedute di riabilitazione',
+    ],
     'fitness.passName': [
       'Carnet da 10 lezioni di tappetino (esempio)',
       'Carnet da 20 lezioni di Reformer (esempio)',
@@ -420,6 +427,18 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Sciroppo contro la febbre (di fantasia)',
       'Sciroppo contro la tosse (di fantasia)',
       'Preparato idratante per uso cutaneo (di fantasia)',
+    ],
+    'daycare.medicationStorage': [
+      'Temperatura ambiente',
+      'Conservare in frigorifero',
+      'Tenere lontano dalla luce del sole',
+    ],
+    'daycare.symptom': [
+      'Naso che cola',
+      'Tosse lieve',
+      'Febbricola',
+      'Eruzione cutanea',
+      'Mal di pancia',
     ],
     'daycare.dosageLabel': [
       'Esempio redatto dal genitore o tutore: 2 mL',
@@ -642,6 +661,13 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Cucina',
       'Escursionismo',
     ],
+    'meetup.availableDays': [
+      'Sere dei giorni feriali',
+      'Fine settimana',
+      'Il martedì e il giovedì',
+      'Il sabato mattina',
+      'Qualsiasi giorno',
+    ],
     'meetup.clubIntro': [
       'Gruppo di fantasia che accoglie anche i vicini alla prima partecipazione.',
       'Gruppo di esempio per condividere piccole attività insieme.',
@@ -745,6 +771,13 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Avventura',
       'Storie di scienza',
       'Saggio',
+    ],
+    'content.seriesSection': [
+      'Settimanali',
+      'Novità',
+      'Concluse',
+      'Quotidiane',
+      'Serie brevi',
     ],
     'content.episodeTitle': [
       'La prima barchetta di carta (di fantasia)',
@@ -885,6 +918,20 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Team design',
       'Assistenza clienti',
       'Risorse umane',
+    ],
+    'workplace.approverRole': [
+      'Responsabile del team',
+      'Direzione di reparto',
+      'Responsabile risorse umane',
+      'Controllo finanziario',
+      'Direzione generale',
+    ],
+    'workplace.closeSection': [
+      'Buste paga',
+      'Note spese',
+      'Presenze',
+      'Benefici',
+      'Ratei',
     ],
     'workplace.position': [
       'Collaboratore',
@@ -1070,6 +1117,13 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Si prega di suonare al citofono dell’ingresso comune.',
       'Si prega di rivolgersi alla portineria.',
     ],
+    'logistics.exceptionDetail': [
+      'Nessuno ha risposto alla porta; è stato lasciato un avviso.',
+      'Il codice d’ingresso dello stabile non funzionava.',
+      'La scatola è arrivata ammaccata; sono state scattate delle foto.',
+      'Il destinatario ha chiesto la consegna per domani.',
+      'Nell’indirizzo manca il numero dell’interno.',
+    ],
     'logistics.entranceHint': [
       'Ingresso comune, codice ••••; chiamare la portineria',
       'Usare il pulsante di chiamata all’ingresso; nessun codice mostrato',
@@ -1151,6 +1205,20 @@ const CoL10nBundle itBundle = CoL10nBundle(
     'hospitality.houseRule': [
       'Si prega di mantenere il silenzio negli spazi comuni durante la notte.',
       'Si prega di consultare l’elenco di controllo di esempio per la partenza.',
+    ],
+    'hospitality.bbqRule': [
+      'Il barbecue è disponibile nella fascia 17:00–21:00.',
+      'Si prega di prenotare il barbecue all’accettazione.',
+      'Carbonella e griglia sono fornite per ogni piazzola.',
+      'Si prega di spegnere completamente il fuoco prima di andare via.',
+      'È vietato grigliare sulla terrazza delle camere.',
+    ],
+    'hospitality.wifiHint': [
+      'Nome della rete e password sono sul cartoncino accanto alla porta.',
+      'Si prega di chiedere all’accoglienza la password della rete ospiti.',
+      'La rete ospiti copre le camere e la sala comune.',
+      'Se il segnale cade dopo le 22:00, si prega di riconnettersi.',
+      'La password cambia ogni lunedì.',
     ],
     'hospitality.reviewSnippet': [
       'Le istruzioni di esempio per la camera erano facili da leggere.',

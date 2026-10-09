@@ -11,7 +11,7 @@ The status line above is read by the tests of the package:
 - `localized`: all three are written. Change the line to `localized` in the same
   pull request that writes them: the tests compare it with the registries.
 
-The three data sets are written: `lib/src/l10n/de/de_bundle.dart` (242 keys, 762
+The three data sets are written: `lib/src/l10n/de/de_bundle.dart` (252 keys, 810
 texts), `de_clinic.dart`, and `de_saas.dart`. The translation is a draft written
 with an AI assistant, and a native speaker has not reviewed it. See
 [README.md](README.md) for the work, the gate, and the format of this file.

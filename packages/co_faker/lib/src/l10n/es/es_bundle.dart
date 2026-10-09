@@ -306,6 +306,13 @@ const CoL10nBundle esBundle = CoL10nBundle(
       'Instrucción de reformer',
       'Instrucción de yoga',
     ],
+    'fitness.instructorCareer': [
+      '5 años impartiendo clases de pilates suelo',
+      '3 años en el reformer',
+      '8 años de yoga en grupo',
+      '2 años de entrenamiento en grupos reducidos',
+      '6 años de sesiones de rehabilitación',
+    ],
     'fitness.passName': [
       'Bono de 10 clases de pilates suelo (ejemplo)',
       'Bono de 20 clases de reformer (ejemplo)',
@@ -420,6 +427,18 @@ const CoL10nBundle esBundle = CoL10nBundle(
       'Jarabe para la fiebre (ficticio)',
       'Jarabe para la tos (ficticio)',
       'Crema hidratante de uso tópico (ficticio)',
+    ],
+    'daycare.medicationStorage': [
+      'Temperatura ambiente',
+      'Conservar en la nevera',
+      'Proteger de la luz solar',
+    ],
+    'daycare.symptom': [
+      'Mocos',
+      'Tos leve',
+      'Febrícula',
+      'Erupción cutánea',
+      'Malestar de estómago',
     ],
     'daycare.dosageLabel': [
       'Ejemplo indicado por la familia: 2 ml',
@@ -646,6 +665,13 @@ const CoL10nBundle esBundle = CoL10nBundle(
       'Cocina',
       'Senderismo',
     ],
+    'meetup.availableDays': [
+      'Tardes entre semana',
+      'Fines de semana',
+      'Martes y jueves',
+      'Sábados por la mañana',
+      'Cualquier día',
+    ],
     'meetup.clubIntro': [
       'Grupo ficticio que da la bienvenida a los vecinos que vienen por primera vez.',
       'Grupo de ejemplo para compartir pequeñas actividades.',
@@ -744,6 +770,13 @@ const CoL10nBundle esBundle = CoL10nBundle(
       'Aventura',
       'Historias de ciencia',
       'Ensayo',
+    ],
+    'content.seriesSection': [
+      'Semanales',
+      'Novedades',
+      'Finalizadas',
+      'Diarias',
+      'Series cortas',
     ],
     'content.episodeTitle': [
       'El primer barquito de papel (ficticio)',
@@ -883,6 +916,20 @@ const CoL10nBundle esBundle = CoL10nBundle(
       'Equipo de diseño',
       'Atención al cliente',
       'Recursos humanos',
+    ],
+    'workplace.approverRole': [
+      'Jefe/a de equipo',
+      'Dirección de departamento',
+      'Responsable de RR. HH.',
+      'Revisión financiera',
+      'Dirección general',
+    ],
+    'workplace.closeSection': [
+      'Nóminas',
+      'Gastos',
+      'Asistencia',
+      'Beneficios sociales',
+      'Periodificaciones',
     ],
     'workplace.position': ['Técnico/a', 'Responsable', 'Jefe/a de equipo'],
     'workplace.workPlace': [
@@ -1064,6 +1111,13 @@ const CoL10nBundle esBundle = CoL10nBundle(
       'Por favor, llame al portero automático del portal.',
       'Por favor, consulte en conserjería.',
     ],
+    'logistics.exceptionDetail': [
+      'Nadie abrió la puerta; se dejó un aviso.',
+      'El código del portal no funcionó.',
+      'La caja llegó abollada; se tomaron fotos.',
+      'El destinatario pidió la entrega para mañana.',
+      'La dirección no indica piso ni puerta.',
+    ],
     'logistics.entranceHint': [
       'Portal n.º ••••; llamar a conserjería',
       'Usar el portero automático; no se muestra ningún código',
@@ -1145,6 +1199,20 @@ const CoL10nBundle esBundle = CoL10nBundle(
     'hospitality.houseRule': [
       'Por favor, guarde silencio en las zonas comunes por la noche.',
       'Por favor, revise la lista de salida de ejemplo.',
+    ],
+    'hospitality.bbqRule': [
+      'La barbacoa está disponible de 17:00 a 21:00.',
+      'Por favor, reserve la barbacoa en recepción al llegar.',
+      'Se facilitan carbón y parrilla en cada parcela.',
+      'Por favor, apague el fuego por completo antes de marcharse.',
+      'No se permite hacer barbacoa en la terraza de las habitaciones.',
+    ],
+    'hospitality.wifiHint': [
+      'El nombre de la red y la contraseña están en la tarjeta junto a la puerta.',
+      'Por favor, pida en recepción la contraseña de la red de huéspedes.',
+      'La red de huéspedes llega a las habitaciones y al salón.',
+      'Si la señal se corta después de las 22:00, vuelva a conectarse.',
+      'La contraseña cambia cada lunes.',
     ],
     'hospitality.reviewSnippet': [
       'Las instrucciones de ejemplo de la habitación se leían con facilidad.',
