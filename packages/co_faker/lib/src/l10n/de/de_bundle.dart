@@ -1245,5 +1245,9 @@ const CoL10nBundle deBundle = CoL10nBundle(
     'clinic.texts.labels': ['HIFU', 'IPL', 'Neutral'],
     'clinic.ops.patientTags.label': ['VIP'],
     'clinic.ops.labels': ['Tablet', 'Online', 'App'],
+    // The SaaS data: the plan that German also calls Standard, and the two
+    // message channels that are named by their acronym.
+    'saas.plans.name': ['Standard'],
+    'saas.labels': ['SMS', 'LMS'],
   },
 );
