@@ -406,7 +406,7 @@ const CoL10nBundle ruBundle = CoL10nBundle(
     ],
     'daycare.mealMenu': [
       'Бурый рис и овощное рагу',
-      'Суп с тофу и рис',
+      'Суп с тофу, рис',
       'Рис, обжаренный с овощами',
     ],
     'daycare.snackMenu': [
@@ -1021,7 +1021,7 @@ const CoL10nBundle ruBundle = CoL10nBundle(
     // of the units of a messaging or quote service and never of a loan.
     'brokerage.creditLabel': [
       'Кредит на отправку предложения (пример)',
-      'Кредит за непросмотренное предложение, возврат (пример)',
+      'Возврат кредита за непросмотренное предложение (пример)',
       'Кредит пополнения (пример)',
     ],
     'brokerage.advisorTitle': [
@@ -1149,7 +1149,7 @@ const CoL10nBundle ruBundle = CoL10nBundle(
     ],
     'hospitality.houseRule': [
       'Пожалуйста, соблюдайте тишину в общих зонах ночью.',
-      'Пожалуйста, просмотрите примерный список для выезда.',
+      'Пожалуйста, ознакомьтесь с примерным списком действий при выезде.',
     ],
     'hospitality.reviewSnippet': [
       'Примерную инструкцию по номеру было легко читать.',
