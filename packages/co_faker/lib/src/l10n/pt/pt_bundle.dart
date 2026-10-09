@@ -279,5 +279,263 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Exemplo de total das participações concluídas.',
       'Exemplo de total sem as participações canceladas.',
     ],
+
+    // fitness
+    // A class name from the category label and the level label of the same
+    // record: the level follows `nível`, which is masculine, so that the label
+    // needs no agreement with the category (`Cadeira, nível intermediário`).
+    'fitness.className': ['{category}, nível {level}'],
+    'fitness.classCategoryLabel': ['Solo', 'Reformer', 'Cadeira', 'Ioga'],
+    'fitness.classLevelLabel': ['iniciante', 'intermediário', 'avançado'],
+    'fitness.equipment': ['Colchonete', 'Reformer', 'Cadeira', 'Bloco de ioga'],
+    'fitness.studioRoom': [
+      'Sala de Pilates solo',
+      'Sala de reformer',
+      'Sala de cadeira',
+      'Sala de ioga',
+    ],
+    'fitness.instructorSpecialty': [
+      'Instrução de Pilates solo',
+      'Instrução de reformer',
+      'Instrução de ioga',
+    ],
+    'fitness.passName': [
+      'Pacote de 10 aulas de solo (exemplo)',
+      'Pacote de 20 aulas de reformer (exemplo)',
+      'Plano mensal (exemplo)',
+    ],
+    'fitness.cancelReason': ['Mudança de agenda', 'Mudança de horário da aula'],
+    'fitness.noShowNote': [
+      'Exemplo de registro sem confirmação de presença.',
+      'Exemplo de falta registrada após o início da aula.',
+    ],
+
+    // space_rental
+    'space_rental.spaceName': [
+      'Salão de festas Quatro da Tarde (fictício)',
+      'Sala de estudos Luzvale (fictício)',
+      'Sala de ensaio Ribazul (fictício)',
+    ],
+    'space_rental.districtName': [
+      'Cidade fictícia, bairro Luzvale',
+      'Cidade fictícia, bairro Ribazul',
+      'Cidade fictícia, bairro Jacarandal',
+    ],
+    'space_rental.amenity': ['Wi-Fi', 'Quadro branco', 'Bebedouro'],
+    'space_rental.equipmentOption': [
+      'Projetor (exemplo)',
+      'Equipamento de som (exemplo)',
+      'Uma vaga de estacionamento (exemplo)',
+    ],
+    'space_rental.houseRule': [
+      'Por favor, devolva os equipamentos após o uso.',
+      'Por favor, respeite o horário reservado.',
+    ],
+    'space_rental.bookingPurpose': [
+      'Encontro de estudos',
+      'Encontro de amigos',
+      'Ensaio de banda',
+    ],
+    'space_rental.guestMessage': [
+      'Poderia me explicar como usar os equipamentos?',
+      'Poderia enviar as instruções de acesso?',
+    ],
+    'space_rental.hostReply': [
+      'Por favor, consulte o guia de equipamentos na página da reserva.',
+      'As instruções de acesso aparecem nos detalhes da reserva.',
+    ],
+
+    // dining
+    'dining.restaurantName': [
+      'Casa de macarrão de perilla (fictício)',
+      'Massas da Viela (fictício)',
+      'Casa de chá Luzvale (fictício)',
+    ],
+    'dining.menuName': [
+      'Macarrão de perilla',
+      'Massa ao molho de tomate',
+      'Tigela de arroz com legumes',
+      'Chá quente',
+    ],
+    // A table is `Mesa para 1`, `Mesa para 4`: no plural to agree.
+    'dining.partyLabel': ['Mesa para {n}'],
+    'dining.noShowNote': [
+      'Exemplo de registro de fila sem confirmação de chegada.',
+      'Exemplo de ausência após o horário informado.',
+    ],
+    'dining.loyaltyBenefit': [
+      'Bebida na quinta visita (exemplo)',
+      'Cupom de sobremesa para cliente frequente (exemplo)',
+    ],
+    'dining.districtName': [
+      'Cidade fictícia, bairro Luzvale',
+      'Cidade fictícia, bairro Ribazul',
+    ],
+
+    // daycare
+    'daycare.childName': ['Lia', 'Davi', 'Alice', 'Theo', 'Maya'],
+    'daycare.className': ['Turma do Sol', 'Turma da Lua', 'Turma da Estrela'],
+    'daycare.ageLabel': ['1 ano', '2 anos', '3 anos', '4 anos', '5 anos'],
+    // {name1} is the first given name drawn: only `por` stands before it, which
+    // does not contract with a name.
+    'daycare.guardianLabel': ['Responsável por {name1}'],
+    // The name is drawn without a sex, so the title takes both forms.
+    'daycare.teacherName': ['Professor(a) {name1}'],
+    'daycare.toiletNote': [
+      'Uma ida ao banheiro registrada (exemplo)',
+      'Duas idas ao banheiro registradas (exemplo)',
+      'Nenhum registro (exemplo)',
+    ],
+    'daycare.mealMenu': [
+      'Arroz integral com ensopado de legumes',
+      'Sopa de tofu com arroz',
+      'Arroz frito com legumes',
+    ],
+    'daycare.snackMenu': [
+      'Fatias de pera',
+      'Batata-doce cozida no vapor',
+      'Iogurte natural',
+    ],
+    'daycare.allergenLabel': [
+      'Leite',
+      'Ovo',
+      'Soja',
+      'Trigo',
+      'Nenhum registrado (exemplo)',
+    ],
+    'daycare.activityTitle': [
+      'Brincadeiras na neve no inverno',
+      'Construindo casinhas de papel',
+      'Brincadeira com blocos coloridos',
+    ],
+    'daycare.albumCaption': [
+      'Ilustração fictícia de amigos empilhando blocos juntos',
+      'Ilustração fictícia de brincadeiras de inverno',
+    ],
+    'daycare.drugLabel': [
+      'Antitérmico líquido (fictício)',
+      'Xarope para tosse (fictício)',
+      'Hidratante tópico (fictício)',
+    ],
+    'daycare.dosageLabel': [
+      'Exemplo preenchido pelo responsável: 2 mL',
+      'Exemplo preenchido pelo responsável: 3 mL',
+      'Exemplo preenchido pelo responsável: pequena quantidade',
+    ],
+    'daycare.noticeTitle': [
+      'Aviso sobre brincadeiras de inverno (exemplo)',
+      'Aviso de mudança no cardápio (exemplo)',
+      'Aviso de verificação de segurança (exemplo)',
+    ],
+
+    // exam_prep
+    'exam_prep.subjectName': [
+      'Banco de dados',
+      'Banco de dados',
+      'Redes',
+      'Redes',
+      'Redes',
+      'Fundamentos de programação',
+      'Fundamentos de programação',
+      'Segurança da informação',
+      'Segurança da informação',
+    ],
+    'exam_prep.unitName': [
+      'Modelagem de dados',
+      'Fundamentos de SQL',
+      'Camada de transporte',
+      'Roteamento',
+      'Camada de aplicação',
+      'Variáveis',
+      'Estruturas de dados',
+      'Fundamentos de criptografia',
+      'Controle de acesso',
+    ],
+    'exam_prep.questionStem': [
+      'Qual chave distingue as linhas de uma tabela?',
+      'Qual cláusula SQL seleciona linhas por meio de uma condição?',
+      'Qual protocolo de transporte cuida da ordenação e da retransmissão?',
+      'Qual equipamento escolhe a próxima rota de um pacote?',
+      'Qual protocolo expressa requisições e respostas da web?',
+      'O que guarda um valor sob um nome no programa?',
+      'Qual estrutura remove primeiro o último valor inserido?',
+      'O que calcula um resumo de tamanho fixo a partir de uma entrada?',
+      'Qual princípio concede apenas as permissões necessárias para uma tarefa?',
+    ],
+    // Every question has four choices, and the first one is the correct answer:
+    // the generator shuffles them.
+    'exam_prep.correctChoice': [
+      'Chave primária',
+      'WHERE',
+      'TCP',
+      'Roteador',
+      'HTTP',
+      'Variável',
+      'Pilha',
+      'Função de hash',
+      'Privilégio mínimo',
+    ],
+    'exam_prep.wrongChoice1': [
+      'Fonte',
+      'Fonte',
+      'JPEG',
+      'Alto-falante',
+      'PNG',
+      'Borda',
+      'Fila FIFO',
+      'Seleção de fonte',
+      'Acesso público',
+    ],
+    'exam_prep.wrongChoice2': [
+      'Cor de fundo',
+      'Margem',
+      'CSS',
+      'Teclado',
+      'MP3',
+      'Margem da página',
+      'Imagem',
+      'Zoom da tela',
+      'Senha compartilhada',
+    ],
+    'exam_prep.wrongChoice3': [
+      'Largura da tela',
+      'Ícone',
+      'SVG',
+      'Monitor',
+      'TTF',
+      'Imagem de fundo',
+      'Arquivo de áudio',
+      'Preenchimento de fundo',
+      'Verificações ignoradas',
+    ],
+    // Each explanation contains the text of its correct choice, and the four
+    // choices of a question are different from one another: tests check both.
+    'exam_prep.explanation': [
+      'A chave primária identifica cada linha de uma tabela.',
+      'A cláusula WHERE expressa uma condição para selecionar linhas.',
+      'O TCP cuida da ordenação e da retransmissão de um fluxo de bytes.',
+      'O roteador escolhe a próxima rota usando o endereço de destino.',
+      'O HTTP expressa requisições e respostas da web.',
+      'A variável permite que um programa se refira a um valor pelo nome.',
+      'A pilha remove primeiro o último valor inserido.',
+      'A função de hash calcula um resumo de tamanho fixo a partir de uma entrada.',
+      'O privilégio mínimo concede apenas as permissões necessárias para uma tarefa.',
+    ],
+    'exam_prep.examPaperTitle': [
+      'Simulado 1 (fictício)',
+      'Simulado 2 (fictício)',
+      'Prova de verificação da unidade (fictício)',
+    ],
+    'exam_prep.studyTaskTitle': [
+      'Resolver dez questões sobre a camada de transporte',
+      'Revisar os erros de controle de acesso',
+      'Conferir os fundamentos de SQL',
+    ],
+    'exam_prep.taxonomyName': [
+      'Banco de dados',
+      'Redes',
+      'Fundamentos de programação',
+      'Segurança da informação',
+    ],
   },
 );
