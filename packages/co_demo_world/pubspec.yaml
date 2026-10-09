@@ -3,7 +3,7 @@ description: >-
   Deterministic demo worlds whose generated display text follows the UI
   language: business data stays fixed, co_faker display data is re-projected
   per language, and user edits survive a language switch.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_demo_world
 # pub.dev 에 내지 않는다 — 소비자는 git 의존(path: packages/co_demo_world, ref: 릴리스 커밋)으로 받고,
 # 형제 패키지(co_faker · co_demo_prefs)는 같은 커밋의 상대 경로로 따라온다.
