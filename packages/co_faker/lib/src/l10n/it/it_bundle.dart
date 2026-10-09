@@ -210,7 +210,7 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Controllo dell’assunzione dei farmaci',
       'Aiuto per l’igiene personale',
       'Aiuto negli spostamenti',
-      'Aiuto ai servizi igienici',
+      'Accompagnamento ai servizi igienici',
       'Compagnia e conversazione',
     ],
 
@@ -461,7 +461,7 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Quale protocollo di trasporto gestisce l’ordinamento e la ritrasmissione?',
       'Quale dispositivo sceglie il percorso successivo di un pacchetto?',
       'Quale protocollo esprime le richieste e le risposte web?',
-      'Che cosa memorizza un valore con un nome in un programma?',
+      'Che cosa permette di memorizzare un valore con un nome in un programma?',
       'Quale struttura rimuove per primo l’ultimo valore inserito?',
       'Che cosa calcola un’impronta di lunghezza fissa a partire da un input?',
       'Quale principio concede solo i permessi necessari per un’attività?',
@@ -566,7 +566,7 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Esaminare esempi di lavoro',
       'Verificare i registri',
     ],
-    'hrd.chapterTitle': ['Introduzione', 'Esame di esempi', 'Riepilogo'],
+    'hrd.chapterTitle': ['Introduzione', 'Analisi di esempi', 'Riepilogo'],
     'hrd.nudgeTitle': [
       'Promemoria sulla scadenza della formazione (esempio)',
       'Promemoria sulla lezione non completata (esempio)',
@@ -968,7 +968,7 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Laboratorio del quotidiano Rivosereno (di fantasia)',
     ],
     'brokerage.providerHeadline': [
-      'Partner di fantasia che presenta schermate di esempio e registri dei lavori',
+      'Partner di fantasia che presenta schermate di esempio e lavori già svolti',
       'Profilo di esempio per esaminare l’ambito di un progetto di fantasia',
     ],
     'brokerage.skillTag': [
@@ -978,7 +978,7 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Scrittura di testi',
     ],
     'brokerage.proposalMessage': [
-      'Ho preparato l’ambito e i punti di controllo del calendario per l’esempio.',
+      'Ho preparato l’ambito dei lavori e i punti di verifica del calendario per l’esempio.',
       'Propongo punti di controllo per le fasi del progetto di fantasia.',
     ],
     'brokerage.portfolioTitle': [

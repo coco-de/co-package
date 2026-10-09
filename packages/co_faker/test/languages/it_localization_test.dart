@@ -581,6 +581,9 @@ void main() {
           for (var i = 0; i < 6; i++) f.clinic.procedure(),
           for (var i = 0; i < 4; i++) f.clinic.package(),
           for (var i = 0; i < 4; i++) f.clinic.soap(),
+          // A national locale gives the patient an Italian address and phone
+          // in every way in, because `it` and `it_IT` are the same country.
+          for (var i = 0; i < 3; i++) f.clinic.patient(),
           f.clinic.consentForm(),
           f.clinic.counselSession(topic: 'toning').summary,
           f.clinic.closureNotice(date: date, clinicName: 'Studio Demo').body,
