@@ -260,7 +260,7 @@ const CoFakerClinicData deClinic = CoFakerClinicData(
     'female': 'Weiblich',
     'male': 'Männlich',
   },
-  packageNameFormat: '{name} – {sessions}er-Karte',
+  packageNameFormat: '{name} – {sessions}er-Paket',
   texts: CoFakerClinicTexts(
     consentForms: <CoConsentFormSpec>[
       (
