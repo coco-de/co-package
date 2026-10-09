@@ -660,5 +660,12 @@ const CoL10nBundle jaBundle = CoL10nBundle(
     // Japanese writes the name of the wireless network in Latin letters too.
     'space_rental.amenity': ['Wi-Fi'],
     'hospitality.amenity': ['Wi-Fi'],
+    // Units, acronyms, and names of the clinic and SaaS data.
+    'clinic.procedures.unit': ['ml'],
+    'clinic.drugForms.unit': ['*'],
+    // The payment networks that a card of any country carries.
+    'clinic.cardIssuers': ['Visa', 'Mastercard', 'Amex'],
+    'clinic.texts.labels': ['HIFU', 'IPL'],
+    'clinic.ops.patientTags.label': ['VIP'],
   },
 );

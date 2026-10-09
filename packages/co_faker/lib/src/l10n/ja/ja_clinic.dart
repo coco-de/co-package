@@ -1,17 +1,578 @@
 import '../../clinic_data.dart';
+import '../../clinic_ops.dart';
+import '../../clinic_texts.dart';
+import '../../currency_format.dart';
+import '../../korean_values.dart';
 
 /// Japanese (`ja`) clinic data for `faker.clinic`.
 ///
-/// `null` until its language Story fills it, and `faker.clinic` then reads
-/// the English data. To fill it, replace `null` with a
-/// `const CoFakerClinicData` that follows `CoFakerClinicData.english`:
+/// A general dermatology and aesthetic clinic in yen, following
+/// `CoFakerClinicData.english` list for list: the same lengths, in the same
+/// order, so that a seed picks the same record in English and in Japanese. The
+/// codes (`CONS01`, `nhis`, `waiting`) are the English ones.
 ///
-/// - translate every list and text, `texts` and `ops` included;
-/// - set `currency` and `priceScale` for JPY (¥, no minor units);
-/// - set `clinicNameFormat` for the order of a clinic name;
-/// - set `koreanValues` to `CoKoreanValues.none`, so that no Korean-only value
-///   appears.
+/// - Amounts are whole yen, written `¥1,200`. The price bands are tax
+///   included where `taxable` is `true` (a 10% consumption tax), and the price
+///   scale rounds an amount the way a Japanese price tag does: 500 yen for a
+///   procedure, 1,000 yen for a package or a prepaid balance, and 10 yen, the
+///   finest unit, for a discount, a split share, a rounding adjustment, and a
+///   point.
+/// - A clinic name is written without a space (`あおぞら皮膚科クリニック`), an
+///   address from the region down (`東京都千代田区…`), and a closure notice
+///   dates with the weekday (`10月8日（木）`).
+/// - No Korean-only value appears: [CoKoreanValues.none].
 ///
-/// `ja`, `ja_JP`, and `CoFaker.forLanguage('ja')` read it.
-/// `../co_l10n_clinic.dart` already points here: nothing else changes.
-const CoFakerClinicData? jaClinic = null;
+/// `ja`, `ja_JP`, and `CoFaker.forLanguage('ja')` read it. The translation is a
+/// draft; `docs/languages/ja.md` lists what a native speaker has to review.
+const CoFakerClinicData jaClinic = CoFakerClinicData(
+  specialties: <CoSpecialtySpec>[
+    (name: '皮膚科', clinicSuffix: '皮膚科クリニック'),
+    (name: '形成外科', clinicSuffix: '形成外科クリニック'),
+    (name: '総合診療科', clinicSuffix: 'ファミリークリニック'),
+    (name: '内科', clinicSuffix: '内科クリニック'),
+    (name: '小児科', clinicSuffix: '小児科クリニック'),
+  ],
+  clinicNamePrefixes: <String>[
+    'あおぞら',
+    'ひだまり',
+    'かえで',
+    'みずべ',
+    'ときわ',
+    'サンプル',
+    'デモ',
+    'きたぐち',
+  ],
+  staffRoles: <String, String>{
+    'director': '院長',
+    'doctor': '医師',
+    'counselor': 'カウンセラー',
+    'coordinator': 'コーディネーター',
+    'nurse': '看護師',
+    'nurseAide': '看護助手',
+    'skincare': 'エステティシャン',
+    'desk': '受付',
+  },
+  visitPurposes: <CoVisitPurposeSpec>[
+    (name: 'カウンセリング', details: <String>['初回カウンセリング', '再カウンセリング']),
+    (name: '施術', details: <String>['注入', 'レーザー', 'リフトアップ']),
+    (name: '診療', details: <String>['ニキビ', '皮膚疾患', 'いぼ']),
+    (name: 'ケア', details: <String>['スキンケア', '鎮静ケア']),
+  ],
+  procedures: <CoProcedureSpec>[
+    (
+      code: 'CONS01',
+      category: '診察/診察料',
+      name: '初診料',
+      unit: '回',
+      minPrice: 3000,
+      maxPrice: 6000,
+      taxable: false,
+    ),
+    (
+      code: 'BTX-F',
+      category: 'ボツリヌストキシン/シワ',
+      name: '額のボツリヌストキシン注射',
+      unit: '部位',
+      minPrice: 20000,
+      maxPrice: 50000,
+      taxable: true,
+    ),
+    (
+      code: 'FIL-L',
+      category: 'フィラー/部位',
+      name: 'ヒアルロン酸フィラー 唇 1ml',
+      unit: 'ml',
+      minPrice: 50000,
+      maxPrice: 90000,
+      taxable: true,
+    ),
+    (
+      code: 'LT-01',
+      category: 'レーザー/トーニング',
+      name: 'ピコレーザートーニング',
+      unit: '回',
+      minPrice: 10000,
+      maxPrice: 30000,
+      taxable: true,
+    ),
+    (
+      code: 'HIFU-300',
+      category: 'リフトアップ/HIFU',
+      name: 'HIFUリフトアップ 300ショット',
+      unit: '回',
+      minPrice: 60000,
+      maxPrice: 250000,
+      taxable: true,
+    ),
+    (
+      code: 'ACN-01',
+      category: 'ニキビ/治療',
+      name: 'ニキビ圧出',
+      unit: '回',
+      minPrice: 3000,
+      maxPrice: 8000,
+      taxable: false,
+    ),
+    (
+      code: 'CARE-01',
+      category: 'ケア/鎮静',
+      name: 'LED鎮静ケア',
+      unit: '回',
+      minPrice: 3000,
+      maxPrice: 8000,
+      taxable: true,
+    ),
+    (
+      code: 'DOC-01',
+      category: '証明書',
+      name: '診断書',
+      unit: '通',
+      minPrice: 3000,
+      maxPrice: 5000,
+      taxable: false,
+    ),
+  ],
+  diagnoses: <CoDiagnosisSpec>[
+    (code: 'L70.0', name: '尋常性ざ瘡', nameEn: 'Acne vulgaris'),
+    (code: 'L81.1', name: '肝斑', nameEn: 'Chloasma'),
+    (code: 'B07', name: 'ウイルス性疣贅', nameEn: 'Viral warts'),
+    (
+      code: 'L20.9',
+      name: 'アトピー性皮膚炎（詳細不明）',
+      nameEn: 'Atopic dermatitis, unspecified',
+    ),
+    (code: 'L30.9', name: '皮膚炎（詳細不明）', nameEn: 'Dermatitis, unspecified'),
+    (code: 'L71.9', name: '酒さ（詳細不明）', nameEn: 'Rosacea, unspecified'),
+  ],
+  drugStems: <String>[
+    'アデルメクス',
+    'ルミソル',
+    'ケラフェン',
+    'ジオクリン',
+    'ナビロックス',
+    'セラトン',
+    'ミノベル',
+    'アクロジン',
+  ],
+  drugForms: <({String form, String unit, List<int> strengths})>[
+    (form: '錠', unit: 'mg', strengths: <int>[5, 10, 20, 50]),
+    (form: 'カプセル', unit: 'mg', strengths: <int>[25, 50, 100]),
+    (form: '軟膏', unit: 'g', strengths: <int>[15, 30]),
+    (form: 'クリーム', unit: 'g', strengths: <int>[15, 30]),
+  ],
+  drugUsages: <String>['1日1回、就寝前', '1日2回、食後', '1日2回、患部に薄く塗る', '1日1回、洗顔後に患部に塗る'],
+  complaints: <String>[
+    '両頬のシミが濃くなったと訴えています',
+    'あご周りのニキビを繰り返しています',
+    '額のシワが気になっています',
+    '肌のたるみの改善を希望されています',
+    '施術後の赤みが続いています',
+  ],
+  findings: <String>[
+    '両側の頬骨部に境界不明瞭な褐色斑',
+    'あごに炎症性丘疹が多数',
+    '額の表情ジワ、グレード2',
+    '下顔面のたるみ、中等度',
+    '軽度の紅斑、浮腫なし',
+  ],
+  plans: <String>[
+    '2週間おきにレーザートーニングを行います',
+    '圧出と外用薬による治療を行います',
+    '注射の2週間後に経過を確認します',
+    '日焼け止めについて指導し、4週間後に再診します',
+    '経過を観察し、悪化した場合は来院してください',
+  ],
+  memos: <String>[
+    '24時間はメイクを控えるようご案内しました。',
+    '施術の30分前に麻酔クリームを塗布しました。',
+    '施術前の写真を撮影しました。',
+    '回数券の料金をご説明しました。患者様は後日お決めになる予定です。',
+    '次回のご予約を2週間後に取りました。',
+  ],
+  questions: <CoQuestionSpec>[
+    (
+      question: 'お薬のアレルギーはありますか？',
+      options: <String>['なし', 'リドカイン', 'ペニシリン', 'わからない'],
+    ),
+    (
+      question: '現在服用中のお薬はありますか？',
+      options: <String>['なし', '抗凝固薬', 'ニキビの薬', 'その他'],
+    ),
+    (
+      question: '妊娠中、または授乳中ですか？',
+      options: <String>['いいえ', '妊娠中', '授乳中', '該当なし'],
+    ),
+    (
+      question: 'いちばん改善したいお悩みは何ですか？',
+      options: <String>['シミ', 'ニキビ', 'シワ', 'ハリ'],
+    ),
+  ],
+  cardIssuers: <String>['Visa', 'Mastercard', 'Amex', 'JCB'],
+  labels: <String, String>{
+    'nhis': '公的医療保険',
+    'medicalAid1': '医療扶助（1種）',
+    'medicalAid2': '医療扶助（2種）',
+    'uninsured': '自費診療',
+    'reception': '受付',
+    'waiting': '待機中',
+    'consultation': '診察',
+    'counseling': 'カウンセリング',
+    'procedure': '施術',
+    'care': 'ケア',
+    'payment': '会計',
+    'done': '完了',
+    'requested': '予約リクエスト',
+    'reserved': '予約済み',
+    'confirmed': '予約確定',
+    'checkedIn': '来院済み',
+    'completed': '完了',
+    'cancelled': 'キャンセル',
+    'noShow': '無断キャンセル',
+    'rejected': '却下',
+    'card': 'カード',
+    'cash': '現金',
+    'transfer': '銀行振込',
+    'prepaid': '前受金',
+    'package': '回数券',
+    'female': '女性',
+    'male': '男性',
+  },
+  packageNameFormat: '{name} {sessions}回券',
+  texts: CoFakerClinicTexts(
+    consentForms: <CoConsentFormSpec>[
+      (
+        kind: 'procedure',
+        title: '施術同意書',
+        clauses: <String>[
+          '施術の目的・方法・期待される効果について説明を受けました。',
+          '施術後に赤み・腫れ・内出血が生じる場合があることを理解しました。',
+          '効果には個人差があり、結果が保証されるものではないことを理解しました。',
+          '服用中のお薬、アレルギー、妊娠の有無を正確にお伝えしました。',
+        ],
+      ),
+      (
+        kind: 'privacy',
+        title: '個人情報の取り扱いに関する同意書',
+        clauses: <String>[
+          '収集する項目：氏名、生年月日、連絡先、診療記録',
+          '利用の目的：診療、予約のご案内、会計',
+          '同意を拒否することもできますが、その場合はオンライン予約をご利用いただけないことがあります。',
+        ],
+      ),
+      (
+        kind: 'photo',
+        title: '写真撮影の同意書',
+        clauses: <String>[
+          '経過を確認するため、施術の前後に写真を撮影します。',
+          '撮影した写真は診療の目的にのみ使用し、外部に公開することはありません。',
+        ],
+      ),
+    ],
+    consentDisclaimer: '※デモ用の例文です。法的な確認を経た書式ではないため、実際の同意書としては使用できません。',
+    feedback: <String, List<String>>{
+      'positive': <String>[
+        '先生が丁寧に説明してくださり、安心しました。',
+        '待ち時間が短く、スタッフの皆さんが親切でした。',
+        '3回の施術で肌のトーンが明るくなりました。',
+      ],
+      'neutral': <String>['効果には満足していますが、料金が少し高めです。', '駐車場が少し不便でした。'],
+      'negative': <String>['予約の時間から40分以上待ちました。', '会計の金額が、見積もりの金額と違っていました。'],
+    },
+    counselTopics: <CoCounselTopicSpec>[
+      (
+        topic: 'toning',
+        procedureCode: 'LT-01',
+        procedure: 'ピコレーザートーニング',
+        concern: '両頬のシミが濃くなってきて気になっています。',
+        recommend: 'シミのお悩みには、ピコレーザートーニングをおすすめします。',
+        pain: 'チクッとする程度で、ほとんどの方が麻酔なしで受けられます。',
+        interval: '2週間おきに、10回ほど受けていただくのが目安です。',
+        downtime: '数時間ほど赤みが出ることがありますが、当日から洗顔できます。',
+        sessions: 10,
+      ),
+      (
+        topic: 'lifting',
+        procedureCode: 'HIFU-300',
+        procedure: 'HIFUリフトアップ',
+        concern: 'あご周りがたるんできた気がします。',
+        recommend: 'HIFUリフトアップなら、肌の深い層から引き締めることができます。',
+        pain: '骨に近い部分は響くように痛むことがあるため、麻酔クリームを塗って行います。',
+        interval: '6か月から1年に1回が目安です。',
+        downtime: '施術後すぐにお仕事に戻れます。',
+        sessions: 3,
+      ),
+    ],
+    counselScript: (
+      greeting: 'こんにちは。本日はどのようなお悩みでいらっしゃいましたか？',
+      questions: <String, String>{
+        'pain': '痛みはありますか？',
+        'interval': 'どのくらいの頻度で受ければいいですか？',
+        'downtime': '終わったあと、そのまま仕事に行けますか？',
+        'price': '料金はいくらですか？',
+      },
+      priceAnswer: '1回{price}で、{sessions}回券なら{packagePrice}です。',
+      bookYes: 'では、今週予約したいです。',
+      bookYesReply: 'かしこまりました。ご予約をお取りし、施術後の注意事項をメッセージでお送りします。',
+      bookNo: '少し考えて、またご連絡します。',
+      bookNoReply: 'かしこまりました。ご不明な点があれば、いつでもご連絡ください。',
+      summary:
+          '{procedure}をご案内：1回{price}、{sessions}回券は{packagePrice}の見積もり。{outcome}',
+      booked: '予約を取りました。',
+      pending: '返答は保留です。後日あらためてご連絡します。',
+    ),
+    integrationResults: <String, List<CoIntegrationResultSpec>>{
+      'eligibility': <CoIntegrationResultSpec>[
+        (code: 'OK', message: '保険資格を確認しました', ok: true),
+        (code: 'LOST', message: '保険資格が失効しています', ok: false),
+        (code: 'NOT_FOUND', message: '該当する加入者が見つかりません', ok: false),
+      ],
+      'dur': <CoIntegrationResultSpec>[
+        (code: 'OK', message: '相互作用は見つかりませんでした', ok: true),
+        (code: 'WARN_COMBINATION', message: '薬剤の相互作用に関する警告', ok: false),
+      ],
+      'insuranceClaim': <CoIntegrationResultSpec>[
+        (code: 'ACCEPTED', message: '請求を受理しました', ok: true),
+        (code: 'ADJUSTED', message: '審査で査定されました', ok: false),
+        (code: 'RETURNED', message: '返戻：必須項目の記載漏れ', ok: false),
+      ],
+      'ePrescription': <CoIntegrationResultSpec>[
+        (code: 'SENT', message: '電子処方箋を送信しました', ok: true),
+        (code: 'FAILED', message: '薬局で受信できませんでした', ok: false),
+      ],
+      'identityQr': <CoIntegrationResultSpec>[
+        (code: 'OK', message: '本人確認が完了しました', ok: true),
+        (code: 'EXPIRED', message: 'QRコードの有効期限が切れました', ok: false),
+      ],
+    },
+    insurers: <String>['ノースウィンド共済', 'ハーバービュー生命', 'サミットライン保険', 'クリアブルック医療保険'],
+    teamNotes: <String>[
+      '{mention}、{patient}様のレーザーの出力を一段階下げてください。',
+      '申し送り：{patient}様は麻酔クリームを塗布済みです。{mention}、いつでも施術に入れます。',
+      '{mention}、{patient}様の回数券は残り1回です。',
+      '{patient}様は保護者の署名が必要です。{mention}、ご確認をお願いします。',
+    ],
+    // `{kind}` is a device label and `{number}` the unit in the clinic.
+    deviceNameFormat: '{kind} {number}号機',
+    staffMentionFormat: '@{name}さん（{role}）',
+    nameMentionFormat: '@{name}さん',
+    labels: <String, String>{
+      'self': '本人',
+      'spouse': '配偶者',
+      'parent': '親',
+      'child': '子',
+      'sibling': 'きょうだい',
+      'grandparent': '祖父母',
+      'grandchild': '孫',
+      'legalGuardian': '法定代理人',
+      'other': 'その他',
+      'picoLaser': 'ピコレーザー',
+      'hifu': 'HIFU',
+      'rf': '高周波',
+      'ipl': 'IPL',
+      'ledTherapy': 'LED機器',
+      'skinAnalyzer': '肌診断機',
+      'photoCamera': '臨床撮影用カメラ',
+      'labelPrinter': 'ラベルプリンター',
+      'cardTerminal': 'カード決済端末',
+      'signaturePad': 'サインパッド',
+      'kiosk': '受付キオスク',
+      'bridgePc': 'ブリッジPC',
+      'positive': 'ポジティブ',
+      'neutral': 'ニュートラル',
+      'negative': 'ネガティブ',
+      'counselor': 'カウンセラー',
+      'patientSpeaker': '患者',
+      'life': '生命保険',
+      'nonLife': '損害保険',
+    },
+  ),
+  ops: CoFakerClinicOps(
+    patientTags: <CoColoredLabelSpec>[
+      (code: 'vip', label: 'VIP', color: '#F59E0B'),
+      (code: 'lifting', label: 'リフトアップ', color: '#6366F1'),
+      (code: 'referral', label: '紹介', color: '#10B981'),
+      (code: 'caution', label: '要注意', color: '#EF4444'),
+      (code: 'package', label: '回数券保有', color: '#8B5CF6'),
+    ],
+    acquisitionChannels: <CoColoredLabelSpec>[
+      (code: 'onlineBooking', label: 'オンライン予約', color: '#03C75A'),
+      (code: 'referral', label: '紹介', color: '#10B981'),
+      (code: 'instagramAd', label: 'SNS広告', color: '#E1306C'),
+      (code: 'search', label: '検索', color: '#7C3AED'),
+      (code: 'walkIn', label: '通りがかり', color: '#64748B'),
+    ],
+    specialNotes: <String>[
+      'リドカインアレルギー',
+      'ケロイド体質：レーザーの出力に注意',
+      '抗凝固薬を服用中：施術前に確認',
+      'ペニシリンアレルギー',
+    ],
+    rooms: <CoRoomSpec>[
+      (name: 'カウンセリング室1', kind: 'counseling', staffRole: 'counselor'),
+      (name: '診察室1', kind: 'consultation', staffRole: 'director'),
+      (name: '診察室2', kind: 'consultation', staffRole: 'doctor'),
+      (name: '施術室1', kind: 'procedure', staffRole: 'nurse'),
+      (name: 'ケア室1', kind: 'care', staffRole: 'skincare'),
+      (name: '会計', kind: 'payment', staffRole: 'coordinator'),
+      (name: 'タブレット受付', kind: 'reception', staffRole: null),
+    ],
+    termsChanges: <String>[
+      'データの保存期間を明確にしました。',
+      '電子処方箋ネットワークを提供先に追加しました。',
+      'AIカウンセリングの録音データを90日間保存することを明記しました。',
+    ],
+    consentDispatch: <String, String>{
+      'sent': '署名のお願いを送信しました。',
+      'opened': '患者様が署名依頼を開きました。',
+      'signed': '電子署名が完了しました。',
+      'expired': '署名依頼の有効期限が切れました（24時間）。',
+      'failed': '署名依頼を送信できませんでした。番号をご確認ください。',
+    },
+    adjustments: <String, List<String>>{
+      'discount': <String>['再来院10%割引', 'スタッフ家族20%割引'],
+      'coupon': <String>['初回来院20%クーポン', 'バースデークーポン'],
+      'point': <String>['ポイント利用'],
+      'rounding': <String>['端数調整'],
+    },
+    pointReasons: <String, String>{
+      'earn': 'お支払い金額の3%を付与',
+      'use': '会計時に利用',
+      'bonus': '口コミ投稿ボーナス',
+      'expire': '有効期限切れ',
+      'refund': '返金に伴いポイントを回収',
+      'adjust': '手動調整',
+    },
+    paymentMessages: <String, String>{
+      'approved': 'カード決済が承認されました。',
+      'cashReceipt': '領収書を発行しました。',
+      'partialCancel': '一部キャンセルが完了しました。',
+      'prepaidUsed': '前受金から差し引きました。',
+      'declined': 'カード決済が承認されませんでした：{reason}',
+    },
+    tasks: <String>['レーザーチップの在庫確認', '消耗品の発注', '日次の締め処理', '冷蔵庫の温度記録'],
+    taskMemos: <String>['午後3時までに完了してください。', '残りが5個未満なら、すぐに発注してください。'],
+    kioskPurposes: <String, String>{
+      'checkin': '来院受付',
+      'reservation': '予約確認',
+      'payment': '会計',
+      'document': '書類発行',
+    },
+    evidence: <CoEvidenceSpec>[
+      (kind: 'chartHistory', rule: '3か月以内に同じ施術を受けた履歴'),
+      (kind: 'priceRule', rule: '単回よりも保有中の回数券を優先して案内'),
+      (kind: 'contraindication', rule: 'リドカインアレルギーの場合は麻酔クリームを除外'),
+    ],
+    counselFailures: <String, String>{
+      'CONSENT_MISSING': '録音の同意がないため、AIカウンセリングを開始できません。',
+      'STT_FAILED': '音声認識に失敗しました。マイクの接続をご確認ください。',
+      'TOO_SHORT': '録音が短すぎて要約できません。',
+      'MODEL_TIMEOUT': '要約の作成が遅れています。しばらくしてからもう一度お試しください。',
+    },
+    claimRules: <CoClaimRuleSpec>[
+      (
+        ruleId: 'R-DX-001',
+        severity: 'error',
+        diagnosisCode: 'Z41.1',
+        feeCode: 'CONS01',
+        message: '美容目的の傷病名には、保険診療の診察料を請求できません。',
+      ),
+      (
+        ruleId: 'R-FE-118',
+        severity: 'warning',
+        diagnosisCode: 'L20.9',
+        feeCode: 'CONS02',
+        message: '同じ日に再診料が二重に算定されています。',
+      ),
+    ],
+    crmFailures: <String, String>{
+      'NIGHT_AD_NO_CONSENT': '夜間の広告配信への同意がありません',
+      'MARKETING_NO_CONSENT': 'マーケティング配信への同意がありません',
+      'OPTED_OUT': '配信停止済み',
+      'INVALID_NUMBER': '番号が正しくありません',
+    },
+    packageBonus: '再生クリームをプレゼント',
+    staffNotices: <String, List<({String title, String body})>>{
+      'training': <({String title, String body})>[
+        (title: '新しいレーザー機器の研修', body: '新しいレーザー機器の研修を、来週水曜日の午後6時から施術室1で行います。'),
+      ],
+      'policy': <({String title, String body})>[
+        (
+          title: 'ID番号の閲覧記録の確認',
+          body: 'ID番号の全体表示は、理由を入力した場合のみ可能です。閲覧記録は毎月確認します。',
+        ),
+      ],
+      'schedule': <({String title, String body})>[
+        (title: '連休のシフト表', body: '連休前日は午後5時まで診療します。シフト表は共有フォルダでご確認ください。'),
+      ],
+    },
+    vitalsNotes: <String, String>{
+      'normal':
+          'バイタルは安定しています（血圧 {sys}/{dia}mmHg、脈拍 {pulse}、SpO2 {spo2}%、体温 {temp}°C）。',
+      'highBp': '血圧 {sys}/{dia}mmHgと高めのため、10分ほど安静にしてから再測定します。',
+      'fever': '体温 {temp}°Cの微熱があります。施術を延期するかどうかは医師が判断します。',
+      'lowSpo2': 'SpO2 {spo2}%と低めのため再測定しました。息苦しさはありません。',
+      'highGlucose': '血糖値 {glucose}mg/dLと高めです。食後の測定であることを確認しました。',
+    },
+    closure: <String, String>{
+      'title': '{dates}休診のお知らせ',
+      'holiday': '{clinic}は{dates}、{name}のため休診いたします。{reopen}から通常診療を行います。',
+      'other': '{clinic}は{dates}、{reason}のため休診いたします。{reopen}から通常診療を行います。',
+    },
+    closureReasons: <String>['学会参加', '内装工事', '機器の定期点検'],
+    dateFormat: '{month}月{day}日（{weekday}）',
+    weekdayNames: <String>['月', '火', '水', '木', '金', '土', '日'],
+    dateRangeFormat: '{from}〜{to}',
+    compoundItemFormat: '{name} {sessions}回',
+    labels: <String, String>{
+      'requested': '受付申請',
+      'waiting': '待機中',
+      'priority': '優先',
+      'inProgress': '対応中',
+      'done': '完了',
+      'tablet': 'タブレット',
+      'online': 'オンライン',
+      'app': 'アプリ',
+      'kiosk': 'キオスク',
+      'desk': '窓口',
+      'paper': '紙',
+      'privacyRequired': '個人情報（必須）',
+      'marketingOptional': 'マーケティング（任意）',
+      'sensitiveInfo': '要配慮個人情報',
+      'photoUse': '写真の利用',
+      'thirdParty': '第三者提供',
+      'aiRecording': 'AI録音',
+      'nightAdvertising': '夜間の広告',
+      'agreed': '同意済み',
+      'withdrawn': '撤回',
+      'chartHistory': 'カルテ履歴',
+      'procedureHistory': '施術履歴',
+      'priceRule': '料金ルール',
+      'contraindication': '禁忌',
+      'guideline': 'ガイドライン',
+      'preference': '希望',
+      'error': 'エラー',
+      'warning': '警告',
+      'discount': '割引',
+      'coupon': 'クーポン',
+      'point': 'ポイント',
+      'rounding': '端数調整',
+    },
+  ),
+  clinicNameFormat: '{prefix}{suffix}',
+  currency: CoCurrencyFormat(code: 'JPY', symbol: '¥'),
+  priceScale: CoClinicPriceScale(
+    priceRounding: 500,
+    packageRounding: 1000,
+    prepaidStep: 1000,
+    installmentMinimum: 50000,
+    splitMinimum: 5000,
+    splitRounding: 10,
+    adjustmentUnit: 10,
+    pointUnit: 10,
+    quoteMin: 5000,
+    quoteMax: 30000,
+  ),
+  koreanValues: CoKoreanValues.none,
+  maskedIdFormat: '****-####',
+  addressLineFormat: '{region}{city}{line1}',
+);
