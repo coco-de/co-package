@@ -667,5 +667,6 @@ const CoL10nBundle jaBundle = CoL10nBundle(
     'clinic.cardIssuers': ['Visa', 'Mastercard', 'Amex'],
     'clinic.texts.labels': ['HIFU', 'IPL'],
     'clinic.ops.patientTags.label': ['VIP'],
+    'saas.labels': ['SMS'],
   },
 );
