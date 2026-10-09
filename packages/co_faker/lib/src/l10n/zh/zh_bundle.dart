@@ -289,5 +289,249 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'exam_prep.examPaperTitle': ['模拟试卷1（虚构）', '模拟试卷2（虚构）', '单元测验卷（虚构）'],
     'exam_prep.studyTaskTitle': ['完成10道传输层题目', '复习访问控制错题', '巩固SQL基础'],
     'exam_prep.taxonomyName': ['数据库', '计算机网络', '编程基础', '信息安全'],
+
+    // hrd
+    'hrd.departmentName': ['销售部', '生产部', '研发部', '客户支持部', '行政部', '物流部'],
+    'hrd.jobTitle': ['专员', '经理', '团队负责人'],
+    'hrd.courseTitle': ['个人信息处理规范2026（虚构）', '协同作业安全守则（虚构）', '工作记录整理（虚构）'],
+    'hrd.courseKind': ['必修', '专业', '领导力'],
+    'hrd.lessonTitle': ['了解基本原则', '回顾工作案例', '核对记录'],
+    'hrd.chapterTitle': ['导言', '示例回顾', '小结'],
+    'hrd.nudgeTitle': ['培训截止提醒（示例）', '未完成课时提醒（示例）'],
+    'hrd.exemptionReason': ['外部结业凭证（示例）', '休假期间核查（示例）', '替代培训核查（示例）'],
+    'hrd.classroomPlace': ['松光教室（虚构）', '清澜研讨室（虚构）'],
+
+    // neighborhood
+    'neighborhood.neighborhoodName': ['松光社区（虚构）', '银杏社区（虚构）', '白蜡社区（虚构）'],
+    'neighborhood.districtName': ['虚构市清澜区', '虚构市松溪区'],
+    'neighborhood.nickname': ['松光豆豆（虚构）', '白蜡星星（虚构）', '巷口云朵（虚构）'],
+    'neighborhood.postTitle': [
+      '在游乐场捡到一只蓝色手套（示例）',
+      '一起探索社区散步路线（示例）',
+      '分享一个小花盆（示例）',
+    ],
+    'neighborhood.postBody': ['虚构的社区消息，详情见帖子正文。', '写给邻居的示例帖子，不含电话号码和真实地址。'],
+    'neighborhood.commentBody': ['谢谢分享消息。', '我确认一下，稍后在帖子里回复。', '晚上我可以去看看。'],
+    'neighborhood.placeName': ['松光烘焙坊（虚构）', '清澜公园休息亭（虚构）', '白蜡小图书馆（虚构）'],
+    'neighborhood.openHours': ['08:00—21:00', '09:00—18:00', '10:00—20:00'],
+    'neighborhood.bannedWord': ['广告示例', '辱骂示例', '禁用词示例'],
+    'neighborhood.keyword': ['手套', '散步', '分享', '社区消息'],
+
+    // meetup
+    'meetup.clubName': ['松光晨跑团（虚构）', '清澜读书会（虚构）', '白蜡桌游社（虚构）'],
+    'meetup.interestTag': ['跑步', '阅读', '桌游', '摄影', '烹饪', '徒步'],
+    'meetup.clubIntro': ['欢迎第一次参加的邻居一起加入的虚构社群。', '一起分享小小活动的示例社群。'],
+    'meetup.gatheringTitle': ['1月第三周聚会（虚构）', '周末读书聊天（虚构）', '冬日散步聚会（虚构）'],
+    'meetup.venueName': ['清澜步道入口（虚构）', '松光小聚会室（虚构）', '白蜡休息亭（虚构）'],
+    'meetup.nickname': ['晨曦豆豆（虚构）', '书间云朵（虚构）', '小小星（虚构）'],
+    'meetup.duesItem': ['聚会费（示例）', '饮品分摊（示例）', '器材租赁分摊（示例）'],
+    'meetup.joinAnswer': ['我想从这个月开始参加活动。', '周末上午我可以参加。'],
+    'meetup.ruleText': ['请互相尊重时间。', '请在群内交流，不要公开联系方式。', '取消参加时请告知群里。'],
+    'meetup.cadenceLabel': ['每周六07:00', '每两周的周日10:00', '每月第一个周六14:00'],
+
+    // fandom
+    // The two fictional creators of the fandom pack: Chinese writes two names
+    // of its own, not the Korean ones, and neither is a real artist.
+    'fandom.creatorName': ['云隙花园', '晚星笺'],
+    'fandom.fanNickname': ['小星星', '小嫩芽', '月亮豆', '光点点'],
+    'fandom.benefitTitle': ['会员专享示例图片', '模拟活动报名', '虚构片段抢先看'],
+    'fandom.postCaption': ['冬日工作室的虚构插画', '记录排练时间的示例帖子'],
+    'fandom.clipTitle': ['30秒排练（虚构）', '工作室问候（虚构）', '冬日声音笔记（虚构）'],
+    'fandom.letterBody': [
+      '今天的示例帖子我看得很开心，期待下一次更新。',
+      '冬日工作室的插画让人觉得很温暖，在此送上我的鼓励。',
+    ],
+    'fandom.eventTitle': ['冬日粉丝见面会（虚构）', '工作室故事活动（虚构）'],
+    'fandom.agendaTitle': ['冬日小剧场日程（虚构）', '虚构的直播对谈', '新帖发布日程'],
+    'fandom.venueLabel': ['冬日小剧场（虚构）', '松光工作室（虚构）', '线上示例空间'],
+
+    // content
+    'content.seriesTitle': ['纸灯塔的邮递小岛（虚构）', '云池的小地图（虚构）', '慢时钟的花园（虚构）'],
+    'content.penName': ['字豆（虚构）', '纸星（虚构）', '云笔（虚构）'],
+    'content.synopsisLine': ['虚构人物在小岛上整理信件的故事。', '一起画出地图上没有的池塘，这是一个虚构的故事。'],
+    'content.genreName': ['奇幻', '日常', '冒险', '科学故事', '随笔'],
+    'content.episodeTitle': ['第一只纸船（虚构）', '池塘上的一个小点（虚构）', '没有时钟的午后（虚构）'],
+    'content.cutAltText': ['虚构人物折纸船的插画', '池塘边两位虚构人物的插画'],
+    'content.commentLine': ['纸船那一幕让我印象很深。', '我想继续读下一个示例章节。'],
+    'content.chapterParagraph': [
+      '岛上的邮箱里躺着一张空白的纸。孩子把它对折，做成了一只形似池塘的小纸船。这一段是为演示而原创的虚构示例。',
+      '慢时钟旁边放着一盆小小的花。两个朋友没有给花取名字，而是把今天看到的云画了下来。这是原创的虚构示例段落。',
+    ],
+    'content.publisherName': ['纸灯塔出版社（虚构）', '云池出版社（虚构）'],
+    'content.audioTitle': ['折纸船的午后（虚构）', '小池塘的声音笔记（虚构）'],
+    'content.newsletterName': ['纸灯塔每周小记（虚构）', '云池小信笺（虚构）'],
+    'content.articleHeadline': ['把日常笔记整理成小分组（虚构）', '记录冬日散步中看到的颜色（虚构）'],
+    'content.topicName': ['日常笔记', '冬日散步', '小小科学', '阅读习惯'],
+    'content.genreTaxonomy': ['奇幻', '日常', '冒险', '科学故事', '随笔'],
+    'content.audioTaxonomy': ['有声书', '播客'],
+    'content.topicTaxonomy': ['日常笔记', '冬日散步', '小小科学', '阅读习惯', '生活观察'],
+
+    // helpdesk
+    // Same order as the ticket categories in CoHelpdeskDomain.
+    'helpdesk.ticketSubject': [
+      '请帮忙确认团队邀请状态',
+      '关于示例账单明细的疑问',
+      '示例CSV导出报错',
+      '关于集成状态的疑问',
+      '关于示例页面按钮的疑问',
+      '关于帮助入口位置的疑问',
+    ],
+    'helpdesk.ticketDescription': [
+      '虚构客服账号里的邀请状态显示为待接受。',
+      '我想核对虚构账单的明细和账期。',
+      '把示例数据导出为CSV时出现了错误状态。',
+      '我想确认虚构集成状态页面上的文案。',
+      '在示例页面点击按钮后，页面没有任何变化。',
+      '虚构客服帮助页面在哪里可以找到？',
+    ],
+    'helpdesk.macroName': ['示例受理确认', '补充信息确认', '处理进度通知'],
+    'helpdesk.helpArticleTitle': ['示例邀请指南', '如何阅读虚构账单', '导出示例CSV数据'],
+    'helpdesk.csatComment': ['我已查看了说明。', '示例说明很容易理解。', '还有一些细节需要确认。'],
+    // Same order as the draft categories in CoFakerHelpdesk.
+    'helpdesk.draftBody': [
+      '请在账号设置中查看邀请状态。这是模拟的AI草稿，需由客服人员审核。',
+      '请一并记录登录方式和示例报错信息。这是模拟的AI草稿，不会对账号做任何更改。',
+      '请核对示例账单上的账期和明细。这是模拟的AI草稿，其中的价格均为虚构。',
+      '请在工单备注中记录示例账单编号。这是模拟的AI草稿，并非真实的付款通知。',
+      '请核对导出时选择的日期范围和格式。这是模拟的AI草稿，记录的示例报错不含个人信息。',
+      '请核对示例CSV的列名和文件状态。这是模拟的AI草稿，需由客服人员审核。',
+      '请记录示例集成状态和检查时间。这是模拟的AI草稿，不会发起任何外部调用。',
+      '请记录出现问题的页面和复现步骤。这是模拟的AI草稿，不承诺任何结果。',
+    ],
+    'helpdesk.topicName': ['账号', '计费', '数据', '集成'],
+
+    // campaign
+    'campaign.brandName': ['春光烘焙坊（虚构）', '月光书店（虚构）', '绿园咖啡馆（虚构）'],
+    'campaign.campaignTitle': ['冬季示例优惠', '首次到店示例消息', '周末示例消息'],
+    'campaign.offerCopy': [
+      '（广告）虚构冬季菜单的示例优惠券。如需退订，请在演示设置中查看。',
+      '（广告）虚构商品的示例优惠。退订方式见演示设置。',
+    ],
+    'campaign.couponTitle': ['冬季8折示例优惠券', '首次到店9折示例优惠券'],
+    'campaign.segmentName': ['近30天购买过的示例人群', '已同意接收营销信息的示例人群', '周末消息示例人群'],
+    'campaign.failReason': ['缺少收件号码（示例）', '未同意接收营销信息（示例）', '未同意夜间接收（示例）'],
+
+    // workplace
+    'workplace.department': ['前端团队', '后端团队', '设计团队', '客户支持', '人力资源团队'],
+    'workplace.position': ['专员', '经理', '团队负责人'],
+    'workplace.workPlace': ['松光办公室（虚构）', '清澜办公中心（虚构）', '远程办公'],
+    'workplace.shiftName': ['白班', '早班', '周末值班'],
+    'workplace.approvalComment': ['已查看附带的示例记录。', '示例事由需要进一步说明。'],
+    'workplace.projectName': ['客户门户改版（虚构）', '内部知识库整理（虚构）', '无障碍改进示例'],
+    'workplace.workItemTitle': ['优化登录报错文案', '检查示例表格排序', '整理通知状态的显示'],
+    'workplace.labelName': ['文案', '无障碍', '待办池', '待确认'],
+    'workplace.milestoneTitle': ['首次评审里程碑', '示例页面完成', '回归检查'],
+    'workplace.sprintName': ['冲刺{n}'],
+    'workplace.commentBody': ['查看示例页面后留下反馈。', '开始下一项任务前，请先确认文案。'],
+    'workplace.merchantName': ['野花餐馆（虚构）', '巷口小吃店（虚构）', '松光办公用品店（虚构）'],
+    'workplace.accountName': [
+      '餐费（示例）',
+      '交通费（示例）',
+      '会议费（示例）',
+      '办公用品费（示例）',
+      '差旅费（示例）',
+      '其他费用（示例）',
+    ],
+    'workplace.rejectReasonText': ['缺少示例票据', '费用类别需要确认', '示例制度限额需要确认'],
+
+    // brokerage
+    'brokerage.projectTitle': ['示例客户门户搭建', '虚构服务页面改版', '示例预约页面搭建'],
+    'brokerage.serviceCategory': ['网页界面', 'App界面', '办公设计', '生活服务'],
+    'brokerage.providerName': ['代码阁楼工作室（虚构）', '松光界面工坊（虚构）', '清澜居家工坊（虚构）'],
+    'brokerage.providerHeadline': ['展示示例页面和工作记录的虚构合作伙伴', '用于核对虚构项目范围的示例简介'],
+    'brokerage.skillTag': ['Dart', '界面规划', '数据整理', '文案撰写'],
+    'brokerage.proposalMessage': [
+      '已为该示例整理好工作范围和进度检查点。',
+      '针对虚构项目的各个阶段，提出检查点建议。',
+    ],
+    'brokerage.portfolioTitle': ['虚构客户门户示例', '示例预约页面记录', '虚构工作表格改进'],
+    'brokerage.milestoneLabel': ['范围确认', '页面草稿确认', '示例功能确认', '交接记录'],
+    'brokerage.homeServiceName': [
+      '空调清洗（示例）',
+      '小型搬家（示例）',
+      '水龙头检修（示例）',
+      '乐器入门课（示例）',
+    ],
+    'brokerage.requestAnswer': ['上门前，我想先确认一下服务范围。', '示例时间是周末上午。'],
+    'brokerage.regionDong': ['虚构市松光街道', '虚构市清澜街道', '虚构市白蜡街道'],
+    'brokerage.reviewText': ['已查看示例工作记录和说明。', '示例日程说明很容易理解。'],
+    'brokerage.creditLabel': ['报价提交额度（示例）', '未查看报价返还额度（示例）', '充值额度（示例）'],
+    'brokerage.advisorTitle': ['虚构税务专家', '虚构法律专家', '虚构劳动法专家'],
+    'brokerage.consultTopic': ['术语说明示例', '咨询前确认事项示例', '材料清单说明示例'],
+    'brokerage.qnaQuestion': ['这个制度术语是什么意思？（虚构问题）', '咨询记录里有哪些项目？（虚构问题）'],
+    'brokerage.qnaAnswerGeneric': [
+      '一般信息示例。制度介绍中可能包含术语、适用范围和所需材料等内容。本内容不含对个案的任何判断。',
+      '一般信息示例。咨询记录会把问题和参考材料分开记录。不提供任何具体结果或处理方式。',
+    ],
+    'brokerage.consultNoteGeneric': [
+      '一般信息示例记录：介绍了问题主题和制度术语。材料清单为用于说明的虚构条目。',
+      '一般信息示例记录：查看了咨询记录的格式。不含针对个案的结论或建议。',
+    ],
+    'brokerage.officeName': ['松光咨询事务所（虚构）', '清澜档案事务所（虚构）'],
+    'brokerage.serviceTypeName': ['保洁', '搬家', '维修', '课程'],
+
+    // logistics
+    'logistics.zoneName': ['松溪1区（虚构）', '松溪2区（虚构）', '清澜片区（虚构）'],
+    'logistics.hubName': ['松光转运中心（虚构）', '清澜转运中心（虚构）'],
+    // A masked plate: {n} is a two-digit number and {m} the last two digits.
+    // Chinese writes the pattern of a Chinese plate, with its middle masked.
+    'logistics.vehiclePlate': ['沪A·{n}●●{m}'],
+    'logistics.deliveryNote': ['请勿放置门口，需当面签收。', '请通过单元门禁呼叫。', '请先与门卫确认。'],
+    'logistics.entranceHint': ['单元门#••••，请呼叫门卫室', '使用门口呼叫按钮，不显示密码'],
+    'logistics.scanEvent': ['到达转运中心', '干线装车', '派送中', '派送完成', '派送未完成'],
+    'logistics.carrierLabel': ['示例快递公司A（虚构）', '示例快递公司B（虚构）', '示例货运公司C（虚构）'],
+    'logistics.freightType': ['包装材料', '食品物资', '建筑材料', '电子元件', '日用品'],
+    'logistics.routeSummary': ['虚构松光片区→清澜片区', '虚构白蜡片区→松溪片区'],
+    'logistics.fareItem': ['基础运费（示例）', '尾板升降附加费（示例）', '人工搬运费（示例）', '等待时间费（示例）'],
+    // Same order as the items in CoLogisticsDomain: BOX-S-200, TAPE-OPP-48,
+    // TOWEL-COT-03, RICE-BRN-02.
+    'logistics.itemName': ['小号纸箱', '包装胶带48mm', '纯棉毛巾3条', '糙米2kg'],
+    'logistics.ownerLabel': ['货主A（虚构）', '货主B（虚构）', '货主C（虚构）'],
+
+    // hospitality
+    'hospitality.propertyName': ['松林营地（虚构）', '清澜休憩酒店（虚构）', '白蜡小木屋（虚构）'],
+    'hospitality.siteName': ['松风A区（虚构）', '松香B区（虚构）', '松果C区（虚构）'],
+    'hospitality.amenity': ['独立烧烤区', '公共淋浴间', '无线网络'],
+    'hospitality.stayOption': ['烧烤炉具套装（示例）', '一捆柴火（示例）', '提前入住（示例）'],
+    'hospitality.seasonName': ['平季', '节假日旺季（示例）', '工作日特惠期（示例）'],
+    'hospitality.ratePlan': ['标准示例房价', '含早示例房价', '工作日示例房价'],
+    'hospitality.houseRule': ['夜间请保持公共区域安静。', '退房时请查看示例退房清单。'],
+    'hospitality.reviewSnippet': ['示例客房说明一目了然。', '虚构住宿的使用说明整理得很清楚。'],
+    'hospitality.hkCheckItem': ['更换床品', '清洁卫生间', '检查客用品', '检查迷你吧'],
+    'hospitality.maintenanceIssue': [
+      '卫生间漏水检查（示例）',
+      '灯具检修申请（示例）',
+      '空调面板显示检查（示例）',
+      '家具损坏检查（示例）',
+    ],
+    'hospitality.lostItemName': ['蓝色雨伞', '灰色围巾', '一本书', '水杯'],
+    'hospitality.specialRequest': ['高楼层、无烟房（示例）', '要求加一个枕头（示例）', '要求安静客房（示例）'],
+    'hospitality.menuItem': ['裙带菜汤套餐', '蔬菜意面', '水果酸奶', '热茶'],
+    'hospitality.menuOption': ['少饭', '正常饭量', '加配菜（示例）', '去冰'],
+    'hospitality.amenityName': ['毛巾', '饮用水', '牙刷', '枕头'],
+    'hospitality.localSpot': ['早市汤铺（虚构）', '巷口咖啡馆（虚构）', '松光步道（虚构）'],
+    'hospitality.conciergeReply': [
+      '虚构住宿的使用说明可在入住详情中查看。',
+      '已将您的需求记录在示例登记簿中。',
+      '附近的地点均为虚构的演示地点。',
+    ],
+    'hospitality.folioItem': ['房费（示例）', '客房送餐（示例）', '附加选项（示例）'],
+  },
+  // The texts that Chinese writes as English does: units of weight and volume,
+  // the acronyms and file formats of the exam questions, and the name of a
+  // programming language. The clinic and SaaS texts that read the same as
+  // English (a unit symbol, an abbreviation) are listed here too.
+  allowSameAsEnglish: <String, List<String>>{
+    // The weight and the volume of a grocery item are written alike.
+    'catalog.groceryUnit': ['*'],
+    // The weight of a snack is written with its unit symbol.
+    'catalog.commerceUnit': ['200g'],
+    // Acronyms and file formats of the exam questions.
+    'exam_prep.correctChoice': ['WHERE', 'TCP', 'HTTP'],
+    'exam_prep.wrongChoice1': ['JPEG', 'PNG'],
+    'exam_prep.wrongChoice2': ['CSS', 'MP3'],
+    'exam_prep.wrongChoice3': ['SVG', 'TTF'],
+    // The name of a programming language.
+    'brokerage.skillTag': ['Dart'],
   },
 );
