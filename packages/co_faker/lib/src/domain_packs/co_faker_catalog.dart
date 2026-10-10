@@ -33,6 +33,41 @@ class CoFakerCatalog {
     ('pantry', 'ambient', 5900),
   ];
 
+  /// The grocery kinds that sit outside [item]'s rotating table, by stable
+  /// code. Their names are `catalog.groceryKindName`, in this order.
+  ///
+  /// Adding a kind here never moves an item of the rotating table: a demo
+  /// that pins some of its products to these kinds keeps every other
+  /// product's name.
+  static const List<String> groceryKindCodes = <String>[
+    'egg',
+    'beef_stew',
+    'rucola',
+  ];
+
+  /// The name of the grocery kind [code] (one of [groceryKindCodes]) in the
+  /// faker's language. Draws nothing from the random stream.
+  String groceryKindName(String code) {
+    final index = groceryKindCodes.indexOf(code);
+    if (index < 0) {
+      throw ArgumentError.value(code, 'code', 'not in groceryKindCodes');
+    }
+    return indexedText(
+      faker,
+      'catalog.groceryKindName',
+      index,
+      rows: groceryKindCodes.length,
+    );
+  }
+
+  /// The label of a pack of [count] pieces (`10구`, `10-pack`), written after
+  /// a kind name the way [CoFakeCatalogItem.unitLabel] is. Draws nothing from
+  /// the random stream.
+  String groceryPackLabel(int count) {
+    if (count < 1) throw ArgumentError.value(count, 'count');
+    return faker.l10n.format('catalog.groceryPackLabel', {'n': count});
+  }
+
   /// Selects one product; all fields originate from the same catalog entry.
   CoFakeCatalogItem item({bool grocery = false, int? index}) {
     if (index != null && index < 0) {

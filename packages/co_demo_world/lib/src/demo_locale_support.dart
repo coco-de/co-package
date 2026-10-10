@@ -6,6 +6,7 @@ import 'demo_world_config.dart';
 import 'display_field_set.dart';
 import 'display_key.dart';
 import 'display_projector.dart';
+import 'locale_field_gap.dart';
 import 'locale_field_report.dart';
 import 'locale_field_status.dart';
 
@@ -36,17 +37,51 @@ abstract final class DemoLocaleSupport {
     final reports = <LocaleFieldReport>[];
     for (final fieldKey in fields.generators.keys) {
       final keys = samples?[fieldKey] ?? _syntheticKeys(fieldKey, sampleCount);
-      final english = [
-        for (final key in keys) projector.generated(key, locale: DemoLocale.en),
-      ];
+      final byLocale = {
+        for (final locale in DemoLocale.values)
+          locale: [
+            for (final key in keys) projector.generated(key, locale: locale),
+          ],
+      };
+      final neutral = _languageNeutral(keys.length, byLocale);
       for (final locale in DemoLocale.values) {
-        final values = [
-          for (final key in keys) projector.generated(key, locale: locale),
-        ];
-        reports.add(_classify(locale, fieldKey, values, english));
+        reports.add(
+          _classify(
+            locale,
+            fieldKey,
+            keys,
+            byLocale[locale]!,
+            byLocale[DemoLocale.en]!,
+            neutral,
+          ),
+        );
       }
     }
     return reports;
+  }
+
+  /// Which sampled values are written the same in every language, or none
+  /// when the whole field is (a field of codes is not localized text, and
+  /// the ratios below already judge it).
+  ///
+  /// Inside a field the other values of which are in their languages, such a
+  /// value is a fallback the generator returned instead of text — an SKU for
+  /// a product the catalog has no name for. A share of them small enough to
+  /// pass every ratio still leaves those keys without the language, so they
+  /// are reported key by key and keep the field from [LocaleFieldStatus.native]
+  /// in every language, English included.
+  static List<bool> _languageNeutral(
+    int count,
+    Map<DemoLocale, List<String>> byLocale,
+  ) {
+    final english = byLocale[DemoLocale.en]!;
+    final neutral = [
+      for (var index = 0; index < count; index++)
+        byLocale.values.every((values) => values[index] == english[index]),
+    ];
+    return neutral.every((same) => same)
+        ? List<bool>.filled(count, false)
+        : neutral;
   }
 
   /// A Markdown table: one row per field, one column per language.
@@ -102,22 +137,34 @@ abstract final class DemoLocaleSupport {
   static LocaleFieldReport _classify(
     DemoLocale locale,
     String fieldKey,
+    List<DisplayKey> keys,
     List<String> values,
     List<String> english,
+    List<bool> neutral,
   ) {
     final count = values.length;
     var sameAsEnglish = 0;
     var withScript = 0;
     var withHangul = 0;
+    final gaps = <LocaleFieldGap>[];
     final script = _scriptOf(locale);
     for (var index = 0; index < count; index++) {
       if (values[index] == english[index]) sameAsEnglish++;
       if (script == null || script.hasMatch(values[index])) withScript++;
       if (_hangul.hasMatch(values[index])) withHangul++;
+      if (neutral[index]) {
+        gaps.add(
+          LocaleFieldGap(
+            key: keys[index],
+            value: values[index],
+            reason: LocaleFieldGapReason.languageNeutral,
+          ),
+        );
+      }
     }
     final englishShare = count == 0 ? 0.0 : sameAsEnglish / count;
     final scriptShare = count == 0 ? 0.0 : withScript / count;
-    final LocaleFieldStatus status;
+    LocaleFieldStatus status;
     if (locale == DemoLocale.en) {
       status = withHangul > 0
           ? LocaleFieldStatus.koreanResidue
@@ -135,6 +182,11 @@ abstract final class DemoLocaleSupport {
     } else {
       status = LocaleFieldStatus.native;
     }
+    // A native verdict covers every sampled key: a fallback hidden under the
+    // ratios is a partial field, in English as in every other language.
+    if (status == LocaleFieldStatus.native && gaps.isNotEmpty) {
+      status = LocaleFieldStatus.partialFallback;
+    }
     return LocaleFieldReport(
       locale: locale,
       fieldKey: fieldKey,
@@ -142,6 +194,7 @@ abstract final class DemoLocaleSupport {
       englishShare: englishShare,
       scriptShare: scriptShare,
       sample: values.isEmpty ? '' : values.first,
+      gaps: List<LocaleFieldGap>.unmodifiable(gaps),
     );
   }
 

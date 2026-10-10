@@ -157,6 +157,9 @@ const CoL10nBundle ruBundle = CoL10nBundle(
       '600\u00A0г',
       '1\u00A0л',
     ],
+    'catalog.groceryKindName': ['Яйца', 'Говядина ханву для супа', 'Руккола'],
+    // `в упаковке: 10`: the count follows its label, so no noun has to agree.
+    'catalog.groceryPackLabel': ['в упаковке: {n}'],
     'catalog.commerceName': [
       'Беспроводные наушники',
       'Складной ящик для хранения',

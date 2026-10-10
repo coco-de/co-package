@@ -80,6 +80,8 @@ const CoL10nBundle koBundle = CoL10nBundle(
     'catalog.groceryName': ['딸기', '시금치', '손만두', '현미', '닭 안심', '냉동 고등어', '우유'],
     // Korean and English output have always shown the same unit labels.
     'catalog.groceryUnit': ['500g', '200g', '1kg', '2kg', '500g', '600g', '1L'],
+    'catalog.groceryKindName': ['계란', '한우 국거리', '루꼴라'],
+    'catalog.groceryPackLabel': ['{n}구'],
     'catalog.commerceName': ['무선 이어폰', '접이식 수납함', '면 수건 세트', '도자기 컵', '곡물 간식'],
     // Korean and English output have always shown the same unit labels.
     'catalog.commerceUnit': ['1 pair', '1 box', '3 pieces', '1 piece', '200g'],

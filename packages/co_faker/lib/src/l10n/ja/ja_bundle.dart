@@ -95,6 +95,8 @@ const CoL10nBundle jaBundle = CoL10nBundle(
     ],
     // Korean and English output have always shown the same unit labels.
     'catalog.groceryUnit': ['500g', '200g', '1kg', '2kg', '500g', '600g', '1L'],
+    'catalog.groceryKindName': ['卵', '韓牛 スープ用', 'ルッコラ'],
+    'catalog.groceryPackLabel': ['{n}個入り'],
     'catalog.commerceName': [
       'ワイヤレスイヤホン',
       '折りたたみ収納ボックス',

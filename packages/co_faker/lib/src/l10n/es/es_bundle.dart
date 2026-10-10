@@ -165,6 +165,9 @@ const CoL10nBundle esBundle = CoL10nBundle(
       '600 g',
       '1 l',
     ],
+    'catalog.groceryKindName': ['Huevos', 'Ternera Hanwoo para sopa', 'Rúcula'],
+    // `10 uds.`: the abbreviation reads for any count.
+    'catalog.groceryPackLabel': ['{n} uds.'],
     'catalog.commerceName': [
       'Auriculares inalámbricos',
       'Caja de almacenaje plegable',

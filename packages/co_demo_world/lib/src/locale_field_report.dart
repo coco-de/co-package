@@ -1,5 +1,6 @@
 import 'package:co_demo_prefs/co_demo_prefs.dart';
 
+import 'locale_field_gap.dart';
 import 'locale_field_status.dart';
 
 /// The support of one display field in one language, measured from real
@@ -13,6 +14,7 @@ class LocaleFieldReport {
     required this.englishShare,
     required this.scriptShare,
     required this.sample,
+    this.gaps = const <LocaleFieldGap>[],
   });
 
   /// The UI language.
@@ -34,9 +36,15 @@ class LocaleFieldReport {
   /// The first sampled value, for the support table.
   final String sample;
 
+  /// The sampled keys this language does not really have, each with its
+  /// value and the reason — empty when [status] is
+  /// [LocaleFieldStatus.native].
+  final List<LocaleFieldGap> gaps;
+
   @override
   String toString() =>
       'LocaleFieldReport(${locale.tag} $fieldKey ${status.name} '
       'en=${englishShare.toStringAsFixed(2)} '
-      'script=${scriptShare.toStringAsFixed(2)} "$sample")';
+      'script=${scriptShare.toStringAsFixed(2)} gaps=${gaps.length} '
+      '"$sample")';
 }
