@@ -15,9 +15,16 @@
 /// options:
 ///   sharedSteps: true   # every co_bdd shared step, from package:co_bdd/shared_steps.dart
 /// ```
+///
+/// ## Formatting
+///
+/// Both outputs go through `DartFormatter`, so a generated file passes
+/// `dart format --set-exit-if-changed` as is (coco-de/co-package#100).
 library;
 
 import 'package:co_bdd/src/generator/feature_parser.dart';
+import 'package:dart_style/dart_style.dart';
+import 'package:pub_semver/pub_semver.dart';
 
 /// Default import path for shared steps package.
 const defaultSharedStepsImport = 'package:co_bdd/shared_steps.dart';
@@ -70,12 +77,16 @@ const Set<String> sharedStepFileNames = {
 ///
 /// Creates a `WidgetTestDriver(tester)` and passes it to step functions
 /// as `TestDriver driver`.
+///
+/// The output is formatted at [languageVersion] — the language version of the
+/// package the file is generated into (default: the formatter's latest).
 String generateWidgetTest(
   FeatureFile feature, {
   required String stepFolder,
   bool useSharedSteps = false,
   String sharedStepsImport = defaultSharedStepsImport,
   Set<String>? sharedStepNames,
+  Version? languageVersion,
 }) {
   final sharedNames = sharedStepNames ?? sharedStepFileNames;
   final buffer = StringBuffer()
@@ -160,19 +171,23 @@ String generateWidgetTest(
   }
 
   buffer.writeln('}');
-  return buffer.toString();
+  return _format(buffer.toString(), languageVersion);
 }
 
 /// Generates Patrol E2E Test code.
 ///
 /// Creates a `PatrolTestDriver($)` and passes it to step functions
 /// as `TestDriver driver`.
+///
+/// The output is formatted at [languageVersion] — the language version of the
+/// package the file is generated into (default: the formatter's latest).
 String generatePatrolTest(
   FeatureFile feature, {
   required String stepFolder,
   bool useSharedSteps = false,
   String sharedStepsImport = defaultSharedStepsImport,
   Set<String>? sharedStepNames,
+  Version? languageVersion,
 }) {
   final sharedNames = sharedStepNames ?? sharedStepFileNames;
   final buffer = StringBuffer()
@@ -256,7 +271,26 @@ String generatePatrolTest(
   }
 
   buffer.writeln('}');
-  return buffer.toString();
+  return _format(buffer.toString(), languageVersion);
+}
+
+/// Formats [code] the way `dart format` does at [languageVersion].
+///
+/// A version newer than the formatter knows is clamped to its latest, which is
+/// what `dart format` itself uses. Code the formatter cannot parse (for example
+/// a scenario name containing three single quotes) is returned unformatted, so
+/// the compile error still points at the generated line instead of failing the
+/// build here.
+String _format(String code, Version? languageVersion) {
+  final latest = DartFormatter.latestLanguageVersion;
+  final version = languageVersion == null || languageVersion > latest
+      ? latest
+      : languageVersion;
+  try {
+    return DartFormatter(languageVersion: version).format(code);
+  } on FormatterException {
+    return code;
+  }
 }
 
 /// TestDriver-based step call — `funcName(driver, params...)`.

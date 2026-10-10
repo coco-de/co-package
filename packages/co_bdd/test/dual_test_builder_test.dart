@@ -4,18 +4,35 @@ import 'dart:convert';
 import 'package:build/build.dart';
 import 'package:co_bdd/src/generator/dual_test_builder.dart';
 import 'package:co_bdd/src/generator/test_generator.dart';
+import 'package:dart_style/dart_style.dart';
+import 'package:package_config/package_config.dart';
+import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
-/// build_runner 가 넘기는 [BuildStep] 중 빌더가 실제로 쓰는 세 멤버만 구현한다.
+/// build_runner 가 넘기는 [BuildStep] 중 빌더가 실제로 쓰는 네 멤버만 구현한다.
 ///
 /// [writeAsString] 은 일부러 한 박자 늦게 끝난다 — 실제 파일 쓰기처럼
 /// 빌더가 `await` 에서 제어를 내주는 동안 다른 빌드가 끼어들 수 있게 해야
 /// 경합을 재현할 수 있다.
 class _FakeBuildStep implements BuildStep {
-  _FakeBuildStep(this.inputId, this.content);
+  _FakeBuildStep(this.inputId, this.content, {this.languageVersion});
 
   @override
   final AssetId inputId;
+
+  /// 입력 패키지의 언어 버전 — `null` 이면 package config 에 패키지가 없다.
+  final LanguageVersion? languageVersion;
+
+  @override
+  Future<PackageConfig> get packageConfig async => PackageConfig([
+    if (languageVersion case final version?)
+      Package(
+        inputId.package,
+        Uri.parse('file:///${inputId.package}/'),
+        packageUriRoot: Uri.parse('file:///${inputId.package}/lib/'),
+        languageVersion: version,
+      ),
+  ]);
 
   /// 입력 `.feature` 본문.
   final String content;
@@ -126,6 +143,54 @@ Feature: Default
       }
       // 도메인 step 은 여전히 로컬이다.
       expect(code, contains("import 'step/i_open_the_settings_page.dart';"));
+    });
+  });
+
+  group('DualTestBuilder — 생성물은 패키지 언어 버전으로 format 된다 (#100)', () {
+    const feature = '''
+Feature: Format
+  Scenario: A scenario name long enough to push the generated test call past eighty columns
+    Then the {'remittance_quote_receive'} widget should contain {'17,850,000동'} text
+''';
+
+    for (final (major, minor) in [(3, 7), (3, 6)]) {
+      test(
+        'should match DartFormatter at the package version $major.$minor',
+        () async {
+          final step = _FakeBuildStep(
+            AssetId('a', 'test/src/bdd/format.feature'),
+            feature,
+            languageVersion: LanguageVersion(major, minor),
+          );
+
+          await DualTestBuilder(options: const BuilderOptions({})).build(step);
+
+          final formatter = DartFormatter(
+            languageVersion: Version(major, minor, 0),
+          );
+          expect(step.outputs, hasLength(2));
+          for (final code in step.outputs.values) {
+            expect(code, formatter.format(code));
+          }
+        },
+      );
+    }
+
+    test('should fall back to the latest version when the package is '
+        'unknown', () async {
+      final step = _FakeBuildStep(
+        AssetId('a', 'test/src/bdd/format.feature'),
+        feature,
+      );
+
+      await DualTestBuilder(options: const BuilderOptions({})).build(step);
+
+      final formatter = DartFormatter(
+        languageVersion: DartFormatter.latestLanguageVersion,
+      );
+      for (final code in step.outputs.values) {
+        expect(code, formatter.format(code));
+      }
     });
   });
 }
