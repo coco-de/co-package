@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/coco-de/co-package/compare/co_demo_world-v0.2.0...co_demo_world-v0.2.1) (2026-10-10)
+
+
+### 버그 수정
+
+* **co_demo_world:** 🐛 grocery 5 SKU 11개 언어 공급과 언어 중립 폴백 native 분류 수정 ([#96](https://github.com/coco-de/co-package/issues/96)) ([#97](https://github.com/coco-de/co-package/issues/97)) ([78911c1](https://github.com/coco-de/co-package/commit/78911c1ac9fc536e7956bfc04a27a23318a23286))
+
 ## [0.2.0](https://github.com/coco-de/co-package/compare/co_demo_world-v0.1.0...co_demo_world-v0.2.0) (2026-10-09)
 
 

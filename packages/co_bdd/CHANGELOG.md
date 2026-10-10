@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/coco-de/co-package/compare/co_bdd-v0.2.0...co_bdd-v0.2.1) (2026-10-10)
+
+
+### 버그 수정
+
+* **co_bdd:** 🐛 생성 테스트를 dart format 결과와 같은 바이트로 낸다 ([#100](https://github.com/coco-de/co-package/issues/100)) ([#101](https://github.com/coco-de/co-package/issues/101)) ([1a55710](https://github.com/coco-de/co-package/commit/1a5571060d6b371567aff6f02d97ecc9264c684e))
+
 ## [0.2.0](https://github.com/coco-de/co-package/compare/co_bdd-v0.1.2...co_bdd-v0.2.0) (2026-09-29)
 
 
