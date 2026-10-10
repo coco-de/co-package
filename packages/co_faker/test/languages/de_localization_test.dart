@@ -85,11 +85,11 @@ void main() {
       final data = CoLanguageData.registered('de');
       expect(data.level, CoLanguageLevel.localized);
       expect(CoFakerLanguages.resolve('de').language.domain, isTrue);
-      // The keys of English, in its order: 252 keys and 810 texts.
+      // The keys of English, in its order: 254 keys and 814 texts.
       expect(bundle.texts.keys.toList(), english.texts.keys.toList());
       expect(
         bundle.texts.values.fold<int>(0, (sum, list) => sum + list.length),
-        810,
+        814,
       );
       expect(clinic.koreanValues, CoKoreanValues.none);
       expect(saas.koreanValues, CoKoreanValues.none);

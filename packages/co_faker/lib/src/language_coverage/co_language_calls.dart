@@ -3,6 +3,7 @@ import '../clinic_data.dart';
 import '../clinic_ops.dart';
 import '../clinic_texts.dart';
 import '../co_faker.dart';
+import '../domain_packs/co_faker_catalog.dart';
 import '../domain_packs/co_faker_exam_prep.dart';
 import '../domain_packs/co_faker_fx.dart';
 import '../domain_packs/co_faker_helpdesk.dart';
@@ -985,6 +986,24 @@ final List<CoLanguageCall> generatorCalls = <CoLanguageCall>[
         for (var i = 0; i < 9; i++)
           f.catalog.item(grocery: grocery, index: i).toJson(),
       for (var i = 0; i < 4; i++) f.catalog.item().toJson(),
+    ],
+  ),
+  CoLanguageCall(
+    'catalog.groceryKindCodes',
+    (f) => CoFakerCatalog.groceryKindCodes,
+  ),
+  CoLanguageCall(
+    'catalog.groceryKindName',
+    (f) => [
+      for (final code in CoFakerCatalog.groceryKindCodes)
+        f.catalog.groceryKindName(code),
+    ],
+  ),
+  CoLanguageCall(
+    'catalog.groceryPackLabel',
+    (f) => [
+      for (final count in const <int>[1, 10, 15, 20])
+        f.catalog.groceryPackLabel(count),
     ],
   ),
   CoLanguageCall('examPrep.sections', (f) => CoFakerExamPrep.sections),

@@ -155,6 +155,9 @@ const CoL10nBundle frBundle = CoL10nBundle(
       '600\u00A0g',
       '1\u00A0L',
     ],
+    'catalog.groceryKindName': ['Œufs', 'Bœuf Hanwoo pour soupe', 'Roquette'],
+    // `x10`, as a pack is labelled: no noun has to agree with the count.
+    'catalog.groceryPackLabel': ['x{n}'],
     'catalog.commerceName': [
       'Écouteurs sans fil',
       'Boîte de rangement pliable',

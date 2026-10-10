@@ -152,6 +152,9 @@ const CoL10nBundle itBundle = CoL10nBundle(
       '600 g',
       '1 L',
     ],
+    'catalog.groceryKindName': ['Uova', 'Manzo Hanwoo da brodo', 'Rucola'],
+    // `10 pz`: the abbreviation reads for any count.
+    'catalog.groceryPackLabel': ['{n} pz'],
     'catalog.commerceName': [
       'Auricolari senza fili',
       'Scatola portaoggetti pieghevole',

@@ -162,6 +162,10 @@ const CoL10nBundle arBundle = CoL10nBundle(
       '600 جم',
       '1 لتر',
     ],
+    'catalog.groceryKindName': ['بيض', 'لحم هانوو للحساء', 'جرجير'],
+    // `عبوة من 10` (a pack of 10): the count follows a preposition, so no noun
+    // has to agree with it.
+    'catalog.groceryPackLabel': ['عبوة من {n}'],
     'catalog.commerceName': [
       'سماعات أذن لاسلكية',
       'صندوق تخزين قابل للطي',

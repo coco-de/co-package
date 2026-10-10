@@ -83,6 +83,8 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     // The units of weight and volume are written with their symbols, as the
     // English and Korean labels are.
     'catalog.groceryUnit': ['500g', '200g', '1kg', '2kg', '500g', '600g', '1L'],
+    'catalog.groceryKindName': ['鸡蛋', '韩牛汤用牛肉', '芝麻菜'],
+    'catalog.groceryPackLabel': ['{n}枚装'],
     'catalog.commerceName': ['无线耳机', '折叠收纳箱', '纯棉毛巾套装', '陶瓷杯', '谷物零食'],
     'catalog.commerceUnit': ['1副', '1个', '3条', '1个', '200g'],
 

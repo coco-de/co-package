@@ -149,6 +149,9 @@ const CoL10nBundle deBundle = CoL10nBundle(
       '600 g',
       '1 l',
     ],
+    'catalog.groceryKindName': ['Eier', 'Hanwoo-Rind für Suppe', 'Rucola'],
+    // `10er-Pack`: the count fuses with the pack, so no noun has to agree.
+    'catalog.groceryPackLabel': ['{n}er-Pack'],
     'catalog.commerceName': [
       'Kabellose Ohrhörer',
       'Faltbare Aufbewahrungsbox',

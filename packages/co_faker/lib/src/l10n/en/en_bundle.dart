@@ -138,6 +138,11 @@ const CoL10nBundle enBundle = CoL10nBundle(
     ],
     // Korean and English output have always shown the same unit labels.
     'catalog.groceryUnit': ['500g', '200g', '1kg', '2kg', '500g', '600g', '1L'],
+    // Grocery kinds outside the rotating catalog, in the order of
+    // `CoFakerCatalog.groceryKindCodes` (egg, beef_stew, rucola).
+    'catalog.groceryKindName': ['Eggs', 'Hanwoo beef for soup', 'Arugula'],
+    // A pack of {n} pieces, written after the kind name like a unit label.
+    'catalog.groceryPackLabel': ['{n}-pack'],
     'catalog.commerceName': [
       'Wireless earphones',
       'Folding storage box',
