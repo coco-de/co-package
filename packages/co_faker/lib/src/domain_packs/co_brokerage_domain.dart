@@ -107,6 +107,15 @@ class CoBrokerageDomain extends CoFakerDomain {
       'headline': 'providerHeadline',
       'skills': 'skillTag',
     },
+    'service_offer': {
+      'message': 'proposalMessage',
+      'providerName': 'providerName',
+    },
+    'service_match': {'providerName': 'providerName'},
+    'portfolio_item': {
+      'title': 'portfolioTitle',
+      'categoryName': 'serviceCategory',
+    },
     'home_service_type': {
       'name': 'serviceTypeName',
       'parentId': 'serviceParent',

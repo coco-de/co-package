@@ -200,11 +200,17 @@ extension CoFakerDomainLookup on List<CoFakerDomain> {
     return null;
   }
 
-  /// Explicit role name the packs assign to [field] of [entity], if any.
+  /// Role name the packs assign to [field] of [entity], if any.
+  ///
+  /// An explicit [CoFakerDomain.entityRoles] entry wins. Otherwise a pack
+  /// that owns [entity] (lists it in its entities or entity roles) lends its
+  /// role of the same name as [field] (`providerName` on a `brokerage`
+  /// entity is `brokerage.providerName`), ahead of the general roles.
   String? entityRole(String? entity, String field) {
     if (entity == null) return null;
     final dot = entity.indexOf('.');
     final key = dot < 0 ? entity : entity.substring(dot + 1);
+    final owners = <CoFakerDomain>[];
     for (final domain in this) {
       if (dot >= 0 && domain.name != entity.substring(0, dot)) {
         continue;
@@ -212,6 +218,18 @@ extension CoFakerDomainLookup on List<CoFakerDomain> {
       final role = domain.entityRoles[key]?[field];
       if (role != null) {
         return role.contains('.') ? role : '${domain.name}.$role';
+      }
+      if (domain.entities.containsKey(key) ||
+          domain.entityRoles.containsKey(key)) {
+        owners.add(domain);
+      }
+    }
+    final normalized = CoDomainRole.normalize(field);
+    for (final domain in owners) {
+      for (final role in domain.roles.keys) {
+        if (CoDomainRole.normalize(role) == normalized) {
+          return '${domain.name}.$role';
+        }
       }
     }
     return null;

@@ -367,6 +367,11 @@ class CoFakerSchema {
   /// [hasEnum] marks fields whose allowed values are known, which always
   /// resolves to [CoFieldRole.status]. [entity] decides whether a bare
   /// `name` field is a person's name or a title.
+  ///
+  /// A name word matches only at the start of a camelCase or snake_case word
+  /// (`capacity` is not a `city`), and the first matching role that fits
+  /// [type] wins: a `bool` field is always [CoFieldRole.boolean], and a
+  /// numeric field never takes a text role.
   CoFieldRole infer(
     String name, {
     String type = 'String',
@@ -374,56 +379,70 @@ class CoFakerSchema {
     String? entity,
   }) {
     if (hasEnum) return CoFieldRole.status;
-    final key = _normalize(name);
     final baseType = _baseType(type);
+    return _candidates(
+      _FieldName(name),
+      baseType,
+      entity,
+    ).firstWhere((role) => _fits(role, baseType));
+  }
+
+  /// The roles [n] suggests, most specific first; [infer] takes the first
+  /// that fits the field type, and the last ones always fit.
+  Iterable<CoFieldRole> _candidates(
+    _FieldName n,
+    String baseType,
+    String? entity,
+  ) sync* {
+    final key = n.key;
     if (key == 'name') {
-      return _isPersonEntity(entity) ? CoFieldRole.name : CoFieldRole.title;
+      yield _isPersonEntity(entity) ? CoFieldRole.name : CoFieldRole.title;
     }
 
-    if (key == 'id' || key == 'uid' || key == 'pk') return CoFieldRole.id;
-    if (key.endsWith('id') && key.length > 2) return CoFieldRole.reference;
+    if (key == 'id' || key == 'uid' || key == 'pk') yield CoFieldRole.id;
+    if (key.endsWith('id') && key.length > 2) yield CoFieldRole.reference;
     if (key == 'index' ||
         key.endsWith('index') ||
-        key.contains('sortorder') ||
+        n.has('sortorder') ||
         key == 'order' ||
         key == 'position' ||
         key == 'rank' ||
         key == 'seq' ||
         key == 'sequence') {
-      return CoFieldRole.ordinal;
+      yield CoFieldRole.ordinal;
     }
-    if (key.contains('rrn') || key.contains('residentnumber')) {
-      return CoFieldRole.rrn;
+    if (n.has('rrn') || n.has('residentnumber')) {
+      yield CoFieldRole.rrn;
     }
-    if (_containsAny(key, const [
+    if (n.hasAny(const [
       'businessnumber',
       'businessregistration',
       'bizno',
       'brn',
     ])) {
-      return CoFieldRole.businessNumber;
+      yield CoFieldRole.businessNumber;
     }
-    if (key == 'pair' || key.endsWith('pair')) return CoFieldRole.currencyPair;
+    if (key == 'pair' || key.endsWith('pair')) yield CoFieldRole.currencyPair;
     if (key == 'place' ||
-        _containsAny(key, const [
+        n.hasAny(const [
           'placename',
           'venue',
           'meetingpoint',
           'meetingplace',
           'spot',
         ])) {
-      return CoFieldRole.place;
+      yield CoFieldRole.place;
     }
-    if (key.endsWith('rate')) return CoFieldRole.rate;
-    if (key.contains('email')) return CoFieldRole.email;
-    if (key.contains('account')) return CoFieldRole.username;
-    if (key.contains('phone') || key.contains('mobile') || key == 'tel') {
-      return CoFieldRole.phone;
+    if (key.endsWith('rate')) yield CoFieldRole.rate;
+    if (n.has('email')) yield CoFieldRole.email;
+    if (n.has('account')) yield CoFieldRole.username;
+    if (n.has('phone') || n.has('mobile') || key == 'tel') {
+      yield CoFieldRole.phone;
     }
-    if (key.contains('avatar') || key.contains('profileimage')) {
-      return CoFieldRole.avatar;
+    if (n.has('avatar') || n.has('profileimage')) {
+      yield CoFieldRole.avatar;
     }
-    if (_containsAny(key, const [
+    if (n.hasAny(const [
       'image',
       'thumbnail',
       'photo',
@@ -433,30 +452,24 @@ class CoFakerSchema {
       'logo',
       'icon',
     ])) {
-      return CoFieldRole.image;
+      yield CoFieldRole.image;
     }
-    if (_containsAny(key, const ['url', 'link', 'website', 'homepage'])) {
-      return CoFieldRole.url;
+    if (n.hasAny(const ['url', 'link', 'website', 'homepage'])) {
+      yield CoFieldRole.url;
     }
-    if (key.contains('firstname') || key == 'givenname') {
-      return CoFieldRole.firstName;
+    if (n.has('firstname') || key == 'givenname') {
+      yield CoFieldRole.firstName;
     }
-    if (key.contains('lastname') ||
-        key.contains('familyname') ||
-        key == 'surname') {
-      return CoFieldRole.lastName;
+    if (n.has('lastname') || n.has('familyname') || key == 'surname') {
+      yield CoFieldRole.lastName;
     }
-    if (key.contains('username') ||
-        key.contains('nickname') ||
-        key == 'handle') {
-      return CoFieldRole.username;
+    if (n.has('username') || n.has('nickname') || key == 'handle') {
+      yield CoFieldRole.username;
     }
-    if (key.contains('jobtitle') ||
-        key == 'job' ||
-        key.contains('occupation')) {
-      return CoFieldRole.jobTitle;
+    if (n.has('jobtitle') || key == 'job' || n.has('occupation')) {
+      yield CoFieldRole.jobTitle;
     }
-    if (_containsAny(key, const [
+    if (n.hasAny(const [
       'company',
       'publisher',
       'brand',
@@ -465,10 +478,10 @@ class CoFakerSchema {
       'shopname',
       'storename',
     ])) {
-      return CoFieldRole.company;
+      yield CoFieldRole.company;
     }
-    if (key.contains('product')) return CoFieldRole.productName;
-    if (_containsAny(key, const [
+    if (n.has('product')) yield CoFieldRole.productName;
+    if (n.hasAny(const [
       'name',
       'author',
       'writer',
@@ -484,35 +497,43 @@ class CoFakerSchema {
       'guest',
       'person',
     ])) {
-      return CoFieldRole.name;
+      yield CoFieldRole.name;
     }
-    if (_containsAny(key, const [
+    if (n.hasAny(const [
       'address',
       'street',
       'location',
       'region',
       'district',
     ])) {
-      return CoFieldRole.address;
+      yield CoFieldRole.address;
     }
-    if (key.contains('city')) return CoFieldRole.city;
-    if (key.contains('country')) return CoFieldRole.country;
-    if (key.contains('postal') || key.contains('zip')) {
-      return CoFieldRole.postalCode;
+    if (n.has('city')) yield CoFieldRole.city;
+    if (n.has('country')) yield CoFieldRole.country;
+    if (n.has('postal') || n.has('zip')) {
+      yield CoFieldRole.postalCode;
     }
-    if (key.contains('subtitle')) return CoFieldRole.subtitle;
-    if (_containsAny(key, const ['title', 'subject', 'headline', 'caption'])) {
-      return CoFieldRole.title;
+    if (n.has('subtitle')) yield CoFieldRole.subtitle;
+    if (n.hasAny(const ['title', 'subject', 'headline', 'caption'])) {
+      yield CoFieldRole.title;
     }
-    if (_containsAny(key, const ['status', 'state', 'stage', 'phase'])) {
-      return CoFieldRole.status;
+    if (n.hasAny(const ['status', 'state', 'stage', 'phase'])) {
+      yield CoFieldRole.status;
     }
-    if (_containsAny(key, const ['category', 'genre', 'tag', 'label']) ||
+    if (n.hasAny(const [
+          'category',
+          'genre',
+          'tag',
+          'hashtag',
+          'label',
+          'skill',
+          'keyword',
+        ]) ||
         key == 'kind' ||
         key == 'type') {
-      return CoFieldRole.category;
+      yield CoFieldRole.category;
     }
-    if (_containsAny(key, const [
+    if (n.hasAny(const [
       'description',
       'content',
       'body',
@@ -527,24 +548,30 @@ class CoFakerSchema {
       'text',
       'reason',
     ])) {
-      return CoFieldRole.description;
+      yield CoFieldRole.description;
     }
-    if (_containsAny(key, const [
+    if (n.hasAny(const [
       'price',
       'amount',
       'cost',
       'salary',
       'balance',
-      'total',
+      'subtotal',
       'budget',
       'revenue',
     ])) {
-      return CoFieldRole.price;
+      yield CoFieldRole.price;
     }
-    if (key.contains('rating') || key.contains('stars')) {
-      return CoFieldRole.rating;
+    // `total` is money only as the head noun (`orderTotal`) or before a money
+    // unit (`totalMinor`); `totalSessions` counts sessions.
+    if (n.words.last == 'total' ||
+        (n.words.first == 'total' && _moneyUnits.contains(n.words.last))) {
+      yield CoFieldRole.price;
     }
-    if (_containsAny(key, const [
+    if (n.has('rating') || n.has('stars')) {
+      yield CoFieldRole.rating;
+    }
+    if (n.hasAny(const [
       'count',
       'quantity',
       'qty',
@@ -558,39 +585,36 @@ class CoFakerSchema {
       'duration',
       'pages',
       'level',
+      'headcount',
+      'guests',
     ])) {
-      return CoFieldRole.quantity;
+      yield CoFieldRole.quantity;
     }
-    if (_containsAny(key, const ['progress', 'percent', 'score'])) {
-      return CoFieldRole.progress;
+    if (n.words.first == 'total') yield CoFieldRole.quantity;
+    if (n.hasAny(const ['progress', 'percent', 'score'])) {
+      yield CoFieldRole.progress;
     }
-    if (key == 'age') return CoFieldRole.age;
-    if (key.contains('birth') || key == 'dob') return CoFieldRole.dateOfBirth;
-    if (_containsAny(key, const [
-          'due',
-          'expire',
-          'deadline',
-          'scheduled',
-          'until',
-        ]) ||
+    if (key == 'age') yield CoFieldRole.age;
+    if (n.has('birth') || key == 'dob') yield CoFieldRole.dateOfBirth;
+    if (n.hasAny(const ['due', 'expire', 'deadline', 'scheduled', 'until']) ||
         key.startsWith('start') ||
         key.startsWith('end')) {
-      return CoFieldRole.dateFuture;
+      yield CoFieldRole.dateFuture;
     }
     if (key.endsWith('edat') ||
         key.endsWith('sat') ||
         key.endsWith('dueat') ||
-        key.contains('date') ||
-        key.contains('time')) {
-      return CoFieldRole.date;
+        n.has('date') ||
+        n.has('time')) {
+      yield CoFieldRole.date;
     }
-    if (key.contains('gender') || key == 'sex') return CoFieldRole.gender;
-    if (key.contains('currency')) return CoFieldRole.currency;
-    if (key.contains('color') || key.contains('colour')) {
-      return CoFieldRole.color;
+    if (n.has('gender') || key == 'sex') yield CoFieldRole.gender;
+    if (n.has('currency')) yield CoFieldRole.currency;
+    if (n.has('color') || n.has('colour')) {
+      yield CoFieldRole.color;
     }
-    if (key.contains('slug')) return CoFieldRole.slug;
-    if (_containsAny(key, const [
+    if (n.has('slug')) yield CoFieldRole.slug;
+    if (n.hasAny(const [
       'code',
       'sku',
       'token',
@@ -600,17 +624,17 @@ class CoFakerSchema {
       'serial',
       'uuid',
     ])) {
-      return CoFieldRole.code;
+      yield CoFieldRole.code;
     }
-    if (key == 'lat' || key.contains('latitude')) return CoFieldRole.latitude;
-    if (key == 'lng' || key == 'lon' || key.contains('longitude')) {
-      return CoFieldRole.longitude;
+    if (key == 'lat' || n.has('latitude')) yield CoFieldRole.latitude;
+    if (key == 'lng' || key == 'lon' || n.has('longitude')) {
+      yield CoFieldRole.longitude;
     }
     if (baseType == 'bool' ||
         key.startsWith('is') ||
         key.startsWith('has') ||
         key.startsWith('can') ||
-        _containsAny(key, const [
+        n.hasAny(const [
           'enabled',
           'active',
           'completed',
@@ -621,13 +645,13 @@ class CoFakerSchema {
           'verified',
           'flag',
         ])) {
-      return CoFieldRole.boolean;
+      yield CoFieldRole.boolean;
     }
-    if (baseType == 'DateTime') return CoFieldRole.date;
+    if (baseType == 'DateTime') yield CoFieldRole.date;
     if (baseType == 'int' || baseType == 'double' || baseType == 'num') {
-      return CoFieldRole.number;
+      yield CoFieldRole.number;
     }
-    return CoFieldRole.text;
+    yield CoFieldRole.text;
   }
 
   /// Generates a single field value.
@@ -897,6 +921,47 @@ class CoFakerSchema {
     return value;
   }
 
+  /// Whether [role] makes a value of [baseType]: a `bool` field takes only
+  /// [CoFieldRole.boolean], and a numeric field only a numeric role or a
+  /// 0/1 [CoFieldRole.boolean].
+  static bool _fits(CoFieldRole role, String baseType) {
+    switch (baseType) {
+      case 'bool':
+        return role == CoFieldRole.boolean;
+      case 'int':
+      case 'double':
+      case 'num':
+        return _numericRoles.contains(role);
+      default:
+        return true;
+    }
+  }
+
+  /// Last words that make a `total<word>` field an amount of money.
+  static const Set<String> _moneyUnits = <String>{
+    'minor',
+    'cents',
+    'won',
+    'krw',
+    'usd',
+  };
+
+  static const Set<CoFieldRole> _numericRoles = <CoFieldRole>{
+    CoFieldRole.id,
+    CoFieldRole.reference,
+    CoFieldRole.ordinal,
+    CoFieldRole.price,
+    CoFieldRole.quantity,
+    CoFieldRole.rating,
+    CoFieldRole.progress,
+    CoFieldRole.age,
+    CoFieldRole.boolean,
+    CoFieldRole.latitude,
+    CoFieldRole.longitude,
+    CoFieldRole.rate,
+    CoFieldRole.number,
+  };
+
   static bool _isPersonEntity(String? entity) {
     if (entity == null) return true;
     final key = _normalize(entity);
@@ -938,4 +1003,52 @@ class CoFakerSchema {
     if (value.isEmpty) return value;
     return '${value[0].toUpperCase()}${value.substring(1)}';
   }
+}
+
+/// A field name normalized like `_normalize`, with the offsets where its
+/// camelCase, snake_case, or digit words start.
+class _FieldName {
+  factory _FieldName(String name) {
+    final key = CoFakerSchema._normalize(name);
+    final words = [
+      for (final match in RegExp(
+        '[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+',
+      ).allMatches(name))
+        match[0]!.toLowerCase(),
+    ];
+    if (words.isEmpty || words.join() != key) {
+      // Letters outside a-z: no reliable words, so any offset may start one.
+      return _FieldName._(key, [key], {for (var i = 0; i < key.length; i++) i});
+    }
+    final starts = <int>{};
+    var offset = 0;
+    for (final word in words) {
+      starts.add(offset);
+      offset += word.length;
+    }
+    return _FieldName._(key, words, starts);
+  }
+
+  const _FieldName._(this.key, this.words, this.starts);
+
+  /// Lowercased letters and digits of the name.
+  final String key;
+
+  /// The words of the name, lowercased.
+  final List<String> words;
+
+  /// Offsets in [key] where a word starts.
+  final Set<int> starts;
+
+  /// Whether [needle] occurs in [key] starting at a word start; it may run
+  /// over several words (`sortorder` in `sortOrder`).
+  bool has(String needle) {
+    for (var i = key.indexOf(needle); i >= 0; i = key.indexOf(needle, i + 1)) {
+      if (starts.contains(i)) return true;
+    }
+    return false;
+  }
+
+  /// Whether any of [needles] [has] a match.
+  bool hasAny(List<String> needles) => needles.any(has);
 }

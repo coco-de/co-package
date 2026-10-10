@@ -1,0 +1,1974 @@
+{
+  "recipes": {
+    "healthcare_vet": {
+      "entities": [
+        {
+          "name": "pet",
+          "fields": {
+            "name": "String",
+            "animalKind": "String",
+            "breed": "String",
+            "photoUrl": "String",
+            "birthDate": "DateTime",
+            "weightKg": "double",
+            "sex": "String",
+            "neutered": "bool",
+            "visitCount": "int",
+            "dueVaccineCount": "int",
+            "guardianName": "String"
+          },
+          "enums": {
+            "animalKind": [
+              "dog",
+              "cat",
+              "small_mammal",
+              "bird",
+              "reptile"
+            ],
+            "sex": [
+              "male",
+              "female"
+            ]
+          }
+        },
+        {
+          "name": "medical_note",
+          "fields": {
+            "title": "String",
+            "diagnosisNote": "String",
+            "prescriptionNote": "String",
+            "vetName": "String",
+            "visitedAt": "DateTime",
+            "nextVisitAt": "DateTime?",
+            "petName": "String"
+          }
+        },
+        {
+          "name": "vet_slot",
+          "fields": {
+            "startsAt": "DateTime",
+            "endsAt": "DateTime",
+            "remaining": "int",
+            "capacity": "int",
+            "vetName": "String",
+            "roomName": "String"
+          }
+        },
+        {
+          "name": "vet_visit",
+          "fields": {
+            "petName": "String",
+            "guardianName": "String",
+            "vetName": "String",
+            "startsAt": "DateTime",
+            "visitReason": "String",
+            "isFirstVisit": "bool",
+            "memo": "String"
+          },
+          "enums": {
+            "visitReason": [
+              "vaccination",
+              "checkup",
+              "skin",
+              "digestive",
+              "injury",
+              "dental",
+              "other"
+            ]
+          }
+        },
+        {
+          "name": "symptom_intake",
+          "fields": {
+            "petName": "String",
+            "chiefComplaint": "String",
+            "onsetDate": "DateTime",
+            "appetiteLevel": "int",
+            "vomiting": "bool",
+            "diarrhea": "bool",
+            "medications": "String",
+            "memo": "String"
+          }
+        },
+        {
+          "name": "vaccination",
+          "fields": {
+            "vaccineName": "String",
+            "petName": "String",
+            "dueDate": "DateTime",
+            "doneAt": "DateTime?",
+            "done": "bool",
+            "hospitalName": "String"
+          }
+        },
+        {
+          "name": "preventive_dose",
+          "fields": {
+            "label": "String",
+            "petName": "String",
+            "scheduledOn": "DateTime",
+            "done": "bool",
+            "productName": "String"
+          }
+        },
+        {
+          "name": "vet_notice",
+          "fields": {
+            "title": "String",
+            "body": "String",
+            "category": "String",
+            "isRead": "bool",
+            "postedAt": "DateTime"
+          },
+          "enums": {
+            "category": [
+              "reminder",
+              "appointment",
+              "result",
+              "clinic_news"
+            ]
+          }
+        },
+        {
+          "name": "consult_message",
+          "fields": {
+            "senderName": "String",
+            "body": "String",
+            "sentAt": "DateTime",
+            "isMine": "bool"
+          }
+        },
+        {
+          "name": "guardian_setting",
+          "fields": {
+            "vaccinePush": "bool",
+            "appointmentPush": "bool",
+            "smsBackup": "bool",
+            "marketingOptIn": "bool",
+            "remindDaysBefore": "int"
+          }
+        }
+      ],
+      "roles": {
+        "pet.name": "vet.petName supported",
+        "pet.animalKind": "status generic",
+        "pet.breed": "vet.breed supported",
+        "pet.photoUrl": "image generic",
+        "pet.birthDate": "korea.birthDate supported",
+        "pet.weightKg": "vet.weightKg supported",
+        "pet.sex": "status generic",
+        "pet.neutered": "boolean generic",
+        "pet.visitCount": "quantity generic",
+        "pet.dueVaccineCount": "quantity generic",
+        "pet.guardianName": "clinic.patientName supported",
+        "medical_note.title": "title generic",
+        "medical_note.diagnosisNote": "description generic",
+        "medical_note.prescriptionNote": "description generic",
+        "medical_note.vetName": "name generic",
+        "medical_note.visitedAt": "date generic",
+        "medical_note.nextVisitAt": "date generic",
+        "medical_note.petName": "name generic",
+        "vet_slot.startsAt": "dateFuture generic",
+        "vet_slot.endsAt": "dateFuture generic",
+        "vet_slot.remaining": "quantity generic",
+        "vet_slot.capacity": "quantity generic",
+        "vet_slot.vetName": "name generic",
+        "vet_slot.roomName": "clinic.roomName supported",
+        "vet_visit.petName": "vet.petName supported",
+        "vet_visit.guardianName": "clinic.patientName supported",
+        "vet_visit.vetName": "name generic",
+        "vet_visit.startsAt": "dateFuture generic",
+        "vet_visit.visitReason": "status generic",
+        "vet_visit.isFirstVisit": "boolean generic",
+        "vet_visit.memo": "description generic",
+        "symptom_intake.petName": "name generic",
+        "symptom_intake.chiefComplaint": "text unsupported",
+        "symptom_intake.onsetDate": "date generic",
+        "symptom_intake.appetiteLevel": "quantity generic",
+        "symptom_intake.vomiting": "boolean generic",
+        "symptom_intake.diarrhea": "boolean generic",
+        "symptom_intake.medications": "text unsupported",
+        "symptom_intake.memo": "description generic",
+        "vaccination.vaccineName": "vet.vaccineName supported",
+        "vaccination.petName": "vet.petName supported",
+        "vaccination.dueDate": "dateFuture generic",
+        "vaccination.doneAt": "boolean generic",
+        "vaccination.done": "boolean generic",
+        "vaccination.hospitalName": "clinic.clinicName supported",
+        "preventive_dose.label": "category generic",
+        "preventive_dose.petName": "name generic",
+        "preventive_dose.scheduledOn": "dateFuture generic",
+        "preventive_dose.done": "boolean generic",
+        "preventive_dose.productName": "productName generic",
+        "vet_notice.title": "title generic",
+        "vet_notice.body": "description generic",
+        "vet_notice.category": "status generic",
+        "vet_notice.isRead": "boolean generic",
+        "vet_notice.postedAt": "date generic",
+        "consult_message.senderName": "name generic",
+        "consult_message.body": "description generic",
+        "consult_message.sentAt": "date generic",
+        "consult_message.isMine": "boolean generic",
+        "guardian_setting.vaccinePush": "boolean generic",
+        "guardian_setting.appointmentPush": "boolean generic",
+        "guardian_setting.smsBackup": "boolean generic",
+        "guardian_setting.marketingOptIn": "boolean generic",
+        "guardian_setting.remindDaysBefore": "number generic"
+      },
+      "values": {
+        "ko/pet": [
+          {
+            "name": "콩이",
+            "animalKind": "dog",
+            "breed": "푸들",
+            "photoUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "birthDate": "1987-12-18T00:00:00.000Z",
+            "weightKg": 3.07,
+            "sex": "male",
+            "neutered": true,
+            "visitCount": 67,
+            "dueVaccineCount": 94,
+            "guardianName": "강현우"
+          },
+          {
+            "name": "두부",
+            "animalKind": "cat",
+            "breed": "푸들",
+            "photoUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "birthDate": "1967-07-18T00:00:00.000Z",
+            "weightKg": 2.39,
+            "sex": "female",
+            "neutered": true,
+            "visitCount": 36,
+            "dueVaccineCount": 84,
+            "guardianName": "한수빈"
+          }
+        ],
+        "ko/medical_note": [
+          {
+            "title": "음악 주제 공간",
+            "diagnosisNote": "성과 나눔 추천 세계 생각 소식. 감각 추천 의미 신뢰 아침 준비.",
+            "prescriptionNote": "협업 균형 연결 디자인 나눔 보관. 성장 의미 관리 정보 비교 노력.",
+            "vetName": "한서연",
+            "visitedAt": "2025-06-12T22:00:52.335Z",
+            "nextVisitAt": "2025-02-21T22:04:15.569Z",
+            "petName": "서서윤"
+          },
+          {
+            "title": "안내 노력 정보",
+            "diagnosisNote": "회고 학습 정리 연습 회고 효율. 탐색 확인 회고 공간 시간 시간.",
+            "prescriptionNote": "약속 동네 관찰 노력 노력 질문. 감각 사용자 취향 데이터 데이터 보관.",
+            "vetName": "윤민서",
+            "visitedAt": "2025-12-12T10:03:44.643Z",
+            "nextVisitAt": "2025-09-02T15:31:21.672Z",
+            "petName": "윤선우"
+          }
+        ],
+        "ko/vet_slot": [
+          {
+            "startsAt": "2026-02-18T05:22:57.387Z",
+            "endsAt": "2026-01-10T05:17:26.819Z",
+            "remaining": 95,
+            "capacity": 3,
+            "vetName": "조건우",
+            "roomName": "시술실2"
+          },
+          {
+            "startsAt": "2026-02-05T23:29:01.959Z",
+            "endsAt": "2026-03-04T10:42:24.555Z",
+            "remaining": 40,
+            "capacity": 33,
+            "vetName": "송예린",
+            "roomName": "상담실1"
+          }
+        ],
+        "ko/vet_visit": [
+          {
+            "petName": "두부",
+            "guardianName": "박서윤",
+            "vetName": "임민서",
+            "startsAt": "2026-03-12T07:50:32.497Z",
+            "visitReason": "vaccination",
+            "isFirstVisit": true,
+            "memo": "음악 선택 목록 요약 도전 희망. 오늘 균형 추천 대화 가치 의미."
+          },
+          {
+            "petName": "두부",
+            "guardianName": "정아린",
+            "vetName": "장우진",
+            "startsAt": "2026-02-08T03:19:10.067Z",
+            "visitReason": "checkup",
+            "isFirstVisit": false,
+            "memo": "책 협업 학습 상상 행복 도전. 보관 가치 발견 꿈 영감 문화."
+          }
+        ],
+        "ko/symptom_intake": [
+          {
+            "petName": "남준서",
+            "chiefComplaint": "데이터 선택",
+            "onsetDate": "2025-05-01T00:55:51.251Z",
+            "appetiteLevel": 19,
+            "vomiting": true,
+            "diarrhea": false,
+            "medications": "제안 목표",
+            "memo": "성과 주제 일정 균형 작업 노트. 가치 추천 제안 여행 편집 기능."
+          },
+          {
+            "petName": "전다은",
+            "chiefComplaint": "성장 운동",
+            "onsetDate": "2025-03-03T04:47:21.077Z",
+            "appetiteLevel": 86,
+            "vomiting": true,
+            "diarrhea": true,
+            "medications": "발견 디자인",
+            "memo": "효율 감각 취향 작업 배움 사진. 효율 정리 영감 시간 활동 내용."
+          }
+        ],
+        "ko/vaccination": [
+          {
+            "vaccineName": "종합백신(예시)",
+            "petName": "보리",
+            "dueDate": "2026-01-27T10:51:10.690Z",
+            "doneAt": "2025-02-28T00:56:48.748Z",
+            "done": true,
+            "hospitalName": "봄날소아청소년과의원"
+          },
+          {
+            "vaccineName": "종합백신(예시)",
+            "petName": "나비",
+            "dueDate": "2026-01-03T23:54:31.113Z",
+            "doneAt": "2025-12-24T20:37:35.772Z",
+            "done": true,
+            "hospitalName": "온담안과의원"
+          }
+        ],
+        "ko/preventive_dose": [
+          {
+            "label": "디지털",
+            "petName": "최시우",
+            "scheduledOn": "2026-02-27T05:29:34.259Z",
+            "done": true,
+            "productName": "편리한 커피드리퍼"
+          },
+          {
+            "label": "자동차",
+            "petName": "김지우",
+            "scheduledOn": "2026-03-24T23:14:34.471Z",
+            "done": true,
+            "productName": "튼튼한 물병"
+          }
+        ],
+        "ko/vet_notice": [
+          {
+            "title": "내용 기준 계획",
+            "body": "성과 연결 기준 선택 나눔 상상. 흐름 특별 내용 효율 메모 주제.",
+            "category": "reminder",
+            "isRead": false,
+            "postedAt": "2025-01-10T17:10:13.821Z"
+          },
+          {
+            "title": "정리 관리 리듬",
+            "body": "노력 가치 관찰 장소 통계 성장. 행복 경험 변화 문화 균형 발견.",
+            "category": "appointment",
+            "isRead": true,
+            "postedAt": "2025-05-06T00:59:25.256Z"
+          }
+        ],
+        "ko/consult_message": [
+          {
+            "senderName": "손예준",
+            "body": "배움 선택 탐색 배움 아침 안내. 상상 통계 탐색 기술 비교 실험.",
+            "sentAt": "2025-01-11T12:00:02.530Z",
+            "isMine": true
+          },
+          {
+            "senderName": "전예린",
+            "body": "탐색 책 세계 확인 구조 영감. 연습 기회 초대 방법 희망 목록.",
+            "sentAt": "2025-03-30T21:51:22.370Z",
+            "isMine": true
+          }
+        ],
+        "ko/guardian_setting": [
+          {
+            "vaccinePush": false,
+            "appointmentPush": false,
+            "smsBackup": false,
+            "marketingOptIn": false,
+            "remindDaysBefore": 199
+          },
+          {
+            "vaccinePush": false,
+            "appointmentPush": false,
+            "smsBackup": true,
+            "marketingOptIn": false,
+            "remindDaysBefore": 620
+          }
+        ],
+        "en/pet": [
+          {
+            "name": "Bean",
+            "animalKind": "dog",
+            "breed": "Poodle",
+            "photoUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "birthDate": "1987-12-18T00:00:00.000Z",
+            "weightKg": 3.07,
+            "sex": "male",
+            "neutered": true,
+            "visitCount": 67,
+            "dueVaccineCount": 94,
+            "guardianName": "Harper Hayes"
+          },
+          {
+            "name": "Tofu",
+            "animalKind": "cat",
+            "breed": "Poodle",
+            "photoUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "birthDate": "1967-07-18T00:00:00.000Z",
+            "weightKg": 2.39,
+            "sex": "female",
+            "neutered": true,
+            "visitCount": 36,
+            "dueVaccineCount": 84,
+            "guardianName": "Morgan Anderson"
+          }
+        ],
+        "en/medical_note": [
+          {
+            "title": "Useful community growth",
+            "diagnosisNote": "Modern product adaptive growth adaptive local. Adaptive adaptive design system open curious.",
+            "prescriptionNote": "Modern local system local product future. Adaptive adaptive system future growth useful.",
+            "vetName": "Avery Anderson",
+            "visitedAt": "2025-06-12T22:00:52.335Z",
+            "nextVisitAt": "2025-02-21T22:04:15.569Z",
+            "petName": "Charlie Carter"
+          },
+          {
+            "title": "Product modern bright",
+            "diagnosisNote": "System community design modern community useful. Community product local growth product bright.",
+            "prescriptionNote": "Simple product bright useful curious adaptive. Adaptive growth product simple simple future.",
+            "vetName": "Riley Parker",
+            "visitedAt": "2025-12-12T10:03:44.643Z",
+            "nextVisitAt": "2025-09-02T15:31:21.672Z",
+            "petName": "Morgan Parker"
+          }
+        ],
+        "en/vet_slot": [
+          {
+            "startsAt": "2026-02-18T05:22:57.387Z",
+            "endsAt": "2026-01-10T05:17:26.819Z",
+            "remaining": 95,
+            "capacity": 3,
+            "vetName": "Charlie Morgan",
+            "roomName": "Care 1"
+          },
+          {
+            "startsAt": "2026-02-05T23:29:01.959Z",
+            "endsAt": "2026-03-04T10:42:24.555Z",
+            "remaining": 40,
+            "capacity": 33,
+            "vetName": "Taylor Parker",
+            "roomName": "Procedure 1"
+          }
+        ],
+        "en/vet_visit": [
+          {
+            "petName": "Tofu",
+            "guardianName": "Charlie Carter",
+            "vetName": "Riley Wilson",
+            "startsAt": "2026-03-12T07:50:32.497Z",
+            "visitReason": "vaccination",
+            "isFirstVisit": true,
+            "memo": "Modern future design cloud adaptive future. Product local open adaptive modern open."
+          },
+          {
+            "petName": "Tofu",
+            "guardianName": "Harper Foster",
+            "vetName": "Jordan Reed",
+            "startsAt": "2026-02-08T03:19:10.067Z",
+            "visitReason": "checkup",
+            "isFirstVisit": false,
+            "memo": "Local modern local useful curious design. Bright modern growth local adaptive bright."
+          }
+        ],
+        "en/symptom_intake": [
+          {
+            "petName": "Avery Reed",
+            "chiefComplaint": "growth bright",
+            "onsetDate": "2025-05-01T00:55:51.251Z",
+            "appetiteLevel": 19,
+            "vomiting": true,
+            "diarrhea": false,
+            "medications": "simple cloud",
+            "memo": "Useful local growth community system local. Useful adaptive growth community bright design."
+          },
+          {
+            "petName": "Harper Reed",
+            "chiefComplaint": "design system",
+            "onsetDate": "2025-03-03T04:47:21.077Z",
+            "appetiteLevel": 86,
+            "vomiting": true,
+            "diarrhea": true,
+            "medications": "simple local",
+            "memo": "Modern design product community curious community. Useful open design future simple growth."
+          }
+        ],
+        "en/vaccination": [
+          {
+            "vaccineName": "Combination vaccine (example)",
+            "petName": "Barley",
+            "dueDate": "2026-01-27T10:51:10.690Z",
+            "doneAt": "2025-02-28T00:56:48.748Z",
+            "done": true,
+            "hospitalName": "Clearview Plastic Surgery"
+          },
+          {
+            "vaccineName": "Combination vaccine (example)",
+            "petName": "Butterfly",
+            "dueDate": "2026-01-03T23:54:31.113Z",
+            "doneAt": "2025-12-24T20:37:35.772Z",
+            "done": true,
+            "hospitalName": "Demo Family Clinic"
+          }
+        ],
+        "en/preventive_dose": [
+          {
+            "label": "Electronics",
+            "petName": "Morgan Davis",
+            "scheduledOn": "2026-02-27T05:29:34.259Z",
+            "done": true,
+            "productName": "Compact Notebook"
+          },
+          {
+            "label": "Books",
+            "petName": "Harper Anderson",
+            "scheduledOn": "2026-03-24T23:14:34.471Z",
+            "done": true,
+            "productName": "Premium Travel Mug"
+          }
+        ],
+        "en/vet_notice": [
+          {
+            "title": "Growth simple product",
+            "body": "Curious local simple future bright curious. Open design cloud useful bright community.",
+            "category": "reminder",
+            "isRead": false,
+            "postedAt": "2025-01-10T17:10:13.821Z"
+          },
+          {
+            "title": "Adaptive community simple",
+            "body": "Useful curious future curious useful design. Useful design open future community simple.",
+            "category": "appointment",
+            "isRead": true,
+            "postedAt": "2025-05-06T00:59:25.256Z"
+          }
+        ],
+        "en/consult_message": [
+          {
+            "senderName": "Jordan Foster",
+            "body": "Curious bright local modern open future. Useful useful system open growth useful.",
+            "sentAt": "2025-01-11T12:00:02.530Z",
+            "isMine": true
+          },
+          {
+            "senderName": "Taylor Reed",
+            "body": "Local system simple product product open. Modern cloud curious local product adaptive.",
+            "sentAt": "2025-03-30T21:51:22.370Z",
+            "isMine": true
+          }
+        ],
+        "en/guardian_setting": [
+          {
+            "vaccinePush": false,
+            "appointmentPush": false,
+            "smsBackup": false,
+            "marketingOptIn": false,
+            "remindDaysBefore": 199
+          },
+          {
+            "vaccinePush": false,
+            "appointmentPush": false,
+            "smsBackup": true,
+            "marketingOptIn": false,
+            "remindDaysBefore": 620
+          }
+        ]
+      }
+    },
+    "exchange_remittance": {
+      "entities": [
+        {
+          "name": "remittance",
+          "fields": {
+            "recipientName": "String",
+            "referenceNo": "String",
+            "receiveCountry": "String",
+            "sendAmount": "int",
+            "feeAmount": "int",
+            "appliedRate": "double",
+            "receiveAmount": "double",
+            "receiveCurrency": "String",
+            "purpose": "String",
+            "fundSource": "String",
+            "requestedAt": "DateTime",
+            "expectedArrivalAt": "DateTime?",
+            "memo": "String"
+          },
+          "enums": {
+            "purpose": [
+              "family_support",
+              "tuition",
+              "living_expense",
+              "medical",
+              "gift",
+              "other"
+            ],
+            "fundSource": [
+              "salary",
+              "savings",
+              "business_income",
+              "other"
+            ]
+          }
+        },
+        {
+          "name": "remittance_milestone",
+          "fields": {
+            "label": "String",
+            "occurredAt": "DateTime",
+            "detail": "String",
+            "stage": "String"
+          }
+        },
+        {
+          "name": "limit_check",
+          "fields": {
+            "label": "String",
+            "detail": "String",
+            "passed": "bool",
+            "sortOrder": "int"
+          }
+        },
+        {
+          "name": "remittance_quote",
+          "fields": {
+            "recipientName": "String",
+            "sendAmount": "int",
+            "appliedRate": "double",
+            "receiveAmount": "double",
+            "receiveCurrency": "String",
+            "validUntil": "DateTime",
+            "arrivalEstimate": "String"
+          }
+        },
+        {
+          "name": "quote_line",
+          "fields": {
+            "label": "String",
+            "unitPrice": "int",
+            "quantity": "int",
+            "lineKind": "String"
+          },
+          "enums": {
+            "lineKind": [
+              "send",
+              "fee",
+              "discount"
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "fields": {
+            "name": "String",
+            "country": "String",
+            "payoutMethod": "String",
+            "bankName": "String",
+            "accountMasked": "String",
+            "relationship": "String",
+            "transferCount": "int",
+            "totalSentAmount": "int",
+            "createdAt": "DateTime"
+          },
+          "enums": {
+            "payoutMethod": [
+              "bank_account",
+              "mobile_wallet",
+              "cash_pickup"
+            ],
+            "relationship": [
+              "parent",
+              "spouse",
+              "child",
+              "sibling",
+              "self",
+              "other"
+            ]
+          }
+        },
+        {
+          "name": "supporting_document",
+          "fields": {
+            "fileLabel": "String",
+            "transferReference": "String",
+            "docKind": "String",
+            "issuedOn": "DateTime",
+            "note": "String",
+            "confirmed": "bool"
+          },
+          "enums": {
+            "docKind": [
+              "tuition_invoice",
+              "family_relation",
+              "employment_proof",
+              "medical_bill",
+              "other"
+            ]
+          }
+        },
+        {
+          "name": "remit_notice",
+          "fields": {
+            "title": "String",
+            "body": "String",
+            "category": "String",
+            "isRead": "bool",
+            "postedAt": "DateTime"
+          },
+          "enums": {
+            "category": [
+              "review",
+              "transfer",
+              "arrival",
+              "event"
+            ]
+          }
+        },
+        {
+          "name": "remit_preference",
+          "fields": {
+            "completionPush": "bool",
+            "arrivalPush": "bool",
+            "rateEventOptIn": "bool",
+            "defaultPurpose": "String",
+            "monthlyReminderDay": "int"
+          }
+        }
+      ],
+      "roles": {
+        "remittance.recipientName": "remit.romanizedNameMasked supported",
+        "remittance.referenceNo": "fx.referenceNo supported",
+        "remittance.receiveCountry": "remit.corridorCountry supported",
+        "remittance.sendAmount": "remit.sendAmount supported",
+        "remittance.feeAmount": "remit.feeAmount supported",
+        "remittance.appliedRate": "remit.appliedRate supported",
+        "remittance.receiveAmount": "remit.receiveAmount supported",
+        "remittance.receiveCurrency": "remit.receiveCurrency supported",
+        "remittance.purpose": "status generic",
+        "remittance.fundSource": "status generic",
+        "remittance.requestedAt": "remit.requestedAt supported",
+        "remittance.expectedArrivalAt": "remit.expectedArrivalAt supported",
+        "remittance.memo": "description generic",
+        "remittance_milestone.label": "category generic",
+        "remittance_milestone.occurredAt": "date generic",
+        "remittance_milestone.detail": "text unsupported",
+        "remittance_milestone.stage": "status needsEnum",
+        "limit_check.label": "category generic",
+        "limit_check.detail": "text unsupported",
+        "limit_check.passed": "boolean generic",
+        "limit_check.sortOrder": "ordinal generic",
+        "remittance_quote.recipientName": "name generic",
+        "remittance_quote.sendAmount": "price generic",
+        "remittance_quote.appliedRate": "rate generic",
+        "remittance_quote.receiveAmount": "price generic",
+        "remittance_quote.receiveCurrency": "currency generic",
+        "remittance_quote.validUntil": "dateFuture generic",
+        "remittance_quote.arrivalEstimate": "text unsupported",
+        "quote_line.label": "category generic",
+        "quote_line.unitPrice": "clinic.procedurePrice supported",
+        "quote_line.quantity": "quantity generic",
+        "quote_line.lineKind": "status generic",
+        "recipient.name": "remit.romanizedNameMasked supported",
+        "recipient.country": "remit.corridorCountry supported",
+        "recipient.payoutMethod": "status generic",
+        "recipient.bankName": "remit.bankNameFictional supported",
+        "recipient.accountMasked": "remit.accountMasked supported",
+        "recipient.relationship": "status generic",
+        "recipient.transferCount": "quantity generic",
+        "recipient.totalSentAmount": "price generic",
+        "recipient.createdAt": "date generic",
+        "supporting_document.fileLabel": "category generic",
+        "supporting_document.transferReference": "text unsupported",
+        "supporting_document.docKind": "status generic",
+        "supporting_document.issuedOn": "boolean generic",
+        "supporting_document.note": "description generic",
+        "supporting_document.confirmed": "boolean generic",
+        "remit_notice.title": "title generic",
+        "remit_notice.body": "description generic",
+        "remit_notice.category": "status generic",
+        "remit_notice.isRead": "boolean generic",
+        "remit_notice.postedAt": "date generic",
+        "remit_preference.completionPush": "boolean generic",
+        "remit_preference.arrivalPush": "boolean generic",
+        "remit_preference.rateEventOptIn": "boolean generic",
+        "remit_preference.defaultPurpose": "clinic.visitPurpose supported",
+        "remit_preference.monthlyReminderDay": "number generic"
+      },
+      "values": {
+        "ko/remittance": [
+          {
+            "recipientName": "J*** L. Q.",
+            "referenceNo": "NR-260101-0001",
+            "receiveCountry": "베트남",
+            "sendAmount": 3010000,
+            "feeAmount": 5000,
+            "appliedRate": 17.85,
+            "receiveAmount": 53728500.0,
+            "receiveCurrency": "VND",
+            "purpose": "family_support",
+            "fundSource": "salary",
+            "requestedAt": "2025-12-24T07:22:00.000Z",
+            "expectedArrivalAt": "2025-12-25T07:22:00.000Z",
+            "memo": "균형 창작 미래 효율 사용자 모임. 선택 준비 이야기 단계 배움 메모."
+          },
+          {
+            "recipientName": "L*** V. I.",
+            "referenceNo": "NR-260101-0002",
+            "receiveCountry": "필리핀",
+            "sendAmount": 250000,
+            "feeAmount": 5000,
+            "appliedRate": 0.0394,
+            "receiveAmount": 9850.0,
+            "receiveCurrency": "PHP",
+            "purpose": "tuition",
+            "fundSource": "savings",
+            "requestedAt": "2025-12-23T19:07:00.000Z",
+            "expectedArrivalAt": "2025-12-24T19:07:00.000Z",
+            "memo": "비교 이야기 주제 주제 공간 약속. 협업 디자인 비교 아침 성장 나눔."
+          }
+        ],
+        "ko/remittance_milestone": [
+          {
+            "label": "스포츠",
+            "occurredAt": "2025-08-29T16:28:40.019Z",
+            "detail": "기능 모임",
+            "stage": "pending"
+          },
+          {
+            "label": "여행",
+            "occurredAt": "2025-09-15T05:04:44.966Z",
+            "detail": "리듬 책",
+            "stage": "active"
+          }
+        ],
+        "ko/limit_check": [
+          {
+            "label": "건강",
+            "detail": "제안 신뢰",
+            "passed": true,
+            "sortOrder": 1
+          },
+          {
+            "label": "취미",
+            "detail": "창작 관리",
+            "passed": false,
+            "sortOrder": 2
+          }
+        ],
+        "ko/remittance_quote": [
+          {
+            "recipientName": "강지호",
+            "sendAmount": 92900,
+            "appliedRate": 1030.1946,
+            "receiveAmount": 159.34,
+            "receiveCurrency": "KRW",
+            "validUntil": "2026-02-09T15:30:48.976Z",
+            "arrivalEstimate": "동네 통계"
+          },
+          {
+            "recipientName": "배민서",
+            "sendAmount": 170800,
+            "appliedRate": 326.4691,
+            "receiveAmount": 201.6,
+            "receiveCurrency": "KRW",
+            "validUntil": "2026-03-31T18:58:27.132Z",
+            "arrivalEstimate": "탐색 협업"
+          }
+        ],
+        "ko/quote_line": [
+          {
+            "label": "문구",
+            "unitPrice": 187000,
+            "quantity": 91,
+            "lineKind": "send"
+          },
+          {
+            "label": "가구",
+            "unitPrice": 10000,
+            "quantity": 86,
+            "lineKind": "fee"
+          }
+        ],
+        "ko/recipient": [
+          {
+            "name": "F*** G. P.",
+            "country": "베트남",
+            "payoutMethod": "bank_account",
+            "bankName": "누리파트너은행(가상)",
+            "accountMasked": "****-**-1549",
+            "relationship": "parent",
+            "transferCount": 42,
+            "totalSentAmount": 62700,
+            "createdAt": "2025-07-10T03:40:12.822Z"
+          },
+          {
+            "name": "Y*** Y. A.",
+            "country": "필리핀",
+            "payoutMethod": "mobile_wallet",
+            "bankName": "누리파트너은행(가상)",
+            "accountMasked": "****-**-4318",
+            "relationship": "spouse",
+            "transferCount": 98,
+            "totalSentAmount": 165200,
+            "createdAt": "2025-02-04T02:40:21.892Z"
+          }
+        ],
+        "ko/supporting_document": [
+          {
+            "fileLabel": "건강",
+            "transferReference": "배움 영감",
+            "docKind": "tuition_invoice",
+            "issuedOn": "2025-11-17T15:02:07.045Z",
+            "note": "메모 약속 모임 창작 친구 성과. 목록 기회 준비 효율 활동 노력.",
+            "confirmed": false
+          },
+          {
+            "fileLabel": "아웃도어",
+            "transferReference": "데이터 생각",
+            "docKind": "family_relation",
+            "issuedOn": "2025-06-24T04:36:49.330Z",
+            "note": "추천 특별 실험 가치 데이터 약속. 일정 세계 비교 리듬 음악 통계.",
+            "confirmed": true
+          }
+        ],
+        "ko/remit_notice": [
+          {
+            "title": "습관 노력 효율",
+            "body": "추천 도전 경험 협업 사진 목표. 메모 연결 편집 활동 미래 책.",
+            "category": "review",
+            "isRead": false,
+            "postedAt": "2025-02-20T19:28:46.006Z"
+          },
+          {
+            "title": "동네 목록 기술",
+            "body": "단계 사용자 모임 제안 확인 초대. 배움 보관 운동 학습 소식 기회.",
+            "category": "transfer",
+            "isRead": true,
+            "postedAt": "2025-08-09T12:11:32.993Z"
+          }
+        ],
+        "ko/remit_preference": [
+          {
+            "completionPush": true,
+            "arrivalPush": true,
+            "rateEventOptIn": false,
+            "defaultPurpose": "상담",
+            "monthlyReminderDay": 573
+          },
+          {
+            "completionPush": true,
+            "arrivalPush": false,
+            "rateEventOptIn": true,
+            "defaultPurpose": "관리",
+            "monthlyReminderDay": 29
+          }
+        ],
+        "en/remittance": [
+          {
+            "recipientName": "J*** L. Q.",
+            "referenceNo": "NR-260101-0001",
+            "receiveCountry": "Vietnam",
+            "sendAmount": 3010000,
+            "feeAmount": 5000,
+            "appliedRate": 17.85,
+            "receiveAmount": 53728500.0,
+            "receiveCurrency": "VND",
+            "purpose": "family_support",
+            "fundSource": "salary",
+            "requestedAt": "2025-12-24T07:22:00.000Z",
+            "expectedArrivalAt": "2025-12-25T07:22:00.000Z",
+            "memo": "Local cloud useful curious growth curious. Future modern future curious modern future."
+          },
+          {
+            "recipientName": "L*** V. I.",
+            "referenceNo": "NR-260101-0002",
+            "receiveCountry": "Philippines",
+            "sendAmount": 250000,
+            "feeAmount": 5000,
+            "appliedRate": 0.0394,
+            "receiveAmount": 9850.0,
+            "receiveCurrency": "PHP",
+            "purpose": "tuition",
+            "fundSource": "savings",
+            "requestedAt": "2025-12-23T19:07:00.000Z",
+            "expectedArrivalAt": "2025-12-24T19:07:00.000Z",
+            "memo": "Growth future local system simple growth. Curious community cloud open open bright."
+          }
+        ],
+        "en/remittance_milestone": [
+          {
+            "label": "Electronics",
+            "occurredAt": "2025-08-29T16:28:40.019Z",
+            "detail": "open modern",
+            "stage": "pending"
+          },
+          {
+            "label": "Electronics",
+            "occurredAt": "2025-09-15T05:04:44.966Z",
+            "detail": "simple system",
+            "stage": "active"
+          }
+        ],
+        "en/limit_check": [
+          {
+            "label": "Electronics",
+            "detail": "growth local",
+            "passed": true,
+            "sortOrder": 1
+          },
+          {
+            "label": "Books",
+            "detail": "cloud system",
+            "passed": false,
+            "sortOrder": 2
+          }
+        ],
+        "en/remittance_quote": [
+          {
+            "recipientName": "Mason Hayes",
+            "sendAmount": 92900,
+            "appliedRate": 1030.1946,
+            "receiveAmount": 159.34,
+            "receiveCurrency": "USD",
+            "validUntil": "2026-02-09T15:30:48.976Z",
+            "arrivalEstimate": "future curious"
+          },
+          {
+            "recipientName": "Riley Hayes",
+            "sendAmount": 170800,
+            "appliedRate": 326.4691,
+            "receiveAmount": 201.6,
+            "receiveCurrency": "USD",
+            "validUntil": "2026-03-31T18:58:27.132Z",
+            "arrivalEstimate": "system useful"
+          }
+        ],
+        "en/quote_line": [
+          {
+            "label": "Outdoor",
+            "unitPrice": 2205,
+            "quantity": 91,
+            "lineKind": "send"
+          },
+          {
+            "label": "Books",
+            "unitPrice": 245,
+            "quantity": 86,
+            "lineKind": "fee"
+          }
+        ],
+        "en/recipient": [
+          {
+            "name": "F*** G. P.",
+            "country": "Vietnam",
+            "payoutMethod": "bank_account",
+            "bankName": "Nuri partner bank (fictional)",
+            "accountMasked": "****-**-1549",
+            "relationship": "parent",
+            "transferCount": 42,
+            "totalSentAmount": 62700,
+            "createdAt": "2025-07-10T03:40:12.822Z"
+          },
+          {
+            "name": "Y*** Y. A.",
+            "country": "Philippines",
+            "payoutMethod": "mobile_wallet",
+            "bankName": "Nuri partner bank (fictional)",
+            "accountMasked": "****-**-4318",
+            "relationship": "spouse",
+            "transferCount": 98,
+            "totalSentAmount": 165200,
+            "createdAt": "2025-02-04T02:40:21.892Z"
+          }
+        ],
+        "en/supporting_document": [
+          {
+            "fileLabel": "Books",
+            "transferReference": "modern adaptive",
+            "docKind": "tuition_invoice",
+            "issuedOn": "2025-11-17T15:02:07.045Z",
+            "note": "Product cloud modern cloud cloud useful. Design cloud modern modern growth modern.",
+            "confirmed": false
+          },
+          {
+            "fileLabel": "Books",
+            "transferReference": "growth adaptive",
+            "docKind": "family_relation",
+            "issuedOn": "2025-06-24T04:36:49.330Z",
+            "note": "Open open modern modern growth growth. Simple growth cloud growth curious useful.",
+            "confirmed": true
+          }
+        ],
+        "en/remit_notice": [
+          {
+            "title": "Adaptive useful useful",
+            "body": "Adaptive design open curious local cloud. Product system bright simple useful system.",
+            "category": "review",
+            "isRead": false,
+            "postedAt": "2025-02-20T19:28:46.006Z"
+          },
+          {
+            "title": "Product open open",
+            "body": "Modern simple modern simple future useful. Modern bright local local community growth.",
+            "category": "transfer",
+            "isRead": true,
+            "postedAt": "2025-08-09T12:11:32.993Z"
+          }
+        ],
+        "en/remit_preference": [
+          {
+            "completionPush": true,
+            "arrivalPush": true,
+            "rateEventOptIn": false,
+            "defaultPurpose": "Consultation",
+            "monthlyReminderDay": 573
+          },
+          {
+            "completionPush": true,
+            "arrivalPush": false,
+            "rateEventOptIn": true,
+            "defaultPurpose": "Care",
+            "monthlyReminderDay": 29
+          }
+        ]
+      }
+    },
+    "ecommerce_grocery": {
+      "entities": [
+        {
+          "name": "grocery_product",
+          "fields": {
+            "name": "String",
+            "summary": "String",
+            "price": "int",
+            "listPrice": "int",
+            "imageUrl": "String",
+            "category": "String",
+            "storageType": "String",
+            "originRegion": "String",
+            "weightLabel": "String",
+            "stock": "int",
+            "isSeasonal": "bool",
+            "rating": "double",
+            "createdAt": "DateTime"
+          },
+          "enums": {
+            "storageType": [
+              "chilled",
+              "frozen",
+              "ambient"
+            ]
+          }
+        },
+        {
+          "name": "produce_category",
+          "fields": {
+            "name": "String",
+            "imageUrl": "String",
+            "parentId": "int",
+            "sortOrder": "int"
+          }
+        },
+        {
+          "name": "product_option",
+          "fields": {
+            "name": "String",
+            "optionGroup": "String",
+            "price": "int",
+            "required": "bool",
+            "multiSelect": "bool",
+            "productCode": "String"
+          }
+        },
+        {
+          "name": "cart_line",
+          "fields": {
+            "productName": "String",
+            "optionSummary": "String",
+            "unitPrice": "int",
+            "quantity": "int",
+            "storageType": "String",
+            "imageUrl": "String",
+            "addedAt": "DateTime"
+          },
+          "enums": {
+            "storageType": [
+              "chilled",
+              "frozen",
+              "ambient"
+            ]
+          }
+        },
+        {
+          "name": "delivery_slot",
+          "fields": {
+            "label": "String",
+            "startsAt": "DateTime",
+            "endsAt": "DateTime",
+            "remaining": "int",
+            "capacity": "int",
+            "slotKind": "String",
+            "zoneName": "String",
+            "cutoffAt": "DateTime"
+          },
+          "enums": {
+            "slotKind": [
+              "dawn",
+              "evening"
+            ]
+          }
+        },
+        {
+          "name": "grocery_order",
+          "fields": {
+            "orderNo": "String",
+            "itemSummary": "String",
+            "totalAmount": "int",
+            "deliveryFee": "int",
+            "recipient": "String",
+            "address": "String",
+            "slotLabel": "String",
+            "deliverAt": "DateTime",
+            "substitutionPolicy": "String",
+            "doorNote": "String",
+            "orderedAt": "DateTime"
+          },
+          "enums": {
+            "substitutionPolicy": [
+              "allow_similar",
+              "contact_first",
+              "refund"
+            ]
+          }
+        },
+        {
+          "name": "order_event",
+          "fields": {
+            "title": "String",
+            "description": "String",
+            "occurredAt": "DateTime",
+            "eventKind": "String"
+          },
+          "enums": {
+            "eventKind": [
+              "status",
+              "substitution",
+              "refund",
+              "notice"
+            ]
+          }
+        },
+        {
+          "name": "delivery_subscription",
+          "fields": {
+            "itemSummary": "String",
+            "isActive": "bool",
+            "skipNext": "bool",
+            "cycleWeeks": "int",
+            "preferredWeekday": "String",
+            "preferredSlotKind": "String",
+            "nextDeliveryAt": "DateTime"
+          },
+          "enums": {
+            "preferredWeekday": [
+              "mon",
+              "tue",
+              "wed",
+              "thu",
+              "fri",
+              "sat"
+            ],
+            "preferredSlotKind": [
+              "dawn",
+              "evening"
+            ]
+          }
+        },
+        {
+          "name": "grocery_review",
+          "fields": {
+            "title": "String",
+            "body": "String",
+            "rating": "int",
+            "freshnessNote": "String",
+            "imageUrl": "String",
+            "createdAt": "DateTime"
+          }
+        },
+        {
+          "name": "shopper",
+          "fields": {
+            "nickname": "String",
+            "gradeName": "String",
+            "avatarUrl": "String",
+            "point": "int",
+            "couponCount": "int",
+            "orderCount": "int",
+            "defaultAddress": "String"
+          }
+        },
+        {
+          "name": "grocery_alert",
+          "fields": {
+            "title": "String",
+            "body": "String",
+            "category": "String",
+            "isRead": "bool",
+            "createdAt": "DateTime"
+          },
+          "enums": {
+            "category": [
+              "order",
+              "benefit",
+              "notice"
+            ]
+          }
+        }
+      ],
+      "roles": {
+        "grocery_product.name": "grocery.produceName supported",
+        "grocery_product.summary": "description generic",
+        "grocery_product.price": "grocery.price supported",
+        "grocery_product.listPrice": "grocery.listPrice supported",
+        "grocery_product.imageUrl": "image generic",
+        "grocery_product.category": "grocery.produceCategory supported",
+        "grocery_product.storageType": "status generic",
+        "grocery_product.originRegion": "grocery.originRegion supported",
+        "grocery_product.weightLabel": "grocery.weightLabel supported",
+        "grocery_product.stock": "quantity generic",
+        "grocery_product.isSeasonal": "boolean generic",
+        "grocery_product.rating": "rating generic",
+        "grocery_product.createdAt": "date generic",
+        "produce_category.name": "grocery.categoryName supported",
+        "produce_category.imageUrl": "image generic",
+        "produce_category.parentId": "grocery.categoryParent supported",
+        "produce_category.sortOrder": "ordinal generic",
+        "product_option.name": "title generic",
+        "product_option.optionGroup": "text unsupported",
+        "product_option.price": "price generic",
+        "product_option.required": "boolean generic",
+        "product_option.multiSelect": "boolean generic",
+        "product_option.productCode": "productName generic",
+        "cart_line.productName": "productName generic",
+        "cart_line.optionSummary": "description generic",
+        "cart_line.unitPrice": "clinic.procedurePrice supported",
+        "cart_line.quantity": "quantity generic",
+        "cart_line.storageType": "status generic",
+        "cart_line.imageUrl": "image generic",
+        "cart_line.addedAt": "date generic",
+        "delivery_slot.label": "category generic",
+        "delivery_slot.startsAt": "dateFuture generic",
+        "delivery_slot.endsAt": "dateFuture generic",
+        "delivery_slot.remaining": "quantity generic",
+        "delivery_slot.capacity": "quantity generic",
+        "delivery_slot.slotKind": "status generic",
+        "delivery_slot.zoneName": "name generic",
+        "delivery_slot.cutoffAt": "date generic",
+        "grocery_order.orderNo": "commerce.orderNo supported",
+        "grocery_order.itemSummary": "description generic",
+        "grocery_order.totalAmount": "price generic",
+        "grocery_order.deliveryFee": "number generic",
+        "grocery_order.recipient": "saas.recipient supported",
+        "grocery_order.address": "korea.address1 supported",
+        "grocery_order.slotLabel": "grocery.slotLabel supported",
+        "grocery_order.deliverAt": "date generic",
+        "grocery_order.substitutionPolicy": "status generic",
+        "grocery_order.doorNote": "grocery.doorNote supported",
+        "grocery_order.orderedAt": "date generic",
+        "order_event.title": "title generic",
+        "order_event.description": "description generic",
+        "order_event.occurredAt": "date generic",
+        "order_event.eventKind": "status generic",
+        "delivery_subscription.itemSummary": "description generic",
+        "delivery_subscription.isActive": "boolean generic",
+        "delivery_subscription.skipNext": "boolean generic",
+        "delivery_subscription.cycleWeeks": "number generic",
+        "delivery_subscription.preferredWeekday": "status generic",
+        "delivery_subscription.preferredSlotKind": "status generic",
+        "delivery_subscription.nextDeliveryAt": "date generic",
+        "grocery_review.title": "title generic",
+        "grocery_review.body": "description generic",
+        "grocery_review.rating": "rating generic",
+        "grocery_review.freshnessNote": "description generic",
+        "grocery_review.imageUrl": "image generic",
+        "grocery_review.createdAt": "date generic",
+        "shopper.nickname": "username generic",
+        "shopper.gradeName": "name generic",
+        "shopper.avatarUrl": "avatar generic",
+        "shopper.point": "number generic",
+        "shopper.couponCount": "quantity generic",
+        "shopper.orderCount": "quantity generic",
+        "shopper.defaultAddress": "address generic",
+        "grocery_alert.title": "title generic",
+        "grocery_alert.body": "description generic",
+        "grocery_alert.category": "status generic",
+        "grocery_alert.isRead": "boolean generic",
+        "grocery_alert.createdAt": "date generic"
+      },
+      "values": {
+        "ko/grocery_product": [
+          {
+            "name": "딸기",
+            "summary": "배움 반복 통계 정보 기준 성장. 마음 관찰 목록 회고 친구 가치.",
+            "price": 12900,
+            "listPrice": 15900,
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "category": "fruit",
+            "storageType": "chilled",
+            "originRegion": "들녘 재배권역(가상)",
+            "weightLabel": "500g",
+            "stock": 29,
+            "isSeasonal": false,
+            "rating": 4.5,
+            "createdAt": "2025-08-10T17:17:35.511Z"
+          },
+          {
+            "name": "시금치",
+            "summary": "노력 기록 참여 참여 발견 장소. 관찰 희망 효율 기회 신뢰 기회.",
+            "price": 3480,
+            "listPrice": 6480,
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "category": "vegetable",
+            "storageType": "frozen",
+            "originRegion": "솔빛 재배권역(가상)",
+            "weightLabel": "200g",
+            "stock": 5,
+            "isSeasonal": false,
+            "rating": 2.3,
+            "createdAt": "2025-06-15T01:48:11.356Z"
+          }
+        ],
+        "ko/produce_category": [
+          {
+            "name": "과일",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "parentId": 0,
+            "sortOrder": 1
+          },
+          {
+            "name": "채소",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "parentId": 0,
+            "sortOrder": 2
+          }
+        ],
+        "ko/product_option": [
+          {
+            "name": "효율 질문 탐색",
+            "optionGroup": "내용 안내",
+            "price": 23800,
+            "required": true,
+            "multiSelect": false,
+            "productCode": "정갈한 담요"
+          },
+          {
+            "name": "준비 주제 정보",
+            "optionGroup": "현재 준비",
+            "price": 197600,
+            "required": true,
+            "multiSelect": true,
+            "productCode": "넉넉한 조명"
+          }
+        ],
+        "ko/cart_line": [
+          {
+            "productName": "아담한 보조배터리",
+            "optionSummary": "기록 선택 일정 기능 작업 학습. 취향 영감 편집 특별 현재 행복.",
+            "unitPrice": 31000,
+            "quantity": 46,
+            "storageType": "chilled",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "addedAt": "2025-09-15T01:22:48.907Z"
+          },
+          {
+            "productName": "세련된 물병",
+            "optionSummary": "여행 반복 비교 질문 마음 보관. 목표 의미 꿈 계획 약속 기록.",
+            "unitPrice": 9000,
+            "quantity": 76,
+            "storageType": "frozen",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "addedAt": "2025-10-07T04:10:52.929Z"
+          }
+        ],
+        "ko/delivery_slot": [
+          {
+            "label": "아웃도어",
+            "startsAt": "2026-01-22T22:51:48.619Z",
+            "endsAt": "2026-02-01T17:17:21.632Z",
+            "remaining": 11,
+            "capacity": 81,
+            "slotKind": "dawn",
+            "zoneName": "남주원",
+            "cutoffAt": "2025-02-24T07:52:24.330Z"
+          },
+          {
+            "label": "도서",
+            "startsAt": "2026-03-24T02:04:50.074Z",
+            "endsAt": "2026-03-08T20:36:47.759Z",
+            "remaining": 64,
+            "capacity": 46,
+            "slotKind": "evening",
+            "zoneName": "장준서",
+            "cutoffAt": "2025-06-03T13:59:03.850Z"
+          }
+        ],
+        "ko/grocery_order": [
+          {
+            "orderNo": "DEMO-O-260101-0001",
+            "itemSummary": "기회 나눔 기술 창작 의미 초대. 미래 흐름 아침 목록 흐름 발견.",
+            "totalAmount": 71200,
+            "deliveryFee": 992,
+            "recipient": "010-****-3216",
+            "address": "경기도 성남시 분당구 분당로 1",
+            "slotLabel": "새벽 06:00~07:00",
+            "deliverAt": "2025-06-18T16:49:50.687Z",
+            "substitutionPolicy": "allow_similar",
+            "doorNote": "공동현관은 호출해 주세요.",
+            "orderedAt": "2025-03-21T11:48:42.683Z"
+          },
+          {
+            "orderNo": "DEMO-O-260101-0002",
+            "itemSummary": "실험 표현 방법 노트 희망 모임. 꿈 시간 관리 효율 탐색 소식.",
+            "totalAmount": 45600,
+            "deliveryFee": 436,
+            "recipient": "010-****-4458",
+            "address": "부산광역시 부산진구 서면로 148",
+            "slotLabel": "새벽 06:00~07:00",
+            "deliverAt": "2025-11-02T23:12:45.841Z",
+            "substitutionPolicy": "contact_first",
+            "doorNote": "공동현관은 호출해 주세요.",
+            "orderedAt": "2025-11-23T13:40:18.883Z"
+          }
+        ],
+        "ko/order_event": [
+          {
+            "title": "습관 계획 습관",
+            "description": "흐름 관리 탐색 목록 목표 성과. 표현 가치 사진 시간 제안 노력.",
+            "occurredAt": "2025-05-25T13:13:23.349Z",
+            "eventKind": "status"
+          },
+          {
+            "title": "공간 희망 효율",
+            "description": "질문 일정 반복 변화 창작 성장. 신뢰 정보 목록 취향 장소 방법.",
+            "occurredAt": "2025-04-11T09:23:38.037Z",
+            "eventKind": "substitution"
+          }
+        ],
+        "ko/delivery_subscription": [
+          {
+            "itemSummary": "공간 습관 표현 꿈 반복 습관. 기능 관찰 미래 실험 사용자 노트.",
+            "isActive": true,
+            "skipNext": true,
+            "cycleWeeks": 879,
+            "preferredWeekday": "mon",
+            "preferredSlotKind": "dawn",
+            "nextDeliveryAt": "2025-06-19T10:42:19.287Z"
+          },
+          {
+            "itemSummary": "사진 목표 초대 참여 단계 확인. 주제 목록 영감 요약 발견 활동.",
+            "isActive": true,
+            "skipNext": true,
+            "cycleWeeks": 479,
+            "preferredWeekday": "tue",
+            "preferredSlotKind": "evening",
+            "nextDeliveryAt": "2025-05-28T11:21:02.224Z"
+          }
+        ],
+        "ko/grocery_review": [
+          {
+            "title": "회고 관리 흐름",
+            "body": "활동 순간 정보 단계 상상 관리. 도전 노력 영감 동네 회고 목록.",
+            "rating": 2,
+            "freshnessNote": "기회 일정 연습 취향 순간 안내. 균형 친구 의미 시작 실험 대화.",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "createdAt": "2025-08-31T19:54:31.992Z"
+          },
+          {
+            "title": "세계 시작 가치",
+            "body": "구조 목표 기준 변화 기준 준비. 요약 문화 배움 생각 세계 반복.",
+            "rating": 3,
+            "freshnessNote": "세계 오늘 순간 활동 책 음악. 기회 준비 연습 동네 시작 메모.",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "createdAt": "2025-03-06T13:28:01.357Z"
+          }
+        ],
+        "ko/shopper": [
+          {
+            "nickname": "juwon.hwang",
+            "gradeName": "남서윤",
+            "avatarUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(406)",
+            "point": 114,
+            "couponCount": 53,
+            "orderCount": 89,
+            "defaultAddress": "포항 해운대로 9459, 25906, 대한민국"
+          },
+          {
+            "nickname": "seoyun.yoo",
+            "gradeName": "안시우",
+            "avatarUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(406)",
+            "point": 8,
+            "couponCount": 29,
+            "orderCount": 41,
+            "defaultAddress": "고양 세종대로 1297, 52909, 캐나다"
+          }
+        ],
+        "ko/grocery_alert": [
+          {
+            "title": "방법 회고 메모",
+            "body": "발견 상상 공간 흐름 효율 통계. 기능 공간 정리 순간 세계 비교.",
+            "category": "order",
+            "isRead": true,
+            "createdAt": "2025-10-16T02:04:41.283Z"
+          },
+          {
+            "title": "회고 행복 안내",
+            "body": "요약 책 도전 배움 회고 이야기. 보관 상상 비교 방법 공간 계획.",
+            "category": "benefit",
+            "isRead": false,
+            "createdAt": "2025-10-01T01:13:11.138Z"
+          }
+        ],
+        "en/grocery_product": [
+          {
+            "name": "Strawberries",
+            "summary": "Curious local modern future simple open. System future open local cloud modern.",
+            "price": 12900,
+            "listPrice": 15900,
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "category": "fruit",
+            "storageType": "chilled",
+            "originRegion": "Field growing zone (fictional)",
+            "weightLabel": "500g",
+            "stock": 29,
+            "isSeasonal": false,
+            "rating": 4.5,
+            "createdAt": "2025-08-10T17:17:35.511Z"
+          },
+          {
+            "name": "Spinach",
+            "summary": "Useful modern future future cloud useful. Bright future useful growth system simple.",
+            "price": 3480,
+            "listPrice": 6480,
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "category": "vegetable",
+            "storageType": "frozen",
+            "originRegion": "Solbit growing zone (fictional)",
+            "weightLabel": "200g",
+            "stock": 5,
+            "isSeasonal": false,
+            "rating": 2.3,
+            "createdAt": "2025-06-15T01:48:11.356Z"
+          }
+        ],
+        "en/produce_category": [
+          {
+            "name": "Fruit",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "parentId": 0,
+            "sortOrder": 1
+          },
+          {
+            "name": "Vegetables",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "parentId": 0,
+            "sortOrder": 2
+          }
+        ],
+        "en/product_option": [
+          {
+            "name": "Modern adaptive community",
+            "optionGroup": "cloud product",
+            "price": 23800,
+            "required": true,
+            "multiSelect": false,
+            "productCode": "Compact Desk Lamp"
+          },
+          {
+            "name": "Modern local product",
+            "optionGroup": "open useful",
+            "price": 197600,
+            "required": true,
+            "multiSelect": true,
+            "productCode": "Modern Notebook"
+          }
+        ],
+        "en/cart_line": [
+          {
+            "productName": "Premium Backpack",
+            "optionSummary": "Curious bright growth open community system. Bright open product open open curious.",
+            "unitPrice": 215,
+            "quantity": 46,
+            "storageType": "chilled",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "addedAt": "2025-09-15T01:22:48.907Z"
+          },
+          {
+            "productName": "Practical Travel Mug",
+            "optionSummary": "Community community simple design community product. Growth design system product cloud useful.",
+            "unitPrice": 250,
+            "quantity": 76,
+            "storageType": "frozen",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "addedAt": "2025-10-07T04:10:52.929Z"
+          }
+        ],
+        "en/delivery_slot": [
+          {
+            "label": "Outdoor",
+            "startsAt": "2026-01-22T22:51:48.619Z",
+            "endsAt": "2026-02-01T17:17:21.632Z",
+            "remaining": 11,
+            "capacity": 81,
+            "slotKind": "dawn",
+            "zoneName": "Taylor Reed",
+            "cutoffAt": "2025-02-24T07:52:24.330Z"
+          },
+          {
+            "label": "Books",
+            "startsAt": "2026-03-24T02:04:50.074Z",
+            "endsAt": "2026-03-08T20:36:47.759Z",
+            "remaining": 64,
+            "capacity": 46,
+            "slotKind": "evening",
+            "zoneName": "Avery Reed",
+            "cutoffAt": "2025-06-03T13:59:03.850Z"
+          }
+        ],
+        "en/grocery_order": [
+          {
+            "orderNo": "DEMO-O-260101-0001",
+            "itemSummary": "Cloud product adaptive cloud design curious. Useful design open adaptive design cloud.",
+            "totalAmount": 71200,
+            "deliveryFee": 992,
+            "recipient": "010-****-3216",
+            "address": "경기도 성남시 분당구 분당로 1",
+            "slotLabel": "Dawn 06:00–07:00",
+            "deliverAt": "2025-06-18T16:49:50.687Z",
+            "substitutionPolicy": "allow_similar",
+            "doorNote": "Please ring at the shared entrance.",
+            "orderedAt": "2025-03-21T11:48:42.683Z"
+          },
+          {
+            "orderNo": "DEMO-O-260101-0002",
+            "itemSummary": "Modern simple local local bright useful. System product community useful local local.",
+            "totalAmount": 45600,
+            "deliveryFee": 436,
+            "recipient": "010-****-4458",
+            "address": "부산광역시 부산진구 서면로 148",
+            "slotLabel": "Dawn 06:00–07:00",
+            "deliverAt": "2025-11-02T23:12:45.841Z",
+            "substitutionPolicy": "contact_first",
+            "doorNote": "Please ring at the shared entrance.",
+            "orderedAt": "2025-11-23T13:40:18.883Z"
+          }
+        ],
+        "en/order_event": [
+          {
+            "title": "Design future adaptive",
+            "description": "Adaptive local community design simple useful. Cloud modern local bright simple useful.",
+            "occurredAt": "2025-05-25T13:13:23.349Z",
+            "eventKind": "status"
+          },
+          {
+            "title": "Simple product useful",
+            "description": "Adaptive growth local adaptive growth design. Local bright open bright modern local.",
+            "occurredAt": "2025-04-11T09:23:38.037Z",
+            "eventKind": "substitution"
+          }
+        ],
+        "en/delivery_subscription": [
+          {
+            "itemSummary": "Growth adaptive growth community local open. Adaptive bright curious curious cloud system.",
+            "isActive": true,
+            "skipNext": true,
+            "cycleWeeks": 879,
+            "preferredWeekday": "mon",
+            "preferredSlotKind": "dawn",
+            "nextDeliveryAt": "2025-06-19T10:42:19.287Z"
+          },
+          {
+            "itemSummary": "Community simple modern future useful future. Community open adaptive growth simple growth.",
+            "isActive": true,
+            "skipNext": true,
+            "cycleWeeks": 479,
+            "preferredWeekday": "tue",
+            "preferredSlotKind": "evening",
+            "nextDeliveryAt": "2025-05-28T11:21:02.224Z"
+          }
+        ],
+        "en/grocery_review": [
+          {
+            "title": "System community design",
+            "body": "Growth curious future useful useful local. Design useful design future local design.",
+            "rating": 2,
+            "freshnessNote": "Cloud cloud modern future curious product. Local simple adaptive simple useful design.",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "createdAt": "2025-08-31T19:54:31.992Z"
+          },
+          {
+            "title": "Simple simple modern",
+            "body": "Product simple simple design cloud useful. Growth bright curious adaptive cloud community.",
+            "rating": 3,
+            "freshnessNote": "Cloud bright useful growth local useful. Cloud useful modern product cloud future.",
+            "imageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(394)",
+            "createdAt": "2025-03-06T13:28:01.357Z"
+          }
+        ],
+        "en/shopper": [
+          {
+            "nickname": "taylor",
+            "gradeName": "Charlie Reed",
+            "avatarUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(402)",
+            "point": 114,
+            "couponCount": 53,
+            "orderCount": 89,
+            "defaultAddress": "9459 Maple Street, Denver, 25906, Germany"
+          },
+          {
+            "nickname": "charlie",
+            "gradeName": "Morgan Morgan",
+            "avatarUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My…(402)",
+            "point": 8,
+            "couponCount": 29,
+            "orderCount": 41,
+            "defaultAddress": "1297 Oak Avenue, Chicago, 52909, Australia"
+          }
+        ],
+        "en/grocery_alert": [
+          {
+            "title": "Local system bright",
+            "body": "Simple curious growth adaptive modern modern. Adaptive cloud open useful simple simple.",
+            "category": "order",
+            "isRead": true,
+            "createdAt": "2025-10-16T02:04:41.283Z"
+          },
+          {
+            "title": "Local useful future",
+            "body": "Growth system design modern system future. Bright modern simple local simple bright.",
+            "category": "benefit",
+            "isRead": false,
+            "createdAt": "2025-10-01T01:13:11.138Z"
+          }
+        ]
+      }
+    }
+  },
+  "packs": {
+    "vet.pet.id": "id generic",
+    "vet.pet.guardianId": "reference generic",
+    "vet.pet.name": "vet.petName supported",
+    "vet.pet.animalKind": "vet.animalKind supported",
+    "vet.pet.breed": "vet.breed supported",
+    "vet.pet.coatColor": "vet.coatColor supported",
+    "vet.pet.weightKg": "vet.weightKg supported",
+    "vet.pet.sex": "status generic",
+    "vet.pet.photoUrl": "image generic",
+    "vet.vet_visit.id": "id generic",
+    "vet.vet_visit.petId": "reference generic",
+    "vet.vet_visit.petName": "vet.petName supported",
+    "vet.vet_visit.roomName": "vet.clinicRoom supported",
+    "vet.vet_visit.visitReason": "status generic",
+    "vet.vet_visit.status": "status generic",
+    "vet.vaccination.id": "id generic",
+    "vet.vaccination.petId": "reference generic",
+    "vet.vaccination.vaccineName": "vet.vaccineName supported",
+    "vet.vaccination.dueDate": "dateFuture generic",
+    "vet.vaccination.done": "boolean generic",
+    "remit.recipient.id": "id generic",
+    "remit.recipient.name": "remit.romanizedNameMasked supported",
+    "remit.recipient.country": "remit.corridorCountry supported",
+    "remit.recipient.payoutMethod": "remit.payoutMethod supported",
+    "remit.recipient.bankName": "remit.bankNameFictional supported",
+    "remit.recipient.accountMasked": "remit.accountMasked supported",
+    "remit.recipient.receiveCurrency": "remit.receiveCurrency supported",
+    "remit.recipient.relationship": "status generic",
+    "remit.remittance.id": "id generic",
+    "remit.remittance.recipientId": "reference generic",
+    "remit.remittance.recipientName": "remit.romanizedNameMasked supported",
+    "remit.remittance.referenceNo": "fx.referenceNo supported",
+    "remit.remittance.receiveCountry": "remit.corridorCountry supported",
+    "remit.remittance.sendAmount": "remit.sendAmount supported",
+    "remit.remittance.feeAmount": "remit.feeAmount supported",
+    "remit.remittance.appliedRate": "remit.appliedRate supported",
+    "remit.remittance.receiveAmount": "remit.receiveAmount supported",
+    "remit.remittance.receiveCurrency": "remit.receiveCurrency supported",
+    "remit.remittance.purpose": "remit.transferPurpose supported",
+    "remit.remittance.fundSource": "remit.fundSource supported",
+    "remit.remittance.requestedAt": "remit.requestedAt supported",
+    "remit.remittance.expectedArrivalAt": "remit.expectedArrivalAt supported",
+    "remit.remittance.status": "status generic",
+    "remit.supporting_document.id": "id generic",
+    "remit.supporting_document.remittanceId": "reference generic",
+    "remit.supporting_document.docKind": "remit.docKind supported",
+    "remit.supporting_document.confirmed": "boolean generic",
+    "fx.fx_rate.id": "id generic",
+    "fx.fx_rate.currencyCode": "fx.currencyCode supported",
+    "fx.fx_rate.currencyName": "fx.currencyName supported",
+    "fx.fx_rate.unitAmount": "fx.unitAmount supported",
+    "fx.fx_rate.baseRate": "fx.baseRate supported",
+    "fx.fx_rate.buyRate": "fx.buyRate supported",
+    "fx.fx_rate.sellRate": "fx.sellRate supported",
+    "fx.fx_branch.id": "id generic",
+    "fx.fx_branch.name": "fx.branchName supported",
+    "fx.fx_branch.branchKind": "fx.branchKind supported",
+    "fx.fx_branch.cashLevel": "status generic",
+    "fx.fx_branch.imageUrl": "image generic",
+    "fx.pickup_order.id": "id generic",
+    "fx.pickup_order.orderNo": "fx.orderNo supported",
+    "fx.pickup_order.currencyCode": "fx.currencyCode supported",
+    "fx.pickup_order.branchId": "reference generic",
+    "fx.pickup_order.passportNameMasked": "fx.passportNameMasked supported",
+    "fx.pickup_order.status": "status generic",
+    "fx.order_line.id": "id generic",
+    "fx.order_line.orderId": "reference generic",
+    "fx.order_line.currencyCode": "fx.currencyCode supported",
+    "fx.order_line.denomination": "fx.denomination supported",
+    "fx.order_line.quantity": "quantity generic",
+    "fx.pickup_ticket.id": "id generic",
+    "fx.pickup_ticket.orderId": "reference generic",
+    "fx.pickup_ticket.ticketNo": "fx.ticketNo supported",
+    "fx.pickup_ticket.status": "status generic",
+    "grocery.grocery_product.id": "id generic",
+    "grocery.grocery_product.code": "grocery.productCode supported",
+    "grocery.grocery_product.name": "grocery.produceName supported",
+    "grocery.grocery_product.category": "grocery.produceCategory supported",
+    "grocery.grocery_product.storageType": "grocery.storageType supported",
+    "grocery.grocery_product.weightLabel": "grocery.weightLabel supported",
+    "grocery.grocery_product.price": "grocery.price supported",
+    "grocery.grocery_product.listPrice": "grocery.listPrice supported",
+    "grocery.grocery_product.imageUrl": "image generic",
+    "grocery.produce_category.id": "id generic",
+    "grocery.produce_category.name": "grocery.categoryName supported",
+    "grocery.produce_category.parentId": "grocery.categoryParent supported",
+    "grocery.produce_category.sortOrder": "ordinal generic",
+    "grocery.grocery_order.id": "id generic",
+    "grocery.grocery_order.orderNo": "commerce.orderNo supported",
+    "grocery.grocery_order.substitutionPolicy": "status generic",
+    "grocery.grocery_order.doorNote": "grocery.doorNote supported",
+    "grocery.grocery_order.status": "status generic",
+    "grocery.pick_line.id": "id generic",
+    "grocery.pick_line.orderId": "reference generic",
+    "grocery.pick_line.productName": "grocery.produceName supported",
+    "grocery.pick_line.binLocation": "grocery.binLocation supported",
+    "grocery.pick_line.status": "status generic"
+  }
+}
