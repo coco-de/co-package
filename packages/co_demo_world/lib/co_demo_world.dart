@@ -33,6 +33,7 @@ export 'src/demo_world_config.dart';
 export 'src/display_field_set.dart';
 export 'src/display_key.dart';
 export 'src/display_projector.dart';
+export 'src/locale_field_gap.dart';
 export 'src/locale_field_report.dart';
 export 'src/locale_field_status.dart';
 export 'src/user_edit_overlay.dart';
