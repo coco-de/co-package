@@ -82,6 +82,11 @@ final courses = faker.schema.records(20, fields, streamKey: 'course');
   whether a bare `name` field is a person's name or a title.
 - `faker.schema.infer('dueAt', type: 'DateTime')` exposes the inferred
   `CoFieldRole` for tooling.
+- A name word matches only where a camelCase or snake_case word starts
+  (`capacity` is a quantity, not a `city`), `total` is money only as the last
+  word (`orderTotal`; `totalSessions` is a count), and the role must fit the
+  field type: a `bool` field is always a boolean, and a numeric field never
+  takes a text role.
 
 ## 도메인 팩 만들기
 

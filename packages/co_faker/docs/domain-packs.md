@@ -22,6 +22,9 @@ final row = f.schema.record(
 The initial `clinic`, `saas`, `korea` precedence in `CoFakerDomains.all` is
 unchanged. New packs infer no global suffix patterns. Use qualified roles or
 `schema.entity('pack.entity')`, not an ambiguous bare role shared by packs.
+A field of an entity a pack owns (lists in `entities` or `entityRoles`) takes
+the pack's role of exactly the same name ahead of the general roles
+(`providerName` of a `brokerage` entity is `brokerage.providerName`).
 Unknown packs/roles/entities fail rather than borrowing a similarly named role.
 
 ## Public helper contracts
