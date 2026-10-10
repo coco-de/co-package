@@ -21,7 +21,10 @@ environment:
 dependencies:
   # pumpFramesUntilBlocState / waitForBlocState — BLoC 상태 신호 대기
   bloc_signals: any
-  build: ">=2.0.0 <5.0.0"
+  build: ">=2.4.0 <5.0.0"
+  # 생성 테스트를 `dart format` 과 같은 바이트로 낸다 (#100). build_runner 가 이미
+  # 의존하는 패키지라 소비자 의존 그래프에 새로 들어오는 것은 없다.
+  dart_style: ">=3.0.0 <4.0.0"
   flutter:
     sdk: flutter
   flutter_test:
@@ -31,12 +34,14 @@ dependencies:
   patrol_finders: ^3.5.0
   # installFakeWebViewPlatform — 웹뷰를 품은 화면을 위젯 테스트에서 띄우는 페이크
   plugin_platform_interface: ^2.1.8
+  pub_semver: ^2.1.4
   signals_core: any
   webview_flutter_platform_interface: any
 
 dev_dependencies:
   build_runner: 2.15.0
   lints: ^6.1.0
+  package_config: ^2.1.0
   test: ^1.31.0
 
 resolution: workspace

@@ -11,6 +11,7 @@ import 'package:co_bdd/src/generator/test_generator.dart'
         generateWidgetTest,
         sharedStepFileNames;
 import 'package:build/build.dart';
+import 'package:pub_semver/pub_semver.dart';
 
 /// .feature 파일에서 Widget Test + Patrol Test를 동시 생성하는 Builder.
 ///
@@ -98,6 +99,10 @@ class DualTestBuilder implements Builder {
       customSharedNames ?? sharedStepFileNames,
     );
 
+    // 생성물은 대상 패키지의 언어 버전으로 format 한다 — `dart format` 이
+    // 그 패키지에서 고르는 버전과 같아야 `--set-exit-if-changed` 를 통과한다.
+    final languageVersion = await _packageLanguageVersion(buildStep);
+
     // Widget Test 생성
     final widgetScenarios = feature.scenarios.where(
       (scenario) => scenario.target != TestTarget.patrolOnly,
@@ -110,6 +115,7 @@ class DualTestBuilder implements Builder {
         useSharedSteps: useSharedSteps,
         sharedStepsImport: sharedStepsImport,
         sharedStepNames: sharedStepNames,
+        languageVersion: languageVersion,
       );
       await buildStep.writeAsString(widgetTestId, widgetTestCode);
     }
@@ -126,10 +132,20 @@ class DualTestBuilder implements Builder {
         useSharedSteps: useSharedSteps,
         sharedStepsImport: sharedStepsImport,
         sharedStepNames: sharedStepNames,
+        languageVersion: languageVersion,
       );
       await buildStep.writeAsString(patrolTestId, patrolTestCode);
     }
   }
+}
+
+/// 입력 파일이 속한 패키지의 언어 버전. 알 수 없으면 `null`(포매터 최신).
+Future<Version?> _packageLanguageVersion(BuildStep buildStep) async {
+  final packageConfig = await buildStep.packageConfig;
+  final package = packageConfig[buildStep.inputId.package];
+  final version = package?.languageVersion;
+  if (version == null) return null;
+  return Version(version.major, version.minor, 0);
 }
 
 /// `defaultTarget` 옵션 문자열을 [TestTarget] 으로 해석한다.
