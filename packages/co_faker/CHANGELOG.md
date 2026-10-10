@@ -153,6 +153,14 @@
   and every code that is not a supported language read English domain data. They
   are never handed Simplified Chinese.
 
+## [0.13.1](https://github.com/coco-de/co-package/compare/co_faker-v0.13.0...co_faker-v0.13.1) (2026-10-10)
+
+
+### 버그 수정
+
+* **co_demo_world:** 🐛 grocery 5 SKU 11개 언어 공급과 언어 중립 폴백 native 분류 수정 ([#96](https://github.com/coco-de/co-package/issues/96)) ([#97](https://github.com/coco-de/co-package/issues/97)) ([78911c1](https://github.com/coco-de/co-package/commit/78911c1ac9fc536e7956bfc04a27a23318a23286))
+* **co_faker:** 🐛 필드 역할 추론 — 타입 가드 · camelCase 단어 경계 · 도메인 팩 엔티티 문맥 ([#99](https://github.com/coco-de/co-package/issues/99)) ([#102](https://github.com/coco-de/co-package/issues/102)) ([a66629f](https://github.com/coco-de/co-package/commit/a66629f630621e74dcf8fce1039435fdd154353e))
+
 ## [0.13.0](https://github.com/coco-de/co-package/compare/co_faker-v0.12.0...co_faker-v0.13.0) (2026-10-09)
 
 
