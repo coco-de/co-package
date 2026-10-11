@@ -362,7 +362,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'content.penName': ['字豆（虚构）', '纸星（虚构）', '云笔（虚构）'],
     'content.synopsisLine': ['虚构人物在小岛上整理信件的故事。', '一起画出地图上没有的池塘，这是一个虚构的故事。'],
     'content.genreName': ['奇幻', '日常', '冒险', '科学故事', '随笔'],
-    'content.seriesSection': ['每周连载', '新作', '已完结', '每日连载', '短篇'],
+    'content.seriesSectionLabel': ['每周连载', '新作', '已完结', '每日连载', '短篇'],
     'content.episodeTitle': ['第一只纸船（虚构）', '池塘上的一个小点（虚构）', '没有时钟的午后（虚构）'],
     'content.cutAltText': ['虚构人物折纸船的插画', '池塘边两位虚构人物的插画'],
     'content.commentLine': ['纸船那一幕让我印象很深。', '我想继续读下一个示例章节。'],
@@ -490,7 +490,7 @@ const CoL10nBundle zhBundle = CoL10nBundle(
     'logistics.hubName': ['松光转运中心（虚构）', '清澜转运中心（虚构）'],
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // Chinese writes the pattern of a Chinese plate, with its middle masked.
-    'logistics.vehiclePlate': ['沪A·{n}●●{m}'],
+    'logistics.localVehiclePlate': ['沪A·{n}●●{m}'],
     'logistics.deliveryNote': ['请勿放置门口，需当面签收。', '请通过单元门禁呼叫。', '请先与门卫确认。'],
     'logistics.exceptionDetail': [
       '敲门无人应答，已留下通知单。',

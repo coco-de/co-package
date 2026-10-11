@@ -738,7 +738,7 @@ const CoL10nBundle enBundle = CoL10nBundle(
       'Science stories',
       'Essay',
     ],
-    'content.seriesSection': [
+    'content.seriesSectionLabel': [
       'Weekly',
       'New',
       'Completed',
@@ -1057,7 +1057,7 @@ const CoL10nBundle enBundle = CoL10nBundle(
     'logistics.hubName': ['Solbit hub (fictional)', 'Garam hub (fictional)'],
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // Korean and English output have always shown this Korean plate format.
-    'logistics.vehiclePlate': ['{n}가●●{m}'],
+    'logistics.localVehiclePlate': ['{n}가●●{m}'],
     'logistics.deliveryNote': [
       'No unattended delivery; hand over directly.',
       'Please ring at the shared entrance.',

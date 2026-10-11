@@ -789,7 +789,7 @@ const CoL10nBundle ruBundle = CoL10nBundle(
       'Научные истории',
       'Эссе',
     ],
-    'content.seriesSection': [
+    'content.seriesSectionLabel': [
       'Еженедельные',
       'Новинки',
       'Завершённые',
@@ -1123,7 +1123,7 @@ const CoL10nBundle ruBundle = CoL10nBundle(
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // Two letters, a number, and a region code, with `●●` hiding two digits, as
     // the plate of a trailer is written.
-    'logistics.vehiclePlate': ['АВ {n}●● {m}'],
+    'logistics.localVehiclePlate': ['АВ {n}●● {m}'],
     'logistics.deliveryNote': [
       'Не оставлять без присмотра; передать лично в руки.',
       'Пожалуйста, позвоните в домофон у общего входа.',

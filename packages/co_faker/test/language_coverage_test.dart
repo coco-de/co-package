@@ -948,7 +948,7 @@ void main() {
           texts['common.taxonomyChild']![0] = '{root}の小項目'; // drops {n}
           texts['fitness.className']![0] = '{分類} {level}'; // renames {category}
           texts['workplace.sprintName']![0] = 'スプリント{n}{n}'; // repeats {n}
-          texts['logistics.vehiclePlate']![0] = '{n}{m}{x}'; // adds {x}
+          texts['logistics.localVehiclePlate']![0] = '{n}{m}{x}'; // adds {x}
         });
         final report = _data(ja.data(bundle: bundle));
         final issues = <String, String>{
@@ -961,7 +961,7 @@ void main() {
             'common.taxonomyChild[0]',
             'fitness.className[0]',
             'workplace.sprintName[0]',
-            'logistics.vehiclePlate[0]',
+            'logistics.localVehiclePlate[0]',
           ]),
         );
         expect(
@@ -977,13 +977,13 @@ void main() {
           contains('has {n}, which English does not have'),
         );
         expect(
-          issues['logistics.vehiclePlate[0]'],
+          issues['logistics.localVehiclePlate[0]'],
           contains('has {x}, which English does not have'),
         );
         // The same fields in another order are the same fields.
         final reordered = _bundle(ja, (texts) {
           texts['fitness.className']![0] = '{level}の{category}';
-          texts['logistics.vehiclePlate']![0] = '{m}・{n}';
+          texts['logistics.localVehiclePlate']![0] = '{m}・{n}';
         });
         expect(_data(ja.data(bundle: reordered)).passed, isTrue);
       },

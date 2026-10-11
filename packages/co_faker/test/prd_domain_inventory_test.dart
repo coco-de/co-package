@@ -141,7 +141,27 @@ void main() {
             ))
               field: 3,
           };
-          final enums = pack.enums[entry.key] ?? {};
+          // A pack may list the codes of a field its entity schema leaves out
+          // (a W1 record's A code field, co-package S-6): a record that has
+          // the field takes the codes.
+          final allEnums = pack.enums[entry.key] ?? {};
+          final enums = {
+            for (final field in allEnums.entries)
+              if (entry.value.containsKey(field.key)) field.key: field.value,
+          };
+          for (final field in allEnums.entries) {
+            if (enums.containsKey(field.key)) continue;
+            expect(
+              _faker().schema
+                  .records(field.value.length * 2, {
+                    field.key: 'String',
+                  }, entity: name)
+                  .map((r) => r[field.key])
+                  .toSet(),
+              field.value.toSet(),
+              reason: '$name.${field.key}',
+            );
+          }
           final count = enums.values.fold<int>(
             6,
             (n, values) => n > values.length ? n : values.length,

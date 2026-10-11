@@ -106,7 +106,12 @@ class CoDaycareDomain extends CoFakerDomain {
       'ageLabel': 'ageLabel',
       'teacherName': 'teacherName',
       'guardianContactMasked': 'guardianContactMasked',
+      // W1 #665 (co-package S-8).
+      'allergyNote': 'allergenLabel',
     },
+    'album_photo': {'title': 'albumCaption'},
+    'album_group': {'title': 'activityTitle'},
+    'day_plan': {'title': 'mealMenu', 'allergenNote': 'allergenLabel'},
     'daily_note': {
       'mealLevel': 'mealLevel',
       'moodLabel': 'moodLabel',
@@ -116,7 +121,6 @@ class CoDaycareDomain extends CoFakerDomain {
     'medication_request': {
       'drugLabel': 'drugLabel',
       'dosage': 'dosageLabel',
-      'storage': 'medicationStorage',
       'symptom': 'symptom',
       'guardianSignature': 'guardianSignature',
     },
@@ -128,10 +132,16 @@ class CoDaycareDomain extends CoFakerDomain {
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {
+    // A code fields of W1 #665 take codes; `daycare.medicationStorage` is the
+    // display label of a storage code (co-package S-6).
+    'child': {
+      'classCode': ['sun', 'moon', 'star'],
+    },
     'daily_note': {
       'status': ['draft', 'sent', 'confirmed'],
     },
     'medication_request': {
+      'storage': ['room', 'fridge'],
       'status': [
         'draft',
         'requested',

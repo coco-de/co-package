@@ -52,22 +52,42 @@ class CoMeetupDomain extends CoFakerDomain {
     'club': {
       'name': 'clubName',
       'intro': 'clubIntro',
-      'interest': 'interestTag',
       'cadenceLabel': 'cadenceLabel',
     },
     'gathering': {'title': 'gatheringTitle', 'venueLabel': 'venueName'},
-    'club_member': {'memberName': 'nickname', 'availableDays': 'availableDays'},
+    'club_member': {'memberName': 'nickname', 'intro': 'joinAnswer'},
+    // W1 #669 dues: an amount the UI language does not change (co-package
+    // S-7 — `unitPrice` was `clinic.procedurePrice`).
+    'club_due': {'title': 'duesItem', 'unitPrice': 'price'},
     'meetup_member': {'interests': 'interestTag'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {
+    // A code fields take codes; `meetup.interestTag` and
+    // `meetup.availableDays` are their display labels (co-package S-6).
     'club': {
       'joinPolicy': ['approval', 'open'],
+      'interest': [
+        'running',
+        'reading',
+        'boardgame',
+        'photo',
+        'cooking',
+        'hiking',
+      ],
     },
     'gathering': {
       'status': ['draft', 'open', 'closed', 'done', 'canceled'],
     },
     'club_member': {
+      'availableDays': [
+        'weekday_evening',
+        'weekend',
+        'tue_thu',
+        'sat_morning',
+        'any_day',
+      ],
+      'experienceLevel': ['first', 'sometimes', 'regular'],
       'status': [
         'applied',
         'approved',

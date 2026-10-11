@@ -161,8 +161,8 @@ that has domain text and asks of its texts, besides the declaration in
 - `fandom.creatorName` has exactly two texts, which are two fictional names of
   the language (never the Korean names);
 - a masked name keeps a mask character (`homecare.recipientName`,
-  `hospitality.guestName`), and the plate of `logistics.vehiclePlate` keeps its
-  `●●`.
+  `hospitality.guestName`), and the plate of `logistics.localVehiclePlate`
+  keeps its `●●`.
 
 The translation of a Story is a draft written with an AI assistant, and a
 native speaker has to review it. Write the terms that are medical, legal, or
@@ -242,7 +242,11 @@ of the generators are still Korean:
   values by name, so the gate skips its roles. The entities of the clinic and
   SaaS packs run without it: with the `korea` pack registered, a field such as
   `phone` or `address1` is inferred to a Korean role.
-- English keeps the Korean plate pattern of `logistics.vehiclePlate` and the
+- A role that is a business value (`CoDomainRole.languageNeutral`: an enum
+  code, a sequence code, the Korean vehicle plate `logistics.vehiclePlate`) is
+  the same in every language by design, so the gate reads neither its Hangul
+  nor its writing system, in a role or in an entity field.
+- English keeps the Korean plate pattern of `logistics.localVehiclePlate` and the
   Korean names of the two approved creators, byte for byte, so the gate does
   not look for Hangul in English.
 - The gate cannot see a word that a generator writes in English when it equals

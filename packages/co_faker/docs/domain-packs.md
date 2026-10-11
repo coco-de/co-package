@@ -24,8 +24,18 @@ unchanged. New packs infer no global suffix patterns. Use qualified roles or
 `schema.entity('pack.entity')`, not an ambiguous bare role shared by packs.
 A field of an entity a pack owns (lists in `entities` or `entityRoles`) takes
 the pack's role of exactly the same name ahead of the general roles
-(`providerName` of a `brokerage` entity is `brokerage.providerName`).
+(`providerName` of a `brokerage` entity is `brokerage.providerName`), unless
+the pack lists enum codes for the field: a code field takes the codes, and the
+role of the same name is its display label. An `entityRoles` entry may name a
+general role the pack does not define (`price`, `quantity`). `workplace` (the
+shared HR pack) precedes `hrd` (training), so an unqualified `employee` is the
+workplace employee and `hrd.employee` the training one.
 Unknown packs/roles/entities fail rather than borrowing a similarly named role.
+
+A role built for a business value (an enum code, an amount, a count, a
+sequence code, the Korean vehicle plate) sets `CoDomainRole.languageNeutral`:
+the same seed and key give the same value in every locale, and
+`test/w1_supply_test.dart` checks it for every such role of every pack.
 
 ## Public helper contracts
 
@@ -141,11 +151,11 @@ from the bundle key of the role (11 languages, lists aligned with English).
 | --- | --- | --- | --- |
 | instructor | specialty · career | `fitness.instructorSpecialty` · `fitness.instructorCareer` | B |
 | child | guardianContactMasked | `daycare.guardianContactMasked` (`***-****-1234`) | A |
-| medication_request | storage · symptom | `daycare.medicationStorage` · `daycare.symptom` | B |
+| medication_request | storage · symptom | enum `room` · `fridge` (A; label `daycare.medicationStorage`) · `daycare.symptom` (B) | A · B |
 | medication_request, pickup_permit | guardianSignature | `daycare.guardianSignature` (`faker.signature` SVG data URI) | A |
 | pickup_permit | relation · contactLast4 | `daycare.pickupRelation` (`parent`, `grandparent`, `relative`, `other`) · `daycare.contactLast4` | A |
-| club_member · meetup_member | availableDays · interests | `meetup.availableDays` · `meetup.interestTag` | B |
-| series | section · releaseWeekday | `content.seriesSection` (B) · `content.releaseWeekday` (`mon`…`sun`, A) | B · A |
+| club_member · meetup_member | availableDays · interests | enum `weekday_evening`…`any_day` (A; label `meetup.availableDays`) · `meetup.interestTag` (B) | A · B |
+| series | section · releaseWeekday | `content.seriesSection` (`weekly`…`short`; label `content.seriesSectionLabel`) · `content.releaseWeekday` (`mon`…`sun`) | A |
 | ticket · ticket_message · csat_response | ticketNo | `helpdesk.ticketNo` (`TK-yymmdd-0001`, one number per record index) | A |
 | ticket_message | visibility | `helpdesk.visibility` (`public`, `internal`) | A |
 | shift · approval_line · month_close_item | department · approverRole · section | `workplace.department` · `workplace.approverRole` · `workplace.closeSection` | B |
@@ -155,7 +165,7 @@ from the bundle key of the role (11 languages, lists aligned with English).
 | load_item | recipientArea · shelfSlot | `logistics.recipientArea` (a city of the locale, B) · `logistics.shelfSlot` (`A-03-2`, A) | B · A |
 | delivery_proof | signatureData | `logistics.signatureData` (`faker.signature` SVG data URI) | A |
 | delivery_exception | detail | `logistics.exceptionDetail` | B |
-| courier | vehicleType · vehiclePlate | `logistics.vehicleType` (A) · `logistics.vehiclePlate` (masked, B) | A · B |
+| courier | vehicleType · vehiclePlate | `logistics.vehicleType` · `logistics.vehiclePlate` (masked Korean plate in every language; the plate of the locale country is `logistics.localVehiclePlate`) | A |
 | stay_booking | arrivalEta | `hospitality.arrivalEta` (`15:00`–`21:30`) | A |
 | stay_guide | bbqRule · wifiHint | `hospitality.bbqRule` · `hospitality.wifiHint` | B |
 | campsite_review | stayMonth | `hospitality.stayMonth` (`YYYY-MM` before the clock) | A |
@@ -165,6 +175,32 @@ reachable number; a signature is generated strokes, not anyone's handwriting.
 `test/w1_recipe_fields_test.dart` checks the resolution, the determinism of
 every identifier across the eleven languages, and the alignment of every
 display text with English.
+
+### W1 supply fixes (faker-support-w1 S-5 · S-6 · S-7 · S-8 · S-10)
+
+The W1 consumption measurement (coco-de/cocode `docs/projects/637/faker-support-w1.md`)
+found fields of the nine design records that the entity context did not
+reach. `test/w1_supply_test.dart` checks each one.
+
+- **S-5** `saas.tenantName` is a clinic name, except in a company field
+  (`companyName`), where a SaaS tenant is the customer company of the service:
+  a helpdesk `tenant.companyName` is a company, not a clinic.
+- **S-6** An A code field takes codes and a display label role stays a role of
+  its own: `child.classCode` (`sun`, `moon`, `star`),
+  `medication_request.storage` (`room`, `fridge`), `club.interest`,
+  `club_member.availableDays` · `experienceLevel`, `series.genre` and
+  `series.section` (`content.seriesSection` is now the code;
+  `content.seriesSectionLabel` the label).
+- **S-7** `club_due.unitPrice` and `pass_line.unitPrice` are `price` (they
+  were `clinic.procedurePrice`, whose amount followed the UI language), and an
+  unqualified `employee` is the workplace employee.
+- **S-8** The packs map the W1 entity fields whose roles they already had
+  (`help_article.title`, `parcel_scan.areaLabel`, `season_rate.seasonName`,
+  ...). A thing name (`itemName`, `seasonName`) infers a title, and the `name`
+  of an `operator`, `courier`, `driver`, `requester` or `assignee` a person.
+- **S-10** `logistics.vehiclePlate` is the masked Korean plate in every
+  language; `logistics.localVehiclePlate` keeps the plate of the locale
+  country.
 
 ## Language bundles
 

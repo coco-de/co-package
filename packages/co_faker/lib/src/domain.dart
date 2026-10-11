@@ -1,4 +1,5 @@
 import 'co_faker.dart';
+import 'schema.dart';
 
 /// What a domain role generator knows about the field it fills.
 typedef CoDomainRoleContext = ({
@@ -30,6 +31,7 @@ class CoDomainRole {
     this.fieldPatterns = const <String>[],
     this.generateRecord,
     this.supportedTypes,
+    this.languageNeutral = false,
   });
 
   /// Produces the value; it must draw only from the given faker.
@@ -43,6 +45,11 @@ class CoDomainRole {
   /// Declared primitive output types, when this role uses a strict adapter.
   /// `null` retains the legacy coercion behavior for existing/custom packs.
   final List<String>? supportedTypes;
+
+  /// Whether the value is a business value (an A value: a code, an amount,
+  /// a count, an identifier) that the UI language must not change. The same
+  /// seed and key give the same value in every locale.
+  final bool languageNeutral;
 
   /// One line for coverage reports and documentation.
   final String description;
@@ -127,7 +134,9 @@ abstract class CoFakerDomain {
       const <String, Map<String, List<String>>>{};
 
   /// Explicit roles of entity fields whose names alone would not infer
-  /// them: entity → field → role name.
+  /// them: entity → field → role name. A name is a role of this pack, a
+  /// qualified role of another pack (`korea.mobilePhone`), or a general
+  /// [CoFieldRole] this pack does not define (`price`, `quantity`).
   Map<String, Map<String, String>> get entityRoles =>
       const <String, Map<String, String>>{};
 }
@@ -205,7 +214,8 @@ extension CoFakerDomainLookup on List<CoFakerDomain> {
   /// An explicit [CoFakerDomain.entityRoles] entry wins. Otherwise a pack
   /// that owns [entity] (lists it in its entities or entity roles) lends its
   /// role of the same name as [field] (`providerName` on a `brokerage`
-  /// entity is `brokerage.providerName`), ahead of the general roles.
+  /// entity is `brokerage.providerName`), ahead of the general roles —
+  /// unless the owner lists enum codes for [field], which then win.
   String? entityRole(String? entity, String field) {
     if (entity == null) return null;
     final dot = entity.indexOf('.');
@@ -217,13 +227,22 @@ extension CoFakerDomainLookup on List<CoFakerDomain> {
       }
       final role = domain.entityRoles[key]?[field];
       if (role != null) {
-        return role.contains('.') ? role : '${domain.name}.$role';
+        if (role.contains('.')) return role;
+        // A general role (`price`, `quantity`) the pack does not define.
+        if (!domain.roles.containsKey(role) &&
+            CoFieldRole.parse(role) != null) {
+          return role;
+        }
+        return '${domain.name}.$role';
       }
       if (domain.entities.containsKey(key) ||
           domain.entityRoles.containsKey(key)) {
         owners.add(domain);
       }
     }
+    // A field the owner lists enum codes for is a code field: a role of the
+    // same name is its display label, not its value (co-package S-6).
+    if (owners.any((domain) => domain.enums[key]?[field] != null)) return null;
     final normalized = CoDomainRole.normalize(field);
     for (final domain in owners) {
       for (final role in domain.roles.keys) {

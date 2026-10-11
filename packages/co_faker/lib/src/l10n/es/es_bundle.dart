@@ -774,7 +774,7 @@ const CoL10nBundle esBundle = CoL10nBundle(
       'Historias de ciencia',
       'Ensayo',
     ],
-    'content.seriesSection': [
+    'content.seriesSectionLabel': [
       'Semanales',
       'Novedades',
       'Finalizadas',
@@ -1108,7 +1108,7 @@ const CoL10nBundle esBundle = CoL10nBundle(
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // The shape is the Spanish plate (four digits, a space, three letters),
     // with `●●` hiding its last two letters.
-    'logistics.vehiclePlate': ['{n}{m} B●●'],
+    'logistics.localVehiclePlate': ['{n}{m} B●●'],
     'logistics.deliveryNote': [
       'No dejar en la puerta; entregar en mano.',
       'Por favor, llame al portero automático del portal.',

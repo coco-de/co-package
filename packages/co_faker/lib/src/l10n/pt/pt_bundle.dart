@@ -777,7 +777,7 @@ const CoL10nBundle ptBundle = CoL10nBundle(
       'Histórias de ciência',
       'Ensaio',
     ],
-    'content.seriesSection': [
+    'content.seriesSectionLabel': [
       'Semanais',
       'Novidades',
       'Concluídas',
@@ -1106,7 +1106,7 @@ const CoL10nBundle ptBundle = CoL10nBundle(
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // The shape is the Brazilian plate (three letters, a hyphen, four digits),
     // with `●●` hiding its first two letters.
-    'logistics.vehiclePlate': ['●●C-{n}{m}'],
+    'logistics.localVehiclePlate': ['●●C-{n}{m}'],
     'logistics.deliveryNote': [
       'Não deixar na porta; entregar em mãos.',
       'Por favor, chame pelo interfone na entrada do prédio.',

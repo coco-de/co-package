@@ -1227,7 +1227,7 @@ void main() {
           matches(RegExp(r'^[A-ZÀ-Ý]\*\*\*$')),
         );
         expect(
-          _role(f, 'logistics.vehiclePlate', i),
+          _role(f, 'logistics.localVehiclePlate', i),
           matches(RegExp(r'^AB \d\d●●\d\d CD$')),
         );
         expect(

@@ -39,7 +39,9 @@ class CoContentDomain extends CoFakerDomain {
     ),
     'topicTaxonomy': taxonomyRole('content.topicTaxonomy', roots: _topicRoots),
     // W1 recipe fields (co-package#78).
-    'seriesSection': textRole('content.seriesSection'),
+    // A code; `seriesSectionLabel` is its display label (co-package S-6).
+    'seriesSection': enumRole(['weekly', 'new', 'completed', 'daily', 'short']),
+    'seriesSectionLabel': textRole('content.seriesSectionLabel'),
     'releaseWeekday': enumRole([
       'mon',
       'tue',
@@ -82,11 +84,15 @@ class CoContentDomain extends CoFakerDomain {
       'title': 'seriesTitle',
       'authorName': 'penName',
       'synopsis': 'synopsisLine',
-      'genre': 'genreName',
       'section': 'seriesSection',
       'releaseWeekday': 'releaseWeekday',
     },
     'episode': {'title': 'episodeTitle'},
+    // W1 #671 (co-package S-8).
+    'episode_cut': {'altText': 'cutAltText'},
+    'novel_chapter': {'title': 'episodeTitle', 'body': 'chapterParagraph'},
+    'episode_comment': {'body': 'commentLine'},
+    'coin_wallet': {'balance': 'quantity'},
     'audiobook': {'title': 'audioTitle', 'narratorName': 'narratorName'},
     'letter_article': {'title': 'articleHeadline', 'body': 'chapterParagraph'},
     'series_genre': {'name': 'genreTaxonomy', 'parentId': 'genreParent'},
@@ -95,6 +101,11 @@ class CoContentDomain extends CoFakerDomain {
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {
+    // A code field: `content.genreName` is the display label of a genre
+    // (co-package S-6).
+    'series': {
+      'genre': ['fantasy', 'daily_life', 'adventure', 'science', 'essay'],
+    },
     'episode': {
       'status': ['draft', 'in_review', 'published', 'archived'],
     },

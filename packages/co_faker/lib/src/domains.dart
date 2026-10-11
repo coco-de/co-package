@@ -147,7 +147,6 @@ abstract final class CoFakerDomains {
     dining,
     daycare,
     examPrep,
-    hrd,
     neighborhood,
     meetup,
     fandom,
@@ -155,6 +154,9 @@ abstract final class CoFakerDomains {
     helpdesk,
     campaign,
     workplace,
+    // After the shared HR pack, so an unqualified `employee` is the workplace
+    // employee; `hrd.employee` is the training one (co-package S-7).
+    hrd,
     brokerage,
     logistics,
     hospitality,
@@ -169,6 +171,12 @@ abstract final class CoFakerDomains {
 }
 
 String _dateString(DateTime value) => value.toIso8601String().substring(0, 10);
+
+/// Whether [field] names a company (`companyName`, `company`): a SaaS tenant
+/// there is the customer company of the service, not a clinic
+/// (co-package S-5).
+bool _isCompanyField(String field) =>
+    CoDomainRole.normalize(field).contains('company');
 
 /// Korean identity domain pack (`korea.*` roles).
 class CoKoreaDomain extends CoFakerDomain {
@@ -501,8 +509,12 @@ class CoSaasDomain extends CoFakerDomain {
       fieldPatterns: const ['tenantcode', 'tenant.code'],
     ),
     'tenantName': CoDomainRole(
-      (f, _) => f.clinic.clinicName(),
-      description: 'Tenant (clinic) name',
+      (f, c) => _isCompanyField(c.field)
+          ? f.commerce.companyName()
+          : f.clinic.clinicName(),
+      description:
+          'Tenant (clinic) name; a company name in a company field '
+          '(`companyName`)',
       fieldPatterns: const ['tenantname', 'tenant.name'],
     ),
     'planCode': CoDomainRole(

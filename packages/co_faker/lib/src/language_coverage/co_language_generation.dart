@@ -47,7 +47,8 @@ const Map<String, String> koreanOnlyPacks = <String, String>{
 /// records each. Every text that comes out is read for:
 ///
 /// - Hangul, when [checkHangul] is set (a call that is independent of the
-///   locale by design, `CoLanguageCall.hangulReason`, is left out);
+///   locale by design, `CoLanguageCall.hangulReason`, and a role that is a
+///   business value, `CoDomainRole.languageNeutral`, are left out);
 /// - a placeholder that no generator filled in (`{n}`);
 /// - the writing system of [script], for the roles and the calls that return
 ///   plain text, when the language has one. A text that is the same in
@@ -397,14 +398,22 @@ class _Generation {
           try {
             final texts = outputs(faker(seed, generationDomains));
             for (final text in texts) {
-              _scan(where, text);
+              _scan(
+                where,
+                text,
+                hangulReason: entry.value.languageNeutral
+                    ? 'a business value the UI language does not change'
+                    : null,
+              );
             }
-            _checkScript(
-              where,
-              texts,
-              () => outputs(_reference('en', seed)),
-              () => outputs(_reference('ko', seed)),
-            );
+            if (!entry.value.languageNeutral) {
+              _checkScript(
+                where,
+                texts,
+                () => outputs(_reference('en', seed)),
+                () => outputs(_reference('ko', seed)),
+              );
+            }
           } catch (error) {
             _report(CoLanguageCheck.error, where, _brief(error));
             break;
@@ -431,18 +440,38 @@ class _Generation {
         };
         _calls++;
         try {
-          final rows = faker(
-            seeds.first,
-            domains,
-          ).schema.entities(qualified, 6, referenceCounts: references);
+          final generator = faker(seeds.first, domains);
+          final rows = generator.schema.entities(
+            qualified,
+            6,
+            referenceCounts: references,
+          );
+          // A field whose role is a business value is the same in every
+          // language (a Korean vehicle plate), like a `hangulReason` call.
+          final neutral = <String>{
+            for (final field in entity.value.keys)
+              if (_isLanguageNeutral(generator, qualified, field)) field,
+          };
           for (final row in rows) {
-            _scan(where, _describe(row));
+            _scan(
+              where,
+              _describe({
+                for (final field in row.entries)
+                  if (!neutral.contains(field.key)) field.key: field.value,
+              }),
+            );
           }
         } catch (error) {
           _report(CoLanguageCheck.error, where, _brief(error));
         }
       }
     }
+  }
+
+  static bool _isLanguageNeutral(CoFaker f, String entity, String field) {
+    final role = f.domains.entityRole(entity, field);
+    return role != null &&
+        (f.domains.findRole(role)?.role.languageNeutral ?? false);
   }
 
   /// Every call of the generators, for every seed.

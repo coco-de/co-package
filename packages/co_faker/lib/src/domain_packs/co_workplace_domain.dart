@@ -114,8 +114,20 @@ class CoWorkplaceDomain extends CoFakerDomain {
       'accountName': 'accountName',
     },
     'work_day': {'status': 'attendanceStatus'},
-    'shift': {'department': 'department'},
-    'approval_line': {'approverRole': 'approverRole'},
+    // W1 #677 (co-package S-8).
+    'department': {'name': 'department'},
+    'shift': {
+      'department': 'department',
+      'title': 'shiftName',
+      'place': 'workPlace',
+    },
+    'leave_request': {'leaveType': 'leaveType'},
+    'approval_line': {
+      'approverRole': 'approverRole',
+      'comment': 'approvalComment',
+      'decision': 'approvalDecision',
+      'actionLabel': 'saas.auditAction',
+    },
     'month_close_item': {'section': 'closeSection'},
   };
   @override

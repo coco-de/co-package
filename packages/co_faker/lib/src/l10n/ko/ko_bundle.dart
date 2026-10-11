@@ -402,7 +402,7 @@ const CoL10nBundle koBundle = CoL10nBundle(
       '지도에 없는 연못을 함께 그려 보는 가상의 이야기입니다.',
     ],
     'content.genreName': ['판타지', '일상', '모험', '과학 이야기', '에세이'],
-    'content.seriesSection': ['주간 연재', '신작', '완결', '매일 연재', '단편'],
+    'content.seriesSectionLabel': ['주간 연재', '신작', '완결', '매일 연재', '단편'],
     'content.episodeTitle': ['첫 번째 종이 배(가상)', '연못의 작은 점(가상)', '시계 없는 오후(가상)'],
     'content.cutAltText': ['가상 인물이 종이 배를 접는 일러스트', '연못 옆 가상 인물 둘의 일러스트'],
     'content.commentLine': ['종이 배 장면이 기억에 남아요.', '다음 예시 회차도 읽어 보고 싶어요.'],
@@ -550,7 +550,7 @@ const CoL10nBundle koBundle = CoL10nBundle(
     'logistics.hubName': ['솔빛 허브(가상)', '가람 허브(가상)'],
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // Korean and English output have always shown this Korean plate format.
-    'logistics.vehiclePlate': ['{n}가●●{m}'],
+    'logistics.localVehiclePlate': ['{n}가●●{m}'],
     'logistics.deliveryNote': [
       '문 앞 보관 금지 · 직접 수령',
       '공동현관에서 호출해 주세요.',
@@ -651,7 +651,7 @@ const CoL10nBundle koBundle = CoL10nBundle(
     // The two approved fictional creators: English writes their Korean names.
     'fandom.creatorName': ['*'],
     // English keeps the Korean plate pattern, and Korean is where it belongs.
-    'logistics.vehiclePlate': ['*'],
+    'logistics.localVehiclePlate': ['*'],
     // Units, acronyms, and names of the Korean clinic and SaaS data.
     'clinic.procedures.unit': ['cc'],
     'clinic.drugForms.unit': ['mg', 'g'],

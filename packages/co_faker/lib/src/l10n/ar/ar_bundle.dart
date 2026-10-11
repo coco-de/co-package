@@ -761,7 +761,13 @@ const CoL10nBundle arBundle = CoL10nBundle(
       'قصص علمية',
       'مقالة',
     ],
-    'content.seriesSection': ['أسبوعي', 'جديد', 'مكتمل', 'يومي', 'سلسلة قصيرة'],
+    'content.seriesSectionLabel': [
+      'أسبوعي',
+      'جديد',
+      'مكتمل',
+      'يومي',
+      'سلسلة قصيرة',
+    ],
     'content.episodeTitle': [
       'القارب الورقي الأول (افتراضي)',
       'نقطة صغيرة على البركة (افتراضي)',
@@ -1081,7 +1087,7 @@ const CoL10nBundle arBundle = CoL10nBundle(
     ],
     // A masked plate: {n} is a two-digit number and {m} the last two digits,
     // after the Arabic letters of a Saudi-style plate.
-    'logistics.vehiclePlate': ['أ ب ج {n}●●{m}'],
+    'logistics.localVehiclePlate': ['أ ب ج {n}●●{m}'],
     'logistics.deliveryNote': [
       'لا تترك الشحنة دون استلام؛ سلّمها مباشرةً.',
       'يُرجى الرنين عند المدخل المشترك.',
