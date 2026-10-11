@@ -87,6 +87,10 @@ class CoFitnessDomain extends CoFakerDomain {
       'startsAt': 'booking.startsAt',
     },
     'class_booking': {'passName': 'passName'},
+    // W1 #662 (co-package S-7 · S-8): `unitPrice` was
+    // `clinic.procedurePrice`, whose amount followed the UI language.
+    'pass_product': {'name': 'passName'},
+    'pass_line': {'unitPrice': 'price'},
     'membership_pass': {'passName': 'passName', 'validDays': 'passTerm'},
     'instructor': {
       'specialty': 'instructorSpecialty',

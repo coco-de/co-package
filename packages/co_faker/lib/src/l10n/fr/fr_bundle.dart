@@ -780,7 +780,7 @@ const CoL10nBundle frBundle = CoL10nBundle(
       'Récits scientifiques',
       'Essai',
     ],
-    'content.seriesSection': [
+    'content.seriesSectionLabel': [
       'Hebdomadaires',
       'Nouveautés',
       'Terminées',
@@ -1109,7 +1109,7 @@ const CoL10nBundle frBundle = CoL10nBundle(
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // The shape is the old French one, digits, letters, and the number of the
     // department; the plate stays masked with `●●`.
-    'logistics.vehiclePlate': ['{n}●● AB {m}'],
+    'logistics.localVehiclePlate': ['{n}●● AB {m}'],
     'logistics.deliveryNote': [
       'Pas de dépôt sans surveillance\u00A0; remise en main propre.',
       'Merci de sonner à l’entrée commune.',

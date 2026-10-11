@@ -10,10 +10,12 @@ CoDomainRole authoredRole(
   String description =
       'Authored fictional example in the locale language; English fallback',
   bool coherent = false,
+  bool languageNeutral = false,
 }) => CoDomainRole(
   generate,
   generateRecord: coherent ? generate : null,
   description: description,
+  languageNeutral: languageNeutral,
   supportedTypes: type == 'int'
       ? const ['int', 'double', 'num', 'String']
       : type == 'double'
@@ -57,6 +59,7 @@ CoDomainRole indexedTextRole(String key, {required int rows}) => authoredRole(
 CoDomainRole enumRole(List<String> values) => authoredRole(
   (f, c) => f.random.pickBalanced(values, c.index),
   description: 'Enum code: ${values.join(', ')}',
+  languageNeutral: true,
 );
 
 /// Generates a bounded, step-aligned illustrative integer.
@@ -64,6 +67,7 @@ CoDomainRole intRole(int min, int max, {int step = 1}) => authoredRole(
   (f, _) => f.number.int(min: min ~/ step, max: max ~/ step) * step,
   type: 'int',
   description: 'Illustrative integer in $min..$max (step $step)',
+  languageNeutral: true,
 );
 
 /// Generates a bounded decimal with specified precision.
@@ -72,6 +76,7 @@ CoDomainRole decimalRole(double min, double max, {int decimals = 1}) =>
       (f, _) => f.number.decimal(min: min, max: max, decimals: decimals),
       type: 'double',
       description: 'Illustrative number in $min..$max',
+      languageNeutral: true,
     );
 
 /// Reuses the existing locale's fictional given-name generator.
@@ -95,20 +100,25 @@ CoDomainRole codeRole(
   String prefix, {
   int width = 4,
   bool dated = false,
-}) => authoredRole((f, c) {
-  final date = f.now
-      .toUtc()
-      .toIso8601String()
-      .substring(2, 10)
-      .replaceAll('-', '');
-  return '$prefix${dated ? '-$date' : ''}-${(c.index + 1).toString().padLeft(width, '0')}';
-}, description: 'Fictional sequence code; UTC clock and record index');
+}) => authoredRole(
+  (f, c) {
+    final date = f.now
+        .toUtc()
+        .toIso8601String()
+        .substring(2, 10)
+        .replaceAll('-', '');
+    return '$prefix${dated ? '-$date' : ''}-${(c.index + 1).toString().padLeft(width, '0')}';
+  },
+  description: 'Fictional sequence code; UTC clock and record index',
+  languageNeutral: true,
+);
 
 /// Parent pointers for an ordered two-level taxonomy: roots precede children.
 CoDomainRole parentRole(int rootCount) => authoredRole(
   (f, c) => c.index < rootCount ? 0 : 1 + (c.index - rootCount) % rootCount,
   type: 'int',
   description: '0 for root, otherwise an earlier root id (1..$rootCount)',
+  languageNeutral: true,
 );
 
 /// Names the same two-level taxonomy as [parentRole], keeping children under

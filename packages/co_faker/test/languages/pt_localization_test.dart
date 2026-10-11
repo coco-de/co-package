@@ -1533,7 +1533,7 @@ void main() {
           matches(RegExp(r'^\p{Lu}\*\*\*$', unicode: true)),
         );
         expect(
-          _value(f, 'logistics.vehiclePlate', i),
+          _value(f, 'logistics.localVehiclePlate', i),
           matches(RegExp(r'^●●C-\d{4}$')),
         );
         expect(

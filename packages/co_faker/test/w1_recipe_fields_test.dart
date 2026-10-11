@@ -5,6 +5,13 @@ import 'package:test/test.dart';
 /// (co-package#78): every one resolves to a domain role, a business
 /// identifier is the same in every language, and a display text is the
 /// translation of the English record in each of the eleven languages.
+///
+/// Four of them are A codes since co-package S-6 · S-10 (the W1 design
+/// records): `medication_request.storage`, `club_member.availableDays` and
+/// `series.section` take codes, and `courier.vehiclePlate` is the Korean plate
+/// in every language. Their display labels stay roles of their own
+/// (`daycare.medicationStorage`, `meetup.availableDays`,
+/// `content.seriesSectionLabel`, `logistics.localVehiclePlate`).
 
 /// entity → field → the role it resolves to, and whether it is a business
 /// identifier (A) or a display text (B).
@@ -18,7 +25,7 @@ const Map<String, Map<String, (String, String)>> _fields =
         'guardianContactMasked': ('daycare.guardianContactMasked', 'A'),
       },
       'medication_request': {
-        'storage': ('daycare.medicationStorage', 'B'),
+        'storage': ('status', 'A'),
         'symptom': ('daycare.symptom', 'B'),
         'guardianSignature': ('daycare.guardianSignature', 'A'),
       },
@@ -27,10 +34,10 @@ const Map<String, Map<String, (String, String)>> _fields =
         'contactLast4': ('daycare.contactLast4', 'A'),
         'guardianSignature': ('daycare.guardianSignature', 'A'),
       },
-      'club_member': {'availableDays': ('meetup.availableDays', 'B')},
+      'club_member': {'availableDays': ('status', 'A')},
       'meetup_member': {'interests': ('meetup.interestTag', 'B')},
       'series': {
-        'section': ('content.seriesSection', 'B'),
+        'section': ('content.seriesSection', 'A'),
         'releaseWeekday': ('content.releaseWeekday', 'A'),
       },
       'ticket': {'ticketNo': ('helpdesk.ticketNo', 'A')},
@@ -54,7 +61,7 @@ const Map<String, Map<String, (String, String)>> _fields =
       'parcel_scan': {'trackingNo': ('logistics.trackingNo', 'A')},
       'courier': {
         'vehicleType': ('logistics.vehicleType', 'A'),
-        'vehiclePlate': ('logistics.vehiclePlate', 'B'),
+        'vehiclePlate': ('logistics.vehiclePlate', 'A'),
       },
       'stay_booking': {'arrivalEta': ('hospitality.arrivalEta', 'A')},
       'stay_guide': {
@@ -96,11 +103,8 @@ String _value(CoFaker f, String entity, String field, int index) =>
 const Map<String, String> _textKeys = <String, String>{
   'fitness.instructorSpecialty': 'fitness.instructorSpecialty',
   'fitness.instructorCareer': 'fitness.instructorCareer',
-  'daycare.medicationStorage': 'daycare.medicationStorage',
   'daycare.symptom': 'daycare.symptom',
-  'meetup.availableDays': 'meetup.availableDays',
   'meetup.interestTag': 'meetup.interestTag',
-  'content.seriesSection': 'content.seriesSection',
   'workplace.department': 'workplace.department',
   'workplace.approverRole': 'workplace.approverRole',
   'workplace.closeSection': 'workplace.closeSection',
@@ -125,7 +129,13 @@ void main() {
     expect(report.rows, hasLength(34));
     expect(report.complete, isTrue, reason: report.toMarkdown());
     for (final row in report.rows) {
-      expect(row.status, CoCoverageStatus.supported, reason: row.field);
+      expect(
+        row.status,
+        row.role == 'status'
+            ? CoCoverageStatus.generic
+            : CoCoverageStatus.supported,
+        reason: row.field,
+      );
       expect(row.role, _fields[row.entity]![row.field]!.$1, reason: row.field);
     }
   });
@@ -227,7 +237,7 @@ void main() {
     }
   });
 
-  test('the recipient area and the plate follow the language', () {
+  test('the recipient area follows the language, the plate stays masked', () {
     for (final language in _languages) {
       final f = _faker(language);
       expect(

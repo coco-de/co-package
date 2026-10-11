@@ -612,7 +612,7 @@ void main() {
       ]);
       for (var i = 0; i < 6; i++) {
         expect(
-          _role(f, 'logistics.vehiclePlate', i),
+          _role(f, 'logistics.localVehiclePlate', i),
           matches(RegExp(r'^沪A·\d{2}●●\d{2}$')),
         );
         expect(
@@ -930,7 +930,7 @@ void main() {
       for (var i = 0; i < 40; i++) {
         expect(_role(f, 'homecare.recipientName', i), matches(mask));
         expect(_role(f, 'hospitality.guestName', i), matches(mask));
-        expect(_role(f, 'logistics.vehiclePlate', i), contains('●●'));
+        expect(_role(f, 'logistics.localVehiclePlate', i), contains('●●'));
         expect(
           _role(f, 'logistics.entranceHint', i),
           isNot(matches(RegExp(r'#\d{4}'))),

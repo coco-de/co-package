@@ -481,6 +481,13 @@ class CoFakerSchema {
       yield CoFieldRole.company;
     }
     if (n.has('product')) yield CoFieldRole.productName;
+    // The name of a thing is a title, not a person (co-package S-8:
+    // `itemName` 「김민지」, `seasonName` 「권아린」).
+    if (n.words.length > 1 &&
+        n.words.last == 'name' &&
+        const ['item', 'season'].contains(n.words.first)) {
+      yield CoFieldRole.title;
+    }
     if (n.hasAny(const [
       'name',
       'author',
@@ -985,6 +992,13 @@ class CoFakerSchema {
       'contact',
       'patient',
       'client',
+      // People who run or carry the service (co-package S-8:
+      // `operator.name` was a title).
+      'operator',
+      'courier',
+      'driver',
+      'requester',
+      'assignee',
     ]);
   }
 

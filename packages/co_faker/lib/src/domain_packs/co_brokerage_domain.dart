@@ -127,6 +127,9 @@ class CoBrokerageDomain extends CoFakerDomain {
     },
     'consult_note': {'summary': 'consultNoteGeneric'},
     'consultation': {'topic': 'consultTopic'},
+    // W1 #680 (co-package S-8).
+    'delivery_milestone': {'label': 'milestoneLabel'},
+    'dispute_case': {'reason': 'disputeReason'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

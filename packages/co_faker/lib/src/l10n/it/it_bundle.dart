@@ -775,7 +775,7 @@ const CoL10nBundle itBundle = CoL10nBundle(
       'Storie di scienza',
       'Saggio',
     ],
-    'content.seriesSection': [
+    'content.seriesSectionLabel': [
       'Settimanali',
       'Novità',
       'Concluse',
@@ -1114,7 +1114,7 @@ const CoL10nBundle itBundle = CoL10nBundle(
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // The shape is the one of an Italian plate, two letters, the digits, and two
     // letters; the plate stays masked with `●●`.
-    'logistics.vehiclePlate': ['AB {n}●●{m} CD'],
+    'logistics.localVehiclePlate': ['AB {n}●●{m} CD'],
     'logistics.deliveryNote': [
       'Nessuna consegna incustodita; consegnare di persona.',
       'Si prega di suonare al citofono dell’ingresso comune.',

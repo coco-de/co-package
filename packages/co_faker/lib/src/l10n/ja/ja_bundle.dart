@@ -414,7 +414,7 @@ const CoL10nBundle jaBundle = CoL10nBundle(
       '地図にない池を一緒に描く、架空のお話です。',
     ],
     'content.genreName': ['ファンタジー', '日常', '冒険', '科学の話', 'エッセイ'],
-    'content.seriesSection': ['週刊連載', '新作', '完結', '毎日更新', '短いシリーズ'],
+    'content.seriesSectionLabel': ['週刊連載', '新作', '完結', '毎日更新', '短いシリーズ'],
     'content.episodeTitle': ['はじめての紙の舟（架空）', '池の小さな点（架空）', '時計のない午後（架空）'],
     'content.cutAltText': ['架空の人物が紙の舟を折るイラスト', '池のそばにいる架空の人物2人のイラスト'],
     'content.commentLine': ['紙の舟の場面が心に残りました。', '次の例のエピソードも読んでみたいです。'],
@@ -597,7 +597,7 @@ const CoL10nBundle jaBundle = CoL10nBundle(
     'logistics.hubName': ['ひなたが丘拠点（架空）', 'せせらぎ台拠点（架空）'],
     // A masked plate: {n} is a two-digit number and {m} the last two digits.
     // The Japanese plate keeps a hiragana and masks the serial number.
-    'logistics.vehiclePlate': ['{n}あ ●●-{m}'],
+    'logistics.localVehiclePlate': ['{n}あ ●●-{m}'],
     'logistics.deliveryNote': [
       '置き配はせず、直接お渡しください。',
       '共用玄関で呼び出してください。',

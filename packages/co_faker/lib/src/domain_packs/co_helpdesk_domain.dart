@@ -76,7 +76,12 @@ class CoHelpdeskDomain extends CoFakerDomain {
     },
     'help_topic': {'name': 'topicName', 'parentId': 'topicParent'},
     'ticket_message': {'ticketNo': 'ticketNo', 'visibility': 'visibility'},
-    'csat_response': {'ticketNo': 'ticketNo'},
+    'csat_response': {'ticketNo': 'ticketNo', 'comment': 'csatComment'},
+    // W1 #674 (co-package S-5 · S-8).
+    'help_article': {'title': 'helpArticleTitle'},
+    'ai_draft': {'templateBody': 'aiDraftText'},
+    'desk_macro': {'name': 'macroName'},
+    'tenant': {'companyName': 'saas.tenantName'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

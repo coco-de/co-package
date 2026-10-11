@@ -778,7 +778,7 @@ const CoL10nBundle deBundle = CoL10nBundle(
       'Wissenschaftsgeschichten',
       'Essay',
     ],
-    'content.seriesSection': [
+    'content.seriesSectionLabel': [
       'Wöchentlich',
       'Neu',
       'Abgeschlossen',
@@ -1108,7 +1108,7 @@ const CoL10nBundle deBundle = CoL10nBundle(
     // A masked plate: {n} is a two-digit number and {m} the last two digits. A
     // German plate is a district code, one or two letters, and up to four
     // digits; the letters are masked.
-    'logistics.vehiclePlate': ['M-●● {n}{m}'],
+    'logistics.localVehiclePlate': ['M-●● {n}{m}'],
     'logistics.deliveryNote': [
       'Keine Ablage vor der Tür; bitte persönlich übergeben.',
       'Bitte am Hauseingang klingeln.',

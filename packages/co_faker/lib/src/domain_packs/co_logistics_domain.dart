@@ -28,16 +28,27 @@ class CoLogisticsDomain extends CoFakerDomain {
       'ton11_wing',
       'reefer_box',
     ]),
+    // The plate of a Korean vehicle is a business value: the UI language does
+    // not change it (co-package S-10). `localVehiclePlate` writes the plate
+    // pattern of the locale's country.
     'vehiclePlate': authoredRole(
-      (f, c) => f.l10n.format('logistics.vehiclePlate', {
+      (f, c) =>
+          '${10 + c.index % 80}가●●${(c.index % 100).toString().padLeft(2, '0')}',
+      description: 'Masked fictional Korean plate, never complete',
+      languageNeutral: true,
+    ),
+    'localVehiclePlate': authoredRole(
+      (f, c) => f.l10n.format('logistics.localVehiclePlate', {
         'n': 10 + c.index % 80,
         'm': (c.index % 100).toString().padLeft(2, '0'),
       }),
-      description: 'Masked fictional plate, never complete',
+      description:
+          'Masked fictional plate of the locale country, never complete',
     ),
     'timeWindow': authoredRole(
       (f, c) =>
           '${(9 + c.index % 9).toString().padLeft(2, '0')}:00~${(11 + c.index % 9).toString().padLeft(2, '0')}:00',
+      languageNeutral: true,
     ),
     'parcelSize': enumRole(['small', 'medium', 'large', 'oversized']),
     'deliveryNote': textRole('logistics.deliveryNote'),
@@ -155,6 +166,8 @@ class CoLogisticsDomain extends CoFakerDomain {
       'trackingNo': 'trackingNo',
       'timeWindow': 'timeWindow',
       'entranceHint': 'entranceHint',
+      'addressLine': 'korea.address1',
+      'requestNote': 'deliveryNote',
     },
     'freight_order': {
       'vehicleType': 'vehicleType',
@@ -178,11 +191,24 @@ class CoLogisticsDomain extends CoFakerDomain {
       'trackingNo': 'trackingNo',
       'recipientArea': 'recipientArea',
       'shelfSlot': 'shelfSlot',
+      'sizeClass': 'parcelSize',
     },
-    'parcel_scan': {'trackingNo': 'trackingNo'},
+    'parcel_scan': {
+      'trackingNo': 'trackingNo',
+      'title': 'scanEvent',
+      'areaLabel': 'hubName',
+    },
     'delivery_proof': {'signatureData': 'signatureData'},
-    'delivery_exception': {'detail': 'exceptionDetail'},
-    'courier': {'vehicleType': 'vehicleType', 'vehiclePlate': 'vehiclePlate'},
+    'delivery_exception': {
+      'detail': 'exceptionDetail',
+      'reasonCode': 'exceptionReason',
+    },
+    'courier': {
+      'name': 'driverName',
+      'vehicleType': 'vehicleType',
+      'vehiclePlate': 'vehiclePlate',
+    },
+    'driver_settlement': {'itemName': 'fareItem'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {

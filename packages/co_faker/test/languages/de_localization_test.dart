@@ -861,8 +861,8 @@ void main() {
       for (var i = 0; i < 12; i++) {
         final plate = f.schema.record(
           {'value': 'String'},
-          roles: {'value': 'logistics.vehiclePlate'},
-          streamKey: 'logistics.vehiclePlate',
+          roles: {'value': 'logistics.localVehiclePlate'},
+          streamKey: 'logistics.localVehiclePlate',
           index: i,
         )['value'];
         // A German plate, masked, with no Korean `가`.

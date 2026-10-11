@@ -114,12 +114,21 @@ class CoHospitalityDomain extends CoFakerDomain {
   };
   @override
   Map<String, Map<String, String>> get entityRoles => const {
-    'campsite': {'name': 'siteName', 'siteType': 'siteType'},
+    'campsite': {
+      'name': 'siteName',
+      'siteType': 'siteType',
+      'category': 'siteType',
+    },
     'stay_booking': {
       'bookingNo': 'bookingNo',
       'guestName': 'guestName',
       'arrivalEta': 'arrivalEta',
+      'phoneMasked': 'korea.mobilePhone',
     },
+    // W1 #686 (co-package S-8).
+    'stay_extra': {'name': 'stayOption'},
+    'season_rate': {'seasonName': 'seasonName'},
+    'property': {'addressDisplay': 'korea.address1'},
     'hotel_room': {
       'roomNo': 'roomNo',
       'roomType': 'roomType',
@@ -131,7 +140,7 @@ class CoHospitalityDomain extends CoFakerDomain {
       'amenityName': 'amenityName',
     },
     'stay_guide': {'bbqRule': 'bbqRule', 'wifiHint': 'wifiHint'},
-    'campsite_review': {'stayMonth': 'stayMonth'},
+    'campsite_review': {'stayMonth': 'stayMonth', 'body': 'reviewSnippet'},
   };
   @override
   Map<String, Map<String, List<String>>> get enums => const {
