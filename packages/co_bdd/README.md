@@ -194,6 +194,7 @@ Exported from `package:co_bdd/co_bdd.dart`.
 | `waitForBlocState` · `pumpFramesUntilBlocState` | Wait on a `bloc_signals` state signal instead of fixed delays |
 | `installFakeWebViewPlatform()` | Mount screens that embed a web view in widget tests |
 | `declaredSemanticsFlag` · `widgetTesterOf` | Building blocks for your own state steps |
+| `HarnessFonts.settle(texts)` | Patrol web: lays out `texts` and waits until fallback fonts stop loading (no `systemFonts` change for 2 s; first change within 10 s; whole call ≤ 30 s, else `TimeoutException`). Returns at once off the web. Generated `*.patrol_test.dart` files call it in `setUpAll` with every Patrol scenario name, so the test-name labels never trigger a `fontsChange` mid-test |
 
 ## Scenario Tags
 
