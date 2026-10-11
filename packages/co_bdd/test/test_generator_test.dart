@@ -84,6 +84,37 @@ void main() {
       expect(code, isNot(contains('Widget only scenario')));
     });
 
+    // grocery#16 — 시험 이름 라벨이 쓸 폴백 글꼴을 첫 시험 전에 확정한다.
+    test('settles harness fonts for every Patrol scenario name', () {
+      final code = generatePatrolTest(feature, stepFolder: 'step');
+
+      expect(
+        code,
+        contains(
+          'setUpAll(\n'
+          '    () => HarnessFonts.settle(const [\n'
+          "      '''Successful login''',\n"
+          "      '''Patrol only scenario''',\n"
+          '    ]),\n'
+          '  );',
+        ),
+      );
+      expect(
+        code.indexOf('setUpAll('),
+        lessThan(code.indexOf('patrolTest(')),
+        reason: '첫 시험보다 먼저 선언한다',
+      );
+      expect('setUpAll('.allMatches(code), hasLength(1));
+      expect('patrolTest('.allMatches(code), hasLength(2));
+    });
+
+    test('widget test does not settle harness fonts', () {
+      final code = generateWidgetTest(feature, stepFolder: 'step');
+
+      expect(code, isNot(contains('HarnessFonts')));
+      expect(code, isNot(contains('setUpAll')));
+    });
+
     test('step calls are identical in both outputs', () {
       final widgetCode = generateWidgetTest(feature, stepFolder: 'step');
       final patrolCode = generatePatrolTest(feature, stepFolder: 'step');

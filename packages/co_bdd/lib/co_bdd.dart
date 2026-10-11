@@ -74,6 +74,7 @@ export 'src/driver/widget_tester_of.dart';
 export 'src/helper/bloc_signal_wait.dart';
 export 'src/helper/declared_semantics.dart';
 export 'src/helper/fake_webview_platform.dart';
+export 'src/helper/harness_fonts.dart';
 export 'src/helper/scale_variants.dart';
 
 // Keys

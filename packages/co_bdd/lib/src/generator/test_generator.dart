@@ -177,7 +177,8 @@ String generateWidgetTest(
 /// Generates Patrol E2E Test code.
 ///
 /// Creates a `PatrolTestDriver($)` and passes it to step functions
-/// as `TestDriver driver`.
+/// as `TestDriver driver`. A `setUpAll` settles the harness fonts for every
+/// Patrol scenario name first — see `HarnessFonts.settle`.
 ///
 /// The output is formatted at [languageVersion] — the language version of the
 /// package the file is generated into (default: the formatter's latest).
@@ -233,6 +234,18 @@ String generatePatrolTest(
     ..writeln('    existsTimeout: Duration(seconds: 15),')
     ..writeln('    visibleTimeout: Duration(seconds: 15),')
     ..writeln('  );')
+    ..writeln();
+
+  // Harness fonts — settle the fallback fonts the test-name labels need
+  // before the first test of the page (coco-de/demo-ecommerce-grocery#16).
+  final patrolNames = [
+    for (final scenario in feature.scenarios)
+      if (scenario.target != TestTarget.widgetOnly) "'''${scenario.name}'''",
+  ];
+  buffer
+    ..writeln(
+      '  setUpAll(() => HarnessFonts.settle(const [${patrolNames.join(', ')}]));',
+    )
     ..writeln();
 
   // Background → bddSetUp
