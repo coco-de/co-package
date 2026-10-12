@@ -1,5 +1,5 @@
 name: co_bdd
-version: 0.2.0
+version: 0.2.1
 description: >-
   BDD Dual Test Generator — generates Widget Test + Patrol E2E Test
   from Gherkin .feature files with a shared TestDriver abstraction.

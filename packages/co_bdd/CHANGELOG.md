@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/coco-de/co-package/compare/co_bdd-v0.2.0...co_bdd-v0.2.1) (2026-10-11)
+
+
+### 버그 수정
+
+* **co_bdd:** 🐛 생성 Patrol 시험이 setUpAll 에서 하네스 글꼴을 확정한다 (HarnessFonts) ([#104](https://github.com/coco-de/co-package/issues/104)) ([5b47911](https://github.com/coco-de/co-package/commit/5b479112d5f4c017572b304656239983d9cfae92))
+* **co_bdd:** 🐛 생성 테스트를 dart format 결과와 같은 바이트로 낸다 ([#100](https://github.com/coco-de/co-package/issues/100)) ([#101](https://github.com/coco-de/co-package/issues/101)) ([1a55710](https://github.com/coco-de/co-package/commit/1a5571060d6b371567aff6f02d97ecc9264c684e))
+
 ## [0.2.0](https://github.com/coco-de/co-package/compare/co_bdd-v0.1.2...co_bdd-v0.2.0) (2026-09-29)
 
 
