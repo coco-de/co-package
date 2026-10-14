@@ -173,12 +173,20 @@ class PointerEventHandler {
   /// 시스템 제스처/팜 리젝션 등으로 포인터가 탈취되면 up 대신 cancel이 온다.
   /// notifier에 전달하지 않으면 activePointerIds에 해당 id가 영구 잔류하여
   /// 이후 해당 페이지에서 터치 필기가 차단된다.
+  ///
+  /// cancel 도 진행 중이던 획을 커밋한다([ScribbleNotifier.onPointerCancel]).
+  /// 커밋했으면 [handlePointerUp] 처럼 완료를 알린다 — 완료 시점에만 도는
+  /// 호스트의 표면 간 동기화 · 실행 취소 버튼 갱신이 이 획을 놓치지 않게 한다.
   void handlePointerCancel(PointerCancelEvent event) {
     isDragging = false;
     _currentPointerKind = null;
 
     final adjustedEvent = adjustPointerEvent(event);
+    final before = scribbleNotifier.value.scribble;
     scribbleNotifier.onPointerCancel(adjustedEvent, modeNotifier.state);
+    if (!identical(scribbleNotifier.value.scribble, before)) {
+      onScribbleFinished(scribbleNotifier);
+    }
   }
 
   /// 멀티터치 확인
