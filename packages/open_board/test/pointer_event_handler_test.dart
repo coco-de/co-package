@@ -371,4 +371,84 @@ void main() {
       expect(handler.pendingDeferredPointerId, 2);
     });
   });
+  /// 취소(`PointerCancel`)도 진행 중이던 획을 커밋한다([ScribbleNotifier.onPointerCancel]).
+  /// 커밋했으면 [PointerEventHandler.handlePointerUp] 처럼 완료를 알린다 — 호스트의
+  /// 표면 간 동기화 · 실행 취소 버튼 갱신이 완료 시점에만 돈다 (unibook#14751 G4).
+  group('취소로 끝난 획 — 완료 알림', () {
+    late int finished;
+    late PointerEventHandler cancelHandler;
+
+    PointerDownEvent down(double x, double y) => PointerDownEvent(
+      kind: PointerDeviceKind.stylus,
+      pointer: 7,
+      position: Offset(x, y),
+    );
+    PointerMoveEvent move(double x, double y) => PointerMoveEvent(
+      kind: PointerDeviceKind.stylus,
+      pointer: 7,
+      position: Offset(x, y),
+    );
+    PointerCancelEvent cancel(double x, double y) => PointerCancelEvent(
+      kind: PointerDeviceKind.stylus,
+      pointer: 7,
+      position: Offset(x, y),
+    );
+    PointerUpEvent up(double x, double y) => PointerUpEvent(
+      kind: PointerDeviceKind.stylus,
+      pointer: 7,
+      position: Offset(x, y),
+    );
+
+    setUp(() {
+      finished = 0;
+      cancelHandler = PointerEventHandler(
+        scribbleNotifier: scribbleNotifier,
+        modeNotifier: modeNotifier,
+        onStateChanged: () {},
+        onScribble: (_) {},
+        onScribbleFinished: (_) => finished++,
+      );
+    });
+
+    tearDown(() => cancelHandler.dispose());
+
+    test('should_notify_finished_when_cancel_commits_an_active_stroke', () {
+      scribbleNotifier
+        ..onPointerDown(down(10, 10), modeNotifier.state)
+        ..onPointerUpdate(move(40, 40), modeNotifier.state);
+
+      cancelHandler.handlePointerCancel(cancel(60, 60));
+
+      expect(
+        scribbleNotifier.value.scribble.strokes,
+        hasLength(1),
+        reason: '취소도 진행 중이던 획을 커밋한다',
+      );
+      expect(finished, 1);
+    });
+
+    test('should_not_notify_finished_when_cancel_has_nothing_to_commit', () {
+      scribbleNotifier
+        ..onPointerDown(down(10, 10), modeNotifier.state)
+        ..onPointerUpdate(move(40, 40), modeNotifier.state)
+        ..onPointerUp(up(60, 60), modeNotifier.state);
+      final committed = scribbleNotifier.value.scribble;
+
+      // 손을 뗀 뒤 같은 포인터의 늦은 취소 — 커밋할 획이 없다.
+      cancelHandler.handlePointerCancel(cancel(60, 60));
+
+      expect(scribbleNotifier.value.scribble, same(committed));
+      expect(finished, 0);
+    });
+
+    test('should_notify_finished_once_when_pointer_up_commits', () {
+      scribbleNotifier
+        ..onPointerDown(down(10, 10), modeNotifier.state)
+        ..onPointerUpdate(move(40, 40), modeNotifier.state);
+
+      cancelHandler.handlePointerUp(up(60, 60));
+
+      expect(finished, 1, reason: '대조 — 업은 종전처럼 한 번 알린다');
+    });
+  });
 }

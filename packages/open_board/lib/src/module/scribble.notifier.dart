@@ -118,7 +118,8 @@ class ScribbleNotifier extends ScribbleNotifierBase
   VoidCallback? onHistoryApplied;
 
   /// [setScribble]/[_updateScribbleWithTextDrawables] 가 `addToUndoHistory:
-  /// true` 로 히스토리에 실제로 커밋된 직후 호출되는 콜백.
+  /// true` 로 히스토리에 실제로 커밋된 직후 호출되는 콜백. 내용을 바꾼
+  /// [undo] · [redo] 뒤에도 호출된다 — 히스토리 이동도 편집의 완료다.
   ///
   /// 펜/지우개 그리기 완료는 `onPointerUp` 이 `state` 를 직접 대입해 이
   /// 경로를 거치지 않는다(`PointerEventHandler.handlePointerUp` 이 별도로
@@ -217,10 +218,22 @@ class ScribbleNotifier extends ScribbleNotifierBase
   }
 
   @override
-  void undo() => _applyImageHistory(.undo, super.undo);
+  void undo() => _applyHistoryEdit(.undo, super.undo);
 
   @override
-  void redo() => _applyImageHistory(.redo, super.redo);
+  void redo() => _applyHistoryEdit(.redo, super.redo);
+
+  /// 실행 취소 · 다시 실행도 내용을 바꾸는 완료다 — 적용해 내용이 바뀌었으면
+  /// [onScribbleFinished] 로 알린다(되돌릴 것이 없으면 내용이 그대로라 알리지
+  /// 않는다). 완료 시점에만 도는 호스트의 표면 간 동기화가 실행 취소를 반대편
+  /// 표면에 옮길 수 있게 한다.
+  void _applyHistoryEdit(ScribbleImageEditKind kind, VoidCallback apply) {
+    final before = value.scribble;
+    _applyImageHistory(kind, apply);
+    if (!identical(value.scribble, before)) {
+      onScribbleFinished?.call();
+    }
+  }
 
   /// Only apply the scribble from the undo history, otherwise keep current state
   @override
