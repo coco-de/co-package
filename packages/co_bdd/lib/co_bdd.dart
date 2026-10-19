@@ -57,6 +57,7 @@
 library;
 
 // Driver
+export 'src/driver/condition_wait.dart';
 export 'src/driver/patrol_test_driver.dart';
 export 'src/driver/test_driver.dart';
 export 'src/driver/widget_test_driver.dart';

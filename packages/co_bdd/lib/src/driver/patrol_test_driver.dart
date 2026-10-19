@@ -65,6 +65,9 @@ class PatrolTestDriver extends TestDriver {
     await $.pumpWidgetAndSettle(widget);
   }
 
+  /// Preserves the original pump duration for existing Patrol steps.
+  /// [timeout] is a legacy name for that duration, not a frame-settling limit.
+  /// New preparation steps can use `waitUntil` to wait for a specific state.
   @override
   Future<void> settle({Duration? timeout}) async {
     await $.pump(timeout ?? const Duration(seconds: 5));
