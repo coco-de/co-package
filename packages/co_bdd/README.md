@@ -136,6 +136,42 @@ This generates:
 
 Both call the same step functions.
 
+## Preparing application state
+
+A `Background` runs once per scenario. Keep UI login in authentication tests;
+for tests of post-login features, let a Given step call an application-owned,
+idempotent session preparation service before checking the UI. Reuse a valid
+session, restore/refresh an existing one, or explicitly provision a test fixture.
+Verify the expected identity and role; never turn a failed server login into a
+successful mock session. Keep fixture cleanup scoped to the current test.
+
+`co_bdd` does not attach to an arbitrary running app or manage its credentials.
+An app can expose a debug-only VM extension over the same preparation service
+used by its Given steps. Keep that service independent of `flutter_test` so
+production code does not import the test runner.
+
+Wait for the condition that matters instead of adding a fixed sleep:
+
+```dart
+await driver.waitUntil(
+  () => session.isReady,
+  timeout: const Duration(seconds: 10),
+  description: 'authenticated workspace',
+);
+```
+
+`waitUntil` returns immediately when true, pumps through `TestDriver.wait` for
+both widget fake time and live Patrol, and throws `TimeoutException` if the
+condition remains false for the polling budget. The callback is synchronous;
+start asynchronous preparation separately and expose its completion as state.
+
+Existing `PatrolTestDriver.settle()` keeps its five-second pump for compatibility;
+its optional `timeout` remains the pumped duration. Shared steps and existing
+callers keep their behavior. New preparation steps should call `waitUntil`
+directly to avoid that fixed wait. It observes state without requiring all
+animations to stop. A settled frame is not evidence that a network request has
+completed; wait for the response state before checking the UI.
+
 ## Shared steps
 
 `package:co_bdd/shared_steps.dart` ships domain-free steps that take widget keys
