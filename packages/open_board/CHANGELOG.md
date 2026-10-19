@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/coco-de/co-package/compare/open_board-v0.3.0...open_board-v0.3.1) (2026-10-19)
+
+
+### 버그 수정
+
+* **open_board:** 🐛 실행 취소 · 다시 실행과 취소로 끝난 획도 완료(onScribbleFinished)를 알린다 ([b290e57](https://github.com/coco-de/co-package/commit/b290e57885cf552db5fb2b93f94eb4a02f56744d))
+* **open_board:** 🐛 실행 취소 · 다시 실행과 취소로 끝난 획도 완료(onScribbleFinished)를 알린다 ([cc573a0](https://github.com/coco-de/co-package/commit/cc573a0bb41498755c0fc3f328ca0ae91dfc6ddd))
+
 ## [0.3.0](https://github.com/coco-de/co-package/compare/open_board-v0.2.0...open_board-v0.3.0) (2026-10-04)
 
 
