@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/coco-de/co-package/compare/co_bdd-v0.2.1...co_bdd-v0.3.0) (2026-10-19)
+
+
+### 기능
+
+* **co_bdd:** ✨ 기존 Patrol 대기를 유지하며 조건 대기 API를 추가한다 ([#108](https://github.com/coco-de/co-package/issues/108)) ([#109](https://github.com/coco-de/co-package/issues/109)) ([9839fe0](https://github.com/coco-de/co-package/commit/9839fe07918fd5694baf95ae351a9cf13e985d1b))
+
 ## [0.2.1](https://github.com/coco-de/co-package/compare/co_bdd-v0.2.0...co_bdd-v0.2.1) (2026-10-11)
 
 
