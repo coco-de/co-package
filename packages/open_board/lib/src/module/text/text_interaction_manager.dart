@@ -67,6 +67,10 @@ class TextInteractionManager {
   /// up 시점에 슬롭 이내 이동의 탭으로 확정된 경우에만 생성한다.
   _PendingNewTextTap? _pendingNewTextTap;
 
+  /// 이미 선택한 텍스트를 다시 탭하면 편집한다(UB-821).
+  /// up까지 기다려 드래그/크기 조절을 편집으로 가로채지 않는다.
+  ({int pointer, String textId, Offset position})? _pendingEditTap;
+
   // 드래그 상태
   int? _draggingTextIndex;
   Offset? _dragStartPosition;
@@ -141,6 +145,8 @@ class TextInteractionManager {
       return false;
     }
 
+    _pendingEditTap = null;
+
     // 보류된 새 텍스트 탭이 있는데 다른 포인터의 down이 도착하면
     // 멀티터치(핀치 등) — 탭이 아니므로 취소한다 (kobic UB-273).
     if (_pendingNewTextTap != null &&
@@ -168,7 +174,11 @@ class TextInteractionManager {
       // 🔥 scribble-tools 방식: 원본 좌표 직접 사용
       final adjustedPosition = event.localPosition; // toScene() 제거
       if (_isPointInTextBounds(adjustedPosition, selectedText)) {
-        // 🔥 더블탭 감지를 드래그 준비보다 먼저 처리
+        _pendingEditTap = (
+          pointer: event.pointer,
+          textId: selectedText.id,
+          position: adjustedPosition,
+        );
         return _handleExistingTextTap(_selectedTextIndex!, adjustedPosition);
       }
     }
@@ -312,7 +322,27 @@ class TextInteractionManager {
     if (_isEditingText) {
       return false;
     }
+    final pendingEdit = _pendingEditTap;
+    _pendingEditTap = null;
+    final canEdit =
+        pendingEdit != null &&
+        pendingEdit.pointer == event.pointer &&
+        !_isDraggingText &&
+        !_isTextResizing &&
+        (event.localPosition - pendingEdit.position).distance <=
+            _newTextTapSlop;
     final released = _releasePointer();
+    if (canEdit) {
+      final index = textDrawables.indexWhere(
+        (text) => text.id == pendingEdit.textId,
+      );
+      if (index >= 0) {
+        _lastTapTime = null;
+        _lastTapPosition = null;
+        _editText(index);
+        return true;
+      }
+    }
     return _commitPendingNewTextTap(event) || released;
   }
 
@@ -347,6 +377,7 @@ class TextInteractionManager {
   bool handlePointerCancel(PointerCancelEvent event) {
     // 보류된 새 텍스트 탭도 함께 취소 (kobic UB-273)
     _pendingNewTextTap = null;
+    _pendingEditTap = null;
     return _releasePointer();
   }
 
@@ -395,6 +426,7 @@ class TextInteractionManager {
     _isEditingText = false;
     _editingTextId = null;
     _pendingNewTextTap = null;
+    _pendingEditTap = null;
   }
 
   /// 선택된 텍스트 삭제
@@ -1110,6 +1142,7 @@ class TextInteractionManager {
     final isDoubleTap = _isDoubleTap(now, position);
 
     if (isDoubleTap) {
+      _pendingEditTap = null;
       // 더블탭 - 텍스트 편집 모드
 
       // 드래그 상태 초기화 (더블탭 시 드래그 방지)
