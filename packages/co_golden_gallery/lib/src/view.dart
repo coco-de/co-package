@@ -297,7 +297,7 @@ class GalleryView extends StatelessComponent {
                 _e('p', [_t(description)]),
               _e('div', classes: 'badges', [
                 Badge(
-                  variant: CoreBadgeVariant.outline,
+                  variant: CoreBadgeVariant.outlined,
                   classes: 'status-badge',
                   child: _t(
                     '${scenario.fromManifest ? '매트릭스' : '이미지'} ${scenario.images.length}',
@@ -305,7 +305,8 @@ class GalleryView extends StatelessComponent {
                 ),
                 if (scenario.failedCount > 0)
                   Badge(
-                    variant: CoreBadgeVariant.destructive,
+                    tone: CoreBadgeTone.destructive,
+                    variant: CoreBadgeVariant.filled,
                     classes: 'status-badge fail',
                     child: _t('실패 ${scenario.failedCount}'),
                   ),

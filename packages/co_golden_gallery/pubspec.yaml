@@ -15,7 +15,7 @@ executables:
 
 dependencies:
   args: ^2.7.0
-  coui_web: any
+  coui_web: ">=0.162.0 <1.0.0"
   jaspr: ^0.23.5
   meta: ^1.16.0
   path: ^1.9.0
@@ -31,9 +31,9 @@ dependency_overrides:
     git:
       url: https://github.com/coco-de/coui.git
       path: packages/coui_web
-      ref: 86930350cacd5511d6994c289cd4c436d4bb56a9
+      ref: bbfed3f7506f1039af6cbb21c2633100822e8e84
   coui_core:
     git:
       url: https://github.com/coco-de/coui.git
       path: packages/coui_core
-      ref: 86930350cacd5511d6994c289cd4c436d4bb56a9
+      ref: bbfed3f7506f1039af6cbb21c2633100822e8e84
