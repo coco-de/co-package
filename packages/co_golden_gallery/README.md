@@ -121,3 +121,9 @@ locale filter is set.
 
 Failed variants do not change the exit code — read them from `--summary`, so
 a pipeline can publish the gallery and still fail afterwards.
+
+## CoUI v2 compatibility
+
+Requires coui_web 0.162.0 or newer. Pin coui_core and coui_web to the same
+commit in the consuming pub root. Scenario counts use outlined badges; failed
+counts use the destructive tone with a filled variant.

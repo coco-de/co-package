@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Migrate scenario badges to CoUI v2 tone/variant APIs and require coui_web 0.162.0.
+
+## Unreleased
+
 - Render the gallery with Jaspr and `coui_web` components, using the
   `cocode-home` dark-first style and mint accent while retaining single-file
   HTML output and the existing CLI options. Document the CoUI overrides needed
