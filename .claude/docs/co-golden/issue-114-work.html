@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#114 Figma·구현 비교</title>
+<style>body{font:16px/1.65 system-ui,sans-serif;max-width:1000px;margin:40px auto;padding:0 24px;background:#0b0d0e;color:#e7eaeb}a{color:#5be0c8}table{border-collapse:collapse;width:100%}td,th{padding:12px;text-align:left;border-bottom:1px solid #343b3e}code{color:#5be0c8}</style>
+<h1>#114 Figma와 구현을 골든 갤러리에서 비교</h1>
+<p>화면 캡처의 정확한 변형에 디자인 PNG를 연결하고, 원본·구현·투명도 겹치기·좌우 비교·차이 이미지를 한 뷰어에서 검토한다. 디자인 차이 필터와 요약 JSON으로 수정할 화면을 찾고, 수정 후 다시 캡처한다.</p>
+<table><tr><th>범위</th><th>결과</th></tr>
+<tr><td>co_golden</td><td>선택적 variant별 원본, 원본 PNG 스냅샷, exact RGBA 비교, alpha·16bit, 크기 불일치. 기존 골든 판정과 분리.</td></tr>
+<tr><td>co_golden_gallery</td><td>5가지 보기, 투명도·키보드, 원본 링크, 디자인 차이 필터, 기존/참조 없는 manifest 호환, 로컬·복사·CDN 자산.</td></tr>
+<tr><td>자동 검사</td><td>co_golden 74개, gallery 50개 통과. 관련 소스 분석·포맷·diff 검사 통과.</td></tr>
+<tr><td>Ego Lite</td><td>실제 Bottari 콘솔 캡처로 5가지 보기, 슬라이더 키보드, 변형 초기화, 필터·탐색, 참조 없음·크기 불일치 확인.</td></tr>
+<tr><td>독립 리뷰</td><td>긴 라벨의 겹치기 정렬, 미세 차이의 0% 반올림, 필터 제외 이미지 탐색을 보정한 뒤 필수 수정 사항 없음.</td></tr></table>
+<p>차이율은 오차 허용 없는 RGBA 지표다. 캡처 성공은 디자인 승인과 다르며, 자동 임계값·마스크·원본 크기 조정은 추가하지 않았다. 기존 이미지 없는 manifest도 읽는다.</p>
+<p><a href="https://github.com/coco-de/co-package/issues/114">이슈</a> · <a href="https://github.com/coco-de/co-package/blob/feat/golden-design-comparison/packages/co_golden/README.md#design-references">적용 API</a> · <a href="https://github.com/coco-de/co-package/blob/feat/golden-design-comparison/packages/co_golden_gallery/README.md#figma-and-implementation-review">검토 절차</a></p>
+</html>
