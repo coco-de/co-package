@@ -246,7 +246,11 @@ void main() {
       suite: 'compare',
       mode: GoldenMatrixMode.compare,
       devices: const [GoldenDevice.phoneCompact],
-    ).scenario('box', build: box);
+    ).scenario(
+      'box',
+      build: box,
+      designReference: (_) => throw StateError('Not used in compare mode'),
+    );
   });
 
   group('compare mode against the baselines', () {

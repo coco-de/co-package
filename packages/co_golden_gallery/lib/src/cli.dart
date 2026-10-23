@@ -252,6 +252,22 @@ Map<String, Object?> _summary(GalleryScan scan) {
     'scenarios': catalog.scenarios.length,
     'images': catalog.imageCount,
     'failed': catalog.failedCount,
+    'designComparisons': catalog.designComparisonCount,
+    'designDifferences': [
+      for (final scenario in catalog.scenarios)
+        for (final image in scenario.images)
+          if (image.designComparison case final design?
+              when design.status != 'matched')
+            {
+              'suite': scenario.suite,
+              'scenario': scenario.name,
+              'variant': image.label,
+              'status': design.status,
+              'differenceRatio': design.differenceRatio,
+              'reference': design.reference,
+              'sourceUrl': design.sourceUrl,
+            },
+    ],
     'missingImages': scan.missingImages,
     'failedImages': [
       for (final scenario in catalog.scenarios)

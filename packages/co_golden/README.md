@@ -91,7 +91,7 @@ void main() {
 
 `scenario` registers one widget test per variant (`auth/login phone · dark ·
 en`, …). Hooks run in this order: `prepare` (install fixtures), build, pump,
-`interact` (tap, type), pump, capture, `dispose` (always).
+`interact` (tap, type), pump, capture, optional design comparison, `dispose` (always).
 
 ### Slang
 
@@ -126,7 +126,7 @@ phone scaling.
 | `CO_GOLDEN_MODE` | What happens |
 | --- | --- |
 | unset / `skip` | Tests are registered as skipped. |
-| `capture` | Every variant is rendered and written to `CO_GOLDEN_OUTPUT` (default `build/co_golden`) without comparison. Errors still fail the variant. |
+| `capture` | Every variant is rendered and written to `CO_GOLDEN_OUTPUT` (default `build/co_golden`) without baseline comparison. Optional design references add informational pixel comparisons. Errors still fail the variant. |
 | `compare` | Every variant is compared with `goldens/<suite>/<scenario>/<variant>.png` next to the test file. `--update-goldens` writes those baselines. |
 
 ```sh
@@ -138,10 +138,69 @@ Capture output:
 ```
 build/co_golden/
 ├── images/<suite>/<scenario>/<device>__<theme>__<locale>[__text-<scale>].png
+├── references/<suite>/<scenario>/<variant>.png     # optional design snapshot
+├── differences/<suite>/<scenario>/<variant>.png    # optional exact pixel diff
 └── runs/<suite>/<scenario>.json
 ```
 
 Images are rendered at the device pixel ratio unless `captureScale` is set.
+
+## Design references
+
+Associate a local PNG exported from Figma (or another design tool) with the
+variants it actually describes. The resolver runs after capture; return `null`
+when the design does not cover a variant's device, theme, locale or text scale:
+
+```dart
+matrix.scenario(
+  'login',
+  build: (_) => const LoginPage(),
+  designReference: (variant) =>
+      variant.device.name == 'phone' &&
+          variant.theme.name == 'light' &&
+          variant.localeTag == 'ko' &&
+          variant.textScale == 1
+      ? const GoldenDesignReference(
+          imagePath: 'test/design/login-phone-light-ko.png',
+          label: 'Figma', // default
+          sourceUrl: 'https://www.figma.com/design/example?node-id=1-2',
+        )
+      : null,
+);
+```
+
+Paths are local filesystem paths, relative to the test package unless absolute.
+The runner never downloads the optional HTTP(S) `sourceUrl`. Export a
+single-frame PNG at the captured image's physical pixel dimensions (logical
+size × `captureScale`, or device pixel ratio when unset).
+
+In **capture mode only**, the runner copies the reference PNG byte for byte
+into `references/` and writes optional `GoldenResult.designComparison` metadata
+in the existing version 1 manifest. No reference resolver means no additional
+field or files; a `null` result does the same for that variant. Skip and baseline
+compare modes do not call the resolver or read design files.
+
+- Equal dimensions produce `matched` or `different`, `differentPixels`,
+  `totalPixels`, and `differenceRatio` (0 to 1). A pixel differs when any decoded
+  normalized R, G, B or alpha channel differs exactly, including RGB under full
+  transparency. PNG palette/grayscale representations normalize to channels;
+  16-bit channel differences are preserved rather than rounded to 8 bits.
+- A visible diff PNG is written under `differences/` even for a perfect match.
+  Changed pixels are opaque magenta and unchanged pixels form a subdued gray
+  context. Alpha-only differences remain visible.
+- Different dimensions produce `sizeMismatch` with both original geometries;
+  `diff`, pixel counts and ratio are `null`. Images are never resized or cropped.
+- A missing, corrupt or animated reference, invalid metadata, or resolver error
+  fails the `designComparison` phase. The captured render and failure remain in
+  the manifest, and normal cleanup hooks still run.
+
+The comparison is **informational**. `GoldenResult.status == passed` means the
+render completed without errors; it does **not** mean the design matches or was
+approved. There is no tolerance, threshold, perceptual metric, or design-based
+acceptance gate. Existing `matchesGoldenFile` baseline checks remain unchanged.
+Font rasterization, anti-aliasing and platform differences can affect exact
+pixels; inspect the reference, render and diff together in
+[`co_golden_gallery`](../co_golden_gallery/README.md).
 
 ## Coverage
 

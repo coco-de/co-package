@@ -16,6 +16,10 @@ favicon files, and any locally served images together.
 - Search, suite/device/theme/locale filters, a failures-only switch, a
   keyboard-friendly lightbox, and dark/light/system themes — all inline, no
   external scripts or styles. Dark is the default.
+- Design references recorded by co_golden appear beside each capture's status.
+  Open a capture to switch between the implementation, design, opacity overlay,
+  side-by-side view, and exact-pixel difference image. The **디자인 차이만**
+  switch finds unequal or differently sized variants even when capture passed.
 - Images stay local, are copied next to the page, or are served from a URL
   prefix such as a storage bucket.
 - The page carries the cocode favicon set — the same files as
@@ -102,6 +106,42 @@ images with relative URLs, so the same folder works at a domain root, at
 An image named by a manifest carries the manifest's metadata; any other image
 is grouped by its path. Two inputs that provide the same gallery path are an
 error.
+
+### Figma and implementation review
+
+Associate an exported Figma PNG with the exact device, theme, locale, and text
+scale in [`GoldenMatrix.scenario(designReference:)`](../co_golden/README.md#design-references).
+Capture again, then build the gallery with the existing command. No gallery
+flag or separate hand-written comparison page is needed. The runner snapshots
+the design under `references/` and writes exact RGBA differences under
+`differences/`; the gallery includes both when copying assets or resolving CDN
+and relative image URLs. These auxiliary assets do not inflate scenario or
+capture counts. Existing manifests without references keep working.
+
+The viewer starts with a 50% overlay. Use the opacity slider to alternate
+between the original and the implementation, or choose **좌우 비교** or
+**차이 이미지**. The original design link opens from the same viewer. Each
+variant resets the controls so a previous variant's reference is never reused.
+Slider arrow keys adjust opacity; they do not navigate to another capture.
+
+Pixel difference is informational and uses exact decoded RGBA equality, with
+no tolerance, masks, or acceptance budget. Fonts, platform rasterization, and
+fixture content can all contribute. A capture's `passed` status describes its
+render diagnostics, independently from agreement with the design. Images with
+different pixel dimensions are shown side by side with both sizes; overlay and
+pixel diff are disabled, and no percentage is invented. The runner never
+resizes the reference to hide a mismatch.
+
+`--summary` includes `designComparisons` and a `designDifferences` list with
+suite, scenario, variant, comparison status, ratio (null for a size mismatch),
+reference path, and source URL. CI can publish the review first and apply its
+own explicit design-acceptance policy afterwards. Gallery exit codes remain
+unchanged. Missing references and diff artifacts follow `--allow-missing`.
+
+For a design correction loop: capture the same state as the Figma frame,
+filter to design differences, inspect the overlay and diff, fix the screen,
+then recapture and review the result. Update the design export only when the
+design itself changes; do not replace it with an implementation screenshot.
 
 Matrix scenarios are grouped by suite and shown as a device × variant grid.
 Rows and columns follow the coverage order that co_golden writes under

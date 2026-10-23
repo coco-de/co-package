@@ -8,6 +8,8 @@
 /// bucket.
 library;
 
+export 'src/design_comparison.dart';
+
 export 'src/cli.dart' show galleryDataError, galleryUsageError, runGalleryCli;
 export 'src/favicon.dart';
 export 'src/html.dart';

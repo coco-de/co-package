@@ -1,5 +1,7 @@
 import 'package:meta/meta.dart';
 
+import 'design_comparison.dart';
+
 /// Outcome of one image, as far as the gallery knows it.
 enum GalleryStatus {
   /// The run manifest reports the variant as passed.
@@ -29,6 +31,7 @@ final class GalleryImage {
     this.errors = const [],
     this.width,
     this.height,
+    this.designComparison,
   });
 
   /// File name without extension, for example `phone__dark__en`.
@@ -66,6 +69,9 @@ final class GalleryImage {
 
   /// Pixel height read from the PNG header, if known.
   final int? height;
+
+  /// Design reference and exact-pixel result for this variant, when supplied.
+  final GalleryDesignComparison? designComparison;
 
   /// Column key of the matrix grid: theme, locale, and text scale.
   String get columnKey => [
@@ -168,6 +174,22 @@ final class GalleryCatalog {
   /// Number of failed images.
   int get failedCount =>
       scenarios.fold(0, (sum, scenario) => sum + scenario.failedCount);
+
+  /// Captured variants with a design reference.
+  int get designComparisonCount => scenarios
+      .expand((s) => s.images)
+      .where((image) => image.designComparison != null)
+      .length;
+
+  /// Captured variants with unequal pixels or incompatible image sizes.
+  int get designDifferenceCount => scenarios
+      .expand((s) => s.images)
+      .where(
+        (image) =>
+            image.designComparison != null &&
+            image.designComparison!.status != 'matched',
+      )
+      .length;
 
   /// Suite names in display order.
   List<String> get suites {
