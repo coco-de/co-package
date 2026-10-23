@@ -8,6 +8,13 @@
 - Preserve existing golden pass/fail behavior: design differences and size
   mismatches are metadata, while invalid references fail `designComparison`.
 
+## [0.4.0](https://github.com/coco-de/co-package/compare/co_golden-v0.3.0...co_golden-v0.4.0) (2026-10-23)
+
+
+### 기능
+
+* **co-golden:** ✨ Figma 원본과 구현을 골든 갤러리에서 비교 ([#115](https://github.com/coco-de/co-package/issues/115)) ([1fe6506](https://github.com/coco-de/co-package/commit/1fe6506c32455834fc81e202f1afcb83e922999c)), closes [#114](https://github.com/coco-de/co-package/issues/114)
+
 ## [0.3.0](https://github.com/coco-de/co-package/compare/co_golden-v0.2.0...co_golden-v0.3.0) (2026-09-30)
 
 
