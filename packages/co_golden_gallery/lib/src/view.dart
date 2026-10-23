@@ -82,6 +82,8 @@ class GalleryView extends StatelessComponent {
             '실패',
             status: catalog.failedCount > 0 ? 'bad' : 'good',
           ),
+          if (catalog.designComparisonCount > 0)
+            _stat(catalog.designDifferenceCount, '디자인 차이'),
         ]),
         _e('dl', classes: 'meta', [
           for (final (label, value) in metadata)
@@ -166,6 +168,15 @@ class GalleryView extends StatelessComponent {
             attributes: const {'type': 'checkbox'},
           ),
           _t(' 실패만'),
+        ]),
+        _e('label', classes: 'check', [
+          _e(
+            'input',
+            [],
+            id: 'f-design',
+            attributes: const {'type': 'checkbox'},
+          ),
+          _t(' 디자인 차이만'),
         ]),
         _e(
           'output',
@@ -411,6 +422,8 @@ class GalleryView extends StatelessComponent {
   Component _shot(GalleryScenario scenario, GalleryImage image) {
     final failed = image.status == GalleryStatus.failed;
     final flags = <Component>[
+      if (image.designComparison case final design?)
+        _e('span', classes: 'design-flag', [_t(design.summary)]),
       if (failed) _e('span', classes: 'flag', [_t('실패')]),
       if (image.overflowCount > 0)
         _e('span', classes: 'flag', [_t('오버플로 ${image.overflowCount}')]),
@@ -479,8 +492,114 @@ class GalleryView extends StatelessComponent {
         ]),
       ]),
       _e('ul', [], id: 'viewer-errors'),
+      _e(
+        'div',
+        id: 'compare-tools',
+        classes: 'compare-tools',
+        attributes: const {'hidden': ''},
+        [
+          _e('label', [
+            _t('보기'),
+            _e(
+              'select',
+              id: 'compare-mode',
+              attributes: const {'aria-label': '디자인 비교 모드'},
+              [
+                _e(
+                  'option',
+                  [_t('실제 구현')],
+                  attributes: const {'value': 'render'},
+                ),
+                _e(
+                  'option',
+                  id: 'reference-option',
+                  [_t('디자인 원본')],
+                  attributes: const {'value': 'reference'},
+                ),
+                _e(
+                  'option',
+                  [_t('겹쳐 보기')],
+                  attributes: const {'value': 'overlay'},
+                ),
+                _e(
+                  'option',
+                  [_t('좌우 비교')],
+                  attributes: const {'value': 'split'},
+                ),
+                _e(
+                  'option',
+                  [_t('차이 이미지')],
+                  attributes: const {'value': 'diff'},
+                ),
+              ],
+            ),
+          ]),
+          _e('label', id: 'opacity-control', [
+            _t('구현 투명도'),
+            _e(
+              'input',
+              [],
+              id: 'compare-opacity',
+              attributes: const {
+                'type': 'range',
+                'min': '0',
+                'max': '100',
+                'value': '50',
+                'aria-label': '구현 화면 투명도',
+              },
+            ),
+            _e(
+              'output',
+              [_t('50%')],
+              id: 'compare-opacity-value',
+              attributes: const {'for': 'compare-opacity'},
+            ),
+          ]),
+          _e(
+            'p',
+            [],
+            id: 'compare-summary',
+            attributes: const {'aria-live': 'polite'},
+          ),
+          _e(
+            'a',
+            [_t('디자인 원본 열기')],
+            id: 'compare-source',
+            attributes: const {
+              'target': '_blank',
+              'rel': 'noopener noreferrer',
+              'hidden': '',
+            },
+          ),
+        ],
+      ),
       _e('div', classes: 'viewer-body', [
-        _e('img', [], id: 'viewer-image', attributes: const {'alt': ''}),
+        _e(
+          'div',
+          id: 'compare-stage',
+          attributes: const {'data-mode': 'render'},
+          [
+            _e('figure', id: 'reference-pane', [
+              _e('figcaption', [], id: 'reference-label'),
+              _e(
+                'img',
+                [],
+                id: 'viewer-reference',
+                attributes: const {'alt': ''},
+              ),
+            ]),
+            _e('figure', id: 'render-pane', [
+              _e('figcaption', [_t('실제 구현')]),
+              _e('img', [], id: 'viewer-image', attributes: const {'alt': ''}),
+            ]),
+            _e(
+              'img',
+              [],
+              id: 'viewer-diff',
+              attributes: const {'alt': '디자인과 실제 구현의 RGBA 픽셀 차이'},
+            ),
+          ],
+        ),
       ]),
     ],
   );
@@ -504,6 +623,7 @@ Map<String, String> _imageAttributes(GalleryImage image) => {
   'data-theme': image.theme ?? '',
   'data-locale': image.locale ?? '',
   'data-status': image.status.name,
+  'data-design-status': image.designComparison?.status ?? '',
 };
 
 Component _t(String value) => Component.text(value);

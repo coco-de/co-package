@@ -13,6 +13,8 @@ library;
 
 export 'src/coverage.dart';
 export 'src/device.dart';
+export 'src/design_comparison.dart';
+export 'src/design_reference.dart';
 export 'src/environment.dart';
 export 'src/fonts.dart';
 export 'src/localization.dart';

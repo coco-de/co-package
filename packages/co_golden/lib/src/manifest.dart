@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 import 'coverage.dart';
+import 'design_comparison.dart';
 import 'environment.dart';
 import 'variant.dart';
 
@@ -36,6 +37,7 @@ final class GoldenResult {
     this.overflowCount = 0,
     this.errors = const [],
     this.failurePhase,
+    this.designComparison,
   });
 
   /// Result for [variant] with its axes flattened into JSON.
@@ -47,6 +49,7 @@ final class GoldenResult {
     int overflowCount = 0,
     List<String> errors = const [],
     String? failurePhase,
+    GoldenDesignComparison? designComparison,
   }) => GoldenResult(
     variant: variant.toJson(),
     fileStem: variant.fileStem,
@@ -56,6 +59,7 @@ final class GoldenResult {
     overflowCount: overflowCount,
     errors: errors,
     failurePhase: failurePhase,
+    designComparison: designComparison,
   );
 
   /// Axis values of the variant.
@@ -83,6 +87,10 @@ final class GoldenResult {
   /// Phase that threw, or `null` when no phase threw.
   final String? failurePhase;
 
+  /// Optional informational design comparison, available only in capture mode.
+  /// A passed result does not imply a match with the design.
+  final GoldenDesignComparison? designComparison;
+
   /// JSON form.
   Map<String, Object?> toJson() => {
     'variant': variant,
@@ -93,6 +101,8 @@ final class GoldenResult {
     'overflowCount': overflowCount,
     'errors': errors,
     'failurePhase': failurePhase,
+    if (designComparison != null)
+      'designComparison': designComparison!.toJson(),
   };
 }
 

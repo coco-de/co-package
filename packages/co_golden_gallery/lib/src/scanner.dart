@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
+import 'design_comparison.dart';
 import 'model.dart';
 
 /// Schema name of co_golden run manifests.
@@ -178,16 +179,18 @@ void _readManifest(
     int? width;
     int? height;
     if (image is String && image.isNotEmpty) {
-      path = _posix(image);
-      final absolute = p.join(root.path, p.joinAll(p.posix.split(path)));
-      claimed.add(path);
-      if (File(absolute).existsSync()) {
-        _claim(files, path, absolute);
-        (width, height) = _pngSize(File(absolute));
-      } else {
-        missing.add(path);
-      }
+      path = _registerImage(image, root, file, files, missing, claimed);
+      final absolute = files[path];
+      if (absolute != null) (width, height) = _pngSize(File(absolute));
     }
+    final design = _readDesignComparison(
+      raw['designComparison'],
+      root,
+      file,
+      files,
+      missing,
+      claimed,
+    );
     builder.images.add(
       GalleryImage(
         name: raw['fileStem'] is String
@@ -213,9 +216,160 @@ void _readManifest(
         ],
         width: width,
         height: height,
+        designComparison: design,
       ),
     );
   }
+}
+
+GalleryDesignComparison? _readDesignComparison(
+  Object? raw,
+  Directory root,
+  File manifest,
+  Map<String, String> files,
+  List<String> missing,
+  Set<String> claimed,
+) {
+  if (raw == null) return null;
+  Never malformed() => throw GallerySourceException(
+    '${manifest.path} has a malformed designComparison.',
+  );
+  if (raw is! Map<String, Object?>) malformed();
+  String string(String key) {
+    final value = raw[key];
+    if (value is! String || value.trim().isEmpty) malformed();
+    return value;
+  }
+
+  int dimension(String key) {
+    final value = raw[key];
+    if (value is! int || value <= 0) malformed();
+    return value;
+  }
+
+  final status = string('status');
+  if (!const {'matched', 'different', 'sizeMismatch'}.contains(status)) {
+    malformed();
+  }
+  final rw = dimension('referenceWidth');
+  final rh = dimension('referenceHeight');
+  final iw = dimension('renderWidth');
+  final ih = dimension('renderHeight');
+  final source = raw['sourceUrl'];
+  if (source != null) {
+    if (source is! String) malformed();
+    final uri = Uri.tryParse(source);
+    if (uri == null ||
+        !const {'http', 'https'}.contains(uri.scheme) ||
+        uri.host.isEmpty) {
+      malformed();
+    }
+  }
+  final diff = raw['diff'];
+  final different = raw['differentPixels'];
+  final total = raw['totalPixels'];
+  final ratio = raw['differenceRatio'];
+  final sameSize = rw == iw && rh == ih;
+  if (status == 'sizeMismatch') {
+    if (sameSize ||
+        diff != null ||
+        different != null ||
+        total != null ||
+        ratio != null) {
+      malformed();
+    }
+  } else {
+    if (!sameSize ||
+        diff is! String ||
+        diff.isEmpty ||
+        different is! int ||
+        total is! int ||
+        total != rw * rh ||
+        different < 0 ||
+        different > total ||
+        ratio is! num ||
+        !ratio.isFinite ||
+        ratio < 0 ||
+        ratio > 1 ||
+        (ratio - different / total).abs() > 1e-12 ||
+        (status == 'matched') != (different == 0)) {
+      malformed();
+    }
+  }
+  final reference = _registerImage(
+    string('reference'),
+    root,
+    manifest,
+    files,
+    missing,
+    claimed,
+    requireImageExtension: true,
+  );
+  final diffPath = diff is String
+      ? _registerImage(
+          diff,
+          root,
+          manifest,
+          files,
+          missing,
+          claimed,
+          requireImageExtension: true,
+        )
+      : null;
+  return GalleryDesignComparison(
+    reference: reference,
+    label: string('label'),
+    status: status,
+    referenceWidth: rw,
+    referenceHeight: rh,
+    renderWidth: iw,
+    renderHeight: ih,
+    sourceUrl: source as String?,
+    diff: diffPath,
+    differentPixels: different as int?,
+    totalPixels: total as int?,
+    differenceRatio: (ratio as num?)?.toDouble(),
+  );
+}
+
+String _registerImage(
+  String path,
+  Directory root,
+  File manifest,
+  Map<String, String> files,
+  List<String> missing,
+  Set<String> claimed, {
+  bool requireImageExtension = false,
+}) {
+  // These paths become both file reads and --copy-images destinations.
+  // Reject escapes before normalization rather than silently repairing them.
+  if (path.isEmpty ||
+      path.contains('\\') ||
+      p.posix.isAbsolute(path) ||
+      Uri.tryParse(path)?.hasScheme != false ||
+      p.posix.split(path).any((part) => part == '.' || part == '..') ||
+      p.posix.normalize(path) != path ||
+      (requireImageExtension &&
+          !_imageExtensions.contains(p.posix.extension(path).toLowerCase()))) {
+    throw GallerySourceException(
+      '${manifest.path} has an unsafe image path: $path',
+    );
+  }
+  final absolute = p.join(root.path, p.joinAll(p.posix.split(path)));
+  claimed.add(path);
+  final image = File(absolute);
+  if (image.existsSync()) {
+    final resolved = image.resolveSymbolicLinksSync();
+    if (!p.isWithin(root.resolveSymbolicLinksSync(), resolved)) {
+      throw GallerySourceException(
+        '${manifest.path} references an image outside its input: $path',
+      );
+    }
+    _claim(files, path, absolute);
+  } else if (!missing.contains(path)) {
+    missing.add(path);
+  }
+  return path;
 }
 
 /// Axis order from `plan.axes`, or null for a manifest written before

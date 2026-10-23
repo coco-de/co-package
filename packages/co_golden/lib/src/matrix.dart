@@ -11,6 +11,9 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 import 'coverage.dart';
+import 'design_comparison.dart';
+import 'design_comparison_capture.dart';
+import 'design_reference.dart';
 import 'environment.dart';
 import 'localization.dart';
 import 'manifest.dart';
@@ -159,6 +162,10 @@ final class GoldenMatrix<T> {
   /// type), and [dispose] after capture even when the variant failed.
   /// [coverage] replaces the matrix coverage for this scenario only, and
   /// [clock] replaces the matrix [GoldenMatrix.clock].
+  /// [designReference] may associate a local design PNG with individual variants
+  /// in capture mode. Return `null` for variants without a matching design.
+  /// Comparison is informational: different pixels do not fail a capture.
+  /// Invalid references fail the `designComparison` phase after rendering.
   ///
   /// Throws an [ArgumentError] when [name] is not a valid golden name or is
   /// already registered in this matrix.
@@ -175,6 +182,7 @@ final class GoldenMatrix<T> {
     Timeout? timeout,
     Iterable<String> tags = const [],
     DateTime? clock,
+    GoldenDesignReference? Function(GoldenVariant<T> variant)? designReference,
   }) {
     checkGoldenName(name, 'scenario');
     if (!_scenarios.add(name)) {
@@ -193,6 +201,7 @@ final class GoldenMatrix<T> {
       interact: interact,
       dispose: dispose,
       pump: pump ?? this.pump ?? GoldenPumps.settle(),
+      designReference: designReference,
     );
     final report = GoldenScenarioReport(
       suite: suite,
@@ -259,6 +268,7 @@ final class GoldenMatrix<T> {
     StackTrace? failureStack;
     String? failurePhase;
     String? image;
+    GoldenDesignComparison? designComparison;
     var phase = 'localization';
     var prepared = false;
 
@@ -292,6 +302,21 @@ final class GoldenMatrix<T> {
       }
       phase = 'capture';
       image = await _capture(tester, boundaryKey, variant, scenario.name);
+      if (environment.mode == GoldenMatrixMode.capture &&
+          scenario.designReference != null) {
+        phase = 'designComparison';
+        final reference = scenario.designReference!(variant);
+        if (reference != null) {
+          designComparison = captureDesignComparison(
+            design: reference,
+            outputDirectory: environment.outputDirectory,
+            renderPath: image,
+            suite: suite,
+            scenario: scenario.name,
+            fileStem: variant.fileStem,
+          );
+        }
+      }
     } on Object catch (error, stack) {
       failure = error;
       failureStack = stack;
@@ -331,6 +356,7 @@ final class GoldenMatrix<T> {
           overflowCount: reported.where(_isOverflow).length,
           errors: errors,
           failurePhase: failurePhase,
+          designComparison: designComparison,
         ),
       );
     }
@@ -421,6 +447,7 @@ final class _Scenario<T> {
     this.prepare,
     this.interact,
     this.dispose,
+    this.designReference,
   });
 
   final String name;
@@ -429,6 +456,8 @@ final class _Scenario<T> {
   final GoldenHook<T>? prepare;
   final GoldenHook<T>? interact;
   final GoldenHook<T>? dispose;
+  final GoldenDesignReference? Function(GoldenVariant<T> variant)?
+  designReference;
 }
 
 /// Applies a variant to the test view and restores it afterwards.

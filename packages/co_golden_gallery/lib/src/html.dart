@@ -85,6 +85,23 @@ Future<String> renderGalleryHtml(
         'label': image.label,
         'status': image.status.name,
         'errors': image.errors,
+        if (image.designComparison case final design?)
+          'design': {
+            'reference': imageUrl(
+              GalleryImage(name: design.label, path: design.reference),
+            ),
+            'label': design.label,
+            'sourceUrl': design.sourceUrl,
+            'status': design.status,
+            'summary': design.summary,
+            'referenceWidth': design.referenceWidth,
+            'referenceHeight': design.referenceHeight,
+            'renderWidth': design.renderWidth,
+            'renderHeight': design.renderHeight,
+            'diff': design.diff == null
+                ? null
+                : imageUrl(GalleryImage(name: 'diff', path: design.diff!)),
+          },
       });
     }
   }
@@ -303,6 +320,26 @@ dialog::backdrop { background: rgba(8, 9, 10, .8); }
 #viewer-errors:empty { display: none; }
 .viewer-body { overflow: auto; max-height: calc(94vh - 72px); padding: 16px; display: grid; place-items: center; }
 .viewer-body img { max-width: 100%; height: auto; }
+.design-flag { position: absolute; bottom: 6px; left: 6px; padding: 2px 6px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 4px; font-size: 11px; }
+.compare-tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.compare-tools label { display: flex; gap: 8px; align-items: center; }
+.compare-tools select { background: var(--panel); border: 1px solid var(--line-strong); padding: 6px; border-radius: 4px; }
+#compare-summary { font-size: 12px; color: var(--secondary); flex: 1 1 260px; }
+#compare-summary[data-status="sizeMismatch"] { color: var(--fail); }
+#compare-stage { display: grid; width: 100%; align-items: start; justify-items: center; }
+#compare-stage figure { min-width: 0; width: 100%; }
+#compare-stage img { display: block; margin: auto; }
+#compare-stage figcaption { font-size: 12px; color: var(--secondary); padding-bottom: 6px; }
+#compare-stage[data-mode="render"] #reference-pane,
+#compare-stage[data-mode="reference"] #render-pane,
+#compare-stage:not([data-mode="diff"]) #viewer-diff,
+#compare-stage[data-mode="diff"] figure { display: none; }
+#compare-stage[data-mode="split"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+#compare-stage[data-mode="overlay"] figure { grid-area: 1 / 1; }
+#compare-stage[data-mode="overlay"] figcaption { display: none; }
+#compare-stage[data-mode="overlay"] #render-pane { opacity: var(--render-opacity, .5); }
+#compare-stage[data-mode="overlay"] img { width: 100%; }
 @media (max-width: 900px) {
   .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .toc { position: static; max-height: none; }
@@ -332,7 +369,7 @@ const String _script = r'''
     applyMode();
   });
 
-  const inputs = ['q', 'f-suite', 'f-device', 'f-theme', 'f-locale', 'f-failed'].map($);
+  const inputs = ['q', 'f-suite', 'f-device', 'f-theme', 'f-locale', 'f-failed', 'f-design'].map($);
   const matches = (el, filter) =>
     (!filter.device || el.dataset.device === filter.device) &&
     (!filter.theme || el.dataset.theme === filter.theme) &&
@@ -346,6 +383,7 @@ const String _script = r'''
       theme: $('f-theme').value,
       locale: $('f-locale').value,
       failed: $('f-failed').checked,
+      design: $('f-design').checked,
     };
     let shown = 0;
     let total = 0;
@@ -369,9 +407,12 @@ const String _script = r'''
         });
       }
       cells.forEach((cell) => {
-        const ok = matches(cell, filter) && (!filter.failed || cell.dataset.status === 'failed');
+        const hasDesignDifference = ['different', 'sizeMismatch'].includes(cell.dataset.designStatus);
+        const ok = matches(cell, filter) && (!filter.failed || cell.dataset.status === 'failed') &&
+          (!filter.design || hasDesignDifference);
         if (table) {
-          cell.classList.toggle('muted', filter.failed && cell.dataset.status !== 'failed');
+          cell.classList.toggle('muted', (filter.failed && cell.dataset.status !== 'failed') ||
+            (filter.design && !hasDesignDifference));
         } else {
           cell.hidden = !ok;
         }
@@ -397,8 +438,23 @@ const String _script = r'''
 
   const viewer = $('viewer');
   let current = -1;
+  const compareMode = $('compare-mode');
+  const opacity = $('compare-opacity');
+  const updateComparison = () => {
+    const item = data[current];
+    if (!item) return;
+    const design = item.design;
+    const selected = design ? compareMode.value : 'render';
+    $('compare-stage').dataset.mode = selected;
+    $('compare-stage').style.setProperty('--render-opacity', Number(opacity.value) / 100);
+    $('opacity-control').hidden = selected !== 'overlay';
+    $('compare-opacity-value').textContent = opacity.value + '%';
+    opacity.setAttribute('aria-valuetext', '실제 구현 ' + opacity.value + '%');
+  };
+  compareMode.addEventListener('change', updateComparison);
+  opacity.addEventListener('input', updateComparison);
   const visibleShots = () => [...document.querySelectorAll('button.shot')]
-    .filter((b) => b.offsetParent !== null);
+    .filter((b) => b.offsetParent !== null && !b.closest('.muted'));
   const show = (index) => {
     const item = data[index];
     if (!item) return;
@@ -407,6 +463,33 @@ const String _script = r'''
     $('viewer-image').alt = item.title + ' — ' + item.label;
     $('viewer-title').textContent = item.title;
     $('viewer-label').textContent = item.label + (item.status === 'failed' ? ' · 실패' : '');
+    const design = item.design;
+    $('compare-tools').hidden = !design;
+    const source = $('compare-source');
+    source.hidden = !design?.sourceUrl;
+    source.removeAttribute('href');
+    $('viewer-reference').removeAttribute('src');
+    $('viewer-diff').removeAttribute('src');
+    compareMode.value = design ? 'overlay' : 'render';
+    opacity.value = '50';
+    if (design) {
+      $('viewer-reference').src = design.reference;
+      $('viewer-reference').alt = design.label + ' 디자인 원본';
+      $('reference-label').textContent = design.label + ' 원본';
+      $('reference-option').textContent = design.label + ' 원본';
+      if (design.diff) $('viewer-diff').src = design.diff;
+      if (design.sourceUrl) source.href = design.sourceUrl;
+      const sizeMismatch = design.status === 'sizeMismatch';
+      compareMode.querySelector('[value="overlay"]').disabled = sizeMismatch;
+      compareMode.querySelector('[value="diff"]').disabled = sizeMismatch || !design.diff;
+      if (sizeMismatch) compareMode.value = 'split';
+      $('compare-summary').dataset.status = design.status;
+      $('compare-summary').textContent = design.summary + ' · 원본 ' +
+        design.referenceWidth + '×' + design.referenceHeight + ' / 구현 ' +
+        design.renderWidth + '×' + design.renderHeight +
+        (sizeMismatch ? ' · 크기가 달라 겹치기·픽셀 비교 불가 (자동 크기 조정 없음)' : ' · RGBA 완전 일치 기준, 캡처 성공과 별도');
+    }
+    updateComparison();
     const errors = $('viewer-errors');
     errors.replaceChildren(...item.errors.map((e) => {
       const li = document.createElement('li');
@@ -429,6 +512,7 @@ const String _script = r'''
   $('viewer-next').addEventListener('click', () => step(1));
   $('viewer-close').addEventListener('click', () => viewer.close());
   viewer.addEventListener('keydown', (event) => {
+    if (event.target.matches('input, select, textarea')) return;
     if (event.key === 'ArrowLeft') step(-1);
     if (event.key === 'ArrowRight') step(1);
   });

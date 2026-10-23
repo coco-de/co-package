@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add optional per-variant `GoldenDesignReference` associations to scenarios.
+  Capture mode snapshots local PNGs and records informational exact RGBA
+  comparisons, visible diffs and unmodified geometry in run-manifest v1.
+- Preserve existing golden pass/fail behavior: design differences and size
+  mismatches are metadata, while invalid references fail `designComparison`.
+
 ## [0.3.0](https://github.com/coco-de/co-package/compare/co_golden-v0.2.0...co_golden-v0.3.0) (2026-09-30)
 
 

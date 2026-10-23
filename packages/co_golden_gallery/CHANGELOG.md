@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Add per-variant Figma/design comparisons: opacity overlay, side-by-side,
+  reference and exact diff views, source links, design-differences filtering,
+  and summary metadata. Preserve old manifests and all asset-serving modes;
+  reject unsafe comparison paths and expose incompatible pixel geometry.
 - Migrate scenario badges to CoUI v2 tone/variant APIs and require coui_web 0.162.0.
 
 ## Unreleased
