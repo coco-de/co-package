@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
+import 'design_analysis.dart';
 import 'design_comparison.dart';
 import 'model.dart';
 
@@ -190,6 +191,11 @@ void _readManifest(
       files,
       missing,
       claimed,
+      variant: (
+        suite: suite,
+        scenario: scenario,
+        fileStem: raw['fileStem'] is String ? raw['fileStem']! as String : null,
+      ),
     );
     builder.images.add(
       GalleryImage(
@@ -222,14 +228,17 @@ void _readManifest(
   }
 }
 
+typedef _VariantIdentity = ({String suite, String scenario, String? fileStem});
+
 GalleryDesignComparison? _readDesignComparison(
   Object? raw,
   Directory root,
   File manifest,
   Map<String, String> files,
   List<String> missing,
-  Set<String> claimed,
-) {
+  Set<String> claimed, {
+  required _VariantIdentity variant,
+}) {
   if (raw == null) return null;
   Never malformed() => throw GallerySourceException(
     '${manifest.path} has a malformed designComparison.',
@@ -329,7 +338,98 @@ GalleryDesignComparison? _readDesignComparison(
     differentPixels: different as int?,
     totalPixels: total as int?,
     differenceRatio: (ratio as num?)?.toDouble(),
+    analysis: _readDesignAnalysis(
+      raw['analysis'],
+      root,
+      manifest,
+      files,
+      missing,
+      claimed,
+      variant: variant,
+    ),
   );
+}
+
+/// Reads the optional tolerance-based analysis of a design comparison and
+/// the report file it points to.
+GalleryDesignAnalysis? _readDesignAnalysis(
+  Object? raw,
+  Directory root,
+  File manifest,
+  Map<String, String> files,
+  List<String> missing,
+  Set<String> claimed, {
+  required _VariantIdentity variant,
+}) {
+  if (raw == null) return null;
+  Never malformed(String detail) => throw GallerySourceException(
+    '${manifest.path} has a malformed designComparison.analysis: $detail.',
+  );
+  if (raw is! Map<String, Object?>) malformed('not an object');
+  final reportValue = raw['report'];
+  if (reportValue is! String || reportValue.isEmpty) malformed('no report');
+  final report = _registerImage(
+    reportValue,
+    root,
+    manifest,
+    files,
+    missing,
+    claimed,
+    extensions: const {'.json'},
+  );
+  final diffValue = raw['diff'];
+  if (diffValue != null && (diffValue is! String || diffValue.isEmpty)) {
+    malformed('invalid diff');
+  }
+  final diff = diffValue is String
+      ? _registerImage(
+          diffValue,
+          root,
+          manifest,
+          files,
+          missing,
+          claimed,
+          requireImageExtension: true,
+        )
+      : null;
+  final GalleryDesignAnalysis analysis;
+  try {
+    analysis = GalleryDesignAnalysis.parse(raw, report: report, diff: diff);
+  } on FormatException catch (error) {
+    malformed(error.message);
+  }
+  final absolute = files[report];
+  if (absolute == null) return analysis;
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(File(absolute).readAsStringSync());
+  } on FormatException catch (error) {
+    throw GallerySourceException(
+      'Invalid JSON in design report $report: $error',
+    );
+  } on FileSystemException catch (error) {
+    throw GallerySourceException('Cannot read design report $report: $error');
+  }
+  if (decoded is Map<String, Object?>) {
+    for (final (key, expected) in [
+      ('suite', variant.suite),
+      ('scenario', variant.scenario),
+      ('fileStem', variant.fileStem),
+    ]) {
+      final value = decoded[key];
+      if (expected != null && value != null && value != expected) {
+        throw GallerySourceException(
+          'Design report $report belongs to $key "$value", not "$expected" '
+          '(${manifest.path}).',
+        );
+      }
+    }
+  }
+  try {
+    return analysis.withDetails(GalleryDesignReport.parse(decoded));
+  } on FormatException catch (error) {
+    throw GallerySourceException('Design report $report ${error.message}.');
+  }
 }
 
 String _registerImage(
@@ -340,7 +440,10 @@ String _registerImage(
   List<String> missing,
   Set<String> claimed, {
   bool requireImageExtension = false,
+  Set<String>? extensions,
 }) {
+  final allowed =
+      extensions ?? (requireImageExtension ? _imageExtensions : null);
   // These paths become both file reads and --copy-images destinations.
   // Reject escapes before normalization rather than silently repairing them.
   if (path.isEmpty ||
@@ -349,10 +452,10 @@ String _registerImage(
       Uri.tryParse(path)?.hasScheme != false ||
       p.posix.split(path).any((part) => part == '.' || part == '..') ||
       p.posix.normalize(path) != path ||
-      (requireImageExtension &&
-          !_imageExtensions.contains(p.posix.extension(path).toLowerCase()))) {
+      (allowed != null &&
+          !allowed.contains(p.posix.extension(path).toLowerCase()))) {
     throw GallerySourceException(
-      '${manifest.path} has an unsafe image path: $path',
+      '${manifest.path} has an unsafe asset path: $path',
     );
   }
   final absolute = p.join(root.path, p.joinAll(p.posix.split(path)));
@@ -362,7 +465,7 @@ String _registerImage(
     final resolved = image.resolveSymbolicLinksSync();
     if (!p.isWithin(root.resolveSymbolicLinksSync(), resolved)) {
       throw GallerySourceException(
-        '${manifest.path} references an image outside its input: $path',
+        '${manifest.path} references a file outside its input: $path',
       );
     }
     _claim(files, path, absolute);

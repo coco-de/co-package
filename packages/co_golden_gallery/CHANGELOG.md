@@ -1,5 +1,18 @@
 ## Unreleased
 
+- Show co_golden design analyses: a tolerance verdict line, a findings panel
+  grouped by category (font loading, frame, missing/extra, component,
+  typography, content, color, layout, shape, pixels) with design →
+  implementation values, Figma nodes, widget source locations, components,
+  fix hints, and known differences, SVG marks on the design and the
+  implementation, region and mask overlays, and a tolerance difference mode.
+  Thumbnails and the design filter follow the verdict when present.
+- Copy and serve design reports and tolerance maps like other auxiliary
+  assets; reject unsafe paths, unreadable or newer reports, and reports that
+  belong to another variant.
+- Extend `--summary` with `designVerdicts`, `designFindingCounts`, per-variant
+  `analysis`, and a flattened `designFindings` list, and add
+  `--design-report <file.md>` for AI agents and pull request comments.
 - Add per-variant Figma/design comparisons: opacity overlay, side-by-side,
   reference and exact diff views, source links, design-differences filtering,
   and summary metadata. Preserve old manifests and all asset-serving modes;

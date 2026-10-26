@@ -7,6 +7,35 @@
   comparisons, visible diffs and unmodified geometry in run-manifest v1.
 - Preserve existing golden pass/fail behavior: design differences and size
   mismatches are metadata, while invalid references fail `designComparison`.
+- Add a design analysis for variants with a design reference
+  (`GoldenMatrix.designAnalysis`, `GoldenDesignAnalysis`):
+  - tolerant pixel comparison (CIEDE2000, positional radius, anti-aliasing,
+    relaxed text boxes) with a ratio and largest-region budget, regions
+    attributed to the design node and widget under them, and a tolerant diff
+    map — rules and defaults shared with the `visual-verify` skill;
+  - structural comparison with the design's node data
+    (`GoldenDesignReference.specPath`: `co_golden.design_spec`, Figma REST
+    nodes, or compare-frames output) that reports typography (role, family,
+    weight, size, line height, letter spacing, runs), colors with token names,
+    layout offsets relative to the nearest matched ancestor and sibling gaps,
+    radii, borders, shadows, component types and variants, and missing or
+    extra elements;
+  - setup checks for fonts that fell back to the test font and images captured
+    before decoding;
+  - findings with source locations of the widgets that created them, written
+    to `analysis/<suite>/<scenario>/<variant>.json`
+    (`co_golden.design_report` v1) and summarized under
+    `designComparison.analysis`.
+- Add `GoldenDesignSystem`: CoUI's `components.json` catalog is discovered from
+  the resolved `coui_flutter`, other design systems use
+  `GoldenComponentMapping`, design packages, text roles, and theme color
+  tokens. Design components missing from the catalog are reported as
+  design-system extension candidates.
+- Add masks with reasons (`GoldenDesignMask.rect`, `.figmaNode`, `.finder`,
+  device safe-area bands by default) and `GoldenKnownDifference` for tracked
+  differences that stay visible without failing the verdict.
+- `GoldenDesignAnalysis.failOnMismatch` turns the verdict into a CI gate;
+  `GoldenDesignAnalysis.off` keeps only the exact comparison.
 
 ## [0.3.0](https://github.com/coco-de/co-package/compare/co_golden-v0.2.0...co_golden-v0.3.0) (2026-09-30)
 

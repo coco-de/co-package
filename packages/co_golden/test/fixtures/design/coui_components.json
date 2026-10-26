@@ -1,0 +1,30 @@
+{
+  "meta": {"schema": 3, "source": "coui_core"},
+  "components": {
+    "button": {
+      "axes": {
+        "variant": {"enum": "CoreButtonVariant", "members": ["primary", "secondary", "outline", "ghost"], "hidden": [], "default": null},
+        "size": {"enum": "CoreComponentSize", "members": ["xs", "sm", "md", "lg"]},
+        "state": null, "enabled": true,
+        "other": [{"enum": "CoreButtonShape", "members": ["rectangle", "square", "circle"], "fields": {}}]
+      },
+      "docs": {"slugs": {"kebab": "button", "snake": "button", "pascal": "Button"}}
+    },
+    "chip": {
+      "axes": {
+        "variant": null, "size": null, "state": null, "enabled": true,
+        "other": [
+          {"enum": "CoreChipColor", "members": ["custom", "neutral", "primary", "secondary"], "fields": {}},
+          {"enum": "CoreChipSize", "members": ["sm", "md", "lg"], "fields": {}}
+        ]
+      },
+      "docs": {"slugs": {"kebab": "chip", "snake": "chip", "pascal": "Chip"}}
+    },
+    "broken": {"axes": {}}
+  },
+  "typography": {
+    "titleMedium": {"fontSize": 18.0, "lineHeight": 1.6, "fontWeight": 700, "letterSpacing": -0.02},
+    "bodyMedium": {"fontSize": 16.0, "lineHeight": 1.6, "fontWeight": 400, "letterSpacing": -0.01},
+    "labelXl2": {"fontSize": 18.0, "lineHeight": 1.2, "fontWeight": 500, "letterSpacing": -0.01}
+  }
+}

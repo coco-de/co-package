@@ -423,7 +423,12 @@ class GalleryView extends StatelessComponent {
     final failed = image.status == GalleryStatus.failed;
     final flags = <Component>[
       if (image.designComparison case final design?)
-        _e('span', classes: 'design-flag', [_t(design.summary)]),
+        _e(
+          'span',
+          classes: 'design-flag',
+          attributes: {'data-design-status': design.designStatus},
+          [_t(design.flag)],
+        ),
       if (failed) _e('span', classes: 'flag', [_t('실패')]),
       if (image.overflowCount > 0)
         _e('span', classes: 'flag', [_t('오버플로 ${image.overflowCount}')]),
@@ -505,32 +510,12 @@ class GalleryView extends StatelessComponent {
               id: 'compare-mode',
               attributes: const {'aria-label': '디자인 비교 모드'},
               [
-                _e(
-                  'option',
-                  [_t('실제 구현')],
-                  attributes: const {'value': 'render'},
-                ),
-                _e(
-                  'option',
-                  id: 'reference-option',
-                  [_t('디자인 원본')],
-                  attributes: const {'value': 'reference'},
-                ),
-                _e(
-                  'option',
-                  [_t('겹쳐 보기')],
-                  attributes: const {'value': 'overlay'},
-                ),
-                _e(
-                  'option',
-                  [_t('좌우 비교')],
-                  attributes: const {'value': 'split'},
-                ),
-                _e(
-                  'option',
-                  [_t('차이 이미지')],
-                  attributes: const {'value': 'diff'},
-                ),
+                _option('render', '실제 구현'),
+                _option('reference', '디자인 원본', id: 'reference-option'),
+                _option('overlay', '겹쳐 보기'),
+                _option('split', '좌우 비교'),
+                _option('tolerant', '허용 오차 차이'),
+                _option('diff', 'RGBA 차이 이미지'),
               ],
             ),
           ]),
@@ -573,7 +558,7 @@ class GalleryView extends StatelessComponent {
           ),
         ],
       ),
-      _e('div', classes: 'viewer-body', [
+      _e('div', id: 'viewer-body', classes: 'viewer-body', [
         _e(
           'div',
           id: 'compare-stage',
@@ -581,26 +566,92 @@ class GalleryView extends StatelessComponent {
           [
             _e('figure', id: 'reference-pane', [
               _e('figcaption', [], id: 'reference-label'),
-              _e(
-                'img',
-                [],
-                id: 'viewer-reference',
-                attributes: const {'alt': ''},
-              ),
+              _frame('viewer-reference', 'reference-marks'),
             ]),
             _e('figure', id: 'render-pane', [
               _e('figcaption', [_t('실제 구현')]),
-              _e('img', [], id: 'viewer-image', attributes: const {'alt': ''}),
+              _frame('viewer-image', 'render-marks'),
             ]),
-            _e(
-              'img',
-              [],
-              id: 'viewer-diff',
-              attributes: const {'alt': '디자인과 실제 구현의 RGBA 픽셀 차이'},
-            ),
+            _e('figure', id: 'diff-pane', [
+              _e('figcaption', [], id: 'diff-label'),
+              _frame(
+                'viewer-diff',
+                'diff-marks',
+                alt: '디자인과 실제 구현의 RGBA 픽셀 차이',
+              ),
+            ]),
           ],
         ),
+        _analysisPanel(),
       ]),
+    ],
+  );
+
+  Component _option(String value, String label, {String? id}) =>
+      _e('option', [_t(label)], id: id, attributes: {'value': value});
+
+  /// An image with an SVG layer on top for design and implementation marks.
+  Component _frame(String imageId, String marksId, {String alt = ''}) =>
+      _e('div', classes: 'frame', [
+        _e('img', [], id: imageId, attributes: {'alt': alt}),
+        _e(
+          'svg',
+          [],
+          id: marksId,
+          classes: 'marks',
+          attributes: const {
+            'aria-hidden': 'true',
+            'focusable': 'false',
+            'preserveAspectRatio': 'none',
+          },
+        ),
+      ]);
+
+  /// Findings of the open variant; the script fills it from the page data.
+  Component _analysisPanel() => _e(
+    'aside',
+    id: 'analysis-panel',
+    classes: 'analysis-panel',
+    attributes: const {'aria-label': '디자인 차이 목록', 'hidden': ''},
+    [
+      _e(
+        'p',
+        [],
+        id: 'analysis-summary',
+        attributes: const {'aria-live': 'polite'},
+      ),
+      _e('div', classes: 'analysis-actions', [
+        _e('label', classes: 'check', [
+          _e(
+            'input',
+            [],
+            id: 'show-regions',
+            attributes: const {'type': 'checkbox'},
+          ),
+          _t(' 픽셀 영역·가림 표시'),
+        ]),
+        _e(
+          'a',
+          [_t('분석 리포트 JSON')],
+          id: 'analysis-report',
+          attributes: const {
+            'target': '_blank',
+            'rel': 'noopener noreferrer',
+            'hidden': '',
+          },
+        ),
+      ]),
+      _e('p', classes: 'mark-legend', [
+        _e('span', classes: 'legend legend-design', [_t('Figma 위치')]),
+        _e('span', classes: 'legend legend-widget', [_t('구현 위치')]),
+        _e('span', classes: 'legend legend-region', [_t('픽셀 영역')]),
+      ]),
+      _e('div', [], id: 'analysis-findings'),
+      _e('details', id: 'analysis-regions-box', classes: 'analysis-regions', [
+        _e('summary', [], id: 'analysis-regions-title'),
+        _e('ul', [], id: 'analysis-regions'),
+      ]),
+      _e('ul', [], id: 'analysis-warnings', classes: 'analysis-warnings'),
     ],
   );
 
@@ -623,7 +674,7 @@ Map<String, String> _imageAttributes(GalleryImage image) => {
   'data-theme': image.theme ?? '',
   'data-locale': image.locale ?? '',
   'data-status': image.status.name,
-  'data-design-status': image.designComparison?.status ?? '',
+  'data-design-status': image.designComparison?.designStatus ?? '',
 };
 
 Component _t(String value) => Component.text(value);

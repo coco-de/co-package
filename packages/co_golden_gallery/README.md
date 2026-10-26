@@ -18,8 +18,12 @@ favicon files, and any locally served images together.
   external scripts or styles. Dark is the default.
 - Design references recorded by co_golden appear beside each capture's status.
   Open a capture to switch between the implementation, design, opacity overlay,
-  side-by-side view, and exact-pixel difference image. The **디자인 차이만**
-  switch finds unequal or differently sized variants even when capture passed.
+  side-by-side view, tolerance difference map, and exact-pixel difference
+  image. When co_golden also recorded a design analysis, a findings panel names
+  the font, widget, or component that deviates, by how much, and the source
+  line to fix; selecting a finding outlines it on both images. The
+  **디자인 차이만** switch finds variants that need a design look even when
+  capture passed.
 - Images stay local, are copied next to the page, or are served from a URL
   prefix such as a storage bucket.
 - The page carries the cocode favicon set — the same files as
@@ -41,7 +45,8 @@ dart run co_golden_gallery build \
   --noindex \
   --meta commit=abc1234 \
   --link GitHub=https://github.com/coco-de/unibook \
-  --summary build/golden-gallery-summary.json
+  --summary build/golden-gallery-summary.json \
+  --design-report build/golden-gallery-design-report.md
 ```
 
 From this workspace:
@@ -70,7 +75,8 @@ Dependency resolution requires Git credentials with access to the repository.
 | `--plain-title` | Heading of the section with images that have no device, theme, or locale (default `축 없는 이미지`). |
 | `--meta label=value` | Header entries such as the commit. Repeatable. |
 | `--link label=url` | Header links. Repeatable. |
-| `--summary file` | Write counts and failed variants as JSON (for CI summaries). |
+| `--summary file` | Write counts, failed variants, design verdicts, and design findings as JSON (for CI summaries). |
+| `--design-report file` | Write a Markdown report of the design findings, for AI agents and pull request comments. |
 | `--allow-missing` | Build even when a manifest names a missing image. |
 
 Without `--asset-base-url` or `--copy-images`, images are referenced relative
@@ -119,29 +125,81 @@ and relative image URLs. These auxiliary assets do not inflate scenario or
 capture counts. Existing manifests without references keep working.
 
 The viewer starts with a 50% overlay. Use the opacity slider to alternate
-between the original and the implementation, or choose **좌우 비교** or
-**차이 이미지**. The original design link opens from the same viewer. Each
-variant resets the controls so a previous variant's reference is never reused.
-Slider arrow keys adjust opacity; they do not navigate to another capture.
+between the original and the implementation, or choose **좌우 비교**,
+**허용 오차 차이**, or **RGBA 차이 이미지**. The original design link opens from
+the same viewer. Each variant resets the controls so a previous variant's
+reference is never reused. Slider arrow keys adjust opacity; they do not
+navigate to another capture.
 
-Pixel difference is informational and uses exact decoded RGBA equality, with
-no tolerance, masks, or acceptance budget. Fonts, platform rasterization, and
-fixture content can all contribute. A capture's `passed` status describes its
-render diagnostics, independently from agreement with the design. Images with
-different pixel dimensions are shown side by side with both sizes; overlay and
-pixel diff are disabled, and no percentage is invented. The runner never
-resizes the reference to hide a mismatch.
+The exact comparison uses decoded RGBA equality, with no tolerance, masks, or
+acceptance budget. Fonts, platform rasterization, and fixture content can all
+contribute. A capture's `passed` status describes its render diagnostics,
+independently from agreement with the design. Images with different pixel
+dimensions are shown side by side with both sizes; overlay and pixel diff are
+disabled, and no percentage is invented. The runner never resizes the
+reference to hide a mismatch.
 
-`--summary` includes `designComparisons` and a `designDifferences` list with
-suite, scenario, variant, comparison status, ratio (null for a size mismatch),
-reference path, and source URL. CI can publish the review first and apply its
-own explicit design-acceptance policy afterwards. Gallery exit codes remain
+#### Design analysis: tolerance, findings, and an AI report
+
+When co_golden records a design analysis (`designComparison.analysis` in the
+manifest, with its report under `analysis/`), the gallery reads each report at
+build time:
+
+- **Verdict line** — 일치 / 불일치 / 판정 불가 under tolerance, the differing
+  pixel ratio and the largest region against their budgets, and the error,
+  warning, info, and known-difference counts. Thumbnails show the same
+  verdict, and **디자인 차이만** keeps `fail` and `undetermined` variants.
+  Variants without an analysis keep the exact-pixel status.
+- **Findings panel** — grouped as 폰트 로딩, 프레임, 누락/추가, 컴포넌트, 서체,
+  내용, 색상, 레이아웃, 모양, and 픽셀, most severe first. Each finding shows
+  the design value → implementation value (with the text run or sibling it
+  applies to), the Figma node and text style, the widget with its source
+  `file:line:column`, the design-system component and its properties, where
+  to fix it (**고칠 곳**: the app's code, or the design system when a component
+  drew the value internally), and a fix hint. Known differences stay listed with their reason and tracking issue
+  but do not count.
+- **Marks** — selecting or focusing a finding outlines the Figma position
+  (pink) and the implementation position (blue, dashed) on the design, the
+  implementation, the overlay, the side-by-side view, and the difference maps.
+  A rect is drawn on the other image only when both share one logical size.
+  **픽셀 영역·가림 표시** draws every differing region and mask; regions that
+  no finding explains are labelled. Up and down arrow keys move between
+  findings.
+- **허용 오차 차이** shows co_golden's tolerance map: red differences, yellow
+  anti-aliasing, and blue masks. **분석 리포트 JSON** opens the full report.
+
+The report JSON and the tolerance map are copied, served, and checked like the
+other auxiliary assets: unsafe paths are rejected, missing files follow
+`--allow-missing`, and a report that is not `co_golden.design_report` version 1
+or that belongs to another suite, scenario, or variant fails with exit code 65.
+
+`--summary` includes `designComparisons`, `designVerdicts`
+(`pass` / `fail` / `undetermined`), `designFindingCounts`, a
+`designDifferences` list, and a flattened `designFindings` list.
+`designDifferences` lists variants whose analysis verdict is not `pass`, or,
+without an analysis, whose exact status is not `matched`. Each entry has suite,
+scenario, variant, exact comparison status, ratio (null for a size mismatch),
+reference path, and source URL; with an analysis it adds `analysis` (verdict,
+pixel status, report and map paths, counts, verdict reasons). Each `designFindings` entry carries suite, scenario,
+variant, report path, and the finding: id, category, severity, message, known
+status, Figma node, widget and source location, component, property
+differences, and hint. CI can publish the review first and apply its own
+explicit design-acceptance policy afterwards. Gallery exit codes remain
 unchanged. Missing references and diff artifacts follow `--allow-missing`.
 
+`--design-report <file.md>` writes the same findings as Markdown for an AI
+agent or a pull request comment: counts first, then every `fail` or
+`undetermined` variant with its findings (element, design → implementation,
+source location, component, hint), known differences, pixel regions that no
+finding explains, and the next steps.
+
 For a design correction loop: capture the same state as the Figma frame,
-filter to design differences, inspect the overlay and diff, fix the screen,
-then recapture and review the result. Update the design export only when the
-design itself changes; do not replace it with an implementation screenshot.
+build the gallery with `--design-report`, fix the findings at their source
+locations — errors first, with design-system components and tokens — then
+recapture and rebuild until the verdict is 일치. Use the overlay, marks, and
+tolerance map for what the findings do not explain. Update the design export
+only when the design itself changes; do not replace it with an implementation
+screenshot.
 
 Matrix scenarios are grouped by suite and shown as a device × variant grid.
 Rows and columns follow the coverage order that co_golden writes under

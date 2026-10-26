@@ -1,0 +1,85 @@
+{
+  "name": "Unibook App",
+  "lastModified": "2026-10-20T08:15:00Z",
+  "version": "2206113284567890123",
+  "role": "viewer",
+  "editorType": "figma",
+  "nodes": {
+    "12:345": {
+      "document": {
+        "id": "12:345",
+        "name": "Mobile-Default",
+        "type": "FRAME",
+        "clipsContent": true,
+        "absoluteBoundingBox": {"x": 1000, "y": 2000, "width": 360, "height": 640},
+        "absoluteRenderBounds": {"x": 1000, "y": 2000, "width": 360, "height": 640},
+        "fills": [{"blendMode": "NORMAL", "type": "SOLID", "color": {"r": 1, "g": 1, "b": 1, "a": 1}}],
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 16, "paddingRight": 16, "paddingTop": 24, "paddingBottom": 24,
+        "itemSpacing": 8,
+        "children": [
+          {
+            "id": "12:346", "name": "Title", "type": "TEXT",
+            "absoluteBoundingBox": {"x": 1016, "y": 2024, "width": 120, "height": 32},
+            "absoluteRenderBounds": {"x": 1016.5, "y": 2029, "width": 118, "height": 22},
+            "styles": {"text": "S:title", "fill": "S:ink"},
+            "fills": [{"type": "SOLID", "color": {"r": 0.0784, "g": 0.0863, "b": 0.102, "a": 1}, "boundVariables": {"color": {"type": "VARIABLE_ALIAS", "id": "VariableID:1:2"}}}],
+            "characters": "로그인 하기",
+            "style": {
+              "fontFamily": "Pretendard", "fontPostScriptName": "Pretendard-Bold", "fontStyle": "Bold",
+              "fontWeight": 700, "fontSize": 24, "textAlignHorizontal": "LEFT", "textAlignVertical": "TOP",
+              "letterSpacing": -0.48, "lineHeightPx": 32, "lineHeightUnit": "PIXELS", "textAutoResize": "WIDTH_AND_HEIGHT"
+            },
+            "characterStyleOverrides": [0, 0, 0, 1, 1, 1],
+            "styleOverrideTable": {"1": {"fontWeight": 400, "fontStyle": "Regular"}}
+          },
+          {
+            "id": "12:347", "name": "Hidden helper", "type": "TEXT", "visible": false,
+            "absoluteBoundingBox": {"x": 1016, "y": 2060, "width": 120, "height": 20},
+            "characters": "숨김", "style": {"fontFamily": "Pretendard", "fontWeight": 400, "fontSize": 14}
+          },
+          {
+            "id": "12:350", "name": "Button", "type": "INSTANCE",
+            "componentId": "1:100",
+            "componentProperties": {
+              "Variant": {"type": "VARIANT", "value": "primary"},
+              "Size": {"type": "VARIANT", "value": "md"},
+              "Child#4:5": {"type": "TEXT", "value": "계속"}
+            },
+            "absoluteBoundingBox": {"x": 1016, "y": 2560, "width": 328, "height": 48},
+            "fills": [{"type": "SOLID", "opacity": 0.5, "color": {"r": 0.357, "g": 0.878, "b": 0.784, "a": 1}}],
+            "strokes": [{"type": "SOLID", "color": {"r": 0, "g": 0, "b": 0, "a": 0.1}}],
+            "strokeWeight": 1,
+            "cornerRadius": 8,
+            "effects": [{"type": "DROP_SHADOW", "visible": true, "color": {"r": 0, "g": 0, "b": 0, "a": 0.25}, "offset": {"x": 0, "y": 2}, "radius": 8, "spread": 0}],
+            "children": [
+              {
+                "id": "I12:350;4:6", "name": "Label", "type": "TEXT",
+                "absoluteBoundingBox": {"x": 1164, "y": 2574, "width": 32, "height": 20},
+                "characters": "계속",
+                "style": {"fontFamily": "Pretendard", "fontWeight": 500, "fontSize": 14, "lineHeightPercentFontSize": 140, "lineHeightPx": 19.6, "lineHeightUnit": "FONT_SIZE_%", "letterSpacing": 0, "textAlignHorizontal": "CENTER"},
+                "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1, "a": 1}}]
+              }
+            ]
+          },
+          {
+            "id": "12:360", "name": "Off canvas", "type": "RECTANGLE",
+            "absoluteBoundingBox": {"x": 5000, "y": 2000, "width": 10, "height": 10},
+            "fills": [{"type": "SOLID", "color": {"r": 1, "g": 0, "b": 0, "a": 1}}]
+          }
+        ]
+      },
+      "components": {
+        "1:100": {"key": "abc123", "name": "Variant=primary, Size=md", "componentSetId": "1:99", "remote": true, "description": ""}
+      },
+      "componentSets": {
+        "1:99": {"key": "set123", "name": "Button", "remote": true, "description": ""}
+      },
+      "styles": {
+        "S:title": {"key": "k1", "name": "Title/Medium", "styleType": "TEXT", "remote": true},
+        "S:ink": {"key": "k2", "name": "Text/Primary", "styleType": "FILL", "remote": true}
+      },
+      "schemaVersion": 0
+    }
+  }
+}

@@ -1,5 +1,7 @@
 import 'package:meta/meta.dart';
 
+import 'design/report.dart';
+
 /// Informational result of comparing a design export with a captured render.
 enum GoldenDesignComparisonStatus {
   /// All decoded RGBA pixel channels match exactly.
@@ -32,6 +34,7 @@ final class GoldenDesignComparison {
     this.differentPixels,
     this.totalPixels,
     this.differenceRatio,
+    this.analysis,
   });
 
   /// Captured, unmodified reference PNG path relative to the output directory.
@@ -70,6 +73,29 @@ final class GoldenDesignComparison {
   /// [differentPixels] / [totalPixels], or `null` when dimensions differ.
   final double? differenceRatio;
 
+  /// Summary of the tolerant design analysis, when it ran. [status] stays the
+  /// exact RGBA result; the analysis verdict applies tolerances and explains
+  /// the differences in its report.
+  final GoldenDesignAnalysisSummary? analysis;
+
+  /// Copy with [summary] attached.
+  GoldenDesignComparison withAnalysis(GoldenDesignAnalysisSummary summary) =>
+      GoldenDesignComparison(
+        reference: reference,
+        label: label,
+        status: status,
+        referenceWidth: referenceWidth,
+        referenceHeight: referenceHeight,
+        renderWidth: renderWidth,
+        renderHeight: renderHeight,
+        sourceUrl: sourceUrl,
+        diff: diff,
+        differentPixels: differentPixels,
+        totalPixels: totalPixels,
+        differenceRatio: differenceRatio,
+        analysis: summary,
+      );
+
   /// JSON representation; no tolerance or design acceptance gate is implied.
   Map<String, Object?> toJson() => {
     'reference': reference,
@@ -84,5 +110,6 @@ final class GoldenDesignComparison {
     'differentPixels': differentPixels,
     'totalPixels': totalPixels,
     'differenceRatio': differenceRatio,
+    if (analysis != null) 'analysis': analysis!.toJson(),
   };
 }
