@@ -181,15 +181,52 @@ final class GalleryCatalog {
       .where((image) => image.designComparison != null)
       .length;
 
-  /// Captured variants with unequal pixels or incompatible image sizes.
+  /// Captured variants whose design needs a look: an analysis verdict other
+  /// than `pass`, or — without analysis — unequal or differently sized
+  /// pixels.
   int get designDifferenceCount => scenarios
       .expand((s) => s.images)
-      .where(
-        (image) =>
-            image.designComparison != null &&
-            image.designComparison!.status != 'matched',
-      )
+      .where((image) => image.designComparison?.hasDifference ?? false)
       .length;
+
+  /// Analysis verdict counts (`pass`, `fail`, `undetermined`) of the variants
+  /// that carry a tolerance-based design analysis.
+  Map<String, int> get designVerdicts {
+    final counts = {'pass': 0, 'fail': 0, 'undetermined': 0};
+    for (final image in scenarios.expand((s) => s.images)) {
+      final verdict = image.designComparison?.analysis?.verdict;
+      if (verdict != null) counts[verdict] = (counts[verdict] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  /// Finding counts over every analysis: `error`, `warning`, and `info`
+  /// count toward verdicts; `known` are accepted known differences.
+  Map<String, int> get designFindingCounts {
+    final counts = {'error': 0, 'warning': 0, 'info': 0, 'known': 0};
+    for (final image in scenarios.expand((s) => s.images)) {
+      final analysis = image.designComparison?.analysis;
+      if (analysis == null) continue;
+      counts['error'] = counts['error']! + analysis.errors;
+      counts['warning'] = counts['warning']! + analysis.warnings;
+      counts['info'] = counts['info']! + analysis.infos;
+      counts['known'] = counts['known']! + analysis.known;
+    }
+    return counts;
+  }
+
+  /// Counting findings by category over every analysis.
+  Map<String, int> get designFindingCategories {
+    final counts = <String, int>{};
+    for (final image in scenarios.expand((s) => s.images)) {
+      final analysis = image.designComparison?.analysis;
+      if (analysis == null) continue;
+      for (final MapEntry(:key, :value) in analysis.byCategory.entries) {
+        counts[key] = (counts[key] ?? 0) + value;
+      }
+    }
+    return counts;
+  }
 
   /// Suite names in display order.
   List<String> get suites {

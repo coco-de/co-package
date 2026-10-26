@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:coui_web/coui_web.dart';
 import 'package:jaspr/server.dart' as jaspr;
 
+import 'design_analysis.dart';
 import 'favicon.dart';
 import 'model.dart';
 import 'view.dart';
@@ -101,6 +102,8 @@ Future<String> renderGalleryHtml(
             'diff': design.diff == null
                 ? null
                 : imageUrl(GalleryImage(name: 'diff', path: design.diff!)),
+            if (design.analysis case final analysis?)
+              'analysis': _analysisData(analysis, imageUrl),
           },
       });
     }
@@ -151,6 +154,34 @@ Future<String> renderGalleryHtml(
       '<body>$body$scripts</body></html>';
 }
 
+/// Viewer data of one analysis: summary, URLs, and the trimmed report.
+Map<String, Object?> _analysisData(
+  GalleryDesignAnalysis analysis,
+  GalleryImageUrl imageUrl,
+) {
+  final details = analysis.details;
+  return {
+    'verdict': analysis.verdict,
+    'pixelStatus': analysis.pixelStatus,
+    'summary': analysis.summary,
+    'line': analysis.line,
+    'report': imageUrl(GalleryImage(name: 'report', path: analysis.report)),
+    'diff': analysis.diff == null
+        ? null
+        : imageUrl(GalleryImage(name: 'analysis', path: analysis.diff!)),
+    if (details != null)
+      ...details.toViewJson()
+    else ...{
+      'findings': const <Object?>[],
+      'findingsTruncated': 0,
+      'regions': const <Object?>[],
+      'regionsTruncated': 0,
+      'masks': const <Object?>[],
+      'warnings': const ['분석 리포트 파일이 없어 지적 사항을 보여 줄 수 없습니다.'],
+    },
+  };
+}
+
 String _jsonForScript(Object? value) {
   const slash = r'\';
   return jsonEncode(value)
@@ -173,6 +204,7 @@ String _css(String brand) {
   --line: #22282a; --line-strong: #343b3e;
   --soft: #181c1e; --fail: #e38b78; --fail-soft: #2b1b18; --on-fail: #0b0d0e;
   --ok: #5be0c8; --brand: $brand;
+  --warn: #e3b341; --mark-design: #ff4fd8; --mark-widget: #2ec5ff; --mark-region: #ff6b5f;
   --coui-surface: 11 13 14; --coui-surface-container-low: 18 21 23;
   --coui-surface-container: 24 28 30; --coui-on-surface: 231 234 235;
   --coui-on-surface-variant: 154 161 163; --coui-outline: 106 114 117;
@@ -188,6 +220,7 @@ String _css(String brand) {
     --line: #dce1e4; --line-strong: #bdc3c7;
     --soft: #eaeef0; --fail: #b53e24; --fail-soft: #fbece7; --on-fail: #ffffff;
     --ok: #167463; --brand: $lightBrand;
+    --warn: #8a5f00; --mark-design: #b8128f; --mark-widget: #00699e; --mark-region: #c4291f;
     --coui-surface: 250 251 252; --coui-surface-container-low: 255 255 255;
     --coui-surface-container: 234 238 240; --coui-on-surface: 20 22 26;
     --coui-on-surface-variant: 74 80 83; --coui-outline: 121 127 130;
@@ -202,6 +235,7 @@ String _css(String brand) {
   --line: #dce1e4; --line-strong: #bdc3c7;
   --soft: #eaeef0; --fail: #b53e24; --fail-soft: #fbece7; --on-fail: #ffffff;
   --ok: #167463; --brand: $lightBrand;
+    --warn: #8a5f00; --mark-design: #b8128f; --mark-widget: #00699e; --mark-region: #c4291f;
   --coui-surface: 250 251 252; --coui-surface-container-low: 255 255 255;
   --coui-surface-container: 234 238 240; --coui-on-surface: 20 22 26;
   --coui-on-surface-variant: 74 80 83; --coui-outline: 121 127 130;
@@ -328,22 +362,81 @@ dialog::backdrop { background: rgba(8, 9, 10, .8); }
 #compare-summary { font-size: 12px; color: var(--secondary); flex: 1 1 260px; }
 #compare-summary[data-status="sizeMismatch"] { color: var(--fail); }
 #compare-stage { display: grid; width: 100%; align-items: start; justify-items: center; }
-#compare-stage figure { min-width: 0; width: 100%; }
+#compare-stage > figure { display: none; min-width: 0; width: 100%; }
+#compare-stage[data-mode="render"] #render-pane,
+#compare-stage[data-mode="reference"] #reference-pane,
+#compare-stage[data-mode="overlay"] #reference-pane,
+#compare-stage[data-mode="overlay"] #render-pane,
+#compare-stage[data-mode="split"] #reference-pane,
+#compare-stage[data-mode="split"] #render-pane,
+#compare-stage[data-mode="diff"] #diff-pane,
+#compare-stage[data-mode="tolerant"] #diff-pane { display: block; }
 #compare-stage img { display: block; margin: auto; }
 #compare-stage figcaption { font-size: 12px; color: var(--secondary); padding-bottom: 6px; }
-#compare-stage[data-mode="render"] #reference-pane,
-#compare-stage[data-mode="reference"] #render-pane,
-#compare-stage:not([data-mode="diff"]) #viewer-diff,
-#compare-stage[data-mode="diff"] figure { display: none; }
 #compare-stage[data-mode="split"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-#compare-stage[data-mode="overlay"] figure { grid-area: 1 / 1; }
+#compare-stage[data-mode="overlay"] > figure { grid-area: 1 / 1; }
 #compare-stage[data-mode="overlay"] figcaption { display: none; }
-#compare-stage[data-mode="overlay"] #render-pane { opacity: var(--render-opacity, .5); }
+#compare-stage[data-mode="overlay"] #render-pane img { opacity: var(--render-opacity, .5); }
+#compare-stage[data-mode="overlay"] .frame,
 #compare-stage[data-mode="overlay"] img { width: 100%; }
+#compare-stage[data-mode="overlay"] #reference-marks { display: none; }
+.frame { position: relative; width: fit-content; max-width: 100%; margin: auto; }
+.marks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.marks rect { fill: none; stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.marks .mark-design { stroke: var(--mark-design); }
+.marks .mark-widget { stroke: var(--mark-widget); stroke-dasharray: 6 3; }
+.marks .mark-component { stroke: var(--mark-widget); stroke-dasharray: 2 3; opacity: .75; }
+.marks .mark-area { stroke: var(--warn); }
+.marks .mark-region { stroke: var(--mark-region); fill: color-mix(in srgb, var(--mark-region) 14%, transparent); }
+.marks .mark-region.known { stroke-dasharray: 4 3; opacity: .7; }
+.marks .mark-mask { stroke: #6a8dff; fill: rgba(106, 141, 255, .16); }
+.marks .mark-selected { stroke-width: 3px; }
+.design-flag[data-design-status="fail"] { border-color: var(--fail); color: var(--fail); }
+.design-flag[data-design-status="undetermined"] { border-color: var(--warn); color: var(--warn); }
+.viewer-body.has-analysis { grid-template-columns: minmax(0, 1fr) minmax(260px, 360px); place-items: start stretch; gap: 16px; }
+.viewer-body.has-analysis #compare-stage { position: sticky; top: 0;
+  max-height: calc(94vh - 104px); overflow: auto; }
+.analysis-panel { display: grid; gap: 10px; align-content: start; min-width: 0; font-size: 12px; color: var(--secondary); }
+#analysis-summary { color: var(--ink); font-weight: 600; }
+#analysis-summary[data-verdict="fail"] { color: var(--fail); }
+#analysis-summary[data-verdict="undetermined"] { color: var(--warn); }
+#analysis-summary[data-verdict="pass"] { color: var(--ok); }
+.analysis-actions { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.analysis-actions .check { min-height: 32px; }
+.mark-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.legend::before { content: ""; display: inline-block; width: 12px; height: 8px; margin-inline-end: 5px;
+  border: 2px solid currentColor; vertical-align: -1px; }
+.legend-design { color: var(--mark-design); }
+.legend-widget { color: var(--mark-widget); }
+.legend-region { color: var(--mark-region); }
+.finding-group h3 { margin: 6px 0 4px; font-size: 12px; font-weight: 600; color: var(--ink); }
+.finding-group h3 .count { margin-inline-start: 2px; }
+.finding-group ul, .analysis-regions ul, .analysis-warnings { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+button.finding, button.region { display: grid; gap: 3px; width: 100%; padding: 8px 10px; text-align: start; font-size: 12px;
+  line-height: 1.5; border: 1px solid var(--line-strong); border-inline-start-width: 4px; border-radius: 6px;
+  background: var(--panel); color: var(--ink); cursor: pointer; }
+.finding[data-severity="error"] { border-inline-start-color: var(--fail); }
+.finding[data-severity="warning"] { border-inline-start-color: var(--warn); }
+button.finding[aria-pressed="true"], button.region[aria-pressed="true"] { outline: 2px solid var(--brand); outline-offset: 1px; }
+.known button.finding, .known button.region { border-style: dashed; opacity: .8; }
+.sev { font-weight: 700; }
+.finding[data-severity="error"] .sev { color: var(--fail); }
+.finding[data-severity="warning"] .sev { color: var(--warn); }
+.finding-diffs { font-family: ui-monospace, "SF Mono", Menlo, monospace; overflow-wrap: anywhere; }
+.finding-design, .finding-widget, .finding-component, .finding-hint { color: var(--secondary); overflow-wrap: anywhere; }
+.finding-owner { color: var(--ink); font-weight: 600; }
+.finding-where { font: 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--brand); overflow-wrap: anywhere; }
+.finding-known { margin: 2px 0 0; font-size: 11px; color: var(--muted); }
+button.region code { font: 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--brand); }
+.region-flag { justify-self: start; padding: 0 5px; border-radius: 4px; background: var(--fail-soft); color: var(--fail); font-size: 11px; }
+.analysis-regions summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.analysis-regions li.mask, .analysis-warnings li, .muted-note { color: var(--muted); }
 @media (max-width: 900px) {
   .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .toc { position: static; max-height: none; }
   .shot img { height: 180px; }
+  .viewer-body.has-analysis { grid-template-columns: minmax(0, 1fr); }
+  .viewer-body.has-analysis #compare-stage { position: static; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 ''';
@@ -407,7 +500,8 @@ const String _script = r'''
         });
       }
       cells.forEach((cell) => {
-        const hasDesignDifference = ['different', 'sizeMismatch'].includes(cell.dataset.designStatus);
+        const hasDesignDifference = ['different', 'sizeMismatch', 'fail', 'undetermined']
+          .includes(cell.dataset.designStatus);
         const ok = matches(cell, filter) && (!filter.failed || cell.dataset.status === 'failed') &&
           (!filter.design || hasDesignDifference);
         if (table) {
@@ -438,18 +532,243 @@ const String _script = r'''
 
   const viewer = $('viewer');
   let current = -1;
+  let selected = null;
   const compareMode = $('compare-mode');
   const opacity = $('compare-opacity');
+  const panel = $('analysis-panel');
+  const showRegions = $('show-regions');
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const layers = { reference: $('reference-marks'), render: $('render-marks'), diff: $('diff-marks') };
+  const categoryOrder = ['font', 'frame', 'presence', 'component', 'typography', 'content', 'color',
+    'layout', 'shape', 'visual'];
+  const categoryLabels = { font: '폰트 로딩', frame: '프레임', presence: '누락/추가', component: '컴포넌트',
+    typography: '서체', content: '내용', color: '색상', layout: '레이아웃', shape: '모양', visual: '픽셀' };
+  const severityLabels = { error: '오류', warning: '경고', info: '정보' };
+  const node = (tag, className, text) => {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined && text !== null) element.textContent = text;
+    return element;
+  };
+  const analysisOf = (item) => (item && item.design && item.design.analysis) || null;
+  const validSize = (size) => (Array.isArray(size) && size[0] > 0 && size[1] > 0 ? size : null);
+  const sameSize = (a, b) => !!a && !!b && Math.abs(a[0] - b[0]) < 1 && Math.abs(a[1] - b[1]) < 1;
+  const addRect = (layer, rect, className) => {
+    if (!Array.isArray(rect) || rect.length !== 4) return;
+    const shape = document.createElementNS(SVG_NS, 'rect');
+    shape.setAttribute('x', rect[0]);
+    shape.setAttribute('y', rect[1]);
+    shape.setAttribute('width', Math.max(rect[2], 0.5));
+    shape.setAttribute('height', Math.max(rect[3], 0.5));
+    shape.setAttribute('class', className);
+    layer.appendChild(shape);
+  };
+  // Design rects use the frame's logical size, widget rects the capture's,
+  // and regions the compared images'. A rect is drawn on another layer only
+  // when both share one logical size, so no mark is ever rescaled.
+  const drawMarks = () => {
+    Object.values(layers).forEach((layer) => layer.replaceChildren());
+    const analysis = analysisOf(data[current]);
+    if (!analysis) return;
+    const compared = validSize(analysis.comparedSize);
+    const design = validSize(analysis.designSize) || compared || validSize(analysis.renderSize);
+    const render = validSize(analysis.renderSize) || design;
+    const diffSize = compared || design;
+    [[layers.reference, design], [layers.render, render], [layers.diff, diffSize]].forEach(([layer, size]) => {
+      if (size) layer.setAttribute('viewBox', '0 0 ' + size[0] + ' ' + size[1]);
+      else layer.removeAttribute('viewBox');
+    });
+    const shared = sameSize(design, render);
+    const designLayers = [layers.reference, layers.diff].concat(shared ? [layers.render] : []);
+    const renderLayers = [layers.render].concat(shared ? [layers.reference, layers.diff] : []);
+    const regionLayers = [layers.reference, layers.diff].concat(sameSize(diffSize, render) ? [layers.render] : []);
+    if (showRegions.checked) {
+      analysis.masks.forEach((mask) => regionLayers.forEach((layer) => addRect(layer, mask.rect, 'mark-mask')));
+      analysis.regions.forEach((region) => regionLayers.forEach((layer) =>
+        addRect(layer, region.rect, region.known ? 'mark-region known' : 'mark-region')));
+    }
+    if (!selected) return;
+    if (selected.type === 'region') {
+      const region = analysis.regions[selected.index];
+      if (region) regionLayers.forEach((layer) => addRect(layer, region.rect, 'mark-region mark-selected'));
+      return;
+    }
+    const finding = analysis.findings[selected.index];
+    if (!finding) return;
+    const designRect = finding.design && finding.design.rect;
+    const widgetRect = finding.widget && finding.widget.rect;
+    const componentRect = finding.component && finding.component.rect;
+    if (componentRect) renderLayers.forEach((layer) => addRect(layer, componentRect, 'mark-component'));
+    if (designRect) designLayers.forEach((layer) => addRect(layer, designRect, 'mark-design mark-selected'));
+    if (widgetRect) renderLayers.forEach((layer) => addRect(layer, widgetRect, 'mark-widget mark-selected'));
+    if (!designRect && !widgetRect && finding.rect) {
+      regionLayers.forEach((layer) => addRect(layer, finding.rect, 'mark-area mark-selected'));
+    }
+  };
+  const select = (next) => {
+    selected = next;
+    panel.querySelectorAll('button[aria-pressed]').forEach((button) => {
+      const on = !!next && button.dataset[next.type] === String(next.index);
+      button.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    drawMarks();
+    // Center the selected element in the stage (only the stage scrolls; tall
+    // phone captures do not fit the dialog).
+    const stage = $('compare-stage');
+    const mark = [...stage.querySelectorAll('.mark-selected')]
+      .find((shape) => shape.getBoundingClientRect().width > 0);
+    if (mark) {
+      const box = mark.getBoundingClientRect();
+      const view = stage.getBoundingClientRect();
+      if (box.top < view.top || box.bottom > view.bottom) {
+        stage.scrollTop += box.top - view.top - Math.max(0, (view.height - box.height) / 2);
+      }
+      if (box.left < view.left || box.right > view.right) {
+        stage.scrollLeft += box.left - view.left - Math.max(0, (view.width - box.width) / 2);
+      }
+    }
+  };
+  const findingItem = (finding, index) => {
+    const item = node('li', finding.known ? 'known' : '');
+    const button = node('button', 'finding');
+    button.type = 'button';
+    button.dataset.finding = String(index);
+    button.dataset.severity = finding.severity;
+    button.setAttribute('aria-pressed', 'false');
+    button.append(
+      node('span', 'sev', severityLabels[finding.severity] || finding.severity),
+      node('span', 'finding-message', finding.message),
+    );
+    if (finding.diffs.length) button.append(node('span', 'finding-diffs', finding.diffs.join(' · ')));
+    if (finding.design && finding.design.label) button.append(node('span', 'finding-design', finding.design.label));
+    if (finding.widget && finding.widget.label) {
+      button.append(node('span', 'finding-widget', '구현: ' + finding.widget.label));
+    }
+    if (finding.component && finding.component.label) {
+      button.append(node('span', 'finding-component', '컴포넌트: ' + finding.component.label));
+    }
+    if (finding.where) button.append(node('code', 'finding-where', finding.where));
+    if (finding.owner) button.append(node('span', 'finding-owner', '고칠 곳: ' + finding.owner));
+    if (finding.hint) button.append(node('span', 'finding-hint', '고칠 방향: ' + finding.hint));
+    item.append(button);
+    if (finding.known) {
+      const known = node('p', 'finding-known', '알려진 차이 · ' + finding.known.reason);
+      if (finding.known.issue) {
+        const link = node('a', '', '추적 이슈');
+        link.href = finding.known.issue;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        known.append(' ', link);
+      }
+      item.append(known);
+    }
+    return item;
+  };
+  const renderAnalysis = (analysis) => {
+    $('viewer-body').classList.toggle('has-analysis', !!analysis);
+    panel.hidden = !analysis;
+    const findings = $('analysis-findings');
+    const regions = $('analysis-regions');
+    findings.replaceChildren();
+    regions.replaceChildren();
+    $('analysis-warnings').replaceChildren();
+    if (!analysis) return;
+    const summary = $('analysis-summary');
+    summary.textContent = analysis.line;
+    summary.dataset.verdict = analysis.verdict;
+    const report = $('analysis-report');
+    report.hidden = !analysis.report;
+    if (analysis.report) report.href = analysis.report;
+    else report.removeAttribute('href');
+    const groups = new Map();
+    analysis.findings.forEach((finding, index) => {
+      if (!groups.has(finding.category)) groups.set(finding.category, []);
+      groups.get(finding.category).push(index);
+    });
+    categoryOrder.concat([...groups.keys()].filter((category) => !categoryOrder.includes(category)))
+      .filter((category) => groups.has(category))
+      .forEach((category) => {
+        const section = node('section', 'finding-group');
+        const heading = node('h3', '', categoryLabels[category] || category);
+        heading.append(' ', node('span', 'count', String(groups.get(category).length)));
+        const list = node('ul');
+        groups.get(category).forEach((index) => list.append(findingItem(analysis.findings[index], index)));
+        section.append(heading, list);
+        findings.append(section);
+      });
+    if (!analysis.findings.length) findings.append(node('p', 'muted-note', '구조 지적 사항이 없습니다.'));
+    if (analysis.findingsTruncated) {
+      findings.append(node('p', 'muted-note', '나머지 ' + analysis.findingsTruncated + '건은 분석 리포트 JSON에 있습니다.'));
+    }
+    analysis.regions.forEach((region, index) => {
+      const item = node('li', region.known ? 'known' : '');
+      const button = node('button', 'region');
+      button.type = 'button';
+      button.dataset.region = String(index);
+      button.setAttribute('aria-pressed', 'false');
+      button.append(node('code', '', region.id), node('span', '', region.label));
+      if (region.unexplained) button.append(node('span', 'region-flag', '설명 없는 픽셀 차이'));
+      if (region.known) button.append(node('span', 'region-flag', '알려진 차이 · ' + region.known.reason));
+      item.append(button);
+      regions.append(item);
+    });
+    analysis.masks.forEach((mask) => {
+      regions.append(node('li', 'mask', '가림 · ' + mask.reason + (mask.source ? ' (' + mask.source + ')' : '')));
+    });
+    $('analysis-regions-title').textContent = '픽셀 영역 ' + analysis.regions.length + '개' +
+      (analysis.regionsTruncated ? ' (+' + analysis.regionsTruncated + ')' : '') +
+      (analysis.masks.length ? ' · 가림 ' + analysis.masks.length + '개' : '');
+    $('analysis-regions-box').hidden = !analysis.regions.length && !analysis.masks.length;
+    analysis.warnings.forEach((warning) => $('analysis-warnings').append(node('li', '', warning)));
+  };
+  const buttonSelection = (target) => {
+    const button = target.closest('button[data-finding], button[data-region]');
+    if (!button) return null;
+    const type = button.dataset.finding !== undefined ? 'finding' : 'region';
+    return { type, index: Number(button.dataset[type]) };
+  };
+  panel.addEventListener('click', (event) => {
+    const next = buttonSelection(event.target);
+    if (next) select(next);
+  });
+  panel.addEventListener('focusin', (event) => {
+    const next = buttonSelection(event.target);
+    if (next) select(next);
+  });
+  panel.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    const buttons = [...panel.querySelectorAll('button[data-finding], button[data-region]')]
+      .filter((button) => button.offsetParent !== null);
+    const at = buttons.indexOf(document.activeElement);
+    if (at < 0) return;
+    event.preventDefault();
+    buttons[(at + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length].focus();
+  });
+  showRegions.addEventListener('change', drawMarks);
   const updateComparison = () => {
     const item = data[current];
     if (!item) return;
     const design = item.design;
-    const selected = design ? compareMode.value : 'render';
-    $('compare-stage').dataset.mode = selected;
-    $('compare-stage').style.setProperty('--render-opacity', Number(opacity.value) / 100);
-    $('opacity-control').hidden = selected !== 'overlay';
+    const analysis = analysisOf(item);
+    const mode = design ? compareMode.value : 'render';
+    const stage = $('compare-stage');
+    stage.dataset.mode = mode;
+    stage.style.setProperty('--render-opacity', Number(opacity.value) / 100);
+    $('opacity-control').hidden = mode !== 'overlay';
     $('compare-opacity-value').textContent = opacity.value + '%';
     opacity.setAttribute('aria-valuetext', '실제 구현 ' + opacity.value + '%');
+    const diffImage = $('viewer-diff');
+    const source = mode === 'tolerant' ? analysis && analysis.diff : mode === 'diff' ? design && design.diff : null;
+    if (source) {
+      if (diffImage.getAttribute('src') !== source) diffImage.src = source;
+    } else {
+      diffImage.removeAttribute('src');
+    }
+    diffImage.alt = mode === 'tolerant' ? '허용 오차를 적용한 디자인 차이 지도' : '디자인과 실제 구현의 RGBA 픽셀 차이';
+    $('diff-label').textContent = mode === 'tolerant'
+      ? '허용 오차 차이 · 빨강 차이 · 노랑 안티앨리어싱 · 파랑 가림'
+      : 'RGBA 완전 일치 기준 차이 · 자홍 차이';
+    drawMarks();
   };
   compareMode.addEventListener('change', updateComparison);
   opacity.addEventListener('input', updateComparison);
@@ -459,11 +778,13 @@ const String _script = r'''
     const item = data[index];
     if (!item) return;
     current = index;
+    selected = null;
     $('viewer-image').src = item.src;
     $('viewer-image').alt = item.title + ' — ' + item.label;
     $('viewer-title').textContent = item.title;
     $('viewer-label').textContent = item.label + (item.status === 'failed' ? ' · 실패' : '');
     const design = item.design;
+    const analysis = analysisOf(item);
     $('compare-tools').hidden = !design;
     const source = $('compare-source');
     source.hidden = !design?.sourceUrl;
@@ -477,18 +798,20 @@ const String _script = r'''
       $('viewer-reference').alt = design.label + ' 디자인 원본';
       $('reference-label').textContent = design.label + ' 원본';
       $('reference-option').textContent = design.label + ' 원본';
-      if (design.diff) $('viewer-diff').src = design.diff;
       if (design.sourceUrl) source.href = design.sourceUrl;
       const sizeMismatch = design.status === 'sizeMismatch';
       compareMode.querySelector('[value="overlay"]').disabled = sizeMismatch;
       compareMode.querySelector('[value="diff"]').disabled = sizeMismatch || !design.diff;
+      compareMode.querySelector('[value="tolerant"]').disabled = !(analysis && analysis.diff);
       if (sizeMismatch) compareMode.value = 'split';
       $('compare-summary').dataset.status = design.status;
-      $('compare-summary').textContent = design.summary + ' · 원본 ' +
+      $('compare-summary').textContent = (analysis ? '정확한 픽셀: ' : '') +
+        design.summary + ' · 원본 ' +
         design.referenceWidth + '×' + design.referenceHeight + ' / 구현 ' +
         design.renderWidth + '×' + design.renderHeight +
         (sizeMismatch ? ' · 크기가 달라 겹치기·픽셀 비교 불가 (자동 크기 조정 없음)' : ' · RGBA 완전 일치 기준, 캡처 성공과 별도');
     }
+    renderAnalysis(analysis);
     updateComparison();
     const errors = $('viewer-errors');
     errors.replaceChildren(...item.errors.map((e) => {
@@ -513,6 +836,7 @@ const String _script = r'''
   $('viewer-close').addEventListener('click', () => viewer.close());
   viewer.addEventListener('keydown', (event) => {
     if (event.target.matches('input, select, textarea')) return;
+    if (event.target.closest('#analysis-panel')) return;
     if (event.key === 'ArrowLeft') step(-1);
     if (event.key === 'ArrowRight') step(1);
   });

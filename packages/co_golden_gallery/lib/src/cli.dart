@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 
+import 'design_analysis.dart';
+import 'design_markdown.dart';
 import 'favicon.dart';
 import 'html.dart';
 import 'model.dart';
@@ -75,7 +77,16 @@ ArgParser _parser() => ArgParser()
   ..addOption(
     'summary',
     valueHelp: 'file',
-    help: 'Write a JSON summary (counts and failed images) to this file.',
+    help:
+        'Write a JSON summary (counts, failed images, design verdicts, and '
+        'design findings) to this file.',
+  )
+  ..addOption(
+    'design-report',
+    valueHelp: 'file',
+    help:
+        'Write a Markdown report of the design findings, for AI agents and '
+        'pull request comments.',
   )
   ..addFlag(
     'allow-missing',
@@ -237,6 +248,18 @@ Future<int> runGalleryCli(
     );
   }
 
+  final designReportPath = args.option('design-report');
+  if (designReportPath != null) {
+    final report = File(designReportPath);
+    report.parent.createSync(recursive: true);
+    report.writeAsStringSync(
+      renderGalleryDesignReport(
+        scan.catalog,
+        title: '${args.option('title')!} — 디자인 차이 리포트',
+      ),
+    );
+  }
+
   final catalog = scan.catalog;
   out.writeln(
     'co_golden_gallery: ${catalog.scenarios.length} scenarios, '
@@ -253,11 +276,15 @@ Map<String, Object?> _summary(GalleryScan scan) {
     'images': catalog.imageCount,
     'failed': catalog.failedCount,
     'designComparisons': catalog.designComparisonCount,
+    'designVerdicts': catalog.designVerdicts,
+    'designFindingCounts': catalog.designFindingCounts,
     'designDifferences': [
       for (final scenario in catalog.scenarios)
         for (final image in scenario.images)
+          // With an analysis the tolerant verdict decides; anti-aliasing
+          // alone always makes the exact status `different`.
           if (image.designComparison case final design?
-              when design.status != 'matched')
+              when design.hasDifference)
             {
               'suite': scenario.suite,
               'scenario': scenario.name,
@@ -266,7 +293,41 @@ Map<String, Object?> _summary(GalleryScan scan) {
               'differenceRatio': design.differenceRatio,
               'reference': design.reference,
               'sourceUrl': design.sourceUrl,
+              if (design.analysis case final analysis?)
+                'analysis': {
+                  'verdict': analysis.verdict,
+                  'pixelStatus': analysis.pixelStatus,
+                  'report': analysis.report,
+                  'diff': analysis.diff,
+                  'ratio': analysis.ratio,
+                  'largestRegion': analysis.largestRegion,
+                  'regionCount': analysis.regionCount,
+                  'findings': {
+                    'error': analysis.errors,
+                    'warning': analysis.warnings,
+                    'info': analysis.infos,
+                    'known': analysis.known,
+                  },
+                  'byCategory': analysis.byCategory,
+                  if (analysis.details?.reasons case final reasons?
+                      when reasons.isNotEmpty)
+                    'reasons': reasons,
+                },
             },
+    ],
+    'designFindings': [
+      for (final scenario in catalog.scenarios)
+        for (final image in scenario.images)
+          if (image.designComparison?.analysis case final analysis?)
+            for (final finding
+                in analysis.details?.findings ?? const <GalleryDesignFinding>[])
+              {
+                'suite': scenario.suite,
+                'scenario': scenario.name,
+                'variant': image.label,
+                'report': analysis.report,
+                ...finding.toSummaryJson(),
+              },
     ],
     'missingImages': scan.missingImages,
     'failedImages': [

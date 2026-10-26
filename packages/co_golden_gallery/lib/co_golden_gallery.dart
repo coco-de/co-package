@@ -8,7 +8,9 @@
 /// bucket.
 library;
 
+export 'src/design_analysis.dart';
 export 'src/design_comparison.dart';
+export 'src/design_markdown.dart';
 
 export 'src/cli.dart' show galleryDataError, galleryUsageError, runGalleryCli;
 export 'src/favicon.dart';
