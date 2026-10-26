@@ -11,6 +11,8 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 import 'coverage.dart';
+import 'design/analysis.dart';
+import 'design/report.dart';
 import 'design_comparison.dart';
 import 'design_comparison_capture.dart';
 import 'design_reference.dart';
@@ -99,6 +101,7 @@ final class GoldenMatrix<T> {
     this.freezeAnimations = true,
     this.failOnErrors = true,
     this.clock,
+    this.designAnalysis = const GoldenDesignAnalysis(),
   }) : environment = environment ?? GoldenMatrixEnvironment.fromEnvironment() {
     checkGoldenName(suite, 'suite');
     final scale = captureScale;
@@ -152,6 +155,12 @@ final class GoldenMatrix<T> {
   /// this per scenario.
   final DateTime? clock;
 
+  /// Design analysis of variants with a design reference: tolerant pixel
+  /// comparison, structural comparison with the design's node data, and a
+  /// report per variant under `analysis/`. [GoldenDesignAnalysis.off] keeps
+  /// only the exact RGBA comparison.
+  final GoldenDesignAnalysis designAnalysis;
+
   final Set<String> _scenarios = {};
 
   /// Registers one test per planned variant of [name].
@@ -164,8 +173,10 @@ final class GoldenMatrix<T> {
   /// [clock] replaces the matrix [GoldenMatrix.clock].
   /// [designReference] may associate a local design PNG with individual variants
   /// in capture mode. Return `null` for variants without a matching design.
-  /// Comparison is informational: different pixels do not fail a capture.
-  /// Invalid references fail the `designComparison` phase after rendering.
+  /// Comparison is informational: different pixels do not fail a capture
+  /// unless [GoldenDesignAnalysis.failOnMismatch] is set. Invalid references
+  /// fail the `designComparison` phase, and unreadable design specifications
+  /// the `designAnalysis` phase, after rendering.
   ///
   /// Throws an [ArgumentError] when [name] is not a valid golden name or is
   /// already registered in this matrix.
@@ -269,6 +280,7 @@ final class GoldenMatrix<T> {
     String? failurePhase;
     String? image;
     GoldenDesignComparison? designComparison;
+    String? designFailure;
     var phase = 'localization';
     var prepared = false;
 
@@ -278,6 +290,9 @@ final class GoldenMatrix<T> {
       prepared = true;
       await scenario.prepare?.call(context);
       phase = 'build';
+      // Build before replacing the error handler: a throwing build must not
+      // leave FlutterError.onError pointing at this variant's list.
+      final built = scenario.build(variant);
       final previousOnError = FlutterError.onError;
       FlutterError.onError = reported.add;
       try {
@@ -286,7 +301,7 @@ final class GoldenMatrix<T> {
             key: boundaryKey,
             child: TickerMode(
               enabled: !freezeAnimations,
-              child: localization.wrap(app(variant, scenario.build(variant))),
+              child: localization.wrap(app(variant, built)),
             ),
           ),
         );
@@ -307,7 +322,7 @@ final class GoldenMatrix<T> {
         phase = 'designComparison';
         final reference = scenario.designReference!(variant);
         if (reference != null) {
-          designComparison = captureDesignComparison(
+          final captured = captureDesign(
             design: reference,
             outputDirectory: environment.outputDirectory,
             renderPath: image,
@@ -315,6 +330,38 @@ final class GoldenMatrix<T> {
             scenario: scenario.name,
             fileStem: variant.fileStem,
           );
+          designComparison = captured.comparison;
+          if (designAnalysis.enabled) {
+            phase = 'designAnalysis';
+            final input = GoldenDesignAnalysisInput(
+              analysis: designAnalysis,
+              reference: reference,
+              outputDirectory: environment.outputDirectory,
+              suite: suite,
+              scenario: scenario.name,
+              fileStem: variant.fileStem,
+              variant: variant.toJson(),
+              renderPath: image,
+              referencePath: captured.comparison.reference,
+              referenceImage: captured.reference,
+              renderImage: captured.render,
+              referenceBytes: captured.referenceBytes,
+              boundaryElement: tester.element(find.byKey(boundaryKey)),
+              boundary: tester.renderObject<RenderBox>(find.byKey(boundaryKey)),
+              safeAreaTop: variant.device.safeArea.top,
+              safeAreaBottom: variant.device.safeArea.bottom,
+              textScale: variant.textScale,
+              themeContext: _contextBelowApp(tester, built, boundaryKey),
+            );
+            final report = runDesignAnalysis(input);
+            designComparison = captured.comparison.withAnalysis(
+              GoldenDesignAnalysisSummary.of(report, reportPathOf(input)),
+            );
+            if (designAnalysis.failOnMismatch &&
+                report.verdict == GoldenDesignVerdict.fail) {
+              designFailure = describeDesignFailure(report);
+            }
+          }
         }
       }
     } on Object catch (error, stack) {
@@ -344,6 +391,7 @@ final class GoldenMatrix<T> {
       final errors = [
         for (final details in reported) _describe(details),
         if (failure != null) '$failurePhase: $failure',
+        ?designFailure,
       ];
       report.add(
         GoldenResult.of(
@@ -370,6 +418,9 @@ final class GoldenMatrix<T> {
         '$suite/${scenario.name} [${variant.label}]:\n'
         '${reported.map(_describe).join('\n')}',
       );
+    }
+    if (designFailure != null) {
+      fail('$suite/${scenario.name} [${variant.label}] $designFailure');
     }
   }
 
@@ -500,6 +551,21 @@ final class _GoldenView {
     _tester.platformDispatcher.clearAllTestValues();
     debugDefaultTargetPlatformOverride = _previousPlatform;
   }
+}
+
+/// A context below the app root, so theme lookups see the app's theme: the
+/// scenario widget's element, else the first text in the tree.
+BuildContext? _contextBelowApp(
+  WidgetTester tester,
+  Widget built,
+  Key boundaryKey,
+) {
+  final scenario = find.byWidget(built).evaluate();
+  if (scenario.isNotEmpty) return scenario.first;
+  final text = find
+      .descendant(of: find.byKey(boundaryKey), matching: find.byType(RichText))
+      .evaluate();
+  return text.isEmpty ? null : text.first;
 }
 
 bool _isOverflow(FlutterErrorDetails details) =>

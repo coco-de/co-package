@@ -113,7 +113,26 @@ void main() {
       expect(results, hasLength(2));
       final matching =
           results.first['designComparison']! as Map<String, Object?>;
-      expect(matching, {
+      expect(matching['analysis'], {
+        'report': 'analysis/design/associated/tiny__light__en.json',
+        'verdict': 'pass',
+        'pixelStatus': 'pass',
+        'findings': {'error': 0, 'warning': 0, 'info': 0, 'known': 0},
+        'ratio': 0.0,
+        'largestRegion': 0.0,
+        'regionCount': 0,
+        'diff': 'analysis/design/associated/tiny__light__en.png',
+      });
+      expect(
+        File(
+          p.join(
+            _output.path,
+            'analysis/design/associated/tiny__light__en.json',
+          ),
+        ).existsSync(),
+        isTrue,
+      );
+      expect({...matching}..remove('analysis'), {
         'reference': 'references/design/associated/tiny__light__en.png',
         'label': 'Figma login',
         'sourceUrl': 'https://www.figma.com/design/example?node-id=1-2',

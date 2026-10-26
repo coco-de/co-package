@@ -15,6 +15,33 @@ GoldenDesignComparison captureDesignComparison({
   required String suite,
   required String scenario,
   required String fileStem,
+}) => captureDesign(
+  design: design,
+  outputDirectory: outputDirectory,
+  renderPath: renderPath,
+  suite: suite,
+  scenario: scenario,
+  fileStem: fileStem,
+).comparison;
+
+/// The exact comparison together with the decoded images and original design
+/// bytes, which the design analysis reuses.
+typedef GoldenCapturedDesign = ({
+  GoldenDesignComparison comparison,
+  image.Image reference,
+  image.Image render,
+  List<int> referenceBytes,
+});
+
+/// Snapshots the design, compares it exactly with the render, and returns the
+/// decoded images. See [captureDesignComparison].
+GoldenCapturedDesign captureDesign({
+  required GoldenDesignReference design,
+  required String outputDirectory,
+  required String renderPath,
+  required String suite,
+  required String scenario,
+  required String fileStem,
 }) {
   if (design.imagePath.trim().isEmpty ||
       RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(design.imagePath)) {
@@ -24,6 +51,12 @@ GoldenDesignComparison captureDesignComparison({
     throw ArgumentError.value(design.label, 'label', 'must not be empty');
   }
   final sourceUrl = design.sourceUrl;
+  final specPath = design.specPath;
+  if (specPath != null &&
+      (specPath.trim().isEmpty ||
+          RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(specPath))) {
+    throw ArgumentError.value(specPath, 'specPath', 'must be local');
+  }
   if (sourceUrl != null) {
     final uri = Uri.tryParse(sourceUrl);
     if (uri == null ||
@@ -53,15 +86,20 @@ GoldenDesignComparison captureDesignComparison({
   referenceFile.parent.createSync(recursive: true);
   referenceFile.writeAsBytesSync(referenceBytes, flush: true);
   if (reference.width != render.width || reference.height != render.height) {
-    return GoldenDesignComparison(
-      reference: relative,
-      label: design.label,
-      sourceUrl: sourceUrl,
-      status: GoldenDesignComparisonStatus.sizeMismatch,
-      referenceWidth: reference.width,
-      referenceHeight: reference.height,
-      renderWidth: render.width,
-      renderHeight: render.height,
+    return (
+      comparison: GoldenDesignComparison(
+        reference: relative,
+        label: design.label,
+        sourceUrl: sourceUrl,
+        status: GoldenDesignComparisonStatus.sizeMismatch,
+        referenceWidth: reference.width,
+        referenceHeight: reference.height,
+        renderWidth: render.width,
+        renderHeight: render.height,
+      ),
+      reference: reference,
+      render: render,
+      referenceBytes: referenceBytes,
     );
   }
   final diff = image.Image(width: render.width, height: render.height);
@@ -99,20 +137,25 @@ GoldenDesignComparison captureDesignComparison({
   diffFile.parent.createSync(recursive: true);
   diffFile.writeAsBytesSync(image.encodePng(diff), flush: true);
   final totalPixels = render.width * render.height;
-  return GoldenDesignComparison(
-    reference: relative,
-    label: design.label,
-    sourceUrl: sourceUrl,
-    status: differentPixels == 0
-        ? GoldenDesignComparisonStatus.matched
-        : GoldenDesignComparisonStatus.different,
-    referenceWidth: reference.width,
-    referenceHeight: reference.height,
-    renderWidth: render.width,
-    renderHeight: render.height,
-    diff: diffPath,
-    differentPixels: differentPixels,
-    totalPixels: totalPixels,
-    differenceRatio: differentPixels / totalPixels,
+  return (
+    comparison: GoldenDesignComparison(
+      reference: relative,
+      label: design.label,
+      sourceUrl: sourceUrl,
+      status: differentPixels == 0
+          ? GoldenDesignComparisonStatus.matched
+          : GoldenDesignComparisonStatus.different,
+      referenceWidth: reference.width,
+      referenceHeight: reference.height,
+      renderWidth: render.width,
+      renderHeight: render.height,
+      diff: diffPath,
+      differentPixels: differentPixels,
+      totalPixels: totalPixels,
+      differenceRatio: differentPixels / totalPixels,
+    ),
+    reference: reference,
+    render: render,
+    referenceBytes: referenceBytes,
   );
 }
