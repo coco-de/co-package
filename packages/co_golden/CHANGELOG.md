@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased
+## [0.4.0](https://github.com/coco-de/co-package/compare/co_golden-v0.3.0...co_golden-v0.4.0) (2026-10-26)
+
+
+### 기능
+
+* **co-golden:** ✨ Figma 원본과 구현을 골든 갤러리에서 비교 ([#115](https://github.com/coco-de/co-package/issues/115)) ([1fe6506](https://github.com/coco-de/co-package/commit/1fe6506c32455834fc81e202f1afcb83e922999c)), closes [#114](https://github.com/coco-de/co-package/issues/114)
+* **co-golden:** ✨ Figma와 다른 서체·위젯·컴포넌트를 소스 위치와 함께 리포트 ([#116](https://github.com/coco-de/co-package/issues/116)) ([6391480](https://github.com/coco-de/co-package/commit/6391480bad79bb84517c736b8796a669b4adcb38))
+
+
+### 상세
 
 - Add optional per-variant `GoldenDesignReference` associations to scenarios.
   Capture mode snapshots local PNGs and records informational exact RGBA
@@ -36,14 +45,6 @@
   differences that stay visible without failing the verdict.
 - `GoldenDesignAnalysis.failOnMismatch` turns the verdict into a CI gate;
   `GoldenDesignAnalysis.off` keeps only the exact comparison.
-
-## [0.4.0](https://github.com/coco-de/co-package/compare/co_golden-v0.3.0...co_golden-v0.4.0) (2026-10-26)
-
-
-### 기능
-
-* **co-golden:** ✨ Figma 원본과 구현을 골든 갤러리에서 비교 ([#115](https://github.com/coco-de/co-package/issues/115)) ([1fe6506](https://github.com/coco-de/co-package/commit/1fe6506c32455834fc81e202f1afcb83e922999c)), closes [#114](https://github.com/coco-de/co-package/issues/114)
-* **co-golden:** ✨ Figma와 다른 서체·위젯·컴포넌트를 소스 위치와 함께 리포트 ([#116](https://github.com/coco-de/co-package/issues/116)) ([6391480](https://github.com/coco-de/co-package/commit/6391480bad79bb84517c736b8796a669b4adcb38))
 
 ## [0.3.0](https://github.com/coco-de/co-package/compare/co_golden-v0.2.0...co_golden-v0.3.0) (2026-09-30)
 

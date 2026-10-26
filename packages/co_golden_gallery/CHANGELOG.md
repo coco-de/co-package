@@ -1,4 +1,20 @@
-## Unreleased
+# Changelog
+
+## [0.3.0](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.2.2...co_golden_gallery-v0.3.0) (2026-10-26)
+
+
+### 기능
+
+* **co-golden:** ✨ Figma 원본과 구현을 골든 갤러리에서 비교 ([#115](https://github.com/coco-de/co-package/issues/115)) ([1fe6506](https://github.com/coco-de/co-package/commit/1fe6506c32455834fc81e202f1afcb83e922999c)), closes [#114](https://github.com/coco-de/co-package/issues/114)
+* **co-golden:** ✨ Figma와 다른 서체·위젯·컴포넌트를 소스 위치와 함께 리포트 ([#116](https://github.com/coco-de/co-package/issues/116)) ([6391480](https://github.com/coco-de/co-package/commit/6391480bad79bb84517c736b8796a669b4adcb38))
+
+
+### 버그 수정
+
+* **co-golden-gallery:** support CoUI v2 badge APIs ([#113](https://github.com/coco-de/co-package/issues/113)) ([8c6f549](https://github.com/coco-de/co-package/commit/8c6f549a0423e9c358275a4a1139fd8df58b324b))
+
+
+### 상세
 
 - Show co_golden design analyses: a tolerance verdict line, a findings panel
   grouped by category (font loading, frame, missing/extra, component,
@@ -18,26 +34,6 @@
   and summary metadata. Preserve old manifests and all asset-serving modes;
   reject unsafe comparison paths and expose incompatible pixel geometry.
 - Migrate scenario badges to CoUI v2 tone/variant APIs and require coui_web 0.162.0.
-
-## Unreleased
-
-- Render the gallery with Jaspr and `coui_web` components, using the
-  `cocode-home` dark-first style and mint accent while retaining single-file
-  HTML output and the existing CLI options. Document the CoUI overrides needed
-  by downstream runner projects.
-
-## [0.3.0](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.2.2...co_golden_gallery-v0.3.0) (2026-10-26)
-
-
-### 기능
-
-* **co-golden:** ✨ Figma 원본과 구현을 골든 갤러리에서 비교 ([#115](https://github.com/coco-de/co-package/issues/115)) ([1fe6506](https://github.com/coco-de/co-package/commit/1fe6506c32455834fc81e202f1afcb83e922999c)), closes [#114](https://github.com/coco-de/co-package/issues/114)
-* **co-golden:** ✨ Figma와 다른 서체·위젯·컴포넌트를 소스 위치와 함께 리포트 ([#116](https://github.com/coco-de/co-package/issues/116)) ([6391480](https://github.com/coco-de/co-package/commit/6391480bad79bb84517c736b8796a669b4adcb38))
-
-
-### 버그 수정
-
-* **co-golden-gallery:** support CoUI v2 badge APIs ([#113](https://github.com/coco-de/co-package/issues/113)) ([8c6f549](https://github.com/coco-de/co-package/commit/8c6f549a0423e9c358275a4a1139fd8df58b324b))
 
 ## [0.2.2](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.2.1...co_golden_gallery-v0.2.2) (2026-09-30)
 
@@ -67,6 +63,14 @@
 ### 버그 수정
 
 * **co-golden-gallery:** 🐛 필터가 숨긴 요소가 보이던 문제 · 격자 축 순서 · 축 없는 이미지 구역 · favicon ([d34c91b](https://github.com/coco-de/co-package/commit/d34c91b7ff0cb679eb8de4e72f1dad0b575d14ff))
+
+
+### 상세
+
+- Render the gallery with Jaspr and `coui_web` components, using the
+  `cocode-home` dark-first style and mint accent while retaining single-file
+  HTML output and the existing CLI options. Document the CoUI overrides needed
+  by downstream runner projects.
 
 ## 0.1.0
 
