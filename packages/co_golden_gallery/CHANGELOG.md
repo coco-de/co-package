@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.3.0...co_golden_gallery-v0.3.1) (2026-10-26)
+
+
+### 버그 수정
+
+* **co-golden-gallery:** 🐛 겹쳐 보기에서 오류 표시가 이미지 밖으로 늘어나던 문제 수정 ([#117](https://github.com/coco-de/co-package/issues/117)) ([7746b80](https://github.com/coco-de/co-package/commit/7746b80d0c5627c858991c1fd201e9e0f8cfcf20))
+
 ## [0.3.0](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.2.2...co_golden_gallery-v0.3.0) (2026-10-26)
 
 
