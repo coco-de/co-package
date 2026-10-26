@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/coco-de/co-package/compare/open_board-v0.3.1...open_board-v0.3.2) (2026-10-26)
+
+
+### 버그 수정
+
+* **open_board:** 🐛 선택한 텍스트 재탭으로 편집 지원 (UB-821) ([#110](https://github.com/coco-de/co-package/issues/110)) ([599dcb4](https://github.com/coco-de/co-package/commit/599dcb43300285d56648f4904acfefc74d1ca587))
+
 ## [0.3.1](https://github.com/coco-de/co-package/compare/open_board-v0.3.0...open_board-v0.3.1) (2026-10-19)
 
 
