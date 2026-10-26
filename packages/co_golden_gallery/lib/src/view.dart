@@ -645,6 +645,7 @@ class GalleryView extends StatelessComponent {
         _e('span', classes: 'legend legend-design', [_t('Figma 위치')]),
         _e('span', classes: 'legend legend-widget', [_t('구현 위치')]),
         _e('span', classes: 'legend legend-region', [_t('픽셀 영역')]),
+        _e('span', classes: 'legend legend-mask', [_t('가림')]),
       ]),
       _e('div', [], id: 'analysis-findings'),
       _e('details', id: 'analysis-regions-box', classes: 'analysis-regions', [

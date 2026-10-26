@@ -205,6 +205,7 @@ String _css(String brand) {
   --soft: #181c1e; --fail: #e38b78; --fail-soft: #2b1b18; --on-fail: #0b0d0e;
   --ok: #5be0c8; --brand: $brand;
   --warn: #e3b341; --mark-design: #ff4fd8; --mark-widget: #2ec5ff; --mark-region: #ff6b5f;
+  --mark-mask: #6a8dff;
   --coui-surface: 11 13 14; --coui-surface-container-low: 18 21 23;
   --coui-surface-container: 24 28 30; --coui-on-surface: 231 234 235;
   --coui-on-surface-variant: 154 161 163; --coui-outline: 106 114 117;
@@ -221,6 +222,7 @@ String _css(String brand) {
     --soft: #eaeef0; --fail: #b53e24; --fail-soft: #fbece7; --on-fail: #ffffff;
     --ok: #167463; --brand: $lightBrand;
     --warn: #8a5f00; --mark-design: #b8128f; --mark-widget: #00699e; --mark-region: #c4291f;
+    --mark-mask: #3a5bd9;
     --coui-surface: 250 251 252; --coui-surface-container-low: 255 255 255;
     --coui-surface-container: 234 238 240; --coui-on-surface: 20 22 26;
     --coui-on-surface-variant: 74 80 83; --coui-outline: 121 127 130;
@@ -236,6 +238,7 @@ String _css(String brand) {
   --soft: #eaeef0; --fail: #b53e24; --fail-soft: #fbece7; --on-fail: #ffffff;
   --ok: #167463; --brand: $lightBrand;
     --warn: #8a5f00; --mark-design: #b8128f; --mark-widget: #00699e; --mark-region: #c4291f;
+  --mark-mask: #3a5bd9;
   --coui-surface: 250 251 252; --coui-surface-container-low: 255 255 255;
   --coui-surface-container: 234 238 240; --coui-on-surface: 20 22 26;
   --coui-on-surface-variant: 74 80 83; --coui-outline: 121 127 130;
@@ -377,9 +380,10 @@ dialog::backdrop { background: rgba(8, 9, 10, .8); }
 #compare-stage[data-mode="overlay"] > figure { grid-area: 1 / 1; }
 #compare-stage[data-mode="overlay"] figcaption { display: none; }
 #compare-stage[data-mode="overlay"] #render-pane img { opacity: var(--render-opacity, .5); }
-#compare-stage[data-mode="overlay"] .frame,
-#compare-stage[data-mode="overlay"] img { width: 100%; }
 #compare-stage[data-mode="overlay"] #reference-marks { display: none; }
+/* Every mode shows the images at their natural size, never enlarged, so the overlay keeps the
+   design's pixel geometry; same-size images shrink together on narrow screens. The frame hugs
+   its image, so the marks layer covers exactly the image even when a page stylesheet resizes it. */
 .frame { position: relative; width: fit-content; max-width: 100%; margin: auto; }
 .marks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .marks rect { fill: none; stroke-width: 2px; vector-effect: non-scaling-stroke; }
@@ -389,7 +393,7 @@ dialog::backdrop { background: rgba(8, 9, 10, .8); }
 .marks .mark-area { stroke: var(--warn); }
 .marks .mark-region { stroke: var(--mark-region); fill: color-mix(in srgb, var(--mark-region) 14%, transparent); }
 .marks .mark-region.known { stroke-dasharray: 4 3; opacity: .7; }
-.marks .mark-mask { stroke: #6a8dff; fill: rgba(106, 141, 255, .16); }
+.marks .mark-mask { stroke: var(--mark-mask); fill: color-mix(in srgb, var(--mark-mask) 16%, transparent); }
 .marks .mark-selected { stroke-width: 3px; }
 .design-flag[data-design-status="fail"] { border-color: var(--fail); color: var(--fail); }
 .design-flag[data-design-status="undetermined"] { border-color: var(--warn); color: var(--warn); }
@@ -409,6 +413,7 @@ dialog::backdrop { background: rgba(8, 9, 10, .8); }
 .legend-design { color: var(--mark-design); }
 .legend-widget { color: var(--mark-widget); }
 .legend-region { color: var(--mark-region); }
+.legend-mask { color: var(--mark-mask); }
 .finding-group h3 { margin: 6px 0 4px; font-size: 12px; font-weight: 600; color: var(--ink); }
 .finding-group h3 .count { margin-inline-start: 2px; }
 .finding-group ul, .analysis-regions ul, .analysis-warnings { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
@@ -598,10 +603,16 @@ const String _script = r'''
     const designRect = finding.design && finding.design.rect;
     const widgetRect = finding.widget && finding.widget.rect;
     const componentRect = finding.component && finding.component.rect;
+    // A pixel finding is about its differing region; the node and the widget
+    // under the region only give context.
+    const visual = finding.category === 'visual' && !!finding.rect;
+    const element = visual ? '' : ' mark-selected';
     if (componentRect) renderLayers.forEach((layer) => addRect(layer, componentRect, 'mark-component'));
-    if (designRect) designLayers.forEach((layer) => addRect(layer, designRect, 'mark-design mark-selected'));
-    if (widgetRect) renderLayers.forEach((layer) => addRect(layer, widgetRect, 'mark-widget mark-selected'));
-    if (!designRect && !widgetRect && finding.rect) {
+    if (designRect) designLayers.forEach((layer) => addRect(layer, designRect, 'mark-design' + element));
+    if (widgetRect) renderLayers.forEach((layer) => addRect(layer, widgetRect, 'mark-widget' + element));
+    if (visual) {
+      regionLayers.forEach((layer) => addRect(layer, finding.rect, 'mark-region mark-selected'));
+    } else if (!designRect && !widgetRect && finding.rect) {
       regionLayers.forEach((layer) => addRect(layer, finding.rect, 'mark-area mark-selected'));
     }
   };
@@ -685,6 +696,9 @@ const String _script = r'''
       if (!groups.has(finding.category)) groups.set(finding.category, []);
       groups.get(finding.category).push(index);
     });
+    // co_golden turns only the largest unexplained regions into pixel
+    // findings; say so, or the region marks outnumber the list.
+    const unexplained = analysis.regions.filter((region) => region.unexplained).length;
     categoryOrder.concat([...groups.keys()].filter((category) => !categoryOrder.includes(category)))
       .filter((category) => groups.has(category))
       .forEach((category) => {
@@ -694,6 +708,10 @@ const String _script = r'''
         const list = node('ul');
         groups.get(category).forEach((index) => list.append(findingItem(analysis.findings[index], index)));
         section.append(heading, list);
+        if (category === 'visual' && unexplained > groups.get(category).length) {
+          section.append(node('p', 'muted-note', '설명 없는 픽셀 영역 ' + unexplained + '개 중 ' +
+            groups.get(category).length + '개만 지적 사항입니다. 전체는 아래 픽셀 영역 목록에 있습니다.'));
+        }
         findings.append(section);
       });
     if (!analysis.findings.length) findings.append(node('p', 'muted-note', '구조 지적 사항이 없습니다.'));

@@ -256,6 +256,7 @@ void main() {
       expect(html, contains('id="render-marks"'));
       expect(html, contains('id="diff-marks"'));
       expect(html, contains('id="show-regions"'));
+      expect(html, contains('<span class="legend legend-mask">가림</span>'));
       expect(html, contains('data-design-status="fail"'));
       expect(html, contains('디자인 불일치 · 오류 2 · 경고 1'));
 
@@ -295,6 +296,37 @@ void main() {
         (analysis['masks']! as List).single,
         containsPair('source', 'safeArea'),
       );
+    });
+
+    test('sizes the marks by the image and never enlarges it', () async {
+      writeAnalysedSource(root);
+      final (code, _, _) = await run([
+        'build',
+        '-i',
+        root.path,
+        '-o',
+        output.path,
+      ]);
+      expect(code, 0);
+      final style = RegExp(r'<style>(.*?)</style>', dotAll: true)
+          .firstMatch(
+            File(p.join(output.path, 'index.html')).readAsStringSync(),
+          )!
+          .group(1)!
+          .replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '');
+      final widths = [
+        for (final rule in RegExp(r'([^{}]+)\{([^{}]*)\}').allMatches(style))
+          if (RegExp(r'\.frame|#compare-stage.* img').hasMatch(rule[1]!) &&
+              RegExp(r'(^|[\s;])width:').hasMatch(rule[2]!))
+            rule[0]!.trim(),
+      ];
+
+      // The marks layer covers the frame. A frame as wide as the stage put
+      // the marks beside an image that a page stylesheet kept at its
+      // natural size.
+      expect(widths, [
+        '.frame { position: relative; width: fit-content; max-width: 100%; margin: auto; }',
+      ]);
     });
 
     test('copies the report and the tolerant map with --copy-images', () async {

@@ -161,10 +161,17 @@ build time:
 - **Marks** — selecting or focusing a finding outlines the Figma position
   (pink) and the implementation position (blue, dashed) on the design, the
   implementation, the overlay, the side-by-side view, and the difference maps.
-  A rect is drawn on the other image only when both share one logical size.
-  **픽셀 영역·가림 표시** draws every differing region and mask; regions that
-  no finding explains are labelled. Up and down arrow keys move between
-  findings.
+  A 픽셀 finding outlines its differing region (red) and keeps the widget
+  under it as context. A rect is drawn on the other image only when both
+  share one logical size. **픽셀 영역·가림 표시** draws every differing region
+  and mask (blue); regions that no finding explains are labelled. co_golden
+  turns at most 20 unexplained regions, largest first, into 픽셀 findings;
+  the panel says how many more the region list holds. Up and down arrow keys
+  move between findings.
+- **Image size** — every view shows the images at their natural size, never
+  enlarged, so the overlay keeps the design's pixel geometry. Images of one
+  size shrink together on narrow screens, and the marks stay on the image
+  even when a page stylesheet resizes it.
 - **허용 오차 차이** shows co_golden's tolerance map: red differences, yellow
   anti-aliasing, and blue masks. **분석 리포트 JSON** opens the full report.
 
