@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/coco-de/co-package/compare/open_board-v0.3.2...open_board-v0.3.3) (2026-10-29)
+
+
+### 되돌림
+
+* **open_board:** ⏪ 핀치 줌 dead-zone 되돌림 — 옛 저장소 되돌림이 main 으로만 머지돼 이관에서 누락 (unibook[#15080](https://github.com/coco-de/co-package/issues/15080)) ([#119](https://github.com/coco-de/co-package/issues/119)) ([9e30f82](https://github.com/coco-de/co-package/commit/9e30f82cb78c3ce14db1d50e4d655f027893f217))
+
 ## [0.3.2](https://github.com/coco-de/co-package/compare/open_board-v0.3.1...open_board-v0.3.2) (2026-10-26)
 
 
