@@ -14,6 +14,7 @@ workspace:
   - packages/co_faker
   - packages/co_golden
   - packages/co_golden_gallery
+  - packages/co_storage # dox_storage 코어 포크 + 서명된 직접 업로드 (서버 경유 자격증명)
   - packages/open_epub_engine
   - packages/open_epub
   - packages/open_epub/example # open_epub → open_epub_engine 을 로컬 해석하도록 워크스페이스 편입
@@ -54,7 +55,7 @@ melos:
 
     license-check:
       run: bash tool/check_licenses.sh
-      description: Verify third-party attribution for ported code (open_epub_engine CFI, ADR-005).
+      description: Verify third-party attribution for ported code (open_epub_engine CFI, co_storage dox_storage fork, ADR-005).
 
     verify:
       run: melos run format && melos run analyze && melos run license-check && melos run test

@@ -15,6 +15,8 @@
 
   "//co_faker": "0.4.0~0.8.1 은 수동 태그(co_faker-vX.Y.Z)로 릴리스했다. 0.8.1 부터 release-please 가 관리한다 — 이후 feat/fix 커밋이 Release PR 에 모인다.",
 
+  "//co_storage": "dox_storage 3.0.1 의 디스크 · 드라이버 계층 포크(FORK.md) + 서명된 직접 업로드. 새 패키지라 첫 릴리스를 1.0.0 이 아니라 0.1.0 으로 낸다.",
+
   "//open_board": "open-board 저장소에서 이관. 마지막 릴리즈는 태그 open_board-v0.1.0(구 v0.1.0, 이관 시 개명)으로 인식되며, 그 이후 커밋이 다음 릴리즈 노트에 담긴다.",
 
   "changelog-sections": [
@@ -40,6 +42,7 @@
     "packages/co_bdd": { "component": "co_bdd", "bump-minor-pre-major": true },
     "packages/co_faker": { "component": "co_faker", "bump-minor-pre-major": true },
     "packages/co_demo_prefs": { "component": "co_demo_prefs", "bump-minor-pre-major": true },
-    "packages/co_demo_world": { "component": "co_demo_world", "bump-minor-pre-major": true, "initial-version": "0.1.0" }
+    "packages/co_demo_world": { "component": "co_demo_world", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
+    "packages/co_storage": { "component": "co_storage", "bump-minor-pre-major": true, "initial-version": "0.1.0" }
   }
 }
