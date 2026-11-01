@@ -11,6 +11,7 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | [`co_demo_world`](packages/co_demo_world/README.md) | Deterministic demo worlds: business data fixed, co_faker display text re-projected per UI language, user edits kept across a live language switch. |
 | [`co_golden`](packages/co_golden/README.md) | Golden matrix testing for Flutter — devices × themes × locales, strict layout diagnostics, Slang locale binding, JSON run manifests. |
 | [`co_golden_gallery`](packages/co_golden_gallery/README.md) | Single-file HTML gallery for co_golden captures and golden PNG trees; images local, copied, or served from a bucket. |
+| [`co_storage`](packages/co_storage/README.md) | File storage for Dart servers — one `Disk` API over S3, R2, MinIO, local disk and memory (a [dox_storage](packages/co_storage/FORK.md) fork), plus signed direct uploads whose storage keys never leave the server. |
 | [`open_epub_engine`](packages/open_epub_engine/README.md) | Pure Dart EPUB 2/3 parser, object model, and CFI locator engine. |
 | [`open_epub`](packages/open_epub/README.md) | Customizable EPUB reader widget for Flutter (reflowable + fixed layout). |
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
