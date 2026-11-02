@@ -104,5 +104,17 @@
     "info": "Las notas se guardan por capítulo (spineHref) — open_epub 1.0 EpubReader con EpubViewController.",
     "webNote": "En la web, las notas solo se conservan durante esta sesión.",
     "sample": "Muestra: {title}"
+  },
+  "toolbar": {
+    "color": "Color de tinta",
+    "width": "Grosor del trazo",
+    "colors": {
+      "black": "Negro",
+      "red": "Rojo",
+      "orange": "Naranja",
+      "green": "Verde",
+      "blue": "Azul",
+      "purple": "Morado"
+    }
   }
 }

@@ -104,5 +104,17 @@
     "info": "手書きはチャプター（spineHref）単位で保存されます — open_epub 1.0 の EpubReader と EpubViewController を連携。",
     "webNote": "Web では、手書きはこのセッションの間だけ保持されます。",
     "sample": "サンプル：{title}"
+  },
+  "toolbar": {
+    "color": "インクの色",
+    "width": "線の太さ",
+    "colors": {
+      "black": "黒",
+      "red": "赤",
+      "orange": "オレンジ",
+      "green": "緑",
+      "blue": "青",
+      "purple": "紫"
+    }
   }
 }

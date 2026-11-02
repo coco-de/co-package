@@ -104,5 +104,17 @@
     "info": "批注按章节（spineHref）保存 — open_epub 1.0 EpubReader 配合 EpubViewController。",
     "webNote": "在网页中，批注只在本次会话内保留。",
     "sample": "示例：{title}"
+  },
+  "toolbar": {
+    "color": "墨水颜色",
+    "width": "笔画粗细",
+    "colors": {
+      "black": "黑色",
+      "red": "红色",
+      "orange": "橙色",
+      "green": "绿色",
+      "blue": "蓝色",
+      "purple": "紫色"
+    }
   }
 }

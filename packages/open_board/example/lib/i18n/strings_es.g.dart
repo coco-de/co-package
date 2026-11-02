@@ -47,6 +47,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$drawing$es drawing = _Translations$drawing$es._(_root);
 	@override late final _Translations$split$es split = _Translations$split$es._(_root);
 	@override late final _Translations$epub$es epub = _Translations$epub$es._(_root);
+	@override late final _Translations$toolbar$es toolbar = _Translations$toolbar$es._(_root);
 }
 
 // Path: app
@@ -171,6 +172,18 @@ class _Translations$epub$es extends Translations$epub$ko {
 	@override String sample({required Object title}) => 'Muestra: ${title}';
 }
 
+// Path: toolbar
+class _Translations$toolbar$es extends Translations$toolbar$ko {
+	_Translations$toolbar$es._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get color => 'Color de tinta';
+	@override String get width => 'Grosor del trazo';
+	@override late final _Translations$toolbar$colors$es colors = _Translations$toolbar$colors$es._(_root);
+}
+
 // Path: home.board
 class _Translations$home$board$es extends Translations$home$board$ko {
 	_Translations$home$board$es._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -259,6 +272,21 @@ class _Translations$drawing$multiPage$es extends Translations$drawing$multiPage$
 	@override String get tip => 'Consejo: escribe en esta página, luego en otra y vuelve. Tus trazos siguen aquí.';
 }
 
+// Path: toolbar.colors
+class _Translations$toolbar$colors$es extends Translations$toolbar$colors$ko {
+	_Translations$toolbar$colors$es._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get black => 'Negro';
+	@override String get red => 'Rojo';
+	@override String get orange => 'Naranja';
+	@override String get green => 'Verde';
+	@override String get blue => 'Azul';
+	@override String get purple => 'Morado';
+}
+
 /// The flat map containing all translations for locale <es>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -339,6 +367,14 @@ extension on TranslationsEs {
 			'epub.info' => 'Las notas se guardan por capítulo (spineHref) — open_epub 1.0 EpubReader con EpubViewController.',
 			'epub.webNote' => 'En la web, las notas solo se conservan durante esta sesión.',
 			'epub.sample' => ({required Object title}) => 'Muestra: ${title}',
+			'toolbar.color' => 'Color de tinta',
+			'toolbar.width' => 'Grosor del trazo',
+			'toolbar.colors.black' => 'Negro',
+			'toolbar.colors.red' => 'Rojo',
+			'toolbar.colors.orange' => 'Naranja',
+			'toolbar.colors.green' => 'Verde',
+			'toolbar.colors.blue' => 'Azul',
+			'toolbar.colors.purple' => 'Morado',
 			_ => null,
 		};
 	}

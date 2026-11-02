@@ -104,5 +104,17 @@
     "info": "Le note vengono salvate per capitolo (spineHref) — open_epub 1.0 EpubReader con EpubViewController.",
     "webNote": "Sul web, le note restano solo per questa sessione.",
     "sample": "Esempio: {title}"
+  },
+  "toolbar": {
+    "color": "Colore dell’inchiostro",
+    "width": "Spessore del tratto",
+    "colors": {
+      "black": "Nero",
+      "red": "Rosso",
+      "orange": "Arancione",
+      "green": "Verde",
+      "blue": "Blu",
+      "purple": "Viola"
+    }
   }
 }

@@ -47,6 +47,7 @@ class TranslationsRu extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$drawing$ru drawing = _Translations$drawing$ru._(_root);
 	@override late final _Translations$split$ru split = _Translations$split$ru._(_root);
 	@override late final _Translations$epub$ru epub = _Translations$epub$ru._(_root);
+	@override late final _Translations$toolbar$ru toolbar = _Translations$toolbar$ru._(_root);
 }
 
 // Path: app
@@ -171,6 +172,18 @@ class _Translations$epub$ru extends Translations$epub$ko {
 	@override String sample({required Object title}) => 'Пример: ${title}';
 }
 
+// Path: toolbar
+class _Translations$toolbar$ru extends Translations$toolbar$ko {
+	_Translations$toolbar$ru._(TranslationsRu root) : this._root = root, super.internal(root);
+
+	final TranslationsRu _root; // ignore: unused_field
+
+	// Translations
+	@override String get color => 'Цвет чернил';
+	@override String get width => 'Толщина линии';
+	@override late final _Translations$toolbar$colors$ru colors = _Translations$toolbar$colors$ru._(_root);
+}
+
 // Path: home.board
 class _Translations$home$board$ru extends Translations$home$board$ko {
 	_Translations$home$board$ru._(TranslationsRu root) : this._root = root, super.internal(root);
@@ -259,6 +272,21 @@ class _Translations$drawing$multiPage$ru extends Translations$drawing$multiPage$
 	@override String get tip => 'Совет: нарисуйте что-нибудь на этой странице, затем на другой и вернитесь. Ваши штрихи на месте.';
 }
 
+// Path: toolbar.colors
+class _Translations$toolbar$colors$ru extends Translations$toolbar$colors$ko {
+	_Translations$toolbar$colors$ru._(TranslationsRu root) : this._root = root, super.internal(root);
+
+	final TranslationsRu _root; // ignore: unused_field
+
+	// Translations
+	@override String get black => 'Чёрный';
+	@override String get red => 'Красный';
+	@override String get orange => 'Оранжевый';
+	@override String get green => 'Зелёный';
+	@override String get blue => 'Синий';
+	@override String get purple => 'Фиолетовый';
+}
+
 /// The flat map containing all translations for locale <ru>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -339,6 +367,14 @@ extension on TranslationsRu {
 			'epub.info' => 'Заметки сохраняются по главам (spineHref) — open_epub 1.0 EpubReader вместе с EpubViewController.',
 			'epub.webNote' => 'В вебе заметки хранятся только в течение этого сеанса.',
 			'epub.sample' => ({required Object title}) => 'Пример: ${title}',
+			'toolbar.color' => 'Цвет чернил',
+			'toolbar.width' => 'Толщина линии',
+			'toolbar.colors.black' => 'Чёрный',
+			'toolbar.colors.red' => 'Красный',
+			'toolbar.colors.orange' => 'Оранжевый',
+			'toolbar.colors.green' => 'Зелёный',
+			'toolbar.colors.blue' => 'Синий',
+			'toolbar.colors.purple' => 'Фиолетовый',
 			_ => null,
 		};
 	}

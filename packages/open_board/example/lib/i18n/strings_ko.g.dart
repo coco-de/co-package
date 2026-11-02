@@ -49,6 +49,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$drawing$ko drawing = Translations$drawing$ko.internal(_root);
 	late final Translations$split$ko split = Translations$split$ko.internal(_root);
 	late final Translations$epub$ko epub = Translations$epub$ko.internal(_root);
+	late final Translations$toolbar$ko toolbar = Translations$toolbar$ko.internal(_root);
 }
 
 // Path: app
@@ -262,6 +263,23 @@ class Translations$epub$ko {
 	String sample({required Object title}) => '샘플: ${title}';
 }
 
+// Path: toolbar
+class Translations$toolbar$ko {
+	Translations$toolbar$ko.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// ko: '잉크 색상'
+	String get color => '잉크 색상';
+
+	/// ko: '선 두께'
+	String get width => '선 두께';
+
+	late final Translations$toolbar$colors$ko colors = Translations$toolbar$colors$ko.internal(_root);
+}
+
 // Path: home.board
 class Translations$home$board$ko {
 	Translations$home$board$ko.internal(this._root);
@@ -373,6 +391,33 @@ class Translations$drawing$multiPage$ko {
 	String get tip => '팁: 이 페이지에 그린 뒤 다른 페이지에도 그리고 다시 돌아와 보세요. 그린 획이 그대로 남아 있습니다.';
 }
 
+// Path: toolbar.colors
+class Translations$toolbar$colors$ko {
+	Translations$toolbar$colors$ko.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// ko: '검정'
+	String get black => '검정';
+
+	/// ko: '빨강'
+	String get red => '빨강';
+
+	/// ko: '주황'
+	String get orange => '주황';
+
+	/// ko: '초록'
+	String get green => '초록';
+
+	/// ko: '파랑'
+	String get blue => '파랑';
+
+	/// ko: '보라'
+	String get purple => '보라';
+}
+
 /// The flat map containing all translations for locale <ko>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -453,6 +498,14 @@ extension on Translations {
 			'epub.info' => '필기는 챕터(spineHref) 기준으로 저장됩니다 — open_epub 1.0 EpubReader + EpubViewController 연동.',
 			'epub.webNote' => '웹에서는 세션 안에서만 필기가 유지됩니다.',
 			'epub.sample' => ({required Object title}) => '샘플: ${title}',
+			'toolbar.color' => '잉크 색상',
+			'toolbar.width' => '선 두께',
+			'toolbar.colors.black' => '검정',
+			'toolbar.colors.red' => '빨강',
+			'toolbar.colors.orange' => '주황',
+			'toolbar.colors.green' => '초록',
+			'toolbar.colors.blue' => '파랑',
+			'toolbar.colors.purple' => '보라',
 			_ => null,
 		};
 	}

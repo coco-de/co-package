@@ -104,5 +104,17 @@
     "info": "Заметки сохраняются по главам (spineHref) — open_epub 1.0 EpubReader вместе с EpubViewController.",
     "webNote": "В вебе заметки хранятся только в течение этого сеанса.",
     "sample": "Пример: {title}"
+  },
+  "toolbar": {
+    "color": "Цвет чернил",
+    "width": "Толщина линии",
+    "colors": {
+      "black": "Чёрный",
+      "red": "Красный",
+      "orange": "Оранжевый",
+      "green": "Зелёный",
+      "blue": "Синий",
+      "purple": "Фиолетовый"
+    }
   }
 }

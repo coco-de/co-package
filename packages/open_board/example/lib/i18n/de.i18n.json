@@ -104,5 +104,17 @@
     "info": "Notizen werden pro Kapitel (spineHref) gespeichert – open_epub 1.0 EpubReader mit EpubViewController.",
     "webNote": "Im Web bleiben Notizen nur während dieser Sitzung erhalten.",
     "sample": "Beispiel: {title}"
+  },
+  "toolbar": {
+    "color": "Tintenfarbe",
+    "width": "Strichstärke",
+    "colors": {
+      "black": "Schwarz",
+      "red": "Rot",
+      "orange": "Orange",
+      "green": "Grün",
+      "blue": "Blau",
+      "purple": "Violett"
+    }
   }
 }

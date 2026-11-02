@@ -104,5 +104,17 @@
     "info": "Notes are saved per chapter (spineHref) — open_epub 1.0 EpubReader with EpubViewController.",
     "webNote": "On the web, notes last only for this session.",
     "sample": "Sample: {title}"
+  },
+  "toolbar": {
+    "color": "Ink color",
+    "width": "Stroke width",
+    "colors": {
+      "black": "Black",
+      "red": "Red",
+      "orange": "Orange",
+      "green": "Green",
+      "blue": "Blue",
+      "purple": "Purple"
+    }
   }
 }

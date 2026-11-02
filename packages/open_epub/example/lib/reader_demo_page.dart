@@ -245,8 +245,10 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 4,
+          runSpacing: 4,
           children: [
             IconButton(
               key: const ValueKey('reader-prev'),
@@ -264,15 +266,21 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
               key: const ValueKey('reader-font-dec'),
               tooltip: t.reader.fontSmaller,
               icon: const Icon(Icons.text_decrease),
-              onPressed: () =>
-                  setState(() => _fontSize = (_fontSize - 2).clamp(12, 32)),
+              onPressed: _fontSize <= 12
+                  ? null
+                  : () => setState(
+                      () => _fontSize = (_fontSize - 2).clamp(12, 32),
+                    ),
             ),
             IconButton(
               key: const ValueKey('reader-font-inc'),
               tooltip: t.reader.fontLarger,
               icon: const Icon(Icons.text_increase),
-              onPressed: () =>
-                  setState(() => _fontSize = (_fontSize + 2).clamp(12, 32)),
+              onPressed: _fontSize >= 32
+                  ? null
+                  : () => setState(
+                      () => _fontSize = (_fontSize + 2).clamp(12, 32),
+                    ),
             ),
             IconButton(
               key: const ValueKey('reader-scroll-toggle'),

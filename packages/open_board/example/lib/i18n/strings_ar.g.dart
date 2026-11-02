@@ -47,6 +47,7 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$drawing$ar drawing = _Translations$drawing$ar._(_root);
 	@override late final _Translations$split$ar split = _Translations$split$ar._(_root);
 	@override late final _Translations$epub$ar epub = _Translations$epub$ar._(_root);
+	@override late final _Translations$toolbar$ar toolbar = _Translations$toolbar$ar._(_root);
 }
 
 // Path: app
@@ -171,6 +172,18 @@ class _Translations$epub$ar extends Translations$epub$ko {
 	@override String sample({required Object title}) => 'نموذج: ${title}';
 }
 
+// Path: toolbar
+class _Translations$toolbar$ar extends Translations$toolbar$ko {
+	_Translations$toolbar$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get color => 'لون الحبر';
+	@override String get width => 'سُمك الخط';
+	@override late final _Translations$toolbar$colors$ar colors = _Translations$toolbar$colors$ar._(_root);
+}
+
 // Path: home.board
 class _Translations$home$board$ar extends Translations$home$board$ko {
 	_Translations$home$board$ar._(TranslationsAr root) : this._root = root, super.internal(root);
@@ -259,6 +272,21 @@ class _Translations$drawing$multiPage$ar extends Translations$drawing$multiPage$
 	@override String get tip => 'نصيحة: اكتب على هذه الصفحة، ثم على صفحة أخرى، وعُد إليها. ستجد خطوطك كما هي.';
 }
 
+// Path: toolbar.colors
+class _Translations$toolbar$colors$ar extends Translations$toolbar$colors$ko {
+	_Translations$toolbar$colors$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get black => 'أسود';
+	@override String get red => 'أحمر';
+	@override String get orange => 'برتقالي';
+	@override String get green => 'أخضر';
+	@override String get blue => 'أزرق';
+	@override String get purple => 'بنفسجي';
+}
+
 /// The flat map containing all translations for locale <ar>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -339,6 +367,14 @@ extension on TranslationsAr {
 			'epub.info' => 'تُحفظ الملاحظات لكل فصل (spineHref) — EpubReader من open_epub 1.0 مع EpubViewController.',
 			'epub.webNote' => 'على الويب، تبقى الملاحظات خلال هذه الجلسة فقط.',
 			'epub.sample' => ({required Object title}) => 'نموذج: ${title}',
+			'toolbar.color' => 'لون الحبر',
+			'toolbar.width' => 'سُمك الخط',
+			'toolbar.colors.black' => 'أسود',
+			'toolbar.colors.red' => 'أحمر',
+			'toolbar.colors.orange' => 'برتقالي',
+			'toolbar.colors.green' => 'أخضر',
+			'toolbar.colors.blue' => 'أزرق',
+			'toolbar.colors.purple' => 'بنفسجي',
 			_ => null,
 		};
 	}

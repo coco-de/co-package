@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_board/open_board.dart';
+import 'package:open_board_example/i18n/strings.g.dart';
 
 /// 보드/EPUB 데모에서 공용으로 사용하는 필기 도구 툴바.
 ///
@@ -37,7 +38,6 @@ class DrawingToolbar extends StatelessWidget {
   final ValueChanged<double> onWidthChanged;
 
   const DrawingToolbar({
-    super.key,
     required this.selectedTool,
     required this.selectedColor,
     required this.selectedWidth,
@@ -46,7 +46,19 @@ class DrawingToolbar extends StatelessWidget {
     required this.onWidthChanged,
     this.tools = defaultTools,
     this.colors = defaultColors,
+    super.key,
   });
+
+  /// Custom swatches use lossless CSS hex notation, including alpha when set.
+  String _hexLabel(Color color) {
+    final argb = color
+        .toARGB32()
+        .toRadixString(16)
+        .padLeft(8, '0')
+        .toUpperCase();
+    final rgb = argb.substring(2);
+    return argb.startsWith('FF') ? '#$rgb' : '#$rgb${argb.substring(0, 2)}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,44 +92,101 @@ class DrawingToolbar extends StatelessWidget {
         ),
         // === Color & Width Selection ===
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           color: cs.surfaceContainerLow,
-          child: Row(
-            children: [
-              for (final c in colors)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: GestureDetector(
-                    onTap: () => onColorSelected(c),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: c,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: selectedColor == c
-                              ? cs.primary
-                              : cs.outlineVariant,
-                          width: selectedColor == c ? 3 : 1,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final t = context.t.toolbar;
+              final names = <Color, String>{
+                Colors.black: t.colors.black,
+                Colors.red: t.colors.red,
+                Colors.orange: t.colors.orange,
+                Colors.green: t.colors.green,
+                Colors.blue: t.colors.blue,
+                Colors.purple: t.colors.purple,
+              };
+              final palette = Wrap(
+                children: [
+                  for (final (index, c) in colors.indexed)
+                    Semantics(
+                      selected: selectedColor == c,
+                      child: IconButton(
+                        key: ValueKey('drawing-color-$index'),
+                        tooltip: '${t.color}: ${names[c] ?? _hexLabel(c)}',
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
+                        onPressed: () => onColorSelected(c),
+                        icon: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: selectedColor == c
+                                  ? cs.primary
+                                  : cs.outlineVariant,
+                              width: selectedColor == c ? 3 : 1,
+                            ),
+                          ),
+                          child: selectedColor == c
+                              ? Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color:
+                                      ThemeData.estimateBrightnessForColor(
+                                            Color.alphaBlend(
+                                              c,
+                                              cs.surfaceContainerLow,
+                                            ),
+                                          ) ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors.black,
+                                )
+                              : null,
                         ),
                       ),
                     ),
+                ],
+              );
+              final width = Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      label: t.width,
+                      child: Slider(
+                        key: const ValueKey('drawing-stroke-width'),
+                        value: selectedWidth.clamp(0.5, 10.0),
+                        min: 0.5,
+                        max: 10.0,
+                        divisions: 19,
+                        label: selectedWidth.toStringAsFixed(1),
+                        onChanged: onWidthChanged,
+                      ),
+                    ),
                   ),
-                ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Slider(
-                  value: selectedWidth.clamp(0.5, 10.0),
-                  min: 0.5,
-                  max: 10.0,
-                  divisions: 19,
-                  onChanged: onWidthChanged,
-                ),
-              ),
-              Text(selectedWidth.toStringAsFixed(1),
-                  style: Theme.of(context).textTheme.bodySmall),
-            ],
+                  Text(
+                    selectedWidth.toStringAsFixed(1),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              );
+              return constraints.maxWidth < 600
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [palette, width],
+                    )
+                  : Row(
+                      children: [
+                        Flexible(child: palette),
+                        const SizedBox(width: 12),
+                        Expanded(child: width),
+                      ],
+                    );
+            },
           ),
         ),
       ],

@@ -65,30 +65,52 @@ class HomeMenuPage extends StatelessWidget {
     final t = context.t;
     return Scaffold(
       appBar: AppBar(title: Text(t.app.title)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _DemoCard(
-            icon: Icons.draw,
-            title: t.home.board.title,
-            description: t.home.board.description,
-            page: const DrawingPage(),
-          ),
-          const SizedBox(height: 12),
-          _DemoCard(
-            icon: Icons.vertical_split,
-            title: t.home.split.title,
-            description: t.home.split.description,
-            page: const SplitDrawingPage(),
-          ),
-          const SizedBox(height: 12),
-          _DemoCard(
-            icon: Icons.menu_book,
-            title: t.home.epub.title,
-            description: t.home.epub.description,
-            page: const EpubAnnotationDemoPage(),
-          ),
-        ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final available = (constraints.maxWidth - 32).clamp(0.0, 1120.0);
+          final columns = available >= 960
+              ? 3
+              : available >= 640
+              ? 2
+              : 1;
+          final cardWidth = (available - 16 * (columns - 1)) / columns;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: available,
+                child: Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    for (final card in <Widget>[
+                      _DemoCard(
+                        icon: Icons.draw,
+                        title: t.home.board.title,
+                        description: t.home.board.description,
+                        page: const DrawingPage(),
+                      ),
+                      _DemoCard(
+                        icon: Icons.vertical_split,
+                        title: t.home.split.title,
+                        description: t.home.split.description,
+                        page: const SplitDrawingPage(),
+                      ),
+                      _DemoCard(
+                        icon: Icons.menu_book,
+                        title: t.home.epub.title,
+                        description: t.home.epub.description,
+                        page: const EpubAnnotationDemoPage(),
+                      ),
+                    ])
+                      SizedBox(width: cardWidth, child: card),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -112,20 +134,37 @@ class _DemoCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: cs.primaryContainer,
-          child: Icon(icon, color: cs.onPrimaryContainer),
-        ),
-        title: Text(title,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(description),
-        trailing: const Icon(Icons.chevron_right),
+      child: InkWell(
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute<void>(builder: (_) => page),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: cs.primaryContainer,
+                    child: Icon(icon, color: cs.onPrimaryContainer),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.arrow_forward),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
         ),
       ),
     );

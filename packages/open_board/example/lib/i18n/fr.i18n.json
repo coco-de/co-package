@@ -104,5 +104,17 @@
     "info": "Les notes sont enregistrées par chapitre (spineHref) — open_epub 1.0 EpubReader avec EpubViewController.",
     "webNote": "Sur le web, les notes ne durent que le temps de cette session.",
     "sample": "Exemple : {title}"
+  },
+  "toolbar": {
+    "color": "Couleur d’encre",
+    "width": "Épaisseur du trait",
+    "colors": {
+      "black": "Noir",
+      "red": "Rouge",
+      "orange": "Orange",
+      "green": "Vert",
+      "blue": "Bleu",
+      "purple": "Violet"
+    }
   }
 }
