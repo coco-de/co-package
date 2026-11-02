@@ -47,6 +47,7 @@ class TranslationsJa extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$drawing$ja drawing = _Translations$drawing$ja._(_root);
 	@override late final _Translations$split$ja split = _Translations$split$ja._(_root);
 	@override late final _Translations$epub$ja epub = _Translations$epub$ja._(_root);
+	@override late final _Translations$toolbar$ja toolbar = _Translations$toolbar$ja._(_root);
 }
 
 // Path: app
@@ -171,6 +172,18 @@ class _Translations$epub$ja extends Translations$epub$ko {
 	@override String sample({required Object title}) => 'サンプル：${title}';
 }
 
+// Path: toolbar
+class _Translations$toolbar$ja extends Translations$toolbar$ko {
+	_Translations$toolbar$ja._(TranslationsJa root) : this._root = root, super.internal(root);
+
+	final TranslationsJa _root; // ignore: unused_field
+
+	// Translations
+	@override String get color => 'インクの色';
+	@override String get width => '線の太さ';
+	@override late final _Translations$toolbar$colors$ja colors = _Translations$toolbar$colors$ja._(_root);
+}
+
 // Path: home.board
 class _Translations$home$board$ja extends Translations$home$board$ko {
 	_Translations$home$board$ja._(TranslationsJa root) : this._root = root, super.internal(root);
@@ -259,6 +272,21 @@ class _Translations$drawing$multiPage$ja extends Translations$drawing$multiPage$
 	@override String get tip => 'ヒント：このページに描いたら別のページにも描き、また戻ってきてください。描いたストロークはそのまま残っています。';
 }
 
+// Path: toolbar.colors
+class _Translations$toolbar$colors$ja extends Translations$toolbar$colors$ko {
+	_Translations$toolbar$colors$ja._(TranslationsJa root) : this._root = root, super.internal(root);
+
+	final TranslationsJa _root; // ignore: unused_field
+
+	// Translations
+	@override String get black => '黒';
+	@override String get red => '赤';
+	@override String get orange => 'オレンジ';
+	@override String get green => '緑';
+	@override String get blue => '青';
+	@override String get purple => '紫';
+}
+
 /// The flat map containing all translations for locale <ja>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -339,6 +367,14 @@ extension on TranslationsJa {
 			'epub.info' => '手書きはチャプター（spineHref）単位で保存されます — open_epub 1.0 の EpubReader と EpubViewController を連携。',
 			'epub.webNote' => 'Web では、手書きはこのセッションの間だけ保持されます。',
 			'epub.sample' => ({required Object title}) => 'サンプル：${title}',
+			'toolbar.color' => 'インクの色',
+			'toolbar.width' => '線の太さ',
+			'toolbar.colors.black' => '黒',
+			'toolbar.colors.red' => '赤',
+			'toolbar.colors.orange' => 'オレンジ',
+			'toolbar.colors.green' => '緑',
+			'toolbar.colors.blue' => '青',
+			'toolbar.colors.purple' => '紫',
 			_ => null,
 		};
 	}

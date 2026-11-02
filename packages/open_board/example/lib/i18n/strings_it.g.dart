@@ -47,6 +47,7 @@ class TranslationsIt extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$drawing$it drawing = _Translations$drawing$it._(_root);
 	@override late final _Translations$split$it split = _Translations$split$it._(_root);
 	@override late final _Translations$epub$it epub = _Translations$epub$it._(_root);
+	@override late final _Translations$toolbar$it toolbar = _Translations$toolbar$it._(_root);
 }
 
 // Path: app
@@ -171,6 +172,18 @@ class _Translations$epub$it extends Translations$epub$ko {
 	@override String sample({required Object title}) => 'Esempio: ${title}';
 }
 
+// Path: toolbar
+class _Translations$toolbar$it extends Translations$toolbar$ko {
+	_Translations$toolbar$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get color => 'Colore dell’inchiostro';
+	@override String get width => 'Spessore del tratto';
+	@override late final _Translations$toolbar$colors$it colors = _Translations$toolbar$colors$it._(_root);
+}
+
 // Path: home.board
 class _Translations$home$board$it extends Translations$home$board$ko {
 	_Translations$home$board$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -259,6 +272,21 @@ class _Translations$drawing$multiPage$it extends Translations$drawing$multiPage$
 	@override String get tip => 'Suggerimento: scrivi su questa pagina, poi su un’altra e torna qui. I tuoi tratti sono ancora qui.';
 }
 
+// Path: toolbar.colors
+class _Translations$toolbar$colors$it extends Translations$toolbar$colors$ko {
+	_Translations$toolbar$colors$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get black => 'Nero';
+	@override String get red => 'Rosso';
+	@override String get orange => 'Arancione';
+	@override String get green => 'Verde';
+	@override String get blue => 'Blu';
+	@override String get purple => 'Viola';
+}
+
 /// The flat map containing all translations for locale <it>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -339,6 +367,14 @@ extension on TranslationsIt {
 			'epub.info' => 'Le note vengono salvate per capitolo (spineHref) — open_epub 1.0 EpubReader con EpubViewController.',
 			'epub.webNote' => 'Sul web, le note restano solo per questa sessione.',
 			'epub.sample' => ({required Object title}) => 'Esempio: ${title}',
+			'toolbar.color' => 'Colore dell’inchiostro',
+			'toolbar.width' => 'Spessore del tratto',
+			'toolbar.colors.black' => 'Nero',
+			'toolbar.colors.red' => 'Rosso',
+			'toolbar.colors.orange' => 'Arancione',
+			'toolbar.colors.green' => 'Verde',
+			'toolbar.colors.blue' => 'Blu',
+			'toolbar.colors.purple' => 'Viola',
 			_ => null,
 		};
 	}

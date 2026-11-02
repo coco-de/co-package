@@ -104,5 +104,17 @@
     "info": "필기는 챕터(spineHref) 기준으로 저장됩니다 — open_epub 1.0 EpubReader + EpubViewController 연동.",
     "webNote": "웹에서는 세션 안에서만 필기가 유지됩니다.",
     "sample": "샘플: {title}"
+  },
+  "toolbar": {
+    "color": "잉크 색상",
+    "width": "선 두께",
+    "colors": {
+      "black": "검정",
+      "red": "빨강",
+      "orange": "주황",
+      "green": "초록",
+      "blue": "파랑",
+      "purple": "보라"
+    }
   }
 }

@@ -104,5 +104,17 @@
     "info": "As anotações são salvas por capítulo (spineHref) — open_epub 1.0 EpubReader com EpubViewController.",
     "webNote": "Na web, as anotações ficam salvas apenas durante esta sessão.",
     "sample": "Amostra: {title}"
+  },
+  "toolbar": {
+    "color": "Cor da tinta",
+    "width": "Espessura do traço",
+    "colors": {
+      "black": "Preto",
+      "red": "Vermelho",
+      "orange": "Laranja",
+      "green": "Verde",
+      "blue": "Azul",
+      "purple": "Roxo"
+    }
   }
 }

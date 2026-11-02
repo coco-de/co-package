@@ -104,5 +104,17 @@
     "info": "تُحفظ الملاحظات لكل فصل (spineHref) — EpubReader من open_epub 1.0 مع EpubViewController.",
     "webNote": "على الويب، تبقى الملاحظات خلال هذه الجلسة فقط.",
     "sample": "نموذج: {title}"
+  },
+  "toolbar": {
+    "color": "لون الحبر",
+    "width": "سُمك الخط",
+    "colors": {
+      "black": "أسود",
+      "red": "أحمر",
+      "orange": "برتقالي",
+      "green": "أخضر",
+      "blue": "أزرق",
+      "purple": "بنفسجي"
+    }
   }
 }

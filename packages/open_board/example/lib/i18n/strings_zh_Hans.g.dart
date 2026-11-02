@@ -47,6 +47,7 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	@override late final _Translations$drawing$zh_Hans drawing = _Translations$drawing$zh_Hans._(_root);
 	@override late final _Translations$split$zh_Hans split = _Translations$split$zh_Hans._(_root);
 	@override late final _Translations$epub$zh_Hans epub = _Translations$epub$zh_Hans._(_root);
+	@override late final _Translations$toolbar$zh_Hans toolbar = _Translations$toolbar$zh_Hans._(_root);
 }
 
 // Path: app
@@ -171,6 +172,18 @@ class _Translations$epub$zh_Hans extends Translations$epub$ko {
 	@override String sample({required Object title}) => '示例：${title}';
 }
 
+// Path: toolbar
+class _Translations$toolbar$zh_Hans extends Translations$toolbar$ko {
+	_Translations$toolbar$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get color => '墨水颜色';
+	@override String get width => '笔画粗细';
+	@override late final _Translations$toolbar$colors$zh_Hans colors = _Translations$toolbar$colors$zh_Hans._(_root);
+}
+
 // Path: home.board
 class _Translations$home$board$zh_Hans extends Translations$home$board$ko {
 	_Translations$home$board$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
@@ -259,6 +272,21 @@ class _Translations$drawing$multiPage$zh_Hans extends Translations$drawing$multi
 	@override String get tip => '提示：在本页书写后，到另一页再写一些，然后回来看看——笔画依然保留。';
 }
 
+// Path: toolbar.colors
+class _Translations$toolbar$colors$zh_Hans extends Translations$toolbar$colors$ko {
+	_Translations$toolbar$colors$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get black => '黑色';
+	@override String get red => '红色';
+	@override String get orange => '橙色';
+	@override String get green => '绿色';
+	@override String get blue => '蓝色';
+	@override String get purple => '紫色';
+}
+
 /// The flat map containing all translations for locale <zh-Hans>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -339,6 +367,14 @@ extension on TranslationsZhHans {
 			'epub.info' => '批注按章节（spineHref）保存 — open_epub 1.0 EpubReader 配合 EpubViewController。',
 			'epub.webNote' => '在网页中，批注只在本次会话内保留。',
 			'epub.sample' => ({required Object title}) => '示例：${title}',
+			'toolbar.color' => '墨水颜色',
+			'toolbar.width' => '笔画粗细',
+			'toolbar.colors.black' => '黑色',
+			'toolbar.colors.red' => '红色',
+			'toolbar.colors.orange' => '橙色',
+			'toolbar.colors.green' => '绿色',
+			'toolbar.colors.blue' => '蓝色',
+			'toolbar.colors.purple' => '紫色',
 			_ => null,
 		};
 	}

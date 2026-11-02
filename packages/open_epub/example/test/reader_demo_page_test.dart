@@ -14,6 +14,32 @@ import 'package:open_epub_example/sample_book.dart';
 SampleBook _book(String id) => kSampleBooks.firstWhere((b) => b.id == id);
 
 void main() {
+  testWidgets('reader controls wrap at 280px and disable text size limits', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(home: ReaderDemoPage(book: _book('cfi'))),
+    );
+    await tester.pumpAndSettle();
+    final smaller = find.byKey(const ValueKey('reader-font-dec'));
+    final larger = find.byKey(const ValueKey('reader-font-inc'));
+    for (var index = 0; index < 3; index++) {
+      await tester.tap(smaller);
+      await tester.pumpAndSettle();
+    }
+    expect(tester.widget<IconButton>(smaller).onPressed, isNull);
+    for (var index = 0; index < 10; index++) {
+      await tester.tap(larger);
+      await tester.pumpAndSettle();
+    }
+    expect(tester.widget<IconButton>(larger).onPressed, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('번들된 샘플(georgia-cfi)은 asset에서 정상적으로 열린다 (#248)', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: ReaderDemoPage(book: _book('cfi'))),
