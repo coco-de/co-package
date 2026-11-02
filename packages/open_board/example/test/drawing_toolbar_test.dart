@@ -39,6 +39,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(tester.widget<Icon>(find.byIcon(Icons.check)).color, Colors.black);
     expect(find.byTooltip('Ink color: #00000000'), findsOneWidget);
     expect(find.byTooltip('Ink color: #FF000080'), findsOneWidget);
     expect(find.byTooltip('Ink color: #123456'), findsOneWidget);

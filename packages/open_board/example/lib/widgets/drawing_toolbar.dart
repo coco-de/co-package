@@ -136,7 +136,12 @@ class DrawingToolbar extends StatelessWidget {
                                   Icons.check,
                                   size: 18,
                                   color:
-                                      ThemeData.estimateBrightnessForColor(c) ==
+                                      ThemeData.estimateBrightnessForColor(
+                                            Color.alphaBlend(
+                                              c,
+                                              cs.surfaceContainerLow,
+                                            ),
+                                          ) ==
                                           Brightness.dark
                                       ? Colors.white
                                       : Colors.black,
