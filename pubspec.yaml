@@ -36,8 +36,12 @@ melos:
     # 쓰므로 dart format 과 결과가 다르다(82 파일). 패키지 내 lefthook 훅이 dcm
     # format 을 강제하므로 여기서는 제외한다. 그 아래 example(open_board_example)도
     # 같은 훅(root: packages/open_board/)의 적용을 받으므로 함께 제외한다.
+    # open_epub 은 lib/test 만 여기서 검사한다. example 은 별도 멤버가 자기
+    # SDK 언어 버전으로 검사하며, 공개 CI 에서 빠져도 부모 SDK 로 재해석하지 않는다.
     format:
-      run: melos exec --ignore="open_board" --ignore="open_board_example" -- dart format --output=none --set-exit-if-changed .
+      run: |
+        melos exec --ignore="open_board" --ignore="open_board_example" --ignore="open_epub" -- dart format --output=none --set-exit-if-changed .
+        dart format --output=none --set-exit-if-changed packages/open_epub/lib packages/open_epub/test
       description: Check formatting for every workspace package (open_board and its example use dcm format).
 
     test:
