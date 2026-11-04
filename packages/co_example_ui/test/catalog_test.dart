@@ -54,7 +54,11 @@ void main() {
           child: ExampleThemeScope(child: child!),
         ),
         home: ExampleCatalog(
-          title: reading ? 'Open EPUB' : 'Open Board',
+          title: locale.languageCode == 'ar'
+              ? (reading ? 'عرض Open EPUB التوضيحي' : 'عرض Open Board التوضيحي')
+              : reading
+              ? 'Open EPUB'
+              : 'Open Board',
           product: reading ? 'OPEN EPUB' : 'OPEN BOARD',
           reading: reading,
           settings: ExampleSettings(

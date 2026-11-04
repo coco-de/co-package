@@ -36,6 +36,7 @@ ThemeData exampleMaterialTheme(Brightness brightness) {
       centerTitle: false,
       titleTextStyle: TextStyle(
         fontFamily: 'packages/co_example_ui/Pretendard',
+        fontFamilyFallback: const ['packages/co_example_ui/NotoSansArabic'],
         fontSize: 17,
         fontWeight: FontWeight.w600,
         color: scheme.onSurface,
