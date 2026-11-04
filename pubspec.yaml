@@ -10,6 +10,7 @@ workspace:
   - packages/co_arc
   - packages/co_bdd # co-test-gen 저장소에서 이관·개명 (구 co_test_gen)
   - packages/co_demo_prefs
+  - packages/co_example_ui
   - packages/co_demo_world
   - packages/co_faker
   - packages/co_golden
@@ -19,7 +20,7 @@ workspace:
   - packages/open_epub
   - packages/open_epub/example # open_epub → open_epub_engine 을 로컬 해석하도록 워크스페이스 편입
   - packages/open_board
-  - packages/open_board/example # open_epub 을 비공개 git 대신 로컬 멤버로 해석 — 토큰 없이 Pages 빌드 (#42)
+  - packages/open_board/example # 로컬 EPUB · 보드 패키지 + 공유 CoUI 예제 테마
 
 dev_dependencies:
   lints: ^6.0.0
@@ -60,3 +61,22 @@ melos:
     verify:
       run: melos run format && melos run analyze && melos run license-check && melos run test
       description: Run formatting, analysis, license check, and tests.
+
+# All CoUI siblings resolve to the coui_flutter-v0.178.0 release commit.
+# Core and web are version 0.176.0 at this commit.
+dependency_overrides:
+  coui_flutter:
+    git:
+      url: https://github.com/coco-de/coui.git
+      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
+      path: packages/coui_flutter
+  coui_core:
+    git:
+      url: https://github.com/coco-de/coui.git
+      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
+      path: packages/coui_core
+  coui_web:
+    git:
+      url: https://github.com/coco-de/coui.git
+      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
+      path: packages/coui_web

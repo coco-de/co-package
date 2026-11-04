@@ -1,3 +1,4 @@
+import 'package:coui_flutter/coui_flutter.dart' as co;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -245,35 +246,21 @@ class _SplitDrawingPageState extends State<SplitDrawingPage> {
       ),
       body: Stack(
         children: [
-          Row(
-            children: [
-              Expanded(child: _canvas(_left, 'A')),
-              const VerticalDivider(width: 1),
-              Expanded(child: _canvas(_right, 'B')),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) => Flex(
+              direction: constraints.maxWidth < 600 ? Axis.vertical : Axis.horizontal,
+              children: [
+                Expanded(child: _canvas(_left, 'A')),
+                const SizedBox(width: 1, height: 1),
+                Expanded(child: _canvas(_right, 'B')),
+              ],
+            ),
           ),
-          const Positioned.fill(child: ScribbleFloatingToolbar()),
-          // ─────────────────────────────────────────────────────────
-          // CoUI 통합 변형 (open-board + coco-de/coui 가 함께 있는 환경)
-          //
-          // open-board lib/ 는 CoUI 를 의존하지 않습니다(독립 배포).
-          // 두 레포가 함께 있는 통합 앱에서 example/pubspec.yaml 에
-          //   coui_flutter: { path: <coui>/packages/coui_flutter }
-          // 를 추가하면, 아래처럼 CoUI `CoDraggablePanel` 셸을 주입해
-          // 동일한 도구 패널을 디자인 시스템 룩으로 띄울 수 있습니다.
-          //
-          //   import 'package:coui_flutter/coui_flutter.dart';
-          //
-          //   Positioned.fill(
-          //     child: ScribbleFloatingToolbar(
-          //       draggable: false, // CoDraggablePanel 드래그에 위임
-          //       containerBuilder: (context, content) => CoDraggablePanel(
-          //         initialDock: CoreDockEdge.right,
-          //         child: content,
-          //       ),
-          //     ),
-          //   )
-          // ─────────────────────────────────────────────────────────
+          Positioned.fill(
+            child: ScribbleFloatingToolbar(
+              containerBuilder: (context, content) => co.Card(child: content),
+            ),
+          ),
         ],
       ),
     );

@@ -3,10 +3,13 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  desktop_drop
+  url_launcher_linux
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
-  flutter_pty
+  flutter_pty2
+  jni
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

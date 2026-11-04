@@ -95,6 +95,7 @@ void main() {
     );
     await pumpApp(tester);
 
+    await tester.ensureVisible(find.text('Board Demo'));
     await tester.tap(find.text('Board Demo'));
     await tester.pumpAndSettle();
 
@@ -109,6 +110,7 @@ void main() {
     applyDemoPrefs(const DemoPrefs(locale: DemoLocale.fr));
     await pumpApp(tester);
 
+    await tester.ensureVisible(find.text('Démo écran partagé'));
     await tester.tap(find.text('Démo écran partagé'));
     await tester.pumpAndSettle();
 

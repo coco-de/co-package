@@ -1,3 +1,4 @@
+import 'package:co_example_ui/co_example_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xterm2/xterm.dart';
@@ -20,6 +21,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'xterm2 demo',
+      theme: exampleMaterialTheme(Brightness.light),
+      darkTheme: exampleMaterialTheme(Brightness.dark),
+      builder: (context, child) => ExampleThemeScope(child: child!),
       debugShowCheckedModeBanner: false,
       home: MyHomePage(),
     );
@@ -35,9 +39,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final terminal = Terminal(
-    maxLines: 1000,
-  );
+  final terminal = Terminal(maxLines: 1000);
 
   late final MockRepl pty;
 
@@ -54,12 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: TerminalView(
-          terminal,
-          backgroundOpacity: 0.7,
-        ),
-      ),
+      body: SafeArea(child: TerminalView(terminal, backgroundOpacity: 0.7)),
     );
   }
 }

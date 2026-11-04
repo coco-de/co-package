@@ -1,3 +1,4 @@
+import 'package:co_example_ui/co_example_ui.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -5,6 +6,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show MaterialApp, Brightness;
 import 'package:path/path.dart' as path;
 import 'package:xterm2/xterm.dart';
 
@@ -20,8 +22,11 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return CupertinoApp(
+    return MaterialApp(
       title: 'xterm2 demo',
+      theme: exampleMaterialTheme(Brightness.light),
+      darkTheme: exampleMaterialTheme(Brightness.dark),
+      builder: (context, child) => ExampleThemeScope(child: child!),
       home: MyHomePage(),
     );
   }
@@ -59,10 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
     terminal.write('Connected\r\n');
 
     final session = await client.shell(
-      pty: SSHPtyConfig(
-        width: terminal.viewWidth,
-        height: terminal.viewHeight,
-      ),
+      pty: SSHPtyConfig(width: terminal.viewWidth, height: terminal.viewHeight),
     );
 
     terminal.buffer.clear();
@@ -76,10 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
       session.resizeTerminal(width, height, pixelWidth, pixelHeight);
     };
 
-    final mux = ZModemMux(
-      stdin: session.stdin,
-      stdout: session.stdout,
-    );
+    final mux = ZModemMux(stdin: session.stdin, stdout: session.stdout);
 
     mux.onTerminalInput = terminal.write;
     mux.onFileOffer = _handleFileOffer;
@@ -91,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _handleFileOffer(ZModemOffer offer) async {
     print(offer.info);
 
-    final outputDir = await FilePicker.platform.getDirectoryPath();
+    final outputDir = await FilePicker.getDirectoryPath();
 
     if (outputDir == null) {
       offer.skip();
@@ -122,31 +121,37 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<Iterable<ZModemOffer>> _handleFileRequest() async {
-    final result = await FilePicker.platform.pickFiles(withReadStream: true);
+    final result = await FilePicker.pickFiles();
 
-    if (result == null) {
+    if (result.isEmpty) {
       return [];
     }
+
+    final sizes = {for (final file in result) file: await file.length()};
 
     void updateProgress(PlatformFile file, int received) {
       terminal.write('\r');
       terminal.write('\x1b[K');
       terminal.write('${file.name}: ');
-      terminal.write((received / file.size * 100).toStringAsFixed(1));
+      terminal.write(
+        (received / (sizes[file]! > 0 ? sizes[file]! : 1) * 100)
+            .toStringAsFixed(1),
+      );
       terminal.write('%');
     }
 
-    return result.files.map(
+    return result.map(
       (file) => ZModemCallbackOffer(
         ZModemFileInfo(
           pathname: path.basename(file.path!),
-          length: file.size,
+          length: sizes[file]!,
           mode: '100644',
           filesRemaining: 1,
-          bytesRemaining: file.size,
+          bytesRemaining: sizes[file]!,
         ),
-        onAccept: (offset) => file.readStream!
-            .skip(offset)
+        onAccept: (offset) => file.xFile
+            .openRead(offset)
+            .cast<List<int>>()
             .transform(
               WithProgress(onProgress: (bytes) => updateProgress(file, bytes)),
             )
@@ -164,9 +169,9 @@ class _MyHomePageState extends State<MyHomePage> {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: Text(title),
-        backgroundColor: CupertinoTheme.of(context)
-            .barBackgroundColor
-            .withValues(alpha: 0.5),
+        backgroundColor: CupertinoTheme.of(
+          context,
+        ).barBackgroundColor.withValues(alpha: 0.5),
       ),
       child: TerminalView(terminal),
     );
@@ -184,12 +189,14 @@ class WithProgress<T> extends StreamTransformerBase<List<T>, List<T>> {
 
   @override
   Stream<List<T>> bind(Stream<List<T>> stream) {
-    return stream.transform(StreamTransformer<List<T>, List<T>>.fromHandlers(
-      handleData: (List<T> data, EventSink<List<T>> sink) {
-        _progress += data.length;
-        onProgress?.call(_progress);
-        sink.add(data);
-      },
-    ));
+    return stream.transform(
+      StreamTransformer<List<T>, List<T>>.fromHandlers(
+        handleData: (List<T> data, EventSink<List<T>> sink) {
+          _progress += data.length;
+          onProgress?.call(_progress);
+          sink.add(data);
+        },
+      ),
+    );
   }
 }
