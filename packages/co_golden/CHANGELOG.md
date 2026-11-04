@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/coco-de/co-package/compare/co_golden-v0.4.0...co_golden-v0.4.1) (2026-11-04)
+
+
+### 문서
+
+* **co-golden-gallery:** 📝 골든 갤러리와 기준 이미지를 S3 에 보관하는 방법 ([#122](https://github.com/coco-de/co-package/issues/122)) ([5247599](https://github.com/coco-de/co-package/commit/5247599add58a2359d9d16d293ad0b0980bb47b4))
+
 ## [0.4.0](https://github.com/coco-de/co-package/compare/co_golden-v0.3.0...co_golden-v0.4.0) (2026-10-26)
 
 

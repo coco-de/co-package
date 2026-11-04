@@ -82,6 +82,21 @@
   - 저장 시점과 크게 다른 뷰포트·폰트 크기로 복원하면 여전히 근사치다(같은
     기기·세션 재진입을 전제).
 
+## [1.4.0](https://github.com/coco-de/co-package/compare/open_epub-v1.3.0...open_epub-v1.4.0) (2026-11-04)
+
+
+### 기능
+
+* **examples:** apply latest CoUI and deploy all playgrounds ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+* **examples:** refresh all playgrounds with latest CoUI and Pages deployment ([d8b5c12](https://github.com/coco-de/co-package/commit/d8b5c12e234a25cb9cd86c348d3cb6f678185f47))
+* **examples:** refresh CoUI playgrounds and GitHub Pages ([#126](https://github.com/coco-de/co-package/issues/126)) ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+* **web:** ✨ 웹 첫 로딩 스플래시 — 코코드 로고(CO.) (coco-de/cocode[#1473](https://github.com/coco-de/co-package/issues/1473)) ([#125](https://github.com/coco-de/co-package/issues/125)) ([fbb8cda](https://github.com/coco-de/co-package/commit/fbb8cda9b675fa842093d051d123b2e17546d7ba))
+
+
+### 버그 수정
+
+* **ci:** exclude private CoUI overrides from public workspace resolution ([dde198d](https://github.com/coco-de/co-package/commit/dde198d53d1a5b29209618731a4f3e1c6ee1dbc0))
+
 ## [1.3.0](https://github.com/coco-de/co-package/compare/open_epub-v1.2.0...open_epub-v1.3.0) (2026-10-04)
 
 

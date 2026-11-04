@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.3.1...co_golden_gallery-v0.4.0) (2026-11-04)
+
+
+### 기능
+
+* **examples:** apply latest CoUI and deploy all playgrounds ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+* **examples:** refresh all playgrounds with latest CoUI and Pages deployment ([d8b5c12](https://github.com/coco-de/co-package/commit/d8b5c12e234a25cb9cd86c348d3cb6f678185f47))
+* **examples:** refresh CoUI playgrounds and GitHub Pages ([#126](https://github.com/coco-de/co-package/issues/126)) ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+
+
+### 문서
+
+* **co-golden-gallery:** 📝 골든 갤러리와 기준 이미지를 S3 에 보관하는 방법 ([#122](https://github.com/coco-de/co-package/issues/122)) ([5247599](https://github.com/coco-de/co-package/commit/5247599add58a2359d9d16d293ad0b0980bb47b4))
+
 ## [0.3.1](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.3.0...co_golden_gallery-v0.3.1) (2026-10-26)
 
 
