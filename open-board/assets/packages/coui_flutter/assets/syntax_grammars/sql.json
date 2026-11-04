@@ -1,0 +1,149 @@
+{
+    "fileTypes": [
+        "sql",
+        "ddl",
+        "dml"
+    ],
+    "foldingStartMarker": "(?i)^\\s*(begin|if|loop)\\b",
+    "foldingStopMarker": "(?i)^\\s*(end)\\b",
+    "keyEquivalent": "^~S",
+    "name": "PL\/pgSQL (Postgres)",
+    "patterns": [
+        {
+            "begin": "\/\\*",
+            "end": "\\*\/",
+            "name": "comment.block.postgres"
+        },
+        {
+            "match": "--.*$",
+            "name": "comment.line.double-dash.postgres"
+        },
+        {
+            "captures": {
+                "1": {
+                    "name": "keyword.other.postgres"
+                },
+                "2": {
+                    "name": "keyword.other.postgres"
+                }
+            },
+            "match": "^\\s*([cC][rR][eE][aA][tT][eE])(\\s+[oO][rR]\\s+[rR][eE][pP][lL][aA][cC][eE])?\\s+",
+            "name": "meta.create.postgres"
+        },
+        {
+            "captures": {
+                "1": {
+                    "name": "keyword.other.postgres"
+                },
+                "2": {
+                    "name": "keyword.other.postgres"
+                },
+                "3": {
+                    "name": "entity.name.type.postgres"
+                }
+            },
+            "match": "\\b([pP][aA][cC][kK][aA][gG][eE])(\\s+[bB][oO][dD][yY])?\\s+(\\S+)",
+            "name": "meta.package.postgres"
+        },
+        {
+            "captures": {
+                "1": {
+                    "name": "keyword.other.postgres"
+                },
+                "2": {
+                    "name": "entity.name.type.postgres"
+                }
+            },
+            "match": "\\b([tT][yY][pP][eE])\\s+\"([^\"]+)\"",
+            "name": "meta.type.postgres"
+        },
+        {
+            "captures": {
+                "1": {
+                    "name": "keyword.other.postgres"
+                },
+                "2": {
+                    "name": "entity.name.function.postgres"
+                }
+            },
+            "match": "\\s*([fF][uU][nN][cC][tT][iI][oO][nN]|[pP][rR][oO][cC][eE][dD][uU][rR][eE])\\s+([-a-zA-Z0-9_.]+)",
+            "name": "meta.procedure.postgres"
+        },
+        {
+            "match": "[!<>:]?=|<>|<|>|\\+|(?<!\\.)\\*|-|(?<!^)\/|@@|\\|\\|",
+            "name": "keyword.operator.postgres"
+        },
+        {
+            "match": "\\b([tT][rR][uU][eE]|[fF][aA][lL][sS][eE]|[nN][uU][lL][lL]|[fF][oO][uU][nN][dD])\\b",
+            "name": "constant.language.postgres"
+        },
+        {
+            "match": "\\b\\d+(\\.\\d+)?\\b",
+            "name": "constant.numeric.postgres"
+        },
+        {
+            "match": "\\b([iI][fF]|[eE][lL][sS][iI][fF]|[eE][lL][sS][eE]|[eE][nN][dD]\\s+[iI][fF]|[lL][oO][oO][pP]|[eE][nN][dD]\\s+[lL][oO][oO][pP]|[fF][oO][rR]|[fF][oO][rR][eE][aA][cC][hH]|[aA][rR][rR][aA][yY]|[cC][aA][sS][eE]|[eE][nN][dD]\\s+[cC][aA][sS][eE]|[cC][oO][nN][tT][iI][nN][uU][eE]|[rR][eE][tT][uU][rR][nN]|[gG][oO][tT][oO]|[aA][lL][iI][aA][sS])\\b",
+            "name": "keyword.control.postgres"
+        },
+        {
+            "match": "\\b([oO][rR]|[aA][nN][dD]|[nN][oO][tT]|[lL][iI][kK][eE])\\b",
+            "name": "keyword.operator.postgres"
+        },
+        {
+            "match": "\\b([sS][yY][sS][dD][aA][tT][eE]|%([iI][sS][oO][pP][eE][nN]|[fF][oO][uU][nN][dD]|[nN][oO][tT][fF][oO][uU][nN][dD]|[rR][oO][wW][cC][oO][uU][nN][tT])|[cC][oO][mM][mM][iI][tT]|[rR][oO][lL][lL][bB][aA][cC][kK]|[sS][qQ][lL][eE][rR][rR][mM]|[sS][uU][bB][sS][tT][rR]|[cC][aA][sS][tT]|[dD][eE][cC][oO][dD][eE]|[lL][eE][nN][gG][tT][hH]|[lL][oO][wW][eE][rR]|[uU][pP][pP][eE][rR]|[cC][oO][aA][lL][eE][sS][cC][eE])\\b",
+            "name": "support.function.postgres"
+        },
+        {
+            "match": "\\b([aA][vV][gG]|[cC][oO][uU][nN][tT]|[sS][uU][mM]|[mM][aA][xX]|[mM][iI][nN]|[nN][vV][lL]|[tT][rR][iI][mM]|[tT][oO]_[dD][aA][tT][eE]|[tT][oO]_[cC][hH][aA][rR]|[lL][pP][aA][dD]|[lL][tT][rR][iI][mM]|[rR][pP][aA][dD]|[rR][tT][rR][iI][mM]|[tT][rR][uU][nN][cC]|[tT][oO]_[nN][uU][mM][bB][eE][rR]|[rR][eE][gG][eE][xX][pP]_[sS][pP][lL][iI][tT]_[tT][oO]_[aA][rR][rR][aA][yY]|[rR][eE][gG][eE][xX][pP]_[rR][eE][pP][lL][aA][cC][eE])\\b",
+            "name": "support.function.builtin.postgres"
+        },
+        {
+            "match": "\\b([sS][qQ][lL]|[sS][qQ][lL][cC][oO][dD][eE])\\b",
+            "name": "variable.language.postgres"
+        },
+        {
+            "match": "\\b([pP]([iI]|[oO]|[iI][oO])_[-a-zA-Z0-9_]+)\\b",
+            "name": "variable.parameter.postgres"
+        },
+        {
+            "match": "\\b([lL]_[-a-zA-Z0-9_]+)\\b",
+            "name": "variable.other.postgres"
+        },
+        {
+            "match": "\\b([iI][mM][mM][uU][tT][aA][bB][lL][eE]|[vV][oO][lL][aA][tT][iI][lL][eE]|[sS][tT][aA][bB][lL][eE]|[sS][eE][rR][iI][aA][lL]|[pP][rR][iI][mM][aA][rR][yY]|[kK][eE][yY]|[rR][eE][fF][eE][rR][eE][nN][cC][eE][sS]|[cC][oO][mM][mM][eE][nN][tT]|[cC][oO][lL][uU][mM][nN]|[sS][cC][hH][eE][mM][aA]|[aA][uU][tT][hH][oO][rR][iI][zZ][aA][tT][iI][oO][nN]|[gG][eE][tT]|[dD][iI][aA][gG][nN][oO][sS][tT][iI][cC][sS]|[rR][eE][tT][uU][rR][nN][iI][nN][gG]|[dD][rR][oO][pP]|[aA][lL][lL]|[rR][aA][iI][sS][eE]|[nN][oO][tT][iI][cC][eE]|[wW][aA][rR][nN][iI][nN][gG]|[eE][xX][cC][eE][pP][tT][iI][oO][nN]|[eE][xX][tT][eE][rR][nN][aA][lL]|[sS][eE][cC][uU][rR][iI][tT][yY]|[dD][eE][fF][iI][nN][eE][rR]|[lL][aA][nN][gG][uU][aA][gG][eE]|[gG][rR][aA][nN][tT]|[eE][xX][eE][cC][uU][tT][eE]|[oO][nN]|[tT][oO]|[fF][uU][nN][cC][tT][iI][oO][nN]|[pP][rR][oO][cC][eE][dD][uU][rR][eE]|[rR][eE][tT][uU][rR][nN][sS]|[eE][nN][dD]|[tT][hH][eE][nN]|[dD][eE][tT][eE][rR][mM][iI][nN][iI][sS][tT][iI][cC]|[eE][xX][cC][eE][pP][tT][iI][oO][nN]|[wW][hH][eE][nN]|[oO][tT][hH][eE][rR][sS]|[sS][uU][bB][tT][yY][pP][eE]|[cC][oO][nN][sS][tT][aA][nN][tT]|[rR][aA][nN][gG][eE]|[bB][iI][nN][aA][rR][yY]_[iI][nN][tT][eE][gG][eE][rR]|[dD][eE][cC][lL][aA][rR][eE]|[bB][eE][gG][iI][nN]|[iI][nN]|[oO][uU][tT]|[iI][sS]|[aA][sS]|[eE][xX][iI][tT]|[oO][pP][eE][nN]|[fF][eE][tT][cC][hH]|[iI][nN][tT][oO]|[cC][lL][oO][sS][eE]|[tT][yY][pP][eE]|[rR][oO][wW][tT][yY][pP][eE]|[dD][eE][fF][aA][uU][lL][tT]|\\.([eE][xX][tT][eE][nN][dD]|[cC][oO][uU][nN][tT]|[fF][iI][rR][sS][tT]|[lL][aA][sS][tT]|[nN][eE][xX][tT]|[nN][eE][xX][tT][vV][aA][lL]|[cC][uU][rR][rR][vV][aA][lL])|[cC][oO][sS][tT]|[aA][lL][tT][eE][rR]|[oO][wW][nN][eE][rR])\\b",
+            "name": "keyword.other.postgres"
+        },
+        {
+            "match": "\\b([sS][eE][lL][eE][cC][tT]|[pP][eE][rR][fF][oO][rR][mM]|[fF][rR][oO][mM]|[wW][hH][eE][rR][eE]|[oO][rR][dD][eE][rR]\\s+[bB][yY]|[gG][rR][oO][uU][pP]\\s+[bB][yY]|[aA][sS][cC]|[dD][eE][sS][cC]|[uU][pP][dD][aA][tT][eE]|[sS][eE][tT]|[iI][nN][sS][eE][rR][tT]|[iI][nN][tT][oO]|[vV][aA][lL][uU][eE][sS]|[dD][eE][lL][eE][tT][eE]|[fF][rR][oO][mM]|[dD][iI][sS][tT][iI][nN][cC][tT]|[uU][nN][iI][oO][nN]|[hH][aA][vV][iI][nN][gG]|[lL][iI][mM][iI][tT]|[tT][aA][bB][lL][eE]|[oO][fF]|[pP][rR][eE][pP][aA][rR][eE]|([iI][nN][nN][eE][rR]|[lL][eE][fF][tT]|[oO][uU][tT][eE][rR]) [jJ][oO][iI][nN])\\b",
+            "name": "keyword.other.sql.postgres"
+        },
+        {
+            "match": "[$][0-9]+",
+            "name": "storage.type.postgres"
+        },
+        {
+            "match": "\\b([dD][bB][mM][sS]_[lL][oO][cC][kK]|[dD][bB][mM][sS]_[oO][uU][tT][pP][uU][tT])\\b",
+            "name": "support.class.postgres"
+        },
+        {
+            "match": "\\b([pP][uU][tT]_[lL][iI][nN][eE])\\b",
+            "name": "support.function.postgres"
+        },
+        {
+            "begin": "'",
+            "end": "'",
+            "name": "string.quoted.single.postgres"
+        },
+        {
+            "begin": "\"",
+            "end": "\"",
+            "name": "string.quoted.double.postgres"
+        },
+        {
+            "match": "\\b([nN][uU][mM][bB][eE][rR]|[iI][nN][tT][eE][gG][eE][rR]|[bB][iI][gG][iI][nN][tT]|[vV][aA][rR][cC][hH][aA][rR]2|[vV][aA][rR][cC][hH][aA][rR]|[bB][oO][oO][lL][eE][aA][nN]|[dD][aA][tT][eE]|[sS][eE][tT][oO][fF]|[rR][eE][cC][oO][rR][dD]|[qQ][uU][eE][rR][yY]|[nN][uU][mM][eE][rR][iI][cC]|[vV][oO][iI][dD]|[cC][hH][aA][rR][aA][cC][tT][eE][rR] [vV][aA][rR][yY][iI][nN][gG]|[tT][eE][xX][tT]|([-a-zA-Z0-9_.]+%([rR][oO][wW])?[tT][yY][pP][eE]))\\b",
+            "name": "storage.type.postgres"
+        }
+    ],
+    "scopeName": "source.plpgsql.postgres",
+    "uuid": "28DCE4DD-F5E1-4ED3-8847-64DA6B1F9163"
+}

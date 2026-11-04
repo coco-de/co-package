@@ -1,0 +1,15 @@
+{
+  "source_repository": "https://github.com/coco-de/co-package",
+  "source_revision": "d8b5c12e234a25cb9cd86c348d3cb6f678185f47",
+  "coui_revision": "ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6",
+  "coui_flutter": "0.178.0",
+  "coui_core": "0.176.0",
+  "coui_web": "0.176.0",
+  "flutter": "3.47.8",
+  "built_at": "2026-11-04T03:07:10.055202+00:00",
+  "routes": [
+    "open-board/",
+    "open-epub/",
+    "xterm2/"
+  ]
+}
