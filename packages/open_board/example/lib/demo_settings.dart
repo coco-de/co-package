@@ -1,3 +1,4 @@
+import 'package:co_example_ui/co_example_ui.dart';
 import 'package:co_demo_prefs/co_demo_prefs.dart';
 import 'package:flutter/material.dart';
 
@@ -11,11 +12,7 @@ final ValueNotifier<ThemeMode> demoThemeMode = ValueNotifier(ThemeMode.system);
 
 /// 앱 크롬의 테마. 필기 종이 · 책 본문 같은 콘텐츠 면은 [LightSurface] 로
 /// 다크에서도 원래 색을 유지한다.
-ThemeData exampleTheme(Brightness brightness) => ThemeData(
-  colorSchemeSeed: Colors.indigo,
-  brightness: brightness,
-  useMaterial3: true,
-);
+ThemeData exampleTheme(Brightness brightness) => exampleMaterialTheme(brightness);
 
 /// 데모 포털(demo.cocode.im)이 넘긴 언어 · 테마를 적용한다.
 ///

@@ -20,12 +20,15 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 
 ## Live examples
 
-Web builds of the example apps are published to this repository's GitHub Pages
-site, <https://docs.cocode.im/co-package/>:
-[`open-board/`](https://docs.cocode.im/co-package/open-board/) and
-[`open-epub/`](https://docs.cocode.im/co-package/open-epub/).
-[`examples-pages.yml`](.github/workflows/examples-pages.yml) builds them on pull
-requests and deploys them on every push to `main` that touches them.
+The [Cocode playground](https://docs.cocode.im/co-package/) includes
+[Open Board](https://docs.cocode.im/co-package/open-board/),
+[Open EPUB](https://docs.cocode.im/co-package/open-epub/), and
+[xterm2](https://docs.cocode.im/co-package/xterm2/). The examples share the latest
+pinned CoUI theme, responsive navigation, bundled multilingual fonts, and
+language/theme settings. The terminal uses a local browser demo shell.
+
+See [build, verification and Pages deployment](tool/pages/README.md) for the
+private CoUI read token or verified prebuilt deployment workflow.
 
 ## Depending on these packages
 

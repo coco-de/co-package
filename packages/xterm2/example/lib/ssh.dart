@@ -1,9 +1,11 @@
+import 'package:co_example_ui/co_example_ui.dart';
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:example/src/virtual_keyboard.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show MaterialApp, Brightness;
 import 'package:xterm2/xterm.dart';
 
 const host = 'localhost';
@@ -18,8 +20,11 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return CupertinoApp(
+    return MaterialApp(
       title: 'xterm2 demo',
+      theme: exampleMaterialTheme(Brightness.light),
+      darkTheme: exampleMaterialTheme(Brightness.dark),
+      builder: (context, child) => ExampleThemeScope(child: child!),
       home: MyHomePage(),
     );
   }
@@ -58,10 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
     terminal.write('Connected\r\n');
 
     final session = await client.shell(
-      pty: SSHPtyConfig(
-        width: terminal.viewWidth,
-        height: terminal.viewHeight,
-      ),
+      pty: SSHPtyConfig(width: terminal.viewWidth, height: terminal.viewHeight),
     );
 
     terminal.buffer.clear();
@@ -95,15 +97,13 @@ class _MyHomePageState extends State<MyHomePage> {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: Text(title),
-        backgroundColor: CupertinoTheme.of(context)
-            .barBackgroundColor
-            .withValues(alpha: 0.5),
+        backgroundColor: CupertinoTheme.of(
+          context,
+        ).barBackgroundColor.withValues(alpha: 0.5),
       ),
       child: Column(
         children: [
-          Expanded(
-            child: TerminalView(terminal),
-          ),
+          Expanded(child: TerminalView(terminal)),
           VirtualKeyboardView(keyboard),
         ],
       ),

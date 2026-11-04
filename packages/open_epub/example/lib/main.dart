@@ -1,3 +1,4 @@
+import 'package:co_example_ui/co_example_ui.dart';
 import 'package:co_demo_prefs/co_demo_prefs.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
       valueListenable: demoThemeMode,
       builder: (context, themeMode, _) => MaterialApp(
         onGenerateTitle: (context) => context.tr.app.title,
+        debugShowCheckedModeBanner: false,
         // slang 로케일이 MaterialApp.locale 을 움직인다 — ar 이면 RTL.
         // TranslationProvider 없이 띄운 테스트에서도 동작하도록 현재 로케일을 쓴다.
         locale: context.tr.$meta.locale.flutterLocale,
@@ -56,9 +58,11 @@ class MyApp extends StatelessWidget {
         darkTheme: exampleTheme(Brightness.dark),
         themeMode: themeMode,
         // 리더 패키지가 그리는 문구(오류 화면 · 빈 페이지 안내 등)도 번역한다.
-        builder: (context, child) => EpubReaderStringsScope(
-          strings: epubReaderStringsOf(context.tr),
-          child: child!,
+        builder: (context, child) => ExampleThemeScope(
+          child: EpubReaderStringsScope(
+            strings: epubReaderStringsOf(context.tr),
+            child: child!,
+          ),
         ),
         home: const HomePage(),
       ),
@@ -76,72 +80,44 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tr;
-    return Scaffold(
-      appBar: AppBar(title: Text(t.app.title), centerTitle: true),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // --- EPUB3 샘플 라이브러리 (marionette 통합테스트 대상) ---
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              key: const ValueKey('demo-sample-library'),
-              leading: const Icon(Icons.local_library),
-              title: Text(t.home.library.title),
-              subtitle: Text(t.home.library.description),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SampleLibraryPage()),
-              ),
-            ),
-          ),
-
-          // --- 1.0 코어 데모 ---
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              key: const ValueKey('demo-v1-core'),
-              leading: const Icon(Icons.auto_stories),
-              title: Text(t.home.core.title),
-              // API 이름 — 번역하지 않는다.
-              subtitle: const Text('EpubBookSession + EpubReader'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const V1DemoPage())),
-            ),
-          ),
-
-          // --- 하이라이트 데모 (#43) ---
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: const Icon(Icons.border_color_outlined),
-              title: Text(t.home.highlight.title),
-              subtitle: Text(t.home.highlight.description),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const HighlightDemoPage()),
-              ),
-            ),
-          ),
-
-          // --- Fixed Layout A4 데모 ---
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              key: const ValueKey('demo-fixed-layout-a4'),
-              leading: const Icon(Icons.insert_drive_file_outlined),
-              title: Text(t.home.fixedLayout.title),
-              subtitle: Text(t.home.fixedLayout.description),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const FixedLayoutDemoPage()),
-              ),
-            ),
-          ),
-        ],
+    return ExampleCatalog(
+      title: t.app.title,
+      product: 'OPEN EPUB',
+      reading: true,
+      settings: ExampleSettings(
+        themeMode: demoThemeMode,
+        locale: DemoLocale.parse(t.$meta.locale.languageCode),
+        onLocaleChanged: (locale) => applyDemoPrefs(DemoPrefs(locale: locale)),
       ),
+      entries: [
+        ExampleEntry(
+          title: t.home.library.title,
+          description: t.home.library.description,
+          icon: Icons.local_library_outlined,
+          page: const SampleLibraryPage(),
+          id: 'demo-sample-library',
+        ),
+        ExampleEntry(
+          title: t.home.core.title,
+          description: 'EpubBookSession + EpubReader',
+          icon: Icons.auto_stories_outlined,
+          page: const V1DemoPage(),
+          id: 'demo-v1-core',
+        ),
+        ExampleEntry(
+          title: t.home.highlight.title,
+          description: t.home.highlight.description,
+          icon: Icons.border_color_outlined,
+          page: const HighlightDemoPage(),
+        ),
+        ExampleEntry(
+          title: t.home.fixedLayout.title,
+          description: t.home.fixedLayout.description,
+          icon: Icons.insert_drive_file_outlined,
+          page: const FixedLayoutDemoPage(),
+          id: 'demo-fixed-layout-a4',
+        ),
+      ],
     );
   }
 }

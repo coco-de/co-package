@@ -1,3 +1,4 @@
+import 'package:co_example_ui/co_example_ui.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -15,11 +16,12 @@ final engine = SuggestionEngine();
 Future<Map<String, dynamic>> loadSuggestion() async {
   final data = await rootBundle.load('assets/specs_v1.json.gz');
   return await Stream.value(data.buffer.asUint8List())
-      .cast<List<int>>()
-      .transform(gzip.decoder)
-      .transform(utf8.decoder)
-      .transform(json.decoder)
-      .first as Map<String, dynamic>;
+          .cast<List<int>>()
+          .transform(gzip.decoder)
+          .transform(utf8.decoder)
+          .transform(json.decoder)
+          .first
+      as Map<String, dynamic>;
 }
 
 void main() async {
@@ -33,6 +35,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'xterm2 demo',
+      theme: exampleMaterialTheme(Brightness.light),
+      darkTheme: exampleMaterialTheme(Brightness.dark),
+      builder: (context, child) => ExampleThemeScope(child: child!),
       debugShowCheckedModeBanner: false,
       home: AppPlatformMenu(child: Home()),
     );
@@ -66,11 +71,9 @@ class _HomeState extends State<Home> {
     super.initState();
     terminal.addListener(_handleTerminalChanged);
 
-    WidgetsBinding.instance.endOfFrame.then(
-      (_) {
-        if (mounted) _startPty();
-      },
-    );
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      if (mounted) _startPty();
+    });
   }
 
   @override
@@ -178,10 +181,7 @@ class _HomeState extends State<Home> {
 
     var commandRange = BufferRangeLine(
       commandStart.offset,
-      CellOffset(
-        terminal.buffer.cursorX,
-        terminal.buffer.absoluteCursorY,
-      ),
+      CellOffset(terminal.buffer.cursorX, terminal.buffer.absoluteCursorY),
     );
     return terminal.buffer.getText(commandRange).trimRightNewline();
   }
@@ -212,8 +212,9 @@ class _HomeState extends State<Home> {
       return;
     }
 
-    final incompleteCommand =
-        command.endsWith(' ') ? null : command.split(' ').last;
+    final incompleteCommand = command.endsWith(' ')
+        ? null
+        : command.split(' ').last;
 
     switch (suggestion) {
       case FigCommand(:var names):
@@ -364,11 +365,7 @@ class SuggestionViewController extends ChangeNotifier {
 
 /// The suggestion popup shown above the terminal when user is typing a command.
 class SuggestionView extends StatelessWidget {
-  const SuggestionView(
-    this.controller, {
-    super.key,
-    this.onSuggestionSelected,
-  });
+  const SuggestionView(this.controller, {super.key, this.onSuggestionSelected});
 
   final SuggestionViewController controller;
 
@@ -388,13 +385,8 @@ class SuggestionView extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: Container(
-        constraints: BoxConstraints(
-          maxWidth: 300,
-          maxHeight: 200,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.grey[800],
-        ),
+        constraints: BoxConstraints(maxWidth: 300, maxHeight: 200),
+        decoration: BoxDecoration(color: Colors.grey[800]),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -420,11 +412,7 @@ class SuggestionView extends StatelessWidget {
               ),
             ),
             if (controller.currentSuggestion != null) ...[
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey[700],
-              ),
+              Divider(height: 1, thickness: 1, color: Colors.grey[700]),
               SuggestionDescriptionView(controller.currentSuggestion!),
             ],
           ],
@@ -437,10 +425,7 @@ class SuggestionView extends StatelessWidget {
 /// The area at the bottom of [SuggestionView] that shows the description of
 /// the currently selected suggestion.
 class SuggestionDescriptionView extends StatefulWidget {
-  const SuggestionDescriptionView(
-    this.suggestion, {
-    super.key,
-  });
+  const SuggestionDescriptionView(this.suggestion, {super.key});
 
   final FigToken suggestion;
 
@@ -491,14 +476,14 @@ class SuggestionTile extends StatelessWidget {
   final FigToken suggestion;
 
   static final primaryStyle = TerminalStyle().toTextStyle().copyWith(
-        leadingDistribution: TextLeadingDistribution.even,
-      );
+    leadingDistribution: TextLeadingDistribution.even,
+  );
 
   static final argumentStyle = TerminalStyle().toTextStyle().copyWith(
-        leadingDistribution: TextLeadingDistribution.even,
-        color: Colors.grey[500],
-        fontSize: 12,
-      );
+    leadingDistribution: TextLeadingDistribution.even,
+    color: Colors.grey[500],
+    fontSize: 12,
+  );
 
   @override
   Widget build(BuildContext context) {

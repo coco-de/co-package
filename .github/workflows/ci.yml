@@ -35,24 +35,10 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      # co_golden_gallery renders with private coco-de/coui. This public repo
-      # has no Actions secret that can read it, so run the remaining workspace
-      # checks without resolving that member, then check its source formatting.
-      - name: Exclude private CoUI gallery from public CI workspace
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          pubspec = Path('pubspec.yaml')
-          marker = '  - packages/co_golden_gallery\n'
-          text = pubspec.read_text()
-          if text.count(marker) != 1:
-              raise SystemExit('co_golden_gallery workspace entry not found exactly once')
-          pubspec.write_text(text.replace(marker, ''))
-          PY
-      # 예제 앱(open_epub/example · open_board/example)은 워크스페이스 멤버라 여기서 함께
-      # 해석 · 분석된다 — 비공개 의존성이 없어 토큰이 필요 없다(#42). --no-example 은 루트
-      # example/ 을 따로 해석하지 않게 하는 플래그로, 루트에는 example/ 이 없다.
+      # Public package checks stay independent of the private CoUI examples.
+      # Full example analysis, tests and builds run locally or with COUI_READ_TOKEN.
+      - name: Prepare public CI workspace
+        run: python3 tool/pages/public_workspace.py
       - run: flutter pub get --no-example
       - run: dart format --output=none --set-exit-if-changed packages/co_golden_gallery
       - run: dart pub global activate melos

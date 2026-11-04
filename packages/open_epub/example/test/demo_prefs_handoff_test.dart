@@ -119,6 +119,9 @@ void main() {
     );
     await pumpApp(tester);
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('demo-fixed-layout-a4')),
+    );
     await tester.tap(find.byKey(const ValueKey('demo-fixed-layout-a4')));
     await tester.pumpAndSettle();
 

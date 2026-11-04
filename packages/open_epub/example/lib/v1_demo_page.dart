@@ -212,8 +212,14 @@ class _V1DemoPageState extends State<V1DemoPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
-                    Text(t.core.eventLog, style: theme.textTheme.titleSmall),
-                    const Spacer(),
+                    Expanded(
+                      child: Text(
+                        t.core.eventLog,
+                        style: theme.textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     IconButton(
                       tooltip: 'session.previousPage()',
                       icon: const Icon(Icons.chevron_left),
@@ -224,10 +230,10 @@ class _V1DemoPageState extends State<V1DemoPage> {
                       icon: const Icon(Icons.chevron_right),
                       onPressed: session?.nextPage,
                     ),
-                    TextButton.icon(
+                    IconButton(
+                      tooltip: t.core.positionToken,
                       onPressed: session == null ? null : _showPositionToken,
                       icon: const Icon(Icons.pin_drop_outlined, size: 18),
-                      label: Text(t.core.positionToken),
                     ),
                   ],
                 ),
