@@ -108,14 +108,35 @@ const Set<String> _vectorTypes = {
   'LINE',
 };
 
-/// Whether [node] draws an icon: a small vector, or a small instance named
-/// like one.
+/// Icon sets whose Figma components are named `<set>/<icon>`, such as
+/// `lucide/bell` (Iconify prefixes, including the sets CoUI ships).
+final RegExp _iconSet = RegExp(
+  '^(lucide|tabler|heroicons|phosphor|material-symbols|feather|mdi|'
+  r'radix-icons|bi|remix)\s*[/:]',
+  caseSensitive: false,
+);
+
+/// Whether [node] draws an icon: a small vector, a small instance named like
+/// an icon or after an icon set, or an instance inside an icon instance,
+/// such as the `lucide/bell` glyph that a CoUI `Icon` component swaps in.
 bool _isIconNode(GoldenDesignSpec spec, GoldenDesignNode node) {
   final small = node.rect.width <= 64 && node.rect.height <= 64;
   if (!small) return false;
   if (_vectorTypes.contains(node.type)) return true;
-  final name = '${node.instance?.name ?? ''} ${node.name}'.toLowerCase();
-  return node.isInstance && RegExp(r'\bicon|^ic[_/ -]|icon/').hasMatch(name);
+  if (!node.isInstance) return false;
+  final instance = node.instance;
+  final name = '${instance?.name ?? ''} ${node.name}'.toLowerCase();
+  if (RegExp(r'\bicon|^ic[_/ -]|icon/').hasMatch(name)) return true;
+  for (final candidate in [
+    instance?.componentSet,
+    instance?.component,
+    node.name,
+  ]) {
+    if (candidate != null && _iconSet.hasMatch(candidate.trim())) return true;
+  }
+  return spec
+      .ancestors(node)
+      .any((ancestor) => ancestor.isInstance && _isIconNode(spec, ancestor));
 }
 
 /// Findings that need no design specification: unloaded fonts.
