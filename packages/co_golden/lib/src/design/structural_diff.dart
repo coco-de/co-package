@@ -650,7 +650,9 @@ final class _StructuralDiff {
       );
     }
 
-    // Color.
+    // Color as painted: an Opacity above the text dims it like its alpha
+    // does, and so does layer opacity in the design (exports often fold it
+    // into the text color already). Token names stay those of the colors.
     final expectedColor = typography.color;
     final actualColor = style.color;
     if (expectedColor != null && actualColor != null) {
@@ -659,8 +661,9 @@ final class _StructuralDiff {
         property: 'textColor',
         design: design,
         render: render,
-        expected: expectedColor,
-        actual: actualColor,
+        expected: _faded(expectedColor, _layerOpacity(design)),
+        actual: _faded(actualColor, render.opacity),
+        actualTokenColor: actualColor,
         expectedToken: typography.colorVariable,
         label: '‘${_short(rendered.text)}’ 글자색',
       );
@@ -747,6 +750,9 @@ final class _StructuralDiff {
       return rendered.style;
     }
 
+    // Colors as painted, as for the whole text.
+    final designOpacity = _layerOpacity(match.design);
+    final renderOpacity = match.render.opacity;
     for (final run in text.runs) {
       if (run.start >= run.end || run.end > characters.length) continue;
       final expected = text.typography.merge(run.typography);
@@ -776,19 +782,22 @@ final class _StructuralDiff {
           ),
         );
       }
-      if (expected.color != null &&
-          actual.color != null &&
-          _deltaE(expected.color!, actual.color!) > tol.propertyDeltaE) {
-        diffs.add(
-          _diff(
-            'color',
-            GoldenColorMath.hexArgb(expected.color!),
-            GoldenColorMath.hexArgb(actual.color!),
-            'ΔE',
-            delta: _deltaE(expected.color!, actual.color!),
-            scope: scope,
-          ),
-        );
+      if (expected.color != null && actual.color != null) {
+        final want = _faded(expected.color!, designOpacity);
+        final got = _faded(actual.color!, renderOpacity);
+        final delta = _deltaE(want, got);
+        if (delta > tol.propertyDeltaE) {
+          diffs.add(
+            _diff(
+              'color',
+              GoldenColorMath.hexArgb(want),
+              GoldenColorMath.hexArgb(got),
+              'ΔE',
+              delta: delta,
+              scope: scope,
+            ),
+          );
+        }
       }
     }
     return diffs;
@@ -1668,6 +1677,15 @@ final class _StructuralDiff {
 
   // ─────────────────────────────── colors ──────────────────────────────────
 
+  /// Opacity the design applies to [node]: its layer opacity times its
+  /// ancestors'.
+  double _layerOpacity(GoldenDesignNode node) => spec
+      .ancestors(node)
+      .fold(node.opacity, (opacity, ancestor) => opacity * ancestor.opacity);
+
+  /// Compares [expected] with [actual]. [actualTokenColor], when given, is
+  /// the color whose theme token names the actual value (the text color
+  /// before an Opacity dims it).
   void _compareColor({
     required String key,
     required String property,
@@ -1677,6 +1695,7 @@ final class _StructuralDiff {
     required int actual,
     required String label,
     String? expectedToken,
+    int? actualTokenColor,
   }) {
     final delta = _deltaE(expected, actual);
     final alphaDelta =
@@ -1684,7 +1703,7 @@ final class _StructuralDiff {
     final expectedName = expectedToken == null
         ? null
         : goldenTokenName(expectedToken);
-    final actualName = _tokenOf(actual);
+    final actualName = _tokenOf(actualTokenColor ?? actual);
     final tokenMismatch =
         expectedName != null &&
         actualName != null &&
@@ -1870,6 +1889,15 @@ final class _StructuralDiff {
 
 GoldenFindingSeverity _worst(List<GoldenFindingDiff> diffs) =>
     diffs.fold(GoldenFindingSeverity.info, (worst, d) => worst.max(d.severity));
+
+/// [argb] with its alpha multiplied by [opacity], rounded the way Flutter
+/// turns an opacity into an alpha (`(a * 255).round()`, half away from
+/// zero).
+int _faded(int argb, double opacity) {
+  if (opacity >= 1) return argb;
+  final fraction = ((argb >> 24) & 255) / 255 * opacity.clamp(0.0, 1.0);
+  return ((fraction * 255).round() << 24) | (argb & 0xffffff);
+}
 
 String _normalize(String value) => value
     .replaceAll(RegExp('[​-‍﻿￼]'), '')
