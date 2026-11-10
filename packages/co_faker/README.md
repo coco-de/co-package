@@ -46,6 +46,21 @@ void main() {
 sequence, which is useful for tests and local fixtures. Pass `now` as well
 when dates must be repeatable: the `date` module measures from that clock.
 
+## UI Example Copy
+
+For designer-approved Korean/English component examples, use `faker.ui`:
+
+```dart
+final faker = CoFaker(locale: 'ko', seed: 6010);
+final title = faker.ui.text('card.header'); // 프로젝트 요약
+final placeholder = faker.ui.text('phoneInput.placeholder'); // 전화번호
+final people = faker.ui.list('itemPicker.options'); // 김코드, 이코드, 박코드
+```
+
+`dart run co_faker:ui_copy --locale ko` exports the catalog as JSON for design
+scripts. See [UI example copy](docs/ui-copy.md) for keys, source decisions,
+language fallback, and visual review guidance.
+
 ## Records From A Schema
 
 `faker.schema` turns a field schema (the shape used by entity manifests and
