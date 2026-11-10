@@ -215,6 +215,9 @@ GoldenDesignReport runDesignAnalysis(GoldenDesignAnalysisInput input) {
       designSystem: system,
       packages: packages,
       catalog: catalog,
+      nestedComponents: spec == null
+          ? const {}
+          : goldenDesignComponentNames(spec, system.components),
     ).inspect(input.boundaryElement, input.boundary);
   } on Object catch (error) {
     snapshot = GoldenRenderSnapshot(

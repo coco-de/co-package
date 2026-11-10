@@ -252,7 +252,11 @@ What it compares:
 - **Structure** (needs `specPath`). Design nodes are matched to what the widget
   tree rendered — texts by content (then similarity, then substring for split
   paragraphs), components by name and overlap, boxes, images and icons by
-  overlap — and compared property by property.
+  overlap — and compared property by property. What is laid out but not
+  painted (a hidden `Visibility` that keeps its child, such as an invisible
+  label twin or a filled field's placeholder) is left out; texts, field values
+  included, are measured by whole line boxes like Figma's text boxes; text
+  colors are compared as painted, `Opacity` and layer opacity included.
 - **Setup checks** that need no design: fonts that silently fell back to the
   test font, images captured before they were decoded, frame size and text
   scale mismatches.
@@ -377,10 +381,17 @@ for exactly its CoUI version, with no configuration:
   implements (CoUI, plus Flutter's Material and Cupertino). Its identity
   properties are read from the conventional fields (`variant`, `size`, `shape`,
   and the catalog's axis enums) without importing the design system.
+- A component that a design-system component creates inside one the app
+  placed (CoUI's TextField creates a FormLabel) is listed as `composed` when
+  the design has an instance of that name, so nested instances such as
+  `TextField › label › FormLabel` find it. The app does not configure it, so
+  its variant differences are `info` findings owned by `designSystem`.
 - A Figma instance matches when its component set is named like the widget
   (`Button` ↔ `Button`) and variant values are spelled like the enum members
   (`Variant=secondary` ↔ `CoreButtonVariant.secondary`). `State=disabled`
   compares with `enabled`; hover, focus, and pressed are runtime states.
+- Small instances named after an icon set (`lucide/bell`, `tabler:home`) or
+  inside an icon instance are compared as icons, not as components.
 - Text roles come from the catalog's typography (`Title/Medium` ↔
   `titleMedium`); a design text without a style can name its role through a
   bound `font-size/<role>` variable.
