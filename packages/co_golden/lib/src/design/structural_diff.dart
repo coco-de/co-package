@@ -72,6 +72,52 @@ GoldenStructuralResult compareDesignStructure(
   GoldenStructuralContext context,
 ) => _StructuralDiff(spec, snapshot, context).run();
 
+/// Widget names, by [goldenNormalizeName], of the component instances in
+/// [spec] that the comparison pairs with rendered components (icons are
+/// compared as icons). The inspector lists these components also where a
+/// design-system component composes them.
+Set<String> goldenDesignComponentNames(
+  GoldenDesignSpec spec,
+  List<GoldenComponentMapping> mappings,
+) => {
+  if (spec.hasStyles)
+    for (final node in spec.nodes)
+      if (node.isInstance &&
+          node.instance?.name != null &&
+          !_isIconNode(spec, node))
+        goldenNormalizeName(_expectedWidget(node.instance!.name!, mappings)),
+};
+
+/// Widget that implements the design component [name]: the one a mapping
+/// names, else the same name.
+String _expectedWidget(String name, List<GoldenComponentMapping> mappings) {
+  for (final mapping in mappings) {
+    if (goldenNormalizeName(mapping.figma) == goldenNormalizeName(name)) {
+      return mapping.widget;
+    }
+  }
+  return name;
+}
+
+const Set<String> _vectorTypes = {
+  'VECTOR',
+  'BOOLEAN_OPERATION',
+  'STAR',
+  'POLYGON',
+  'REGULAR_POLYGON',
+  'LINE',
+};
+
+/// Whether [node] draws an icon: a small vector, or a small instance named
+/// like one.
+bool _isIconNode(GoldenDesignSpec spec, GoldenDesignNode node) {
+  final small = node.rect.width <= 64 && node.rect.height <= 64;
+  if (!small) return false;
+  if (_vectorTypes.contains(node.type)) return true;
+  final name = '${node.instance?.name ?? ''} ${node.name}'.toLowerCase();
+  return node.isInstance && RegExp(r'\bicon|^ic[_/ -]|icon/').hasMatch(name);
+}
+
 /// Findings that need no design specification: unloaded fonts.
 List<GoldenDesignFinding> goldenFontFindings(GoldenRenderSnapshot snapshot) {
   final findings = <GoldenDesignFinding>[];
@@ -797,7 +843,7 @@ final class _StructuralDiff {
     ];
     final pairs = <(GoldenDesignNode, GoldenRenderComponent, double)>[];
     for (final design in instances) {
-      final expected = _expectedWidget(design);
+      final expected = _expectedWidgetOf(design);
       for (final component in components) {
         if (goldenNormalizeName(component.name) !=
             goldenNormalizeName(expected)) {
@@ -813,7 +859,13 @@ final class _StructuralDiff {
         if (iou >= 0.3 || centered) pairs.add((design, component, 1 - iou));
       }
     }
-    pairs.sort((a, b) => a.$3.compareTo(b.$3));
+    // Closest first; on a tie, the component the app placed before one that
+    // a design-system component composed inside it.
+    pairs.sort((a, b) {
+      final closer = a.$3.compareTo(b.$3);
+      if (closer != 0) return closer;
+      return (a.$2.composed ? 1 : 0) - (b.$2.composed ? 1 : 0);
+    });
     final assigned = <String, GoldenRenderComponent>{};
     for (final (design, component, _) in pairs) {
       if (assigned.containsKey(design.id) ||
@@ -833,15 +885,8 @@ final class _StructuralDiff {
     }
   }
 
-  String _expectedWidget(GoldenDesignNode design) {
-    final name = design.instance!.name!;
-    for (final mapping in context.mappings) {
-      if (goldenNormalizeName(mapping.figma) == goldenNormalizeName(name)) {
-        return mapping.widget;
-      }
-    }
-    return name;
-  }
+  String _expectedWidgetOf(GoldenDesignNode design) =>
+      _expectedWidget(design.instance!.name!, context.mappings);
 
   GoldenComponentMapping? _mappingFor(String figmaName) {
     for (final mapping in context.mappings) {
@@ -862,6 +907,12 @@ final class _StructuralDiff {
     final listed = context.catalog?.component(component.name);
     final diffs = <GoldenFindingDiff>[];
     final hints = <String>[];
+    // The app does not configure a component that a design-system component
+    // composed (its container may restyle it), so its variant is context
+    // for the design system, not a deviation of the app.
+    final severity = component.composed
+        ? GoldenFindingSeverity.info
+        : GoldenFindingSeverity.error;
     for (final MapEntry(key: axis, value: value) in instance.variant.entries) {
       if (mapping?.ignore.contains(axis) ?? false) continue;
       final normalizedAxis = goldenNormalizeName(axis);
@@ -881,6 +932,7 @@ final class _StructuralDiff {
               expectedEnabled == 'true',
               enabled == 'true',
               null,
+              severity: severity,
             ),
           );
           hints.add(
@@ -897,7 +949,7 @@ final class _StructuralDiff {
       if (actual == null) continue;
       final expected = mapping?.values[axis]?[value] ?? value;
       if (goldenNormalizeName(expected) != goldenNormalizeName(actual)) {
-        diffs.add(_diff(field, expected, actual, null));
+        diffs.add(_diff(field, expected, actual, null, severity: severity));
         final enumName = listed?.axisFor(axis, expected)?.enumName;
         hints.add(
           enumName == null
@@ -920,7 +972,7 @@ final class _StructuralDiff {
     _add(
       category: GoldenFindingCategory.component,
       key: 'variant',
-      severity: GoldenFindingSeverity.error,
+      severity: severity,
       message:
           'Figma ‘${instance.name}’($variant)과 구현 ${component.name}($props)의 '
           '변형이 다릅니다.',
@@ -965,23 +1017,27 @@ final class _StructuralDiff {
     final instance = design.instance!;
     final name = instance.name!;
     final catalog = context.catalog;
-    final expected = _expectedWidget(design);
+    final expected = _expectedWidgetOf(design);
     final known =
         catalog?.component(expected) != null || _mappingFor(name) != null;
-    final other = components
-        .where(
-          (c) =>
-              !usedComponents.contains(c.id) &&
-              (design.rect.iou(c.rect) >= 0.5),
-        )
-        .firstOrNull;
+    final overlapping = components.where(
+      (c) => !usedComponents.contains(c.id) && (design.rect.iou(c.rect) >= 0.5),
+    );
+    // A component the app placed explains the instance before one that a
+    // design-system component composed, which the app did not choose.
+    final other =
+        overlapping.where((c) => !c.composed).firstOrNull ??
+        overlapping.firstOrNull;
     if (other != null) {
+      final severity = other.composed
+          ? GoldenFindingSeverity.info
+          : GoldenFindingSeverity.error;
       _add(
         category: GoldenFindingCategory.component,
         key: 'type',
-        severity: GoldenFindingSeverity.error,
+        severity: severity,
         message: 'Figma는 ‘$name’ 컴포넌트인데 구현은 ${other.name}입니다.',
-        diffs: [_diff('component', name, other.name, null)],
+        diffs: [_diff('component', name, other.name, null, severity: severity)],
         design: design,
         component: other,
         rect: other.rect,
@@ -1048,21 +1104,7 @@ final class _StructuralDiff {
 
   // ────────────────────────── images and icons ─────────────────────────────
 
-  bool _isIcon(GoldenDesignNode node) {
-    final small = node.rect.width <= 64 && node.rect.height <= 64;
-    if (!small) return false;
-    const vectors = {
-      'VECTOR',
-      'BOOLEAN_OPERATION',
-      'STAR',
-      'POLYGON',
-      'REGULAR_POLYGON',
-      'LINE',
-    };
-    if (vectors.contains(node.type)) return true;
-    final name = '${node.instance?.name ?? ''} ${node.name}'.toLowerCase();
-    return node.isInstance && RegExp(r'\bicon|^ic[_/ -]|icon/').hasMatch(name);
-  }
+  bool _isIcon(GoldenDesignNode node) => _isIconNode(spec, node);
 
   void _matchImagesAndIcons() {
     final images = designNodes.where((n) => n.hasImageFill).toList();
@@ -1753,17 +1795,37 @@ final class _StructuralDiff {
             (design != null && render != null
                 ? design.rect.union(render.rect)
                 : (render?.rect ?? design?.rect)),
-        hint: drawnByComponent
-            ? '‘${enclosing.name}’'
-                  '${enclosing.library == null ? '' : '(${enclosing.library})'}가 '
-                  '직접 그린 요소입니다 — 앱에서 덮어쓰지 말고 디자인 시스템 버전 '
-                  '차이나 라이브러리와 코드의 차이인지 확인하세요. 추적 이슈가 '
-                  "있으면 GoldenKnownDifference(widget: '${enclosing.name}', "
-                  'issue: …)로 등록합니다.'
-            : hint,
+        hint: drawnByComponent ? _designSystemHint(enclosing) : hint,
         owner: owner,
       ),
     );
+  }
+
+  /// Hint of a finding that [component], or the component that composed
+  /// it, decides.
+  String _designSystemHint(GoldenRenderComponent component) {
+    String label(GoldenRenderComponent c) =>
+        '‘${c.name}’${c.library == null ? '' : '(${c.library})'}';
+    final composer = _composerOf(component);
+    final what = composer == null || identical(composer, component)
+        ? '${label(component)}가 직접 그린 요소입니다 — 앱에서 덮어쓰지 말고 '
+              '디자인 시스템 버전 차이나 라이브러리와 코드의 차이인지 확인하세요.'
+        : '${label(composer)}가 안에서 만든 ${component.name}입니다 — 앱이 정하는 '
+              '값이 아니니 디자인 시스템의 구성과 Figma 라이브러리의 차이인지 '
+              '확인하세요.';
+    return "$what 추적 이슈가 있으면 GoldenKnownDifference(widget: '"
+        "${component.name}', issue: …)로 등록합니다.";
+  }
+
+  /// The component the app placed that [component] is, or that composed it.
+  GoldenRenderComponent? _composerOf(GoldenRenderComponent component) {
+    var current = component;
+    while (current.composed) {
+      final parent = current.parent;
+      if (parent == null || parent >= snapshot.components.length) return null;
+      current = snapshot.components[parent];
+    }
+    return current;
   }
 
   static GoldenFindingDiff _diff(

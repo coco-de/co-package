@@ -52,6 +52,7 @@ final class GoldenRenderInspector {
     required this.designSystem,
     required this.packages,
     this.catalog,
+    this.nestedComponents = const {},
   }) : _dsPackages = {
          ...designSystem.packages,
          ?catalog?.library,
@@ -72,9 +73,17 @@ final class GoldenRenderInspector {
   /// Package resolution for source locations.
   final GoldenPackageMap packages;
 
+  /// Components, by [goldenNormalizeName] of the widget name, to list also
+  /// where a design-system component creates them inside a component the
+  /// app placed, as CoUI's TextField creates a FormLabel. The analysis
+  /// passes the names of the design's instances, so nested instances find
+  /// their counterpart without listing every internal widget.
+  final Set<String> nestedComponents;
+
   final Set<String> _dsPackages;
   final Map<String, GoldenComponentMapping> _mappings;
   final Map<Element, GoldenSourceLocation?> _locations = {};
+  final Map<Element, String?> _creators = {};
   final Map<Element, String?> _packages = {};
   late final InspectorSerializationDelegate _delegate =
       InspectorSerializationDelegate(
@@ -105,10 +114,19 @@ final class GoldenRenderInspector {
         next = next.created(location, _keyOf(widget), name);
         if (!_trivialWidget.hasMatch(name)) next = next.named(name);
       }
-      if (element is ComponentElement &&
-          (location?.project ?? !tracked) &&
-          widget is! Icon) {
-        final identity = _component(element, widget, tracked);
+      if (element is ComponentElement && widget is! Icon) {
+        // Components the app places, and ones that a design-system
+        // component composes inside them: Figma nests instances
+        // (TextField › FormLabel) where the code does.
+        final placed = location?.project ?? !tracked;
+        final composed =
+            !placed &&
+            location != null &&
+            next.component != null &&
+            _composes(element, widget);
+        final identity = placed || composed
+            ? _component(element, widget, tracked)
+            : null;
         if (identity != null) {
           final rect = _rectOfElement(element, boundary);
           final shell =
@@ -124,10 +142,14 @@ final class GoldenRenderInspector {
                 properties: identity.properties,
                 rect: rect,
                 source: location,
-                parent: next.component,
+                parent: next.enclosing,
+                composed: composed,
               ),
             );
-            next = next.inComponent(components.length - 1, identity.name);
+            final index = components.length - 1;
+            next = composed
+                ? next.inComposed(index)
+                : next.inComponent(index, identity.name);
           }
         }
       }
@@ -522,6 +544,19 @@ final class GoldenRenderInspector {
     );
   }
 
+  /// Whether design-system code created [widget], a component of
+  /// [nestedComponents] that is neither private nor a layout or app-shell
+  /// widget, so that it was composed by the component around it.
+  bool _composes(Element element, Widget widget) {
+    if (nestedComponents.isEmpty) return false;
+    final name = _typeName(widget);
+    return !name.startsWith('_') &&
+        !_trivialWidget.hasMatch(name) &&
+        !_shellWidget.hasMatch(name) &&
+        nestedComponents.contains(goldenNormalizeName(name)) &&
+        _dsPackages.contains(_creators[element]);
+  }
+
   bool _hasCatalogAxis(Widget widget, GoldenCatalogComponent component) {
     for (final axis in component.axes) {
       for (final field in goldenAxisFields(axis, component.name)) {
@@ -576,23 +611,24 @@ final class GoldenRenderInspector {
     return result;
   }
 
+  /// Library that implements [element]'s widget: the one whose code created
+  /// the widget's first descendant. Widgets that Flutter's own helpers
+  /// create on the way are passed over, so a build that starts with
+  /// `DefaultTextStyle.merge` or `IconTheme.merge` (a Builder around the
+  /// child the component built) still names the component's package.
   String? _implementation(ComponentElement element) {
     if (_packages.containsKey(element)) return _packages[element];
-    Element? child;
-    element.visitChildElements((c) => child ??= c);
     String? result;
-    final location = child == null ? null : _rawLocation(child!);
-    if (location != null) {
+    Element? current = element;
+    for (var depth = 0; depth < 8 && current != null; depth++) {
+      Element? child;
+      current.visitChildElements((c) => child ??= c);
+      final location = child == null ? null : _rawLocation(child!);
+      if (location == null) break;
       final path = GoldenPackageMap.toPath(location.$1);
-      final package = packages.packageOf(path);
-      if (package != null) {
-        result = package.name;
-        if (package.name == 'flutter') {
-          final posix = path.replaceAll(r'\', '/');
-          if (posix.contains('/src/material/')) result = 'flutter/material';
-          if (posix.contains('/src/cupertino/')) result = 'flutter/cupertino';
-        }
-      }
+      result = _library(packages.packageOf(path), path);
+      if (result != 'flutter') break;
+      current = child;
     }
     return _packages[element] = result;
   }
@@ -615,13 +651,17 @@ final class GoldenRenderInspector {
     return null;
   }
 
+  /// Where [element]'s widget was created. Also records the library whose
+  /// code created it, for [_composes].
   GoldenSourceLocation? _location(Element element) {
     if (_locations.containsKey(element)) return _locations[element];
     final raw = _rawLocation(element);
     GoldenSourceLocation? result;
+    String? creator;
     if (raw != null) {
       final path = GoldenPackageMap.toPath(raw.$1);
       final package = packages.packageOf(path);
+      creator = _library(package, path);
       // co_golden's own widgets (the capture boundary, TickerMode) are not
       // app code, even when co_golden is a workspace member.
       final infrastructure =
@@ -638,6 +678,7 @@ final class GoldenRenderInspector {
                 _isWithinPath(packages.workingDirectory, path)),
       );
     }
+    _creators[element] = creator;
     return _locations[element] = result;
   }
 
@@ -681,6 +722,19 @@ bool _hidesSubtree(Widget widget) => switch (widget) {
   _ => false,
 };
 
+/// Name of [package] as [GoldenDesignSystem.packages] lists it, with
+/// Flutter's Material and Cupertino libraries told apart from the rest of
+/// Flutter.
+String? _library(GoldenPackage? package, String path) {
+  if (package == null) return null;
+  if (package.name == 'flutter') {
+    final posix = path.replaceAll(r'\', '/');
+    if (posix.contains('/src/material/')) return 'flutter/material';
+    if (posix.contains('/src/cupertino/')) return 'flutter/cupertino';
+  }
+  return package.name;
+}
+
 bool _isWithinPath(String parent, String child) {
   final prefix = parent.endsWith('/') ? parent : '$parent/';
   return child.startsWith(prefix);
@@ -692,6 +746,7 @@ final class _Context {
     this.sourceWidget,
     this.key,
     this.component,
+    this.enclosing,
     this.opacity = 1,
     this.path = const [],
     this.icon,
@@ -701,7 +756,13 @@ final class _Context {
   final GoldenSourceLocation? source;
   final String? sourceWidget;
   final String? key;
+
+  /// Nearest component the app placed; nodes belong to it.
   final int? component;
+
+  /// Innermost listed component, composed ones included: the parent of the
+  /// next component.
+  final int? enclosing;
   final double opacity;
   final List<String> path;
   final Icon? icon;
@@ -713,6 +774,7 @@ final class _Context {
     String? key,
     bool resetKey = false,
     int? component,
+    int? enclosing,
     double? opacity,
     List<String>? path,
     Icon? icon,
@@ -723,6 +785,7 @@ final class _Context {
     sourceWidget: sourceWidget ?? this.sourceWidget,
     key: resetKey ? key : (key ?? this.key),
     component: component ?? this.component,
+    enclosing: enclosing ?? this.enclosing,
     opacity: opacity ?? this.opacity,
     path: path ?? this.path,
     icon: resetIcon ? null : (icon ?? this.icon),
@@ -737,8 +800,11 @@ final class _Context {
 
   _Context inComponent(int index, String name) => copy(
     component: index,
+    enclosing: index,
     path: path.isNotEmpty && path.last == name ? path : [...path, name],
   );
+
+  _Context inComposed(int index) => copy(enclosing: index);
 
   _Context faded(double value) => copy(opacity: opacity * value);
 

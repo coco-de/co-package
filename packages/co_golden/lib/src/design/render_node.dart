@@ -267,6 +267,7 @@ final class GoldenRenderComponent {
     this.properties = const {},
     this.source,
     this.parent,
+    this.composed = false,
   });
 
   /// Index in [GoldenRenderSnapshot.components].
@@ -284,11 +285,18 @@ final class GoldenRenderComponent {
   /// Rendered bounds in logical pixels.
   final GoldenRect rect;
 
-  /// Where the app created the component.
+  /// Where the app created the component; for a [composed] one, where the
+  /// design-system code created it.
   final GoldenSourceLocation? source;
 
   /// Index of the enclosing component, if any.
   final int? parent;
+
+  /// Whether a design-system component created this one inside itself, as
+  /// CoUI's TextField creates a FormLabel, rather than the app. Composed
+  /// components answer nested design instances; the nodes they draw still
+  /// belong to the component the app placed.
+  final bool composed;
 
   /// JSON form.
   Map<String, Object?> toJson() => {
@@ -299,6 +307,7 @@ final class GoldenRenderComponent {
     'rect': rect.toJson(),
     if (source != null) 'source': source!.label,
     if (parent != null) 'parent': parent,
+    if (composed) 'composed': true,
   };
 }
 
@@ -386,7 +395,8 @@ final class GoldenRenderNode {
   /// ancestor of it.
   final GoldenSourceLocation? source;
 
-  /// Index of the nearest enclosing design-system component.
+  /// Index of the nearest enclosing design-system component that the app
+  /// placed (never a [GoldenRenderComponent.composed] one).
   final int? component;
 
   /// Ancestor widgets worth naming, outermost first.

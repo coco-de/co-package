@@ -32,7 +32,8 @@ abstract final class GoldenFindingOwner {
   /// Owner of a finding about [widget] inside [component]: the design system
   /// when the nearest app source of the widget is the component itself (the
   /// app only created the component), else the app when the widget comes from
-  /// project code.
+  /// project code. A finding about a component alone belongs to the app,
+  /// unless a design-system component composed it.
   static String? of(
     GoldenRenderNode? widget,
     GoldenRenderComponent? component,
@@ -45,7 +46,9 @@ abstract final class GoldenFindingOwner {
       return designSystem;
     }
     if (source != null && source.project) return app;
-    if (widget == null && component != null) return app;
+    if (widget == null && component != null) {
+      return component.composed ? designSystem : app;
+    }
     return null;
   }
 }
