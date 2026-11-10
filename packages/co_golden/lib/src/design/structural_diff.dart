@@ -671,17 +671,24 @@ final class _StructuralDiff {
 
     // Truncation and wrapping.
     if (rendered.truncated && !text.truncated) {
+      // `overflow: ellipsis` without maxLines ellipsizes the first line that
+      // overflows and drops the rest (dart:ui `ParagraphStyle.ellipsis`).
+      final unlimited = rendered.maxLines == null;
       _add(
         category: GoldenFindingCategory.content,
         key: 'truncated',
         severity: GoldenFindingSeverity.error,
         message:
-            '‘${_short(rendered.text)}’가 구현에서 잘립니다(최대 ${rendered.maxLines}줄). '
+            '‘${_short(rendered.text)}’가 구현에서 잘립니다'
+            '(${unlimited ? '줄 수 제한 없는 말줄임 — 첫 줄에서 끊김' : '최대 ${rendered.maxLines}줄'}). '
             'Figma는 전부 보여 줍니다.',
         diffs: [_diff('truncated', false, true, null)],
         design: design,
         render: render,
-        hint: '폭·서체·자간이 디자인과 같은지 확인하고, 그래도 넘치면 maxLines를 디자인에 맞추세요.',
+        hint: unlimited
+            ? 'maxLines 없이 overflow: ellipsis 면 첫 줄만 그려집니다 — 여러 줄을 보이려면 overflow를 '
+                  'clip으로 두거나 maxLines를 디자인 줄 수로 주세요.'
+            : '폭·서체·자간이 디자인과 같은지 확인하고, 그래도 넘치면 maxLines를 디자인에 맞추세요.',
       );
     }
     final designLines =

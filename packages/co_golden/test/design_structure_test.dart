@@ -272,4 +272,75 @@ void main() {
       );
     });
   });
+
+  group('truncated text', () {
+    const style = TextStyle(fontSize: 14, height: 1.5);
+    const long = '응급 환자나 재진 환자를 먼저 보내야 할 때 순서를 바꿀 방법이 없어요.';
+
+    Future<List<GoldenDesignFinding>> truncated(
+      WidgetTester tester, {
+      int? maxLines,
+    }) async {
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: _boundary,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: 120,
+                child: Text(
+                  long,
+                  style: style,
+                  maxLines: maxLines,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final snapshot =
+          GoldenRenderInspector(
+            designSystem: GoldenDesignSystem.none,
+            packages: GoldenPackageMap.discover(),
+          ).inspect(
+            tester.element(find.byKey(_boundary)),
+            tester.renderObject<RenderBox>(find.byKey(_boundary)),
+          );
+      final rect = tester.getRect(find.text(long));
+      return _compare(
+        _spec([
+          {
+            'id': '1:2',
+            'name': 'Text',
+            'type': 'TEXT',
+            // Figma wraps the whole sentence.
+            'rect': [rect.left, rect.top, rect.width, 21 * 4],
+            'text': {
+              'characters': long,
+              'fontSize': 14,
+              'lineHeight': {'unit': 'PIXELS', 'value': 21},
+            },
+          },
+        ]),
+        snapshot,
+      ).where((f) => f.diffs.any((d) => d.property == 'truncated')).toList();
+    }
+
+    testWidgets('names an ellipsis without maxLines as a first-line cut', (
+      tester,
+    ) async {
+      final finding = (await truncated(tester)).single;
+      expect(finding.message, contains('첫 줄에서 끊김'));
+      expect(finding.message, isNot(contains('null')));
+      expect(finding.hint, contains('overflow를 clip'));
+    });
+
+    testWidgets('names the line limit when maxLines is set', (tester) async {
+      final finding = (await truncated(tester, maxLines: 2)).single;
+      expect(finding.message, contains('최대 2줄'));
+    });
+  });
 }
