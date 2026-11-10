@@ -4,7 +4,7 @@
 // ignore_for_file: invalid_use_of_visible_for_testing_member
 
 import 'dart:math' as math;
-import 'dart:ui' show BoxHeightStyle;
+import 'dart:ui' show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -288,9 +288,8 @@ final class GoldenRenderInspector {
         maxLines: render.maxLines,
         scaler: render.textScaler,
         truncated: false,
-        boxes: (length) => render.getBoxesForSelection(
-          TextSelection(baseOffset: 0, extentOffset: length),
-        ),
+        // Whole line boxes too, like static text and a Figma text box.
+        boxes: (length) => _editableLineBoxes(render, length),
         render: render,
         boundary: boundary,
         families: families,
@@ -721,6 +720,33 @@ bool _hidesSubtree(Widget widget) => switch (widget) {
   SliverVisibility(visible: false, maintainState: true) => true,
   _ => false,
 };
+
+/// Line boxes of the first [length] characters of [render], measured like
+/// static text: [BoxHeightStyle.max] and [BoxWidthStyle.tight].
+///
+/// RenderEditable measures in its selection styles, and those leave out
+/// line spacing: CoUI's fields select tight glyph boxes (16.7 high in a
+/// 19.6 line), Flutter's default omits the first line's top leading. The
+/// styles are switched for the call and put back; only the selection
+/// highlight listens to them, so nothing is laid out again.
+List<TextBox> _editableLineBoxes(RenderEditable render, int length) {
+  final selection = TextSelection(baseOffset: 0, extentOffset: length);
+  final height = render.selectionHeightStyle;
+  final width = render.selectionWidthStyle;
+  if (height == BoxHeightStyle.max && width == BoxWidthStyle.tight) {
+    return render.getBoxesForSelection(selection);
+  }
+  render
+    ..selectionHeightStyle = BoxHeightStyle.max
+    ..selectionWidthStyle = BoxWidthStyle.tight;
+  try {
+    return render.getBoxesForSelection(selection);
+  } finally {
+    render
+      ..selectionHeightStyle = height
+      ..selectionWidthStyle = width;
+  }
+}
 
 /// Name of [package] as [GoldenDesignSystem.packages] lists it, with
 /// Flutter's Material and Cupertino libraries told apart from the rest of

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show BoxHeightStyle;
 
 import 'package:co_golden/co_golden.dart';
 import 'package:co_golden/src/design/finding.dart';
@@ -7,6 +8,7 @@ import 'package:co_golden/src/design/inspection.dart';
 import 'package:co_golden/src/design/package_map.dart';
 import 'package:co_golden/src/design/render_node.dart';
 import 'package:co_golden/src/design/structural_diff.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -367,6 +369,80 @@ void main() {
         variant.hint,
         contains('‘FakeToolbar’(fake_design_system)가 안에서 만든 FakeButton'),
       );
+    });
+  });
+
+  group('editable text', () {
+    const style = TextStyle(fontSize: 14, height: 1.5);
+
+    Widget field(
+      TextEditingController controller,
+      FocusNode focus, {
+      int? maxLines = 1,
+      BoxHeightStyle? selectionHeightStyle,
+    }) => SizedBox(
+      width: 300,
+      child: EditableText(
+        controller: controller,
+        focusNode: focus,
+        style: style,
+        maxLines: maxLines,
+        cursorColor: const Color(0xff000000),
+        backgroundCursorColor: const Color(0xff808080),
+        selectionHeightStyle: selectionHeightStyle,
+      ),
+    );
+
+    testWidgets('is measured with whole line boxes, like static text', (
+      tester,
+    ) async {
+      final single = TextEditingController(text: '상복부 통증');
+      final multi = TextEditingController(text: '첫 줄\n둘째 줄\n셋째 줄');
+      final focus = FocusNode();
+      addTearDown(single.dispose);
+      addTearDown(multi.dispose);
+      addTearDown(focus.dispose);
+      await _pump(
+        tester,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('상복부 통증', style: style),
+            // Tight boxes, as CoUI's TextField and TextArea select.
+            field(single, focus, selectionHeightStyle: BoxHeightStyle.tight),
+            // Flutter's default style leaves out the first top leading.
+            field(multi, focus, maxLines: null),
+          ],
+        ),
+      );
+      final snapshot = _inspectPumped(tester);
+      GoldenRenderText text(String value, {required bool editable}) => snapshot
+          .nodes
+          .singleWhere(
+            (n) => n.text?.text == value && n.text!.editable == editable,
+          )
+          .text!;
+      final label = text('상복부 통증', editable: false);
+      final value = text('상복부 통증', editable: true);
+      final lines = text('첫 줄\n둘째 줄\n셋째 줄', editable: true);
+      final editables = tester.allRenderObjects
+          .whereType<RenderEditable>()
+          .toList();
+
+      // A 21px line box at the field's top, as Figma draws the text box.
+      expect(label.contentRect.top, 0);
+      expect(label.contentRect.height, 21);
+      expect(value.contentRect.top, 21);
+      expect(value.contentRect.height, 21);
+      expect(value.contentRect.width, label.contentRect.width);
+      expect(lines.lineCount, 3);
+      expect(lines.contentRect.top, 42);
+      expect(lines.contentRect.height, 63);
+      // The fields keep their own selection styles.
+      expect(editables.map((r) => r.selectionHeightStyle), [
+        BoxHeightStyle.tight,
+        EditableText.defaultSelectionHeightStyle,
+      ]);
     });
   });
 }
