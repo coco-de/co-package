@@ -95,6 +95,9 @@ final class GoldenRenderInspector {
 
     void visit(Element element, _Context context) {
       final widget = element.widget;
+      // Nothing below a hidden Visibility is painted, nor counts as a
+      // component.
+      if (_hidesSubtree(widget)) return;
       var next = context;
       final location = tracked ? _location(element) : null;
       if (location != null && location.project) {
@@ -664,6 +667,19 @@ final class GoldenRenderInspector {
     };
   }
 }
+
+/// Whether [widget] keeps a subtree that it does not paint: a [Visibility]
+/// or [SliverVisibility] that is not visible but maintains its child. With
+/// `maintainSize` the child is laid out and only its paint is skipped (as
+/// for the invisible bold twin that reserves a toggle label's width, or a
+/// text field's placeholder while the field has a value), else an offstage
+/// keeps it. Without `maintainState`, the child is not built and the
+/// replacement, which is painted, is inspected as usual.
+bool _hidesSubtree(Widget widget) => switch (widget) {
+  Visibility(visible: false, maintainState: true) => true,
+  SliverVisibility(visible: false, maintainState: true) => true,
+  _ => false,
+};
 
 bool _isWithinPath(String parent, String child) {
   final prefix = parent.endsWith('/') ? parent : '$parent/';
