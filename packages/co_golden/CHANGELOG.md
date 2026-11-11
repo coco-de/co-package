@@ -11,6 +11,24 @@
 - Read context-resolved component properties, including named icons and their inherited paint.
 - Explain icon and image sampling differences only with verified geometry, paint and source-byte evidence.
 
+## [0.4.1](https://github.com/coco-de/co-package/compare/co_golden-v0.4.0...co_golden-v0.4.1) (2026-11-11)
+
+
+### 버그 수정
+
+* **co_golden:** attribute glyph bearings and verify sRGB ink blending ([#137](https://github.com/coco-de/co-package/issues/137)) ([32f980a](https://github.com/coco-de/co-package/commit/32f980a55c9a244c94bc820cd0170ab4f480606d))
+* **co_golden:** preserve connected-region budgets when grouping diagnostics ([#138](https://github.com/coco-de/co-package/issues/138)) ([f41e935](https://github.com/coco-de/co-package/commit/f41e9356365041c2ed1acf24ea0eb84a6e871a21))
+* **co_golden:** verify diagnostic causes against painted source evidence ([#136](https://github.com/coco-de/co-package/issues/136)) ([4fc554a](https://github.com/coco-de/co-package/commit/4fc554aed661789e20e49c1a726da1b0a784327d)), closes [#135](https://github.com/coco-de/co-package/issues/135)
+* **co-golden:** 🐛 디자인 분석 오판과 갤러리 보고서 링크 개선 ([#134](https://github.com/coco-de/co-package/issues/134)) ([1c57775](https://github.com/coco-de/co-package/commit/1c57775df01c58dc90614ed5c5417366dadcf612))
+* **co-golden:** 🐛 빈 글상자와 고정 높이 줄 수 오판 수정 ([7a53a1b](https://github.com/coco-de/co-package/commit/7a53a1bd16c30f1bd8b3a922afbedd2f8a301ca9))
+* **co-golden:** 🐛 숨김·빈 글상자·줄 수 분석 오판과 갤러리 보고서 링크 개선 ([1c57775](https://github.com/coco-de/co-package/commit/1c57775df01c58dc90614ed5c5417366dadcf612))
+* **co-golden:** 🐛 크기 유지용 숨김 글자를 디자인 분석에서 제외 ([bbb396d](https://github.com/coco-de/co-package/commit/bbb396d74a0dfb49716ea935d25d86321f7d3d5b))
+
+
+### 문서
+
+* **co-golden-gallery:** 📝 골든 갤러리와 기준 이미지를 S3 에 보관하는 방법 ([#122](https://github.com/coco-de/co-package/issues/122)) ([5247599](https://github.com/coco-de/co-package/commit/5247599add58a2359d9d16d293ad0b0980bb47b4))
+
 ## [0.4.0](https://github.com/coco-de/co-package/compare/co_golden-v0.3.0...co_golden-v0.4.0) (2026-10-26)
 
 
