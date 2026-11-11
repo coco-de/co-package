@@ -241,7 +241,14 @@ final class _StructuralDiff {
   // ─────────────────────────────── texts ───────────────────────────────────
 
   void _matchTexts() {
-    final texts = designNodes.where((n) => n.isText).toList();
+    final texts = designNodes
+        .where(
+          (n) =>
+              n.isText &&
+              (n.text?.displayed == null ||
+                  _normalize(n.text!.displayed!).isNotEmpty),
+        )
+        .toList();
     final rendered = renderNodes
         .where((n) => n.kind == GoldenRenderKind.text)
         .toList();
@@ -615,7 +622,11 @@ final class _StructuralDiff {
       );
     }
     final designLines =
-        typography.lineHeight != null && typography.lineHeight! > 0
+        // A fixed-height text box can contain unused space. Its height is
+        // not evidence of how many lines Figma actually painted.
+        design.text?.autoResize != 'NONE' &&
+            typography.lineHeight != null &&
+            typography.lineHeight! > 0
         ? (design.rect.height / typography.lineHeight!).round()
         : null;
     if (!match.partial &&
