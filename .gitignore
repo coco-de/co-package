@@ -10,10 +10,24 @@ build/
 /coverage/
 
 # Flutter
+.flutter-plugins
 .flutter-plugins-dependencies
 **/ios/Flutter/.last_build_id
 app.*.symbols
 app.*.map.json
+
+# Flutter 로컬 생성물 — 개발자 머신의 절대 경로(홈 디렉터리 · SDK 위치)가 들어가므로 커밋하지 않는다.
+# 패키지별 .gitignore 가 없는 새 플랫폼 폴더도 걸러지도록 루트에도 둔다.
+**/Flutter/Generated.xcconfig
+**/Flutter/flutter_export_environment.sh
+**/Flutter/ephemeral/
+**/flutter/ephemeral/
+**/.symlinks/
+**/Pods/
+**/android/local.properties
+**/android/.gradle/
+flutter_*.log
+.pub-cache/
 
 # IDE
 .idea/
@@ -34,9 +48,15 @@ _work/
 # 시크릿 — 절대 커밋 금지
 *.pem
 .env.*
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+key.properties
 
 # Local agent config
 CLAUDE.md
+.claude/settings.local.json
 
 # EPUB fixtures: 라이선스 확인 완료 후 커밋된 공개 데모용 EPUB3 샘플만 예외
 # (IDPF epub3-samples CC-BY-SA 3.0 / GFDL 1.2 — THIRD_PARTY_LICENSES 참조).
