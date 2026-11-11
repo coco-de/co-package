@@ -9,6 +9,10 @@ GoldenStructuralResult compare({
   String text = 'Title',
   String autoResize = 'NONE',
   bool render = true,
+  String? horizontalAnchor,
+  double renderX = 0,
+  double renderWidth = 120,
+  bool loadedFont = false,
 }) => compareDesignStructure(
   GoldenDesignSpec.parse({
     'schema': 'co_golden.design_spec',
@@ -31,9 +35,13 @@ GoldenStructuralResult compare({
         'text': {
           'characters': text,
           'fontSize': 16,
+          'fontFamily': 'TestFont',
+          'color': '#111111FF',
           'fontWeight': 400,
+          'letterSpacing': 0,
           'lineHeight': {'unit': 'PIXELS', 'value': 20},
           'autoResize': autoResize,
+          'horizontalAnchor': ?horizontalAnchor,
         },
       },
     ],
@@ -41,22 +49,25 @@ GoldenStructuralResult compare({
   GoldenRenderSnapshot(
     width: 200,
     height: 200,
+    fonts: {'TestFont': loadedFont},
     nodes: [
       if (render)
-        const GoldenRenderNode(
+        GoldenRenderNode(
           id: 0,
           kind: GoldenRenderKind.text,
           widget: 'Text',
-          rect: GoldenRect(0, 0, 120, 20),
-          visibleRect: GoldenRect(0, 0, 120, 20),
+          rect: GoldenRect(renderX, 0, renderWidth, 20),
+          visibleRect: GoldenRect(renderX, 0, renderWidth, 20),
           text: GoldenRenderText(
             text: 'Title',
-            style: GoldenRenderTextStyle(
+            style: const GoldenRenderTextStyle(
               fontSize: 16,
+              fontFamily: 'TestFont',
+              color: 0xff111111,
               fontWeight: 400,
               height: 1.25,
             ),
-            contentRect: GoldenRect(0, 0, 120, 20),
+            contentRect: GoldenRect(renderX, 0, renderWidth, 20),
           ),
         ),
     ],
@@ -65,6 +76,65 @@ GoldenStructuralResult compare({
 );
 
 void main() {
+  test(
+    'verified identical text at a wrap boundary is renderer information',
+    () {
+      final finding = compare(
+        autoResize: 'HEIGHT',
+        renderWidth: 118,
+        loadedFont: true,
+      ).findings.singleWhere((f) => f.diffs.any((d) => d.property == 'lines'));
+      expect(finding.severity.name, 'info');
+      expect(finding.owner, isNull);
+    },
+  );
+  test('a real line-width mismatch remains a warning', () {
+    final finding = compare(
+      autoResize: 'HEIGHT',
+      renderWidth: 80,
+      loadedFont: true,
+    ).findings.singleWhere((f) => f.diffs.any((d) => d.property == 'lines'));
+    expect(finding.severity.name, 'warning');
+  });
+  test('unverified fonts are not explained as a wrap boundary', () {
+    final finding = compare(
+      autoResize: 'HEIGHT',
+      renderWidth: 118,
+    ).findings.singleWhere((f) => f.diffs.any((d) => d.property == 'lines'));
+    expect(finding.severity.name, 'warning');
+  });
+  test(
+    'container-centred text compares its centre when glyph advances differ',
+    () {
+      expect(
+        compare(
+          horizontalAnchor: 'CENTER',
+          renderX: 4,
+          renderWidth: 112,
+        ).findings.where((f) => f.category == 'layout'),
+        isEmpty,
+      );
+    },
+  );
+  test('an actual centre offset is still reported', () {
+    expect(
+      compare(
+        horizontalAnchor: 'CENTER',
+        renderX: 9,
+        renderWidth: 112,
+      ).findings.where((f) => f.category == 'layout'),
+      isNotEmpty,
+    );
+  });
+  test('left-aligned text keeps its left edge as the anchor', () {
+    expect(
+      compare(
+        renderX: 4,
+        renderWidth: 112,
+      ).findings.where((f) => f.category == 'layout'),
+      isNotEmpty,
+    );
+  });
   test('fixed text boxes do not invent a second line from empty space', () {
     expect(
       compare().findings.where(

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Inspect only painted layout candidates and unoccluded Stack/Overlay content.
+- Compare split text runs and editable line leading without hiding real text, style or scroll differences.
+- Preserve container text anchors and explain verified text raster differences with ink-mass evidence.
+- Report every unexplained visual element once, preserving all raw pixel evidence and verdicts.
+- Read context-resolved component properties, including named icons and their inherited paint.
+- Explain icon and image sampling differences only with verified geometry, paint and source-byte evidence.
+
 ## [0.4.0](https://github.com/coco-de/co-package/compare/co_golden-v0.3.0...co_golden-v0.4.0) (2026-10-26)
 
 

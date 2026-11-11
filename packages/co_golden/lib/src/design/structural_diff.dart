@@ -256,6 +256,7 @@ final class _StructuralDiff {
       _matchTextsByGeometry(texts, rendered);
       return;
     }
+    _matchAdjacentTextParts(texts, rendered);
     // 1. Exact content, closest first.
     final pairs = <(GoldenDesignNode, GoldenRenderNode, double)>[];
     for (final design in texts) {
@@ -325,6 +326,12 @@ final class _StructuralDiff {
     for (final render in rendered) {
       if (usedRender.contains(render.id)) continue;
       if (render.text!.editable && render.text!.text.trim().isEmpty) continue;
+      // A partially covered line box may extend past an opaque overlay even
+      // when every painted glyph is covered. Require differing pixels before
+      // claiming that such unmatched text is visible in the final capture.
+      if (context.regions != null && !_pixelEvidence(render.visibleRect)) {
+        continue;
+      }
       _add(
         category: GoldenFindingCategory.presence,
         key: 'extra',
@@ -341,6 +348,97 @@ final class _StructuralDiff {
         ],
         render: render,
         hint: '디자인에 없는 문구인지, 다른 상태의 화면을 캡처했는지 확인하세요.',
+      );
+    }
+  }
+
+  /// A single Figma line may be several widgets (for example breadcrumb
+  /// links and separators). Compare the complete painted line without
+  /// inventing missing or extra labels. Only exact content on one baseline
+  /// is combined; reordered, missing, and additional words stay unmatched.
+  void _matchAdjacentTextParts(
+    List<GoldenDesignNode> texts,
+    List<GoldenRenderNode> rendered,
+  ) {
+    for (final design in texts) {
+      final wanted = _normalize(design.text?.displayed ?? '');
+      if (wanted.isEmpty) continue;
+      final bounds = design.rect.inflate(tol.textPosition, tol.textPosition);
+      bool inside(GoldenRenderNode node) => bounds.contains(
+        node.text!.contentRect.centerX,
+        node.text!.contentRect.centerY,
+      );
+      if (rendered.any(
+        (r) => inside(r) && _normalize(r.text!.text) == wanted,
+      )) {
+        continue;
+      }
+      final parts =
+          rendered
+              .where(
+                (r) =>
+                    !usedRender.contains(r.id) &&
+                    r.text!.lineCount == 1 &&
+                    inside(r) &&
+                    r.text!.text.trim().isNotEmpty &&
+                    wanted.contains(_normalize(r.text!.text)),
+              )
+              .toList()
+            ..sort((a, b) => a.rect.left.compareTo(b.rect.left));
+      if (parts.length < 2) continue;
+      final baseline = parts.first.text!.contentRect.centerY;
+      if (parts.any(
+        (r) =>
+            (r.text!.contentRect.centerY - baseline).abs() > tol.textPosition,
+      )) {
+        continue;
+      }
+      String? separator;
+      for (final candidate in ['', ' ']) {
+        if (_normalize(parts.map((r) => r.text!.text).join(candidate)) ==
+            wanted) {
+          separator = candidate;
+          break;
+        }
+      }
+      if (separator == null) continue;
+      final first = parts.first;
+      var rect = first.text!.contentRect;
+      final runs = <GoldenRenderTextRun>[];
+      var offset = 0;
+      for (final part in parts) {
+        rect = rect.union(part.text!.contentRect);
+        runs.add(
+          GoldenRenderTextRun(
+            offset,
+            offset + part.text!.text.length,
+            part.text!.style,
+          ),
+        );
+        offset += part.text!.text.length + separator.length;
+        usedRender.add(part.id);
+      }
+      matched[design.id] = _Match(
+        design,
+        GoldenRenderNode(
+          id: first.id,
+          kind: GoldenRenderKind.text,
+          widget: first.widget,
+          rect: rect,
+          visibleRect: rect,
+          source: first.source,
+          component: first.component,
+          path: first.path,
+          text: GoldenRenderText(
+            text: parts.map((r) => r.text!.text).join(separator),
+            style: first.text!.style,
+            contentRect: rect,
+            align: first.text!.align,
+            truncated: parts.any((r) => r.text!.truncated),
+            runs: runs,
+          ),
+        ),
+        _Kind.text,
       );
     }
   }
@@ -634,26 +732,57 @@ final class _StructuralDiff {
         designLines > 0 &&
         designLines != rendered.lineCount &&
         !rendered.truncated) {
+      final atWrapBoundary =
+          designLines == 2 &&
+          rendered.lineCount == 1 &&
+          diffs.isEmpty &&
+          _sameLoadedTextStyle(text, rendered) &&
+          !displayed.contains('\n') &&
+          displayed == rendered.text &&
+          (design.rect.width - rendered.contentRect.width).abs() <=
+              tol.textPixel &&
+          (design.rect.width - render.rect.width).abs() <= tol.textPixel;
+      final severity = atWrapBoundary
+          ? GoldenFindingSeverity.info
+          : GoldenFindingSeverity.warning;
       _add(
         category: GoldenFindingCategory.content,
         key: 'lines',
-        severity: GoldenFindingSeverity.warning,
+        severity: severity,
         message:
             '‘${_short(rendered.text)}’ 줄 수가 다릅니다: Figma $designLines줄 → 구현 '
-            '${rendered.lineCount}줄. 폭이나 서체 차이로 줄바꿈이 달라졌습니다.',
+            '${rendered.lineCount}줄. '
+            '${atWrapBoundary ? '동일한 로드 서체·스타일의 한 줄이 줄바꿈 경계 ${_n(tol.textPixel)}px 안에 있습니다. 글자 폭의 렌더러 차이를 확인하세요.' : '폭이나 서체 차이로 줄바꿈이 달라졌습니다.'}',
         diffs: [
           _diff(
             'lines',
             designLines,
             rendered.lineCount,
             null,
-            severity: GoldenFindingSeverity.warning,
+            severity: severity,
           ),
         ],
         design: design,
         render: render,
+        rendererDifference: atWrapBoundary,
       );
     }
+  }
+
+  bool _sameLoadedTextStyle(GoldenDesignText design, GoldenRenderText render) {
+    final d = design.typography;
+    final r = render.style;
+    bool same(double? a, double? b) =>
+        a != null && b != null && (a - b).abs() < 0.001;
+    return d.fontFamily != null &&
+        d.fontFamily == r.fontFamily &&
+        snapshot.fonts[r.fontFamily] == true &&
+        d.fontWeight == r.fontWeight &&
+        d.color != null &&
+        d.color == r.color &&
+        same(d.fontSize, r.fontSize) &&
+        same(d.lineHeight, r.lineHeight) &&
+        same(d.letterSpacing, r.letterSpacing);
   }
 
   /// Rendered style that corresponds to [design]: the run that holds the
@@ -691,11 +820,24 @@ final class _StructuralDiff {
       return rendered.style;
     }
 
-    for (final run in text.runs) {
-      if (run.start >= run.end || run.end > characters.length) continue;
-      final expected = text.typography.merge(run.typography);
-      final actual = styleAt(run.start);
-      final scope = '‘${_short(characters.substring(run.start, run.end))}’';
+    final boundaries = <int>{
+      0,
+      characters.length,
+      for (final run in text.runs) ...[run.start, run.end],
+      for (final run in rendered.runs) ...[run.start, run.end],
+    }.where((i) => i >= 0 && i <= characters.length).toList()..sort();
+    for (var i = 0; i + 1 < boundaries.length; i++) {
+      final start = boundaries[i];
+      final end = boundaries[i + 1];
+      if (start == end) continue;
+      var expected = text.typography;
+      for (final run in text.runs) {
+        if (start >= run.start && start < run.end) {
+          expected = expected.merge(run.typography);
+        }
+      }
+      final actual = styleAt(start);
+      final scope = '‘${_short(characters.substring(start, end))}’';
       if (expected.fontWeight != null &&
           expected.fontWeight != actual.fontWeight) {
         diffs.add(
@@ -1072,7 +1214,8 @@ final class _StructuralDiff {
     };
     if (vectors.contains(node.type)) return true;
     final name = '${node.instance?.name ?? ''} ${node.name}'.toLowerCase();
-    return node.isInstance && RegExp(r'\bicon|^ic[_/ -]|icon/').hasMatch(name);
+    return node.isInstance &&
+        RegExp(r'\bicon|^ic[_/ -]|icon/|\blucide/').hasMatch(name);
   }
 
   void _matchImagesAndIcons() {
@@ -1190,15 +1333,53 @@ final class _StructuralDiff {
       );
     }
     final expected = _vectorColor(design);
-    final actual = render.iconColor;
+    final properties = snapshot.componentOf(render)?.properties;
+    final expectedGlyph = design.instance?.properties['glyphName'];
+    final actualGlyph = properties?['glyphName'];
+    if (expectedGlyph != null &&
+        actualGlyph != null &&
+        expectedGlyph != actualGlyph) {
+      _add(
+        category: GoldenFindingCategory.content,
+        key: 'iconGlyph',
+        severity: GoldenFindingSeverity.error,
+        message: '아이콘 종류가 Figma와 다릅니다: $expectedGlyph → $actualGlyph.',
+        diffs: [_diff('glyphName', expectedGlyph, actualGlyph, null)],
+        design: design,
+        render: render,
+      );
+    }
+    final expectedStroke = design.strokeWeight;
+    final actualStroke = double.tryParse(properties?['strokeWidth'] ?? '');
+    if (expectedStroke != null &&
+        actualStroke != null &&
+        (expectedStroke - actualStroke).abs() > tol.strokeWidth) {
+      _add(
+        category: GoldenFindingCategory.shape,
+        key: 'iconStroke',
+        severity: GoldenFindingSeverity.warning,
+        message:
+            '아이콘 획이 Figma와 다릅니다: ${_n(expectedStroke)} → ${_n(actualStroke)}px.',
+        diffs: [_diff('strokeWidth', expectedStroke, actualStroke, 'px')],
+        design: design,
+        render: render,
+      );
+    }
+    final actual =
+        render.iconColor ?? int.tryParse(properties?['colorArgb'] ?? '');
     if (expected != null && actual != null) {
       _compareColor(
         key: 'icon',
         property: 'iconColor',
         design: design,
         render: render,
-        expected: expected.color!,
-        actual: actual,
+        expected:
+            (((expected.color! >> 24) * design.opacity).round().clamp(0, 255) <<
+                24) |
+            (expected.color! & 0xffffff),
+        actual:
+            (((actual >> 24) * render.opacity).round().clamp(0, 255) << 24) |
+            (actual & 0xffffff),
         expectedToken: expected.variable,
         label: '아이콘 색',
       );
@@ -1591,9 +1772,26 @@ final class _StructuralDiff {
         (design.rect.top, render.rect.top),
       );
     }
-    final content = render.text!.contentRect;
+    final text = render.text!;
+    var content = text.contentRect;
+    // Editable selection boxes describe glyph cells, not the complete line
+    // boxes Figma positions. Restore the omitted outer leading without
+    // losing an actual paint/scroll offset.
+    final lineHeight = text.style.lineHeight;
+    if (text.editable && lineHeight != null && text.runs.isEmpty) {
+      final leading =
+          lineHeight * text.textScale * text.lineCount - content.height;
+      if (leading > 0 && leading < lineHeight * text.textScale) {
+        content = GoldenRect(
+          content.left,
+          content.top - leading / 2,
+          content.width,
+          content.height + leading,
+        );
+      }
+    }
     final rect = _textRect(design);
-    final align = design.text?.align ?? 'LEFT';
+    final align = design.text?.horizontalAnchor ?? design.text?.align ?? 'LEFT';
     final x = switch (align) {
       'CENTER' => (rect.centerX, content.centerX),
       'RIGHT' => (rect.right, content.right),
@@ -1730,6 +1928,7 @@ final class _StructuralDiff {
     String? widgetRole,
     GoldenRect? rect,
     String? hint,
+    bool rendererDifference = false,
   }) {
     final subject =
         design?.id ??
@@ -1743,7 +1942,9 @@ final class _StructuralDiff {
     final seen = _ids[id] = (_ids[id] ?? 0) + 1;
     if (seen > 1) id = '$id#$seen';
     final enclosing = component ?? snapshot.componentOf(render);
-    final owner = GoldenFindingOwner.of(render, enclosing);
+    final owner = rendererDifference
+        ? null
+        : GoldenFindingOwner.of(render, enclosing);
     final drawnByComponent =
         owner == GoldenFindingOwner.designSystem && enclosing != null;
     findings.add(
