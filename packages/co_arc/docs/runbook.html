@@ -317,16 +317,18 @@
           <div class="code">
             <div class="code-head">
               <span class="code-label">zsh</span>
-              <button class="copy" data-code="mkdir ~/actions-runner && cd ~/actions-runner&#10;curl -o actions-runner.tar.gz -L \&#10;  https://github.com/actions/runner/releases/download/v2.xxx.x/actions-runner-osx-arm64-2.xxx.x.tar.gz&#10;# 릴리스 노트의 SHA-256 Checksums 에서 osx-arm64 값을 가져와 확인한 뒤에만 푼다 (&quot;OK&quot; 가 나와야 함)&#10;echo &quot;&lt;osx-arm64 SHA-256&gt;  actions-runner.tar.gz&quot; | shasum -a 256 -c&#10;tar xzf actions-runner.tar.gz">복사</button>
+              <button class="copy" data-code="VER=2.xxx.x   # 최신 버전은 https://github.com/actions/runner/releases 에서 확인&#10;PKG=&quot;actions-runner-osx-arm64-${VER}.tar.gz&quot;&#10;mkdir ~/actions-runner &amp;&amp; cd ~/actions-runner&#10;curl -o &quot;$PKG&quot; -L &quot;https://github.com/actions/runner/releases/download/v${VER}/${PKG}&quot;&#10;# 공식 릴리스가 게시한 SHA-256 과 대조한 뒤에만 푼다 (&quot;OK&quot; 가 나와야 함)&#10;SHA=$(gh api &quot;repos/actions/runner/releases/tags/v${VER}&quot; \&#10;  --jq &quot;.assets[] | select(.name == \&quot;${PKG}\&quot;) | .digest&quot; | sed 's/^sha256://')&#10;echo &quot;${SHA}  ${PKG}&quot; | shasum -a 256 -c - &amp;&amp; tar xzf &quot;$PKG&quot;">복사</button>
             </div>
-<pre><span class="g">mkdir</span> ~/actions-runner <span class="b">&&</span> <span class="g">cd</span> ~/actions-runner
-<span class="g">curl</span> <span class="b">-o</span> actions-runner.tar.gz <span class="b">-L</span> \
-  <span class="a">https://github.com/actions/runner/releases/download/v2.xxx.x/actions-runner-osx-arm64-2.xxx.x.tar.gz</span>
-<span class="c"># 릴리스 노트의 SHA-256 Checksums 에서 osx-arm64 값을 가져와 확인한 뒤에만 푼다 ("OK" 가 나와야 함)</span>
-<span class="g">echo</span> <span class="a">"&lt;osx-arm64 SHA-256&gt;  actions-runner.tar.gz"</span> | <span class="g">shasum</span> <span class="b">-a</span> 256 <span class="b">-c</span>
-<span class="g">tar</span> <span class="b">xzf</span> actions-runner.tar.gz</pre>
+<pre><span class="g">VER</span>=2.xxx.x   <span class="c"># 최신 버전은 https://github.com/actions/runner/releases 에서 확인</span>
+<span class="g">PKG</span>=<span class="a">"actions-runner-osx-arm64-${VER}.tar.gz"</span>
+<span class="g">mkdir</span> ~/actions-runner <span class="b">&&</span> <span class="g">cd</span> ~/actions-runner
+<span class="g">curl</span> <span class="b">-o</span> <span class="a">"$PKG"</span> <span class="b">-L</span> <span class="a">"https://github.com/actions/runner/releases/download/v${VER}/${PKG}"</span>
+<span class="c"># 공식 릴리스가 게시한 SHA-256 과 대조한 뒤에만 푼다 ("OK" 가 나와야 함)</span>
+<span class="g">SHA</span>=$(<span class="g">gh</span> api <span class="a">"repos/actions/runner/releases/tags/v${VER}"</span> \
+  <span class="b">--jq</span> <span class="a">".assets[] | select(.name == \"${PKG}\") | .digest"</span> | <span class="g">sed</span> <span class="a">'s/^sha256://'</span>)
+<span class="g">echo</span> <span class="a">"${SHA}  ${PKG}"</span> | <span class="g">shasum</span> <span class="b">-a</span> 256 <span class="b">-c</span> - <span class="b">&&</span> <span class="g">tar</span> <span class="b">xzf</span> <span class="a">"$PKG"</span></pre>
           </div>
-          <p class="hint">최신 버전과 SHA-256은 <a href="https://github.com/actions/runner/releases" target="_blank" rel="noopener">actions/runner releases</a>의 릴리스 노트(<strong>SHA-256 Checksums</strong> 절)에서 확인하세요. 값이 다르면 압축을 풀지 말고 파일을 지운 뒤 다시 받으세요.</p>
+          <p class="hint">위 SHA-256은 릴리스 자산 메타데이터의 <code>digest</code> 로, <a href="https://github.com/actions/runner/releases" target="_blank" rel="noopener">actions/runner releases</a> 릴리스 노트의 <strong>SHA-256 Checksums</strong> 표와 같은 값입니다(<code>digest</code> 가 비어 있는 오래된 릴리스는 표 값을 직접 넣으세요). 값이 다르면 압축을 풀지 말고 파일을 지운 뒤 다시 받으세요.</p>
         </div>
       </div>
       <!-- 02 -->

@@ -392,7 +392,7 @@ final class LocalRunner {
             ? '⚠️ 자동 로그인 꺼짐 + FileVault On — 재부팅 후 잠금해제(=로그인) 전까지 러너가 뜨지 않습니다 '
                   '(무인 재부팅: sudo fdesetup authrestart)'
             : '⚠️ 자동 로그인 꺼짐 — 재부팅 후 로그인해야 러너가 뜹니다 '
-                  '(FileVault를 켜고 재부팅은 sudo fdesetup authrestart)',
+                  '(시스템 설정 > 사용자 및 그룹 > 자동 로그인)',
       );
     }
 

@@ -34,18 +34,20 @@ Self-hosted 러너에는 아무 도구도 깔려있지 않습니다. 워크플�
 홈 디렉토리에 러너 폴더를 만들고 **Apple Silicon용(arm64)** 에이전트를 내려받습니다. Intel 맥이면 `osx-x64`로 받으세요.
 
 ```bash
+VER=2.xxx.x   # 최신 버전은 https://github.com/actions/runner/releases 에서 확인
+PKG="actions-runner-osx-arm64-${VER}.tar.gz"
 mkdir ~/actions-runner && cd ~/actions-runner
-curl -o actions-runner.tar.gz -L \
-  https://github.com/actions/runner/releases/download/v2.xxx.x/actions-runner-osx-arm64-2.xxx.x.tar.gz
-# 릴리스 노트의 SHA-256 Checksums 에서 osx-arm64 값을 가져와 확인한 뒤에만 푼다 ("OK" 가 나와야 함)
-echo "<osx-arm64 SHA-256>  actions-runner.tar.gz" | shasum -a 256 -c
-tar xzf actions-runner.tar.gz
+curl -o "$PKG" -L "https://github.com/actions/runner/releases/download/v${VER}/${PKG}"
+# 공식 릴리스가 게시한 SHA-256 과 대조한 뒤에만 푼다 ("OK" 가 나와야 함)
+SHA=$(gh api "repos/actions/runner/releases/tags/v${VER}" \
+  --jq ".assets[] | select(.name == \"${PKG}\") | .digest" | sed 's/^sha256://')
+echo "${SHA}  ${PKG}" | shasum -a 256 -c - && tar xzf "$PKG"
 ```
 
-최신 버전과 SHA-256은 [actions/runner releases](https://github.com/actions/runner/releases)의
-릴리스 노트(**SHA-256 Checksums** 절)에서 확인하세요. 값이 다르면 압축을 풀지 말고 파일을 지운 뒤
-다시 받으세요. `register-runner.sh`는 같은 검증을 자동으로 수행하고, 값을 읽지 못하거나 다르면
-압축을 풀지 않고 중단합니다.
+위 SHA-256은 릴리스 자산 메타데이터의 `digest` 이고, 릴리스 노트의 **SHA-256 Checksums** 표와 같은
+값입니다(`digest` 가 비어 있는 오래된 릴리스는 릴리스 노트의 표 값을 직접 넣으세요). 값이 다르면
+압축을 풀지 말고 파일을 지운 뒤 다시 받으세요. `register-runner.sh`는 같은 검증을 자동으로
+수행합니다 — 값을 구하지 못하면 내려받지 않고, 다르면 폐기하고 중단합니다.
 
 > ⚠️ **아키텍처 확인** — Apple Silicon 맥이라도 터미널 앱이 Rosetta로 떠 있으면
 > `uname -m`이 `x86_64`를 반환해서 자기도 모르게 x64 러너를 받게 됩니다.
@@ -202,19 +204,25 @@ TUI 하단 `로컬:` 줄에 노란색 **`KeepAlive 없음`** 이 보인다면 �
 ### ③ 재부팅 후 로그인 세션 확보 — FileVault 유지 + `fdesetup authrestart`
 
 LaunchAgent가 로그인에 묶여 있으므로, **재부팅 후 아무도 로그인하지 않으면 러너는
-계속 오프라인**입니다. **FileVault(디스크 암호화)는 켠 채로 유지**하고, 계획된 재부팅은
-`sudo fdesetup authrestart`로 합니다.
+계속 오프라인**입니다. 그렇다고 FileVault(디스크 암호화)를 끄고 자동 로그인을 켜지는
+마세요 — **FileVault는 켠 채로 유지**하고, 계획된 재부팅만 `sudo fdesetup authrestart`로
+처리합니다.
 
-| FileVault | 재부팅하면 | 로그인 세션을 확보하려면 |
+| 상황 | 재부팅하면 | 러너를 되살리려면 |
 |---|---|---|
-| **On (권장)** | 잠금해제 화면에서 멈춘다. 비밀번호를 넣으면 그대로 로그인까지 이어져 러너가 뜬다 | `sudo fdesetup authrestart` 로 재부팅 (이번 부팅 1회만 잠금해제를 건너뛰고 바로 로그인까지 진행) |
-| Off | 로그인하기 전까지 러너가 뜨지 않는다 | **FileVault를 먼저 켠다** — 시스템 설정 > 개인정보 보호 및 보안 > FileVault. 켠 뒤에는 위 방식으로 재부팅 |
+| 계획된 재부팅 (업데이트 · 점검) | 잠금해제 화면을 건너뛰고 그대로 로그인까지 이어져 러너가 뜬다 | `sudo fdesetup authrestart` — FileVault 사용자 암호를 입력하면 **이번 부팅 1회만** 잠금해제를 건너뛴다 |
+| 정전 등 예기치 않은 재부팅 | 잠금해제 화면에서 멈춘다 | 사람이 잠금해제해야 한다. UPS 같은 전원 대책으로 빈도를 줄인다 |
 
-FileVault가 켜져 있으면 macOS가 자동 로그인을 허용하지 않습니다. 디스크 암호화를 끄고
-자동 로그인을 켜는 구성은 쓰지 않습니다 — 러너 머신에는 소스 코드와 빌드 비밀 값이 남을 수
-있어 암호화를 유지하는 쪽을 기본으로 합니다. 대신 무인 복귀는 `authrestart`로 얻고,
-정전처럼 예기치 않은 재부팅 뒤에는 잠금해제가 한 번 필요하므로 UPS 같은 전원 대책을 함께
-둡니다.
+- FileVault가 켜져 있으면 macOS가 자동 로그인을 허용하지 않습니다. 그래서 정전 뒤의 무인
+  복귀는 FileVault를 유지하는 한 기대하지 않습니다.
+- `authrestart`는 암호를 직접 묻습니다. 암호를 파일에 적어 두고 자동화하지 마세요. 또 인증
+  재시작 동안에는 FileVault 보호가 낮아집니다 — `fdesetup` 매뉴얼의 경고대로 해제 키 사본이
+  메모리와 SMC에 놓였다가 잠금해제 뒤에 지워집니다. 사람이 곁에 있는 계획된 재부팅에만
+  쓰세요. 기종에 따라 동작하지 않을 수 있습니다(`fdesetup supportsauthrestart`).
+- 이미 FileVault가 꺼진 머신이라면 먼저 켭니다(시스템 설정 > 개인정보 보호 및 보안 >
+  FileVault). 켠 뒤에는 위 표의 방식으로 운영합니다.
+- `register-runner.sh`는 FileVault를 끄지 않고 끄라고 권하지도 않습니다 — 서비스를 켤 때 위
+  상황만 점검해서 알려 줍니다.
 
 ### ④ 잠들지 않게 — `pmset`
 
