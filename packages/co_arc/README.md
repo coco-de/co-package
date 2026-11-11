@@ -46,7 +46,7 @@ coarc                     # org coco-de 스코프로 실행 (러너 목록·등�
 coarc list --org coco-de  # TUI 없이 목록만 스냅샷 출력
 ```
 
-`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령을 바로 쓸 수 있습니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다. 설치할 버전을 고정하려면 `--git-ref <태그 또는 커밋 SHA>`를 붙입니다. 자세한 키/옵션은 [docs/tui.md](docs/tui.md) 참고.
+`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령을 바로 쓸 수 있습니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다. 설치할 버전을 고정하려면 `--git-ref <커밋 SHA>`를 붙입니다. 자세한 키/옵션은 [docs/tui.md](docs/tui.md) 참고.
 
 ### 3. 러너 연결 확인
 
