@@ -48,6 +48,7 @@ final class GoldenReportRegion {
     this.widget,
     this.findings = const [],
     this.known,
+    this.largestConnectedPixels,
   });
 
   /// `node:<design node id>` or `cell:<x>,<y>` — stable across runs.
@@ -68,12 +69,18 @@ final class GoldenReportRegion {
   /// Known difference that accepts the region, if any.
   final GoldenKnownDifference? known;
 
+  /// Largest original connected fragment in a grouped diagnostic. Raw entries
+  /// leave this null and use their own logical pixel count.
+  final double? largestConnectedPixels;
+
   /// JSON form.
   Map<String, Object?> toJson() => {
     'id': id,
     'rect': region.bounds.toJson(),
     'pixels': region.pixels,
     'logicalPixels': region.logicalPixels,
+    if (largestConnectedPixels != null)
+      'largestConnectedPixels': largestConnectedPixels,
     'designColor': GoldenColorMath.hex(region.referenceColor),
     'renderColor': GoldenColorMath.hex(region.renderColor),
     'meanDeltaE': region.meanDeltaE,

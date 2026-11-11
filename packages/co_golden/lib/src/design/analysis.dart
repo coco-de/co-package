@@ -701,11 +701,7 @@ GoldenDesignFinding _visualFinding(
   final r = region.region;
   final severity = rasterCoverage != null
       ? GoldenFindingSeverity.info
-      : r.logicalPixels > tolerance.budgetRegion
-      ? GoldenFindingSeverity.error
-      : (r.logicalPixels > tolerance.budgetRegion / 4
-            ? GoldenFindingSeverity.warning
-            : GoldenFindingSeverity.info);
+      : goldenUnexplainedSeverity(region, tolerance);
   final where = [
     if (region.design != null) 'Figma ‘${region.design!.name}’',
     if (region.widget != null)
@@ -725,7 +721,9 @@ GoldenDesignFinding _visualFinding(
             ? '원본 자산·채움·자름이 같은 이미지 보간 차이'
             : '구조·색·$rasterKind 윤곽이 일치하는 렌더러 차이'} '
         '${goldenRound(r.bounds.width, 1)}×${goldenRound(r.bounds.height, 1)}px '
-        '(넓이 ${goldenRound(r.logicalPixels, 2)}px², ΔE ${goldenRound(r.meanDeltaE, 2)})'
+        '(넓이 ${goldenRound(r.logicalPixels, 2)}px², '
+        '최대 연결 구역 ${goldenRound(region.largestConnectedPixels ?? r.logicalPixels, 2)}px², '
+        'ΔE ${goldenRound(r.meanDeltaE, 2)})'
         '${where.isEmpty ? '' : ' — $where'}.',
     diffs: [
       GoldenFindingDiff(
