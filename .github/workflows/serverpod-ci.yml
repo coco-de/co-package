@@ -4,10 +4,10 @@
 # (ARC dind 러너: runs-on: arc-dart / GitHub-hosted: ubuntu-latest)
 # macOS self-hosted 러너에서는 services:가 동작하지 않습니다.
 #
-# 서비스 레포에서:
+# 서비스 레포에서 (호출 대상은 `@main` 같은 이동 ref 대신 태그 또는 커밋 SHA 로 고정):
 #   jobs:
 #     server:
-#       uses: coco-de/co-package/.github/workflows/serverpod-ci.yml@main
+#       uses: coco-de/co-package/.github/workflows/serverpod-ci.yml@<커밋 SHA>
 #       with:
 #         runs-on: '"arc-dart"'
 #         server-directory: 'packages/my_server'
@@ -37,6 +37,9 @@ on:
       DB_PASSWORD:
         description: 'config/test.yaml과 일치하는 테스트 DB 비밀번호'
         required: false
+
+permissions:
+  contents: read
 
 jobs:
   serverpod:
@@ -70,7 +73,7 @@ jobs:
       run:
         working-directory: ${{ inputs.server-directory }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: pub get
         run: dart pub get

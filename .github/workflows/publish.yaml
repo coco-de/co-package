@@ -27,6 +27,11 @@
 #       * Tag pattern: open_epub_engine-v{{version}}  (엔진) / open_epub-v{{version}}  (리더)
 #   - 최초 1회는 소유자가 `dart pub publish`로 수동 발행해 패키지를 생성/클레임해야 할 수 있다
 #     (자동 발행은 기존 패키지에 대해 동작). OIDC라 장기 토큰/시크릿은 불필요.
+#   - 발행 잡은 GitHub 환경 `pub.dev` 에서 실행된다(`with: environment: pub.dev`). pub.dev 의
+#     "Automated publishing" 에서 "Require GitHub Actions environment" 를 켠다면 같은 이름
+#     (`pub.dev`)을 입력한다. 저장소 Settings > Environments 의 `pub.dev` 에 필수 승인자를 두면
+#     발행 전에 승인이 필요하다 — 엔진 승인이 늦어져 `wait-for-engine` 의 최대 대기(20분)가
+#     먼저 끝나면 리더 발행 잡을 다시 실행한다.
 #
 # 이 워크플로는 dart-lang/setup-dart의 공식 재사용 워크플로를 호출한다(OIDC 토큰 교환 처리).
 
@@ -40,14 +45,18 @@ on:
       # 리더: open_epub-v1.2.3 등 ("open_epub-v"는 "open_epub_engine-v"와 겹치지 않음)
       - "open_epub-v[0-9]+.[0-9]+.[0-9]+*"
 
+permissions:
+  contents: read
+
 jobs:
   publish-engine:
     # open_epub_engine-v* 태그에서만 실행.
     if: ${{ startsWith(github.ref, 'refs/tags/open_epub_engine-v') }}
     permissions:
       id-token: write # pub.dev OIDC 토큰 교환에 필요
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
     with:
+      environment: pub.dev
       working-directory: packages/open_epub_engine
 
   # ── 발행 순서 강제 게이트 ────────────────────────────────────────────────────
@@ -67,7 +76,7 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/open_epub-v') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0 # git tag --points-at 을 쓰려면 태그가 필요
 
@@ -102,6 +111,7 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/open_epub-v') }}
     permissions:
       id-token: write
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
     with:
+      environment: pub.dev
       working-directory: packages/open_epub

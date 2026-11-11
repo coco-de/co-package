@@ -1,0 +1,19 @@
+# Dependabot — 워크플로에서 커밋 SHA 로 고정한 외부 액션을 주기적으로 갱신한다.
+#
+# 고정은 `uses: owner/repo@<40자리 SHA> # v1.2.3` 형식이다. 줄 끝 버전 주석은 그 SHA 가 어느
+# 릴리스인지 알아보게 하는 표지이고, Dependabot 이 SHA 와 함께 갱신한다 — 지우지 않는다.
+# 갱신 PR 도 이 저장소의 CI 를 돌리므로, 병합 전에 릴리스 노트와 diff 를 확인한다.
+# pub 생태계는 워크스페이스 해석 구조에 맞춰 따로 다룬다.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # 새 릴리스는 7일 지켜본 뒤에 제안한다. 이 옵션은 버전 업데이트에만 적용되고
+    # 보안 업데이트에는 적용되지 않는다.
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "ci(deps)"
