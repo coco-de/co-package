@@ -37,10 +37,15 @@ Self-hosted 러너에는 아무 도구도 깔려있지 않습니다. 워크플�
 mkdir ~/actions-runner && cd ~/actions-runner
 curl -o actions-runner.tar.gz -L \
   https://github.com/actions/runner/releases/download/v2.xxx.x/actions-runner-osx-arm64-2.xxx.x.tar.gz
+# 릴리스 노트의 SHA-256 Checksums 에서 osx-arm64 값을 가져와 확인한 뒤에만 푼다 ("OK" 가 나와야 함)
+echo "<osx-arm64 SHA-256>  actions-runner.tar.gz" | shasum -a 256 -c
 tar xzf actions-runner.tar.gz
 ```
 
-최신 버전은 [actions/runner releases](https://github.com/actions/runner/releases)에서 확인하세요.
+최신 버전과 SHA-256은 [actions/runner releases](https://github.com/actions/runner/releases)의
+릴리스 노트(**SHA-256 Checksums** 절)에서 확인하세요. 값이 다르면 압축을 풀지 말고 파일을 지운 뒤
+다시 받으세요. `register-runner.sh`는 같은 검증을 자동으로 수행하고, 값을 읽지 못하거나 다르면
+압축을 풀지 않고 중단합니다.
 
 > ⚠️ **아키텍처 확인** — Apple Silicon 맥이라도 터미널 앱이 Rosetta로 떠 있으면
 > `uname -m`이 `x86_64`를 반환해서 자기도 모르게 x64 러너를 받게 됩니다.
@@ -194,20 +199,22 @@ launchd는 plist를 **로드 시점에** 읽으므로:
 TUI 하단 `로컬:` 줄에 노란색 **`KeepAlive 없음`** 이 보인다면 자동 적용이 **실패한** 것입니다
 (자동으로 걸리는 게 정상이라, 이 경고가 뜬다는 건 PlistBuddy 부재나 권한 문제라는 뜻입니다).
 
-### ③ 재부팅 후 로그인 세션 확보 — 자동 로그인 / FileVault
+### ③ 재부팅 후 로그인 세션 확보 — FileVault 유지 + `fdesetup authrestart`
 
 LaunchAgent가 로그인에 묶여 있으므로, **재부팅 후 아무도 로그인하지 않으면 러너는
-계속 오프라인**입니다. 상황별로 필요한 조치가 다릅니다.
+계속 오프라인**입니다. **FileVault(디스크 암호화)는 켠 채로 유지**하고, 계획된 재부팅은
+`sudo fdesetup authrestart`로 합니다.
 
-| FileVault | 재부팅하면 | 무인 운영하려면 |
+| FileVault | 재부팅하면 | 로그인 세션을 확보하려면 |
 |---|---|---|
-| **Off** | 자동 로그인을 켜두면 부팅 → 로그인 → 러너 기동까지 무인 | 시스템 설정 > 사용자 및 그룹 > **자동 로그인**에 계정 지정 |
-| **On** | 잠금해제 화면에서 멈춘다. 비밀번호를 넣으면 그대로 로그인까지 이어져 러너가 뜬다 | `sudo fdesetup authrestart` 로 재부팅 (이번 부팅 1회만 잠금해제를 건너뛰고 바로 로그인까지 진행) |
+| **On (권장)** | 잠금해제 화면에서 멈춘다. 비밀번호를 넣으면 그대로 로그인까지 이어져 러너가 뜬다 | `sudo fdesetup authrestart` 로 재부팅 (이번 부팅 1회만 잠금해제를 건너뛰고 바로 로그인까지 진행) |
+| Off | 로그인하기 전까지 러너가 뜨지 않는다 | **FileVault를 먼저 켠다** — 시스템 설정 > 개인정보 보호 및 보안 > FileVault. 켠 뒤에는 위 방식으로 재부팅 |
 
-FileVault가 켜져 있으면 자동 로그인을 설정할 수 없습니다. **원격으로 재부팅해야 하는
-전용 빌드 머신**이라면 FileVault를 끄고 자동 로그인을 켜는 게 유일한 완전 무인 조합이고,
-개인 노트북을 겸용하는 머신이라면 FileVault를 유지하고 `fdesetup authrestart`로 계획된
-재부팅만 무인화하는 쪽이 현실적입니다.
+FileVault가 켜져 있으면 macOS가 자동 로그인을 허용하지 않습니다. 디스크 암호화를 끄고
+자동 로그인을 켜는 구성은 쓰지 않습니다 — 러너 머신에는 소스 코드와 빌드 비밀 값이 남을 수
+있어 암호화를 유지하는 쪽을 기본으로 합니다. 대신 무인 복귀는 `authrestart`로 얻고,
+정전처럼 예기치 않은 재부팅 뒤에는 잠금해제가 한 번 필요하므로 UPS 같은 전원 대책을 함께
+둡니다.
 
 ### ④ 잠들지 않게 — `pmset`
 

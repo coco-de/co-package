@@ -555,7 +555,10 @@ AC Power:
       );
 
       expect(warnings.single, contains('자동 로그인'));
-      expect(warnings.single, isNot(contains('FileVault')));
+      // FileVault가 꺼져 있어도 권고는 자동 로그인 지정이 아니라 FileVault 를 켜고
+      // authrestart 로 재부팅하는 것이다.
+      expect(warnings.single, contains('FileVault'));
+      expect(warnings.single, contains('fdesetup authrestart'));
     });
 
     test('FileVault가 켜져 있으면 authrestart를 함께 안내한다', () {

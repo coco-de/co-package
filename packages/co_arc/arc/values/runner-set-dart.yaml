@@ -2,6 +2,11 @@
 # chart: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set
 #
 # helm 릴리스 이름(arc-dart)이 곧 워크플로우의 `runs-on: arc-dart` 값이 됩니다.
+#
+# 고정 필요 (arc/README.md "버전 고정"):
+#   · 차트 버전: `helm install` · `install.sh` 에 `--version` 이 없어 설치할 때마다 최신 차트를 받는다
+#   · 러너 이미지: 아래 `:latest` 는 움직이는 태그다
+#   배포 중인 버전은 이 저장소에서 알 수 없어 값을 바꾸지 않았다 — 확인한 쪽이 고정한다.
 
 # org 전체 레포에서 사용 (특정 레포만 쓰려면 레포 URL로 변경)
 githubConfigUrl: https://github.com/coco-de
@@ -22,6 +27,8 @@ template:
   spec:
     containers:
       - name: runner
+        # 고정 필요: `latest` 는 러너 릴리스마다 움직이는 태그다. 배포 중인 버전 태그(가능하면
+        # `@sha256:` 다이제스트까지)로 고정하고, 새 러너 릴리스에 맞춰 주기적으로 올린다.
         image: ghcr.io/actions/actions-runner:latest
         command: ["/home/runner/run.sh"]
         resources:

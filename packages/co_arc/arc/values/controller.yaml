@@ -2,6 +2,10 @@
 # chart: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
 #
 # 기본값으로 충분히 동작합니다. 필요한 항목만 오버라이드하세요.
+#
+# 고정 필요: `helm install` · `install.sh` 에 `--version` 이 없어 설치할 때마다 최신 차트(=최신
+# 컨트롤러)를 받는다. 배포 중인 차트 버전을 `helm list -A` 로 확인해 `--version` 으로 고정한다
+# (arc/README.md "버전 고정"). 이 저장소에서는 배포 중인 버전을 알 수 없어 값을 바꾸지 않았다.
 
 replicaCount: 1
 
