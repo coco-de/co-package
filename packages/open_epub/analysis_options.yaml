@@ -9,6 +9,8 @@
 # packages, and plugins designed to encourage good coding practices.
 analyzer:
   exclude:
+    # The example has its own analysis job and private CoUI dependencies.
+    - example/**
     - build/**
     - android/**
     - ios/**

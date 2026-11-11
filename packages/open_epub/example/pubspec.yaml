@@ -12,6 +12,8 @@ environment:
   sdk: ^3.9.2
 
 dependencies:
+  co_example_ui:
+    path: ../../co_example_ui
   flutter:
     sdk: flutter
   flutter_localizations:

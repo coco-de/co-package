@@ -1,0 +1,36 @@
+name: co_example_ui
+description: Shared CoUI theme and responsive navigation for Cocode example apps.
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+  flutter: '>=3.47.0'
+
+dependencies:
+  co_demo_prefs:
+    path: ../co_demo_prefs
+  coui_flutter: any
+  cupertino_icons: ^1.0.9
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_localizations:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: fonts/Pretendard-Regular.otf
+          weight: 400
+        - asset: fonts/Pretendard-SemiBold.otf
+          weight: 600
+    - family: NotoSansArabic
+      fonts:
+        - asset: fonts/NotoSansArabic.ttf

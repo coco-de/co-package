@@ -30,9 +30,10 @@
 사전 준비물과 상세 절차는 [docs/self-hosted-runner.md](docs/self-hosted-runner.md) 런북을 따르세요.
 
 > `--service`는 launchd 등록에 더해 plist에 `KeepAlive`를 심어 **러너가 죽어도 되살아나게** 합니다.
-> 다만 launchd의 LaunchAgent는 "부팅 시"가 아니라 **"로그인 시"** 로드되므로, 재부팅 후 무인
-> 복귀에는 자동 로그인(또는 FileVault 사용 시 `fdesetup authrestart`) 설정이 함께 필요합니다 —
-> 서비스를 켤 때 무엇이 빠졌는지 점검 결과가 출력됩니다. 자세한 내용은
+> 다만 launchd의 LaunchAgent는 "부팅 시"가 아니라 **"로그인 시"** 로드되므로, 재부팅 후에는 로그인
+> 세션이 생겨야 러너가 돌아옵니다. **FileVault는 켠 채로 유지**하고 계획된 재부팅은
+> `sudo fdesetup authrestart`로 합니다 — 서비스를 켤 때 무엇이 빠졌는지 점검 결과가 출력됩니다.
+> 자세한 내용은
 > [재부팅 후에도 백그라운드로 유지하기](docs/self-hosted-runner.md#재부팅-후에도-백그라운드로-유지하기).
 
 ### 2. (선택) TUI로 관리하기
@@ -45,7 +46,7 @@ coarc                     # org coco-de 스코프로 실행 (러너 목록·등�
 coarc list --org coco-de  # TUI 없이 목록만 스냅샷 출력
 ```
 
-`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령을 바로 쓸 수 있습니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다. 자세한 키/옵션은 [docs/tui.md](docs/tui.md) 참고.
+`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령을 바로 쓸 수 있습니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다. 설치할 버전을 고정하려면 `--git-ref <커밋 SHA>`를 붙입니다. 자세한 키/옵션은 [docs/tui.md](docs/tui.md) 참고.
 
 ### 3. 러너 연결 확인
 
@@ -62,14 +63,24 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   ci:
-    uses: coco-de/co-package/.github/workflows/melos-ci.yml@main
+    # `@main` 같은 이동 ref 대신 태그 또는 검토한 커밋 SHA 로 고정해 호출한다
+    uses: coco-de/co-package/.github/workflows/melos-ci.yml@<커밋 SHA>
     with:
       runs-on: '["self-hosted", "macOS", "flutter"]'
 ```
 
 전체 예시는 [`templates/caller-example.yml`](templates/caller-example.yml) 참고.
+
+> **호출은 태그 또는 커밋 SHA로 고정하세요.** `@main`처럼 움직이는 ref로 부르면 호출 대상이 바뀌는 시점을
+> 호출하는 쪽이 정할 수 없습니다. 고정하면 올릴 때 변경을 직접 확인하고 올리게 됩니다. SHA는
+> `gh api repos/coco-de/co-package/commits/main --jq .sha`로 구하되 검토한 커밋을 고르세요.
+> 재사용 워크플로우의 `GITHUB_TOKEN`은 호출자가 준 권한을 올릴 수 없으므로(같거나 낮추기만 함) 호출 쪽에도
+> `permissions: contents: read`를 둡니다.
 
 > **참고** — co-package는 public 레포라 재사용 워크플로우를 별도 설정 없이 호출할 수 있습니다. (private 레포로 바꿀 경우
 > `Settings → Actions → General → Access → "Accessible from repositories in the coco-de organization"` 허용이 필요합니다.)

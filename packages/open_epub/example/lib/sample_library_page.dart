@@ -25,6 +25,13 @@ class SampleLibraryPage extends StatefulWidget {
 
 class _SampleLibraryPageState extends State<SampleLibraryPage> {
   late final Future<List<SampleBook>> _books = _availableBooks();
+  final _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   /// 번들에 자산이 있는 샘플만 — 합성 샘플(bytesLoader)은 항상 연다.
   Future<List<SampleBook>> _availableBooks() async {
@@ -56,52 +63,114 @@ class _SampleLibraryPageState extends State<SampleLibraryPage> {
           if (books == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          return ListView.separated(
-            key: const ValueKey('sample-library-list'),
-            padding: const EdgeInsets.all(12),
-            itemCount: books.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, i) {
-              final book = books[i];
-              final text = sampleTexts(t, book);
-              return Card(
-                margin: EdgeInsets.zero,
-                child: ListTile(
-                  key: ValueKey('sample-${book.id}'),
-                  leading: CircleAvatar(
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    child: Icon(
-                      book.icon,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  title: Text(
-                    text.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        text.subtitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+          final query = _search.text.trim().toLowerCase();
+          final visibleBooks = books.where((book) {
+            final text = sampleTexts(t, book);
+            return '${text.title} ${text.subtitle} ${text.tag}'
+                .toLowerCase()
+                .contains(query);
+          }).toList();
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                    child: TextField(
+                      key: const ValueKey('sample-library-search'),
+                      controller: _search,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        hintText: MaterialLocalizations.of(
+                          context,
+                        ).searchFieldLabel,
+                        suffixIcon: query.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: MaterialLocalizations.of(
+                                  context,
+                                ).deleteButtonTooltip,
+                                icon: const Icon(Icons.close_rounded),
+                                onPressed: () => setState(_search.clear),
+                              ),
                       ),
-                      const SizedBox(height: 4),
-                      _FeatureChip(label: text.tag),
-                    ],
-                  ),
-                  isThreeLine: true,
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ReaderDemoPage(book: book),
                     ),
                   ),
-                ),
-              );
-            },
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        '${visibleBooks.length} / ${books.length}',
+                        style: theme.textTheme.labelMedium,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: visibleBooks.isEmpty
+                        ? const Center(
+                            child: Icon(Icons.search_off_rounded, size: 40),
+                          )
+                        : ListView.separated(
+                            key: const ValueKey('sample-library-list'),
+                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                            itemCount: visibleBooks.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, i) {
+                              final book = visibleBooks[i];
+                              final text = sampleTexts(t, book);
+                              return Card(
+                                margin: EdgeInsets.zero,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                  key: ValueKey('sample-${book.id}'),
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        theme.colorScheme.primaryContainer,
+                                    child: Icon(
+                                      book.icon,
+                                      color:
+                                          theme.colorScheme.onPrimaryContainer,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    text.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(text.subtitle),
+                                      const SizedBox(height: 4),
+                                      _FeatureChip(label: text.tag),
+                                    ],
+                                  ),
+                                  isThreeLine: true,
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ReaderDemoPage(book: book),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),

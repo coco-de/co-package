@@ -27,7 +27,7 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 
   <title>Open Board Demo</title>
   <link rel="manifest" href="manifest.json">
@@ -38,7 +38,7 @@
     // does not flash white while main.dart.js loads. LIGHT / DARK = this app's
     // light / dark scaffold background (exampleTheme in lib/demo_settings.dart).
     (function () {
-      var LIGHT = '#FBF8FF', DARK = '#121318';
+      var LIGHT = '#FFFFFF', DARK = '#17191E';
       try {
         var t = new URLSearchParams(location.search).get('theme');
         if (t === null) {
@@ -58,6 +58,24 @@
   </script>
 </head>
 <body>
+  <!-- splash:begin — tool/web/splash.html · UPDATE_PRE_BOOT=1 flutter test test/web/pre_boot_test.dart (app/app) -->
+  <div id="co-splash" aria-hidden="true" style="position:fixed;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;pointer-events:none;color:CanvasText">
+    <svg viewBox="0 5.64 78 46.72" width="150" height="90" fill="currentColor" focusable="false" style="display:block;overflow:visible;width:min(150px,60vmin);height:auto">
+      <path d="M28.2135 46.1843C27.966 45.8984 27.7246 45.6075 27.4907 45.3118C26.1689 45.6447 24.7852 45.8217 23.3595 45.8217C14.0697 45.8217 6.53855 38.2918 6.53855 29.0008C6.53855 19.7097 14.0697 12.1798 23.3595 12.1798C24.7865 12.1798 26.1702 12.3568 27.492 12.6922C27.7259 12.3964 27.9672 12.1043 28.2148 11.8185C29.5749 10.2442 31.1133 8.84066 32.8015 7.63148C29.9153 6.35299 26.7197 5.64258 23.3607 5.64258C10.4607 5.64258 0.00128174 16.102 0.00128174 29.002C0.00128174 41.902 10.4607 52.3614 23.3607 52.3614C26.7221 52.3614 29.9165 51.651 32.804 50.3737C31.1146 49.1646 29.5762 47.7598 28.2135 46.1843Z"/>
+      <path d="M48.0974 5.6431C43.5565 5.6431 39.3163 6.93892 35.7283 9.18154C33.7394 10.4254 31.9498 11.9613 30.4213 13.7287C26.8779 17.8241 24.7368 23.162 24.7368 29.0013C24.7368 34.8405 26.8779 40.1785 30.4213 44.2739C31.9498 46.0412 33.7382 47.5772 35.7283 48.821C39.3163 51.0636 43.5552 52.3594 48.0974 52.3594C60.9974 52.3594 71.4568 41.9001 71.4568 29C71.4568 16.1 60.9974 5.64062 48.0974 5.64062V5.6431ZM48.0974 45.8234C45.5763 45.8234 43.1839 45.2689 41.0354 44.2764C39.0192 43.3419 37.2185 42.0189 35.7283 40.405C32.9647 37.4074 31.274 33.4036 31.274 29.0038C31.274 24.6039 32.9634 20.6001 35.7283 17.6025C37.2172 15.9886 39.018 14.6656 41.0354 13.7311C43.1839 12.7385 45.5763 12.1841 48.0974 12.1841C57.3872 12.1841 64.9183 19.714 64.9183 29.005C64.9183 38.296 57.3872 45.8259 48.0974 45.8259V45.8234Z"/>
+      <path d="M74.7289 52.3601C76.5348 52.3601 77.9988 50.8961 77.9988 49.0902C77.9988 47.2843 76.5348 45.8203 74.7289 45.8203C72.923 45.8203 71.459 47.2843 71.459 49.0902C71.459 50.8961 72.923 52.3601 74.7289 52.3601Z"/>
+    </svg>
+  </div>
+  <script>
+    (function () {
+      function remove() {
+        var splash = document.getElementById('co-splash');
+        if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+      }
+      window.addEventListener('flutter-first-frame', remove);
+    })();
+  </script>
+  <!-- splash:end -->
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

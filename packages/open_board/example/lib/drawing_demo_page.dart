@@ -495,12 +495,12 @@ class _DrawingPageState extends State<DrawingPage> {
         title: Text(t.home.board.title),
         actions: [
           IconButton(
-            onPressed: () => _notifier.undo(),
+            onPressed: _notifier.canUndo ? () => _notifier.undo() : null,
             icon: const Icon(Icons.undo),
             tooltip: t.common.undo,
           ),
           IconButton(
-            onPressed: () => _notifier.redo(),
+            onPressed: _notifier.canRedo ? () => _notifier.redo() : null,
             icon: const Icon(Icons.redo),
             tooltip: t.common.redo,
           ),

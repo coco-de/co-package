@@ -25,7 +25,8 @@ favicon files, and any locally served images together.
   **디자인 차이만** switch finds variants that need a design look even when
   capture passed.
 - Images stay local, are copied next to the page, or are served from a URL
-  prefix such as a storage bucket.
+  prefix such as an S3 bucket or CDN — see
+  [Storing the gallery in S3](#storing-the-gallery-in-s3).
 - The page carries the cocode favicon set — the same files as
   [cocode.im](https://cocode.im): `favicon.svg` (the "CO." mark, which follows
   the browser theme), `favicon.ico` (a 32 × 32 PNG for browsers without SVG
@@ -100,6 +101,81 @@ images with relative URLs, so the same folder works at a domain root, at
 
 - `--asset-base-url` must be an absolute http(s) URL. Use it only for images
   on another host (such as a storage bucket), not for the Pages sub-path.
+
+### Storing the gallery in S3
+
+A workflow artifact expires and a CI runner's work folder is cleaned up; an S3
+bucket keeps the captures until a lifecycle rule removes them. Upload under a
+prefix that is new for every run — the commit SHA, or the run id when one
+commit can be captured twice — so no object is overwritten and long cache
+lifetimes are safe.
+
+**The whole gallery under one prefix.** The page links its images and favicons
+relatively, so `--copy-images` needs no URL option:
+
+```sh
+dart run co_golden_gallery:co_golden_gallery build \
+  --input build/co_golden --output build/golden-gallery --copy-images --noindex
+
+aws s3 cp build/golden-gallery "s3://example-bucket/golden/$GITHUB_SHA/" \
+  --recursive --cache-control "public, max-age=31536000, immutable"
+```
+
+Open `…/golden/<sha>/index.html` by name: the S3 REST endpoint and CloudFront do
+not map a folder URL to its `index.html`.
+
+**Images in S3, the page elsewhere** — `index.html` and its favicons go to a
+workflow artifact or GitHub Pages. Upload the capture output except the files
+only the build reads (the `runs/` manifests and the `*.design.json` spec
+snapshots), then point `--asset-base-url` at the prefix:
+
+```sh
+aws s3 cp build/co_golden "s3://example-bucket/golden/$GITHUB_SHA/" --recursive \
+  --exclude "runs/*" --exclude "*.design.json" \
+  --cache-control "public, max-age=31536000, immutable"
+
+dart run co_golden_gallery:co_golden_gallery build \
+  --input build/co_golden --output build/golden-gallery --noindex \
+  --asset-base-url "https://example-bucket.s3.ap-northeast-2.amazonaws.com/golden/$GITHUB_SHA/"
+```
+
+The gallery appends each file's gallery path to the base URL, percent-encoded
+segment by segment (`<base>images/auth/login/phone__dark__ko.png`), and adds a
+missing trailing slash. The base is a plain prefix with no query string, so
+presigned URLs do not work. The `images/`, `references/`, `differences/`, and
+`analysis/` trees cover every file `--copy-images` would copy.
+
+In GitHub Actions, get short-lived credentials from OIDC instead of storing
+access keys. The role needs only `s3:PutObject` and `s3:AbortMultipartUpload`
+(so a failed large upload can clean up) on
+`arn:aws:s3:::example-bucket/golden/*`. GitHub-hosted runners include the AWS
+CLI; a self-hosted runner needs it installed.
+
+```yaml
+permissions:
+  contents: read
+  id-token: write # exchanges the job's OIDC token for AWS credentials
+steps:
+  - uses: aws-actions/configure-aws-credentials@v6
+    with:
+      role-to-assume: ${{ vars.GOLDEN_S3_ROLE_ARN }}
+      aws-region: ap-northeast-2
+  # then the `aws s3 cp` and gallery build steps above
+```
+
+- **Access.** Design exports and analysis reports (which carry `file:line`
+  source locations) are as sensitive as the source. Keep S3 Block Public Access
+  on and serve the bucket through CloudFront with origin access control and
+  your own authentication. `--noindex` only keeps the page out of search
+  engines; it does not protect the images. A public bucket policy suits
+  non-confidential demo captures only.
+- **CORS.** No bucket CORS configuration is needed: the page loads images with
+  plain `<img>` tags and opens report JSON as links.
+- **Retention.** Unlike an artifact, objects stay until removed. Add a
+  lifecycle rule that expires the `golden/` prefix.
+- **Baselines.** The accepted baselines stay in Git because `compare` reads
+  them from the working tree. For candidate baselines, see
+  [Baselines in CI](../co_golden/README.md#baselines-in-ci).
 
 ## Input layout
 

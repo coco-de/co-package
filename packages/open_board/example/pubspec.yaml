@@ -4,13 +4,16 @@ publish_to: 'none'
 version: 1.0.0+1
 
 # 모노레포 pub workspace 멤버 — open_board · open_epub(→ open_epub_engine)을 로컬
-# 해석한다. 비공개 git 의존성이 없어 토큰 없이 `flutter pub get` 이 된다 (#42).
+# 해석한다. 예제 테마의 CoUI git 의존성에는 coco-de/coui 읽기 권한이 필요하다.
 resolution: workspace
 
 environment:
   sdk: ^3.11.1
 
 dependencies:
+  coui_flutter: any
+  co_example_ui:
+    path: ../../co_example_ui
   flutter:
     sdk: flutter
   flutter_localizations:

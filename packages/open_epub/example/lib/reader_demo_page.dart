@@ -245,8 +245,10 @@ class _ReaderDemoPageState extends State<ReaderDemoPage> {
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 4,
+          runSpacing: 4,
           children: [
             IconButton(
               key: const ValueKey('reader-prev'),

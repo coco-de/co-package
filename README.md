@@ -11,6 +11,7 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | [`co_demo_world`](packages/co_demo_world/README.md) | Deterministic demo worlds: business data fixed, co_faker display text re-projected per UI language, user edits kept across a live language switch. |
 | [`co_golden`](packages/co_golden/README.md) | Golden matrix testing for Flutter — devices × themes × locales, strict layout diagnostics, Slang locale binding, JSON run manifests. |
 | [`co_golden_gallery`](packages/co_golden_gallery/README.md) | Single-file HTML gallery for co_golden captures and golden PNG trees; images local, copied, or served from a bucket. |
+| [`co_storage`](packages/co_storage/README.md) | File storage for Dart servers — one `Disk` API over S3, R2, MinIO, local disk and memory (a [dox_storage](packages/co_storage/FORK.md) fork), plus signed direct uploads whose storage keys never leave the server. |
 | [`open_epub_engine`](packages/open_epub_engine/README.md) | Pure Dart EPUB 2/3 parser, object model, and CFI locator engine. |
 | [`open_epub`](packages/open_epub/README.md) | Customizable EPUB reader widget for Flutter (reflowable + fixed layout). |
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
@@ -19,12 +20,15 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 
 ## Live examples
 
-Web builds of the example apps are published to this repository's GitHub Pages
-site, <https://docs.cocode.im/co-package/>:
-[`open-board/`](https://docs.cocode.im/co-package/open-board/) and
-[`open-epub/`](https://docs.cocode.im/co-package/open-epub/).
-[`examples-pages.yml`](.github/workflows/examples-pages.yml) builds them on pull
-requests and deploys them on every push to `main` that touches them.
+The [Cocode playground](https://docs.cocode.im/co-package/) includes
+[Open Board](https://docs.cocode.im/co-package/open-board/),
+[Open EPUB](https://docs.cocode.im/co-package/open-epub/), and
+[xterm2](https://docs.cocode.im/co-package/xterm2/). The examples share the latest
+pinned CoUI theme, responsive navigation, bundled multilingual fonts, and
+language/theme settings. The terminal uses a local browser demo shell.
+
+See [build, verification and Pages deployment](tool/pages/README.md) for the
+private CoUI read token or verified prebuilt deployment workflow.
 
 ## Depending on these packages
 
@@ -51,8 +55,13 @@ dependencies:
 ## Reusable workflows
 
 Service repositories call the shared CI workflows in
-[`.github/workflows/`](.github/workflows/) with `workflow_call`
-(`uses: coco-de/co-package/.github/workflows/melos-ci.yml@main`).
+[`.github/workflows/`](.github/workflows/) with `workflow_call`. Pin the call to
+a tag or a reviewed commit SHA instead of a moving ref such as `main`:
+
+```yaml
+uses: coco-de/co-package/.github/workflows/melos-ci.yml@<commit SHA>
+```
+
 See [`packages/co_arc/README.md`](packages/co_arc/README.md) for the runner setup.
 
 ## Development
@@ -66,6 +75,13 @@ melos run verify
 The workspace uses Dart's native `workspace` declaration. Packages use
 `resolution: workspace`, so dependency resolution stays consistent across the
 repository.
+
+### Workflow action pins
+
+Every external `uses:` in `.github/workflows/` is pinned to a full commit SHA
+with the release as a trailing comment (`uses: owner/repo@<sha> # v1.2.3`).
+`python3 tool/check_action_pins.py` checks this locally and CI runs the same
+check; Dependabot proposes the weekly updates.
 
 ### Graft code graph
 

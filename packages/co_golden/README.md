@@ -148,6 +148,10 @@ build/co_golden/
 
 Images are rendered at the device pixel ratio unless `captureScale` is set.
 
+To keep captures beyond the CI run, upload `build/co_golden` (or the built
+gallery) to S3 — see
+[Storing the gallery in S3](../co_golden_gallery/README.md#storing-the-gallery-in-s3).
+
 ## Design references
 
 Associate a local PNG exported from Figma (or another design tool) with the
@@ -566,6 +570,40 @@ run_id=$(gh run list --workflow ci.yml --status failure --limit 1 \
 gh run download "$run_id" --name golden-baselines --dir .
 git status --short -- '**/goldens/**'
 ```
+
+Accepted baselines stay in Git — `compare` reads `goldens/` from the working
+tree. Only the *candidates* (and captures, see above) can live in S3, which fits
+when they must outlive the artifact's retention or be shared across workflows.
+Replace the upload step with the steps below; the compare and `--update-goldens`
+steps stay. The job needs `permissions: id-token: write` so it can exchange its
+OIDC token for short-lived AWS credentials instead of storing access keys:
+
+```yaml
+- uses: aws-actions/configure-aws-credentials@v6
+  if: failure()
+  with:
+    role-to-assume: ${{ vars.GOLDEN_S3_ROLE_ARN }}
+    aws-region: ap-northeast-2
+- name: Upload candidate baselines to S3
+  if: failure()
+  run: |
+    find . -path '*/goldens/*' -name '*.png' -print0 \
+      | tar --null -T - -czf golden-baselines.tgz
+    aws s3 cp golden-baselines.tgz "s3://example-bucket/golden-baselines/$GITHUB_RUN_ID.tgz"
+```
+
+```sh
+# Apply the S3 copy of the failed run (run_id as above), then review the diff.
+aws s3 cp "s3://example-bucket/golden-baselines/$run_id.tgz" - | tar -xzf -
+git status --short -- '**/goldens/**'
+```
+
+The role that uploads needs `s3:PutObject` and `s3:AbortMultipartUpload` on
+`golden-baselines/*`; developers who apply the candidates need `s3:GetObject`. Keep the bucket private — the
+baselines are screenshots of the product — and add a lifecycle rule that
+expires the prefix, since objects, unlike artifacts, stay until removed. The
+[gallery guide](../co_golden_gallery/README.md#storing-the-gallery-in-s3) covers
+access control for anything served to a browser.
 
 ## Run manifest
 

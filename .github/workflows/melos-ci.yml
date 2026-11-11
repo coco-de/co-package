@@ -1,9 +1,9 @@
 # 재사용 워크플로우 — melos 모노레포 공용 CI
 #
-# 서비스 레포에서:
+# 서비스 레포에서 (호출 대상은 `@main` 같은 이동 ref 대신 태그 또는 커밋 SHA 로 고정):
 #   jobs:
 #     ci:
-#       uses: coco-de/co-package/.github/workflows/melos-ci.yml@main
+#       uses: coco-de/co-package/.github/workflows/melos-ci.yml@<커밋 SHA>
 #       with:
 #         runs-on: '["self-hosted", "macos", "flutter"]'
 #
@@ -32,6 +32,9 @@ on:
         type: string
         default: ''
 
+permissions:
+  contents: read
+
 jobs:
   melos:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -39,7 +42,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: 툴체인 버전
         run: |

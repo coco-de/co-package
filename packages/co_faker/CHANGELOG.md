@@ -1,5 +1,12 @@
 ## Unreleased
 
+- Add `faker.ui`: 252 Korean/English component-example keys (418 texts), following
+  CoUI #6010's approved copy and final fictional-name/Autocomplete decisions.
+  Immutable, aligned reads and seeded picks preserve the existing random stream
+  behavior; other UI languages explicitly fall back to English. Export the
+  catalog with `dart run co_faker:ui_copy --locale ko` for design scripts.
+  See `docs/ui-copy.md` for source precedence, exceptions, and rendering checks.
+
 - Cover the 34 fields of the demo W1 recipes (co-package#78): new roles and
   `entityRoles` in the fitness, daycare, meetup, content, helpdesk, workplace,
   brokerage, logistics, and hospitality packs, so `CoFakerCoverage` reports

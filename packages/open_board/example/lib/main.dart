@@ -1,3 +1,4 @@
+import 'package:co_example_ui/co_example_ui.dart';
 import 'package:co_demo_prefs/co_demo_prefs.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -46,9 +47,11 @@ class OpenBoardExampleApp extends StatelessWidget {
         themeMode: themeMode,
         // 패키지가 직접 그리는 문구(링크 메뉴 · 대화상자 · 도구 이름)도 번역한다.
         // Navigator 위라 Overlay 에디터 · 대화상자 라우트까지 닿는다.
-        builder: (context, child) => OpenBoardStringsScope(
+        builder: (context, child) => ExampleThemeScope(
+          child: OpenBoardStringsScope(
           strings: openBoardStringsOf(context.t),
           child: child!,
+          ),
         ),
         home: const HomeMenuPage(),
       ),
@@ -63,71 +66,35 @@ class HomeMenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.t;
-    return Scaffold(
-      appBar: AppBar(title: Text(t.app.title)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _DemoCard(
-            icon: Icons.draw,
-            title: t.home.board.title,
-            description: t.home.board.description,
-            page: const DrawingPage(),
-          ),
-          const SizedBox(height: 12),
-          _DemoCard(
-            icon: Icons.vertical_split,
-            title: t.home.split.title,
-            description: t.home.split.description,
-            page: const SplitDrawingPage(),
-          ),
-          const SizedBox(height: 12),
-          _DemoCard(
-            icon: Icons.menu_book,
-            title: t.home.epub.title,
-            description: t.home.epub.description,
-            page: const EpubAnnotationDemoPage(),
-          ),
-        ],
+    return ExampleCatalog(
+      title: t.app.title,
+      product: 'OPEN BOARD',
+      reading: false,
+      settings: ExampleSettings(
+        themeMode: demoThemeMode,
+        locale: DemoLocale.parse(t.$meta.locale.languageCode),
+        onLocaleChanged: (locale) => applyDemoPrefs(DemoPrefs(locale: locale)),
       ),
-    );
-  }
-}
-
-class _DemoCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final Widget page;
-
-  const _DemoCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.page,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: cs.primaryContainer,
-          child: Icon(icon, color: cs.onPrimaryContainer),
+      entries: [
+        ExampleEntry(
+          title: t.home.board.title,
+          description: t.home.board.description,
+          icon: Icons.draw_rounded,
+          page: const DrawingPage(),
         ),
-        title: Text(title,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(description),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute<void>(builder: (_) => page),
+        ExampleEntry(
+          title: t.home.split.title,
+          description: t.home.split.description,
+          icon: Icons.vertical_split_rounded,
+          page: const SplitDrawingPage(),
         ),
-      ),
+        ExampleEntry(
+          title: t.home.epub.title,
+          description: t.home.epub.description,
+          icon: Icons.menu_book_rounded,
+          page: const EpubAnnotationDemoPage(),
+        ),
+      ],
     );
   }
 }

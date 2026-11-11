@@ -42,6 +42,9 @@
 # 안내합니다. 자세한 배경은 docs/self-hosted-runner.md "재부팅 후에도
 # 백그라운드로 유지하기" 참고.
 #
+# 러너 에이전트는 공식 릴리스가 게시한 SHA-256(릴리스 자산의 digest, 없으면 릴리스 노트의
+# 값)과 일치할 때만 풀립니다. 값을 구하지 못하면 내려받지 않고, 다르면 폐기하고 중단합니다.
+#
 set -euo pipefail
 
 SCOPE_TYPE="" SCOPE=""
@@ -101,7 +104,47 @@ if [[ -z "$RUNNER_DIR" ]]; then
   RUNNER_DIR="${HOME}/actions/${RUNNER_NAME}"
 fi
 
-# ---- 1. 러너 에이전트 다운로드 (최신 버전, arch 자동 감지) -------------------
+# 파일의 SHA-256 — 소문자 hex 64자리 (macOS 는 shasum, 그 밖에는 sha256sum).
+sha256_file() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  elif command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    echo "error: shasum 또는 sha256sum 이 필요합니다 (러너 에이전트 체크섬 검증용)" >&2
+    return 1
+  fi
+}
+
+# 공식 릴리스가 게시한 러너 패키지의 SHA-256 을 가져온다.
+#   1순위: 릴리스 자산의 digest ("sha256:<64자리>")
+#   2순위: 릴리스 노트 "SHA-256 Checksums" 절의
+#          `<!-- BEGIN SHA osx-arm64 -->…<!-- END SHA osx-arm64 -->` 표식 (digest 가 없는 릴리스 대비)
+# 64자리 소문자 hex 로 확인된 값만 출력한다. 못 구하면 빈 문자열을 돌려주고, 호출하는 쪽이
+# 검증 없이 설치하지 않고 멈춘다.
+# 사용법: runner_package_sha256 <버전> <패키지 파일명> <os-arch>   (os-arch 예: osx-arm64)
+runner_package_sha256() {
+  local ver="$1" pkg="$2" os_arch="$3" release sha
+  release="repos/actions/runner/releases/tags/v${ver}"
+
+  sha="$(gh api "$release" --jq ".assets[] | select(.name == \"${pkg}\") | .digest" 2>/dev/null \
+    | sed 's/^sha256://' | head -n 1 || true)"
+  if [[ "$sha" =~ ^[0-9a-f]{64}$ ]]; then
+    printf '%s' "$sha"
+    return 0
+  fi
+
+  sha="$(gh api "$release" --jq '.body' 2>/dev/null \
+    | tr -d '\r' \
+    | sed -n "s/.*<!-- BEGIN SHA ${os_arch} -->\([0-9a-f]\{64\}\)<!-- END SHA ${os_arch} -->.*/\1/p" \
+    | head -n 1 || true)"
+  if [[ "$sha" =~ ^[0-9a-f]{64}$ ]]; then
+    printf '%s' "$sha"
+  fi
+  return 0
+}
+
+# ---- 1. 러너 에이전트 다운로드 (최신 버전, arch 자동 감지, SHA-256 검증) -----
 OS="osx"; [[ "$(uname -s)" == "Linux" ]] && OS="linux"
 ARCH="x64"; [[ "$(uname -m)" == "arm64" || "$(uname -m)" == "aarch64" ]] && ARCH="arm64"
 
@@ -112,9 +155,27 @@ mkdir -p "$RUNNER_DIR"
 cd "$RUNNER_DIR"
 
 if [[ ! -x ./config.sh ]]; then
+  # 공식 릴리스가 게시한 SHA-256 으로 검증한 뒤에만 푼다. 값을 못 구하면 내려받지도 않는다.
+  EXPECTED_SHA256="$(runner_package_sha256 "$VER" "$PKG" "${OS}-${ARCH}")"
+  if [[ -z "$EXPECTED_SHA256" ]]; then
+    echo "error: 릴리스 v${VER} 에서 ${PKG} 의 공식 SHA-256 을 찾지 못했습니다 — 검증 없이 설치하지 않습니다" >&2
+    exit 1
+  fi
+
   echo "==> 러너 에이전트 v${VER} 다운로드 (${OS}-${ARCH})"
   curl -fSL -o "$PKG" \
     "https://github.com/actions/runner/releases/download/v${VER}/${PKG}"
+
+  ACTUAL_SHA256="$(sha256_file "$PKG")" || { rm -f "$PKG"; exit 1; }
+  if [[ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]]; then
+    rm -f "$PKG"
+    echo "error: ${PKG} 의 SHA-256 이 공식 릴리스 값과 다릅니다 — 다운로드를 폐기하고 중단합니다" >&2
+    echo "       공식 릴리스 : ${EXPECTED_SHA256}" >&2
+    echo "       받은 파일   : ${ACTUAL_SHA256}" >&2
+    exit 1
+  fi
+  echo "==> SHA-256 일치 (공식 릴리스 값)"
+
   tar xzf "$PKG" && rm -f "$PKG"
 else
   echo "==> 기존 러너 에이전트 사용 ($RUNNER_DIR)"
@@ -260,11 +321,12 @@ boot_readiness_report() {
     warned=true
     if [[ "$filevault" == *"FileVault is On"* ]]; then
       echo "  ⚠️  자동 로그인 꺼짐 + FileVault On — 재부팅 후 디스크 잠금해제(=로그인) 전까지 러너가 뜨지 않습니다"
-      echo "      · 무인 재부팅  : sudo fdesetup authrestart   (이번 부팅 1회만 잠금해제를 건너뜀)"
-      echo "      · 완전 무인화  : 전용기라면 FileVault를 끄고 시스템 설정 > 사용자 및 그룹 > 자동 로그인 지정"
+      echo "      · 계획된 재부팅 : sudo fdesetup authrestart   (FileVault 사용자 암호를 입력하면 이번 부팅 1회만 잠금해제를 건너뜀)"
+      echo "      · 정전 등 예기치 않은 재부팅은 사람이 잠금해제해야 합니다 — FileVault는 끄지 말고 유지하세요"
     else
       echo "  ⚠️  자동 로그인 꺼짐 — 재부팅 후 로그인해야 러너가 뜹니다 (LaunchAgent는 GUI 로그인 시 로드)"
       echo "      · 시스템 설정 > 사용자 및 그룹 > 자동 로그인에서 이 계정을 지정하세요"
+      echo "      · FileVault(디스크 암호화)가 꺼져 있다면 먼저 켜세요 — 켜면 자동 로그인은 쓸 수 없으니 계획된 재부팅은 sudo fdesetup authrestart 로 합니다"
     fi
   fi
 

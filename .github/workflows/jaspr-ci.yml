@@ -1,9 +1,9 @@
 # 재사용 워크플로우 — Jaspr 웹 빌드/테스트
 #
-# 서비스 레포에서:
+# 서비스 레포에서 (호출 대상은 `@main` 같은 이동 ref 대신 태그 또는 커밋 SHA 로 고정):
 #   jobs:
 #     web:
-#       uses: coco-de/co-package/.github/workflows/jaspr-ci.yml@main
+#       uses: coco-de/co-package/.github/workflows/jaspr-ci.yml@<커밋 SHA>
 #       with:
 #         runs-on: '"arc-dart"'
 #         project-directory: 'apps/web'
@@ -30,6 +30,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 jobs:
   jaspr:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -39,7 +42,7 @@ jobs:
       run:
         working-directory: ${{ inputs.project-directory }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: pub get
         run: dart pub get
@@ -59,7 +62,7 @@ jobs:
 
       - name: upload build
         if: inputs.upload-artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: jaspr-build
           path: ${{ inputs.project-directory }}/build/jaspr

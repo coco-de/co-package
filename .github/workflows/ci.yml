@@ -23,36 +23,29 @@ jobs:
   license-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: bash tool/check_licenses.sh
+
+  # 외부 uses: 는 40자리 커밋 SHA 로 고정한다 — 고정되지 않은 참조가 들어오면 실패. SDK 불필요.
+  action-pins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - run: python3 tool/check_action_pins.py
 
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      # co_golden_gallery renders with private coco-de/coui. This public repo
-      # has no Actions secret that can read it, so run the remaining workspace
-      # checks without resolving that member, then check its source formatting.
-      - name: Exclude private CoUI gallery from public CI workspace
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          pubspec = Path('pubspec.yaml')
-          marker = '  - packages/co_golden_gallery\n'
-          text = pubspec.read_text()
-          if text.count(marker) != 1:
-              raise SystemExit('co_golden_gallery workspace entry not found exactly once')
-          pubspec.write_text(text.replace(marker, ''))
-          PY
-      # 예제 앱(open_epub/example · open_board/example)은 워크스페이스 멤버라 여기서 함께
-      # 해석 · 분석된다 — 비공개 의존성이 없어 토큰이 필요 없다(#42). --no-example 은 루트
-      # example/ 을 따로 해석하지 않게 하는 플래그로, 루트에는 example/ 이 없다.
+      # Public package checks stay independent of the private CoUI examples.
+      # Full example analysis, tests and builds run locally or with COUI_READ_TOKEN.
+      - name: Prepare public CI workspace
+        run: python3 tool/pages/public_workspace.py
       - run: flutter pub get --no-example
       - run: dart format --output=none --set-exit-if-changed packages/co_golden_gallery
       - run: dart pub global activate melos
@@ -79,8 +72,8 @@ jobs:
       run:
         working-directory: packages/xterm3
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
@@ -99,8 +92,8 @@ jobs:
       run:
         working-directory: packages/xterm2
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
@@ -116,14 +109,25 @@ jobs:
   lint-runner-infra:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: shellcheck
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
           shellcheck packages/co_arc/scripts/*.sh packages/co_arc/arc/*.sh
 
+      # 버전을 고정하고 릴리스 아카이브(linux_amd64 — ubuntu-latest 는 x86_64)의 SHA-256 을
+      # 확인한 뒤에만 푼다. 올릴 때는 두 값을 함께 바꾼다 — 해시는 그 릴리스의
+      # actionlint_<버전>_checksums.txt 에 있다.
       - name: actionlint
+        env:
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
         run: |
-          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint -color
+          set -euo pipefail
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL --retry 3 -o "${RUNNER_TEMP}/${archive}" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}"
+          echo "${ACTIONLINT_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check --strict -
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" actionlint
+          "${RUNNER_TEMP}/actionlint" -color

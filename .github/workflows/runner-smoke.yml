@@ -15,6 +15,9 @@ on:
           - macos-selfhosted
           - arc-dart
 
+permissions:
+  contents: read
+
 jobs:
   smoke-macos:
     if: inputs.target == 'macos-selfhosted'

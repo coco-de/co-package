@@ -19,6 +19,7 @@ import 'random_source.dart';
 import 'saas.dart';
 import 'signature.dart';
 import 'schema.dart';
+import 'ui.dart';
 
 /// A callback used by [CoFaker.generate].
 typedef CoFakerBuilder<T> = T Function(CoFaker faker, int index);
@@ -282,6 +283,9 @@ class CoFaker {
   /// labels, names, and sentences of the domain packs and the dedicated
   /// generators. See [CoFakerL10n].
   late final CoFakerL10n l10n = CoFakerL10n(this);
+
+  /// Authored Korean/English component example copy, approved in CoUI #6010.
+  late final CoFakerUi ui = CoFakerUi(this);
 
   /// Records generated from a field schema, callable as
   /// `faker.schema(fields)`.

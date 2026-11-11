@@ -6,6 +6,9 @@
 #            arc-runners 네임스페이스에 arc-github-secret 시크릿이 있어야 합니다.
 #            (없으면 arc/README.md 2단계 참고)
 #
+# 고정 필요: 아래 helm 명령에는 `--version` 이 없어 설치할 때마다 차트 최신판을 받는다.
+#            배포 중인 차트 버전을 확인해 고정한다 (arc/README.md "버전 고정").
+#
 set -euo pipefail
 
 cd "$(dirname "$0")"

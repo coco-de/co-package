@@ -83,6 +83,22 @@ jobs:
 
 Serverpod 테스트처럼 `services:`(Postgres/Redis 컨테이너)가 필요한 잡은 러너에 Docker가 필요하므로, `runner-set-dart.yaml`에서 `containerMode.type: dind`를 사용합니다.
 
+위 예시의 `container.image`(`:stable`)와 `actions/checkout@v4`는 설명용입니다 — 실제 워크플로우에서는 이미지를 버전 태그로,
+액션을 커밋 SHA(`@<40자리 SHA> # vX.Y.Z`)로 고정해 쓰세요.
+
+## 버전 고정 (고정 필요)
+
+설치 명령과 values 가 아직 버전을 고정하지 않았습니다. 배포 중인 버전은 이 저장소에서 알 수 없어 값은 바꾸지 않고
+표시만 해 두었으니, 배포한 쪽이 확인해 고정하세요.
+
+| 대상 | 현재 | 고정 방법 |
+|---|---|---|
+| 컨트롤러 차트 | `--version` 없음 (설치할 때마다 최신) | `helm list -A` 로 배포 중인 버전을 확인해 `helm upgrade --install … --version <버전>` |
+| 스케일 세트 차트 | `--version` 없음 (설치할 때마다 최신) | 같은 방식 |
+| 러너 이미지 | `ghcr.io/actions/actions-runner:latest` | `values/runner-set-dart.yaml` 의 `image:` 를 버전 태그(가능하면 `@sha256:` 다이제스트까지)로 |
+
+고정한 뒤에는 새 릴리스에 맞춰 주기적으로 올립니다 — 올리기 전에 릴리스 노트를 확인하세요.
+
 ## 제거
 
 ```bash

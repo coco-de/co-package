@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:coui_flutter/coui_flutter.dart' as co;
 import 'package:open_board/open_board.dart';
 
 /// 보드/EPUB 데모에서 공용으로 사용하는 필기 도구 툴바.
@@ -67,11 +68,17 @@ class DrawingToolbar extends StatelessWidget {
                 for (final (tool, icon) in tools)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: FilterChip(
-                      avatar: Icon(icon, size: 18),
-                      label: Text(strings.toolLabel(tool)),
+                    child: Semantics(
                       selected: selectedTool == tool,
-                      onSelected: (_) => onToolSelected(tool),
+                      child: co.Button(
+                        size: co.CoreComponentSize.sm,
+                        variant: selectedTool == tool
+                            ? co.CoreButtonVariant.primary
+                            : co.CoreButtonVariant.ghost,
+                        leading: Icon(icon, size: 18),
+                        onPressed: () => onToolSelected(tool),
+                        child: Text(strings.toolLabel(tool)),
+                      ),
                     ),
                   ),
               ],
@@ -82,43 +89,46 @@ class DrawingToolbar extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           color: cs.surfaceContainerLow,
-          child: Row(
-            children: [
-              for (final c in colors)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: GestureDetector(
-                    onTap: () => onColorSelected(c),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: c,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: selectedColor == c
-                              ? cs.primary
-                              : cs.outlineVariant,
-                          width: selectedColor == c ? 3 : 1,
+          child: LayoutBuilder(builder: (context, constraints) {
+            final palette = Wrap(
+              children: [
+                for (final c in colors)
+                  Semantics(
+                    selected: selectedColor == c,
+                    child: IconButton(
+                      tooltip: '#${c.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
+                      onPressed: () => onColorSelected(c),
+                      icon: Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: c,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: selectedColor == c ? cs.primary : cs.outlineVariant, width: selectedColor == c ? 3 : 1),
                         ),
+                        child: selectedColor == c ? Icon(Icons.check, size: 16, color: c.computeLuminance() > .4 ? Colors.black : Colors.white) : null,
                       ),
                     ),
                   ),
-                ),
-              const SizedBox(width: 12),
+              ],
+            );
+            final widthControl = Row(children: [
               Expanded(
                 child: Slider(
                   value: selectedWidth.clamp(0.5, 10.0),
                   min: 0.5,
                   max: 10.0,
                   divisions: 19,
+                  label: '${selectedWidth.toStringAsFixed(1)} px',
                   onChanged: onWidthChanged,
                 ),
               ),
-              Text(selectedWidth.toStringAsFixed(1),
-                  style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
+              SizedBox(width: 48, child: Text('${selectedWidth.toStringAsFixed(1)} px', style: Theme.of(context).textTheme.bodySmall)),
+            ]);
+            return constraints.maxWidth < 520
+                ? Column(mainAxisSize: MainAxisSize.min, children: [palette, widthControl])
+                : Row(children: [palette, const SizedBox(width: 16), Expanded(child: widthControl)]);
+          }),
         ),
       ],
     );
