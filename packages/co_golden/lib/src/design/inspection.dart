@@ -95,6 +95,13 @@ final class GoldenRenderInspector {
 
     void visit(Element element, _Context context) {
       final widget = element.widget;
+      // maintainSize keeps a laid-out subtree without painting it. Flutter
+      // uses a private render object for this branch, so the Offstage and
+      // Opacity checks below cannot detect it. Do not skip the non-maintained
+      // branch: its replacement is visible and must still be inspected.
+      if (widget is Visibility && !widget.visible && widget.maintainState) {
+        return;
+      }
       var next = context;
       final location = tracked ? _location(element) : null;
       if (location != null && location.project) {

@@ -72,7 +72,7 @@ ArgParser _parser() => ArgParser()
   ..addMultiOption(
     'link',
     valueHelp: 'label=url',
-    help: 'Header link. Repeatable.',
+    help: 'Header link: http(s) URL or relative report path. Repeatable.',
   )
   ..addOption(
     'summary',
@@ -149,8 +149,10 @@ Future<int> runGalleryCli(
     metadata = _pairs(args.multiOption('meta'), 'meta');
     links = _pairs(args.multiOption('link'), 'link');
     for (final (label, url) in links) {
-      if (!_isHttpUrl(url)) {
-        throw FormatException('--link $label must point to an http(s) URL.');
+      if (!_isHttpUrl(url) && !_isReportPath(url)) {
+        throw FormatException(
+          '--link $label must point to an http(s) URL or a relative report path.',
+        );
       }
     }
   } on FormatException catch (error) {
@@ -358,6 +360,17 @@ bool _isHttpUrl(String value) {
   return uri != null &&
       (uri.scheme == 'https' || uri.scheme == 'http') &&
       uri.host.isNotEmpty;
+}
+
+bool _isReportPath(String value) {
+  final uri = Uri.tryParse(value);
+  return uri != null &&
+      !uri.hasScheme &&
+      !uri.hasAuthority &&
+      uri.path.isNotEmpty &&
+      !uri.path.startsWith('/') &&
+      !value.contains('\\') &&
+      uri.pathSegments.every((s) => s != '..' && !s.contains('\\'));
 }
 
 String _usage(ArgParser parser) =>
