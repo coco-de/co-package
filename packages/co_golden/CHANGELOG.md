@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Apply the existing connected-region budget to the largest original fragment when grouping diagnostics; preserve combined totals and raw frame verdicts.
 - Preserve vertical pixel limits while recognizing encoded/linear sRGB glyph coverage and assigning matched glyph bearings to their text.
 - Inspect only painted layout candidates and unoccluded Stack/Overlay content.
 - Compare split text runs and editable line leading without hiding real text, style or scroll differences.

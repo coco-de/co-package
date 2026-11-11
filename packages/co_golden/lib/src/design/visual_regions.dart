@@ -1,5 +1,21 @@
 import 'pixel_diff.dart';
 import 'report.dart';
+import 'finding.dart';
+import 'tolerance.dart';
+
+/// The region budget limits a connected defect, not the sum of disconnected
+/// fragments grouped for presentation. Frame ratios and raw totals stay intact.
+GoldenFindingSeverity goldenUnexplainedSeverity(
+  GoldenReportRegion region,
+  GoldenDesignTolerance tolerance,
+) {
+  final largest = region.largestConnectedPixels ?? region.region.logicalPixels;
+  return largest > tolerance.budgetRegion
+      ? GoldenFindingSeverity.error
+      : largest > tolerance.budgetRegion / 4
+      ? GoldenFindingSeverity.warning
+      : GoldenFindingSeverity.info;
+}
 
 /// One actionable visual finding per attributed element. The original
 /// connected regions remain unchanged in the report and pixel map.
@@ -25,6 +41,7 @@ GoldenReportRegion _merged(String key, List<GoldenReportRegion> regions) {
   var pixels = 0;
   var logical = 0.0;
   var delta = 0.0;
+  var largest = 0.0;
   final reference = [0.0, 0.0, 0.0];
   final render = [0.0, 0.0, 0.0];
   for (final item in regions) {
@@ -33,6 +50,8 @@ GoldenReportRegion _merged(String key, List<GoldenReportRegion> regions) {
     pixels += r.pixels;
     logical += r.logicalPixels;
     delta += r.meanDeltaE * r.pixels;
+    final connected = item.largestConnectedPixels ?? r.logicalPixels;
+    if (connected > largest) largest = connected;
     for (var i = 0; i < 3; i++) {
       final shift = (2 - i) * 8;
       reference[i] += ((r.referenceColor >> shift) & 255) * r.pixels;
@@ -56,5 +75,6 @@ GoldenReportRegion _merged(String key, List<GoldenReportRegion> regions) {
     design: first.design,
     widget: first.widget,
     findings: const [],
+    largestConnectedPixels: largest,
   );
 }

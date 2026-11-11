@@ -263,7 +263,10 @@ outer line leading that selection boxes omit. Text split across adjacent links
 is compared as one design line, including each link's style.
 
 Visual fragments attributed to one rendered element produce one finding;
-the complete connected regions, pixel counts, maps and pixel verdict remain
+its severity uses the largest original connected fragment, while its total
+pixel area remains the sum of every fragment. Grouping cannot turn many tiny
+edges into a fictitious large connected defect.
+The complete connected regions, pixel counts, maps and pixel verdict remain
 unchanged. Verified matching loaded text can carry an informational raster
 finding only when its declared font, weight, metrics, opaque color and solid
 background match, its ink mass is comparable, and at least 99.5% of ink mass
