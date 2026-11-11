@@ -9,6 +9,10 @@
 #   1. co-package → Settings → Actions → General → Access 를
 #      "Accessible from repositories in the coco-de organization"으로 설정
 #   2. 러너가 등록되어 있어야 함 (co-package/packages/co_arc/scripts 또는 arc/)
+#   3. 아래 <커밋 SHA> 를 co-package 에서 검토한 커밋의 40자리 SHA(또는 태그)로 바꾼다 —
+#      `@main` 같은 이동 ref 로 부르지 않는다.
+#        gh api repos/coco-de/co-package/commits/main --jq .sha
+#      고정하면 호출 대상이 바뀌는 시점을 이 저장소가 정하고, 올릴 때 변경을 직접 확인하게 된다.
 
 name: CI
 
@@ -17,6 +21,11 @@ on:
   push:
     branches: [main]
 
+# GITHUB_TOKEN 최소 권한. 재사용 워크플로우는 이 범위를 넘는 권한을 받을 수 없고(같거나
+# 낮추기만 함), 이보다 좁게 주면(예: `permissions: {}`) 비공개 저장소에서 checkout 이 실패한다.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -24,7 +33,7 @@ concurrency:
 jobs:
   # 모노레포 전체: bootstrap → analyze → test (macOS self-hosted)
   monorepo:
-    uses: coco-de/co-package/.github/workflows/melos-ci.yml@main
+    uses: coco-de/co-package/.github/workflows/melos-ci.yml@<커밋 SHA>
     with:
       runs-on: '["self-hosted", "macos", "flutter"]'
       # melos.yaml에 scripts.analyze / scripts.test가 있으면:
@@ -33,14 +42,14 @@ jobs:
 
   # Serverpod 서버 테스트 (ARC Linux + Postgres/Redis)
   server:
-    uses: coco-de/co-package/.github/workflows/serverpod-ci.yml@main
+    uses: coco-de/co-package/.github/workflows/serverpod-ci.yml@<커밋 SHA>
     with:
       runs-on: '"arc-dart"'
       server-directory: packages/my_project_server
 
   # Jaspr 웹 빌드 (ARC Linux)
   web:
-    uses: coco-de/co-package/.github/workflows/jaspr-ci.yml@main
+    uses: coco-de/co-package/.github/workflows/jaspr-ci.yml@<커밋 SHA>
     with:
       runs-on: '"arc-dart"'
       project-directory: apps/web
@@ -48,7 +57,7 @@ jobs:
 
   # 릴리스 빌드가 필요하면 (iOS는 macOS 러너 필수):
   # app-build:
-  #   uses: coco-de/co-package/.github/workflows/flutter-ci.yml@main
+  #   uses: coco-de/co-package/.github/workflows/flutter-ci.yml@<커밋 SHA>
   #   with:
   #     runs-on: '["self-hosted", "macos", "flutter"]'
   #     working-directory: apps/mobile

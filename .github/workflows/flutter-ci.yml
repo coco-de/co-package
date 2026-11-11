@@ -1,9 +1,9 @@
 # 재사용 워크플로우 — 단일 Flutter 앱 CI (+ 선택 빌드)
 #
-# 서비스 레포에서:
+# 서비스 레포에서 (호출 대상은 `@main` 같은 이동 ref 대신 태그 또는 커밋 SHA 로 고정):
 #   jobs:
 #     app:
-#       uses: coco-de/co-package/.github/workflows/flutter-ci.yml@main
+#       uses: coco-de/co-package/.github/workflows/flutter-ci.yml@<커밋 SHA>
 #       with:
 #         runs-on: '["self-hosted", "macos", "flutter"]'
 #         build-targets: 'apk,ios'
@@ -28,6 +28,9 @@ on:
         type: string
         default: ''
 
+permissions:
+  contents: read
+
 jobs:
   flutter:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -35,7 +38,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: 툴체인 버전
         run: flutter --version

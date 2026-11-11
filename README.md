@@ -55,8 +55,13 @@ dependencies:
 ## Reusable workflows
 
 Service repositories call the shared CI workflows in
-[`.github/workflows/`](.github/workflows/) with `workflow_call`
-(`uses: coco-de/co-package/.github/workflows/melos-ci.yml@main`).
+[`.github/workflows/`](.github/workflows/) with `workflow_call`. Pin the call to
+a tag or a reviewed commit SHA instead of a moving ref such as `main`:
+
+```yaml
+uses: coco-de/co-package/.github/workflows/melos-ci.yml@<commit SHA>
+```
+
 See [`packages/co_arc/README.md`](packages/co_arc/README.md) for the runner setup.
 
 ## Development
@@ -70,6 +75,13 @@ melos run verify
 The workspace uses Dart's native `workspace` declaration. Packages use
 `resolution: workspace`, so dependency resolution stays consistent across the
 repository.
+
+### Workflow action pins
+
+Every external `uses:` in `.github/workflows/` is pinned to a full commit SHA
+with the release as a trailing comment (`uses: owner/repo@<sha> # v1.2.3`).
+`python3 tool/check_action_pins.py` checks this locally and CI runs the same
+check; Dependabot proposes the weekly updates.
 
 ### Graft code graph
 
