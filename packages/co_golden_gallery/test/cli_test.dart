@@ -229,6 +229,41 @@ void main() {
     );
   });
 
+  test('links reports beside the generated gallery', () async {
+    final (code, _, _) = await run([
+      'build',
+      '-i',
+      root.path,
+      '-o',
+      output.path,
+      '--link',
+      'Report=design-report.md',
+    ]);
+    expect(code, 0);
+    expect(
+      File(p.join(output.path, 'index.html')).readAsStringSync(),
+      contains('href="design-report.md"'),
+    );
+  });
+
+  for (final url in [
+    'javascript:alert(1)',
+    'data:text/html,test',
+    'file:///tmp/test',
+    '//outside.example/report',
+    '/report.md',
+    '../report.md',
+    '%2e%2e/report.md',
+    r'..\report.md',
+  ]) {
+    test('rejects unsafe report link $url', () async {
+      expect(
+        (await run(['build', '-i', root.path, '--link', 'Report=$url'])).$1,
+        galleryUsageError,
+      );
+    });
+  }
+
   test('fails on an input directory that does not exist', () async {
     final (code, _, _) = await run([
       'build',
