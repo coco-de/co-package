@@ -539,7 +539,7 @@ AC Power:
     test('자동 로그인·전원 설정이 모두 맞으면 경고 없음', () {
       expect(
         LocalRunner.bootWarnings(
-          autoLoginUser: 'dongwoo',
+          autoLoginUser: 'runner',
           fileVaultStatus: 'FileVault is Off.',
           pmsetCustom: readyPmset,
         ),
@@ -570,7 +570,7 @@ AC Power:
 
     test('AC에서 잠들도록 설정돼 있으면 경고', () {
       final warnings = LocalRunner.bootWarnings(
-        autoLoginUser: 'dongwoo',
+        autoLoginUser: 'runner',
         fileVaultStatus: 'FileVault is Off.',
         pmsetCustom: 'AC Power:\n sleep                10\n',
       );
@@ -580,7 +580,7 @@ AC Power:
 
     test('autorestart를 지원하는 기종에서 꺼져 있으면 경고', () {
       final warnings = LocalRunner.bootWarnings(
-        autoLoginUser: 'dongwoo',
+        autoLoginUser: 'runner',
         fileVaultStatus: 'FileVault is Off.',
         pmsetCustom: 'AC Power:\n sleep 0\n autorestart 0\n',
       );
@@ -590,7 +590,7 @@ AC Power:
 
     test('조회에 실패해 값이 비면(모름) 전원 관련 경고를 만들지 않는다', () {
       final warnings = LocalRunner.bootWarnings(
-        autoLoginUser: 'dongwoo',
+        autoLoginUser: 'runner',
         fileVaultStatus: '',
         pmsetCustom: '',
       );
