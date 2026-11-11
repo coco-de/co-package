@@ -338,6 +338,7 @@ final class GoldenRenderNode {
     this.iconSize,
     this.iconColor,
     this.imageDescription,
+    this.imagePaint = const {},
     this.source,
     this.component,
     this.path = const [],
@@ -382,6 +383,10 @@ final class GoldenRenderNode {
   /// Image provider description, such as an asset name.
   final String? imageDescription;
 
+  /// Image paint inputs: fit, alignment, clip radius, decoded dimensions,
+  /// opacity and whether a tint or unsupported transform affects painting.
+  final Map<String, Object?> imagePaint;
+
   /// Nearest project source location that created the node's widget or an
   /// ancestor of it.
   final GoldenSourceLocation? source;
@@ -419,6 +424,7 @@ final class GoldenRenderNode {
         if (iconColor != null) 'color': GoldenColorMath.hexArgb(iconColor!),
       },
     if (imageDescription != null) 'image': imageDescription,
+    if (imagePaint.isNotEmpty) 'imagePaint': imagePaint,
     if (source != null) 'source': source!.label,
     if (component != null) 'component': component,
     if (path.isNotEmpty) 'path': path.join(' › '),

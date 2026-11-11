@@ -257,6 +257,37 @@ What it compares:
   test font, images captured before they were decoded, frame size and text
   scale mismatches.
 
+The inspector excludes unpainted layout candidates and content fully covered
+by later opaque Stack or Overlay entries. Editable text geometry includes the
+outer line leading that selection boxes omit. Text split across adjacent links
+is compared as one design line, including each link's style.
+
+Visual fragments attributed to one rendered element produce one finding;
+the complete connected regions, pixel counts, maps and pixel verdict remain
+unchanged. Verified matching loaded text can carry an informational raster
+finding only when its declared font, weight, metrics, opaque color and solid
+background match, its ink mass is comparable, and at least 99.5% of ink mass
+has bidirectional shape support within the existing positional tolerance.
+Changed text, missing ink, unloaded fonts and incorrect styles remain actionable.
+The text proof uses the existing text-pixel radius on both axes and normalizes
+solid backgrounds only within the existing property-color tolerance. Comparable
+text ink mass means a ratio from 2/3 to 3/2; this alone is never evidence.
+Named icon evidence additionally requires identical resolved color, stroke and
+geometry, and uses a tighter ink-mass ratio (0.9–1.1). Supply optional
+`GoldenComponentMapping.resolvedReaders` to read inherited paint from the
+widget's actual `BuildContext`; unavailable readers provide no evidence.
+
+Optional IMAGE-paint `sourceDigest` (`sha1:` or `sha256:`) and `imageFit` can
+establish texture provenance. Sampling evidence requires the observed asset's
+identical encoded bytes, decoded dimensions, fit, center alignment, visible
+clip, corner radii, opacity and untransformed geometry. Unknown custom paths,
+tint, repeat, mirroring and wrong assets fail closed. At least 99.5% of 3×3
+low-frequency samples must satisfy the existing color tolerance, with mean
+ΔE ≤ min(1, colorDeltaE / 3). No evidence changes raw pixels or acceptance.
+Optional `text.horizontalAnchor` describes container alignment separately from
+paragraph `align`, so intrinsic glyph advance differences do not change a
+centered label into a left-anchored comparison.
+
 Each finding has a category, a severity, a Korean message, the property
 differences (design → implementation), the design node (id, layer path, text
 style or role) and the widget (type, text, bounds, **source location**,

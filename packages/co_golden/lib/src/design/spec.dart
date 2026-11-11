@@ -75,6 +75,8 @@ final class GoldenDesignPaint {
     this.color,
     this.variable,
     this.style,
+    this.sourceDigest,
+    this.imageFit,
   });
 
   /// Figma paint type, such as `SOLID`, `GRADIENT_LINEAR`, or `IMAGE`.
@@ -89,6 +91,13 @@ final class GoldenDesignPaint {
   /// Paint style name, when known.
   final String? style;
 
+  /// Digest of the design's original or natively exported source image,
+  /// prefixed with `sha1:` or `sha256:`. It is never a screen capture digest.
+  final String? sourceDigest;
+
+  /// Design image fitting mode, for example `cover`. Unspecified is unverified.
+  final String? imageFit;
+
   /// Whether this is a solid color.
   bool get isSolid => type == 'SOLID' && color != null;
 
@@ -98,6 +107,8 @@ final class GoldenDesignPaint {
     if (color != null) 'color': GoldenColorMath.hexArgb(color!),
     if (variable != null) 'variable': variable,
     if (style != null) 'style': style,
+    if (sourceDigest != null) 'sourceDigest': sourceDigest,
+    if (imageFit != null) 'imageFit': imageFit,
   };
 }
 
@@ -269,6 +280,7 @@ final class GoldenDesignText {
     required this.characters,
     required this.typography,
     this.align,
+    this.horizontalAnchor,
     this.verticalAlign,
     this.autoResize,
     this.maxLines,
@@ -284,6 +296,10 @@ final class GoldenDesignText {
 
   /// `LEFT`, `CENTER`, `RIGHT`, or `JUSTIFIED`.
   final String? align;
+
+  /// Position anchor for content-sized text placed by its container.
+  /// This does not change the text's own alignment or typography.
+  final String? horizontalAnchor;
 
   /// `TOP`, `CENTER`, or `BOTTOM`.
   final String? verticalAlign;
@@ -320,6 +336,7 @@ final class GoldenDesignText {
     'characters': characters,
     ...typography.toJson(),
     if (align != null) 'align': align,
+    if (horizontalAnchor != null) 'horizontalAnchor': horizontalAnchor,
     if (verticalAlign != null) 'verticalAlign': verticalAlign,
     if (autoResize != null) 'autoResize': autoResize,
     if (maxLines != null) 'maxLines': maxLines,
@@ -767,6 +784,8 @@ final class _NeutralParser {
                 : null,
             variable: paint['variable'] as String?,
             style: paint['style'] as String?,
+            sourceDigest: paint['sourceDigest'] as String?,
+            imageFit: paint['imageFit'] as String?,
           ),
   ];
 
@@ -819,6 +838,7 @@ final class _NeutralParser {
       characters: json['characters'] as String?,
       typography: _typography(json),
       align: json['align'] as String?,
+      horizontalAnchor: json['horizontalAnchor'] as String?,
       verticalAlign: json['verticalAlign'] as String?,
       autoResize: json['autoResize'] as String?,
       maxLines: _num(json['maxLines'])?.toInt(),

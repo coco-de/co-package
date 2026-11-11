@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter/widgets.dart';
@@ -10,15 +11,20 @@ import '../design_reference.dart';
 import 'design_system.dart';
 import 'finding.dart';
 import 'geometry.dart';
+import 'icon_raster_evidence.dart';
+import 'image_raster_evidence.dart';
 import 'inspection.dart';
 import 'mask.dart';
 import 'package_map.dart';
 import 'pixel_diff.dart';
+import 'region_attribution.dart';
 import 'render_node.dart';
 import 'report.dart';
 import 'spec.dart';
 import 'structural_diff.dart';
+import 'text_raster_evidence.dart';
 import 'tolerance.dart';
+import 'visual_regions.dart';
 
 /// Configures the design analysis that runs in capture mode for every
 /// variant with a [GoldenDesignReference].
@@ -248,11 +254,14 @@ GoldenDesignReport runDesignAnalysis(GoldenDesignAnalysisInput input) {
     '${input.fileStem}.png',
   );
   GoldenReportPixels pixels;
+  GoldenRgbImage? referencePixels;
+  GoldenRgbImage? renderPixels;
   try {
-    final referencePixels = GoldenRgbImage.fromImage(input.referenceImage);
+    referencePixels = GoldenRgbImage.fromImage(input.referenceImage);
+    renderPixels = GoldenRgbImage.fromImage(input.renderImage);
     final diff = compareDesignPixels(
       reference: referencePixels,
-      render: GoldenRgbImage.fromImage(input.renderImage),
+      render: renderPixels,
       logicalWidth: snapshot.width,
       tolerance: tolerance,
       masks: [for (final mask in masks) mask.rect],
@@ -282,6 +291,7 @@ GoldenDesignReport runDesignAnalysis(GoldenDesignAnalysisInput input) {
   var matchedDesign = 0;
   var matchedRender = 0;
   var compared = 0;
+  final structuralMatches = <String, int>{};
   if (spec != null) {
     try {
       final result = compareDesignStructure(
@@ -301,6 +311,7 @@ GoldenDesignReport runDesignAnalysis(GoldenDesignAnalysisInput input) {
       matchedDesign = result.matches.length;
       matchedRender = result.matches.values.toSet().length;
       compared = result.compared;
+      structuralMatches.addAll(result.matches);
     } on Object catch (error) {
       warnings.add('Structural comparison failed: $error');
     }
@@ -327,14 +338,101 @@ GoldenDesignReport runDesignAnalysis(GoldenDesignAnalysisInput input) {
   }
 
   final resolved = [for (final finding in findings) accept(finding)];
-  final regions = _regions(pixels, spec, snapshot, resolved, known);
+  final regions = _regions(
+    pixels,
+    spec,
+    snapshot,
+    resolved,
+    known,
+    structuralMatches,
+    tolerance,
+  );
 
   // Regions that no finding explains become visual findings.
-  var visual = 0;
-  for (final region in regions) {
-    if (region.findings.isNotEmpty || region.known != null) continue;
-    if (visual++ >= 20) break;
-    resolved.add(accept(_visualFinding(region, spec, snapshot, tolerance)));
+  final rasterEvidence = <String, GoldenTextRasterEvidence?>{};
+  final imageAssets = <String, Uint8List?>{};
+  final refPixels = referencePixels;
+  final actualPixels = renderPixels;
+  for (final region in goldenGroupUnexplainedRegions(regions)) {
+    GoldenTextRasterEvidence? evidence;
+    final design = region.design;
+    final widget = region.widget;
+    if (design != null &&
+        widget != null &&
+        refPixels != null &&
+        actualPixels != null &&
+        structuralMatches[design.id] == widget.id) {
+      evidence = rasterEvidence.putIfAbsent(
+        '${design.id}/${widget.id}',
+        () => GoldenTextRasterEvidence.compare(
+          design: design,
+          render: widget,
+          fonts: snapshot.fonts,
+          reference: refPixels,
+          actual: actualPixels,
+          logicalWidth: snapshot.width,
+          tolerance: tolerance,
+        ),
+      );
+    }
+    final iconEvidence =
+        design != null &&
+            widget != null &&
+            refPixels != null &&
+            actualPixels != null &&
+            structuralMatches[design.id] == widget.id
+        ? goldenIconRasterEvidence(
+            design: design,
+            render: widget,
+            snapshot: snapshot,
+            reference: refPixels,
+            actual: actualPixels,
+            logicalWidth: snapshot.width,
+            tolerance: tolerance,
+          )
+        : null;
+    GoldenImageRasterEvidence? imageEvidence;
+    if (design != null &&
+        widget != null &&
+        refPixels != null &&
+        actualPixels != null &&
+        structuralMatches[design.id] == widget.id &&
+        widget.imageDescription != null) {
+      final bytes = imageAssets.putIfAbsent(
+        widget.imageDescription!,
+        () => goldenAssetImageBytes(widget.imageDescription, packages),
+      );
+      if (bytes != null) {
+        imageEvidence = GoldenImageRasterEvidence.compare(
+          design: design,
+          render: widget,
+          sourceBytes: bytes,
+          reference: refPixels,
+          actual: actualPixels,
+          logicalWidth: snapshot.width,
+          tolerance: tolerance,
+        );
+      }
+    }
+    resolved.add(
+      accept(
+        _visualFinding(
+          region,
+          spec,
+          snapshot,
+          tolerance,
+          rasterCoverage:
+              evidence?.coverage ??
+              iconEvidence?.coverage ??
+              imageEvidence?.coverage,
+          rasterKind: imageEvidence != null
+              ? '이미지'
+              : iconEvidence == null
+              ? '글자'
+              : '아이콘',
+        ),
+      ),
+    );
   }
   resolved.sort(_compareFindings);
 
@@ -475,7 +573,10 @@ List<GoldenReportRegion> _regions(
   GoldenRenderSnapshot snapshot,
   List<GoldenDesignFinding> findings,
   List<GoldenKnownDifference> known,
+  Map<String, int> matches,
+  GoldenDesignTolerance tolerance,
 ) {
+  final renderedById = {for (final node in snapshot.nodes) node.id: node};
   final candidates = [
     if (spec != null)
       for (final node in spec.nodes)
@@ -498,6 +599,14 @@ List<GoldenReportRegion> _regions(
         widget = node;
       }
     }
+    widget = goldenPreferMatchedText(
+      design: design,
+      selected: widget,
+      matched: renderedById[matches[design?.id]],
+      x: cx,
+      y: cy,
+      tolerance: tolerance,
+    );
     final id = design != null
         ? 'node:${design.id}'
         : 'cell:${(region.bounds.left ~/ 8) * 8},${(region.bounds.top ~/ 8) * 8}';
@@ -570,10 +679,14 @@ GoldenDesignFinding _visualFinding(
   GoldenReportRegion region,
   GoldenDesignSpec? spec,
   GoldenRenderSnapshot snapshot,
-  GoldenDesignTolerance tolerance,
-) {
+  GoldenDesignTolerance tolerance, {
+  double? rasterCoverage,
+  String rasterKind = '글자',
+}) {
   final r = region.region;
-  final severity = r.logicalPixels > tolerance.budgetRegion
+  final severity = rasterCoverage != null
+      ? GoldenFindingSeverity.info
+      : r.logicalPixels > tolerance.budgetRegion
       ? GoldenFindingSeverity.error
       : (r.logicalPixels > tolerance.budgetRegion / 4
             ? GoldenFindingSeverity.warning
@@ -591,9 +704,13 @@ GoldenDesignFinding _visualFinding(
     category: GoldenFindingCategory.visual,
     severity: severity,
     message:
-        '구조 비교로 설명되지 않는 픽셀 차이 '
+        '${rasterCoverage == null
+            ? '구조 비교로 설명되지 않는 픽셀 차이'
+            : rasterKind == '이미지'
+            ? '원본 자산·채움·자름이 같은 이미지 보간 차이'
+            : '구조·색·$rasterKind 윤곽이 일치하는 렌더러 차이'} '
         '${goldenRound(r.bounds.width, 1)}×${goldenRound(r.bounds.height, 1)}px '
-        '(넓이 ${r.logicalPixels}px², ΔE ${r.meanDeltaE})'
+        '(넓이 ${goldenRound(r.logicalPixels, 2)}px², ΔE ${goldenRound(r.meanDeltaE, 2)})'
         '${where.isEmpty ? '' : ' — $where'}.',
     diffs: [
       GoldenFindingDiff(
@@ -609,14 +726,21 @@ GoldenDesignFinding _visualFinding(
     designPath: region.design == null ? null : spec?.pathOf(region.design!),
     widget: region.widget,
     component: snapshot.componentOf(region.widget),
-    owner: GoldenFindingOwner.of(
-      region.widget,
-      snapshot.componentOf(region.widget),
-    ),
+    owner: rasterCoverage == null
+        ? GoldenFindingOwner.of(
+            region.widget,
+            snapshot.componentOf(region.widget),
+          )
+        : null,
     rect: r.bounds,
-    hint:
-        '겹쳐 보기에서 이 영역을 확인하세요 — 아이콘 모양, 이미지, 그림자, '
-        '그라디언트, 잘림처럼 구조 비교가 보지 않는 차이일 수 있습니다.',
+    hint: rasterCoverage != null && rasterKind == '이미지'
+        ? '원본 이미지의 바이트 해시와 크기·채움·정렬·자름·불투명도가 일치하고, 추가 색 필터가 없습니다. 저주파 색 비교도 기존 허용 범위 안입니다. 원시 픽셀 수·차이 지도·수락 판정은 보존합니다.'
+        : rasterCoverage != null
+        ? '같은 $rasterKind 속성·스타일·색이며, 윤곽이 기존 위치 허용 범위에서 '
+              '${goldenRound(rasterCoverage * 100, 2)}% 일치합니다. '
+              '원시 픽셀 수·차이 지도·수락 판정은 그대로 보존합니다.'
+        : '겹쳐 보기에서 이 영역을 확인하세요 — 아이콘 모양, 이미지, 그림자, '
+              '그라디언트, 잘림처럼 구조 비교가 보지 않는 차이일 수 있습니다.',
   );
 }
 

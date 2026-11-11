@@ -11,6 +11,10 @@ import 'package_map.dart';
 /// Reads a component property that the generic reader does not know.
 typedef GoldenPropertyReader = Object? Function(Widget widget);
 
+/// Reads a property after resolving the component's theme and inherited slots.
+typedef GoldenResolvedPropertyReader =
+    Object? Function(Widget widget, BuildContext context);
+
 /// Identifies a design-system component that the catalog cannot describe.
 typedef GoldenComponentResolver =
     GoldenComponentIdentity? Function(Widget widget);
@@ -63,6 +67,7 @@ final class GoldenComponentMapping {
     String? figma,
     this.properties = const {},
     this.readers = const {},
+    this.resolvedReaders = const {},
     this.values = const {},
     this.ignore = const {},
   }) : figma = figma ?? widget;
@@ -81,6 +86,10 @@ final class GoldenComponentMapping {
   /// Widget property name → reader, for properties the generic reader does
   /// not know.
   final Map<String, GoldenPropertyReader> readers;
+
+  /// Resolved properties such as an icon's inherited color and stroke width.
+  /// Like [readers], these run only during inspection and never alter painting.
+  final Map<String, GoldenResolvedPropertyReader> resolvedReaders;
 
   /// Design property name → design value → widget value, when spellings
   /// differ.

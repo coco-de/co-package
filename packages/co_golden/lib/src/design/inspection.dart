@@ -95,6 +95,26 @@ final class GoldenRenderInspector {
 
     void visit(Element element, _Context context) {
       final widget = element.widget;
+      // Responsive render objects can lay out several candidates but paint
+      // only one. Laid-out bounds alone are not evidence that a child is
+      // visible (IndexedStack and CoUI Pagination's fit candidates).
+      final object = element.renderObject;
+      final parent = object?.parent;
+      if (parent is RenderIndexedStack) {
+        final index = parent.index;
+        if (index == null) return;
+        var chosen = parent.firstChild;
+        for (var i = 0; i < index && chosen != null; i++) {
+          chosen = parent.childAfter(chosen);
+        }
+        if (object != chosen) return;
+      }
+      if (object != null &&
+          object != boundary &&
+          parent != null &&
+          !_paintsChild(parent, object)) {
+        return;
+      }
       // maintainSize keeps a laid-out subtree without painting it. Flutter
       // uses a private render object for this branch, so the Offstage and
       // Opacity checks below cannot detect it. Do not skip the non-maintained
@@ -110,7 +130,8 @@ final class GoldenRenderInspector {
         if (!_trivialWidget.hasMatch(name)) next = next.named(name);
       }
       if (element is ComponentElement &&
-          (location?.project ?? !tracked) &&
+          ((location?.project ?? !tracked) ||
+              _mappings.containsKey(goldenNormalizeName(_typeName(widget)))) &&
           widget is! Icon) {
         final identity = _component(element, widget, tracked);
         if (identity != null) {
@@ -308,6 +329,7 @@ final class GoldenRenderInspector {
         'Image',
         imageDescription:
             '${context.image ?? 'image'}${render.image == null ? ' (not decoded)' : ''}',
+        imagePaint: _imagePaint(render, boundary),
       );
       return;
     }
@@ -414,6 +436,7 @@ final class GoldenRenderInspector {
     double? iconSize,
     int? iconColor,
     String? imageDescription,
+    Map<String, Object?> imagePaint = const {},
   }) {
     final rect = _globalRect(render, boundary, Offset.zero & render.size);
     if (rect == null) return;
@@ -435,6 +458,7 @@ final class GoldenRenderInspector {
         iconSize: iconSize,
         iconColor: iconColor,
         imageDescription: imageDescription,
+        imagePaint: imagePaint,
         source: context.source,
         component: context.component,
         path: context.path.length > 6
@@ -521,7 +545,7 @@ final class GoldenRenderInspector {
     if (!accepted) return null;
     return GoldenComponentIdentity(
       name,
-      properties: _properties(widget, listed, mapping),
+      properties: _properties(widget, element, listed, mapping),
       library: implementation ?? (listed != null ? catalog?.library : null),
     );
   }
@@ -540,6 +564,7 @@ final class GoldenRenderInspector {
 
   Map<String, String> _properties(
     Widget widget,
+    BuildContext context,
     GoldenCatalogComponent? listed,
     GoldenComponentMapping? mapping,
   ) {
@@ -554,6 +579,13 @@ final class GoldenRenderInspector {
         put(field, reader(widget));
       } on Object {
         // A reader that does not fit this widget is ignored.
+      }
+    });
+    mapping?.resolvedReaders.forEach((field, reader) {
+      try {
+        put(field, reader(widget, context));
+      } on Object {
+        // A reader that cannot resolve this instance provides no evidence.
       }
     });
     if (listed != null) {
@@ -964,6 +996,27 @@ Rect? _visibleRect(
   RenderObject child = render;
   var parent = render.parent;
   while (parent != null && !identical(child, boundary)) {
+    // Stack paints later siblings above earlier ones. A laid-out underlay
+    // completely covered by a solid rectangle is not visible content.
+    // Overlay's private theater visits entries in paint order too; SDK has
+    // no public base type for it. Keep unknown custom containers untouched.
+    if ((parent is RenderStack ||
+            parent.runtimeType.toString() == '_RenderTheater') &&
+        child is RenderBox) {
+      final siblings = <RenderObject>[];
+      parent.visitChildren(siblings.add);
+      final at = siblings.indexOf(child);
+      if (at >= 0 &&
+          siblings
+              .skip(at + 1)
+              .any(
+                (sibling) =>
+                    _paintsChild(parent!, sibling) &&
+                    _opaqueCover(sibling, boundary, visible),
+              )) {
+        return null;
+      }
+    }
     final clip = parent.describeApproximatePaintClip(child);
     if (clip != null) {
       final global = _globalRect(parent, boundary, clip);
@@ -977,6 +1030,254 @@ Rect? _visibleRect(
     parent = parent.parent;
   }
   return visible;
+}
+
+bool _paintsChild(RenderObject parent, RenderObject child) {
+  try {
+    // Keep the inspector usable with SDKs that do not expose this hook.
+    return (parent as dynamic).paintsChild(child) != false;
+  } on NoSuchMethodError {
+    return true;
+  }
+}
+
+// Deliberately conservative: rounded, opaque boxes must contain the entire
+// target; translucent, rotated and custom painted branches prove no coverage.
+bool _opaqueCover(RenderObject object, RenderBox boundary, Rect target) {
+  if (object is RenderOffstage && object.offstage ||
+      object is RenderOpacity && object.opacity != 1 ||
+      object is RenderAnimatedOpacity && object.opacity.value != 1) {
+    return false;
+  }
+  Color? color;
+  BorderRadiusGeometry? borderRadius;
+  if (object is RenderDecoratedBox &&
+      object.position == DecorationPosition.background) {
+    final decoration = object.decoration;
+    if (decoration is BoxDecoration && decoration.shape == BoxShape.rectangle) {
+      color = decoration.color;
+      borderRadius = decoration.borderRadius;
+    }
+  } else if (object is RenderPhysicalModel &&
+      object.shape == BoxShape.rectangle) {
+    color = object.color;
+    borderRadius = object.borderRadius;
+  } else if (object is RenderPhysicalShape) {
+    final clipper = object.clipper;
+    if (clipper is ShapeBorderClipper &&
+        clipper.shape is RoundedRectangleBorder) {
+      color = object.color;
+      borderRadius = (clipper.shape as RoundedRectangleBorder).borderRadius;
+    }
+  }
+  if (object is RenderBox && color?.a == 1) {
+    final transform = object.getTransformTo(boundary);
+    if (transform.entry(0, 1).abs() < 0.000001 &&
+        transform.entry(1, 0).abs() < 0.000001) {
+      final cover = _globalRect(object, boundary, Offset.zero & object.size);
+      if (cover != null &&
+          cover.left <= target.left &&
+          cover.top <= target.top &&
+          cover.right >= target.right &&
+          cover.bottom >= target.bottom) {
+        final radii = borderRadius?.resolve(TextDirection.ltr);
+        final radius = radii == null
+            ? 0.0
+            : [
+                radii.topLeft,
+                radii.topRight,
+                radii.bottomRight,
+                radii.bottomLeft,
+              ].fold<double>(0, (r, v) => math.max(r, math.max(v.x, v.y)));
+        final scaled = math.min(
+          radius *
+              math.max(
+                transform.entry(0, 0).abs(),
+                transform.entry(1, 1).abs(),
+              ),
+          math.min(cover.width, cover.height) / 2,
+        );
+        final corners = [
+          target.topLeft,
+          target.topRight,
+          target.bottomLeft,
+          target.bottomRight,
+        ];
+        if (corners.every((point) {
+          final center = Offset(
+            point.dx.clamp(cover.left + scaled, cover.right - scaled),
+            point.dy.clamp(cover.top + scaled, cover.bottom - scaled),
+          );
+          return (point - center).distanceSquared <= scaled * scaled + 0.000001;
+        })) {
+          return true;
+        }
+      }
+    }
+  }
+  var covered = false;
+  object.visitChildren((child) {
+    if (!covered && _paintsChild(object, child)) {
+      final clip = object.describeApproximatePaintClip(child);
+      final global = clip == null ? null : _globalRect(object, boundary, clip);
+      if (global != null &&
+          (global.left > target.left ||
+              global.top > target.top ||
+              global.right < target.right ||
+              global.bottom < target.bottom)) {
+        return;
+      }
+      covered = _opaqueCover(child, boundary, target);
+    }
+  });
+  return covered;
+}
+
+Map<String, Object?> _imagePaint(RenderImage image, RenderBox boundary) {
+  var verified = true;
+  var tinted = image.color != null;
+  final radii = [0.0, 0.0, 0.0, 0.0];
+  final rect = _globalRect(image, boundary, Offset.zero & image.size);
+  bool untransformed(RenderObject object) {
+    final t = object.getTransformTo(boundary);
+    return (t.entry(0, 0) - 1).abs() < 0.000001 &&
+        (t.entry(1, 1) - 1).abs() < 0.000001 &&
+        t.entry(0, 1).abs() < 0.000001 &&
+        t.entry(1, 0).abs() < 0.000001;
+  }
+
+  verified = rect != null && untransformed(image);
+  void clip(RenderBox object, BorderRadius radius) {
+    final box = _globalRect(object, boundary, Offset.zero & object.size);
+    if (box == null || rect == null || !untransformed(object)) {
+      verified = false;
+      return;
+    }
+    final values = _radii(radius);
+    if (box == rect) {
+      for (var i = 0; i < 4; i++) {
+        radii[i] = math.max(radii[i], values[i]);
+      }
+    } else if (values.any((v) => v != 0)) {
+      final shape = RRect.fromRectAndCorners(
+        box,
+        topLeft: radius.topLeft,
+        topRight: radius.topRight,
+        bottomRight: radius.bottomRight,
+        bottomLeft: radius.bottomLeft,
+      );
+      if (![
+        rect.topLeft,
+        rect.topRight,
+        rect.bottomLeft,
+        rect.bottomRight,
+      ].every(shape.contains)) {
+        verified = false;
+      }
+    }
+  }
+
+  for (
+    RenderObject? parent = image.parent;
+    parent != null && parent != boundary;
+    parent = parent.parent
+  ) {
+    if (parent.runtimeType.toString().contains('Filter') ||
+        parent is RenderShaderMask) {
+      tinted = true;
+    }
+    if (parent is RenderClipRRect && parent.clipBehavior != Clip.none) {
+      clip(parent, parent.borderRadius.resolve(TextDirection.ltr));
+    } else if (parent is RenderClipOval && parent.clipBehavior != Clip.none) {
+      if (parent.size.width != parent.size.height) {
+        verified = false;
+      }
+      clip(parent, BorderRadius.circular(parent.size.width / 2));
+    } else if (parent is RenderPhysicalModel &&
+        parent.clipBehavior != Clip.none) {
+      if (parent.shape == BoxShape.circle &&
+          parent.size.width != parent.size.height) {
+        verified = false;
+      }
+      clip(
+        parent,
+        parent.shape == BoxShape.circle
+            ? BorderRadius.circular(parent.size.width / 2)
+            : parent.borderRadius ?? BorderRadius.zero,
+      );
+    } else if (parent is RenderPhysicalShape &&
+        parent.clipBehavior != Clip.none) {
+      final c = parent.clipper;
+      if (c is ShapeBorderClipper && c.shape is RoundedRectangleBorder) {
+        clip(
+          parent,
+          (c.shape as RoundedRectangleBorder).borderRadius.resolve(
+            TextDirection.ltr,
+          ),
+        );
+      } else {
+        verified = false;
+      }
+    } else if (parent is RenderClipPath && parent.clipBehavior != Clip.none) {
+      final c = parent.clipper;
+      if (c is ShapeBorderClipper && c.shape is RoundedRectangleBorder) {
+        clip(
+          parent,
+          (c.shape as RoundedRectangleBorder).borderRadius.resolve(
+            TextDirection.ltr,
+          ),
+        );
+      } else if (c.runtimeType.toString() == '_DecorationClipper') {
+        // Container delegates to Decoration.getClipPath. Read the public
+        // decoration field only for that SDK clipper; arbitrary custom paths
+        // cannot establish rounded-rectangle geometry.
+        Decoration? decoration;
+        try {
+          final value = (c as dynamic).decoration;
+          if (value is Decoration) decoration = value;
+        } on NoSuchMethodError {
+          // SDKs without this field supply no clipping evidence.
+        }
+        if (decoration is BoxDecoration &&
+            decoration.shape == BoxShape.rectangle) {
+          clip(
+            parent,
+            decoration.borderRadius?.resolve(TextDirection.ltr) ??
+                BorderRadius.zero,
+          );
+        } else if (decoration is ShapeDecoration &&
+            decoration.shape is RoundedRectangleBorder) {
+          clip(
+            parent,
+            (decoration.shape as RoundedRectangleBorder).borderRadius.resolve(
+              TextDirection.ltr,
+            ),
+          );
+        } else {
+          verified = false;
+        }
+      } else {
+        verified = false;
+      }
+    }
+  }
+  final align = image.alignment.resolve(
+    image.textDirection ?? TextDirection.ltr,
+  );
+  return {
+    'fit': image.fit?.name ?? 'scaleDown',
+    'alignment': [align.x, align.y],
+    'clipRadius': radii,
+    'verifiedGeometry': verified,
+    'tinted': tinted,
+    'repeat': image.repeat.name,
+    'mirrored':
+        image.matchTextDirection && image.textDirection == TextDirection.rtl,
+    'paintOpacity': image.opacity?.value ?? 1,
+    'decodedWidth': image.image?.width,
+    'decodedHeight': image.image?.height,
+    'filterQuality': image.filterQuality.name,
+  };
 }
 
 GoldenRect? _rectOfElement(Element element, RenderBox boundary) {
@@ -1004,8 +1305,8 @@ String? _keyOf(Widget widget) {
 }
 
 String _describeImage(ImageProvider provider) {
-  if (provider is AssetImage) return 'asset:${provider.assetName}';
-  if (provider is ExactAssetImage) return 'asset:${provider.assetName}';
+  if (provider is AssetImage) return 'asset:${provider.keyName}';
+  if (provider is ExactAssetImage) return 'asset:${provider.keyName}';
   if (provider is NetworkImage) return 'network:${provider.url}';
   if (provider is MemoryImage) return 'memory';
   if (provider is FileImage) return 'file:${provider.file.path}';
