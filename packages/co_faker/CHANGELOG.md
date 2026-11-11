@@ -160,6 +160,13 @@
   and every code that is not a supported language read English domain data. They
   are never handed Simplified Chinese.
 
+## [0.14.0](https://github.com/coco-de/co-package/compare/co_faker-v0.13.1...co_faker-v0.14.0) (2026-11-11)
+
+
+### 기능
+
+* **co_faker:** add approved Korean UI example copy from CoUI 6010 ([#128](https://github.com/coco-de/co-package/issues/128)) ([3db5404](https://github.com/coco-de/co-package/commit/3db54047dbd70a10a60978977c0613d12bb3e62c))
+
 ## [0.13.1](https://github.com/coco-de/co-package/compare/co_faker-v0.13.0...co_faker-v0.13.1) (2026-10-11)
 
 

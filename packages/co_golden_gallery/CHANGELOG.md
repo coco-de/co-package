@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.3.1...co_golden_gallery-v0.4.0) (2026-11-11)
+
+
+### 기능
+
+* **examples:** apply latest CoUI and deploy all playgrounds ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+* **examples:** refresh all playgrounds with latest CoUI and Pages deployment ([d8b5c12](https://github.com/coco-de/co-package/commit/d8b5c12e234a25cb9cd86c348d3cb6f678185f47))
+* **examples:** refresh CoUI playgrounds and GitHub Pages ([#126](https://github.com/coco-de/co-package/issues/126)) ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+
+
+### 버그 수정
+
+* **co-golden-gallery:** 🐛 갤러리 옆 보고서의 상대 링크 지원 ([e3ecdb2](https://github.com/coco-de/co-package/commit/e3ecdb2ca0251dc63e48fd8bebc6b33add0686d5))
+* **co-golden:** 🐛 디자인 분석 오판과 갤러리 보고서 링크 개선 ([#134](https://github.com/coco-de/co-package/issues/134)) ([1c57775](https://github.com/coco-de/co-package/commit/1c57775df01c58dc90614ed5c5417366dadcf612))
+* **co-golden:** 🐛 숨김·빈 글상자·줄 수 분석 오판과 갤러리 보고서 링크 개선 ([1c57775](https://github.com/coco-de/co-package/commit/1c57775df01c58dc90614ed5c5417366dadcf612))
+
+
+### 문서
+
+* **co-golden-gallery:** 📝 골든 갤러리와 기준 이미지를 S3 에 보관하는 방법 ([#122](https://github.com/coco-de/co-package/issues/122)) ([5247599](https://github.com/coco-de/co-package/commit/5247599add58a2359d9d16d293ad0b0980bb47b4))
+
 ## [0.3.1](https://github.com/coco-de/co-package/compare/co_golden_gallery-v0.3.0...co_golden_gallery-v0.3.1) (2026-10-26)
 
 
