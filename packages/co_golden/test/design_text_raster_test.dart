@@ -107,8 +107,9 @@ void main() {
   test('different characters are never explained as rasterization', () {
     expect(evidence(glyph(), text: 'B'), isNull);
   });
-  test('uses the existing text pixel radius on both axes', () {
-    expect(evidence(glyph(shiftY: 2)), isNotNull);
+  test('preserves the existing vertical pixel radius', () {
+    expect(evidence(glyph(shiftY: 1)), isNotNull);
+    expect(evidence(glyph(shiftY: 2)), isNull);
     expect(evidence(glyph(shiftY: 5)), isNull);
   });
   test(

@@ -269,9 +269,12 @@ finding only when its declared font, weight, metrics, opaque color and solid
 background match, its ink mass is comparable, and at least 99.5% of ink mass
 has bidirectional shape support within the existing positional tolerance.
 Changed text, missing ink, unloaded fonts and incorrect styles remain actionable.
-The text proof uses the existing text-pixel radius on both axes and normalizes
+The text proof uses the existing horizontal text-pixel and vertical pixel radii and normalizes
 solid backgrounds only within the existing property-color tolerance. Comparable
 text ink mass means a ratio from 2/3 to 3/2; this alone is never evidence.
+Palette evidence tests encoded-sRGB and linear-sRGB alpha interpolation, choosing
+one model for an entire glyph with the fewest foreign pixels. The same 2 RGB
+residual and 0.5% foreign-pixel limit apply to either model.
 Named icon evidence additionally requires identical resolved color, stroke and
 geometry, and uses a tighter ink-mass ratio (0.9–1.1). Supply optional
 `GoldenComponentMapping.resolvedReaders` to read inherited paint from the

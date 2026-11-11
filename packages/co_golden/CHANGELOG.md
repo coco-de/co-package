@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Preserve vertical pixel limits while recognizing encoded/linear sRGB glyph coverage and assigning matched glyph bearings to their text.
 - Inspect only painted layout candidates and unoccluded Stack/Overlay content.
 - Compare split text runs and editable line leading without hiding real text, style or scroll differences.
 - Preserve container text anchors and explain verified text raster differences with ink-mass evidence.

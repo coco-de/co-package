@@ -599,6 +599,21 @@ List<GoldenReportRegion> _regions(
         widget = node;
       }
     }
+    if (design == null) {
+      final textHit = goldenMatchedTextAt(
+        candidates: candidates,
+        matches: matches,
+        rendered: renderedById,
+        selected: widget,
+        x: cx,
+        y: cy,
+        tolerance: tolerance,
+      );
+      if (textHit != null) {
+        design = textHit.$1;
+        widget = textHit.$2;
+      }
+    }
     widget = goldenPreferMatchedText(
       design: design,
       selected: widget,

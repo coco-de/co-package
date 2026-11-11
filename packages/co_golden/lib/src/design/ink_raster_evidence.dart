@@ -75,16 +75,35 @@ final class GoldenInkRasterEvidence {
       return null;
     }
     final fg = foregroundColor & 0xffffff;
-    (Uint8List, double, int)? ink(GoldenRgbImage img, int bgColor) {
+    double channel(int value, bool linear) {
+      if (!linear) return value.toDouble();
+      final v = value / 255;
+      return (255 *
+              (v <= 0.04045 ? v / 12.92 : math.pow((v + .055) / 1.055, 2.4)))
+          .toDouble();
+    }
+
+    double encoded(double value, bool linear) {
+      if (!linear) return value;
+      final v = value.clamp(0, 255) / 255;
+      return 255 *
+          (v <= 0.0031308 ? v * 12.92 : 1.055 * math.pow(v, 1 / 2.4) - .055);
+    }
+
+    (Uint8List, double, int, int)? ink(
+      GoldenRgbImage img,
+      int bgColor,
+      bool linear,
+    ) {
       final background = [
-        bgColor >> 16 & 255,
-        bgColor >> 8 & 255,
-        bgColor & 255,
+        channel(bgColor >> 16 & 255, linear),
+        channel(bgColor >> 8 & 255, linear),
+        channel(bgColor & 255, linear),
       ];
       final vector = [
-        (fg >> 16 & 255) - background[0],
-        (fg >> 8 & 255) - background[1],
-        (fg & 255) - background[2],
+        channel(fg >> 16 & 255, linear) - background[0],
+        channel(fg >> 8 & 255, linear) - background[1],
+        channel(fg & 255, linear) - background[2],
       ];
       final norm = vector.fold<double>(0, (sum, v) => sum + v * v);
       if (norm < 1200) return null;
@@ -99,13 +118,17 @@ final class GoldenInkRasterEvidence {
           final channels = [rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255];
           var alpha = 0.0;
           for (var c = 0; c < 3; c++) {
-            alpha += (channels[c] - background[c]) * vector[c] / norm;
+            alpha +=
+                (channel(channels[c], linear) - background[c]) *
+                vector[c] /
+                norm;
           }
           var residual = 0.0;
           for (var c = 0; c < 3; c++) {
             residual = math.max(
               residual,
-              (channels[c] - background[c] - alpha * vector[c]).abs(),
+              (channels[c] - encoded(background[c] + alpha * vector[c], linear))
+                  .abs(),
             );
           }
           if (alpha < -0.02 || alpha > 1.02 || residual > 2) foreign++;
@@ -119,12 +142,28 @@ final class GoldenInkRasterEvidence {
           }
         }
       }
-      if (foreign > w * h * 0.005 || inkPixels < 4) return null;
-      return (mask, mass, count);
+      if (inkPixels < 4) return null;
+      return (mask, mass, count, foreign);
     }
 
-    final a = ink(reference, bg.$1);
-    final b = ink(actual, otherBg.$1);
+    (Uint8List, double, int, int)? bestInk(GoldenRgbImage img, int bgColor) {
+      // Choose one interpolation space for the entire glyph, never one per
+      // pixel. Both encoded-sRGB and linear-sRGB alpha blending are used by
+      // renderers. The original 2 RGB palette residual still applies.
+      final candidates = [
+        ink(img, bgColor, false),
+        ink(img, bgColor, true),
+      ].whereType<(Uint8List, double, int, int)>().toList();
+      if (candidates.isEmpty) return null;
+      var best = candidates.first;
+      for (final candidate in candidates.skip(1)) {
+        if (candidate.$4 < best.$4) best = candidate;
+      }
+      return best.$4 <= w * h * .005 ? best : null;
+    }
+
+    final a = bestInk(reference, bg.$1);
+    final b = bestInk(actual, otherBg.$1);
     if (a == null || b == null || a.$2 == 0) return null;
     final massRatio = b.$2 / a.$2;
     if (massRatio < minMassRatio || massRatio > maxMassRatio) return null;
