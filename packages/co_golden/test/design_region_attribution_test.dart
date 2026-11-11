@@ -54,4 +54,57 @@ void main() {
     final candidate = selected(GoldenRenderKind.box);
     expect(owner(candidate, 5), candidate);
   });
+  (GoldenDesignNode, GoldenRenderNode)? hit(
+    GoldenRenderNode? selected, {
+    double x = 9,
+    GoldenRenderNode target = matched,
+  }) => goldenMatchedTextAt(
+    candidates: [design],
+    matches: {'text': target.id},
+    rendered: {target.id: target},
+    selected: selected,
+    x: x,
+    y: 15,
+    tolerance: const GoldenDesignTolerance(),
+  );
+  test('recovers a matched text pair outside both layout hit boxes', () {
+    final pair = hit(selected(GoldenRenderKind.box));
+    expect(pair?.$1, design);
+    expect(pair?.$2, matched);
+  });
+  test(
+    'does not assign image, vector icon or another text pixels to a glyph',
+    () {
+      for (final kind in [
+        GoldenRenderKind.image,
+        GoldenRenderKind.graphic,
+        GoldenRenderKind.text,
+      ]) {
+        expect(hit(selected(kind)), isNull);
+      }
+    },
+  );
+  test(
+    'requires both source and target near the pixel within existing radii',
+    () {
+      expect(hit(null, x: 5), isNull);
+      const moved = GoldenRenderNode(
+        id: 1,
+        kind: GoldenRenderKind.text,
+        widget: 'Text',
+        rect: GoldenRect(40, 10, 20, 20),
+        visibleRect: GoldenRect(40, 10, 20, 20),
+        text: GoldenRenderText(
+          text: 'A',
+          contentRect: GoldenRect(40, 10, 20, 20),
+          style: GoldenRenderTextStyle(fontSize: 14, fontWeight: 400),
+        ),
+      );
+      expect(hit(null, target: moved), isNull);
+    },
+  );
+  test('an existing vector icon owner is preserved by the text preference', () {
+    final candidate = selected(GoldenRenderKind.graphic);
+    expect(owner(candidate, 15), candidate);
+  });
 }

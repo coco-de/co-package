@@ -67,7 +67,7 @@ final class GoldenTextRasterEvidence {
       actual: actual,
       logicalWidth: logicalWidth,
       horizontalRadius: tolerance.textPixel,
-      verticalRadius: tolerance.textPixel,
+      verticalRadius: tolerance.pixel,
       // Small glyphs have few solid interior pixels; different antialiasing
       // coverage can change total ink appreciably without changing the outline.
       // Content, loaded font, weight, color and 99.5% shape support remain required.
