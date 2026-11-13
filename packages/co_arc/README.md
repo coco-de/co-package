@@ -119,3 +119,4 @@ jobs:
 - self-hosted 러너는 **coco-de의 private 레포에만** 연결합니다. 퍼블릭 레포는 외부 PR이 러너에서 임의 코드를 실행할 수 있습니다.
 - 등록 토큰은 1시간만 유효하며 스크립트가 매번 새로 발급합니다. 토큰을 파일/채팅에 남기지 마세요.
 - `_work` 디렉토리는 주기적으로 정리하세요: `./scripts/cleanup-work.sh`
+- 러너를 해제할 때는 `./scripts/remove-runner.sh --purge` 로 폴더까지 지우세요 — 해제만 하면 도구 캐시가 수십 GB 남습니다. 러너를 여러 개 돌리면 SDK 사본이 러너 수만큼 쌓이니 `register-runner.sh --seed-from <기존 러너 폴더>` 로 새 러너를 복제해서 시작하고, 사본은 [복제 중복 제거](docs/self-hosted-runner.md#러너-사본과-디스크-격리를-유지하면서-사본-줄이기)로 합치세요.
