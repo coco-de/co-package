@@ -7,5 +7,6 @@
   "packages/co_bdd": "0.3.0",
   "packages/co_faker": "0.13.1",
   "packages/co_demo_prefs": "1.0.1",
-  "packages/co_demo_world": "0.2.1"
+  "packages/co_demo_world": "0.2.1",
+  "packages/co_site_metadata": "0.1.0"
 }

@@ -34,6 +34,7 @@
   ],
 
   "packages": {
+    "packages/co_site_metadata": { "component": "co_site_metadata", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
     "packages/open_epub_engine": { "component": "open_epub_engine" },
     "packages/open_epub": { "component": "open_epub" },
     "packages/open_board": { "component": "open_board" },

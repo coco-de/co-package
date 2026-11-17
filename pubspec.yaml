@@ -15,6 +15,7 @@ workspace:
   - packages/co_faker
   - packages/co_golden
   - packages/co_golden_gallery
+  - packages/co_site_metadata
   - packages/co_storage # dox_storage 코어 포크 + 서명된 직접 업로드 (서버 경유 자격증명)
   - packages/open_epub_engine
   - packages/open_epub

@@ -7,6 +7,7 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | Package | Description |
 | --- | --- |
 | [`co_arc`](packages/co_arc/README.md) | Cocode Actions Runner Cluster — self-hosted 러너 관리 TUI(`coarc`), 등록 스크립트, ARC 설정, 재사용 CI 워크플로우. |
+| [`co_site_metadata`](packages/co_site_metadata/README.md) | Pure Dart route metadata, canonical URLs, sitemap, robots and LLM discovery documents. |
 | [`co_faker`](packages/co_faker/README.md) | Pure Dart, deterministic, multilingual fake data generation. |
 | [`co_demo_world`](packages/co_demo_world/README.md) | Deterministic demo worlds: business data fixed, co_faker display text re-projected per UI language, user edits kept across a live language switch. |
 | [`co_golden`](packages/co_golden/README.md) | Golden matrix testing for Flutter — devices × themes × locales, strict layout diagnostics, Slang locale binding, JSON run manifests. |
