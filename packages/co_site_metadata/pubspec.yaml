@@ -1,6 +1,6 @@
 name: co_site_metadata
 description: Framework-independent route metadata and sitemap, robots.txt, and llms.txt generation for Dart sites.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_site_metadata
 publish_to: none
 resolution: workspace
