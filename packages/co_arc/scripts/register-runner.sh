@@ -25,6 +25,12 @@
 #                          여러 러너를 띄울 때 매 인스턴스가 SDK를 중복 캐싱하는
 #                          걸 막아줍니다 (자세한 배경은 docs/self-hosted-runner.md
 #                          "공유 tool-cache" 절 참고).
+#   --seed-from <dir>      같은 맥의 기존 러너 폴더(예: ~/actions/<기존 러너>)에서 도구 캐시
+#                          (_work/_tool 의 Flutter SDK·Dart·Node·JDK 등)를 APFS 복제로 가져와
+#                          시작합니다. 새 러너가 SDK 를 처음부터 받지 않고(5~25분) 디스크도 한 벌
+#                          크기 그대로입니다. 이미 _work/_tool 이 채워진 러너와 --tool-cache 를 쓰는
+#                          러너에는 적용하지 않습니다 (자세한 내용: scripts/seed-runner-tools.sh ·
+#                          docs/self-hosted-runner.md "러너 사본과 디스크" 절).
 #   --service              구성 후 launchd 서비스로 바로 등록/시작
 #
 # 여러 인스턴스를 한 머신에 띄우려면 --dir/--name을 인스턴스별로 다르게 지정해
@@ -54,6 +60,7 @@ RUNNER_NAME=""
 RUNNER_DIR=""
 RUNNER_GROUP=""
 TOOL_CACHE=""
+SEED_FROM=""
 AS_SERVICE=false
 
 # 이름 미지정 등록 시 붙일 영어 공룡 이름 풀 (lib/src/naming.dart와 동일).
@@ -80,13 +87,14 @@ while [[ $# -gt 0 ]]; do
     --dir)           RUNNER_DIR="$2"; shift 2 ;;
     --runner-group)  RUNNER_GROUP="$2"; shift 2 ;;
     --tool-cache)    TOOL_CACHE="$2"; shift 2 ;;
+    --seed-from)     SEED_FROM="$2"; shift 2 ;;
     --service)       AS_SERVICE=true; shift ;;
     *) echo "unknown option: $1" >&2; exit 1 ;;
   esac
 done
 
 if [[ -z "$SCOPE_TYPE" ]]; then
-  echo "usage: $0 --repo coco-de/<repo> | --org coco-de [--labels ...] [--name ...] [--service]" >&2
+  echo "usage: $0 --repo coco-de/<repo> | --org coco-de [--labels ...] [--name ...] [--seed-from <기존 러너 폴더>] [--service]" >&2
   exit 1
 fi
 
@@ -234,6 +242,21 @@ if [[ -n "$TOOL_CACHE" ]]; then
   else
     echo "RUNNER_TOOL_CACHE=${TOOL_CACHE}" >> .env
     echo "==> .env에 RUNNER_TOOL_CACHE=${TOOL_CACHE} 추가"
+  fi
+fi
+
+# 도구 캐시 시드 (--seed-from) — 새 러너가 같은 맥의 기존 러너 도구 폴더를 복제해 시작한다.
+# 이미 _work/_tool 이 채워진 러너(재실행 · 서비스 전환)와 공유 tool-cache 를 쓰는 러너에는 손대지 않는다.
+# 실패해도 러너는 빈 캐시로 정상 시작하므로 등록은 계속 진행한다.
+if [[ -n "$SEED_FROM" ]]; then
+  if [[ -n "$TOOL_CACHE" ]]; then
+    echo "==> 공유 tool-cache(${TOOL_CACHE})를 쓰므로 도구 캐시 시드를 건너뜁니다"
+  elif [[ -n "$(ls -A "${RUNNER_DIR}/_work/_tool" 2>/dev/null)" ]]; then
+    echo "==> ${RUNNER_DIR}/_work/_tool 이 이미 있어 도구 캐시 시드를 건너뜁니다"
+  else
+    echo "==> 도구 캐시 시드: ${SEED_FROM} → ${RUNNER_DIR}"
+    "$(cd "$(dirname "$0")" && pwd)/seed-runner-tools.sh" --from "$SEED_FROM" --to "$RUNNER_DIR" \
+      || echo "warn: 도구 캐시 시드에 실패했습니다 — 러너는 빈 캐시로 시작합니다" >&2
   fi
 fi
 
