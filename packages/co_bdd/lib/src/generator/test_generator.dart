@@ -48,7 +48,6 @@ const Set<String> sharedStepFileNames = {
   'i_confirm_deletion',
   'i_enter_in_the_widget',
   'i_long_press_the_widget',
-  'i_press_the_back_button',
   'i_scroll_until_the_widget_is_visible',
   'i_should_see_widgets',
   'i_tap_the_next_page_button',

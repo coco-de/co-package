@@ -196,55 +196,5 @@ void main() {
       expect(code, contains("import 'package:my_app/shared_steps.dart'"));
       expect(code, contains("import 'step/i_tap_the_login_button.dart'"));
     });
-
-    // 뒤로 가기는 위젯·Patrol 양쪽에서 같은 공유 step 을 부른다 (#147).
-    group('I press the back button', () {
-      final backFeature = FeatureFile(
-        name: 'Back',
-        tags: [],
-        background: [],
-        scenarios: [
-          const Scenario(
-            name: 'Back returns to the list',
-            tags: [],
-            steps: [
-              Step(
-                keyword: 'When',
-                text: 'I press the back button',
-                params: [],
-              ),
-            ],
-          ),
-        ],
-      );
-
-      test('is a default shared step name', () {
-        expect(sharedStepFileNames, contains('i_press_the_back_button'));
-      });
-
-      test(
-        'widget and patrol tests call the shared step, not a local file',
-        () {
-          final widgetCode = generateWidgetTest(
-            backFeature,
-            stepFolder: 'step',
-            useSharedSteps: true,
-          );
-          final patrolCode = generatePatrolTest(
-            backFeature,
-            stepFolder: 'step',
-            useSharedSteps: true,
-          );
-
-          for (final code in [widgetCode, patrolCode]) {
-            expect(code, contains('iPressTheBackButton(driver)'));
-            expect(
-              code,
-              isNot(contains("import 'step/i_press_the_back_button.dart'")),
-            );
-          }
-        },
-      );
-    });
   });
 }

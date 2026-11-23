@@ -44,7 +44,6 @@ export 'src/shared_step/i_clear_the_widget.dart';
 export 'src/shared_step/i_confirm_deletion.dart';
 export 'src/shared_step/i_enter_in_the_widget.dart';
 export 'src/shared_step/i_long_press_the_widget.dart';
-export 'src/shared_step/i_press_the_back_button.dart';
 export 'src/shared_step/i_scroll_until_the_widget_is_visible.dart';
 export 'src/shared_step/i_should_see_widgets.dart';
 export 'src/shared_step/i_tap_the_next_page_button.dart';

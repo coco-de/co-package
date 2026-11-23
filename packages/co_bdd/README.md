@@ -193,7 +193,6 @@ together with the co_bdd ones you keep.
 | `I tap the {'key'} widget at index {'N'}` | `iTapTheWidgetAtIndex` (0-based) |
 | `I tap the {'text'} text` | `iTapTheText` |
 | `I long press the {'key'} widget` | `iLongPressTheWidget` |
-| `I press the back button` | `iPressTheBackButton` — widget test: Android's `popRoute` (Navigator · Router · `PopScope` run); Patrol: `$.native.pressBack()`, Android only (throws on iOS) |
 | `I enter {'value'} in the {'key'} widget` | `iEnterInTheWidget` |
 | `I clear the {'key'} widget` | `iClearTheWidget` |
 | `I scroll until the {'key'} widget is visible` | `iScrollUntilTheWidgetIsVisible` |
