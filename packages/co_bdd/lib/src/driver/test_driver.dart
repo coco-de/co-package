@@ -65,6 +65,16 @@ abstract class TestDriver {
   /// Long-presses the widget identified by [key].
   Future<void> longPress(Key key);
 
+  /// Presses the system back button.
+  ///
+  /// - [WidgetTestDriver] dispatches the same `popRoute` message as Android's
+  ///   system back, so `Navigator`, `Router` and `PopScope` handle it.
+  /// - [PatrolTestDriver] uses `$.native.pressBack()`, which exists on Android
+  ///   only and throws on iOS.
+  ///
+  /// The default does nothing, for custom drivers that cannot press back.
+  Future<void> pressBack() async {}
+
   // --- Patrol-only (no-op in widget tests) ---
 
   /// Presses the home button (Patrol only).
@@ -72,7 +82,4 @@ abstract class TestDriver {
 
   /// Opens the notification shade (Patrol only).
   Future<void> openNotifications() async {}
-
-  /// Presses the back button (Patrol only).
-  Future<void> pressBack() async {}
 }

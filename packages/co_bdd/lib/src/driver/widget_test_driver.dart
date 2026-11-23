@@ -1,4 +1,5 @@
 import 'package:co_bdd/src/driver/test_driver.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol_finders/patrol_finders.dart';
@@ -122,5 +123,31 @@ class WidgetTestDriver extends TestDriver {
   Future<void> longPress(Key key) async {
     await tester.longPress(find.byKey(key));
     await tester.pump();
+  }
+
+  /// Sends the `popRoute` message the engine sends on Android's system back, so
+  /// the app's own back handling (`Navigator`, `Router`, `PopScope`) really
+  /// runs. Flutter's own tests simulate the back button the same way.
+  ///
+  /// The leaving route stays in the tree until its transition ends (about
+  /// 300–500 ms), so a following "should not be displayed" would still fail
+  /// after the usual 100 ms [settle]. The fake clock is advanced by one second
+  /// to let it finish.
+  ///
+  /// With nothing left to pop (the root route) the framework would close the
+  /// app on a device; here the call just returns, and the scenario's `Then`
+  /// steps decide what that means.
+  @override
+  Future<void> pressBack() async {
+    final message = const JSONMethodCodec().encodeMethodCall(
+      const MethodCall('popRoute'),
+    );
+    await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      'flutter/navigation',
+      message,
+      (_) {},
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
   }
 }
