@@ -252,7 +252,7 @@ Exported from `package:co_bdd/co_bdd.dart`.
 | `settle()` | `tester.pump()` | `$.pump()` |
 | `pumpWidget(Widget)` | `tester.pumpWidget(widget)` | `$.pumpWidgetAndSettle(widget)` |
 | `pressHome()` | no-op | `$.native.pressHome()` |
-| `pressBack()` | sends Android's `popRoute` message | `$.native.pressBack()` (Android only; throws on iOS) |
+| `pressBack()` | dispatches `popRoute`, what Android's back button triggers (`Navigator` · `Router` · `PopScope` run) | `$.native.pressBack()` (Android only; throws on iOS) |
 
 ## Parameters
 
