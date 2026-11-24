@@ -5,6 +5,7 @@ import 'package:open_board/src/module/l10n/open_board_strings_scope.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
+import 'package:open_board/src/module/text/text_box_font_weights.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
@@ -99,6 +100,7 @@ class TextInteractionManager {
 
   // 공통 변형 핸들러
   late TransformHandler _transformHandler;
+  TextBoxFontWeights _textBoxFontWeights;
 
   TextInteractionManager({
     required this.scribbleNotifier,
@@ -113,9 +115,19 @@ class TextInteractionManager {
     required this.widgetState,
     this.onTextEdit,
     this.linkTargetResolver,
-  }) {
+    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+  }) : _textBoxFontWeights = textBoxFontWeights {
     _transformHandler = TransformHandler();
     _initializeFromScribble();
+  }
+
+  void updateTextBoxFontWeights(TextBoxFontWeights weights) {
+    _textBoxFontWeights = weights;
+    if (_textEditorOverlay != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _textEditorOverlay?.markNeedsBuild();
+      });
+    }
   }
 
   // Getters - ScribbleNotifier에서 직접 가져오기
@@ -619,7 +631,10 @@ class TextInteractionManager {
   /// 텍스트의 변형 핸들(좌하단) 캔버스 좌표 계산
   /// (TextDrawablePainter._getRotatedButtonPositions와 일치)
   Offset _getTransformHandleCanvasPosition(TextDrawable textDrawable) {
-    final textSpan = buildLinkAwareTextSpan(textDrawable);
+    final textSpan = buildLinkAwareTextSpan(
+      textDrawable,
+      textBoxFontWeights: _textBoxFontWeights,
+    );
     final tp = TextPainter(
       text: textSpan,
       textAlign: textDrawable.alignment.textAlign,
@@ -872,6 +887,7 @@ class TextInteractionManager {
         selectedColor: modeNotifier.state.inkGroupInfo.selectedColor,
         linkTargetResolver: linkTargetResolver,
         strings: strings,
+        textBoxFontWeights: _textBoxFontWeights,
         onComplete: (updatedDrawable) {
           _hideTextEditor();
 
@@ -939,6 +955,7 @@ class TextInteractionManager {
         selectedColor: modeNotifier.state.inkGroupInfo.selectedColor,
         linkTargetResolver: linkTargetResolver,
         strings: strings,
+        textBoxFontWeights: _textBoxFontWeights,
         onComplete: (updatedDrawable) {
           _hideTextEditor();
 
@@ -1060,7 +1077,10 @@ class TextInteractionManager {
       rotation = 0.0;
     }
 
-    final textSpan = buildLinkAwareTextSpan(textDrawable);
+    final textSpan = buildLinkAwareTextSpan(
+      textDrawable,
+      textBoxFontWeights: _textBoxFontWeights,
+    );
 
     final textPainter = TextPainter(
       text: textSpan,
@@ -1381,7 +1401,10 @@ class TextInteractionManager {
   /// 회전된 텍스트의 정확한 버튼 위치 계산 (TextDrawablePainter와 동일한 로직)
   Map<String, Offset> _getRotatedButtonPositions(TextDrawable textDrawable) {
     // TextPainter로 텍스트 크기 계산
-    final textSpan = buildLinkAwareTextSpan(textDrawable);
+    final textSpan = buildLinkAwareTextSpan(
+      textDrawable,
+      textBoxFontWeights: _textBoxFontWeights,
+    );
 
     final textPainter = TextPainter(
       text: textSpan,

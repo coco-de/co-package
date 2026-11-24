@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
+import 'package:open_board/src/module/text/text_box_font_weights.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
@@ -11,12 +12,14 @@ class TextDrawablePainter extends CustomPainter {
   final TextDrawable? selectedTextDrawable;
   final bool isTransforming;
   final String? editingTextId;
+  final TextBoxFontWeights textBoxFontWeights;
 
   const TextDrawablePainter({
     required this.textDrawables,
     required this.selectedTextDrawable,
     required this.isTransforming,
     required this.editingTextId,
+    this.textBoxFontWeights = defaultTextBoxFontWeights,
   });
 
   @override
@@ -46,12 +49,19 @@ class TextDrawablePainter extends CustomPainter {
     return textDrawables != oldDelegate.textDrawables ||
         selectedTextDrawable != oldDelegate.selectedTextDrawable ||
         isTransforming != oldDelegate.isTransforming ||
-        editingTextId != oldDelegate.editingTextId;
+        editingTextId != oldDelegate.editingTextId ||
+        textBoxFontWeights != oldDelegate.textBoxFontWeights;
   }
 
   /// Get the bounding rect of a text drawable
-  static Rect getTextBounds(TextDrawable textDrawable) {
-    final textSpan = buildLinkAwareTextSpan(textDrawable);
+  static Rect getTextBounds(
+    TextDrawable textDrawable, {
+    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+  }) {
+    final textSpan = buildLinkAwareTextSpan(
+      textDrawable,
+      textBoxFontWeights: textBoxFontWeights,
+    );
 
     final textPainter = TextPainter(
       text: textSpan,
@@ -93,12 +103,19 @@ class TextDrawablePainter extends CustomPainter {
   }
 
   /// 텍스트 오버레이 버튼 클릭 감지 (회전 지원)
-  static String? getButtonType(TextDrawable textDrawable, Offset point) {
+  static String? getButtonType(
+    TextDrawable textDrawable,
+    Offset point, {
+    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+  }) {
     const buttonSize = 28.0; // 시각 버튼(35) 대비 약간 작은 hit-detect
     const buttonRadius = buttonSize / 2;
 
     // 회전된 텍스트의 정확한 버튼 위치 계산
-    final buttonPositions = _getStaticRotatedButtonPositions(textDrawable);
+    final buttonPositions = _getStaticRotatedButtonPositions(
+      textDrawable,
+      textBoxFontWeights,
+    );
 
     // 삭제 버튼 (우상단)
     final deleteButtonCenter = buttonPositions['delete']!;
@@ -116,7 +133,11 @@ class TextDrawablePainter extends CustomPainter {
   }
 
   /// 텍스트 영역 내부 클릭 감지 (버튼 제외, 회전 지원)
-  static bool isPointInTextArea(TextDrawable textDrawable, Offset point) {
+  static bool isPointInTextArea(
+    TextDrawable textDrawable,
+    Offset point, {
+    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+  }) {
     // 회전된 텍스트의 경우 점이 회전된 영역 내부에 있는지 확인
     double rotation = 0.0;
     try {
@@ -130,7 +151,10 @@ class TextDrawablePainter extends CustomPainter {
 
     if (rotation == 0.0) {
       // 회전이 없는 경우 기존 방식
-      final bounds = getTextBounds(textDrawable);
+      final bounds = getTextBounds(
+        textDrawable,
+        textBoxFontWeights: textBoxFontWeights,
+      );
       final rect = Rect.fromLTWH(
         bounds.left - 4,
         bounds.top - 4,
@@ -142,7 +166,10 @@ class TextDrawablePainter extends CustomPainter {
       if (!rect.contains(point)) return false;
     } else {
       // 회전된 텍스트의 경우 역변환을 통해 점이 영역 내부에 있는지 확인
-      final textSpan = buildLinkAwareTextSpan(textDrawable);
+      final textSpan = buildLinkAwareTextSpan(
+      textDrawable,
+      textBoxFontWeights: textBoxFontWeights,
+    );
 
       final textPainter = TextPainter(
         text: textSpan,
@@ -182,7 +209,10 @@ class TextDrawablePainter extends CustomPainter {
     const buttonRadius = buttonSize / 2;
 
     // 회전된 텍스트의 정확한 버튼 위치 계산
-    final buttonPositions = _getStaticRotatedButtonPositions(textDrawable);
+    final buttonPositions = _getStaticRotatedButtonPositions(
+      textDrawable,
+      textBoxFontWeights,
+    );
 
     // 삭제 버튼 영역 제외
     final deleteButtonCenter = buttonPositions['delete']!;
@@ -200,7 +230,10 @@ class TextDrawablePainter extends CustomPainter {
   }
 
   void _paintTextDrawable(Canvas canvas, TextDrawable textDrawable) {
-    final textSpan = buildLinkAwareTextSpan(textDrawable);
+    final textSpan = buildLinkAwareTextSpan(
+      textDrawable,
+      textBoxFontWeights: textBoxFontWeights,
+    );
 
     final textPainter = TextPainter(
       text: textSpan,
@@ -279,7 +312,10 @@ class TextDrawablePainter extends CustomPainter {
   }
 
   void _paintSelectionIndicator(Canvas canvas, TextDrawable textDrawable) {
-    final textSpan = buildLinkAwareTextSpan(textDrawable);
+    final textSpan = buildLinkAwareTextSpan(
+      textDrawable,
+      textBoxFontWeights: textBoxFontWeights,
+    );
 
     final textPainter = TextPainter(
       text: textSpan,
@@ -586,9 +622,13 @@ class TextDrawablePainter extends CustomPainter {
   /// 회전된 텍스트의 정확한 버튼 위치 계산 (정적 메서드용)
   static Map<String, Offset> _getStaticRotatedButtonPositions(
     TextDrawable textDrawable,
+    TextBoxFontWeights textBoxFontWeights,
   ) {
     // TextPainter로 텍스트 크기 계산
-    final textSpan = buildLinkAwareTextSpan(textDrawable);
+    final textSpan = buildLinkAwareTextSpan(
+      textDrawable,
+      textBoxFontWeights: textBoxFontWeights,
+    );
 
     final textPainter = TextPainter(
       text: textSpan,
