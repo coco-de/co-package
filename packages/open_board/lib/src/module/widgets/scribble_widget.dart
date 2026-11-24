@@ -1401,8 +1401,15 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       return shouldEnable;
     }
 
+    bool get _isPenOnlyStrokeInProgress =>
+        widget.isScribbleEnable &&
+        pointerHandler.isStylusStrokeInProgress &&
+        DrawingState().pointerMode.value == DrawingPointerMode.penOnly;
+
     /// 🎯 InteractiveViewer pan 제스처 허용 여부 (panDirection에 따라 제어)
     bool _shouldEnablePan() {
+      if (_isPenOnlyStrokeInProgress) return false;
+
       // 🖊️ 멀티터치(두 손가락) 시에는 항상 pan 허용 (핀치 줌/드래그용).
       //   🐛 #7092: highlighter 체크보다 먼저 둔다. 기존엔 highlighter 를 먼저
       //   false 처리해 "외곽 IV 가 핀치를 처리"하도록 의도했으나, 내부 IV 의
@@ -1452,6 +1459,8 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 
     /// 🎯 InteractiveViewer scale 제스처 허용 여부 (확대/축소 허용)
     bool _shouldEnableScale() {
+      if (_isPenOnlyStrokeInProgress) return false;
+
       // 🎯 하이라이트 모드: 외곽 InteractiveViewer 에 scale 양보 (GestureArena
       //    경합 방지). 외곽 IV 가 멀티터치 핀치를 일관되게 캡처하도록 한다.
       //    내부 IV 와 외곽 IV 가 동시에 ScaleGestureRecognizer 를 등록하면
@@ -1760,6 +1769,13 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         }
 
         pointerHandler.incrementTouch();
+
+        // 펜을 뗀 뒤에도 이 접촉이 끝날 때까지 팜으로 취급한다.
+        if (_isPenOnlyStrokeInProgress) {
+          pointerHandler.markPalmIgnored(event.pointer);
+          return;
+        }
+
         _pendingTouchDowns.add(event.pointer);
 
         // 🖐️ 팜 리젝션 (kobic UB-219): 손모드 필기가 이미 진행 중일 때
@@ -2118,9 +2134,12 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       if (!widget.isScribbleEnable) return;
       // 🖐️ 팜으로 무시된 포인터 자신의 move는 처리하지 않는다 (kobic UB-219).
       if (pointerHandler.isPalmIgnored(event.pointer)) return;
-      // 팜을 제외한 "유효" 멀티터치 기준으로 판정해, 손모드 필기 중 팜이
-      // 함께 눌려 있어도 실제 그리기 포인터의 move는 계속 처리한다.
-      if (pointerHandler.isEffectiveMultiTouch) return;
+      // 펜보다 먼저 닿은 터치가 있어도 현재 획의 이동을 받는다.
+      if (_isPenOnlyStrokeInProgress) {
+        if (event.kind == ui.PointerDeviceKind.touch) return;
+      } else if (pointerHandler.isEffectiveMultiTouch) {
+        return;
+      }
 
       // 🔗 kobic UB-188: 이 포인터의 그리기가 지연 시작 보류 중이면, slop
       // 초과 여부만 판정한다 — 다른 어떤 처리(텍스트/올가미 우선 처리 등)
@@ -2239,7 +2258,8 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       // 등 그리기 종료 콜백을 유발하지 않아 진행 중이던 다른 손가락의
       // 스트로크가 이 up 으로 조기 종료되지 않는다.
       if (event.kind == ui.PointerDeviceKind.touch &&
-          pointerHandler.isPalmIgnored(event.pointer)) {
+          (pointerHandler.isPalmIgnored(event.pointer) ||
+              _isPenOnlyStrokeInProgress)) {
         pointerHandler.clearPalmIgnored(event.pointer);
         if (wasMultiTouch && !pointerHandler.isMultiTouch()) {
           setState(() {});
@@ -2253,7 +2273,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       }
 
       if (!widget.isScribbleEnable) return;
-      if (pointerHandler.isMultiTouch()) return;
+      if (!_isPenOnlyStrokeInProgress && pointerHandler.isMultiTouch()) return;
 
       // 🔗 kobic UB-188: 이 포인터가 지연 시작 보류 중이었다면(=slop/
       // timeout 도달 전에 손을 뗀 진짜 탭), 실제로는 아무 것도 그려진 적이
@@ -2350,7 +2370,8 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       // 않았으므로 스트로크/손모드 상태에 영향을 주지 않고 카운트 정리 후
       // 종료한다 (up 처리와 동일한 근거).
       if (event.kind == ui.PointerDeviceKind.touch &&
-          pointerHandler.isPalmIgnored(event.pointer)) {
+          (pointerHandler.isPalmIgnored(event.pointer) ||
+              _isPenOnlyStrokeInProgress)) {
         pointerHandler.clearPalmIgnored(event.pointer);
         if (wasMultiTouch && !pointerHandler.isMultiTouch()) {
           setState(() {});

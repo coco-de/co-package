@@ -94,6 +94,15 @@ class PointerEventHandler {
 
   ui.PointerDeviceKind? get currentPointerKind => _currentPointerKind;
 
+  /// 실제로 시작했거나 링크 위에서 시작을 보류한 펜 획인지 확인한다.
+  bool get isStylusStrokeInProgress {
+    final kind =
+        _pendingDeferredStroke?.downEvent.kind ??
+        (_isDragging ? _currentPointerKind : null);
+    return kind == ui.PointerDeviceKind.stylus ||
+        kind == ui.PointerDeviceKind.unknown;
+  }
+
   /// 현재 화면에 닿아 있는 하드웨어 터치 포인터 수 (kobic UB-219 2차).
   ///
   /// 새 down 이벤트 처리 전에 "이 down 이전에 다른 터치가 없었는가"를
@@ -218,6 +227,7 @@ class PointerEventHandler {
       _pendingDeferredTimeoutTimer = null;
       onTimeout();
     });
+    onStateChanged();
   }
 
   /// 보류 상태와 그 타임아웃 타이머를 함께 정리한다 — 스트로크 자체를
@@ -264,6 +274,7 @@ class PointerEventHandler {
       return null;
     }
     _clearPendingDeferredStroke();
+    onStateChanged();
     return pending;
   }
 
