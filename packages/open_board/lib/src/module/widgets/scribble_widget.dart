@@ -127,6 +127,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       this.shouldDeferDrawStart,
       this.canSelectItem,
       this.textBoxTypography = defaultTextBoxTypography,
+      this.textSelectionPadding = defaultTextSelectionPadding,
       this.preserveViewTransform = false,
     });
 
@@ -169,6 +170,9 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 
     /// Display weights for regular and bold text box annotations.
     final TextBoxTypography textBoxTypography;
+
+    /// Gap between the text and selection border, in logical canvas pixels.
+    final double textSelectionPadding;
 
     /// When true, layout/orientation/scale-fit changes do not reset
     /// [transformationController] to identity. Used by replay cameras that
@@ -410,6 +414,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         drawPen: widget.drawPen,
         drawEraser: widget.drawEraser,
         textBoxTypography: widget.textBoxTypography,
+        textSelectionPadding: widget.textSelectionPadding,
       );
     }
 
@@ -434,6 +439,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         widgetState: widgetState,
         linkTargetResolver: widget.linkTargetResolver,
         textBoxTypography: widget.textBoxTypography,
+        textSelectionPadding: widget.textSelectionPadding,
         onTextSelected: (textDrawable) {
           lassoManager.resetLassoState();
         },
@@ -2608,6 +2614,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         selectedText,
         adjustedPosition, // 원본 좌표 직접 사용
         textBoxTypography: widget.textBoxTypography,
+        padding: widget.textSelectionPadding,
       );
 
       if (buttonType == 'delete') {
@@ -2658,6 +2665,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         widgetState.selectedTextDrawable!,
         adjustedPosition, // 원본 좌표 직접 사용
         textBoxTypography: widget.textBoxTypography,
+        padding: widget.textSelectionPadding,
       );
 
       if (isInTextArea) {
@@ -2888,6 +2896,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
           widgetState.selectedTextDrawable!,
           adjustedPosition, // 원본 좌표 직접 사용
           textBoxTypography: widget.textBoxTypography,
+          padding: widget.textSelectionPadding,
         );
 
         if (buttonType != null) {
@@ -2921,6 +2930,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
           widgetState.selectedTextDrawable!,
           adjustedPosition, // 원본 좌표 직접 사용
           textBoxTypography: widget.textBoxTypography,
+          padding: widget.textSelectionPadding,
         );
         if (isInTextArea) {
           return true;
@@ -3054,9 +3064,11 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         _initializeManagers();
         _loadTextDrawablesFromNotifier();
         _pendingTouchDowns.clear();
-      } else if (widget.textBoxTypography != oldWidget.textBoxTypography) {
+      } else if (widget.textBoxTypography != oldWidget.textBoxTypography ||
+          widget.textSelectionPadding != oldWidget.textSelectionPadding) {
         renderLayers = _createRenderLayers();
         textManager.updateTextBoxTypography(widget.textBoxTypography);
+        textManager.textSelectionPadding = widget.textSelectionPadding;
         lassoManager.textBoxTypography = widget.textBoxTypography;
       }
 

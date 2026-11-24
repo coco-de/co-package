@@ -6,6 +6,7 @@ import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
 import 'package:open_board/src/module/text/text_box_typography.dart';
+import 'package:open_board/src/module/text/text_painter.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
@@ -14,6 +15,7 @@ import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
 import 'package:open_board/src/module/coordinate_transformer.dart';
 import 'package:open_board/src/module/transform_handler.dart';
 import 'package:open_board/src/module/widgets/selection_overlay.dart';
+
 import 'dart:math' as math;
 import 'dart:ui' show PointerDeviceKind;
 
@@ -101,6 +103,7 @@ class TextInteractionManager {
   // 공통 변형 핸들러
   late TransformHandler _transformHandler;
   TextBoxTypography _textBoxTypography;
+  double textSelectionPadding;
 
   TextInteractionManager({
     required this.scribbleNotifier,
@@ -116,6 +119,7 @@ class TextInteractionManager {
     this.onTextEdit,
     this.linkTargetResolver,
     TextBoxTypography textBoxTypography = defaultTextBoxTypography,
+    this.textSelectionPadding = defaultTextSelectionPadding,
   }) : _textBoxTypography = textBoxTypography {
     _transformHandler = TransformHandler();
     _initializeFromScribble();
@@ -185,7 +189,10 @@ class TextInteractionManager {
       // 선택된 텍스트 영역 내부 터치 확인 (변형 모드)
       // 🔥 scribble-tools 방식: 원본 좌표 직접 사용
       final adjustedPosition = event.localPosition; // toScene() 제거
-      if (_isPointInTextBounds(adjustedPosition, selectedText)) {
+      final isInSelection = textSelectionPadding <= 8
+          ? _isPointInTextBounds(adjustedPosition, selectedText)
+          : _selectionGeometry(selectedText).contains(adjustedPosition);
+      if (isInSelection) {
         _pendingEditTap = (
           pointer: event.pointer,
           textId: selectedText.id,
@@ -629,37 +636,15 @@ class TextInteractionManager {
   }
 
   /// 텍스트의 변형 핸들(좌하단) 캔버스 좌표 계산
-  /// (TextDrawablePainter._getRotatedButtonPositions와 일치)
-  Offset _getTransformHandleCanvasPosition(TextDrawable textDrawable) {
-    final textSpan = buildLinkAwareTextSpan(
-      textDrawable,
-      textBoxTypography: _textBoxTypography,
-    );
-    final tp = TextPainter(
-      text: textSpan,
-      textAlign: textDrawable.alignment.textAlign,
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: textDrawable.layoutMaxWidth);
+  Offset _getTransformHandleCanvasPosition(TextDrawable textDrawable) =>
+      _selectionGeometry(textDrawable).transformHandle;
 
-    final center = textDrawable.position;
-    final halfWidth = tp.width / 2;
-    final halfHeight = tp.height / 2;
-    final rotation = _safeRotation(textDrawable);
-
-    // 좌하단 모서리 (패딩 4px 포함)
-    final corner = Offset(-halfWidth - 4, halfHeight + 4);
-
-    if (rotation == 0.0) {
-      return Offset(center.dx + corner.dx, center.dy + corner.dy);
-    }
-
-    final cos = math.cos(rotation);
-    final sin = math.sin(rotation);
-    return Offset(
-      center.dx + corner.dx * cos - corner.dy * sin,
-      center.dy + corner.dx * sin + corner.dy * cos,
-    );
-  }
+  TextSelectionGeometry _selectionGeometry(TextDrawable textDrawable) =>
+      TextDrawablePainter.getSelectionGeometry(
+        textDrawable,
+        textBoxTypography: _textBoxTypography,
+        padding: textSelectionPadding,
+      );
 
   double _safeRotation(TextDrawable textDrawable) {
     try {
@@ -1377,11 +1362,11 @@ class TextInteractionManager {
     final adjustedPosition = position;
 
     // 회전된 텍스트의 정확한 버튼 위치 계산
-    final buttonPositions = _getRotatedButtonPositions(textDrawable);
+    final selection = _selectionGeometry(textDrawable);
 
     // 삭제 버튼 터치 (원형 영역)
     final deleteButtonDistance =
-        (adjustedPosition - buttonPositions['delete']!).distance;
+        (adjustedPosition - selection.deleteHandle).distance;
     if (deleteButtonDistance <= scaledButtonRadius) {
       deleteSelectedText();
       return true; // 이벤트 처리 완료
@@ -1389,79 +1374,13 @@ class TextInteractionManager {
 
     // 변형 버튼 터치 (원형 영역) - 크기조정 모드 시작
     final transformButtonDistance =
-        (adjustedPosition - buttonPositions['transform']!).distance;
+        (adjustedPosition - selection.transformHandle).distance;
     if (transformButtonDistance <= scaledButtonRadius) {
       _beginResizeRotate(globalPosition);
       return true; // 이벤트 처리 완료 (텍스트 드래그 방지)
     }
 
     return null; // 컨트롤 영역이 아님
-  }
-
-  /// 회전된 텍스트의 정확한 버튼 위치 계산 (TextDrawablePainter와 동일한 로직)
-  Map<String, Offset> _getRotatedButtonPositions(TextDrawable textDrawable) {
-    // TextPainter로 텍스트 크기 계산
-    final textSpan = buildLinkAwareTextSpan(
-      textDrawable,
-      textBoxTypography: _textBoxTypography,
-    );
-
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: textDrawable.alignment.textAlign,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
-
-    final center = textDrawable.position;
-    final halfWidth = textPainter.width / 2;
-    final halfHeight = textPainter.height / 2;
-
-    double rotation = 0.0;
-    try {
-      rotation = textDrawable.rotation;
-    } on Exception {
-      // rotation 필드가 없거나 접근할 수 없는 경우 기본값 사용
-      rotation = 0.0;
-    }
-
-    if (rotation == 0.0) {
-      // 회전이 없는 경우 기존 방식
-      final rect = Rect.fromLTWH(
-        center.dx - halfWidth - 4,
-        center.dy - halfHeight - 4,
-        textPainter.width + 8,
-        textPainter.height + 8,
-      );
-      return {
-        'delete': Offset(rect.right, rect.top),
-        'transform': Offset(rect.left, rect.bottom),
-      };
-    }
-
-    // 회전된 텍스트의 네 모서리 계산 (패딩 포함)
-    final corners = [
-      Offset(-halfWidth - 4, -halfHeight - 4), // 좌상단
-      Offset(halfWidth + 4, -halfHeight - 4), // 우상단
-      Offset(halfWidth + 4, halfHeight + 4), // 우하단
-      Offset(-halfWidth - 4, halfHeight + 4), // 좌하단
-    ];
-
-    // 회전 변환 적용
-    final cos = math.cos(rotation);
-    final sin = math.sin(rotation);
-
-    final rotatedCorners = corners.map((corner) {
-      return Offset(
-        center.dx + corner.dx * cos - corner.dy * sin,
-        center.dy + corner.dx * sin + corner.dy * cos,
-      );
-    }).toList();
-
-    return {
-      'delete': rotatedCorners[1], // 우상단
-      'transform': rotatedCorners[3], // 좌하단
-    };
   }
 }
 
