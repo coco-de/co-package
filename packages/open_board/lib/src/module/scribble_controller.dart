@@ -9,6 +9,7 @@ import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/link_hit_test.dart';
 
 /// ✨ ScribbleWidget을 편리하게 사용하기 위한 컨트롤러
@@ -123,11 +124,15 @@ class ScribbleController extends ChangeNotifier {
   /// 읽기 모드에서 호스트(예: kobic 뷰어)가 필기 레이어 위의 탭을 가로채
   /// 링크 여부를 판정할 때 사용한다. [canvasPoint] 는 필기 캔버스 좌표계
   /// 기준이어야 한다 (필요 시 호스트가 transform 으로 변환).
-  TextLinkSpan? linkAtCanvasPoint(Offset canvasPoint) {
+  TextLinkSpan? linkAtCanvasPoint(
+    Offset canvasPoint, {
+    TextBoxTypography textBoxTypography = defaultTextBoxTypography,
+  }) {
     _ensureInitialized();
     return findLinkAtCanvasPoint(
       _scribbleNotifier.currentScribble.textDrawables,
       canvasPoint,
+      textBoxTypography: textBoxTypography,
     );
   }
 

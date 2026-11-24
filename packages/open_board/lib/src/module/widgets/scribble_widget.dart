@@ -20,6 +20,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
   import 'package:open_board/src/module/state/viewer_gesture_bus.dart';
   import 'package:open_board/src/module/text/inline_text_editor.dart'
       show LinkTargetResolver;
+  import 'package:open_board/src/module/text/text_box_typography.dart';
   import 'package:open_board/src/module/text/text_interaction_manager.dart';
   import 'package:open_board/src/module/text/text_painter.dart';
   // 새로 생성한 클래스들 import
@@ -125,6 +126,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       this.linkTargetResolver,
       this.shouldDeferDrawStart,
       this.canSelectItem,
+      this.textBoxTypography = defaultTextBoxTypography,
       this.preserveViewTransform = false,
     });
 
@@ -164,6 +166,9 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
     /// 도구와 무관하게 계속 동작한다 (kobic#12374 보존). 미주입(`null`) 시
     /// 기존과 완전히 동일하다. 상세는 [CanSelectScribbleItem] 참조.
     final CanSelectScribbleItem? canSelectItem;
+
+    /// Display weights for regular and bold text box annotations.
+    final TextBoxTypography textBoxTypography;
 
     /// When true, layout/orientation/scale-fit changes do not reset
     /// [transformationController] to identity. Used by replay cameras that
@@ -404,6 +409,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         size: null, // child가 있으면 자동으로 크기 측정됨
         drawPen: widget.drawPen,
         drawEraser: widget.drawEraser,
+        textBoxTypography: widget.textBoxTypography,
       );
     }
 
@@ -427,6 +433,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         repaintBoundaryKey: widget.repaintBoundaryKey,
         widgetState: widgetState,
         linkTargetResolver: widget.linkTargetResolver,
+        textBoxTypography: widget.textBoxTypography,
         onTextSelected: (textDrawable) {
           lassoManager.resetLassoState();
         },
@@ -445,6 +452,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         transformationController: transformationController,
         onModeChanged: widget.onModeChanged,
         canSelectItem: widget.canSelectItem,
+        textBoxTypography: widget.textBoxTypography,
       );
 
       // 🎯 스트로크(펜/지우개) 그리기 완료는 PointerEventHandler.handlePointerUp
@@ -2599,6 +2607,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       final buttonType = TextDrawablePainter.getButtonType(
         selectedText,
         adjustedPosition, // 원본 좌표 직접 사용
+        textBoxTypography: widget.textBoxTypography,
       );
 
       if (buttonType == 'delete') {
@@ -2648,6 +2657,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
       final isInTextArea = TextDrawablePainter.isPointInTextArea(
         widgetState.selectedTextDrawable!,
         adjustedPosition, // 원본 좌표 직접 사용
+        textBoxTypography: widget.textBoxTypography,
       );
 
       if (isInTextArea) {
@@ -2736,17 +2746,15 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
     bool _isPointInTextBounds(Offset point, TextDrawable textDrawable) {
       final textSpan = TextSpan(
         text: textDrawable.text,
-        style: TextStyle(
-          fontSize: textDrawable.fontSize,
-          color: Color(textDrawable.color),
-          fontFamily: textDrawable.fontFamily,
-          fontWeight: textDrawable.isBold ? FontWeight.bold : FontWeight.normal,
-          fontStyle: textDrawable.isItalic
-              ? FontStyle.italic
-              : FontStyle.normal,
-          decoration: textDrawable.isUnderlined
-              ? TextDecoration.underline
-              : null,
+        style: widget.textBoxTypography.applyTo(
+          TextStyle(
+            fontSize: textDrawable.fontSize,
+            color: Color(textDrawable.color),
+            fontFamily: textDrawable.fontFamily,
+            fontWeight: textDrawable.isBold ? .bold : .normal,
+            fontStyle: textDrawable.isItalic ? .italic : .normal,
+            decoration: textDrawable.isUnderlined ? .underline : null,
+          ),
         ),
       );
 
@@ -2879,6 +2887,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         final buttonType = TextDrawablePainter.getButtonType(
           widgetState.selectedTextDrawable!,
           adjustedPosition, // 원본 좌표 직접 사용
+          textBoxTypography: widget.textBoxTypography,
         );
 
         if (buttonType != null) {
@@ -2911,6 +2920,7 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         final isInTextArea = TextDrawablePainter.isPointInTextArea(
           widgetState.selectedTextDrawable!,
           adjustedPosition, // 원본 좌표 직접 사용
+          textBoxTypography: widget.textBoxTypography,
         );
         if (isInTextArea) {
           return true;
@@ -3044,6 +3054,10 @@ import 'package:open_board/src/module/text/text_drawable_extensions.dart';
         _initializeManagers();
         _loadTextDrawablesFromNotifier();
         _pendingTouchDowns.clear();
+      } else if (widget.textBoxTypography != oldWidget.textBoxTypography) {
+        renderLayers = _createRenderLayers();
+        textManager.updateTextBoxTypography(widget.textBoxTypography);
+        lassoManager.textBoxTypography = widget.textBoxTypography;
       }
 
       // 🖐️ 필기 활성화 상태가 토글되면 진행 중이던 터치 추적을 초기화한다.

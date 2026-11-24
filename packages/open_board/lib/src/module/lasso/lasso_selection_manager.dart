@@ -9,6 +9,7 @@ import 'package:open_board/src/module/coordinate_transformer.dart';
 import 'package:open_board/src/module/models/scribble_selectable.dart';
 import 'package:open_board/src/module/image/image_drawable_extensions.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/transform_handler.dart';
 
@@ -74,6 +75,7 @@ class LassoSelectionManager {
   /// 객체의 이동/삭제/변형에는 적용되지 않는다 — 상세는
   /// [CanSelectScribbleItem] 참조.
   final CanSelectScribbleItem? canSelectItem;
+  TextBoxTypography textBoxTypography;
 
   LassoSelectionManager({
     required this.scribbleNotifier,
@@ -81,6 +83,7 @@ class LassoSelectionManager {
     required this.transformationController,
     required this.onModeChanged,
     this.canSelectItem,
+    this.textBoxTypography = defaultTextBoxTypography,
   }) {
     _transformHandler = TransformHandler();
   }
@@ -931,7 +934,7 @@ class LassoSelectionManager {
   Rect _calculateTextBounds(TextDrawable textDrawable) {
     final textSpan = TextSpan(
       text: textDrawable.text,
-      style: textDrawable.style,
+      style: textBoxTypography.applyTo(textDrawable.style),
     );
     final tp = TextPainter(
       text: textSpan,

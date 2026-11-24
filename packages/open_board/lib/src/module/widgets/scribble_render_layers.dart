@@ -12,6 +12,7 @@ import 'package:open_board/src/module/state/scribble_mode.state.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_painter.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
@@ -31,6 +32,7 @@ class ScribbleRenderLayers {
   final double pressureFactor;
   final double speedFactor;
   final double minWidthFactor;
+  final TextBoxTypography textBoxTypography;
 
   const ScribbleRenderLayers({
     required this.scribbleNotifier,
@@ -45,6 +47,7 @@ class ScribbleRenderLayers {
     this.pressureFactor = 1.0,
     this.speedFactor = 1.0,
     this.minWidthFactor = 0.3,
+    this.textBoxTypography = defaultTextBoxTypography,
   });
 
   /// 배경 레이어 빌드
@@ -106,6 +109,7 @@ class ScribbleRenderLayers {
           isTransforming:
               widgetState.isTextTransforming || widgetState.isTextResizing,
           editingTextId: widgetState.editingTextId,
+          textBoxTypography: textBoxTypography,
         ),
       ),
     );
@@ -269,7 +273,7 @@ class ScribbleRenderLayers {
 
     final textSpan = TextSpan(
       text: textDrawable.text,
-      style: textDrawable.style,
+      style: textBoxTypography.applyTo(textDrawable.style),
     );
     final textPainter = TextPainter(
       text: textSpan,
@@ -399,7 +403,10 @@ class ScribbleRenderLayers {
 
   /// 텍스트 바운딩 박스 계산 (내부 헬퍼 메서드)
   Rect _calculateTextBounds(TextDrawable textDrawable) {
-    return TextDrawablePainter.getTextBounds(textDrawable);
+    return TextDrawablePainter.getTextBounds(
+      textDrawable,
+      textBoxTypography: textBoxTypography,
+    );
   }
 
   /// 올가미 드래그 핸들러 빌드 (시각적 요소 없이 드래그만)

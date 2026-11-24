@@ -9,6 +9,7 @@ import 'package:open_board/src/module/l10n/open_board_strings_scope.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/link_aware_text_editing_controller.dart';
 import 'package:open_board/src/module/text/link_span_offsets.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 
@@ -53,6 +54,7 @@ final class InlineTextEditor extends StatefulWidget {
     required this.selectedColor,
     this.linkTargetResolver,
     this.strings,
+    this.textBoxTypography = defaultTextBoxTypography,
     super.key,
   });
 
@@ -64,6 +66,9 @@ final class InlineTextEditor extends StatefulWidget {
 
   /// 텍스트 설정
   final TextSettings textSettings;
+
+  /// Display weights for regular and bold text box annotations.
+  final TextBoxTypography textBoxTypography;
 
   /// 편집 완료 콜백
   final void Function(TextDrawable? drawable) onComplete;
@@ -531,13 +536,14 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
     // TextDrawable과 동일한 스타일 생성
     // 기존 텍스트 재편집 시에는 커밋(_completeEditing)과 동일하게 텍스트
     // 고유 스타일을 사용해 편집 중 표시 색상도 원본과 일치시킨다.
-    final textStyle = widget.isNew
+    final baseStyle = widget.isNew
         ? widget.textSettings.textStyle.copyWith(
             fontSize: actualFontSize,
             color: textColor,
             letterSpacing: 0,
           )
         : drawableStyle.copyWith(fontSize: actualFontSize, letterSpacing: 0);
+    final textStyle = widget.textBoxTypography.applyTo(baseStyle);
 
     // TextPainter로 텍스트 크기 측정 (TextDrawablePainter와 동일한 방식)
     final textSpan = TextSpan(
