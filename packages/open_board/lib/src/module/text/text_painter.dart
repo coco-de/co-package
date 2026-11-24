@@ -1,10 +1,51 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
-import 'dart:math' as math;
+
+const double defaultTextSelectionPadding = 4;
+
+/// Selection bounds in text-local coordinates, projected onto the canvas.
+final class TextSelectionGeometry {
+  const TextSelectionGeometry(
+    this.textBounds,
+    this.localBounds,
+    this.center,
+    this.rotation,
+  );
+
+  final Rect textBounds;
+  final Rect localBounds;
+  final Offset center;
+  final double rotation;
+
+  Offset _rotate(Offset point, double angle) {
+    final cos = math.cos(angle);
+    final sin = math.sin(angle);
+    return Offset(
+      point.dx * cos - point.dy * sin,
+      point.dx * sin + point.dy * cos,
+    );
+  }
+
+  Offset get deleteHandle => center + _rotate(localBounds.topRight, rotation);
+  Offset get transformHandle =>
+      center + _rotate(localBounds.bottomLeft, rotation);
+
+  Rect get canvasBounds => MatrixUtils.transformRect(
+    Matrix4.identity()
+      ..translateByDouble(center.dx, center.dy, 0, 1)
+      ..rotateZ(rotation),
+    localBounds,
+  );
+
+  bool contains(Offset point) =>
+      localBounds.contains(_rotate(point - center, -rotation));
+}
 
 /// Custom painter for rendering text drawables
 class TextDrawablePainter extends CustomPainter {
@@ -13,6 +54,7 @@ class TextDrawablePainter extends CustomPainter {
   final bool isTransforming;
   final String? editingTextId;
   final TextBoxTypography textBoxTypography;
+  final double textSelectionPadding;
 
   const TextDrawablePainter({
     required this.textDrawables,
@@ -20,6 +62,7 @@ class TextDrawablePainter extends CustomPainter {
     required this.isTransforming,
     required this.editingTextId,
     this.textBoxTypography = defaultTextBoxTypography,
+    this.textSelectionPadding = defaultTextSelectionPadding,
   });
 
   @override
@@ -50,7 +93,8 @@ class TextDrawablePainter extends CustomPainter {
         selectedTextDrawable != oldDelegate.selectedTextDrawable ||
         isTransforming != oldDelegate.isTransforming ||
         editingTextId != oldDelegate.editingTextId ||
-        textBoxTypography != oldDelegate.textBoxTypography;
+        textBoxTypography != oldDelegate.textBoxTypography ||
+        textSelectionPadding != oldDelegate.textSelectionPadding;
   }
 
   /// Get the bounding rect of a text drawable
@@ -94,11 +138,33 @@ class TextDrawablePainter extends CustomPainter {
         break;
     }
 
-    return Rect.fromLTWH(
-      position.dx,
-      position.dy,
-      textPainter.width,
-      textPainter.height,
+    final bounds = position & textPainter.size;
+    textPainter.dispose();
+    return bounds;
+  }
+
+  static TextSelectionGeometry getSelectionGeometry(
+    TextDrawable textDrawable, {
+    TextBoxTypography textBoxTypography = defaultTextBoxTypography,
+    double padding = defaultTextSelectionPadding,
+  }) {
+    final textBounds = getTextBounds(
+      textDrawable,
+      textBoxTypography: textBoxTypography,
+    );
+    final rotation = textDrawable.rotation;
+    return TextSelectionGeometry(
+      textBounds,
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: textBounds.width,
+        height: textBounds.height,
+      ).inflate(padding),
+      // Legacy boxes anchor the handles at the stored position.
+      rotation == 0 && padding != defaultTextSelectionPadding
+          ? textBounds.center
+          : textDrawable.position,
+      rotation,
     );
   }
 
@@ -107,28 +173,24 @@ class TextDrawablePainter extends CustomPainter {
     TextDrawable textDrawable,
     Offset point, {
     TextBoxTypography textBoxTypography = defaultTextBoxTypography,
+    double padding = defaultTextSelectionPadding,
   }) {
-    const buttonSize = 28.0; // 시각 버튼(35) 대비 약간 작은 hit-detect
-    const buttonRadius = buttonSize / 2;
-
-    // 회전된 텍스트의 정확한 버튼 위치 계산
-    final buttonPositions = _getStaticRotatedButtonPositions(
+    final geometry = getSelectionGeometry(
       textDrawable,
-      textBoxTypography,
+      textBoxTypography: textBoxTypography,
+      padding: padding,
     );
+    return _buttonAt(geometry, point);
+  }
 
-    // 삭제 버튼 (우상단)
-    final deleteButtonCenter = buttonPositions['delete']!;
-    if ((point - deleteButtonCenter).distance <= buttonRadius) {
+  static String? _buttonAt(TextSelectionGeometry geometry, Offset point) {
+    const buttonRadius = 14.0;
+    if ((point - geometry.deleteHandle).distance <= buttonRadius) {
       return 'delete';
     }
-
-    // 변형 버튼 (좌하단)
-    final transformButtonCenter = buttonPositions['transform']!;
-    if ((point - transformButtonCenter).distance <= buttonRadius) {
+    if ((point - geometry.transformHandle).distance <= buttonRadius) {
       return 'transform';
     }
-
     return null;
   }
 
@@ -137,96 +199,18 @@ class TextDrawablePainter extends CustomPainter {
     TextDrawable textDrawable,
     Offset point, {
     TextBoxTypography textBoxTypography = defaultTextBoxTypography,
+    double padding = defaultTextSelectionPadding,
   }) {
-    // 회전된 텍스트의 경우 점이 회전된 영역 내부에 있는지 확인
-    double rotation = 0.0;
-    try {
-      rotation = textDrawable.rotation;
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      // rotation 필드가 없거나 접근할 수 없는 경우 기본값 사용
-      rotation = 0.0;
-    }
-
-    if (rotation == 0.0) {
-      // 회전이 없는 경우 기존 방식
-      final bounds = getTextBounds(
-        textDrawable,
-        textBoxTypography: textBoxTypography,
-      );
-      final rect = Rect.fromLTWH(
-        bounds.left - 4,
-        bounds.top - 4,
-        bounds.width + 8,
-        bounds.height + 8,
-      );
-
-      // 전체 영역에 포함되는지 확인
-      if (!rect.contains(point)) return false;
-    } else {
-      // 회전된 텍스트의 경우 역변환을 통해 점이 영역 내부에 있는지 확인
-      final textSpan = buildLinkAwareTextSpan(
+    final geometry = getSelectionGeometry(
       textDrawable,
       textBoxTypography: textBoxTypography,
+      padding: padding,
     );
-
-      final textPainter = TextPainter(
-        text: textSpan,
-        textAlign: textDrawable.alignment.textAlign,
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
-
-      final center = textDrawable.position;
-      final halfWidth = textPainter.width / 2;
-      final halfHeight = textPainter.height / 2;
-
-      // 점을 텍스트 중심 기준으로 이동
-      final relativePoint = point - center;
-
-      // 역회전 적용 (-rotation)
-      final cos = math.cos(-rotation);
-      final sin = math.sin(-rotation);
-      final rotatedPoint = Offset(
-        relativePoint.dx * cos - relativePoint.dy * sin,
-        relativePoint.dx * sin + relativePoint.dy * cos,
-      );
-
-      // 회전되지 않은 상태에서 영역 내부에 있는지 확인
-      final rect = Rect.fromLTWH(
-        -halfWidth - 4,
-        -halfHeight - 4,
-        textPainter.width + 8,
-        textPainter.height + 8,
-      );
-
-      if (!rect.contains(rotatedPoint)) return false;
-    }
-
-    // 버튼 영역 제외
-    const buttonSize = 28.0; // 시각 버튼(35) 대비 약간 작은 hit-detect
-    const buttonRadius = buttonSize / 2;
-
-    // 회전된 텍스트의 정확한 버튼 위치 계산
-    final buttonPositions = _getStaticRotatedButtonPositions(
-      textDrawable,
-      textBoxTypography,
-    );
-
-    // 삭제 버튼 영역 제외
-    final deleteButtonCenter = buttonPositions['delete']!;
-    if ((point - deleteButtonCenter).distance <= buttonRadius) {
-      return false;
-    }
-
-    // 변형 버튼 영역 제외
-    final transformButtonCenter = buttonPositions['transform']!;
-    if ((point - transformButtonCenter).distance <= buttonRadius) {
-      return false;
-    }
-
-    return true;
+    final contains =
+        padding == defaultTextSelectionPadding && geometry.rotation == 0
+        ? geometry.textBounds.inflate(padding).contains(point)
+        : geometry.contains(point);
+    return contains && _buttonAt(geometry, point) == null;
   }
 
   void _paintTextDrawable(Canvas canvas, TextDrawable textDrawable) {
@@ -312,195 +296,44 @@ class TextDrawablePainter extends CustomPainter {
   }
 
   void _paintSelectionIndicator(Canvas canvas, TextDrawable textDrawable) {
-    final textSpan = buildLinkAwareTextSpan(
+    final geometry = getSelectionGeometry(
       textDrawable,
       textBoxTypography: textBoxTypography,
+      padding: textSelectionPadding,
     );
 
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: textDrawable.alignment.textAlign,
-      textDirection: TextDirection.ltr,
+    canvas.save();
+    canvas.translate(geometry.center.dx, geometry.center.dy);
+    canvas.rotate(geometry.rotation);
+    final borderPaint = Paint()
+      ..color = isTransforming ? Colors.green : Colors.blue
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isTransforming ? 3.0 : 2.0;
+    canvas.drawRect(geometry.localBounds, borderPaint);
+
+    if (isTransforming) {
+      final backgroundPaint = Paint()
+        ..color = Colors.blue.withValues(alpha: 0.1);
+      canvas.drawRect(geometry.localBounds, backgroundPaint);
+    }
+    canvas.restore();
+
+    _paintOverlayButtons(
+      canvas,
+      geometry.deleteHandle,
+      geometry.transformHandle,
     );
-
-    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
-
-    // 회전이 있는 경우와 없는 경우 모두 중심점 기준으로 처리
-    final textCenter = textDrawable.position;
-    final halfWidth = textPainter.width / 2;
-    final halfHeight = textPainter.height / 2;
-
-    // 회전을 고려한 사각형 그리기
-    double rotation = 0.0;
-    try {
-      rotation = textDrawable.rotation;
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      // rotation 필드가 없거나 접근할 수 없는 경우 기본값 사용
-      rotation = 0.0;
-    }
-    if (rotation != 0.0) {
-      canvas.save();
-      canvas.translate(textCenter.dx, textCenter.dy);
-      canvas.rotate(rotation);
-
-      // 회전된 상태에서 사각형 그리기
-      final rect = Rect.fromLTWH(
-        -halfWidth - 4,
-        -halfHeight - 4,
-        textPainter.width + 8,
-        textPainter.height + 8,
-      );
-
-      final paint = Paint()
-        ..color = isTransforming ? Colors.green : Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = isTransforming ? 3.0 : 2.0;
-
-      try {
-        canvas.drawRect(rect, paint);
-      } on Exception {
-        //
-      }
-
-      // 드래그 중일 때 배경 표시
-      if (isTransforming) {
-        final backgroundPaint = Paint()
-          ..color = Colors.blue.withValues(alpha: 0.1)
-          ..style = PaintingStyle.fill;
-        try {
-          canvas.drawRect(rect, backgroundPaint);
-        } on Exception catch (error) {
-          debugPrint('배경 사각형 렌더링 오류 (회전됨): $error');
-        }
-      }
-
-      canvas.restore();
-
-      // 회전된 텍스트의 정확한 버튼 위치 계산
-      final buttonPositions = _getRotatedButtonPositions(
-        textDrawable,
-        textPainter,
-      );
-      _paintOverlayButtonsAtPositions(canvas, buttonPositions);
-    } else {
-      // 회전이 없는 경우 기존 방식
-      final position = Offset(
-        textCenter.dx - halfWidth,
-        textCenter.dy - halfHeight,
-      );
-
-      final rect = Rect.fromLTWH(
-        position.dx - 4,
-        position.dy - 4,
-        textPainter.width + 8,
-        textPainter.height + 8,
-      );
-
-      final paint = Paint()
-        ..color = isTransforming ? Colors.green : Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = isTransforming ? 3.0 : 2.0;
-
-      try {
-        canvas.drawRect(rect, paint);
-      } on Exception catch (error) {
-        debugPrint('선택 표시 사각형 렌더링 오류: $error');
-      }
-
-      // 드래그 중일 때 배경 표시
-      if (isTransforming) {
-        final backgroundPaint = Paint()
-          ..color = Colors.blue.withValues(alpha: 0.1)
-          ..style = PaintingStyle.fill;
-        try {
-          canvas.drawRect(rect, backgroundPaint);
-        } on Exception catch (error) {
-          debugPrint('배경 사각형 렌더링 오류: $error');
-        }
-      }
-
-      _paintOverlayButtons(canvas, rect);
-    }
   }
 
-  /// 회전된 텍스트의 정확한 버튼 위치 계산
-  Map<String, Offset> _getRotatedButtonPositions(
-    TextDrawable textDrawable,
-    TextPainter textPainter,
-  ) {
-    final center = textDrawable.position;
-    final halfWidth = textPainter.width / 2;
-    final halfHeight = textPainter.height / 2;
-    double rotation = 0.0;
-    try {
-      rotation = textDrawable.rotation;
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      // rotation 필드가 없거나 접근할 수 없는 경우 기본값 사용
-      rotation = 0.0;
-    }
-
-    if (rotation == 0.0) {
-      // 회전이 없는 경우 기존 방식
-      final rect = Rect.fromLTWH(
-        center.dx - halfWidth - 4,
-        center.dy - halfHeight - 4,
-        textPainter.width + 8,
-        textPainter.height + 8,
-      );
-      return {
-        'delete': Offset(rect.right, rect.top),
-        'transform': Offset(rect.left, rect.bottom),
-      };
-    }
-
-    // 회전된 텍스트의 네 모서리 계산 (패딩 포함)
-    final corners = [
-      Offset(-halfWidth - 4, -halfHeight - 4), // 좌상단
-      Offset(halfWidth + 4, -halfHeight - 4), // 우상단
-      Offset(halfWidth + 4, halfHeight + 4), // 우하단
-      Offset(-halfWidth - 4, halfHeight + 4), // 좌하단
-    ];
-
-    // 회전 변환 적용
-    final cos = math.cos(rotation);
-    final sin = math.sin(rotation);
-
-    final rotatedCorners = corners.map((corner) {
-      return Offset(
-        center.dx + corner.dx * cos - corner.dy * sin,
-        center.dy + corner.dx * sin + corner.dy * cos,
-      );
-    }).toList();
-
-    return {
-      'delete': rotatedCorners[1], // 우상단
-      'transform': rotatedCorners[3], // 좌하단
-    };
-  }
-
-  /// 오버레이 버튼 그리기 (변형 모드) - Rect 기반
-  void _paintOverlayButtons(Canvas canvas, Rect rect) {
-    final buttonPositions = {
-      'delete': Offset(rect.right, rect.top),
-      'transform': Offset(rect.left, rect.bottom),
-    };
-    _paintOverlayButtonsAtPositions(canvas, buttonPositions);
-  }
-
-  /// 오버레이 버튼 그리기 (변형 모드) - 위치 기반
-  void _paintOverlayButtonsAtPositions(
+  void _paintOverlayButtons(
     Canvas canvas,
-    Map<String, Offset> positions,
+    Offset deleteButtonCenter,
+    Offset transformButtonCenter,
   ) {
     const buttonSize = 35.0; // 시각 버튼 크기 (기존 50의 70%)
     const buttonRadius = buttonSize / 2;
 
     // 삭제 버튼 (우상단)
-    final deleteButtonCenter = positions['delete']!;
     final deleteButtonPaint = Paint()
       ..color = Colors.red
       ..style = PaintingStyle.fill;
@@ -551,7 +384,6 @@ class TextDrawablePainter extends CustomPainter {
     }
 
     // 변형 버튼 (좌하단)
-    final transformButtonCenter = positions['transform']!;
     final transformButtonPaint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.fill;
@@ -617,76 +449,5 @@ class TextDrawablePainter extends CustomPainter {
     } on Exception catch (error) {
       debugPrint('변형 아이콘 화살표 머리 렌더링 오류: $error');
     }
-  }
-
-  /// 회전된 텍스트의 정확한 버튼 위치 계산 (정적 메서드용)
-  static Map<String, Offset> _getStaticRotatedButtonPositions(
-    TextDrawable textDrawable,
-    TextBoxTypography textBoxTypography,
-  ) {
-    // TextPainter로 텍스트 크기 계산
-    final textSpan = buildLinkAwareTextSpan(
-      textDrawable,
-      textBoxTypography: textBoxTypography,
-    );
-
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: textDrawable.alignment.textAlign,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
-
-    final center = textDrawable.position;
-    final halfWidth = textPainter.width / 2;
-    final halfHeight = textPainter.height / 2;
-
-    double rotation = 0.0;
-    try {
-      rotation = textDrawable.rotation;
-    } on Exception catch (error, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace);
-      debugPrint(error.toString());
-      // rotation 필드가 없거나 접근할 수 없는 경우 기본값 사용
-      rotation = 0.0;
-    }
-
-    if (rotation == 0.0) {
-      // 회전이 없는 경우 기존 방식
-      final rect = Rect.fromLTWH(
-        center.dx - halfWidth - 4,
-        center.dy - halfHeight - 4,
-        textPainter.width + 8,
-        textPainter.height + 8,
-      );
-      return {
-        'delete': Offset(rect.right, rect.top),
-        'transform': Offset(rect.left, rect.bottom),
-      };
-    }
-
-    // 회전된 텍스트의 네 모서리 계산 (패딩 포함)
-    final corners = [
-      Offset(-halfWidth - 4, -halfHeight - 4), // 좌상단
-      Offset(halfWidth + 4, -halfHeight - 4), // 우상단
-      Offset(halfWidth + 4, halfHeight + 4), // 우하단
-      Offset(-halfWidth - 4, halfHeight + 4), // 좌하단
-    ];
-
-    // 회전 변환 적용
-    final cos = math.cos(rotation);
-    final sin = math.sin(rotation);
-
-    final rotatedCorners = corners.map((corner) {
-      return Offset(
-        center.dx + corner.dx * cos - corner.dy * sin,
-        center.dy + corner.dx * sin + corner.dy * cos,
-      );
-    }).toList();
-
-    return {
-      'delete': rotatedCorners[1], // 우상단
-      'transform': rotatedCorners[3], // 좌하단
-    };
   }
 }

@@ -11,12 +11,9 @@ import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/scribble_mode.state.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/module/state/scribble.state.dart';
-import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/text_box_typography.dart';
-import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_painter.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
-import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 
 /// ScribbleWidget의 렌더링 레이어들을 관리하는 클래스
 class ScribbleRenderLayers {
@@ -33,6 +30,7 @@ class ScribbleRenderLayers {
   final double speedFactor;
   final double minWidthFactor;
   final TextBoxTypography textBoxTypography;
+  final double textSelectionPadding;
 
   const ScribbleRenderLayers({
     required this.scribbleNotifier,
@@ -48,6 +46,7 @@ class ScribbleRenderLayers {
     this.speedFactor = 1.0,
     this.minWidthFactor = 0.3,
     this.textBoxTypography = defaultTextBoxTypography,
+    this.textSelectionPadding = defaultTextSelectionPadding,
   });
 
   /// 배경 레이어 빌드
@@ -110,6 +109,7 @@ class ScribbleRenderLayers {
               widgetState.isTextTransforming || widgetState.isTextResizing,
           editingTextId: widgetState.editingTextId,
           textBoxTypography: textBoxTypography,
+          textSelectionPadding: textSelectionPadding,
         ),
       ),
     );
@@ -231,18 +231,20 @@ class ScribbleRenderLayers {
 
     final selectedText = widgetState.selectedTextDrawable!;
 
-    // 텍스트 바운딩 박스 계산 (축 정렬)
-    final bounds = _calculateTextBounds(selectedText);
+    final selection = TextDrawablePainter.getSelectionGeometry(
+      selectedText,
+      textBoxTypography: textBoxTypography,
+      padding: textSelectionPadding,
+    );
 
-    // 회전된 텍스트의 경우 시각적 핸들 위치(회전된 모서리)와
-    // 핸들 GestureDetector 위치를 일치시켜야 커서/탭 포인트가
-    // 보이는 핸들 위에 정확히 떨어진다.
-    final handlePositions = _calculateRotatedHandlePositions(selectedText);
-
-    // 드래그 핸들러만 제공 (시각적 요소는 TextDrawablePainter에서 처리)
-    final overlayWidgets = buildSelectionOverlay(
+    final useDefaultPadding =
+        textSelectionPadding == defaultTextSelectionPadding;
+    final useDefaultHandles = useDefaultPadding && selection.rotation == 0;
+    return buildSelectionOverlay(
       type: .text,
-      boundingBox: bounds,
+      boundingBox: useDefaultPadding
+          ? selection.textBounds
+          : selection.canvasBounds,
       onDelete: onTextDelete,
       onTransformStart: onTextTransformStart,
       onTransformUpdate: onTextTransformUpdate,
@@ -250,66 +252,11 @@ class ScribbleRenderLayers {
       onMoveStart: onTextMoveStart,
       onMoveUpdate: onTextMoveUpdate,
       onMoveEnd: onTextMoveEnd,
-      deleteButtonPosition: handlePositions?['delete'],
-      transformButtonPosition: handlePositions?['transform'],
+      deleteButtonPosition: useDefaultHandles ? null : selection.deleteHandle,
+      transformButtonPosition: useDefaultHandles
+          ? null
+          : selection.transformHandle,
     );
-
-    return overlayWidgets;
-  }
-
-  /// 회전된 텍스트의 회전된 핸들 위치 계산
-  /// (TextDrawablePainter가 그리는 시각적 핸들 위치와 동일)
-  /// 회전이 0이면 null을 반환해 기본(축 정렬) 위치를 사용하게 한다.
-  Map<String, Offset>? _calculateRotatedHandlePositions(
-    TextDrawable textDrawable,
-  ) {
-    double rotation = 0.0;
-    try {
-      rotation = textDrawable.rotation;
-    } on Exception {
-      rotation = 0.0;
-    }
-    if (rotation == 0.0) return null;
-
-    final textSpan = TextSpan(
-      text: textDrawable.text,
-      style: textBoxTypography.applyTo(textDrawable.style),
-    );
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: textDrawable.alignment.textAlign,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout(maxWidth: textDrawable.layoutMaxWidth);
-
-    final center = textDrawable.position;
-    final halfWidth = textPainter.width / 2;
-    final halfHeight = textPainter.height / 2;
-
-    // 패딩(4px)을 포함한 모서리 — TextDrawablePainter._getRotatedButtonPositions와 일치
-    final corners = <Offset>[
-      Offset(-halfWidth - 4, -halfHeight - 4), // 좌상단
-      Offset(halfWidth + 4, -halfHeight - 4), // 우상단
-      Offset(halfWidth + 4, halfHeight + 4), // 우하단
-      Offset(-halfWidth - 4, halfHeight + 4), // 좌하단
-    ];
-
-    final cos = math.cos(rotation);
-    final sin = math.sin(rotation);
-
-    final rotatedCorners = corners
-        .map(
-          (c) => Offset(
-            center.dx + c.dx * cos - c.dy * sin,
-            center.dy + c.dx * sin + c.dy * cos,
-          ),
-        )
-        .toList();
-
-    return {
-      'delete': rotatedCorners[1], // 우상단
-      'transform': rotatedCorners[3], // 좌하단
-    };
   }
 
   /// 모든 레이어를 순서대로 빌드
@@ -402,13 +349,6 @@ class ScribbleRenderLayers {
   }
 
   /// 텍스트 바운딩 박스 계산 (내부 헬퍼 메서드)
-  Rect _calculateTextBounds(TextDrawable textDrawable) {
-    return TextDrawablePainter.getTextBounds(
-      textDrawable,
-      textBoxTypography: textBoxTypography,
-    );
-  }
-
   /// 올가미 드래그 핸들러 빌드 (시각적 요소 없이 드래그만)
   List<Widget> _buildLassoDragHandlers({
     required Rect boundingBox,
