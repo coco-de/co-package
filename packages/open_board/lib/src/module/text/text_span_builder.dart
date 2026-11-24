@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
-import 'package:open_board/src/module/text/text_box_font_weights.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 
 /// Default visual style for an inline hyperlink span: blue + underline.
@@ -23,9 +23,9 @@ const Color kTextLinkColor = Color(0xFF1A73E8);
 TextSpan buildLinkAwareTextSpan(
   TextDrawable drawable, {
   Color linkColor = kTextLinkColor,
-  TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+  TextBoxTypography textBoxTypography = defaultTextBoxTypography,
 }) {
-  final base = textBoxFontWeights.applyTo(drawable.style);
+  final base = textBoxTypography.applyTo(drawable.style);
   final text = drawable.text;
   final spans = sanitizeLinkSpans(drawable.linkSpans, text.length);
   if (spans.isEmpty) {

@@ -6,7 +6,11 @@ import 'package:open_board/src/module/text/inline_text_editor.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 
 void main() {
-  const weights = (regular: FontWeight.w300, bold: FontWeight.w600);
+  const typography = (
+    regular: FontWeight.w300,
+    bold: FontWeight.w600,
+    fontFamily: 'ExampleFont',
+  );
   const cases = [
     (name: 'new regular', isNew: true, isBold: false, weight: FontWeight.w300),
     (
@@ -24,7 +28,7 @@ void main() {
     ) async {
       final drawable = TextDrawable(
         id: 'box',
-        text: item.isNew ? '' : 'Medical text',
+        text: item.isNew ? '' : 'Example text',
         fontSize: 24,
         color: Colors.black.toARGB32(),
         isBold: item.isBold,
@@ -42,7 +46,7 @@ void main() {
             selectedColor: Colors.black,
             isNew: item.isNew,
             scale: 1,
-            textBoxFontWeights: weights,
+            textBoxTypography: typography,
             onComplete: completions.add,
           ),
         ),
@@ -50,9 +54,11 @@ void main() {
       await tester.pump();
 
       final field = find.byType(TextField);
-      expect(tester.widget<TextField>(field).style!.fontWeight, item.weight);
+      final style = tester.widget<TextField>(field).style!;
+      expect(style.fontWeight, item.weight);
+      expect(style.fontFamily, typography.fontFamily);
 
-      await tester.enterText(field, 'Updated medical text');
+      await tester.enterText(field, 'Updated example text');
       await tester.tapAt(const Offset(5, 590));
       await tester.pumpAndSettle();
 
@@ -66,12 +72,21 @@ void main() {
       expect(
         buildLinkAwareTextSpan(
           saved,
-          textBoxFontWeights: weights,
+          textBoxTypography: typography,
         ).style!.fontWeight,
         item.weight,
       );
     });
   }
+
+  test('keeps an explicitly stored font family', () {
+    final drawable = TextDrawable(text: 'example', fontFamily: 'StoredFont');
+    final span = buildLinkAwareTextSpan(
+      drawable,
+      textBoxTypography: typography,
+    );
+    expect(span.style!.fontFamily, 'StoredFont');
+  });
 
   test('applies configured weight to hyperlink runs', () {
     final drawable = TextDrawable(
@@ -80,9 +95,13 @@ void main() {
       linkSpans: [TextLinkSpan(start: 0, end: 4, url: 'page:3')],
     );
 
-    final span = buildLinkAwareTextSpan(drawable, textBoxFontWeights: weights);
+    final span = buildLinkAwareTextSpan(
+      drawable,
+      textBoxTypography: typography,
+    );
     final link = span.children!.single as TextSpan;
     expect(link.style!.fontWeight, FontWeight.w600);
+    expect(link.style!.fontFamily, typography.fontFamily);
     expect(link.style!.decoration, TextDecoration.underline);
   });
 }

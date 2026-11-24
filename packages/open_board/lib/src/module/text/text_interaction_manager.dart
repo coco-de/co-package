@@ -5,7 +5,7 @@ import 'package:open_board/src/module/l10n/open_board_strings_scope.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
-import 'package:open_board/src/module/text/text_box_font_weights.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart';
@@ -100,7 +100,7 @@ class TextInteractionManager {
 
   // 공통 변형 핸들러
   late TransformHandler _transformHandler;
-  TextBoxFontWeights _textBoxFontWeights;
+  TextBoxTypography _textBoxTypography;
 
   TextInteractionManager({
     required this.scribbleNotifier,
@@ -115,14 +115,14 @@ class TextInteractionManager {
     required this.widgetState,
     this.onTextEdit,
     this.linkTargetResolver,
-    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
-  }) : _textBoxFontWeights = textBoxFontWeights {
+    TextBoxTypography textBoxTypography = defaultTextBoxTypography,
+  }) : _textBoxTypography = textBoxTypography {
     _transformHandler = TransformHandler();
     _initializeFromScribble();
   }
 
-  void updateTextBoxFontWeights(TextBoxFontWeights weights) {
-    _textBoxFontWeights = weights;
+  void updateTextBoxTypography(TextBoxTypography weights) {
+    _textBoxTypography = weights;
     if (_textEditorOverlay != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _textEditorOverlay?.markNeedsBuild();
@@ -633,7 +633,7 @@ class TextInteractionManager {
   Offset _getTransformHandleCanvasPosition(TextDrawable textDrawable) {
     final textSpan = buildLinkAwareTextSpan(
       textDrawable,
-      textBoxFontWeights: _textBoxFontWeights,
+      textBoxTypography: _textBoxTypography,
     );
     final tp = TextPainter(
       text: textSpan,
@@ -887,7 +887,7 @@ class TextInteractionManager {
         selectedColor: modeNotifier.state.inkGroupInfo.selectedColor,
         linkTargetResolver: linkTargetResolver,
         strings: strings,
-        textBoxFontWeights: _textBoxFontWeights,
+        textBoxTypography: _textBoxTypography,
         onComplete: (updatedDrawable) {
           _hideTextEditor();
 
@@ -955,7 +955,7 @@ class TextInteractionManager {
         selectedColor: modeNotifier.state.inkGroupInfo.selectedColor,
         linkTargetResolver: linkTargetResolver,
         strings: strings,
-        textBoxFontWeights: _textBoxFontWeights,
+        textBoxTypography: _textBoxTypography,
         onComplete: (updatedDrawable) {
           _hideTextEditor();
 
@@ -1079,7 +1079,7 @@ class TextInteractionManager {
 
     final textSpan = buildLinkAwareTextSpan(
       textDrawable,
-      textBoxFontWeights: _textBoxFontWeights,
+      textBoxTypography: _textBoxTypography,
     );
 
     final textPainter = TextPainter(
@@ -1403,7 +1403,7 @@ class TextInteractionManager {
     // TextPainter로 텍스트 크기 계산
     final textSpan = buildLinkAwareTextSpan(
       textDrawable,
-      textBoxFontWeights: _textBoxFontWeights,
+      textBoxTypography: _textBoxTypography,
     );
 
     final textPainter = TextPainter(

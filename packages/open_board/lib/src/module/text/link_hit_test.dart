@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
-import 'package:open_board/src/module/text/text_box_font_weights.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 
@@ -20,13 +20,13 @@ const double _kLinkTouchPadding = 8;
 TextLinkSpan? findLinkAtCanvasPoint(
   List<TextDrawable> drawables,
   Offset canvasPoint, {
-  TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+  TextBoxTypography textBoxTypography = defaultTextBoxTypography,
 }) {
   for (var i = drawables.length - 1; i >= 0; i--) {
     final drawable = drawables[i];
     if (drawable.hidden) continue;
     if (drawable.linkSpans.isEmpty) continue;
-    final link = _linkInDrawable(drawable, canvasPoint, textBoxFontWeights);
+    final link = _linkInDrawable(drawable, canvasPoint, textBoxTypography);
     if (link != null) return link;
   }
   return null;
@@ -35,10 +35,10 @@ TextLinkSpan? findLinkAtCanvasPoint(
 TextLinkSpan? _linkInDrawable(
   TextDrawable drawable,
   Offset canvasPoint,
-  TextBoxFontWeights textBoxFontWeights,
+  TextBoxTypography textBoxTypography,
 ) {
   final textPainter = TextPainter(
-    text: buildLinkAwareTextSpan(drawable, textBoxFontWeights: textBoxFontWeights),
+    text: buildLinkAwareTextSpan(drawable, textBoxTypography: textBoxTypography),
     textAlign: drawable.alignment.textAlign,
     textDirection: TextDirection.ltr,
   )..layout(maxWidth: drawable.layoutMaxWidth);

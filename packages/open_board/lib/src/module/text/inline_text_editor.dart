@@ -9,7 +9,7 @@ import 'package:open_board/src/module/l10n/open_board_strings_scope.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
 import 'package:open_board/src/module/text/link_aware_text_editing_controller.dart';
 import 'package:open_board/src/module/text/link_span_offsets.dart';
-import 'package:open_board/src/module/text/text_box_font_weights.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 
@@ -54,7 +54,7 @@ final class InlineTextEditor extends StatefulWidget {
     required this.selectedColor,
     this.linkTargetResolver,
     this.strings,
-    this.textBoxFontWeights = defaultTextBoxFontWeights,
+    this.textBoxTypography = defaultTextBoxTypography,
     super.key,
   });
 
@@ -68,7 +68,7 @@ final class InlineTextEditor extends StatefulWidget {
   final TextSettings textSettings;
 
   /// Display weights for regular and bold text box annotations.
-  final TextBoxFontWeights textBoxFontWeights;
+  final TextBoxTypography textBoxTypography;
 
   /// 편집 완료 콜백
   final void Function(TextDrawable? drawable) onComplete;
@@ -543,7 +543,7 @@ final class _InlineTextEditorState extends State<InlineTextEditor>
             letterSpacing: 0,
           )
         : drawableStyle.copyWith(fontSize: actualFontSize, letterSpacing: 0);
-    final textStyle = widget.textBoxFontWeights.applyTo(baseStyle);
+    final textStyle = widget.textBoxTypography.applyTo(baseStyle);
 
     // TextPainter로 텍스트 크기 측정 (TextDrawablePainter와 동일한 방식)
     final textSpan = TextSpan(

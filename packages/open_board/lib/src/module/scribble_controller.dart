@@ -9,7 +9,7 @@ import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';
 import 'package:open_board/src/module/state/drawing_state.dart';
-import 'package:open_board/src/module/text/text_box_font_weights.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/link_hit_test.dart';
 
 /// ✨ ScribbleWidget을 편리하게 사용하기 위한 컨트롤러
@@ -126,13 +126,13 @@ class ScribbleController extends ChangeNotifier {
   /// 기준이어야 한다 (필요 시 호스트가 transform 으로 변환).
   TextLinkSpan? linkAtCanvasPoint(
     Offset canvasPoint, {
-    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+    TextBoxTypography textBoxTypography = defaultTextBoxTypography,
   }) {
     _ensureInitialized();
     return findLinkAtCanvasPoint(
       _scribbleNotifier.currentScribble.textDrawables,
       canvasPoint,
-      textBoxFontWeights: textBoxFontWeights,
+      textBoxTypography: textBoxTypography,
     );
   }
 

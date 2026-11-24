@@ -6,7 +6,7 @@ import 'package:open_board/src/module/scribble_controller.dart';
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/text/inline_text_editor.dart'
     show LinkTargetResolver;
-import 'package:open_board/src/module/text/text_box_font_weights.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/widgets/scribble_widget.dart';
 import 'package:open_board/src/module/models/scribble_selectable.dart';
 
@@ -60,7 +60,7 @@ final class SimpleScribbleWidget extends StatefulWidget {
     this.linkTargetResolver,
     this.shouldDeferDrawStart,
     this.canSelectItem,
-    this.textBoxFontWeights = defaultTextBoxFontWeights,
+    this.textBoxTypography = defaultTextBoxTypography,
   });
 
   /// 텍스트 주석 링크 타깃 입력 UI 제공자 (kobic #9838).
@@ -78,7 +78,7 @@ final class SimpleScribbleWidget extends StatefulWidget {
   final CanSelectScribbleItem? canSelectItem;
 
   /// Display weights for regular and bold text box annotations.
-  final TextBoxFontWeights textBoxFontWeights;
+  final TextBoxTypography textBoxTypography;
 
   /// 필기 컨트롤러 (선택적 - 없으면 자동 생성)
   final ScribbleController? controller;
@@ -239,7 +239,7 @@ final class _SimpleScribbleWidgetState extends State<SimpleScribbleWidget> {
       linkTargetResolver: widget.linkTargetResolver,
       shouldDeferDrawStart: widget.shouldDeferDrawStart,
       canSelectItem: widget.canSelectItem,
-      textBoxFontWeights: widget.textBoxFontWeights,
+      textBoxTypography: widget.textBoxTypography,
       // onScribbleChanged는 _initializeController에서 컨트롤러 리스너로
       // 이미 연결되어 모든 변경을 전달한다. 여기서 onScribble로도 감싸
       // 전달하면 같은 변경에 대해 사용자 콜백이 두 번 호출된다.

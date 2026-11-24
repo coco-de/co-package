@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
-import 'package:open_board/src/module/text/text_box_font_weights.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_span_builder.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
@@ -12,14 +12,14 @@ class TextDrawablePainter extends CustomPainter {
   final TextDrawable? selectedTextDrawable;
   final bool isTransforming;
   final String? editingTextId;
-  final TextBoxFontWeights textBoxFontWeights;
+  final TextBoxTypography textBoxTypography;
 
   const TextDrawablePainter({
     required this.textDrawables,
     required this.selectedTextDrawable,
     required this.isTransforming,
     required this.editingTextId,
-    this.textBoxFontWeights = defaultTextBoxFontWeights,
+    this.textBoxTypography = defaultTextBoxTypography,
   });
 
   @override
@@ -50,17 +50,17 @@ class TextDrawablePainter extends CustomPainter {
         selectedTextDrawable != oldDelegate.selectedTextDrawable ||
         isTransforming != oldDelegate.isTransforming ||
         editingTextId != oldDelegate.editingTextId ||
-        textBoxFontWeights != oldDelegate.textBoxFontWeights;
+        textBoxTypography != oldDelegate.textBoxTypography;
   }
 
   /// Get the bounding rect of a text drawable
   static Rect getTextBounds(
     TextDrawable textDrawable, {
-    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+    TextBoxTypography textBoxTypography = defaultTextBoxTypography,
   }) {
     final textSpan = buildLinkAwareTextSpan(
       textDrawable,
-      textBoxFontWeights: textBoxFontWeights,
+      textBoxTypography: textBoxTypography,
     );
 
     final textPainter = TextPainter(
@@ -106,7 +106,7 @@ class TextDrawablePainter extends CustomPainter {
   static String? getButtonType(
     TextDrawable textDrawable,
     Offset point, {
-    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+    TextBoxTypography textBoxTypography = defaultTextBoxTypography,
   }) {
     const buttonSize = 28.0; // 시각 버튼(35) 대비 약간 작은 hit-detect
     const buttonRadius = buttonSize / 2;
@@ -114,7 +114,7 @@ class TextDrawablePainter extends CustomPainter {
     // 회전된 텍스트의 정확한 버튼 위치 계산
     final buttonPositions = _getStaticRotatedButtonPositions(
       textDrawable,
-      textBoxFontWeights,
+      textBoxTypography,
     );
 
     // 삭제 버튼 (우상단)
@@ -136,7 +136,7 @@ class TextDrawablePainter extends CustomPainter {
   static bool isPointInTextArea(
     TextDrawable textDrawable,
     Offset point, {
-    TextBoxFontWeights textBoxFontWeights = defaultTextBoxFontWeights,
+    TextBoxTypography textBoxTypography = defaultTextBoxTypography,
   }) {
     // 회전된 텍스트의 경우 점이 회전된 영역 내부에 있는지 확인
     double rotation = 0.0;
@@ -153,7 +153,7 @@ class TextDrawablePainter extends CustomPainter {
       // 회전이 없는 경우 기존 방식
       final bounds = getTextBounds(
         textDrawable,
-        textBoxFontWeights: textBoxFontWeights,
+        textBoxTypography: textBoxTypography,
       );
       final rect = Rect.fromLTWH(
         bounds.left - 4,
@@ -168,7 +168,7 @@ class TextDrawablePainter extends CustomPainter {
       // 회전된 텍스트의 경우 역변환을 통해 점이 영역 내부에 있는지 확인
       final textSpan = buildLinkAwareTextSpan(
       textDrawable,
-      textBoxFontWeights: textBoxFontWeights,
+      textBoxTypography: textBoxTypography,
     );
 
       final textPainter = TextPainter(
@@ -211,7 +211,7 @@ class TextDrawablePainter extends CustomPainter {
     // 회전된 텍스트의 정확한 버튼 위치 계산
     final buttonPositions = _getStaticRotatedButtonPositions(
       textDrawable,
-      textBoxFontWeights,
+      textBoxTypography,
     );
 
     // 삭제 버튼 영역 제외
@@ -232,7 +232,7 @@ class TextDrawablePainter extends CustomPainter {
   void _paintTextDrawable(Canvas canvas, TextDrawable textDrawable) {
     final textSpan = buildLinkAwareTextSpan(
       textDrawable,
-      textBoxFontWeights: textBoxFontWeights,
+      textBoxTypography: textBoxTypography,
     );
 
     final textPainter = TextPainter(
@@ -314,7 +314,7 @@ class TextDrawablePainter extends CustomPainter {
   void _paintSelectionIndicator(Canvas canvas, TextDrawable textDrawable) {
     final textSpan = buildLinkAwareTextSpan(
       textDrawable,
-      textBoxFontWeights: textBoxFontWeights,
+      textBoxTypography: textBoxTypography,
     );
 
     final textPainter = TextPainter(
@@ -622,12 +622,12 @@ class TextDrawablePainter extends CustomPainter {
   /// 회전된 텍스트의 정확한 버튼 위치 계산 (정적 메서드용)
   static Map<String, Offset> _getStaticRotatedButtonPositions(
     TextDrawable textDrawable,
-    TextBoxFontWeights textBoxFontWeights,
+    TextBoxTypography textBoxTypography,
   ) {
     // TextPainter로 텍스트 크기 계산
     final textSpan = buildLinkAwareTextSpan(
       textDrawable,
-      textBoxFontWeights: textBoxFontWeights,
+      textBoxTypography: textBoxTypography,
     );
 
     final textPainter = TextPainter(

@@ -12,7 +12,7 @@ import 'package:open_board/src/module/state/scribble_mode.state.dart';
 import 'package:open_board/src/module/scribble_painter.dart' as painter;
 import 'package:open_board/src/module/state/scribble.state.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
-import 'package:open_board/src/module/text/text_box_font_weights.dart';
+import 'package:open_board/src/module/text/text_box_typography.dart';
 import 'package:open_board/src/module/text/text_drawable_extensions.dart';
 import 'package:open_board/src/module/text/text_painter.dart';
 import 'package:open_board/src/module/widgets/scribble_widget_state.dart';
@@ -32,7 +32,7 @@ class ScribbleRenderLayers {
   final double pressureFactor;
   final double speedFactor;
   final double minWidthFactor;
-  final TextBoxFontWeights textBoxFontWeights;
+  final TextBoxTypography textBoxTypography;
 
   const ScribbleRenderLayers({
     required this.scribbleNotifier,
@@ -47,7 +47,7 @@ class ScribbleRenderLayers {
     this.pressureFactor = 1.0,
     this.speedFactor = 1.0,
     this.minWidthFactor = 0.3,
-    this.textBoxFontWeights = defaultTextBoxFontWeights,
+    this.textBoxTypography = defaultTextBoxTypography,
   });
 
   /// 배경 레이어 빌드
@@ -109,7 +109,7 @@ class ScribbleRenderLayers {
           isTransforming:
               widgetState.isTextTransforming || widgetState.isTextResizing,
           editingTextId: widgetState.editingTextId,
-          textBoxFontWeights: textBoxFontWeights,
+          textBoxTypography: textBoxTypography,
         ),
       ),
     );
@@ -273,7 +273,7 @@ class ScribbleRenderLayers {
 
     final textSpan = TextSpan(
       text: textDrawable.text,
-      style: textBoxFontWeights.applyTo(textDrawable.style),
+      style: textBoxTypography.applyTo(textDrawable.style),
     );
     final textPainter = TextPainter(
       text: textSpan,
@@ -405,7 +405,7 @@ class ScribbleRenderLayers {
   Rect _calculateTextBounds(TextDrawable textDrawable) {
     return TextDrawablePainter.getTextBounds(
       textDrawable,
-      textBoxFontWeights: textBoxFontWeights,
+      textBoxTypography: textBoxTypography,
     );
   }
 
