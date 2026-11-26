@@ -979,6 +979,12 @@ class NoteEditorController extends ChangeNotifier {
     try {
       await repository.save(document);
       _savedRevision = revision;
+      // `commit` above armed the next autosave before this write started. Drop
+      // it when nothing is left to save; a failed write or a newer edit keeps it.
+      if (!hasUnsavedChanges) {
+        _autoSaveTimer?.cancel();
+        _autoSaveTimer = null;
+      }
     } on Object catch (error) {
       _saveError = error;
       if (rethrowErrors) rethrow;
