@@ -1,3 +1,17 @@
+# Changelog
+
+## [0.2.0](https://github.com/coco-de/co-package/compare/open_note-v0.1.0...open_note-v0.2.0) (2026-11-26)
+
+
+### 기능
+
+* **open_note:** ✨ 필기 노트 패키지 open_note 추가 ([#153](https://github.com/coco-de/co-package/issues/153)) ([34d0377](https://github.com/coco-de/co-package/commit/34d0377217be632ae9caa4b81b742aef48422692))
+
+
+### 버그 수정
+
+* ship third-party notices with distributed assets ([#156](https://github.com/coco-de/co-package/issues/156)) ([7efe296](https://github.com/coco-de/co-package/commit/7efe296adb0db87d6131a93cba6f2851de72182a))
+
 ## 0.1.0
 
 - Preserve the Open Board MIT notice and credit the demo EPUB in the package archive.

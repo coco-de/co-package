@@ -3,7 +3,7 @@ description: >-
   File storage for Dart servers: one API over AWS S3 and S3-compatible
   services (R2, MinIO, Spaces), local disk and memory, plus signed direct
   uploads so an app's secret keys stay on its server. Forked from dox_storage.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_storage
 topics:
   - storage

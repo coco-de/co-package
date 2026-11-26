@@ -3,6 +3,21 @@
 - First pub.dev release of the Cocode fork under `co_xterm2`.
 - Retains the MIT-licensed desktop IME composition fixes from the Git release.
 
+## [5.4.0](https://github.com/coco-de/co-package/compare/co_xterm2-v5.3.0...co_xterm2-v5.4.0) (2026-11-26)
+
+
+### 기능
+
+* **examples:** apply latest CoUI and deploy all playgrounds ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+* **examples:** refresh all playgrounds with latest CoUI and Pages deployment ([d8b5c12](https://github.com/coco-de/co-package/commit/d8b5c12e234a25cb9cd86c348d3cb6f678185f47))
+* **examples:** refresh CoUI playgrounds and GitHub Pages ([#126](https://github.com/coco-de/co-package/issues/126)) ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+* **xterm2:** ✨ MIT 포크와 클린룸 데스크톱 IME 수정을 채택한다 ([#80](https://github.com/coco-de/co-package/issues/80)) ([53a7430](https://github.com/coco-de/co-package/commit/53a743032bdaa0087c8b3dffd90b5464c1332450))
+
+
+### 버그 수정
+
+* ship third-party notices with distributed assets ([#156](https://github.com/coco-de/co-package/issues/156)) ([7efe296](https://github.com/coco-de/co-package/commit/7efe296adb0db87d6131a93cba6f2851de72182a))
+
 ## [5.3.0+cocode.1] - 2026-10-09
 
 * Preserve the MIT source from `leynier/xterm2@6775995f` and its upstream attribution.

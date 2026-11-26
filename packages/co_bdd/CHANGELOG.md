@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/coco-de/co-package/compare/co_bdd-v0.3.0...co_bdd-v0.3.1) (2026-11-26)
+
+
+### 버그 수정
+
+* **co_bdd:** 🐛 위젯 테스트의 pressBack() 이 실제 뒤로 가기를 일으키게 한다 ([#147](https://github.com/coco-de/co-package/issues/147)) ([#148](https://github.com/coco-de/co-package/issues/148)) ([cd9f79e](https://github.com/coco-de/co-package/commit/cd9f79e68c36b1bd9536b6dbaea56bca8033cd24))
+* ship third-party notices with distributed assets ([#156](https://github.com/coco-de/co-package/issues/156)) ([7efe296](https://github.com/coco-de/co-package/commit/7efe296adb0db87d6131a93cba6f2851de72182a))
+
 ## [0.3.0](https://github.com/coco-de/co-package/compare/co_bdd-v0.2.1...co_bdd-v0.3.0) (2026-10-19)
 
 
