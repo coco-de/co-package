@@ -4,7 +4,7 @@ import '../co_l10n_bundle.dart';
 /// same number of texts in the same order, so that one seed picks the same
 /// record in English, Korean, and Italian. See [CoL10nBundle].
 ///
-/// The conventions of the language are in `docs/languages/it.md`, and the ones
+/// The conventions of the language are in `doc/languages/it.md`, and the ones
 /// that a template has to keep are these:
 ///
 /// - the register is `Lei`; a notice or an instruction that says nobody in

@@ -1,12 +1,18 @@
 # co-package
 
-Cocode Dart and Flutter packages in a Melos monorepo.
+Dart and Flutter packages from Cocode for testing, demo data, file storage,
+drawing, reading EPUBs, and embedding terminals.
+
+[![CI](https://github.com/coco-de/co-package/actions/workflows/ci.yml/badge.svg)](https://github.com/coco-de/co-package/actions/workflows/ci.yml)
 
 ## Packages
 
 | Package | Description |
 | --- | --- |
-| [`co_arc`](packages/co_arc/README.md) | Cocode Actions Runner Cluster — self-hosted 러너 관리 TUI(`coarc`), 등록 스크립트, ARC 설정, 재사용 CI 워크플로우. |
+| [`co_arc`](packages/co_arc/README.md) | Manage self-hosted GitHub Actions runners with a terminal UI, registration scripts, and reusable CI workflows. |
+| [`co_bdd`](packages/co_bdd/README.md) | Generate Flutter widget tests and Patrol integration tests from shared Gherkin scenarios. |
+| [`co_demo_prefs`](packages/co_demo_prefs/README.md) | Carry language and theme settings into embedded and standalone demos. |
+| [`co_example_ui`](packages/co_example_ui/README.md) | Shared CoUI theme, catalog and settings for Flutter demos. |
 | [`co_site_metadata`](packages/co_site_metadata/README.md) | Pure Dart route metadata, canonical URLs, sitemap, robots and LLM discovery documents. |
 | [`co_faker`](packages/co_faker/README.md) | Pure Dart, deterministic, multilingual fake data generation. |
 | [`co_demo_world`](packages/co_demo_world/README.md) | Deterministic demo worlds: business data fixed, co_faker display text re-projected per UI language, user edits kept across a live language switch. |
@@ -16,9 +22,9 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | [`open_epub_engine`](packages/open_epub_engine/README.md) | Pure Dart EPUB 2/3 parser, object model, and CFI locator engine. |
 | [`open_epub`](packages/open_epub/README.md) | Customizable EPUB reader widget for Flutter (reflowable + fixed layout). |
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
-| [`open_note`](packages/open_note/README.md) | Flutter handwriting note engine cloned from `open_board` — pens, layers, page templates, notebooks, outline & bookmarks, study aids. |
-| [`xterm2`](packages/xterm2/FORK.md) | MIT terminal emulator from `leynier/xterm2@6775995f`, with Cocode's clean-room desktop IME composition fixes. Independent package and CI job. |
-| [`xterm3`](packages/xterm3/FORK.md) | [klc/xterm3](https://github.com/klc/xterm3) 6.3.4 포크 — 데스크톱 입력기(한글 두벌식 등) 조합 수정. **AGPL-3.0**, 워크스페이스 비회원(자체 CI 잡). |
+| [`open_note`](packages/open_note/README.md) | Flutter handwriting note engine built from `open_board`: pens, layers, page templates, notebooks, outline and bookmarks, and study aids. |
+| [`co_xterm2`](packages/xterm2/README.md) | MIT terminal emulator fork with desktop IME composition fixes. |
+| [`co_xterm3`](packages/xterm3/README.md) | AGPL-3.0-or-later terminal emulator fork with desktop IME composition fixes. |
 
 ## Live examples
 
@@ -34,8 +40,11 @@ private CoUI read token or verified prebuilt deployment workflow.
 
 ## Depending on these packages
 
-Until a package is on pub.dev, depend on it by git tag
-(`<package>-v<version>`, for example `co_faker-v0.8.1`):
+After a package has been published, install it with `dart pub add <package>`
+or `flutter pub add <package>`. The [release guide](RELEASING.md) lists the
+order for the first pub.dev releases and their prerequisites.
+
+Existing Git releases can still be pinned by tag. For example:
 
 ```yaml
 dependencies:
@@ -43,7 +52,7 @@ dependencies:
     git:
       url: https://github.com/coco-de/co-package.git
       path: packages/co_faker
-      ref: co_faker-v0.8.1
+      ref: co_faker-v0.13.1
 ```
 
 - **One ref per workspace.** Every package of a consuming workspace must use
@@ -66,17 +75,18 @@ uses: coco-de/co-package/.github/workflows/melos-ci.yml@<commit SHA>
 
 See [`packages/co_arc/README.md`](packages/co_arc/README.md) for the runner setup.
 
-## Development
+## Contributing
 
-```bash
-flutter pub get --no-example   # open_board 가 Flutter 패키지라 워크스페이스 해석에 Flutter SDK 가 필요하다
-dart pub global activate melos
-melos run verify
+Run the public checks from a clone with Flutter 3.47.0 and Python 3.9 or later.
+
+```sh
+python3 tool/pages/public_workspace.py verify
 ```
 
-The workspace uses Dart's native `workspace` declaration. Packages use
-`resolution: workspace`, so dependency resolution stays consistent across the
-repository.
+See the [contribution guide](CONTRIBUTING.md), the
+[issue forms](https://github.com/coco-de/co-package/issues/new/choose), and the
+[Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities through the
+[private reporting form](https://github.com/coco-de/co-package/security/advisories/new).
 
 ### Workflow action pins
 
@@ -102,9 +112,8 @@ shared instructions and generated graph format consistent.
 
 ## License
 
-BSD-3-Clause (Cocode Inc.)
-
-`packages/xterm2` follows its upstream MIT license (© 2020 xuty; package `LICENSE`).
-
-예외: `packages/xterm3` 는 업스트림 라이선스 AGPL-3.0-or-later 를 따른다
-(패키지 안의 `LICENSE` · `LICENSE.MIT` · `NOTICE`).
+The repository-level license is [BSD-3-Clause](LICENSE). Each package ships
+its own `LICENSE`. `co_bdd`, `co_xterm2`, `open_board`, `open_epub`, and
+`open_epub_engine` use MIT. `co_xterm3` uses AGPL-3.0-or-later and includes the
+MIT notice for prior work. See [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES)
+for bundled assets and third-party code.

@@ -1,7 +1,7 @@
 import 'dart:math' show max, min;
 import 'dart:ui';
 
-import 'package:xterm2/src/ui/branch_glyphs.dart';
+import 'package:co_xterm2/src/ui/branch_glyphs.dart';
 
 const _singleLineBoxArms = <int>[
   0x44,

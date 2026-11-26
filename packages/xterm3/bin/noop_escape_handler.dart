@@ -21,8 +21,8 @@
 // error instead of a quietly poisoned measurement. Regenerate rather than
 // patch by hand.
 
-import 'package:xterm3/src/core/escape/handler.dart';
-import 'package:xterm3/src/core/mouse/mode.dart';
+import 'package:co_xterm3/src/core/escape/handler.dart';
+import 'package:co_xterm3/src/core/mouse/mode.dart';
 
 class NoopEscapeHandler implements EscapeHandler, EscapeTextHandler {
   @override

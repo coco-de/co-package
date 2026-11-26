@@ -5,7 +5,7 @@ import '../co_l10n_bundle.dart';
 /// seed picks the same record in English, Korean, and Portuguese. See
 /// [CoL10nBundle].
 ///
-/// The conventions of the language are in `docs/languages/pt.md`, and the ones
+/// The conventions of the language are in `doc/languages/pt.md`, and the ones
 /// that a template has to keep are these:
 ///
 /// - it is Brazilian Portuguese (the 2009 orthography): no European spelling or

@@ -2,8 +2,8 @@
 // import 'dart:io';
 // import 'dart:typed_data';
 
-// import 'package:xterm3/core/escape/handler.dart';
-// import 'package:xterm3/core/escape/parser.dart';
+// import 'package:co_xterm3/core/escape/handler.dart';
+// import 'package:co_xterm3/core/escape/parser.dart';
 
 // final handler = DebugTerminalHandler();
 // final protocol = EscapeParser(handler);

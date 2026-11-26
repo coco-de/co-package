@@ -23,7 +23,7 @@
 #   --tool-cache <path>    여러 인스턴스가 Flutter/JDK 등 tool-cache를 공유하도록
 #                          .env에 RUNNER_TOOL_CACHE=<path>를 설정. 한 머신에
 #                          여러 러너를 띄울 때 매 인스턴스가 SDK를 중복 캐싱하는
-#                          걸 막아줍니다 (자세한 배경은 docs/self-hosted-runner.md
+#                          걸 막아줍니다 (자세한 배경은 doc/self-hosted-runner.md
 #                          "공유 tool-cache" 절 참고).
 #   --service              구성 후 launchd 서비스로 바로 등록/시작
 #
@@ -39,7 +39,7 @@
 #
 # --service로 서비스를 켤 때 launchd plist에 KeepAlive를 자동으로 심고
 # (=크래시 시 자동 복구), 재부팅 후 무인 복귀를 막는 머신 설정을 점검해
-# 안내합니다. 자세한 배경은 docs/self-hosted-runner.md "재부팅 후에도
+# 안내합니다. 자세한 배경은 doc/self-hosted-runner.md "재부팅 후에도
 # 백그라운드로 유지하기" 참고.
 #
 # 러너 에이전트는 공식 릴리스가 게시한 SHA-256(릴리스 자산의 digest, 없으면 릴리스 노트의

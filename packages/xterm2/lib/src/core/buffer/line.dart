@@ -1,11 +1,11 @@
 import 'dart:math' show max, min;
 import 'dart:typed_data';
 
-import 'package:xterm2/src/core/buffer/cell_offset.dart';
-import 'package:xterm2/src/core/cell.dart';
-import 'package:xterm2/src/core/cursor.dart';
-import 'package:xterm2/src/utils/circular_buffer.dart';
-import 'package:xterm2/src/utils/unicode_v11.dart';
+import 'package:co_xterm2/src/core/buffer/cell_offset.dart';
+import 'package:co_xterm2/src/core/cell.dart';
+import 'package:co_xterm2/src/core/cursor.dart';
+import 'package:co_xterm2/src/utils/circular_buffer.dart';
+import 'package:co_xterm2/src/utils/unicode_v11.dart';
 
 part 'line_compaction.dart';
 

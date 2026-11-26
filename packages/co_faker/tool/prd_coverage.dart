@@ -6,7 +6,7 @@ import 'package:co_faker/co_faker.dart';
 /// Reports actual role lookup/type support for the independent PRD inventory.
 void main(List<String> args) {
   final inventory =
-      jsonDecode(File('docs/prd_domain_inventory.json').readAsStringSync())
+      jsonDecode(File('doc/prd_domain_inventory.json').readAsStringSync())
           as Map<String, dynamic>;
   final types = (inventory['types'] as Map).cast<String, String>();
   final faker = CoFaker(

@@ -1,13 +1,13 @@
-export 'package:xterm3/src/core/input/event.dart';
-export 'package:xterm3/src/core/input/kitty_handler.dart';
+export 'package:co_xterm3/src/core/input/event.dart';
+export 'package:co_xterm3/src/core/input/kitty_handler.dart';
 
-import 'package:xterm3/src/core/input/composed_text.dart';
-import 'package:xterm3/src/core/input/event.dart';
-import 'package:xterm3/src/core/input/keys.dart';
-import 'package:xterm3/src/utils/char_code.dart';
-import 'package:xterm3/src/core/input/keytab/keytab.dart';
-import 'package:xterm3/src/core/input/kitty_handler.dart';
-import 'package:xterm3/src/core/platform.dart';
+import 'package:co_xterm3/src/core/input/composed_text.dart';
+import 'package:co_xterm3/src/core/input/event.dart';
+import 'package:co_xterm3/src/core/input/keys.dart';
+import 'package:co_xterm3/src/utils/char_code.dart';
+import 'package:co_xterm3/src/core/input/keytab/keytab.dart';
+import 'package:co_xterm3/src/core/input/kitty_handler.dart';
+import 'package:co_xterm3/src/core/platform.dart';
 
 /// Chains input handlers and returns the first non-null result.
 class CascadeInputHandler implements TerminalInputHandler {

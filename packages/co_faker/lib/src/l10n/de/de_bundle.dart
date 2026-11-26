@@ -4,7 +4,7 @@ import '../co_l10n_bundle.dart';
 /// same number of texts in the same order.
 ///
 /// The texts are a draft written with an AI assistant that a native speaker
-/// has to review; `docs/languages/de.md` lists the terms, the conventions, and
+/// has to review; `doc/languages/de.md` lists the terms, the conventions, and
 /// the texts to look at. A patient or customer is addressed with `Sie`.
 ///
 /// The fictional place names are German-sounding inventions that stand in for

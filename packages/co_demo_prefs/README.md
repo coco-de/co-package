@@ -12,6 +12,10 @@ links.
 
 This README is the source of truth for **protocol v1**.
 
+```sh
+dart pub add co_demo_prefs
+```
+
 ## Values
 
 | Value | Allowed | Notes |

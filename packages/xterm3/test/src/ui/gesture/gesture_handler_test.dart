@@ -2,9 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm3/src/ui/gesture/gesture_handler.dart';
-import 'package:xterm3/src/ui/render.dart';
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/src/ui/gesture/gesture_handler.dart';
+import 'package:co_xterm3/src/ui/render.dart';
+import 'package:co_xterm3/xterm.dart';
 
 /// These tests target [TerminalGestureHandler] directly: they pump the
 /// handler with their own stub callbacks and their own [TerminalController],

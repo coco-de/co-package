@@ -20,9 +20,9 @@ final files = site.artifacts(); // Map<String, String>; no side effects
 final canonical = site.canonicalUrl(site.routes.first);
 ```
 
-Install using `git: {url: https://github.com/coco-de/co-package.git,
-path: packages/co_site_metadata, ref: <merged-commit-sha>}`. Use the same git ref
-for every co-package dependency in the consuming pub workspace.
+```sh
+dart pub add co_site_metadata
+```
 
 ## Integration contract
 
@@ -64,4 +64,4 @@ dart test
 dart run --enable-asserts example/main.dart
 ```
 
-See [Flenx assessment](docs/flenx-assessment.md) for provenance and adoption scope.
+See [Flenx assessment](doc/flenx-assessment.md) for provenance and adoption scope.

@@ -1,4 +1,4 @@
-import 'package:xterm2/core.dart';
+import 'package:co_xterm2/core.dart';
 
 void main() {
   final terminal = Terminal(maxLines: 10000)..resize(120, 24);

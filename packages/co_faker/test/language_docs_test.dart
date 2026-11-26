@@ -44,7 +44,7 @@ status: localized
 ''';
 
 void main() {
-  final directory = Directory('docs/languages');
+  final directory = Directory('doc/languages');
 
   // The languages that the registries list, except Korean and English, which
   // are not localized by a Story: each has a file, and the file tells the
@@ -56,7 +56,7 @@ void main() {
 
   group('the language files', () {
     test('are a README and one file for each registered language', () {
-      expect(File('docs/languages/README.md').existsSync(), isTrue);
+      expect(File('doc/languages/README.md').existsSync(), isTrue);
       final known = <String>{
         'README.md',
         for (final language in CoFakerLanguages.all)
@@ -78,7 +78,7 @@ void main() {
 
     for (final code in languages) {
       group(code, () {
-        final path = 'docs/languages/$code.md';
+        final path = 'doc/languages/$code.md';
         final doc = parseLanguageDoc(File(path).readAsStringSync());
         final data = CoLanguageData.registered(code);
 

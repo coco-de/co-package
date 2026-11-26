@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/xterm.dart';
 
 void main() {
   test('Can instantiate Terminal', () {

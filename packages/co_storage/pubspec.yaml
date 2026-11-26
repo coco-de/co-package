@@ -5,8 +5,10 @@ description: >-
   uploads so an app's secret keys stay on its server. Forked from dox_storage.
 version: 0.1.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_storage
-# pub.dev 에 내지 않는다 — 소비자는 git 의존(path: packages/co_storage, ref: 릴리스 태그)으로 받는다.
-publish_to: none
+topics:
+  - storage
+  - s3
+  - file-upload
 resolution: workspace
 
 environment:

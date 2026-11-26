@@ -1,13 +1,11 @@
-# Alera xterm2 fork
+# co_xterm2
 
-Alera consumes this fork as a submodule from `next`, its only permanent remote branch. It is based on SoFluffyOS/xterm2 at `2a339558ba103e38a304a4eda7c984b45c47e186`. See [ALERA_PATCHES.md](ALERA_PATCHES.md) for the compatibility audit and regression tests. This fork does not publish the upstream package name on pub.dev.
-
-
-## xterm2
+Cocode's MIT-licensed Flutter terminal emulator fork with desktop IME fixes.
+See [FORK.md](FORK.md) for the upstream revision and compatibility history.
 
 <p>
-    <a href="https://pub.dev/packages/xterm2">
-      <img alt="Package version" src="https://img.shields.io/pub/v/xterm2?color=blue&include_prereleases">
+    <a href="https://pub.dev/packages/co_xterm2">
+      <img alt="Package version" src="https://img.shields.io/pub/v/co_xterm2?color=blue&include_prereleases">
     </a>
 </p>
 
@@ -64,14 +62,13 @@ under a new pub package name.
 
 ```yml
 dependencies:
-  ...
-  xterm2: ^5.1.0
+  co_xterm2: ^5.3.0
 ```
 
 **2.** Create the terminal:
 
 ```dart
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/xterm.dart';
 ...
 terminal = Terminal();
 ```
@@ -89,7 +86,7 @@ terminal.onOutput = (output) {
 **3.** Create the view, attach the terminal to the view:
 
 ```dart
-import 'package:xterm2/flutter.dart';
+import 'package:co_xterm2/flutter.dart';
 ...
 child: TerminalView(terminal),
 ```
@@ -101,6 +98,9 @@ terminal.write('Hello, world!');
 ```
 
 **Done!**
+
+To migrate from the Git release `xterm2-v5.3.0+cocode.1`, change the
+dependency to `co_xterm2` and the import prefix to `package:co_xterm2/`.
 
 ## More examples
 
@@ -116,7 +116,7 @@ For the original package history, see [TerminalStudio/xterm.dart].
 
 ## Features and bugs
 
-Please file feature requests and bugs at the [issue tracker](https://github.com/SoFluffyOS/xterm2/issues).
+Please file feature requests and bugs at the [issue tracker](https://github.com/coco-de/co-package/issues).
 
 Contributions are always welcome!
 

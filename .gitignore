@@ -56,7 +56,7 @@ key.properties
 
 # Local agent config
 CLAUDE.md
-.claude/settings.local.json
+.claude/
 
 # EPUB fixtures: 라이선스 확인 완료 후 커밋된 공개 데모용 EPUB3 샘플만 예외
 # (IDPF epub3-samples CC-BY-SA 3.0 / GFDL 1.2 — THIRD_PARTY_LICENSES 참조).

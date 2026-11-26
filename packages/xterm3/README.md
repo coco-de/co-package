@@ -1,25 +1,27 @@
 
-## xterm3
+# co_xterm3
+
+Cocode's fork of [xterm3](https://github.com/klc/xterm3) with desktop IME
+composition fixes. See [FORK.md](FORK.md) for the upstream revision and changes.
 
 <p>
-    <a href="https://pub.dev/packages/xterm3">
-      <img alt="Package version" src="https://img.shields.io/pub/v/xterm3?color=blue&include_prereleases">
+    <a href="https://pub.dev/packages/co_xterm3">
+      <img alt="Package version" src="https://img.shields.io/pub/v/co_xterm3?color=blue&include_prereleases">
     </a>
-    <a href="https://pub.dev/packages/xterm3/score">
-      <img alt="Pub points" src="https://img.shields.io/pub/points/xterm3?color=blue">
+    <a href="https://pub.dev/packages/co_xterm3/score">
+      <img alt="Pub points" src="https://img.shields.io/pub/points/co_xterm3?color=blue">
     </a>
-    <a href="https://pub.dev/packages/xterm3/publisher">
-      <img alt="Pub likes" src="https://img.shields.io/pub/likes/xterm3?color=blue">
+    <a href="https://pub.dev/packages/co_xterm3/publisher">
+      <img alt="Pub likes" src="https://img.shields.io/pub/likes/co_xterm3?color=blue">
     </a>
     <a href="LICENSE">
       <img alt="License: AGPL-3.0-or-later" src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue">
     </a>
 </p>
 
-**[pub.dev/packages/xterm3](https://pub.dev/packages/xterm3)** ·
-[API reference](https://pub.dev/documentation/xterm3/latest/) ·
-[Changelog](https://pub.dev/packages/xterm3/changelog) ·
-[Source](https://github.com/klc/xterm3)
+[API reference](https://pub.dev/documentation/co_xterm3/latest/) ·
+[Changelog](https://pub.dev/packages/co_xterm3/changelog) ·
+[Source](https://github.com/coco-de/co-package/tree/main/packages/xterm3)
 
 **xterm3** is a terminal emulator for Flutter applications, on mobile and
 desktop. It ships a headless emulation core with no Flutter dependency and a
@@ -135,7 +137,7 @@ retouched. Grid 100x30, Cascadia Mono at 13pt.
 
 - 📦 **Works out of the box.** No special configuration required.
 - ✔ **Frontend independent.** The emulation core runs without Flutter —
-  `package:xterm3/core.dart` has no `dart:ui` on any path.
+  `package:co_xterm3/core.dart` has no `dart:ui` on any path.
 - 😀 **Unicode 17.** Wide characters, grapheme clusters, emoji sequences, and
   a batched write path that covers Latin, Greek, Cyrillic and Armenian rather
   than ASCII alone.
@@ -165,24 +167,23 @@ retouched. Grid 100x30, Cascadia Mono at 13pt.
 
 ## Getting Started
 
-**1.** Add the [package from pub.dev](https://pub.dev/packages/xterm3):
+**1.** Add the [package from pub.dev](https://pub.dev/packages/co_xterm3):
 
 ```sh
-flutter pub add xterm3
+flutter pub add co_xterm3
 ```
 
 or add it to your package's pubspec.yaml file by hand:
 
 ```yml
 dependencies:
-  ...
-  xterm3: ^6.3.0
+  co_xterm3: ^6.3.4
 ```
 
 **2.** Create the terminal:
 
 ```dart
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/xterm.dart';
 ...
 terminal = Terminal();
 ```
@@ -200,7 +201,7 @@ terminal.onOutput = (output) {
 **3.** Create the view, attach the terminal to the view:
 
 ```dart
-import 'package:xterm3/flutter.dart';
+import 'package:co_xterm3/flutter.dart';
 ...
 child: TerminalView(terminal),
 ```
@@ -231,9 +232,8 @@ For the original package history, see [TerminalStudio/xterm.dart].
 
 The public API is unchanged. Three mechanical edits:
 
-- `xterm2: ^5.3.0` becomes `xterm3: ^6.3.0` in `pubspec.yaml`.
-- `package:xterm2/...` becomes `package:xterm3/...` in imports. The entry point
-  keeps its name: `import 'package:xterm3/xterm.dart';`.
+- Use `co_xterm3: ^6.3.4` in `pubspec.yaml`.
+- Use `package:co_xterm3/` in imports, for example `import 'package:co_xterm3/xterm.dart';`.
 - `XTERM2_FUZZ_ROUNDS` becomes `XTERM3_FUZZ_ROUNDS`.
 
 Note the licence change below: `xterm2` 5.3.0 and earlier are MIT, `xterm3`
@@ -241,7 +241,7 @@ Note the licence change below: `xterm2` 5.3.0 and earlier are MIT, `xterm3`
 
 ## Features and bugs
 
-Please file feature requests and bugs at the [issue tracker](https://github.com/klc/xterm3/issues).
+Please file feature requests and bugs at the [issue tracker](https://github.com/coco-de/co-package/issues).
 
 Contributions are always welcome!
 

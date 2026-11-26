@@ -9,7 +9,7 @@ import 'package:test/test.dart';
 /// - DE: Bundesnetzagentur Mitteilung 148/2021 ("Drama Numbers").
 /// - FR: ARCEP décision 2018-0881, blocks for audiovisual productions.
 /// - JP, CN, IN, IT, RU, BR, ES, SA: no reserved range; prefixes that no number
-///   type uses (checked with Google libphonenumber, see docs/countries.md).
+///   type uses (checked with Google libphonenumber, see doc/countries.md).
 final Map<String, List<RegExp>> _fictionalPhones = <String, List<RegExp>>{
   'US': [RegExp(r'^\(\d{3}\) 555-01\d{2}$')],
   'CA': [RegExp(r'^\(\d{3}\) 555-01\d{2}$')],

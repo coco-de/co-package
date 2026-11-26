@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/xterm.dart';
 
 void main() {
   test('full hyperlink tables preserve links and eventually reclaim erasures',

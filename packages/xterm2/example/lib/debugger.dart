@@ -6,8 +6,8 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:example/src/virtual_keyboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show MaterialApp, Brightness;
-import 'package:xterm2/utils.dart';
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/utils.dart';
+import 'package:co_xterm2/xterm.dart';
 
 const host = 'localhost';
 const port = 22;

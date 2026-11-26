@@ -36,6 +36,8 @@
   ],
 
   "packages": {
+    "packages/co_arc": { "component": "co_arc", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
+    "packages/co_example_ui": { "component": "co_example_ui", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
     "packages/co_site_metadata": { "component": "co_site_metadata", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
     "packages/open_epub_engine": { "component": "open_epub_engine" },
     "packages/open_epub": { "component": "open_epub" },
@@ -47,6 +49,8 @@
     "packages/co_faker": { "component": "co_faker", "bump-minor-pre-major": true },
     "packages/co_demo_prefs": { "component": "co_demo_prefs", "bump-minor-pre-major": true },
     "packages/co_demo_world": { "component": "co_demo_world", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
-    "packages/co_storage": { "component": "co_storage", "bump-minor-pre-major": true, "initial-version": "0.1.0" }
+    "packages/co_storage": { "component": "co_storage", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
+    "packages/xterm2": { "component": "co_xterm2", "initial-version": "5.3.0" },
+    "packages/xterm3": { "component": "co_xterm3", "initial-version": "6.3.4" }
   }
 }

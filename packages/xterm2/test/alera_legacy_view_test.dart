@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/xterm.dart';
 
 void main() {
   testWidgets('preserves composed accented text input', (tester) async {

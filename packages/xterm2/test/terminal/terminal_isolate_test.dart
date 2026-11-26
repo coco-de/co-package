@@ -1,8 +1,8 @@
 // import 'dart:async';
 
 // import 'package:flutter_test/flutter_test.dart';
-// import 'package:xterm2/terminal/terminal_backend.dart';
-// import 'package:xterm2/terminal/terminal_isolate.dart';
+// import 'package:co_xterm2/terminal/terminal_backend.dart';
+// import 'package:co_xterm2/terminal/terminal_isolate.dart';
 
 void main() {
   // group('Start behavior tests', () {

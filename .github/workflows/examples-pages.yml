@@ -3,17 +3,6 @@ name: Examples Pages
 # All three CoUI examples share one Pages artifact. Authenticated source builds
 # use COUI_READ_TOKEN; local verified builds can be deployed from gh-pages.
 on:
-  pull_request:
-    paths:
-      - "packages/open_board/**"
-      - "packages/open_epub/**"
-      - "packages/open_epub_engine/**"
-      - "packages/co_example_ui/**"
-      - "packages/co_demo_prefs/**"
-      - "packages/xterm2/**"
-      - "pubspec.yaml"
-      - "tool/pages/**"
-      - ".github/workflows/examples-pages.yml"
   push:
     branches: [main]
     paths:
@@ -37,14 +26,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'pages' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: pages
 
 env:
   FLUTTER_VERSION: "3.47.0"
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -122,7 +111,7 @@ jobs:
           path: _site
 
   deploy:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.build.outputs.ready == 'true'
+    if: needs.build.outputs.ready == 'true'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10

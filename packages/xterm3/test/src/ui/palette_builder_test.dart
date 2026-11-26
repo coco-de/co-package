@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm3/src/ui/palette_builder.dart';
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/src/ui/palette_builder.dart';
+import 'package:co_xterm3/xterm.dart';
 
 /// Every field gets a distinct color so a wrong index shows up as a wrong
 /// value rather than an accidental match.

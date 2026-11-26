@@ -42,16 +42,9 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      # Public package checks stay independent of the private CoUI examples.
-      # Full example analysis, tests and builds run locally or with COUI_READ_TOKEN.
-      - name: Prepare public CI workspace
-        run: python3 tool/pages/public_workspace.py
-      - run: flutter pub get --no-example
+      - name: Verify the public workspace
+        run: python3 tool/pages/public_workspace.py format analyze test:dart test:flutter
       - run: dart format --output=none --set-exit-if-changed packages/co_golden_gallery
-      - run: dart pub global activate melos
-      - run: melos run format
-      - run: melos run analyze
-      - run: melos run test:dart
       # 파생 seed 가 VM 과 웹에서 같은지 — 웹으로 배포한 데모와 VM 에서 찍은 골든이 같은 목데이터를 보여야 한다 (#69).
       - name: co_faker web determinism (chrome · dart2js)
         working-directory: packages/co_faker
@@ -60,11 +53,12 @@ jobs:
       - name: co_demo_world web determinism (chrome · dart2js)
         working-directory: packages/co_demo_world
         run: dart test -p chrome
-      - run: melos run test:flutter
+      - name: Check package release archives
+        run: python3 tool/pub_release.py --check-all
 
   # packages/xterm3 — klc/xterm3 포크(AGPL-3.0). 워크스페이스 비회원이라 melos 잡이
   # 보지 않는다: 업스트림 dev 의존(lints ^3)이 루트 lints ^6 과 한 lockfile 에서
-  # 풀리지 않고, 업스트림과 바이트 동일을 유지해야 동기화된다(packages/xterm3/FORK.md).
+  # 풀리지 않는다(packages/xterm3/FORK.md).
   # 업스트림 CI 와 같은 검사를 macOS 에서 돌린다 — 골든 4장이 macOS 에서 렌더됐다.
   xterm3:
     runs-on: macos-latest
