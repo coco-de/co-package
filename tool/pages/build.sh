@@ -16,7 +16,9 @@ for entry in open_board:open-board open_epub:open-epub xterm2:xterm2; do
 done
 mkdir -p "$site_dir"
 cp tool/pages/index.html "$site_dir/index.html"
-cat packages/co_example_ui/fonts/LICENSE.txt packages/co_example_ui/fonts/NotoSansArabic-LICENSE.txt > "$site_dir/FONT-LICENSES.txt"
+cat THIRD_PARTY_LICENSES packages/xterm2/example/THIRD_PARTY_LICENSES > "$site_dir/THIRD_PARTY_LICENSES.txt"
+cat packages/co_example_ui/fonts/{LICENSE.txt,NotoSansArabic-LICENSE.txt} \
+  packages/xterm2/example/fonts/CascadiaMonoPL-LICENSE.txt > "$site_dir/FONT-LICENSES.txt"
 touch "$site_dir/.nojekyll"
 for entry in open_board:open-board open_epub:open-epub xterm2:xterm2; do
   package=${entry%%:*}

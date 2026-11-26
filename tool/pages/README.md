@@ -27,8 +27,9 @@ bash tool/pages/build.sh
 (cd packages/co_golden_gallery && dart test)
 ```
 
-`build/pages` contains only the three production builds and landing page. The
-build script scans it for credentials. Serve its parent under `/co-package/`
+`build/pages` contains the three production builds, landing page, and linked
+license notices for the sample books, Fig dataset, and bundled fonts. The build
+script scans it for credentials. Serve its parent under `/co-package/`
 when testing locally, because the apps use production base paths.
 
 The six catalog goldens cover both apps at phone/desktop widths, light/dark
@@ -51,7 +52,8 @@ Use one of these two sources for the site.
    ```
 
    This checks out only the static site, validates all three entry points,
-   rescans credentials, and deploys through the same Pages artifact/OIDC path.
+   compares license notices with the source tree, rescans credentials, and
+   deploys through the same Pages artifact/OIDC path.
    Include `deployment.json` with the source commit and CoUI release for audit.
 
 ## Verification on 2026-11-04

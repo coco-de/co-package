@@ -1,5 +1,6 @@
 ## 0.1.0
 
+- Preserve the Open Board MIT notice and credit the demo EPUB in the package archive.
 - Start `open_note` as a separate package cloned from `open_board` 0.3.2 and
   renamed (`package:open_note/open_note.dart`, `OpenNoteStrings`). The engine's
   `Scribble*` API stays, so both packages can be used side by side with an
