@@ -3,6 +3,10 @@ description: Flutter terminal emulator with VT/xterm compatibility and desktop I
 version: 5.3.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/xterm2
 issue_tracker: https://github.com/coco-de/co-package/issues
+topics:
+  - terminal
+  - emulator
+  - ime
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

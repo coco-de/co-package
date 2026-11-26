@@ -14,6 +14,11 @@ changelog and license. The repository root and the full demo apps under
 `example/` are kept for development and GitHub Pages. The Flutter archives
 include standalone examples where the full demo relies on the monorepo.
 
+Run `python3 tool/pub_release.py --check-all` to check every release entry and
+run the dry runs whose dependencies are on pub.dev. Pull request CI uses the
+same command. Packages waiting for their first sibling or CoUI release are
+listed separately. Use the package-specific dry run before uploading it.
+
 ## First releases
 
 Publish in this order. Packages in the same row can be published independently

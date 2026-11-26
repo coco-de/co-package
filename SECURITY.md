@@ -11,12 +11,8 @@ repository (tags `<package>-v<version>`, see
 **Please do not report vulnerabilities in public issues, pull requests or
 discussions.**
 
-Report them privately to the repository administrators with GitHub's
-[private vulnerability reporting](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately):
-open the **Security** tab of this repository and choose **Report a
-vulnerability**. If that option is not available, contact a repository
-administrator through a private channel and ask for a private way to share the
-details.
+Send the details to the maintainers using the
+[private vulnerability reporting form](https://github.com/coco-de/co-package/security/advisories/new).
 
 Please include:
 
@@ -48,11 +44,8 @@ report it to the upstream project.
 
 **보안 취약점은 공개 이슈 · PR · 토론으로 알리지 마세요.**
 
-GitHub 의
-[비공개 보안 권고](https://docs.github.com/ko/code-security/how-tos/report-and-fix-vulnerabilities/report-privately)로
-저장소 관리자에게 비공개로 알려 주세요. 이 저장소의 **Security** 탭에서
-**Report a vulnerability** 를 선택합니다. 해당 메뉴가 보이지 않으면 저장소 관리자에게
-비공개 경로로 연락해 세부 내용을 전달할 방법을 요청해 주세요.
+[GitHub 비공개 취약점 신고 양식](https://github.com/coco-de/co-package/security/advisories/new)으로
+저장소 관리자에게 세부 내용을 전달해 주세요.
 
 신고에는 다음을 적어 주세요.
 

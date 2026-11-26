@@ -5,6 +5,10 @@ description: >-
   uploads so an app's secret keys stay on its server. Forked from dox_storage.
 version: 0.1.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_storage
+topics:
+  - storage
+  - s3
+  - file-upload
 resolution: workspace
 
 environment:

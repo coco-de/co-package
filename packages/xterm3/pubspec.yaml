@@ -5,6 +5,10 @@ description: >-
 version: 6.3.4
 repository: https://github.com/coco-de/co-package/tree/main/packages/xterm3
 issue_tracker: https://github.com/coco-de/co-package/issues
+topics:
+  - terminal
+  - emulator
+  - ime
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

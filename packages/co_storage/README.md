@@ -26,6 +26,9 @@ framework glue — see [FORK.md](FORK.md).
 dart pub add co_storage
 ```
 
+Run the [in-memory example](example/example.dart) to try storing, reading, and
+deleting a file without setting up S3.
+
 ## On the server
 
 ```dart

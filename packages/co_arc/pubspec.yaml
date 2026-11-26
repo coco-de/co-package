@@ -2,6 +2,10 @@ name: co_arc
 description: A Dart terminal UI for listing, registering, and managing self-hosted GitHub Actions runners.
 version: 0.1.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_arc
+topics:
+  - github-actions
+  - ci
+  - cli
 resolution: workspace
 
 environment:
