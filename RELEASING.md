@@ -21,6 +21,10 @@ listed separately. Use the package-specific dry run before uploading it.
 
 ## First releases
 
+pub.dev limits each uploader to four new packages per rolling two minutes
+and twelve per rolling day. Check for a version on pub.dev before retrying
+an interrupted batch. Review the [registry limits](https://github.com/dart-lang/pub-dev/blob/a6b664df3b741107b55f43e96df7811c9c7abe09/app/config/dartlang-pub.yaml#L60-L64).
+
 Publish in this order. Packages in the same row can be published independently
 once their prerequisites appear on pub.dev.
 
