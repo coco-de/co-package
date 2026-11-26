@@ -5,10 +5,10 @@
 #     app:
 #       uses: coco-de/co-package/.github/workflows/flutter-ci.yml@<커밋 SHA>
 #       with:
-#         runs-on: '["self-hosted", "macos", "flutter"]'
 #         build-targets: 'apk,ios'
 #
-# 전제: 러너에 Flutter SDK (+ ios 빌드는 Xcode/CocoaPods) 설치.
+# iOS/macOS 빌드에 필요한 Xcode를 제공하는 macos-latest가 기본값입니다.
+# GitHub-hosted 러너에서는 Flutter stable SDK를 설치합니다.
 
 name: Flutter CI
 
@@ -18,7 +18,7 @@ on:
       runs-on:
         description: 'runs-on 값 (JSON)'
         type: string
-        default: '["self-hosted", "macos", "flutter"]'
+        default: '"macos-latest"'
       working-directory:
         description: 'Flutter 앱 경로'
         type: string
@@ -39,6 +39,11 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        if: runner.environment == 'github-hosted'
+        with:
+          channel: stable
+          cache: true
 
       - name: 툴체인 버전
         run: flutter --version

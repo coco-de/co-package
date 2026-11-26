@@ -48,9 +48,9 @@ coarc list --repo OWNER/REPO
 
 `~/.pub-cache/bin`을 `PATH`에 추가하면 `coarc`를 실행할 수 있습니다. 설치할 버전을 고정하려면 `dart pub global activate co_arc 0.1.0`처럼 버전을 지정합니다. 자세한 키와 옵션은 [TUI 사용법](doc/tui.md)을 참고하세요.
 
-### 3. 러너 연결 확인
+### 3. GitHub 표준 러너 환경 확인
 
-co-package 레포의 **Actions → Runner Smoke Test → Run workflow** 를 실행하면 러너에 잡이 배정되고 Dart 스택 버전이 출력됩니다.
+co-package 레포의 **Actions → Runner Smoke Test → Run workflow**에서 `ubuntu-latest` 또는 `macos-latest`를 선택합니다. Ubuntu는 Dart 컨테이너를, macOS는 Flutter SDK와 iOS 툴체인을 확인합니다.
 
 ### 4. 서비스 레포에서 공용 CI 사용
 
@@ -70,8 +70,6 @@ jobs:
   ci:
     # `@main` 같은 이동 ref 대신 태그 또는 검토한 커밋 SHA 로 고정해 호출한다
     uses: coco-de/co-package/.github/workflows/melos-ci.yml@<커밋 SHA>
-    with:
-      runs-on: '["self-hosted", "macOS", "flutter"]'
 ```
 
 전체 예시는 [`templates/caller-example.yml`](templates/caller-example.yml) 참고.
@@ -87,32 +85,19 @@ jobs:
 
 ## 재사용 워크플로우 목록
 
-| 워크플로우 | 용도 | 주요 입력 |
-|---|---|---|
-| [`melos-ci.yml`](../../.github/workflows/melos-ci.yml) | melos 모노레포 공용 CI (bootstrap → analyze → test) | `runs-on`, `flutter-channel` |
-| [`flutter-ci.yml`](../../.github/workflows/flutter-ci.yml) | 단일 Flutter 앱 CI + 선택적 빌드(apk/ios/web) | `runs-on`, `build-targets` |
-| [`serverpod-ci.yml`](../../.github/workflows/serverpod-ci.yml) | Serverpod 서버 테스트 (Postgres·Redis 서비스 컨테이너) | `runs-on`, `server-directory` |
-| [`jaspr-ci.yml`](../../.github/workflows/jaspr-ci.yml) | Jaspr 웹 빌드/테스트 | `runs-on`, `project-directory` |
-| [`runner-smoke.yml`](../../.github/workflows/runner-smoke.yml) | 러너 연결/환경 확인 (수동 실행) | `runs-on` |
+| 워크플로우 | 용도 | 기본 러너 | 주요 입력 |
+|---|---|---|---|
+| [`melos-ci.yml`](../../.github/workflows/melos-ci.yml) | melos 모노레포 공용 CI (bootstrap → analyze → test) | `ubuntu-latest` | `runs-on`, `analyze-script`, `test-script` |
+| [`flutter-ci.yml`](../../.github/workflows/flutter-ci.yml) | 단일 Flutter 앱 CI + 선택적 빌드(apk/ios/web) | `macos-latest` | `runs-on`, `build-targets` |
+| [`serverpod-ci.yml`](../../.github/workflows/serverpod-ci.yml) | Serverpod 서버 테스트 (Postgres·Redis 서비스 컨테이너) | `ubuntu-latest` | `runs-on`, `server-directory` |
+| [`jaspr-ci.yml`](../../.github/workflows/jaspr-ci.yml) | Jaspr 웹 빌드/테스트 | `ubuntu-latest` | `runs-on`, `project-directory` |
+| [`runner-smoke.yml`](../../.github/workflows/runner-smoke.yml) | 표준 러너 환경 확인 (수동 실행) | `ubuntu-latest` | `target` |
 
 ## 러너 전략
 
-```
-┌─────────────────────────────────────────────────────┐
-│  macOS self-hosted (scripts/)                       │
-│  · iOS/macOS 빌드는 반드시 여기 (Xcode 필요)          │
-│  · 라벨: [self-hosted, macOS, flutter]              │
-├─────────────────────────────────────────────────────┤
-│  ARC on Kubernetes (arc/)                           │
-│  · Linux 컨테이너 러너 오토스케일링                    │
-│  · analyze/test/web·server 빌드, 병렬 잡에 적합       │
-│  · runs-on: arc-dart (러너 스케일 세트 이름)          │
-└─────────────────────────────────────────────────────┘
-```
+`runs-on` 입력을 생략하면 표의 기본 러너를 사용합니다. 단일 라벨은 `runs-on: '"ubuntu-latest"'`처럼 JSON 문자열로, 여러 라벨은 JSON 배열로 전달합니다. Flutter와 Melos CI는 GitHub-hosted 러너에서 Flutter stable SDK를 설치합니다.
 
-- **지금**: Mac 1대를 등록해서 시작 (`scripts/`)
-- **확장**: 잡이 밀리기 시작하면 ARC로 Linux 잡을 분리 (`arc/`)
-- iOS 빌드는 ARC(Linux)에서 불가능하므로 macOS 러너는 계속 유지
+비공개 레포에서 자체 러너가 필요하면 macOS 러너는 [`scripts/`](scripts/)로, Docker를 지원하는 Linux 러너는 [`arc/`](arc/)로 구성한 뒤 `runs-on`을 지정할 수 있습니다. Melos와 Flutter CI에 사용할 자체 러너에는 Flutter SDK를 미리 설치합니다.
 
 ## 보안 수칙
 

@@ -5,7 +5,6 @@
 #     web:
 #       uses: coco-de/co-package/.github/workflows/jaspr-ci.yml@<커밋 SHA>
 #       with:
-#         runs-on: '"arc-dart"'
 #         project-directory: 'apps/web'
 
 name: Jaspr CI
@@ -16,7 +15,7 @@ on:
       runs-on:
         description: 'runs-on 값 (JSON)'
         type: string
-        default: '"arc-dart"'
+        default: '"ubuntu-latest"'
       project-directory:
         description: 'Jaspr 프로젝트 경로'
         type: string
