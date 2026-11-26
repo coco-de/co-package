@@ -15,11 +15,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SIBLINGS = {
     "co_demo_world": ("co_demo_prefs", "co_faker"),
-    "co_example_ui": ("co_demo_prefs",),
     "open_epub": ("open_epub_engine",),
 }
 COUI_DEPENDENCIES = {
-    "co_example_ui": ("coui_flutter",),
     "co_golden_gallery": ("coui_web",),
 }
 
@@ -88,18 +86,21 @@ def hosted_package_exists(name: str) -> bool:
 
 def check_all_packages(packages: dict[str, str]) -> int:
     files = set(git("ls-tree", "-r", "--name-only", "HEAD", "packages").decode().splitlines())
-    paths = {
-        file.removesuffix("/pubspec.yaml")
+    pubspecs = {
+        file.removesuffix("/pubspec.yaml"): git("show", f"HEAD:{file}").decode()
         for file in files
         if file.count("/") == 2 and file.endswith("/pubspec.yaml")
     }
+    release_paths = {
+        path for path, pubspec in pubspecs.items() if pubspec_field(pubspec, "publish_to") != "none"
+    }
     manifest = json.loads(git("show", "HEAD:.release-please-manifest.json"))
-    if paths != set(packages.values()) or paths != set(manifest):
-        raise SystemExit("The release config and version manifest must cover every top-level package.")
+    if release_paths != set(packages.values()) or release_paths != set(manifest):
+        raise SystemExit("The release config and version manifest must match the publishable packages.")
 
     passed = pending = failed = 0
     for name, path in sorted(packages.items()):
-        pubspec = git("show", f"HEAD:{path}/pubspec.yaml").decode()
+        pubspec = pubspecs[path]
         if (
             pubspec_field(pubspec, "name") != name
             or pubspec_field(pubspec, "version") != manifest[path]
@@ -155,7 +156,7 @@ def main() -> int:
 
     if args.check_all:
         if args.package:
-            parser.error("--check-all checks every package")
+            parser.error("--check-all checks every publishable package")
         return check_all_packages(packages)
     if not args.package:
         parser.error("provide a package name or --check-all")
