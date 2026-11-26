@@ -1,0 +1,33 @@
+// Study overlays: cover-up masks and tape, the region selector, the AI pen and
+// floating tool windows. Files not exported here are internal widgets.
+export 'fake_note_ai_pen_service.dart';
+export 'note_ai_pen_controller.dart';
+export 'note_ai_pen_exception.dart';
+export 'note_ai_pen_kind.dart';
+export 'note_ai_pen_panel_style.dart';
+export 'note_ai_pen_request.dart';
+export 'note_ai_pen_result.dart';
+export 'note_ai_pen_result_panel.dart';
+export 'note_ai_pen_service.dart';
+export 'note_floating_window.dart';
+export 'note_floating_window_controller.dart';
+export 'note_floating_window_geometry.dart';
+export 'note_floating_window_host.dart';
+export 'note_floating_window_spec.dart';
+export 'note_floating_window_style.dart';
+export 'note_mask_fill.dart';
+export 'note_mask_fill_image.dart' show NoteMaskImageResolver;
+export 'note_mask_geometry.dart';
+export 'note_mask_object.dart';
+export 'note_mask_ops.dart';
+export 'note_mask_pen_session.dart';
+export 'note_mask_style.dart';
+export 'note_mask_view.dart';
+export 'note_region_geometry.dart';
+export 'note_region_selector.dart';
+export 'note_region_selector_style.dart';
+export 'note_study_overlay_strings.dart';
+export 'note_tape_object.dart';
+export 'note_tape_view.dart';
+export 'register_note_study_objects.dart';
+export 'unconfigured_note_ai_pen_service.dart';

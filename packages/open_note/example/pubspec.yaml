@@ -1,0 +1,42 @@
+name: open_note_example
+description: "Open Note 패키지 데모 앱"
+publish_to: 'none'
+version: 1.0.0+1
+
+# 모노레포 pub workspace 멤버 — open_note · open_epub(→ open_epub_engine)을 로컬
+# 해석한다. 예제 테마는 pub.dev에서 CoUI를 해석한다.
+resolution: workspace
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  coui_flutter: ^0.194.2-beta.1
+  co_example_ui:
+    path: ../../co_example_ui
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  open_note:
+    path: ../
+  open_epub:
+    path: ../../open_epub
+  # 데모 포털(demo.cocode.im)에서 고른 언어 · 테마 이어받기 — 같은 워크스페이스 멤버 (#43)
+  co_demo_prefs:
+    path: ../../co_demo_prefs
+  # 11개 언어 번역 — lib/i18n/*.i18n.json → `dart run slang` (생성물 커밋)
+  intl: any
+  slang: ^4.19.2
+  slang_flutter: ^4.19.0
+  marionette_flutter: ^0.6.0
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/books/

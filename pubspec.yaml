@@ -6,7 +6,7 @@ environment:
   sdk: ">=3.11.0 <4.0.0"
 
 # 워크스페이스 멤버 (단일 루트 lockfile 공유).
-# open_epub·open_board 는 Flutter 패키지이므로 루트 해석에는 `flutter pub get` 이 필요하다.
+# open_epub·open_board·open_note 는 Flutter 패키지이므로 루트 해석에는 `flutter pub get` 이 필요하다.
 workspace:
   - packages/co_arc
   - packages/co_bdd # co-test-gen 저장소에서 이관·개명 (구 co_test_gen)
@@ -23,6 +23,8 @@ workspace:
   - packages/open_epub/example # open_epub → open_epub_engine 을 로컬 해석하도록 워크스페이스 편입
   - packages/open_board
   - packages/open_board/example # 로컬 EPUB · 보드 패키지 + 공유 CoUI 예제 테마
+  - packages/open_note # open_board 를 복제·개명해 필기 노트 기능을 얹은 노트 엔진
+  - packages/open_note/example # 로컬 EPUB · 노트 패키지 + 공유 CoUI 예제 테마
 
 dev_dependencies:
   lints: ^6.0.0
@@ -38,13 +40,15 @@ melos:
     # 쓰므로 dart format 과 결과가 다르다(82 파일). 패키지 내 lefthook 훅이 dcm
     # format 을 강제하므로 여기서는 제외한다. 그 아래 example(open_board_example)도
     # 같은 훅(root: packages/open_board/)의 적용을 받으므로 함께 제외한다.
+    # open_note 는 open_board 를 복제한 패키지라 같은 dcm format 규약을 쓰므로
+    # open_note · open_note_example 도 같은 이유로 제외한다.
     # open_epub 은 lib/test 만 여기서 검사한다. example 은 별도 멤버가 자기
     # SDK 언어 버전으로 검사하며, 공개 CI 에서 빠져도 부모 SDK 로 재해석하지 않는다.
     format:
       run: |
-        dart run melos exec --ignore="open_board" --ignore="open_board_example" --ignore="open_epub" -- dart format --output=none --set-exit-if-changed . &&
+        dart run melos exec --ignore="open_board" --ignore="open_board_example" --ignore="open_note" --ignore="open_note_example" --ignore="open_epub" -- dart format --output=none --set-exit-if-changed . &&
           dart format --output=none --set-exit-if-changed packages/open_epub/lib packages/open_epub/test
-      description: Check formatting for every workspace package (open_board and its example use dcm format).
+      description: Check formatting for every workspace package (open_board, open_note and their examples use dcm format).
 
     test:
       run: dart run melos run test:dart && dart run melos run test:flutter

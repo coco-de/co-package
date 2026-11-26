@@ -29,7 +29,7 @@ once their prerequisites appear on pub.dev.
 
 | Order | Packages | Prerequisites |
 | --- | --- | --- |
-| 1 | `co_arc`, `co_bdd`, `co_demo_prefs`, `co_faker`, `co_golden`, `co_site_metadata`, `co_storage`, `co_xterm2`, `co_xterm3`, `open_board`, `open_epub_engine` | Hosted dependencies already available |
+| 1 | `co_arc`, `co_bdd`, `co_demo_prefs`, `co_faker`, `co_golden`, `co_site_metadata`, `co_storage`, `co_xterm2`, `co_xterm3`, `open_board`, `open_epub_engine`, `open_note` | Hosted dependencies already available |
 | 2 | `co_demo_world` | `co_demo_prefs ^1.0.1`, `co_faker ^0.13.1` |
 | 2 | `open_epub` | `open_epub_engine >=1.1.0 <1.2.0` |
 | 3 | `co_example_ui` | `co_demo_prefs ^1.0.1` and `coui_flutter ^0.194.2-beta.1` |
