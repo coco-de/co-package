@@ -2,6 +2,7 @@ import 'package:co_demo_prefs/co_demo_prefs.dart';
 import 'package:co_example_ui/co_example_ui.dart';
 import 'package:coui_flutter/coui_flutter.dart' as co;
 import 'package:flutter/foundation.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -49,6 +50,7 @@ class TerminalExampleApp extends StatelessWidget {
             scriptCode: locale.scriptCode,
           ),
       ],
+      // ignore: deprecated_member_use
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, child) => ExampleThemeScope(child: child!),
       home: const TerminalPlayground(),

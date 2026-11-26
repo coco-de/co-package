@@ -1,3 +1,4 @@
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:coui_flutter/coui_flutter.dart' as co;
 import 'package:open_board/open_board.dart';

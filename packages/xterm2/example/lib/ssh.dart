@@ -4,7 +4,9 @@ import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:example/src/virtual_keyboard.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/cupertino.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart' show MaterialApp, Brightness;
 import 'package:co_xterm2/xterm.dart';
 

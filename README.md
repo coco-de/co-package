@@ -76,7 +76,7 @@ See [`packages/co_arc/README.md`](packages/co_arc/README.md) for the runner setu
 
 ## Contributing
 
-Run the public checks from a clone with Flutter 3.47.0 and Python 3.9 or later.
+Run the public checks from a clone with Flutter 3.50.1 and Python 3.9 or later.
 
 ```sh
 python3 tool/pages/public_workspace.py verify

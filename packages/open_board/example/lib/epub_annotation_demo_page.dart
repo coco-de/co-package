@@ -7,6 +7,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:open_board/open_board.dart';

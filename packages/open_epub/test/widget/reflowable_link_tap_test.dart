@@ -1,5 +1,6 @@
 // Story: S7.3/S7.5 (E7) — buildReflowableHtml onLinkTap 라우팅 위젯 테스트
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_engine.dart';

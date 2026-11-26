@@ -1,5 +1,6 @@
 import 'package:co_example_ui/co_example_ui.dart';
 import 'package:co_demo_prefs/co_demo_prefs.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import 'i18n/strings.g.dart';

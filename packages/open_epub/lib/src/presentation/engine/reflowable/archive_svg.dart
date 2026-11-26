@@ -7,6 +7,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:html/dom.dart' as dom;

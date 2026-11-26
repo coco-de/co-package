@@ -1,5 +1,6 @@
 // Story: S8.1/S8.2 (E8) — EpubReader 페이지·위치·viewport 콜백 (open-board 연동)
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub_engine/src/api/epub_position.dart';

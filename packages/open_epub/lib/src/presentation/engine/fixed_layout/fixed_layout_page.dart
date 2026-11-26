@@ -3,6 +3,7 @@
 // Story: S1.8 (#14) — InteractiveViewer 핀치 줌 + 더블 탭
 // BDD: F3.1 (viewport fit), F3.2 (핀치 줌 + 더블 탭 원복)
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import 'viewport_fitter.dart';

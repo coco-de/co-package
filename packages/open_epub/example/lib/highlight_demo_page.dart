@@ -31,6 +31,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show BrowserContextMenu;
 import 'package:open_epub/open_epub.dart';

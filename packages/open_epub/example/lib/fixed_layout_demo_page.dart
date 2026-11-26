@@ -7,6 +7,7 @@
 // 줌·페이지 넘김이 정상 동작하는지 확인한다.
 import 'dart:typed_data';
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:open_epub/open_epub.dart';
 

@@ -1,6 +1,7 @@
 // 데모 포털 이어받기 · 11개 언어 · 다크 테마 · 리더 문구 (co-package#44).
 
 import 'package:co_demo_prefs/co_demo_prefs.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,5 +1,6 @@
 import 'package:co_demo_prefs/co_demo_prefs.dart';
 import 'package:co_example_ui/co_example_ui.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -46,6 +47,7 @@ void main() {
         themeMode: mode.value,
         locale: locale,
         supportedLocales: const [Locale('ko'), Locale('en'), Locale('ar')],
+        // ignore: deprecated_member_use
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(

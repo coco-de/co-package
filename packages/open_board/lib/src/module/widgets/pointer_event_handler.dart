@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:open_board/src/module/scribble.notifier.dart';
 import 'package:open_board/src/module/scribble_mode.notifier.dart';

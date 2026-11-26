@@ -1,5 +1,6 @@
 // Story: S8.3 (E8) — FixedLayoutPage 공유 TransformationController 주입
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/presentation/engine/fixed_layout/fixed_layout_page.dart';

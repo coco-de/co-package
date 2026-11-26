@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_board/src/module/state/text_settings.dart';
