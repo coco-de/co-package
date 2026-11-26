@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xterm3/src/utils/debugger.dart';
+import 'package:co_xterm3/src/utils/debugger.dart';
 
 class TerminalDebuggerView extends StatefulWidget {
   const TerminalDebuggerView(

@@ -143,7 +143,7 @@ language that is filled is checked with no edit elsewhere.
 | `lib/src/l10n/<language>/<language>_bundle.dart` | The domain text bundle: every key of `lib/src/l10n/en/en_bundle.dart`, with the same number of texts in the same order, and `allowSameAsEnglish`. |
 | `lib/src/l10n/<language>/<language>_clinic.dart` | The clinic data, a `const CoFakerClinicData` that follows the English data: lists of the same lengths, the currency and price scale, `koreanValues: CoKoreanValues.none`. |
 | `lib/src/l10n/<language>/<language>_saas.dart` | The SaaS data, a `const CoFakerSaasData`, in the same way. |
-| `docs/languages/<language>.md` | The status line (`status: localized`), the glossary, the format conventions, and the review checklist. |
+| `doc/languages/<language>.md` | The status line (`status: localized`), the glossary, the format conventions, and the review checklist. |
 | `test/language_safety/<language>.dart` | The safety conventions of the language: how it marks a fictional name, how general-information texts begin, the phrases that promise a result, and the spellings of real brands in its writing system. |
 | `test/languages/<language>_localization_test.dart` | A new test of what is particular to the language (a new file). |
 

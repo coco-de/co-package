@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/xterm.dart';
 
 void main() {
   group('BufferLine.getText()', () {

@@ -4,7 +4,7 @@ import '../co_l10n_bundle.dart';
 /// with the same number of texts in the same order, so that one seed picks the
 /// same record in English, Korean, and Spanish. See [CoL10nBundle].
 ///
-/// The conventions of the language are in `docs/languages/es.md`, and the ones
+/// The conventions of the language are in `doc/languages/es.md`, and the ones
 /// that a template has to keep are these:
 ///
 /// - it is the Spanish of Spain (`es_ES`): Peninsular words and spellings

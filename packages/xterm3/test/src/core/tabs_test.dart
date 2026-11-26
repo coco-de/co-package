@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm3/src/core/tabs.dart';
+import 'package:co_xterm3/src/core/tabs.dart';
 
 void main() {
   group('TabStops', () {

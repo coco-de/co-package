@@ -15,11 +15,7 @@ Widget tests and Patrol E2E tests serve different purposes but often test the sa
 
 ```yaml
 dev_dependencies:
-  co_bdd:
-    git:
-      url: https://github.com/coco-de/co-package.git
-      path: packages/co_bdd
-      ref: co_bdd-vX.Y.Z # or a commit SHA
+  co_bdd: ^0.3.0
   build_runner: ^2.4.0
 ```
 

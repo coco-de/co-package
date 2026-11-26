@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/xterm.dart';
 
 /// [Terminal.onReply] separates what the terminal answers by itself from what
 /// the user types. Both reach the program over the same wire, so an embedder

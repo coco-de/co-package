@@ -7,10 +7,10 @@
 | 영역 | 내용 | 위치 |
 |---|---|---|
 | 러너 등록 | 로컬 머신(macOS)을 self-hosted 러너로 등록/해제하는 스크립트 | [`scripts/`](scripts/) |
-| 러너 TUI | 러너 상태 조회·등록·해제·서비스 제어를 한 화면에서 (Dart, `coarc`) | [`bin/`](bin/) · [`lib/`](lib/) · [docs/tui.md](docs/tui.md) |
+| 러너 TUI | 러너 상태 조회·등록·해제·서비스 제어를 한 화면에서 (Dart, `coarc`) | [`bin/`](bin/) · [`lib/`](lib/) · [doc/tui.md](doc/tui.md) |
 | ARC | Kubernetes 기반 러너 오토스케일링 (Actions Runner Controller) | [`arc/`](arc/) |
 | 재사용 워크플로우 | 서비스 레포들이 `workflow_call`로 가져다 쓰는 공용 CI | [`.github/workflows/`](../../.github/workflows/) (모노레포 루트) |
-| 문서 | 러너 세팅 런북 | [`docs/`](docs/) |
+| 문서 | 러너 세팅 런북 | [`doc/`](doc/) |
 
 ## 빠른 시작
 
@@ -27,26 +27,26 @@
 ./scripts/register-runner.sh --org coco-de --service
 ```
 
-사전 준비물과 상세 절차는 [docs/self-hosted-runner.md](docs/self-hosted-runner.md) 런북을 따르세요.
+사전 준비물과 상세 절차는 [doc/self-hosted-runner.md](doc/self-hosted-runner.md) 런북을 따르세요.
 
 > `--service`는 launchd 등록에 더해 plist에 `KeepAlive`를 심어 **러너가 죽어도 되살아나게** 합니다.
 > 다만 launchd의 LaunchAgent는 "부팅 시"가 아니라 **"로그인 시"** 로드되므로, 재부팅 후에는 로그인
 > 세션이 생겨야 러너가 돌아옵니다. **FileVault는 켠 채로 유지**하고 계획된 재부팅은
 > `sudo fdesetup authrestart`로 합니다 — 서비스를 켤 때 무엇이 빠졌는지 점검 결과가 출력됩니다.
 > 자세한 내용은
-> [재부팅 후에도 백그라운드로 유지하기](docs/self-hosted-runner.md#재부팅-후에도-백그라운드로-유지하기).
+> [재부팅 후에도 백그라운드로 유지하기](doc/self-hosted-runner.md#재부팅-후에도-백그라운드로-유지하기).
 
 ### 2. (선택) TUI로 관리하기
 
 레포를 clone하지 않고 바로 전역 설치할 수 있습니다:
 
 ```bash
-dart pub global activate --source git https://github.com/coco-de/co-package.git --git-path packages/co_arc
-coarc                     # org coco-de 스코프로 실행 (러너 목록·등록·해제·서비스 제어)
-coarc list --org coco-de  # TUI 없이 목록만 스냅샷 출력
+dart pub global activate co_arc
+coarc --org YOUR_ORG
+coarc list --repo OWNER/REPO
 ```
 
-`~/.pub-cache/bin`이 `PATH`에 있어야 `coarc` 명령을 바로 쓸 수 있습니다 (Dart SDK 설치 시 보통 자동으로 잡힙니다). 최신 버전으로 갱신하려면 같은 `activate` 명령을 다시 실행하세요 — git 소스는 자동 업데이트되지 않습니다. 설치할 버전을 고정하려면 `--git-ref <커밋 SHA>`를 붙입니다. 자세한 키/옵션은 [docs/tui.md](docs/tui.md) 참고.
+`~/.pub-cache/bin`을 `PATH`에 추가하면 `coarc`를 실행할 수 있습니다. 설치할 버전을 고정하려면 `dart pub global activate co_arc 0.1.0`처럼 버전을 지정합니다. 자세한 키와 옵션은 [TUI 사용법](doc/tui.md)을 참고하세요.
 
 ### 3. 러너 연결 확인
 

@@ -5,7 +5,7 @@
   Immutable, aligned reads and seeded picks preserve the existing random stream
   behavior; other UI languages explicitly fall back to English. Export the
   catalog with `dart run co_faker:ui_copy --locale ko` for design scripts.
-  See `docs/ui-copy.md` for source precedence, exceptions, and rendering checks.
+  See `doc/ui-copy.md` for source precedence, exceptions, and rendering checks.
 
 - Cover the 34 fields of the demo W1 recipes (co-package#78): new roles and
   `entityRoles` in the fitness, daycare, meetup, content, helpdesk, workplace,
@@ -14,14 +14,14 @@
   `contactLast4`, `shelfSlot`, `extension`, `arrivalEta`, `stayMonth`,
   signatures) are the same in every language; display texts come from ten new
   bundle keys written in all eleven languages (AI draft, native review
-  pending). See `docs/domain-packs.md`.
+  pending). See `doc/domain-packs.md`.
 - Localize the domain mock data in Arabic (`ar`, co-package#71): the domain
   text bundle (242 keys), the clinic data, and the SaaS data, in Modern
   Standard Arabic as written in Saudi Arabia, right to left with the digits
   0–9, SAR (`1,234.00 ر.س`) and 15 % VAT. The same seed picks the translation
   of the same record. `dart run co_faker:coverage --language ar --strict`
   passes. The translation is an AI draft for native review
-  (`docs/languages/ar.md`).
+  (`doc/languages/ar.md`).
 - Behavior change: the clinic, SaaS, and domain pack output of `ar`, `ar_SA`,
   and `forLanguage('ar')` changes from English to Arabic.
 - Localize the domain mock data in Spanish (`es`, co-package#71): the domain
@@ -29,7 +29,7 @@
   Spanish with EUR (`1.234,00 €`) and 21 % IVA. The same seed picks the
   translation of the same record. `dart run co_faker:coverage --language es
   --strict` passes. The translation is an AI draft for native review
-  (`docs/languages/es.md`).
+  (`doc/languages/es.md`).
 - Behavior change: the clinic, SaaS, and domain pack output of `es`, `es_ES`,
   and `forLanguage('es')` changes from English to Spanish.
 - Add the national locales of Spain (`es_ES`) and Saudi Arabia (`ar_SA`) for
@@ -48,7 +48,7 @@
   `fr_FR`, `ru_RU`, `it_IT`, `en_CA`, `pt_BR`. They carry gendered names
   (Russian family names agree with the sex), coherent city, region and postal
   codes, national address order, romanized usernames, reserved email domains,
-  and currency-aware prices. See `docs/countries.md`.
+  and currency-aware prices. See `doc/countries.md`.
 - Add `CoFakerCountries` (`all`, `gdpTop10`, `byCode`), `CoFaker.forCountry`,
   `CoFaker.country`, `CoFakerLocales.resolve`, `address.postalAddress()`,
   `region()`, `regionCode()`, `locality()`, `postalCodeFor()`, the `region`
@@ -111,7 +111,7 @@
   table of supported languages, computed from the registries, and
   `dart run co_faker:coverage --language <code> --strict` runs the gate and
   exits with 1 when it fails. `CoL10nBundle.allowSameAsEnglish` lists the texts
-  that equal English on purpose (units, acronyms, names). `docs/languages/`
+  that equal English on purpose (units, acronyms, names). `doc/languages/`
   holds one file for each language, with a glossary, and a test checks that no
   term has two translations and that no forbidden form is written.
 - Add the bundle key `fandom.creatorName`: the two approved creator names of
@@ -129,7 +129,7 @@
   the register of the language, fictional names, and no Korean-only values. The
   same seed picks the same record as in English and Korean. Every language
   passes `dart run co_faker:coverage --language <code> --strict`, and
-  `docs/languages/<code>.md` holds its glossary and a native-speaker review
+  `doc/languages/<code>.md` holds its glossary and a native-speaker review
   checklist. These translations are AI drafts that no native speaker has
   reviewed yet.
 - Behavior change: when a language gets domain data (its bundle, clinic data

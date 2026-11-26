@@ -14,7 +14,7 @@ import '../../korean_values.dart';
 /// ([CoKoreanValues.none]).
 ///
 /// The texts are a draft that a native speaker has to review: see
-/// `docs/languages/de.md`. A patient is addressed with `Sie`.
+/// `doc/languages/de.md`. A patient is addressed with `Sie`.
 ///
 /// `de`, `de_DE`, and `CoFaker.forLanguage('de')` read it.
 const CoFakerClinicData deClinic = CoFakerClinicData(

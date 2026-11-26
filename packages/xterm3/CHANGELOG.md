@@ -1,3 +1,8 @@
+## 6.3.4 (co_xterm3)
+
+- First pub.dev release of the Cocode fork under `co_xterm3`.
+- Retains the desktop IME composition fixes and the upstream AGPL and MIT notices.
+
 ## [6.3.4+cocode.1] - 2026-09-28
 
 Cocode fork of 6.3.4 — see [FORK.md](FORK.md).
@@ -718,4 +723,3 @@ Cocode fork of 6.3.4 — see [FORK.md](FORK.md).
 
 [#186]: https://github.com/TerminalStudio/xterm.dart/pull/186
 [#190]: https://github.com/TerminalStudio/xterm.dart/pull/190
- 

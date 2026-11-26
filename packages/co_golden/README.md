@@ -28,15 +28,8 @@ the captures as a searchable HTML gallery.
 
 ```yaml
 dev_dependencies:
-  co_golden:
-    git:
-      url: https://github.com/coco-de/co-package.git
-      path: packages/co_golden
-      ref: co_golden-v<version>
+  co_golden: ^0.4.0
 ```
-
-Pin a release tag, and use the **same ref for every package of your
-workspace** that depends on co_golden (see the repository README).
 
 Declare the tags the matrix adds in `dart_test.yaml`:
 

@@ -35,7 +35,7 @@ void _expectType(Object? value, String type, String qualified) {
 
 void main() {
   final inventory =
-      jsonDecode(File('docs/prd_domain_inventory.json').readAsStringSync())
+      jsonDecode(File('doc/prd_domain_inventory.json').readAsStringSync())
           as Map<String, dynamic>;
   final sources = (inventory['sources'] as List).cast<Map<String, dynamic>>();
   final types = (inventory['types'] as Map).cast<String, String>();

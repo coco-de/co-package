@@ -1,7 +1,6 @@
 name: co_arc
-description: Cocode Actions Runner Cluster — self-hosted 러너 관리 TUI(coarc)와 등록 스크립트, ARC 설정, 재사용 워크플로우.
+description: A Dart terminal UI for listing, registering, and managing self-hosted GitHub Actions runners.
 version: 0.1.0
-publish_to: none
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_arc
 resolution: workspace
 

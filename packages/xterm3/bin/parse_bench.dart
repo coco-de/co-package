@@ -13,8 +13,8 @@
 // Every workload is fed in 8 KiB chunks, the size a PTY read hands over, and
 // the terminal is sized to the same 170x50 grid the render comparison uses.
 
-import 'package:xterm3/src/core/escape/parser.dart';
-import 'package:xterm3/src/terminal.dart';
+import 'package:co_xterm3/src/core/escape/parser.dart';
+import 'package:co_xterm3/src/terminal.dart';
 
 import 'noop_escape_handler.dart';
 

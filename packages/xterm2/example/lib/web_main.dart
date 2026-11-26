@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/xterm.dart';
 
 final _themeMode = ValueNotifier(ThemeMode.system);
 final _locale = ValueNotifier<DemoLocale>(DemoLocale.en);

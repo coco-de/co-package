@@ -1,4 +1,4 @@
-import 'package:xterm3/src/core/cell.dart';
+import 'package:co_xterm3/src/core/cell.dart';
 
 enum TerminalCursorType {
   block,

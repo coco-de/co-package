@@ -1,10 +1,8 @@
-name: xterm2
-description: Maintained Flutter terminal emulator package with fast rendering and broad VT/xterm compatibility.
-version: 5.3.0+cocode.1
-publish_to: none
-homepage: https://github.com/SoFluffyOS/xterm2
+name: co_xterm2
+description: Flutter terminal emulator with VT/xterm compatibility and desktop IME composition fixes. Cocode's MIT-licensed fork of xterm2.
+version: 5.3.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/xterm2
-issue_tracker: https://github.com/leynier/xterm2/issues
+issue_tracker: https://github.com/coco-de/co-package/issues
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

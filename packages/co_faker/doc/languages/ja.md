@@ -205,7 +205,7 @@ Texts that the author is not sure about:
 
 What the gate of the language does not see, and what a language file cannot
 change. They are assumptions of the generators and of the gate, and
-`docs/languages/README.md` lists them too:
+`doc/languages/README.md` lists them too:
 
 - The Korean number formats. `clinic.approvalNo` and the role `saas.recipient`,
   and the fields `rrnMasked` of `clinic.patient` and `businessNumber` of

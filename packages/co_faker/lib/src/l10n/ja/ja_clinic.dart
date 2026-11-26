@@ -23,7 +23,7 @@ import '../../korean_values.dart';
 /// - No Korean-only value appears: [CoKoreanValues.none].
 ///
 /// `ja`, `ja_JP`, and `CoFaker.forLanguage('ja')` read it. The translation is a
-/// draft; `docs/languages/ja.md` lists what a native speaker has to review.
+/// draft; `doc/languages/ja.md` lists what a native speaker has to review.
 const CoFakerClinicData jaClinic = CoFakerClinicData(
   specialties: <CoSpecialtySpec>[
     (name: '皮膚科', clinicSuffix: '皮膚科クリニック'),

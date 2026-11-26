@@ -1,9 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm3/src/ui/infinite_scroll_view.dart';
-import 'package:xterm3/src/ui/scroll_handler.dart';
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/src/ui/infinite_scroll_view.dart';
+import 'package:co_xterm3/src/ui/scroll_handler.dart';
+import 'package:co_xterm3/xterm.dart';
 
 /// These tests target [TerminalScrollGestureHandler] directly: unlike
 /// [TerminalGestureHandler], its constructor takes only plain values and

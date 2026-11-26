@@ -136,17 +136,9 @@ changes; their support tables show it.
 
 ## Installing
 
-Pin the release commit; co_faker and co_demo_prefs come from the same commit
-through relative paths, so every package of the workspace resolves to one ref.
-
-```yaml
-dependencies:
-  co_demo_world:
-    git:
-      url: https://github.com/coco-de/co-package.git
-      path: packages/co_demo_world
-      ref: <co_demo_world-vX.Y.Z commit SHA>
+```sh
+dart pub add co_demo_world
 ```
 
-If the app also depends on co_faker or co_demo_prefs directly, use the **same
-ref** (cocode S-9).
+Pub resolves compatible versions of `co_faker` and `co_demo_prefs` together
+with the app's other hosted dependencies.

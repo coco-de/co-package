@@ -1,5 +1,6 @@
 name: co_package_workspace
 description: Cocode Dart and Flutter package workspace.
+publish_to: none
 
 environment:
   sdk: ">=3.11.0 <4.0.0"

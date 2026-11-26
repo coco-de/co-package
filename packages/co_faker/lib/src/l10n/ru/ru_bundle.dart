@@ -4,7 +4,7 @@ import '../co_l10n_bundle.dart';
 /// same number of texts in the same order, so that one seed picks the same
 /// record in English, Korean, and Russian. See [CoL10nBundle].
 ///
-/// The conventions of the language are in `docs/languages/ru.md`, and the ones
+/// The conventions of the language are in `doc/languages/ru.md`, and the ones
 /// that a template has to keep are these:
 ///
 /// - the register is `вы`: a sentence that speaks to a person uses the plural

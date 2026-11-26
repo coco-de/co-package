@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:xterm2/src/core/buffer/buffer.dart';
-import 'package:xterm2/src/core/buffer/cell_offset.dart';
-import 'package:xterm2/src/core/buffer/line.dart';
-import 'package:xterm2/src/core/buffer/range_line.dart';
-import 'package:xterm2/src/terminal.dart';
+import 'package:co_xterm2/src/core/buffer/buffer.dart';
+import 'package:co_xterm2/src/core/buffer/cell_offset.dart';
+import 'package:co_xterm2/src/core/buffer/line.dart';
+import 'package:co_xterm2/src/core/buffer/range_line.dart';
+import 'package:co_xterm2/src/terminal.dart';
 
 const _defaultSearchResultLimit = 1000;
 

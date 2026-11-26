@@ -22,15 +22,8 @@ framework glue — see [FORK.md](FORK.md).
 | `package:co_storage/co_storage.dart` | a **server** — it holds the storage keys | `dart:io` |
 | `package:co_storage/client.dart` | a **client** — Flutter (mobile, desktop, web) or a Jaspr page | `package:http` only; compiles for the web |
 
-Depend on it by git tag until it is on pub.dev (`<package>-v<version>`):
-
-```yaml
-dependencies:
-  co_storage:
-    git:
-      url: https://github.com/coco-de/co-package.git
-      path: packages/co_storage
-      ref: co_storage-v0.1.0
+```sh
+dart pub add co_storage
 ```
 
 ## On the server

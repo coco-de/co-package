@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:test/test.dart';
-import 'package:xterm2/core.dart';
+import 'package:co_xterm2/core.dart';
 
 void main() {
   test('Terminal batches printable ASCII parser runs', () {

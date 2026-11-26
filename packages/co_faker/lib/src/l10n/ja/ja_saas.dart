@@ -19,7 +19,7 @@ import '../../saas_ops.dart';
 ///   [CoKoreanValues.none].
 ///
 /// `ja`, `ja_JP`, and `CoFaker.forLanguage('ja')` read it. The translation is a
-/// draft; `docs/languages/ja.md` lists what a native speaker has to review.
+/// draft; `doc/languages/ja.md` lists what a native speaker has to review.
 const CoFakerSaasData jaSaas = CoFakerSaasData(
   plans: <CoPlanSpec>[
     (

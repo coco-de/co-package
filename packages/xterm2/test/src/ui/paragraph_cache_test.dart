@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm2/src/ui/paragraph_cache.dart';
+import 'package:co_xterm2/src/ui/paragraph_cache.dart';
 
 void main() {
   test('replacement, eviction and disposal release native paragraphs', () {

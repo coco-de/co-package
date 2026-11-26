@@ -231,7 +231,7 @@ has no bundle.
 - A custom locale adds a language with `CoFakerLocale.l10n`; see the README.
 - A language is finished when `dart run co_faker:coverage --language <code>
   --strict` passes: its texts are written in the language, line up with
-  English, and leave no key a stub. `docs/languages/README.md` describes the
+  English, and leave no key a stub. `doc/languages/README.md` describes the
   gate and the files a language fills.
 
 ## Authored-data restrictions
