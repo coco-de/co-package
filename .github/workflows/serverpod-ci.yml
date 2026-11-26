@@ -1,20 +1,18 @@
 # 재사용 워크플로우 — Serverpod 서버 테스트
 #
-# Postgres·Redis 서비스 컨테이너를 띄우므로 Docker 가능한 Linux 러너가 필요합니다.
-# (ARC dind 러너: runs-on: arc-dart / GitHub-hosted: ubuntu-latest)
-# macOS self-hosted 러너에서는 services:가 동작하지 않습니다.
+# 기본값인 ubuntu-latest에서 Postgres·Redis 서비스 컨테이너를 실행합니다.
+# runs-on을 지정할 때도 Docker를 지원하는 Linux 러너를 사용하세요.
 #
 # 서비스 레포에서 (호출 대상은 `@main` 같은 이동 ref 대신 태그 또는 커밋 SHA 로 고정):
 #   jobs:
 #     server:
 #       uses: coco-de/co-package/.github/workflows/serverpod-ci.yml@<커밋 SHA>
 #       with:
-#         runs-on: '"arc-dart"'
 #         server-directory: 'packages/my_server'
 #
 # 전제: 서버의 config/test.yaml이 아래 서비스 접속 정보와 일치해야 합니다.
-#   database: host localhost, port 5432, name serverpod_test, user postgres
-#   redis:    host localhost, port 6379
+#   database: host postgres, port 5432, name serverpod_test, user postgres
+#   redis:    host redis, port 6379
 
 name: Serverpod CI
 
@@ -24,7 +22,7 @@ on:
       runs-on:
         description: 'runs-on 값 (JSON)'
         type: string
-        default: '"arc-dart"'
+        default: '"ubuntu-latest"'
       server-directory:
         description: 'Serverpod 서버 패키지 경로'
         type: string

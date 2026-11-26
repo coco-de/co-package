@@ -1,18 +1,12 @@
 # 서비스 레포에 복사해서 쓰는 예시 — .github/workflows/ci.yml
 #
 # 구성 예: melos 모노레포 (Flutter 앱 + Jaspr 웹 + Serverpod 서버)
-#   - 모노레포 전체 analyze/test → macOS self-hosted 러너
-#   - Serverpod 서버 테스트     → ARC Linux 러너 (Postgres/Redis 컨테이너)
-#   - Jaspr 웹 빌드             → ARC Linux 러너
+#   - 모노레포 전체 analyze/test, Serverpod 테스트, Jaspr 빌드 → ubuntu-latest
+#   - Flutter 앱 빌드 (iOS 포함) → macos-latest
 #
-# 사용 전 확인:
-#   1. co-package → Settings → Actions → General → Access 를
-#      "Accessible from repositories in the coco-de organization"으로 설정
-#   2. 러너가 등록되어 있어야 함 (co-package/packages/co_arc/scripts 또는 arc/)
-#   3. 아래 <커밋 SHA> 를 co-package 에서 검토한 커밋의 40자리 SHA(또는 태그)로 바꾼다 —
-#      `@main` 같은 이동 ref 로 부르지 않는다.
-#        gh api repos/coco-de/co-package/commits/main --jq .sha
-#      고정하면 호출 대상이 바뀌는 시점을 이 저장소가 정하고, 올릴 때 변경을 직접 확인하게 된다.
+# 아래 <커밋 SHA> 는 co-package 에서 검토한 커밋의 40자리 SHA(또는 태그)로 바꾼다.
+# 호출 대상의 업데이트를 직접 관리할 수 있도록 고정한다.
+#   gh api repos/coco-de/co-package/commits/main --jq .sha
 
 name: CI
 
@@ -31,34 +25,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # 모노레포 전체: bootstrap → analyze → test (macOS self-hosted)
+  # 모노레포 전체: bootstrap → analyze → test (ubuntu-latest)
   monorepo:
     uses: coco-de/co-package/.github/workflows/melos-ci.yml@<커밋 SHA>
-    with:
-      runs-on: '["self-hosted", "macos", "flutter"]'
-      # melos.yaml에 scripts.analyze / scripts.test가 있으면:
-      # analyze-script: analyze
-      # test-script: test
+    # melos.yaml에 scripts.analyze / scripts.test가 있으면:
+    # with:
+    #   analyze-script: analyze
+    #   test-script: test
 
-  # Serverpod 서버 테스트 (ARC Linux + Postgres/Redis)
+  # Serverpod 서버 테스트 (ubuntu-latest + Postgres/Redis)
   server:
     uses: coco-de/co-package/.github/workflows/serverpod-ci.yml@<커밋 SHA>
     with:
-      runs-on: '"arc-dart"'
       server-directory: packages/my_project_server
 
-  # Jaspr 웹 빌드 (ARC Linux)
+  # Jaspr 웹 빌드 (ubuntu-latest)
   web:
     uses: coco-de/co-package/.github/workflows/jaspr-ci.yml@<커밋 SHA>
     with:
-      runs-on: '"arc-dart"'
       project-directory: apps/web
       upload-artifact: true
 
-  # 릴리스 빌드가 필요하면 (iOS는 macOS 러너 필수):
+  # 릴리스 빌드가 필요하면 (macos-latest):
   # app-build:
   #   uses: coco-de/co-package/.github/workflows/flutter-ci.yml@<커밋 SHA>
   #   with:
-  #     runs-on: '["self-hosted", "macos", "flutter"]'
   #     working-directory: apps/mobile
   #     build-targets: 'apk,ios'

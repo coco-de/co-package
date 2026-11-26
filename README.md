@@ -73,7 +73,13 @@ a tag or a reviewed commit SHA instead of a moving ref such as `main`:
 uses: coco-de/co-package/.github/workflows/melos-ci.yml@<commit SHA>
 ```
 
-See [`packages/co_arc/README.md`](packages/co_arc/README.md) for the runner setup.
+Flutter CI defaults to `macos-latest` to support Apple builds. Melos, Jaspr, and
+Serverpod CI default to `ubuntu-latest`. Standard runner compute is free and
+unlimited when the calling repository is public.
+[Standard runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories) ·
+[Reusable workflow billing](https://docs.github.com/en/actions/concepts/billing-and-usage#billing-for-reusable-workflows)
+
+See the [workflow inputs and runner setup guide](packages/co_arc/README.md).
 
 ## Contributing
 

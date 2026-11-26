@@ -1,6 +1,4 @@
-# 러너 연결 확인용 스모크 테스트
-# Actions 탭에서 수동 실행(Run workflow)하면 러너에 잡이 배정되는지,
-# Dart 스택이 제대로 깔려 있는지 확인할 수 있습니다.
+# GitHub 표준 러너와 Dart/Flutter 실행 환경을 확인하는 수동 워크플로우
 
 name: Runner Smoke Test
 
@@ -10,35 +8,39 @@ on:
       target:
         description: '확인할 러너'
         type: choice
-        default: macos-selfhosted
+        default: ubuntu-latest
         options:
-          - macos-selfhosted
-          - arc-dart
+          - ubuntu-latest
+          - macos-latest
 
 permissions:
   contents: read
 
 jobs:
   smoke-macos:
-    if: inputs.target == 'macos-selfhosted'
-    runs-on: [self-hosted, macos, flutter]
+    if: inputs.target == 'macos-latest'
+    runs-on: macos-latest
     steps:
       - name: 러너 정보
         run: |
           echo "runner  : $RUNNER_NAME"
           echo "os/arch : $(uname -s) $(uname -m)"
-          echo "host    : $(hostname)"
-      - name: Dart 스택 확인
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version-file: .fvmrc
+          channel: stable
+          cache: true
+      - name: Flutter 및 iOS 툴체인 확인
         run: |
-          which dart && dart --version || echo "⚠️ dart 없음"
-          which flutter && flutter --version || echo "⚠️ flutter 없음"
-          which melos && melos --version || echo "ℹ️ melos 없음 (잡에서 pub global activate 예정이면 무시)"
-          which pod && pod --version || echo "ℹ️ CocoaPods 없음 (iOS 빌드 안 하면 무시)"
-          xcodebuild -version 2>/dev/null || echo "ℹ️ Xcode 없음 (iOS 빌드 안 하면 무시)"
+          flutter --version
+          dart --version
+          pod --version
+          xcodebuild -version
 
-  smoke-arc:
-    if: inputs.target == 'arc-dart'
-    runs-on: arc-dart
+  smoke-ubuntu:
+    if: inputs.target == 'ubuntu-latest'
+    runs-on: ubuntu-latest
     container:
       image: dart:stable
     steps:
