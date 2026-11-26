@@ -23,8 +23,7 @@ environment:
 dependencies:
   co_example_ui:
     path: ../../co_example_ui
-  co_demo_prefs:
-    path: ../../co_demo_prefs
+  co_demo_prefs: ^1.0.1
   coui_flutter: any
   co_xterm2:
     path: ../
@@ -105,6 +104,8 @@ flutter:
 
 # Standalone example: keep siblings at the workspace release commit.
 dependency_overrides:
+  co_demo_prefs:
+    path: ../../co_demo_prefs
   coui_flutter:
     git:
       url: https://github.com/coco-de/coui.git

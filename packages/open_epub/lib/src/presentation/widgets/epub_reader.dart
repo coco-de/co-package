@@ -10,6 +10,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show listEquals;
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';

@@ -4,6 +4,7 @@
 // 합성값(`scaling × textScaler`)을 `MediaQuery.textScaler` 로 얹는 최소 앱으로
 // 같은 실패 모드를 재현한다 — 판정 함수가 잡는지가 관심사다.
 import 'package:co_bdd/co_bdd.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

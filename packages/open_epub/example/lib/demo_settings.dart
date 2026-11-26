@@ -1,6 +1,7 @@
 import 'package:co_example_ui/co_example_ui.dart';
 // 데모 포털(demo.cocode.im) 이어받기 · 테마 (co-package#44).
 import 'package:co_demo_prefs/co_demo_prefs.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import 'i18n/strings.g.dart';

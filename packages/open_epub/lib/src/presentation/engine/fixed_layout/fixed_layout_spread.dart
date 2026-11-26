@@ -2,6 +2,7 @@
 // Story: S1.9 (#15) — Fixed Layout spread (1-page / 2-page) + L/R 슬롯
 // BDD: F3.3 (auto spread breakpoint), F3.5 (page-spread-left/right 슬롯 존중)
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';

@@ -6,6 +6,7 @@
 // vertical-rl은 우→좌(기본), vertical-lr은 좌→우로 배치한다. 복잡한 HTML(이미지·
 // SVG·수식·표)은 이 경로를 쓰지 않고 기존 가로 렌더로 폴백한다([isSimpleTextContent]).
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 /// 본문에 세로쓰기(`writing-mode: vertical-rl|vertical-lr`)가 있는지.

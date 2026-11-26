@@ -14,6 +14,7 @@
 // - 페이지 넘김 — 수평 스와이프(줌 1.0x일 때) + [FixedLayoutEngineState.jumpToSpine]
 //   프로그램적 이동. spread 렌더 중에는 row 단위로 이동한다 (kobic#7576)
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';

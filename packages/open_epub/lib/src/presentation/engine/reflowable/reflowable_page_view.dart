@@ -39,6 +39,7 @@
 import 'dart:async';
 import 'dart:ui' show lerpDouble;
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import 'package:open_epub_engine/open_epub_engine.dart';

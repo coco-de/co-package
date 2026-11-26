@@ -1,6 +1,6 @@
 # Releasing to pub.dev
 
-Use Python 3.9 or later and the Dart bundled with Flutter 3.47.0, the SDK used by CI.
+Use Python 3.9 or later and the Dart bundled with Flutter 3.50.1, the SDK used by CI.
 The release tool packages only files committed at `HEAD`. It resolves hosted
 dependencies without the repository's local workspace members or CoUI Git
 overrides. Run it from the commit you intend to release.

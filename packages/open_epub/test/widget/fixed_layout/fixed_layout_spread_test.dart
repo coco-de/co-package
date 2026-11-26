@@ -1,6 +1,7 @@
 // Story: S1.9 (#15) — FixedLayoutEngine spread mode widget tests
 // BDD: F3.3 (auto spread 1024px breakpoint), F3.5 (L/R 슬롯 존중)
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub_engine/src/api/epub_book.dart';

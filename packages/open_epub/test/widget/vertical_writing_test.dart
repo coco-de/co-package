@@ -1,5 +1,6 @@
 // Story: S15.4 (#111) — 세로쓰기 실용 조판 위젯/통합 테스트 (gap #4 조판분)
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';

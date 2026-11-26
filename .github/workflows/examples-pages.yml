@@ -28,9 +28,6 @@ permissions:
 concurrency:
   group: pages
 
-env:
-  FLUTTER_VERSION: "3.47.0"
-
 jobs:
   build:
     if: github.ref == 'refs/heads/main'
@@ -73,7 +70,7 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         if: steps.mode.outputs.prebuilt == 'false'
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
           channel: stable
           cache: true
 

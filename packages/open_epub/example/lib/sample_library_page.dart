@@ -5,6 +5,7 @@
 //
 // 저장소에 없는 로컬 전용 픽스처(nohoechan · accessible_epub_3)는 앱 번들에
 // 들어 있을 때만 보인다 — 공개 데모(Pages)에서는 열 수 없는 항목을 숨긴다.
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 

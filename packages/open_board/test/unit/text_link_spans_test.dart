@@ -3,6 +3,7 @@
 // (singleOrNull/firstOrNull) 으로 바꾸지 않는다. (kobic 에서도 이 규칙은 style 로
 // 완화됨 — project-config.md.)
 // ignore_for_file: avoid-unsafe-collection-methods
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';

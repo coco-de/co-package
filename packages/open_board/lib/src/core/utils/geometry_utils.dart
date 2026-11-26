@@ -4,6 +4,7 @@ import 'dart:math' as math;
 // 🐦 Flutter imports:
 
 // 🌎 Project imports:
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
 

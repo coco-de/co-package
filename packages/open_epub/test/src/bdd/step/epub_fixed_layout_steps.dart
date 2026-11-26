@@ -4,6 +4,7 @@
 // FixedLayoutEngine을 session.book + session.resources 기반 pageBuilder로
 // pump한다 (페이지 XHTML의 viewport meta에서 논리 크기를 읽는다).
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub.dart';

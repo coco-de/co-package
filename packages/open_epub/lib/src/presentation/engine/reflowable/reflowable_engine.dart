@@ -15,6 +15,7 @@
 
 import 'dart:typed_data';
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';

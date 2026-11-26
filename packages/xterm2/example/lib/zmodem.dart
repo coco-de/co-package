@@ -5,7 +5,9 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:file_picker/file_picker.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/cupertino.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart' show MaterialApp, Brightness;
 import 'package:path/path.dart' as path;
 import 'package:co_xterm2/xterm.dart';

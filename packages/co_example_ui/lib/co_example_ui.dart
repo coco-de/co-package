@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:co_demo_prefs/co_demo_prefs.dart';
 import 'package:coui_flutter/coui_flutter.dart' as co;
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 /// The same resolved CoUI palette drives Material content and CoUI controls.

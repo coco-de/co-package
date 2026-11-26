@@ -15,9 +15,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  FLUTTER_VERSION: "3.47.0"
-
 jobs:
   # 이식(epub_pro CFI) 코드의 attribution 누락 차단 — SDK 불필요.
   license-check:
@@ -39,7 +36,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
           channel: stable
           cache: true
       - name: Verify the public workspace
@@ -69,7 +66,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
           channel: stable
           cache: true
       - run: flutter pub get
@@ -89,7 +86,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
           channel: stable
           cache: true
       - run: flutter pub get --no-example

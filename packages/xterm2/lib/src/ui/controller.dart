@@ -1,3 +1,4 @@
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 import 'package:co_xterm2/src/base/disposable.dart';

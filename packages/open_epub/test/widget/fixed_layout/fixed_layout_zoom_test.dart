@@ -1,6 +1,7 @@
 // Story: S1.8 (#14) — FixedLayoutPage 핀치 줌 + 더블 탭 tests
 // BDD: F3.2 (핀치 줌 인 + 최대 4.0x + 더블 탭 원복)
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/presentation/engine/fixed_layout/fixed_layout_page.dart';

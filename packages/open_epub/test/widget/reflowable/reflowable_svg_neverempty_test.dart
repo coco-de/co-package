@@ -1,6 +1,7 @@
 // Story: S11.4 (#91) — 인라인 SVG 렌더(fwfh_svg) + never-empty 계약(ADR-009)
 // BDD: F2.5 확장 (이미지/SVG/수식 placeholder), design gate C-coverage
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_svg/flutter_svg.dart';

@@ -6,6 +6,7 @@
 // 2차 방어(defense-in-depth)를 검증한다. 선택은 fwfh가 선택 가능한 RichText로
 // 렌더하는지, 하이라이트는 openepub-hl 링크가 렌더·탭·재배치되는지 회귀한다.
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';

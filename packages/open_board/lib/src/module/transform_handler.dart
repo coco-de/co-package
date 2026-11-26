@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 /// 선택된 요소의 이동/크기조절/회전을 처리하는 공통 핸들러

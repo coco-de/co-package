@@ -1,5 +1,6 @@
 import 'dart:ui' show PointerDeviceKind;
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/src/data/model/protobuf/scribble.pb.dart';
