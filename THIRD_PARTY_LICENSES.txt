@@ -1,0 +1,233 @@
+THIRD-PARTY LICENSES
+====================
+
+This repository incorporates source code from third-party projects. Their
+license notices are reproduced below as required.
+
+
+--------------------------------------------------------------------------------
+epub_pro — CFI subsystem (packages/open_epub_engine/lib/src/cfi/)
+--------------------------------------------------------------------------------
+
+Ported (adapted) from epub_pro, lib/src/cfi/{core,dom}/ — the EPUB CFI
+parsing/serialization/DOM-navigation primitives only. epub_pro's own book model
+(ref_entities) and the layers coupled to it (epub/, tracking/, split mappers)
+were NOT ported; open_epub_engine bridges its own EpubBook via a self-authored
+adapter (S12.2).
+
+Source: https://github.com/watate/epub_pro
+Origin: https://github.com/orthros/dart-epub
+
+MIT License
+
+Copyright (c) 2017 Colin Nelson
+Copyright (c) 2025 Walter Tay Ann Lee
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+--------------------------------------------------------------------------------
+IDPF EPUB 3 Samples — bundled sample EPUBs (packages/open_epub/example/assets/)
+--------------------------------------------------------------------------------
+
+Bundled unmodified (byte-for-byte) from the IDPF/W3C EPUB 3 Community Group's
+public sample corpus, for use as public-demo content in the example app
+(#248). Source repository: https://github.com/IDPF/epub3-samples (release
+20230704). Per that repository's README, samples are licensed CC-BY-SA 3.0
+unless stated otherwise in the sample table or the file's own metadata.
+
+georgia-cfi.epub
+  Title: Georgia (Encyclopaedia Britannica, 11th Edition, Volume 11, Slice 7)
+  Creator: Various — source text: Encyclopaedia Britannica, 11th ed. (1911,
+    public domain), via Project Gutenberg
+  License: CC-BY-SA 3.0 (repository default; no override in file/table)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/georgia-cfi.epub
+
+moby-dick-mo.epub
+  Title: Moby-Dick (with Media Overlays)
+  Creator: Herman Melville (1851, public domain); narration: Stuart Wills
+  License: CC-BY-SA 3.0 (repository default; no override in file/table)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/moby-dick-mo.epub
+
+mymedia_lite.epub
+  Title: ガリ版の話
+  Creator: 津野海太郎; Publisher: 株式会社ボイジャー
+  License: CC-BY-SA 3.0 (repository default; no override in file/table)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/mymedia_lite.epub
+
+regime-anticancer-arabic.epub
+  Title: Le Vrai Régime anti-cancer
+  Creator: Pr David Khayat, Nathalie Hutter-Lardeau, Marina Khalil Fayad
+  License: CC-BY-SA 3.0 (stated in file metadata)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/regime-anticancer-arabic.epub
+
+wasteland.epub
+  Title: The Waste Land
+  Creator: T.S. Eliot
+  License: CC-BY-SA 3.0 (stated in file metadata)
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/wasteland.epub
+
+linear-algebra.epub
+  Title: A First Course in Linear Algebra
+  Creator: Robert A. Beezer — canonical version: http://linear.ups.edu
+  Copyright: © 2004 by Robert A. Beezer
+  License: GNU Free Documentation License, Version 1.2 (stated in file
+    metadata and in the sample table)
+    https://www.gnu.org/licenses/old-licenses/fdl-1.2.html
+  Download: https://github.com/IDPF/epub3-samples/releases/download/20230704/linear-algebra.epub
+
+Creative Commons Attribution-ShareAlike 3.0 Unported (CC-BY-SA 3.0):
+https://creativecommons.org/licenses/by-sa/3.0/legalcode
+
+NOT bundled (excluded — see sample_book.dart): accessible_epub_3.epub from the
+same IDPF repository carries its own file-level notice ("Copyright © 2012
+O'Reilly Media, Inc.") that overrides the repository's default license, so it
+is not redistributed here. 노회찬평전(nohoechan.epub) is not part of the IDPF
+corpus and is excluded for the same reason (real-world in-copyright book).
+
+
+--------------------------------------------------------------------------------
+xterm3 — packages/xterm3/ (a fork kept as its own package)
+--------------------------------------------------------------------------------
+
+packages/xterm3 is a fork of xterm3 (https://github.com/klc/xterm3), licensed
+under the GNU Affero General Public License v3.0 or later. The fork is a
+standalone package with its own license files:
+
+  packages/xterm3/LICENSE      GNU AGPL-3.0
+  packages/xterm3/LICENSE.MIT  MIT notice of the prior work it derives from
+                               (xterm, xterm2)
+  packages/xterm3/NOTICE       copyright and derivation notice
+
+
+--------------------------------------------------------------------------------
+pixelmatch — anti-aliasing check (packages/co_golden/lib/src/design/pixel_diff.dart)
+--------------------------------------------------------------------------------
+
+The anti-aliased pixel check of co_golden's tolerant design comparison
+(_antialiased and _manySiblings in pixel_diff.dart) is adapted from pixelmatch,
+which implements V. Vysniauskas, "Anti-aliased Pixel and Intensity Slope
+Detector" (2009). The rest of the comparison is self-authored. The notice is
+also kept in the header of pixel_diff.dart.
+
+Source: https://github.com/mapbox/pixelmatch
+
+ISC License
+
+Copyright (c) 2025, Mapbox
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
+
+
+--------------------------------------------------------------------------------
+dox_storage 3.0.1 — disks and drivers (packages/co_storage/lib/src/, outside uploads/)
+--------------------------------------------------------------------------------
+
+Forked from dox_storage: the disk and driver layer (Disk, DriveManager,
+DriverContract, key normalizer, exceptions, the S3 / local / memory drivers) and
+their tests. The Dox framework glue (lib/src/dox/) was NOT taken. Cocode's
+changes to the forked files are listed in FORK.md.
+
+Source: https://github.com/dartondox/dox-storage
+Package: https://pub.dev/packages/dox_storage (publisher dartondox.dev)
+
+MIT License. The upstream LICENSE file begins with "Copyright 2022" and names no
+copyright holder; its text is reproduced here unchanged:
+
+Copyright 2022
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Alice's Adventures in Wonderland — sample EPUB
+----------------------------------------------
+
+The Open Board and Open Note examples bundle identical copies of
+`example/assets/books/alice.epub` by Lewis Carroll. The EPUB metadata
+identifies Project Gutenberg eBook #11 as the source and records that
+the book is in the public domain in the United States. The EPUB retains
+the Project Gutenberg notice.
+
+Source: https://www.gutenberg.org/ebooks/11
+
+
+--------------------------------------------------------------------------------
+xterm2 example — Fig Autocomplete dataset and Cascadia Mono PL font
+--------------------------------------------------------------------------------
+
+The xterm2 example distributes Fig Autocomplete specifications in
+assets/specs_v1.json.gz. See packages/xterm2/example/THIRD_PARTY_LICENSES
+for the original MIT notice. Cascadia Mono PL is from Microsoft's Cascadia
+Code 2102.03 release and remains under the SIL Open Font License 1.1.
+The original license is in packages/xterm2/example/fonts/CascadiaMonoPL-LICENSE.txt.
+
+--------------------------------------------------------------------------------
+Open Note — drawing engine and assets inherited from Open Board 0.3.2
+--------------------------------------------------------------------------------
+
+The open_note package carries the original Open Board MIT notice in
+packages/open_note/THIRD_PARTY_LICENSES. Open Note additions use the
+BSD-3-Clause license.
+
+
+Terminal demo — third-party licenses
+====================================
+
+Fig Autocomplete — assets/specs_v1.json.gz
+-----------------------------------------
+
+The compressed command-completion dataset was inherited from the xterm2
+example and contains completion specifications from Fig Autocomplete.
+Source: https://github.com/withfig/autocomplete
+
+MIT License
+
+Copyright (c) 2021 Hercules Labs Inc. (Fig)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
