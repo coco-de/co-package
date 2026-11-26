@@ -9,6 +9,7 @@
 
 import 'dart:typed_data';
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/presentation/engine/reflowable/reflowable_engine.dart';

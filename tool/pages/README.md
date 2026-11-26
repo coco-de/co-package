@@ -15,7 +15,7 @@ preserve its independent library/CI; repeat its sibling overrides when upgrading
 
 ## Build and verify
 
-Use Flutter 3.47 or newer and a local Git login with read access to
+Use Flutter 3.50.1 from `.fvmrc` and a local Git login with read access to
 `coco-de/coui`. Remove the public workspace's generated `pubspec_overrides.yaml`
 before building the full demos.
 

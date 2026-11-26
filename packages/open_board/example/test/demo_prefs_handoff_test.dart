@@ -1,4 +1,5 @@
 import 'package:co_demo_prefs/co_demo_prefs.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_board/open_board.dart';

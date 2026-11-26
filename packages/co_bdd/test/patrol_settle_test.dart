@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:co_bdd/co_bdd.dart';
 import 'package:co_bdd/shared_steps.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';

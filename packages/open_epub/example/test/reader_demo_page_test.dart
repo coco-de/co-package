@@ -4,6 +4,7 @@
 // 정상적으로 렌더되고, 저작권 사유로 여전히 로컬 전용인 나머지는 안내
 // 메시지를 유지하는지 검증한다.
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub.dart';

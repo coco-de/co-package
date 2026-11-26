@@ -1,5 +1,6 @@
 import 'package:co_example_ui/co_example_ui.dart';
 import 'package:flutter/foundation.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:co_xterm2/xterm.dart';
 

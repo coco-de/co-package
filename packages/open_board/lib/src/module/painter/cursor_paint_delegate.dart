@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:open_board/src/core/utils/ink_group_info.dart';
 import 'package:open_board/src/module/painter/paint_delegate.dart';

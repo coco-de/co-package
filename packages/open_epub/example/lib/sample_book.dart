@@ -13,6 +13,7 @@
 // 안내 메시지를 표시한다(reader_demo_page.dart).
 import 'dart:typed_data';
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import 'demo_epub.dart' show buildFixedLayoutA4DemoEpub;

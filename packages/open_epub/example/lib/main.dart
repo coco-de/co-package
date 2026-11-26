@@ -1,6 +1,7 @@
 import 'package:co_example_ui/co_example_ui.dart';
 import 'package:co_demo_prefs/co_demo_prefs.dart';
 import 'package:flutter/foundation.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
@@ -53,6 +54,7 @@ class MyApp extends StatelessWidget {
         // TranslationProvider 없이 띄운 테스트에서도 동작하도록 현재 로케일을 쓴다.
         locale: context.tr.$meta.locale.flutterLocale,
         supportedLocales: AppLocaleUtils.supportedLocales,
+        // ignore: deprecated_member_use
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: exampleTheme(Brightness.light),
         darkTheme: exampleTheme(Brightness.dark),

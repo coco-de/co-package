@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:example/src/platform_menu.dart';
 import 'package:example/src/suggestion_engine.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_pty2/flutter_pty.dart';

@@ -5,6 +5,7 @@
 // 문제의 재발 방지 — 두 데모 페이지가 override 없이(=기본 경로) 정상적으로
 // EPUB을 열 수 있는지 검증한다.
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub.dart';

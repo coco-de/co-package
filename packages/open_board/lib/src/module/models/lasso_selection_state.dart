@@ -1,3 +1,4 @@
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:open_board/src/module/models/oriented_bounding_box.dart';
 

@@ -1,4 +1,5 @@
 import 'package:co_xterm2/xterm.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 void main() {

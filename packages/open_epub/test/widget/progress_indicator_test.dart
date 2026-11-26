@@ -3,6 +3,7 @@
 // 한다. 부수적으로, 이전에는 _handlePageChanged가 setState를 하지 않아 진행률
 // %가 페이지 이동에도 stale하게 남던 버그도 함께 고친다.
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/src/api/epub_reader_controller.dart';

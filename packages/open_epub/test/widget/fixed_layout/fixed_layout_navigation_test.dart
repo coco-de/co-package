@@ -3,6 +3,7 @@
 // - nextPage/previousPage의 spread row 단위 이동
 // - 줌 1.0x 수평 fling 스와이프 페이지 넘김 (InteractiveViewer onInteractionEnd)
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub_engine/src/api/epub_book.dart';

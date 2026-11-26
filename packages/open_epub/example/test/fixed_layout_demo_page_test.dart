@@ -4,6 +4,7 @@
 // layout/크기를 올바르게 보여주는지, 다음 페이지 버튼으로 페이지가 넘어가는지
 // 검증한다.
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_epub/open_epub.dart';

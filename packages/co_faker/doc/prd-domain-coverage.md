@@ -77,7 +77,7 @@ qualified-role arrays are in the JSON inventory rather than copied fixture data.
 
 ## Reproduce from `packages/co_faker`
 
-Use the pinned Flutter 3.47.6 toolchain (Dart 3.13.5):
+Use Flutter 3.50.1 (Dart 3.14.0) from the repository’s `.fvmrc`.
 
 ```sh
 fvm dart run tool/prd_coverage.dart --summary
@@ -104,11 +104,7 @@ co_faker tests remain part of the same suite.
 | `git diff --check` | Passed |
 | Graph cache | Refreshed with pinned Graft 0.18.0 after the implementation |
 
-SDK selection is a local `.fvmrc`/`.fvm` setup for Flutter 3.47.6, not a package
-version or release change. These local setup artifacts are outside the package
-change list. DTD discovery found no running debug app; the requested hot-reload
-attempt could not connect to an app. This pure-Dart package was validated by its
-tests/analysis; consumer runtime reload and pin synchronization are parent-owned.
+These results were recorded with Flutter 3.47.6 and Dart 3.13.5.
 
 ## Remaining boundaries / unsupported requests
 
