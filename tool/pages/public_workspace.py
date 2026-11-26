@@ -9,6 +9,7 @@ PRIVATE_MEMBERS = {
     "packages/co_example_ui": "co_example_ui",
     "packages/co_golden_gallery": "co_golden_gallery",
     "packages/open_board/example": "open_board_example",
+    "packages/open_note/example": "open_note_example",
     "packages/open_epub/example": "open_epub_example",
 }
 COUI_OVERRIDES = {"coui_core", "coui_flutter", "coui_web"}

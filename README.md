@@ -22,6 +22,7 @@ drawing, reading EPUBs, and embedding terminals.
 | [`open_epub_engine`](packages/open_epub_engine/README.md) | Pure Dart EPUB 2/3 parser, object model, and CFI locator engine. |
 | [`open_epub`](packages/open_epub/README.md) | Customizable EPUB reader widget for Flutter (reflowable + fixed layout). |
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
+| [`open_note`](packages/open_note/README.md) | Flutter handwriting note engine built from `open_board`: pens, layers, page templates, notebooks, outline and bookmarks, and study aids. |
 | [`co_xterm2`](packages/xterm2/README.md) | MIT terminal emulator fork with desktop IME composition fixes. |
 | [`co_xterm3`](packages/xterm3/README.md) | AGPL-3.0-or-later terminal emulator fork with desktop IME composition fixes. |
 
