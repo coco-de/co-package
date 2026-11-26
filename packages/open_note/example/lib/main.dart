@@ -1,6 +1,7 @@
 import 'package:co_example_ui/co_example_ui.dart';
 import 'package:co_demo_prefs/co_demo_prefs.dart';
 import 'package:flutter/foundation.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
@@ -42,6 +43,7 @@ class OpenNoteExampleApp extends StatelessWidget {
         // slang 로케일이 MaterialApp.locale 을 움직인다 — ar 이면 RTL.
         locale: TranslationProvider.of(context).flutterLocale,
         supportedLocales: AppLocaleUtils.supportedLocales,
+        // ignore: deprecated_member_use
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: exampleTheme(Brightness.light),
         darkTheme: exampleTheme(Brightness.dark),

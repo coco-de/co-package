@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_final_fields
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:open_note/src/core/theme/color_s.dart';
 

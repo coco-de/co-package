@@ -1,5 +1,6 @@
 import 'package:open_note/open_note.dart';
 import 'dart:math' as math;
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart' show Rect;
 import 'package:fixnum/fixnum.dart' as fixnum; // 🔧 Int64 타입 처리용 import
 import 'package:flutter/foundation.dart' show debugPrint; // 🔧 디버그 출력용 import

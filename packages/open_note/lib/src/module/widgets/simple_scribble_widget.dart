@@ -1,5 +1,6 @@
 // import 'dart:developer' show log; // 🚀 성능 최적화: 디버그 로그 제거
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:open_note/src/data/model/protobuf/scribble.pb.dart';
 import 'package:open_note/src/module/scribble_controller.dart';

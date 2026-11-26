@@ -1,5 +1,6 @@
   import 'dart:ui' as ui;
 
+  // ignore: deprecated_member_use
   import 'package:flutter/material.dart';
   import 'package:open_note/src/data/model/protobuf/scribble.pb.dart';
   import 'package:open_note/src/module/models/lasso_selection_state.dart';

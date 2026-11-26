@@ -2,6 +2,7 @@
 // 단언하는 관용구다 — 가정 위반 시 즉시 실패하는 것이 기대 동작이라 safe 변형
 // (singleOrNull/firstOrNull) 으로 바꾸지 않는다.
 // ignore_for_file: avoid-unsafe-collection-methods
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_note/src/data/model/protobuf/scribble.pb.dart';

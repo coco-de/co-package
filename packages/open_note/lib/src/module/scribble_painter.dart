@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 // 🐦 Flutter imports:
 
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 // 🌎 Project imports:
 import 'package:open_note/src/core/const.dart';
