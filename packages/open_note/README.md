@@ -170,4 +170,6 @@ dart analyze   # the engine's material.dart deprecation notes are expected
 
 ## License
 
-BSD 3-Clause. See `LICENSE`.
+Open Note additions use the [BSD 3-Clause License](LICENSE). Code and drawing
+assets inherited from Open Board retain the [original MIT notice](THIRD_PARTY_LICENSES),
+which also credits the sample EPUB.

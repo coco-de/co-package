@@ -13,6 +13,7 @@ on:
       - "packages/co_demo_prefs/**"
       - "packages/xterm2/**"
       - "pubspec.yaml"
+      - "THIRD_PARTY_LICENSES"
       - "tool/pages/**"
       - ".github/workflows/examples-pages.yml"
   workflow_dispatch:
@@ -64,6 +65,9 @@ jobs:
           test -f _site/open-board/index.html
           test -f _site/open-epub/index.html
           test -f _site/xterm2/index.html
+          cmp _site/THIRD_PARTY_LICENSES.txt <(cat THIRD_PARTY_LICENSES packages/xterm2/example/THIRD_PARTY_LICENSES)
+          cmp _site/FONT-LICENSES.txt <(cat packages/co_example_ui/fonts/{LICENSE.txt,NotoSansArabic-LICENSE.txt} \
+            packages/xterm2/example/fonts/CascadiaMonoPL-LICENSE.txt)
           python3 tool/pages/check_no_credentials.py _site
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

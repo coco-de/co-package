@@ -274,4 +274,6 @@ Future<void> iEnterInTheEmailField(TestDriver driver, String param1) async {
 
 ## License
 
-MIT
+[MIT](LICENSE). Cocode’s shared steps and generic test helpers originated in
+Cocode’s Unibook test tooling. The exported helpers use public Flutter and Dart
+interfaces.
