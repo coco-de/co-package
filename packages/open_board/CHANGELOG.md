@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.4.0](https://github.com/coco-de/co-package/compare/open_board-v0.3.2...open_board-v0.4.0) (2026-11-26)
+
+
+### 기능
+
+* **examples:** apply latest CoUI and deploy all playgrounds ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+* **examples:** refresh all playgrounds with latest CoUI and Pages deployment ([d8b5c12](https://github.com/coco-de/co-package/commit/d8b5c12e234a25cb9cd86c348d3cb6f678185f47))
+* **examples:** refresh CoUI playgrounds and GitHub Pages ([#126](https://github.com/coco-de/co-package/issues/126)) ([85ec91c](https://github.com/coco-de/co-package/commit/85ec91c17c9e7d308c7cea2c9718f5480a20e52a))
+* **open_board:** ✨ 텍스트 박스 표시 서체 설정 추가 ([#149](https://github.com/coco-de/co-package/issues/149)) ([1680f7c](https://github.com/coco-de/co-package/commit/1680f7c3b221d94d84be24da92b4d9a01f4501e9))
+* **web:** ✨ 웹 첫 로딩 스플래시 — 코코드 로고(CO.) (coco-de/cocode[#1473](https://github.com/coco-de/co-package/issues/1473)) ([#125](https://github.com/coco-de/co-package/issues/125)) ([fbb8cda](https://github.com/coco-de/co-package/commit/fbb8cda9b675fa842093d051d123b2e17546d7ba))
+
+
+### 버그 수정
+
+* **open_board:** 🐛 터치가 겹쳐도 스타일러스 획 입력 유지 ([#151](https://github.com/coco-de/co-package/issues/151)) ([428123d](https://github.com/coco-de/co-package/commit/428123d45fefa948a0c89ad7806987535b1a27b3))
+* **open_board:** 🐛 텍스트 선택 테두리 여백 설정 지원 (unibook[#15207](https://github.com/coco-de/co-package/issues/15207)) ([#150](https://github.com/coco-de/co-package/issues/150)) ([dc167ea](https://github.com/coco-de/co-package/commit/dc167eae9be785d604e603625c3165be57a51338))
+
+
+### 되돌림
+
+* **open_board:** ⏪ 핀치 줌 dead-zone 되돌림 — 옛 저장소 되돌림이 main 으로만 머지돼 이관에서 누락 (unibook[#15080](https://github.com/coco-de/co-package/issues/15080)) ([#119](https://github.com/coco-de/co-package/issues/119)) ([9e30f82](https://github.com/coco-de/co-package/commit/9e30f82cb78c3ce14db1d50e4d655f027893f217))
+
 ## [0.3.2](https://github.com/coco-de/co-package/compare/open_board-v0.3.1...open_board-v0.3.2) (2026-10-26)
 
 

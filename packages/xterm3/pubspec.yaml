@@ -2,7 +2,7 @@ name: co_xterm3
 description: >-
   Cocode fork of xterm3 (klc/xterm3) 6.3.4 with desktop input method fixes:
   composed Hangul/CJK text instead of bare jamo, see FORK.md.
-version: 6.3.4
+version: 6.3.5
 repository: https://github.com/coco-de/co-package/tree/main/packages/xterm3
 issue_tracker: https://github.com/coco-de/co-package/issues
 topics:

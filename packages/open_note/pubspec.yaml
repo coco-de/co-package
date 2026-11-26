@@ -3,7 +3,7 @@ description: >-
   Flutter handwriting note engine — pens, layers, page templates, notebooks,
   outline and bookmarks, study aids. Cloned from open_board and extended for
   note-taking apps.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/open_note
 
 environment:

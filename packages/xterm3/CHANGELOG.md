@@ -3,6 +3,19 @@
 - First pub.dev release of the Cocode fork under `co_xterm3`.
 - Retains the desktop IME composition fixes and the upstream AGPL and MIT notices.
 
+## [6.3.5](https://github.com/coco-de/co-package/compare/co_xterm3-v6.3.4...co_xterm3-v6.3.5) (2026-11-26)
+
+
+### 버그 수정
+
+* **xterm3:** 🐛 xterm3 6.3.4 포크 — 데스크톱 입력기(한글 두벌식) 조합 수정 ([#14](https://github.com/coco-de/co-package/issues/14)) ([f7aebbf](https://github.com/coco-de/co-package/commit/f7aebbf043f9faca256edb25e670aa9340196006))
+* **xterm3:** 🐛 데스크톱 입력기(한글 두벌식)가 조합한 글자가 자모로 쪼개져 PTY 에 가던 문제 ([44afebf](https://github.com/coco-de/co-package/commit/44afebf05d0f754abf98553b2e3c19c29d23d522))
+
+
+### 문서
+
+* **xterm3:** 📝 업스트림 PR 기록 위치를 coco-de/cocode[#452](https://github.com/coco-de/co-package/issues/452) 로 둔다 ([fb20a2b](https://github.com/coco-de/co-package/commit/fb20a2ba83605891ba734ee484a451c497e18e0c))
+
 ## [6.3.4+cocode.1] - 2026-09-28
 
 Cocode fork of 6.3.4 — see [FORK.md](FORK.md).

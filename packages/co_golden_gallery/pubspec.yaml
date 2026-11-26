@@ -2,7 +2,7 @@ name: co_golden_gallery
 description: >-
   Builds a searchable HTML gallery from Flutter golden PNGs, with device,
   theme and locale comparisons, failure highlighting, and local or remote images.
-version: 0.3.1
+version: 0.4.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_golden_gallery
 topics:
   - golden-tests
