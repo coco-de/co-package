@@ -12,6 +12,12 @@ their own.
 
 ## Install
 
+```sh
+flutter pub add open_note
+```
+
+To use a specific source revision, pin a Git tag or commit.
+
 ```yaml
 dependencies:
   open_note:

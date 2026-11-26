@@ -1,7 +1,7 @@
 name: Examples Pages
 
-# All three CoUI examples share one Pages artifact. Authenticated source builds
-# use COUI_READ_TOKEN; local verified builds can be deployed from gh-pages.
+# All three CoUI examples use hosted dependencies and share one Pages artifact.
+# A verified prebuilt site can also be deployed from gh-pages.
 on:
   push:
     branches: [main]
@@ -33,68 +33,32 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    outputs:
-      ready: ${{ steps.mode.outputs.ready }}
     steps:
-      - name: Select build mode
-        id: mode
-        env:
-          COUI_READ_TOKEN: ${{ secrets.COUI_READ_TOKEN }}
-          PREBUILT_REF: ${{ inputs.prebuilt_ref }}
-        run: |
-          if [[ -n "$PREBUILT_REF" ]]; then
-            echo 'prebuilt=true' >> "$GITHUB_OUTPUT"
-            echo 'ready=true' >> "$GITHUB_OUTPUT"
-          elif [[ -n "$COUI_READ_TOKEN" ]]; then
-            echo 'prebuilt=false' >> "$GITHUB_OUTPUT"
-            echo 'ready=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo '::warning::CoUI source builds require a COUI_READ_TOKEN with read access to coco-de/coui. Deploy a locally verified gh-pages build using workflow_dispatch.prebuilt_ref.'
-            echo '### Source build skipped: missing COUI_READ_TOKEN' >> "$GITHUB_STEP_SUMMARY"
-            echo 'Public package CI still runs. See tool/pages/README.md for authenticated local verification and prebuilt deployment.' >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: steps.mode.outputs.ready == 'true'
         with:
           persist-credentials: false
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: steps.mode.outputs.prebuilt == 'true'
+        if: inputs.prebuilt_ref != ''
         with:
           ref: ${{ inputs.prebuilt_ref }}
           path: _site
           persist-credentials: false
 
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
-        if: steps.mode.outputs.prebuilt == 'false'
+        if: inputs.prebuilt_ref == ''
         with:
           flutter-version-file: .fvmrc
           channel: stable
           cache: true
 
-      - name: Authenticate private CoUI source
-        if: steps.mode.outputs.prebuilt == 'false'
-        env:
-          COUI_READ_TOKEN: ${{ secrets.COUI_READ_TOKEN }}
-        run: |
-          auth_header=$(printf 'x-access-token:%s' "$COUI_READ_TOKEN" | base64 -w0)
-          echo "::add-mask::$auth_header"
-          git config --global http.https://github.com/coco-de/coui.git.extraheader "AUTHORIZATION: basic $auth_header"
-
       - name: Build all examples
-        if: steps.mode.outputs.prebuilt == 'false'
+        if: inputs.prebuilt_ref == ''
         run: |
           bash tool/pages/build.sh
           mv build/pages _site
 
-      - name: Remove source credentials
-        if: always() && steps.mode.outputs.prebuilt == 'false'
-        run: git config --global --unset-all http.https://github.com/coco-de/coui.git.extraheader || true
-
       - name: Validate and scan site
-        if: steps.mode.outputs.ready == 'true'
         run: |
           test -f _site/index.html
           test -f _site/open-board/index.html
@@ -103,12 +67,10 @@ jobs:
           python3 tool/pages/check_no_credentials.py _site
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        if: steps.mode.outputs.ready == 'true'
         with:
           path: _site
 
   deploy:
-    if: needs.build.outputs.ready == 'true'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -5,10 +5,9 @@ description: >-
   note-taking apps.
 version: 0.1.0
 repository: https://github.com/coco-de/co-package/tree/main/packages/open_note
-# pub.dev 에 내지 않는다 — 소비자는 git 의존(path: packages/open_note, ref: 릴리스 태그)으로 받는다.
 
 environment:
-  sdk: ">=3.10.0 <5.0.0"
+  sdk: ">=3.10.0 <4.0.0"
   flutter: ">=3.41.6"
 
 resolution: workspace

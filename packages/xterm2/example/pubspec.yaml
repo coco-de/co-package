@@ -24,7 +24,7 @@ dependencies:
   co_example_ui:
     path: ../../co_example_ui
   co_demo_prefs: ^1.0.1
-  coui_flutter: any
+  coui_flutter: ^0.194.2-beta.1
   co_xterm2:
     path: ../
 
@@ -106,13 +106,3 @@ flutter:
 dependency_overrides:
   co_demo_prefs:
     path: ../../co_demo_prefs
-  coui_flutter:
-    git:
-      url: https://github.com/coco-de/coui.git
-      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      path: packages/coui_flutter
-  coui_core:
-    git:
-      url: https://github.com/coco-de/coui.git
-      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      path: packages/coui_core

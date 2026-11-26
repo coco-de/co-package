@@ -15,12 +15,11 @@ Run the checks from the repository root.
 python3 tool/pages/public_workspace.py verify
 ```
 
-This creates a Git-ignored `pubspec_overrides.yaml` and runs the public
-format, analysis, license and test checks. The public workspace excludes the
-CoUI-dependent theme package, gallery, and full demo apps. To run fewer checks,
-pass scripts such as `analyze` or `test:dart` in place of `verify`. If you already
-have a local override file, move it aside first. Remove the generated override
-to return to the full workspace with CoUI access.
+The command resolves CoUI from pub.dev and runs the workspace format, analysis,
+license and test checks. For fewer checks, pass a script such as `analyze`
+or `test:dart` in place of `verify`. If an earlier version of the setup
+generated a `pubspec_overrides.yaml` that excluded CoUI consumers, remove
+that override to include the full workspace.
 
 The terminal forks use their own dependency resolution and CI jobs. Run
 `flutter pub get --no-example` and `flutter test --no-pub` from their package

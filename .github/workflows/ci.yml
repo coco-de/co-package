@@ -41,7 +41,6 @@ jobs:
           cache: true
       - name: Verify the public workspace
         run: python3 tool/pages/public_workspace.py format analyze test:dart test:flutter
-      - run: dart format --output=none --set-exit-if-changed packages/co_golden_gallery
       # 파생 seed 가 VM 과 웹에서 같은지 — 웹으로 배포한 데모와 VM 에서 찍은 골든이 같은 목데이터를 보여야 한다 (#69).
       - name: co_faker web determinism (chrome · dart2js)
         working-directory: packages/co_faker

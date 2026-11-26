@@ -5,7 +5,7 @@ provides the light and dark themes, a responsive demo catalog, and language and
 theme controls that integrate with `co_demo_prefs`.
 
 ```sh
-flutter pub add co_example_ui
+flutter pub add co_example_ui:^0.1.0-beta.1
 ```
 
 ```dart

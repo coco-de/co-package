@@ -4,14 +4,14 @@ publish_to: 'none'
 version: 1.0.0+1
 
 # 모노레포 pub workspace 멤버 — open_note · open_epub(→ open_epub_engine)을 로컬
-# 해석한다. 예제 테마의 CoUI git 의존성에는 coco-de/coui 읽기 권한이 필요하다.
+# 해석한다. 예제 테마는 pub.dev에서 CoUI를 해석한다.
 resolution: workspace
 
 environment:
   sdk: ^3.11.1
 
 dependencies:
-  coui_flutter: any
+  coui_flutter: ^0.194.2-beta.1
   co_example_ui:
     path: ../../co_example_ui
   flutter:
