@@ -37,7 +37,6 @@
 
   "packages": {
     "packages/co_arc": { "component": "co_arc", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
-    "packages/co_example_ui": { "component": "co_example_ui", "bump-minor-pre-major": true, "initial-version": "0.1.0-beta.1" },
     "packages/co_site_metadata": { "component": "co_site_metadata", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
     "packages/open_epub_engine": { "component": "open_epub_engine" },
     "packages/open_epub": { "component": "open_epub" },

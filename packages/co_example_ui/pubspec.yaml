@@ -1,6 +1,7 @@
 name: co_example_ui
 description: Shared CoUI theme, responsive demo navigation, and locale and appearance controls for Flutter example apps.
 version: 0.1.0-beta.1
+publish_to: none
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_example_ui
 topics:
   - flutter

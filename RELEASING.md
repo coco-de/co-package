@@ -32,12 +32,11 @@ once their prerequisites appear on pub.dev.
 | 1 | `co_arc`, `co_bdd`, `co_demo_prefs`, `co_faker`, `co_golden`, `co_site_metadata`, `co_storage`, `co_xterm2`, `co_xterm3`, `open_board`, `open_epub_engine`, `open_note` | Hosted dependencies already available |
 | 2 | `co_demo_world` | `co_demo_prefs ^1.0.1`, `co_faker ^0.13.1` |
 | 2 | `open_epub` | `open_epub_engine >=1.1.0 <1.2.0` |
-| 3 | `co_example_ui` | `co_demo_prefs ^1.0.1` and `coui_flutter ^0.194.2-beta.1` |
 | 3 | `co_golden_gallery` | `coui_web ^0.192.0` |
 
-CoUI is hosted on pub.dev. `co_example_ui` starts at `0.1.0-beta.1` because
-its Flutter theme dependency is a prerelease. The gallery uses stable
-`coui_web`.
+The Flutter examples resolve `co_example_ui` from the workspace. Its
+`publish_to: none` keeps it out of the release manifest. The gallery uses
+stable `coui_web` from pub.dev.
 
 The terminal forks use the distinct pub.dev names `co_xterm2` (MIT) and
 `co_xterm3` (AGPL-3.0-or-later). Existing Git tags use the original package

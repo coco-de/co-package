@@ -4,9 +4,7 @@ Shared presentation for Flutter example apps using CoUI and Material. The packag
 provides the light and dark themes, a responsive demo catalog, and language and
 theme controls that integrate with `co_demo_prefs`.
 
-```sh
-flutter pub add co_example_ui:^0.1.0-beta.1
-```
+The example apps resolve this workspace package from the local checkout.
 
 ```dart
 import 'package:co_example_ui/co_example_ui.dart';

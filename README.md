@@ -12,7 +12,6 @@ drawing, reading EPUBs, and embedding terminals.
 | [`co_arc`](packages/co_arc/README.md) | Manage self-hosted GitHub Actions runners with a terminal UI, registration scripts, and reusable CI workflows. |
 | [`co_bdd`](packages/co_bdd/README.md) | Generate Flutter widget tests and Patrol integration tests from shared Gherkin scenarios. |
 | [`co_demo_prefs`](packages/co_demo_prefs/README.md) | Carry language and theme settings into embedded and standalone demos. |
-| [`co_example_ui`](packages/co_example_ui/README.md) | Shared CoUI theme, catalog and settings for Flutter demos. |
 | [`co_site_metadata`](packages/co_site_metadata/README.md) | Pure Dart route metadata, canonical URLs, sitemap, robots and LLM discovery documents. |
 | [`co_faker`](packages/co_faker/README.md) | Pure Dart, deterministic, multilingual fake data generation. |
 | [`co_demo_world`](packages/co_demo_world/README.md) | Deterministic demo worlds: business data fixed, co_faker display text re-projected per UI language, user edits kept across a live language switch. |
@@ -27,6 +26,8 @@ drawing, reading EPUBs, and embedding terminals.
 | [`co_xterm3`](packages/xterm3/README.md) | AGPL-3.0-or-later terminal emulator fork with desktop IME composition fixes. |
 
 ## Live examples
+
+The Flutter demos share the workspace-only [`co_example_ui`](packages/co_example_ui/README.md) package.
 
 The [Cocode playground](https://docs.cocode.im/co-package/) includes
 [Open Board](https://docs.cocode.im/co-package/open-board/),

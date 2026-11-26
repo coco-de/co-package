@@ -1,6 +1,5 @@
 {
   "packages/co_arc": "0.1.0",
-  "packages/co_example_ui": "0.1.0-beta.1",
   "packages/co_storage": "0.1.0",
   "packages/xterm2": "5.3.0",
   "packages/xterm3": "6.3.4",
