@@ -15,6 +15,20 @@ LocalStatus _status({
 );
 
 void main() {
+  test('findScript locates bundled scripts from outside the checkout', () {
+    final originalDirectory = Directory.current;
+    final temporaryDirectory = Directory.systemTemp.createTempSync('co_arc');
+    try {
+      Directory.current = temporaryDirectory;
+      final script = LocalRunner.findScript('register-runner.sh');
+      expect(script, isNotNull);
+      expect(File(script!).existsSync(), isTrue);
+    } finally {
+      Directory.current = originalDirectory;
+      temporaryDirectory.deleteSync(recursive: true);
+    }
+  });
+
   group('LocalRunner.svcSubcommands', () {
     test('실행 중이면(launchd 서비스) 설치 여부와 무관하게 stop', () {
       final status = _status(svcInstalled: true, listenerRunning: true);

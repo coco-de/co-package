@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a reproducible problem with a package, example, or workflow.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep credentials and personal data out of examples and logs. Report security vulnerabilities through the [private reporting form](https://github.com/coco-de/co-package/security/advisories/new).
+  - type: input
+    id: package
+    attributes:
+      label: Package or workflow
+      placeholder: open_board, co_faker, or CI
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Package version or commit
+      description: Include the Git tag or commit if you installed from source.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include a minimal example or a small public repository if available.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and logs
+      description: Include the Dart or Flutter version, platform, and relevant error output.

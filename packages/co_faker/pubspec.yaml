@@ -4,6 +4,10 @@ description: >-
   development. Deterministic, multilingual, and extensible without a server.
 version: 0.13.1
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_faker
+topics:
+  - fake-data
+  - testing
+  - localization
 resolution: workspace
 
 environment:

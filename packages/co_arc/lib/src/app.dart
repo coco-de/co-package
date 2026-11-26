@@ -419,10 +419,7 @@ final class AppModel extends TeaModel {
   (List<String> logLines, Cmd? cmd) _removeLocalScript(String dir) {
     final script = LocalRunner.findScript('remove-runner.sh');
     if (script == null) {
-      return (
-        const ['remove-runner.sh를 찾지 못했습니다 (co-package 레포 안에서 실행하세요)'],
-        null,
-      );
+      return (const ['remove-runner.sh를 찾지 못했습니다. co_arc 설치를 확인하세요.'], null);
     }
     final args = removeArgs(scope, dir);
     return (
@@ -547,7 +544,7 @@ final class AppModel extends TeaModel {
     final script = LocalRunner.findScript('register-runner.sh');
     if (script == null) {
       return (
-        const ['register-runner.sh를 찾지 못했습니다 (co-package 레포 안에서 실행하세요)'],
+        const ['register-runner.sh를 찾지 못했습니다. co_arc 설치를 확인하세요.'],
         null,
         null,
       );

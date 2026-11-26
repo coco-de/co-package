@@ -28,6 +28,13 @@ PORTED_DIRS=(
 
 errors=()
 
+for pubspec in packages/*/pubspec.yaml; do
+  license="${pubspec%/pubspec.yaml}/LICENSE"
+  if [[ ! -s "$license" ]] || grep -qi '^TODO:' "$license"; then
+    errors+=("${license}: 패키지 발행에 필요한 라이선스 전문이 없습니다.")
+  fi
+done
+
 # 고지 파일 존재 + 필수 문구(epub_pro / MIT License) 검사 헬퍼.
 check_notice_file() {
   local file="$1"

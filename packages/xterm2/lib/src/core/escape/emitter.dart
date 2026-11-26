@@ -1,4 +1,4 @@
-import 'package:xterm2/src/core/color_scheme.dart';
+import 'package:co_xterm2/src/core/color_scheme.dart';
 
 class EscapeEmitter {
   const EscapeEmitter();

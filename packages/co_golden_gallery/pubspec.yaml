@@ -1,10 +1,13 @@
 name: co_golden_gallery
 description: >-
-  Builds a searchable HTML gallery from co_golden capture output
-  and plain golden PNG trees: a device × theme × locale grid per scenario,
-  failure highlighting, and images served locally or from a CDN or bucket.
+  Builds a searchable HTML gallery from Flutter golden PNGs, with device,
+  theme and locale comparisons, failure highlighting, and local or remote images.
 version: 0.3.1
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_golden_gallery
+topics:
+  - golden-tests
+  - visual-regression
+  - cli
 resolution: workspace
 
 environment:
@@ -15,7 +18,7 @@ executables:
 
 dependencies:
   args: ^2.7.0
-  coui_web: ">=0.162.0 <1.0.0"
+  coui_web: ^0.176.0
   jaspr: ^0.23.5
   meta: ^1.16.0
   path: ^1.9.0
@@ -24,6 +27,3 @@ dev_dependencies:
   crypto: ^3.0.0
   lints: ^6.0.0
   test: ^1.26.0
-
-# CoUI git overrides live at the workspace root (one release commit).
-# Git consumers repeat the root overrides in their own workspace.

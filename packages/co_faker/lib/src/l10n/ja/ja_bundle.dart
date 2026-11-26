@@ -9,7 +9,7 @@ import '../co_l10n_bundle.dart';
 /// counter is `回` for a time, `名` for a person, and `件` for a record.
 ///
 /// The translation is a draft written with an AI assistant: the terms that a
-/// native speaker has to look at are in `docs/languages/ja.md`. See
+/// native speaker has to look at are in `doc/languages/ja.md`. See
 /// [CoL10nBundle].
 const CoL10nBundle jaBundle = CoL10nBundle(
   language: 'ja',

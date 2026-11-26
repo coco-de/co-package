@@ -1,6 +1,6 @@
-import 'package:xterm3/src/core/input/event.dart';
-import 'package:xterm3/src/core/input/keys.dart';
-import 'package:xterm3/src/core/platform.dart';
+import 'package:co_xterm3/src/core/input/event.dart';
+import 'package:co_xterm3/src/core/input/keys.dart';
+import 'package:co_xterm3/src/core/platform.dart';
 
 /// Whether the platform composed a character out of a modified key press, so
 /// the modifier is part of the layout rather than a modifier to report.

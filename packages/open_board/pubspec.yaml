@@ -4,6 +4,10 @@ description: >-
   selection, text and image annotations, multi-page, recording and replay.
 version: 0.3.2
 repository: https://github.com/coco-de/co-package/tree/main/packages/open_board
+topics:
+  - drawing
+  - annotation
+  - whiteboard
 
 environment:
   sdk: ">=3.10.0 <5.0.0"

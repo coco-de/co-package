@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/xterm.dart';
 
 void main() {
   // BenchmarkWrite().run();

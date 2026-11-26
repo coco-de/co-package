@@ -35,6 +35,12 @@ favicon files, and any locally served images together.
   below a path such as GitHub Pages' `/<repo>/`. They are files rather than
   data URIs because Safari does not show data URI favicons.
 
+## Install
+
+```sh
+dart pub add --dev co_golden_gallery
+```
+
 ## Usage
 
 ```sh

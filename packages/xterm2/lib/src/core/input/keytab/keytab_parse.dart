@@ -1,6 +1,6 @@
-import 'package:xterm2/src/core/input/keytab/keytab.dart';
-import 'package:xterm2/src/core/input/keytab/keytab_token.dart';
-import 'package:xterm2/src/core/input/keytab/qt_keyname.dart';
+import 'package:co_xterm2/src/core/input/keytab/keytab.dart';
+import 'package:co_xterm2/src/core/input/keytab/keytab_token.dart';
+import 'package:co_xterm2/src/core/input/keytab/qt_keyname.dart';
 
 class ParseError {}
 

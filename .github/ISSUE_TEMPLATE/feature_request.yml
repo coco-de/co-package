@@ -1,0 +1,22 @@
+name: Feature request
+description: Describe a use case the project could support.
+body:
+  - type: input
+    id: package
+    attributes:
+      label: Package or workflow
+      placeholder: co_storage or example apps
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Use case
+      description: Describe what you are trying to do and where you get stuck.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include a small API example or expected user flow if it helps explain the request.

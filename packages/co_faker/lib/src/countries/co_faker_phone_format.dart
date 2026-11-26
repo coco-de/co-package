@@ -4,7 +4,7 @@
 /// the same digits in order, so one generated number can be shown either way.
 /// Every built-in format is fictional by construction: it is a range a
 /// regulator reserves for fiction, or a prefix that no number type uses (see
-/// `docs/countries.md`).
+/// `doc/countries.md`).
 class CoFakerPhoneFormat {
   /// Creates a phone format.
   const CoFakerPhoneFormat({

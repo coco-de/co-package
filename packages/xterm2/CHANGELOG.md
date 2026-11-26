@@ -1,3 +1,8 @@
+## 5.3.0 (co_xterm2)
+
+- First pub.dev release of the Cocode fork under `co_xterm2`.
+- Retains the MIT-licensed desktop IME composition fixes from the Git release.
+
 ## [5.3.0+cocode.1] - 2026-10-09
 
 * Preserve the MIT source from `leynier/xterm2@6775995f` and its upstream attribution.
@@ -362,4 +367,3 @@
 
 [#186]: https://github.com/TerminalStudio/xterm.dart/pull/186
 [#190]: https://github.com/TerminalStudio/xterm.dart/pull/190
- 

@@ -6,7 +6,8 @@
 - 라이선스: MIT, © 2020 xuty. 원천 `LICENSE`를 그대로 보존한다.
 - 원 포크의 변경·회귀 목록: 함께 포함한 `ALERA_PATCHES.md`.
 - 소비 경로: `coco-de/co-package`, `packages/xterm2`.
-- 고정 태그: `xterm2-v5.3.0+cocode.1`.
+- pub.dev 패키지 이름은 `co_xterm2`, 릴리스 태그는 `co_xterm2-v<version>`이다.
+- 기존 Git 릴리스 `xterm2-v5.3.0+cocode.1`은 `xterm2` 이름을 사용한다.
 
 ## 데스크톱 IME 수정
 

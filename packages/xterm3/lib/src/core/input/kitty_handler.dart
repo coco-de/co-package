@@ -1,6 +1,6 @@
-import 'package:xterm3/src/core/input/composed_text.dart';
-import 'package:xterm3/src/core/input/event.dart';
-import 'package:xterm3/src/core/input/keys.dart';
+import 'package:co_xterm3/src/core/input/composed_text.dart';
+import 'package:co_xterm3/src/core/input/event.dart';
+import 'package:co_xterm3/src/core/input/keys.dart';
 
 /// Translates key presses using Kitty's progressive keyboard protocol.
 ///

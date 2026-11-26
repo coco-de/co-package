@@ -23,7 +23,7 @@ depend on Flutter.
 
 ```yaml
 dependencies:
-  co_faker: ^0.9.0
+  co_faker: ^0.13.1
 ```
 
 ## Quick start
@@ -58,7 +58,7 @@ final people = faker.ui.list('itemPicker.options'); // 김코드, 이코드, 박
 ```
 
 `dart run co_faker:ui_copy --locale ko` exports the catalog as JSON for design
-scripts. See [UI example copy](docs/ui-copy.md) for keys, source decisions,
+scripts. See [UI example copy](doc/ui-copy.md) for keys, source decisions,
 language fallback, and visual review guidance.
 
 ## Records From A Schema
@@ -250,9 +250,9 @@ typed API는 각각 `CoFakeFxRatePoint`, `CoFakeExamQuestion`,
 방향이 다릅니다. 송금은 `rateNumerator`·`rateDenominator`·`receiveMinorUnits`도
 제공합니다(VN 예시: 1785/100, 1,000,000 KRW → 17,850,000 VND).
 
-[팩 계약과 단위](docs/domain-packs.md),
-[36개 원문별 정확한 역할 목록](docs/prd_domain_inventory.json),
-[검증 범위와 남은 경계](docs/prd-domain-coverage.md)를 확인하세요.
+[팩 계약과 단위](doc/domain-packs.md),
+[36개 원문별 정확한 역할 목록](doc/prd_domain_inventory.json),
+[검증 범위와 남은 경계](doc/prd-domain-coverage.md)를 확인하세요.
 전체 앱 시드 건수·투어 고정 레코드·연결 관계·집계·상태 전이는 레시피가
 조립하며, 등록된 스키마는 재사용 가능한 예시 스키마입니다.
 
@@ -495,7 +495,7 @@ Korean, English, Chinese (Simplified), Japanese, German, French, Russian,
 Italian, and Portuguese (Brazil) are built in, and every other language reads
 English until its bundle is filled in. The translations of the languages other
 than Korean and English are AI drafts that no native speaker has reviewed yet:
-each `docs/languages/<code>.md` carries a glossary and a review checklist.
+each `doc/languages/<code>.md` carries a glossary and a review checklist.
 (`faker.clinic` and `faker.saas` have their own language data, described under
 "Language data" above.) A custom locale carries
 a bundle of its own, with no change to co_faker:
@@ -595,7 +595,7 @@ for (final country in CoFakerCountries.gdpTop10) {
   the digits 0 to 9.
 
 Sources, the phone rationale per country, and the compatibility notes are in
-[docs/countries.md](docs/countries.md).
+[doc/countries.md](doc/countries.md).
 
 ## Language settings
 
@@ -713,7 +713,7 @@ that loses, renames, or repeats a `{name}` field of its English text, on clinic
 or SaaS data that does not say `koreanValues: CoKoreanValues.none`, on a key
 that is still a stub, and on a generator that leaves a placeholder unfilled or
 throws. A language that has no data yet is `planned` and fails with that
-message. See `docs/languages/README.md` for the gate, how to read its report,
+message. See `doc/languages/README.md` for the gate, how to read its report,
 the files a language fills, and the glossary of each language.
 
 ## Template Sugar

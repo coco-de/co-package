@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/xterm.dart';
 
 void main() {
   test('CursorStyle reports italic through the correctly spelled getter', () {

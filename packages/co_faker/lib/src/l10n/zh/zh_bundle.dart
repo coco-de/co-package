@@ -6,7 +6,7 @@ import '../co_l10n_bundle.dart';
 /// The texts are what the domain packs and the dedicated generators show for
 /// `zh`, `zh_CN`, and `zh-Hans`. They follow the conventions of mainland China:
 /// Simplified characters only, the terms of the glossary in
-/// `docs/languages/zh.md`, full-width punctuation, no space between Chinese
+/// `doc/languages/zh.md`, full-width punctuation, no space between Chinese
 /// characters and digits, and `您` for a patient or a customer. A fictional
 /// name carries `（虚构）` and an example carries `（示例）`. The translation is a
 /// draft that a native speaker has to review. See [CoL10nBundle].

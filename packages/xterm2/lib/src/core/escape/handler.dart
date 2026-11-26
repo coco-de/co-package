@@ -1,4 +1,4 @@
-import 'package:xterm2/src/core/mouse/mode.dart';
+import 'package:co_xterm2/src/core/mouse/mode.dart';
 
 enum TerminalProgressState {
   remove,

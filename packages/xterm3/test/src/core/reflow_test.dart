@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:xterm3/src/terminal.dart';
+import 'package:co_xterm3/src/terminal.dart';
 
 void main() {
   test('reflow() can reflow a single line', () {

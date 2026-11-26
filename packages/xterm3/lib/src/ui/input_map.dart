@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:xterm3/src/core/input/keys.dart';
+import 'package:co_xterm3/src/core/input/keys.dart';
 
 final _keyToTerminalKey = {
   LogicalKeyboardKey.hyper: TerminalKey.hyper,

@@ -4,6 +4,10 @@ description: >-
   a URL query for new tabs and a postMessage handshake for iframe previews.
 version: 1.0.1
 repository: https://github.com/coco-de/co-package/tree/main/packages/co_demo_prefs
+topics:
+  - localization
+  - theme
+  - iframe
 resolution: workspace
 
 environment:

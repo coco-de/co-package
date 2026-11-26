@@ -18,7 +18,7 @@ import '../../saas_ops.dart';
 /// number (`{n}`) puts it last, so that it is right for one and for many.
 ///
 /// The texts are a draft that a native speaker has to review: see
-/// `docs/languages/de.md`. A customer is addressed with `Sie`.
+/// `doc/languages/de.md`. A customer is addressed with `Sie`.
 ///
 /// `de`, `de_DE`, and `CoFaker.forLanguage('de')` read it.
 const CoFakerSaasData deSaas = CoFakerSaasData(

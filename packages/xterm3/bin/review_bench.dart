@@ -9,12 +9,12 @@
 // millisecond per mouse move does - inspection alone cannot tell them apart,
 // which is the point of this file.
 
-import 'package:xterm3/src/core/escape/parser.dart';
-import 'package:xterm3/src/core/reflow.dart';
-import 'package:xterm3/src/terminal.dart';
-import 'package:xterm3/src/terminal_search.dart';
-import 'package:xterm3/src/terminal_url_detection.dart';
-import 'package:xterm3/src/core/buffer/cell_offset.dart';
+import 'package:co_xterm3/src/core/escape/parser.dart';
+import 'package:co_xterm3/src/core/reflow.dart';
+import 'package:co_xterm3/src/terminal.dart';
+import 'package:co_xterm3/src/terminal_search.dart';
+import 'package:co_xterm3/src/terminal_url_detection.dart';
+import 'package:co_xterm3/src/core/buffer/cell_offset.dart';
 
 import 'noop_escape_handler.dart';
 

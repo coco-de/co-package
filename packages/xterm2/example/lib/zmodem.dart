@@ -8,7 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show MaterialApp, Brightness;
 import 'package:path/path.dart' as path;
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/xterm.dart';
 
 const host = 'localhost';
 const port = 22;

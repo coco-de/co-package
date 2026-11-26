@@ -1,6 +1,6 @@
-import 'package:xterm3/src/core/input/keys.dart';
-import 'package:xterm3/src/core/platform.dart';
-import 'package:xterm3/src/core/state.dart';
+import 'package:co_xterm3/src/core/input/keys.dart';
+import 'package:co_xterm3/src/core/platform.dart';
+import 'package:co_xterm3/src/core/state.dart';
 
 enum TerminalKeyEventType { press, repeat, release }
 

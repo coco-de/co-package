@@ -1,5 +1,5 @@
-import 'package:xterm3/src/core/buffer/line.dart';
-import 'package:xterm3/src/utils/circular_buffer.dart';
+import 'package:co_xterm3/src/core/buffer/line.dart';
+import 'package:co_xterm3/src/utils/circular_buffer.dart';
 
 class _LineBuilder {
   _LineBuilder([this._capacity = 80]);

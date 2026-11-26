@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 /// 이 머신에 설치된 러너 에이전트의 스냅샷.
 final class LocalStatus {
@@ -123,7 +124,7 @@ final class LocalRunner {
         pgrep.exitCode == 0 && listenerRunningIn(dir, pgrep.stdout as String);
 
     // 이 러너(agentName)의 plist만 확인한다 — 파일명 접두사(actions.runner.)만
-    // 보면 한 머신에 여러 러너를 띄운 멀티 인스턴스 구성(docs/self-hosted-runner.md
+    // 보면 한 머신에 여러 러너를 띄운 멀티 인스턴스 구성(doc/self-hosted-runner.md
     // "여러 인스턴스 운영" 참고)에서 다른 러너의 서비스 설치 여부를 이 러너의
     // 것으로 착각하게 된다.
     var svcInstalled = false;
@@ -440,7 +441,7 @@ final class LocalRunner {
   /// listener가 있는지.
   ///
   /// 머신 전체에서 `Runner.Listener` 프로세스의 존재만 보면, 한 머신에 여러
-  /// 러너를 띄운 구성(docs/self-hosted-runner.md "여러 인스턴스 운영")에서 다른
+  /// 러너를 띄운 구성(doc/self-hosted-runner.md "여러 인스턴스 운영")에서 다른
   /// 러너의 listener를 이 러너의 것으로 착각한다. 그러면 [svcSubcommands]가 아직
   /// 떠 있지도 않은 러너에 `stop`을 실행해(`not installed` / `Unload failed`)
   /// 정작 필요한 `install`+`start`로 넘어가지 못한다.
@@ -489,6 +490,14 @@ final class LocalRunner {
   /// co-package 모노레포 루트에서 실행한 경우도 찾을 수 있게
   /// `packages/co_arc/scripts/`도 함께 본다.
   static String? findScript(String name) {
+    final library = Isolate.resolvePackageUriSync(
+      Uri.parse('package:co_arc/co_arc.dart'),
+    );
+    if (library != null && library.scheme == 'file') {
+      final script = File.fromUri(library.resolve('../scripts/$name'));
+      if (script.existsSync()) return script.path;
+    }
+
     final starts = <String>{
       File(Platform.script.toFilePath()).parent.path,
       Directory.current.path,

@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
-import 'package:xterm3/src/core/mouse/reporter.dart';
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/src/core/mouse/reporter.dart';
+import 'package:co_xterm3/xterm.dart';
 
 void main() {
   group('MouseReporter', () {

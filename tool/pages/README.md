@@ -15,7 +15,9 @@ preserve its independent library/CI; repeat its sibling overrides when upgrading
 
 ## Build and verify
 
-Use Flutter 3.47 or newer and a local Git login with read access to `coco-de/coui`:
+Use Flutter 3.47 or newer and a local Git login with read access to
+`coco-de/coui`. Remove the public workspace's generated `pubspec_overrides.yaml`
+before building the full demos.
 
 ```sh
 bash tool/pages/build.sh
@@ -37,8 +39,8 @@ that navigation remains usable. Update intentional redesigns with
 
 ## GitHub Actions
 
-Pages uses GitHub Actions, with deployment restricted to `main` and the existing
-`github-pages` environment. `examples-pages.yml` supports:
+Pages builds and deploys from `main` through the `github-pages` environment.
+Use one of these two sources for the site.
 
 1. **Source builds**: add repository secret `COUI_READ_TOKEN` with read-only
    `coco-de/coui` contents access. The workflow installs the dependency using a
@@ -54,10 +56,9 @@ Pages uses GitHub Actions, with deployment restricted to `main` and the existing
    rescans credentials, and deploys through the same Pages artifact/OIDC path.
    Include `deployment.json` with the source commit and CoUI release for audit.
 
-Without the read token, source builds explicitly report **skipped**, and never
-replace the live site. Public package CI removes private-CoUI consumers from its
-temporary workspace using `public_workspace.py`; the public library packages do
-not gain a CoUI dependency. Credentials are never stored in the artifact branch.
+With no read token, the workflow reports the source build as skipped. Pull
+requests run public package CI with a temporary dependency override. The Pages
+workflow uses the read token only when building from `main`.
 
 ## Verification on 2026-11-04
 

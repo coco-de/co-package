@@ -1,8 +1,8 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm3/src/ui/render.dart';
-import 'package:xterm3/xterm.dart';
+import 'package:co_xterm3/src/ui/render.dart';
+import 'package:co_xterm3/xterm.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

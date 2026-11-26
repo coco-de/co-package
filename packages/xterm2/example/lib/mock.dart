@@ -1,7 +1,7 @@
 import 'package:co_example_ui/co_example_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:xterm2/xterm.dart';
+import 'package:co_xterm2/xterm.dart';
 
 void main() {
   runApp(MyApp());
