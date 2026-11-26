@@ -69,22 +69,3 @@ melos:
         dart run melos run format && dart run melos run analyze &&
         dart run melos run license-check && dart run melos run test
       description: Run formatting, analysis, license check, and tests.
-
-# All CoUI siblings resolve to the coui_flutter-v0.178.0 release commit.
-# Core and web are version 0.176.0 at this commit.
-dependency_overrides:
-  coui_flutter:
-    git:
-      url: https://github.com/coco-de/coui.git
-      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      path: packages/coui_flutter
-  coui_core:
-    git:
-      url: https://github.com/coco-de/coui.git
-      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      path: packages/coui_core
-  coui_web:
-    git:
-      url: https://github.com/coco-de/coui.git
-      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      path: packages/coui_web

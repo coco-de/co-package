@@ -8,16 +8,15 @@ Live site: https://docs.cocode.im/co-package/
 | `open-epub/` | Searchable sample library, reader, highlights/notes, fixed layout |
 | `xterm2/` | Browser terminal with a local command shell |
 
-All Flutter examples use `co_example_ui`, the CoUI release pinned in the root
-pubspec, and bundled OFL fonts. The xterm2 example stays a standalone package to
-preserve its independent library/CI; repeat its sibling overrides when upgrading.
+All Flutter examples use `co_example_ui`, CoUI from pub.dev, and bundled OFL
+fonts. The terminal example resolves its sibling demo preferences from the
+checkout because the example has its own dependency resolution.
 `lang` and `theme` query parameters and the existing embed protocol remain supported.
 
 ## Build and verify
 
-Use Flutter 3.50.1 from `.fvmrc` and a local Git login with read access to
-`coco-de/coui`. Remove the public workspace's generated `pubspec_overrides.yaml`
-before building the full demos.
+Use Flutter 3.50.1 from `.fvmrc`. Run the build from the full workspace so all
+three examples and their shared theme resolve together.
 
 ```sh
 bash tool/pages/build.sh
@@ -42,9 +41,8 @@ that navigation remains usable. Update intentional redesigns with
 Pages builds and deploys from `main` through the `github-pages` environment.
 Use one of these two sources for the site.
 
-1. **Source builds**: add repository secret `COUI_READ_TOKEN` with read-only
-   `coco-de/coui` contents access. The workflow installs the dependency using a
-   temporary Git HTTP header and removes it before artifact scanning/upload.
+1. **Source builds** pull dependencies from pub.dev and build on pushes to
+   `main`.
 2. **Verified prebuilt site**: commit the contents of `build/pages` to the
    `gh-pages` artifact branch, then dispatch from `main`:
 
@@ -55,10 +53,6 @@ Use one of these two sources for the site.
    This checks out only the static site, validates all three entry points,
    rescans credentials, and deploys through the same Pages artifact/OIDC path.
    Include `deployment.json` with the source commit and CoUI release for audit.
-
-With no read token, the workflow reports the source build as skipped. Pull
-requests run public package CI with a temporary dependency override. The Pages
-workflow uses the read token only when building from `main`.
 
 ## Verification on 2026-11-04
 

@@ -150,7 +150,7 @@ packages:
       path: "../../co_example_ui"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.0-beta.1"
   co_xterm2:
     dependency: "direct main"
     description:
@@ -183,23 +183,21 @@ packages:
     source: hosted
     version: "3.1.1"
   coui_core:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "packages/coui_core"
-      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      resolved-ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      url: "https://github.com/coco-de/coui.git"
-    source: git
-    version: "0.176.0"
+      name: coui_core
+      sha256: "4095f5c4e32e31370bc7fa011c05717d90b9669650666099d2d654e20500b7c9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.192.0"
   coui_flutter:
     dependency: "direct main"
     description:
-      path: "packages/coui_flutter"
-      ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      resolved-ref: ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6
-      url: "https://github.com/coco-de/coui.git"
-    source: git
-    version: "0.178.0"
+      name: coui_flutter
+      sha256: "7f718e28c78679a1c1aeec760cfc81cb34c0c0937f9b3636a4fce67fe7e587a9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.194.2-beta.1"
   country_flags:
     dependency: transitive
     description:

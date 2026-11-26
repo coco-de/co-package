@@ -2,8 +2,7 @@
 
 Use Python 3.9 or later and the Dart bundled with Flutter 3.50.1, the SDK used by CI.
 The release tool packages only files committed at `HEAD`. It resolves hosted
-dependencies without the repository's local workspace members or CoUI Git
-overrides. Run it from the commit you intend to release.
+dependencies independently of the local workspace members. Run it from the commit you intend to release.
 
 ```sh
 python3 tool/pub_release.py co_faker
@@ -33,13 +32,12 @@ once their prerequisites appear on pub.dev.
 | 1 | `co_arc`, `co_bdd`, `co_demo_prefs`, `co_faker`, `co_golden`, `co_site_metadata`, `co_storage`, `co_xterm2`, `co_xterm3`, `open_board`, `open_epub_engine` | Hosted dependencies already available |
 | 2 | `co_demo_world` | `co_demo_prefs ^1.0.1`, `co_faker ^0.13.1` |
 | 2 | `open_epub` | `open_epub_engine >=1.1.0 <1.2.0` |
-| 3 | `co_example_ui` | `co_demo_prefs ^1.0.1` and hosted `coui_flutter ^0.178.0` |
-| 3 | `co_golden_gallery` | Hosted `coui_web ^0.176.0` |
+| 3 | `co_example_ui` | `co_demo_prefs ^1.0.1` and `coui_flutter ^0.194.2-beta.1` |
+| 3 | `co_golden_gallery` | `coui_web ^0.192.0` |
 
-The CoUI packages are in a separate repository. Their maintainers need to
-publish compatible `coui_flutter`, `coui_web` and their CoUI dependencies
-before the last two packages can resolve on pub.dev. The local Git pins allow
-development and verification with CoUI access while those releases are pending.
+CoUI is hosted on pub.dev. `co_example_ui` starts at `0.1.0-beta.1` because
+its Flutter theme dependency is a prerelease. The gallery uses stable
+`coui_web`.
 
 The terminal forks use the distinct pub.dev names `co_xterm2` (MIT) and
 `co_xterm3` (AGPL-3.0-or-later). Existing Git tags use the original package

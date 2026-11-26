@@ -34,8 +34,8 @@ The [Cocode playground](https://docs.cocode.im/co-package/) includes
 pinned CoUI theme, responsive navigation, bundled multilingual fonts, and
 language/theme settings. The terminal uses a local browser demo shell.
 
-See [build, verification and Pages deployment](tool/pages/README.md) for the
-private CoUI read token or verified prebuilt deployment workflow.
+See [build, verification and Pages deployment](tool/pages/README.md) for
+the hosted dependency build and verified prebuilt deployment workflow.
 
 ## Depending on these packages
 
