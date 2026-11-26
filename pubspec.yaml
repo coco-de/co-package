@@ -31,7 +31,7 @@ dev_dependencies:
 melos:
   scripts:
     analyze:
-      run: melos exec -- dart analyze --fatal-infos
+      run: dart run melos exec -- dart analyze --fatal-infos
       description: Analyze every workspace package.
 
     # open_board 는 dcm format(line-length 80, cascading widget extensions) 규약을
@@ -42,22 +42,22 @@ melos:
     # SDK 언어 버전으로 검사하며, 공개 CI 에서 빠져도 부모 SDK 로 재해석하지 않는다.
     format:
       run: |
-        melos exec --ignore="open_board" --ignore="open_board_example" --ignore="open_epub" -- dart format --output=none --set-exit-if-changed .
-        dart format --output=none --set-exit-if-changed packages/open_epub/lib packages/open_epub/test
+        dart run melos exec --ignore="open_board" --ignore="open_board_example" --ignore="open_epub" -- dart format --output=none --set-exit-if-changed . &&
+          dart format --output=none --set-exit-if-changed packages/open_epub/lib packages/open_epub/test
       description: Check formatting for every workspace package (open_board and its example use dcm format).
 
     test:
-      run: melos run test:dart && melos run test:flutter
+      run: dart run melos run test:dart && dart run melos run test:flutter
       description: Run every package test suite (pure Dart, then Flutter).
 
     test:dart:
-      run: melos exec --no-flutter --dir-exists=test -- dart test
+      run: dart run melos exec --no-flutter --dir-exists=test -- dart test
       description: Run pure-Dart package tests.
 
     # --no-pub: 루트 워크스페이스 해석을 그대로 쓴다 — 패키지마다 암묵적 pub get 을
     # 되풀이하지 않는다. example 앱(open_epub_example·open_board_example)은 제외한다.
     test:flutter:
-      run: melos exec --flutter --dir-exists=test --ignore="*example*" -- flutter test --no-pub
+      run: dart run melos exec --flutter --dir-exists=test --ignore="*example*" -- flutter test --no-pub
       description: Run Flutter package tests (example apps excluded).
 
     license-check:
@@ -65,7 +65,9 @@ melos:
       description: Verify third-party attribution for ported code (open_epub_engine CFI, co_storage dox_storage fork, ADR-005).
 
     verify:
-      run: melos run format && melos run analyze && melos run license-check && melos run test
+      run: >-
+        dart run melos run format && dart run melos run analyze &&
+        dart run melos run license-check && dart run melos run test
       description: Run formatting, analysis, license check, and tests.
 
 # All CoUI siblings resolve to the coui_flutter-v0.178.0 release commit.
