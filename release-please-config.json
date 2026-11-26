@@ -19,6 +19,8 @@
 
   "//open_board": "open-board 저장소에서 이관. 마지막 릴리즈는 태그 open_board-v0.1.0(구 v0.1.0, 이관 시 개명)으로 인식되며, 그 이후 커밋이 다음 릴리즈 노트에 담긴다.",
 
+  "//open_note": "open_board 를 복제·개명해 필기 노트 기능(레이어 · 템플릿 · 노트북 · 개요/북마크 · 학습 보조 등)을 얹은 새 패키지. 새 패키지라 첫 릴리스를 1.0.0 이 아니라 0.1.0 으로 낸다.",
+
   "changelog-sections": [
     { "type": "feat",     "section": "기능" },
     { "type": "fix",      "section": "버그 수정" },
@@ -38,6 +40,7 @@
     "packages/open_epub_engine": { "component": "open_epub_engine" },
     "packages/open_epub": { "component": "open_epub" },
     "packages/open_board": { "component": "open_board" },
+    "packages/open_note": { "component": "open_note", "bump-minor-pre-major": true, "initial-version": "0.1.0" },
     "packages/co_golden": { "component": "co_golden" },
     "packages/co_golden_gallery": { "component": "co_golden_gallery" },
     "packages/co_bdd": { "component": "co_bdd", "bump-minor-pre-major": true },

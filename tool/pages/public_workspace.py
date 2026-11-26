@@ -6,6 +6,7 @@ PRIVATE_MEMBERS = {
     "packages/co_golden_gallery",
     "packages/co_example_ui",
     "packages/open_board/example",
+    "packages/open_note/example",
     "packages/open_epub/example",
 }
 

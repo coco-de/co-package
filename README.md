@@ -16,6 +16,7 @@ Cocode Dart and Flutter packages in a Melos monorepo.
 | [`open_epub_engine`](packages/open_epub_engine/README.md) | Pure Dart EPUB 2/3 parser, object model, and CFI locator engine. |
 | [`open_epub`](packages/open_epub/README.md) | Customizable EPUB reader widget for Flutter (reflowable + fixed layout). |
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
+| [`open_note`](packages/open_note/README.md) | Flutter handwriting note engine cloned from `open_board` — pens, layers, page templates, notebooks, outline & bookmarks, study aids. |
 | [`xterm2`](packages/xterm2/FORK.md) | MIT terminal emulator from `leynier/xterm2@6775995f`, with Cocode's clean-room desktop IME composition fixes. Independent package and CI job. |
 | [`xterm3`](packages/xterm3/FORK.md) | [klc/xterm3](https://github.com/klc/xterm3) 6.3.4 포크 — 데스크톱 입력기(한글 두벌식 등) 조합 수정. **AGPL-3.0**, 워크스페이스 비회원(자체 CI 잡). |
 

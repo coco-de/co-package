@@ -2,7 +2,7 @@
 
 - Platform: Flutter web examples (not Jaspr apps); gallery uses coui_web.
 - Shared UI: packages/co_example_ui. Example packages: open_board/example,
-  open_epub/example, and standalone xterm2/example.
+  open_note/example, open_epub/example, and standalone xterm2/example.
 - Release: coui_flutter 0.178.0, core/web 0.176.0, all pinned to
   ebf34ca7f8a57e7288b3fb5ee50f123f3d76afb6.
 - Overrides: root pubspec.yaml (all three siblings); xterm2/example/pubspec.yaml
@@ -31,4 +31,4 @@
   Authenticated source build or prebuilt static deployment: tool/pages/README.md.
 - After pins: run coui_pin.py check for root and terminal, run all example
   verification, refresh graft. No generated icon bundle is used by the apps.
-- Formatting: only changed Dart files; open_board follows its existing DCM style.
+- Formatting: only changed Dart files; open_board and open_note follow their existing DCM style.
