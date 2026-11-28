@@ -1,7 +1,7 @@
 # co-package
 
 Dart and Flutter packages from Cocode for testing, demo data, file storage,
-drawing, reading EPUBs, and embedding terminals.
+drawing, and reading EPUBs.
 
 [![CI](https://github.com/coco-de/co-package/actions/workflows/ci.yml/badge.svg)](https://github.com/coco-de/co-package/actions/workflows/ci.yml)
 
@@ -22,19 +22,16 @@ drawing, reading EPUBs, and embedding terminals.
 | [`open_epub`](packages/open_epub/README.md) | Customizable EPUB reader widget for Flutter (reflowable + fixed layout). |
 | [`open_board`](packages/open_board/README.md) | Flutter drawing & annotation widget (pen/lasso/text/image, multi-page, recording & replay). |
 | [`open_note`](packages/open_note/README.md) | Flutter handwriting note engine built from `open_board`: pens, layers, page templates, notebooks, outline and bookmarks, and study aids. |
-| [`co_xterm2`](packages/xterm2/README.md) | MIT terminal emulator fork with desktop IME composition fixes. |
-| [`co_xterm3`](packages/xterm3/README.md) | AGPL-3.0-or-later terminal emulator fork with desktop IME composition fixes. |
 
 ## Live examples
 
 The Flutter demos share the workspace-only [`co_example_ui`](packages/co_example_ui/README.md) package.
 
 The [Cocode playground](https://docs.cocode.im/co-package/) includes
-[Open Board](https://docs.cocode.im/co-package/open-board/),
-[Open EPUB](https://docs.cocode.im/co-package/open-epub/), and
-[xterm2](https://docs.cocode.im/co-package/xterm2/). The examples share the latest
-pinned CoUI theme, responsive navigation, bundled multilingual fonts, and
-language/theme settings. The terminal uses a local browser demo shell.
+[Open Board](https://docs.cocode.im/co-package/open-board/) and
+[Open EPUB](https://docs.cocode.im/co-package/open-epub/). The examples share the
+latest pinned CoUI theme, responsive navigation, bundled multilingual fonts, and
+language/theme settings.
 
 See [build, verification and Pages deployment](tool/pages/README.md) for
 the hosted dependency build and verified prebuilt deployment workflow.
@@ -120,7 +117,6 @@ shared instructions and generated graph format consistent.
 ## License
 
 The repository-level license is [BSD-3-Clause](LICENSE). Each package ships
-its own `LICENSE`. `co_bdd`, `co_xterm2`, `open_board`, `open_epub`, and
-`open_epub_engine` use MIT. `co_xterm3` uses AGPL-3.0-or-later and includes the
-MIT notice for prior work. See [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES)
-for bundled assets and third-party code.
+its own `LICENSE`. `co_bdd`, `open_board`, `open_epub`, and `open_epub_engine`
+use MIT. See [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) for bundled assets and
+third-party code.

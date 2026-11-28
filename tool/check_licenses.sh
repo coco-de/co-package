@@ -129,21 +129,9 @@ if [[ ! -f "$note_notice" ]] ||
   errors+=("${note_notice}: 원본 Open Board MIT 라이선스 전문을 포함해야 합니다.")
 fi
 
-# xterm2 예제의 데이터와 폰트는 웹 배포에도 포함된다.
-fig_notice="packages/xterm2/example/THIRD_PARTY_LICENSES"
-if ! grep -qxF 'Copyright (c) 2021 Hercules Labs Inc. (Fig)' "$fig_notice" ||
-  ! grep -q '^Permission is hereby granted' "$fig_notice"; then
-  errors+=("${fig_notice}: Fig Autocomplete의 원본 MIT 고지가 없습니다.")
-fi
-cascadia_license="packages/xterm2/example/fonts/CascadiaMonoPL-LICENSE.txt"
-if ! grep -qF 'Microsoft Corporation' "$cascadia_license" ||
-  ! grep -qF 'SIL OPEN FONT LICENSE Version 1.1' "$cascadia_license"; then
-  errors+=("${cascadia_license}: Cascadia Mono PL의 원본 OFL 고지가 없습니다.")
-fi
-
 # 결과
 if [[ ${#errors[@]} -eq 0 ]]; then
-  echo "✓ license-check 통과 — 이식 코드 ${checked}개 attribution + 루트/엔진패키지 THIRD_PARTY_LICENSES + 엔진 LICENSE 고지 정상; co_storage 포크 ${storage_checked}개 헤더 + 고지 + LICENSE 정상; Open Board MIT 및 xterm2 예제 고지 정상."
+  echo "✓ license-check 통과 — 이식 코드 ${checked}개 attribution + 루트/엔진패키지 THIRD_PARTY_LICENSES + 엔진 LICENSE 고지 정상; co_storage 포크 ${storage_checked}개 헤더 + 고지 + LICENSE 정상; Open Board MIT 고지 정상."
   exit 0
 fi
 

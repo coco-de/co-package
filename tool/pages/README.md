@@ -6,29 +6,26 @@ Live site: https://docs.cocode.im/co-package/
 | --- | --- |
 | `open-board/` | Drawing, split canvas, recording/replay, EPUB annotation |
 | `open-epub/` | Searchable sample library, reader, highlights/notes, fixed layout |
-| `xterm2/` | Browser terminal with a local command shell |
 
 All Flutter examples use `co_example_ui`, CoUI from pub.dev, and bundled OFL
-fonts. The terminal example resolves its sibling demo preferences from the
-checkout because the example has its own dependency resolution.
-`lang` and `theme` query parameters and the existing embed protocol remain supported.
+fonts. `lang` and `theme` query parameters and the existing embed protocol remain
+supported.
 
 ## Build and verify
 
-Use Flutter 3.50.1 from `.fvmrc`. Run the build from the full workspace so all
-three examples and their shared theme resolve together.
+Use Flutter 3.50.1 from `.fvmrc`. Run the build from the full workspace so both
+examples and their shared theme resolve together.
 
 ```sh
 bash tool/pages/build.sh
 (cd packages/co_example_ui && flutter test --no-pub)
 (cd packages/open_board/example && flutter test --no-pub)
 (cd packages/open_epub/example && flutter test --no-pub)
-(cd packages/xterm2/example && flutter test --no-pub)
 (cd packages/co_golden_gallery && dart test)
 ```
 
-`build/pages` contains the three production builds, landing page, and linked
-license notices for the sample books, Fig dataset, and bundled fonts. The build
+`build/pages` contains the two production builds, landing page, and linked
+license notices for the sample books and bundled fonts. The build
 script scans it for credentials. Serve its parent under `/co-package/`
 when testing locally, because the apps use production base paths.
 
@@ -51,7 +48,7 @@ Use one of these two sources for the site.
    gh workflow run examples-pages.yml --ref main -f prebuilt_ref=gh-pages
    ```
 
-   This checks out only the static site, validates all three entry points,
+   This checks out only the static site, validates both entry points,
    compares license notices with the source tree, rescans credentials, and
    deploys through the same Pages artifact/OIDC path.
    Include `deployment.json` with the source commit and CoUI release for audit.

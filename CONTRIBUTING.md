@@ -21,10 +21,6 @@ or `test:dart` in place of `verify`. If an earlier version of the setup
 generated a `pubspec_overrides.yaml` that excluded CoUI consumers, remove
 that override to include the full workspace.
 
-The terminal forks use their own dependency resolution and CI jobs. Run
-`flutter pub get --no-example` and `flutter test --no-pub` from their package
-directories. On Linux, the `co_xterm2` CI job excludes `platform-golden` tests.
-
 The libraries use the SDK's Material and Cupertino types for compatibility with
 existing host apps. Flutter 3.50 marks those imports and the legacy localization
 delegate as deprecated. The analysis exceptions apply to those lines.

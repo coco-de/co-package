@@ -103,20 +103,6 @@ corpus and is excluded for the same reason (real-world in-copyright book).
 
 
 --------------------------------------------------------------------------------
-xterm3 — packages/xterm3/ (a fork kept as its own package)
---------------------------------------------------------------------------------
-
-packages/xterm3 is a fork of xterm3 (https://github.com/klc/xterm3), licensed
-under the GNU Affero General Public License v3.0 or later. The fork is a
-standalone package with its own license files:
-
-  packages/xterm3/LICENSE      GNU AGPL-3.0
-  packages/xterm3/LICENSE.MIT  MIT notice of the prior work it derives from
-                               (xterm, xterm2)
-  packages/xterm3/NOTICE       copyright and derivation notice
-
-
---------------------------------------------------------------------------------
 pixelmatch — anti-aliasing check (packages/co_golden/lib/src/design/pixel_diff.dart)
 --------------------------------------------------------------------------------
 
@@ -180,16 +166,6 @@ the Project Gutenberg notice.
 
 Source: https://www.gutenberg.org/ebooks/11
 
-
---------------------------------------------------------------------------------
-xterm2 example — Fig Autocomplete dataset and Cascadia Mono PL font
---------------------------------------------------------------------------------
-
-The xterm2 example distributes Fig Autocomplete specifications in
-assets/specs_v1.json.gz. See packages/xterm2/example/THIRD_PARTY_LICENSES
-for the original MIT notice. Cascadia Mono PL is from Microsoft's Cascadia
-Code 2102.03 release and remains under the SIL Open Font License 1.1.
-The original license is in packages/xterm2/example/fonts/CascadiaMonoPL-LICENSE.txt.
 
 --------------------------------------------------------------------------------
 Open Note — drawing engine and assets inherited from Open Board 0.3.2

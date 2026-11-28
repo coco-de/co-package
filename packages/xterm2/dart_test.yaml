@@ -1,3 +1,0 @@
-tags:
-  platform-golden:
-    # Upstream images differ under Flutter 3.44.8 before any fork changes.
