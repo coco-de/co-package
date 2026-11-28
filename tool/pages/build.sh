@@ -5,22 +5,20 @@ cd "$(dirname "$0")/../.."
 repo_root=$PWD
 site_dir="$repo_root/build/pages"
 flutter pub get --no-example
-for entry in open_board:open-board open_epub:open-epub xterm2:xterm2; do
+for entry in open_board:open-board open_epub:open-epub; do
   package=${entry%%:*}
   route=${entry##*:}
   (
     cd "packages/$package/example"
-    if [[ "$package" == xterm2 ]]; then flutter pub get --no-example; fi
     flutter build web --release --no-wasm-dry-run --base-href "/co-package/$route/"
   )
 done
 mkdir -p "$site_dir"
 cp tool/pages/index.html "$site_dir/index.html"
-cat THIRD_PARTY_LICENSES packages/xterm2/example/THIRD_PARTY_LICENSES > "$site_dir/THIRD_PARTY_LICENSES.txt"
-cat packages/co_example_ui/fonts/{LICENSE.txt,NotoSansArabic-LICENSE.txt} \
-  packages/xterm2/example/fonts/CascadiaMonoPL-LICENSE.txt > "$site_dir/FONT-LICENSES.txt"
+cp THIRD_PARTY_LICENSES "$site_dir/THIRD_PARTY_LICENSES.txt"
+cat packages/co_example_ui/fonts/{LICENSE.txt,NotoSansArabic-LICENSE.txt} > "$site_dir/FONT-LICENSES.txt"
 touch "$site_dir/.nojekyll"
-for entry in open_board:open-board open_epub:open-epub xterm2:xterm2; do
+for entry in open_board:open-board open_epub:open-epub; do
   package=${entry%%:*}
   route=${entry##*:}
   stage_dir=$(mktemp -d "$site_dir/.${route}.XXXXXX")

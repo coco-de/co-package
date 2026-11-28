@@ -26,10 +26,9 @@ before disclosing the issue publicly.
 
 ## Scope
 
-This policy covers the packages in this repository. Some packages contain code
-forked from upstream projects (`packages/xterm2`, `packages/xterm3`,
-`packages/co_storage`); if an issue originates in the upstream code, please also
-report it to the upstream project.
+This policy covers the packages in this repository. `packages/co_storage`
+contains code forked from an upstream project; if an issue originates in the
+upstream code, please also report it to the upstream project.
 
 ---
 
@@ -58,6 +57,6 @@ report it to the upstream project.
 
 ## 범위
 
-이 정책은 이 저장소의 패키지에 적용됩니다. 일부 패키지(`packages/xterm2`,
-`packages/xterm3`, `packages/co_storage`)는 업스트림 프로젝트를 포크한 코드를 담고 있으니,
-업스트림 코드에서 비롯된 문제라면 업스트림 프로젝트에도 알려 주세요.
+이 정책은 이 저장소의 패키지에 적용됩니다. `packages/co_storage` 는 업스트림 프로젝트를
+포크한 코드를 담고 있으니, 업스트림 코드에서 비롯된 문제라면 업스트림 프로젝트에도 알려
+주세요.

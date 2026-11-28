@@ -29,7 +29,7 @@ once their prerequisites appear on pub.dev.
 
 | Order | Packages | Prerequisites |
 | --- | --- | --- |
-| 1 | `co_arc`, `co_bdd`, `co_demo_prefs`, `co_faker`, `co_golden`, `co_site_metadata`, `co_storage`, `co_xterm2`, `co_xterm3`, `open_board`, `open_epub_engine`, `open_note` | Hosted dependencies already available |
+| 1 | `co_arc`, `co_bdd`, `co_demo_prefs`, `co_faker`, `co_golden`, `co_site_metadata`, `co_storage`, `open_board`, `open_epub_engine`, `open_note` | Hosted dependencies already available |
 | 2 | `co_demo_world` | `co_demo_prefs ^1.0.1`, `co_faker ^0.13.1` |
 | 2 | `open_epub` | `open_epub_engine >=1.1.0 <1.2.0` |
 | 3 | `co_golden_gallery` | `coui_web ^0.192.0` |
@@ -38,10 +38,12 @@ The Flutter examples resolve `co_example_ui` from the workspace. Its
 `publish_to: none` keeps it out of the release manifest. The gallery uses
 stable `coui_web` from pub.dev.
 
-The terminal forks use the distinct pub.dev names `co_xterm2` (MIT) and
-`co_xterm3` (AGPL-3.0-or-later). Existing Git tags use the original package
-names. When moving from those tags, update the dependency key and the `package:`
-prefix in imports.
+The terminal forks (`co_xterm2` and `co_xterm3`) are no longer part of this
+repository. Keep their Git tags `xterm2-v5.3.0+cocode.1` and
+`xterm3-v6.3.4+cocode.1`. Consumers, including older branches, pin them under the
+package names `xterm2` and `xterm3`. Without a tag, a new machine can still run
+`pub get` from a committed `pubspec.lock`, but `pub upgrade` and unlocked
+checkouts fail.
 
 For each first release, complete the dry run, then run the same command with
 `--publish` using the Google account that will own the upload. Pub will prompt
@@ -59,7 +61,7 @@ access and transferring a package to a verified publisher.
 
 1. On each package's pub.dev **Admin → Automated publishing** page, allow
    GitHub Actions from `coco-de/co-package` with `<package>-v{{version}}`.
-   For example, set `co_xterm2-v{{version}}` for `co_xterm2`. If you require a
+   For example, set `co_faker-v{{version}}` for `co_faker`. If you require a
    GitHub environment there, use `pub.dev`. The workflow uses OIDC.
 2. Merge the release-please PR. To have release-please's tags trigger the
    publish workflow, configure `RELEASE_PLEASE_TOKEN` with a repository-scoped
